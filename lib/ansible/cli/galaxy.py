@@ -383,6 +383,8 @@ class GalaxyCLI(CLI):
     def execute_build(self):
         """
         Build an Ansible Galaxy collection artifact that can be stored in a central repository like Ansible Galaxy.
+        By default, this command builds from the current working directory. You can optionally pass in the
+        collection input path (where the ``galaxy.yml`` file is).
         """
         force = context.CLIARGS['force']
         output_path = GalaxyCLI._resolve_path(context.CLIARGS['output_path'])
@@ -400,6 +402,7 @@ class GalaxyCLI(CLI):
     def execute_init(self):
         """
         Creates the skeleton framework of a role or collection that complies with the Galaxy metadata format.
+        Requires a role or collection name. The collection name must be in the format ``<namespace>.<collection>``.
         """
 
         galaxy_type = context.CLIARGS['type']
@@ -569,7 +572,9 @@ class GalaxyCLI(CLI):
 
     def execute_install(self):
         """
-        uses the args list of roles to be installed, unless -f was specified. The list of roles
+        Install one or more roles(``ansible-galaxy role install``), or one or more collections(``ansible-galaxy collection install``).
+        You can pass in a list (roles or collections) or use the file
+        option listed below (these are mutually exclusive). If you pass in a list, it
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local tar archive file.
         """
         if context.CLIARGS['type'] == 'collection':
@@ -819,7 +824,7 @@ class GalaxyCLI(CLI):
 
     def execute_publish(self):
         """
-        Publish a collection into Ansible Galaxy.
+        Publish a collection into Ansible Galaxy. Requires the path to the collection tarball to publish.
         """
         api_key = context.CLIARGS['api_key'] or GalaxyToken().get()
         api_server = context.CLIARGS['api_server']

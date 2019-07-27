@@ -1,0 +1,2 @@
+bugfixes:
+- module_utils - remove unused objects from dict_transformations, removed, and sys_info modules (https://github.com/ansible/ansible/pull/59570)

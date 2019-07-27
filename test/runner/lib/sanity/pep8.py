@@ -2,8 +2,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import os
+
+import lib.types as t
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -30,6 +31,11 @@ from lib.config import (
 
 class Pep8Test(SanitySingleVersion):
     """Sanity test for PEP 8 style guidelines using pycodestyle."""
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'A100'
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -39,7 +45,7 @@ class Pep8Test(SanitySingleVersion):
         current_ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/pep8/current-ignore.txt')
         current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
 
-        settings = self.load_settings(args, 'A100')
+        settings = self.load_processor(args)
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/'))
         paths = settings.filter_skipped_paths(paths)

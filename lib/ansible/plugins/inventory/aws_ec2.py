@@ -21,6 +21,8 @@ DOCUMENTATION = '''
     notes:
         - If no credentials are provided and the control node has an associated IAM instance profile then the
           role will be used for authentication.
+    author:
+        - Sloane Hertel (@s-hertel)
     options:
         plugin:
             description: Token that ensures this is a source file for the plugin.
@@ -577,10 +579,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             session = botocore.session.get_session()
-            if session.get_credentials() is not None:
-                self.aws_access_key_id = session.get_credentials().access_key
-                self.aws_secret_access_key = session.get_credentials().secret_key
-                self.aws_security_token = session.get_credentials().token
+            try:
+                credentials = session.get_credentials().get_frozen_credentials()
+            except AttributeError:
+                pass
+            else:
+                self.aws_access_key_id = credentials.access_key
+                self.aws_secret_access_key = credentials.secret_key
+                self.aws_security_token = credentials.token
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "

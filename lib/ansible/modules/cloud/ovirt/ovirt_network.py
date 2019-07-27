@@ -127,7 +127,7 @@ EXAMPLES = '''
     data_center: mydatacenter
 
 # Add network from external provider
-- ovirt_networks:
+- ovirt_network:
     data_center: mydatacenter
     name: mynetwork
     external_provider: ovirt-provider-ovn

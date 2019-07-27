@@ -9,6 +9,8 @@ from xml.etree.ElementTree import (
     Element,
 )
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -34,6 +36,11 @@ from lib.config import (
 
 class ShellcheckTest(SanitySingleVersion):
     """Sanity test using shellcheck."""
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'AT1000'
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -43,7 +50,7 @@ class ShellcheckTest(SanitySingleVersion):
         exclude_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/shellcheck/exclude.txt')
         exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
 
-        settings = self.load_settings(args, 'AT1000')
+        settings = self.load_processor(args)
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh')
         paths = settings.filter_skipped_paths(paths)

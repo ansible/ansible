@@ -50,6 +50,11 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'ansible-test'
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -64,7 +69,7 @@ class PylintTest(SanitySingleVersion):
         plugin_names = sorted(p[0] for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
 
-        settings = self.load_settings(args, 'ansible-test')
+        settings = self.load_processor(args)
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/'))
         paths = settings.filter_skipped_paths(paths)

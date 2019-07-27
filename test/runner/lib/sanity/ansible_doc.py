@@ -48,7 +48,7 @@ class AnsibleDocTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        settings = self.load_settings(args, None)
+        settings = self.load_processor(args)
 
         targets_include = [target for target in targets.include if os.path.splitext(target.path)[1] == '.py']
         targets_include = settings.filter_skipped_targets(targets_include)

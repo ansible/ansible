@@ -82,6 +82,51 @@
     that:
       - result is failed
 
+- when: pyopenssl_version.stdout is version('0.15', '>=')
+  block:
+    - name: ensure SSL certificate is checked
+      consul_session:
+        state: info
+        id: '{{ session_id }}'
+        port: 8501
+        scheme: https
+      register: result
+      ignore_errors: True
+
+    - name: previous task should fail since certificate is not known
+      assert:
+        that:
+          - result is failed
+          - "'certificate verify failed' in result.msg"
+
+    - name: ensure SSL certificate isn't checked when validate_certs is disabled
+      consul_session:
+        state: info
+        id: '{{ session_id }}'
+        port: 8501
+        scheme: https
+        validate_certs: False
+      register: result
+
+    - name: previous task should succeed since certificate isn't checked
+      assert:
+        that:
+          - result is changed
+
+    - name: ensure a secure connection is possible
+      consul_session:
+        state: info
+        id: '{{ session_id }}'
+        port: 8501
+        scheme: https
+      environment:
+        REQUESTS_CA_BUNDLE: '{{ remote_dir }}/cert.pem'
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+
 - name: delete a session
   consul_session:
     state: absent
@@ -113,5 +158,5 @@
 - name: ensure session was deleted
   assert:
     that:
-      - search_deleted is success
-      - search_deleted is not changed
+      - search_deleted is skipped  # each iteration is skipped
+      - search_deleted is not changed  # and then unchanged

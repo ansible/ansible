@@ -5,6 +5,8 @@ __metaclass__ = type
 import json
 import os
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -43,6 +45,11 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'A100'
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -62,7 +69,7 @@ class ValidateModulesTest(SanitySingleVersion):
 
         env = ansible_environment(args, color=False)
 
-        settings = self.load_settings(args, 'A100')
+        settings = self.load_processor(args)
 
         paths = sorted(i.path for i in targets.include if i.module)
         paths = settings.filter_skipped_paths(paths)

@@ -1,5 +1,10 @@
----
-- block:
+- debug:
+    msg: Running tests/options-ca.yml
+
+- name: options-ca
+  when: pyopenssl_version.stdout is version('0.15', '>=') or
+        cryptography_version.stdout is version('1.6', '>=')
+  block:
   - name: Generate privatekey
     openssl_privatekey:
       path: "{{ output_dir }}/ansible_{{ key }}.key"
@@ -151,4 +156,4 @@
       - "'Minimum version required is 2.6.0 ' in output_1.msg"
     when: docker_py_version is version('2.6.0', '<')
 
-  when: pyopenssl_version.stdout is version('0.15', '>=') or cryptography_version.stdout is version('1.6', '>=')
+  - include_tasks: cleanup.yml

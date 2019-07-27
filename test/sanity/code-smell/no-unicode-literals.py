@@ -10,7 +10,6 @@ import sys
 def main():
     skip = set([
         'test/sanity/code-smell/%s' % os.path.basename(__file__),
-        'lib/ansible/module_utils/compat/ipaddress.py',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():

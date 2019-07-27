@@ -9,20 +9,21 @@ Collections
 
 Collections are a distribution format for Ansible content. They can be used to
 package and distribute playbooks, roles, modules, and plugins.
-You will be able to publish and use collections through `Ansible's Galaxy repository <https://galaxy.ansible.com>`_.
+You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
 .. important::
-    This feature is available in Ansible 2.8 as a *Technology Preview* and therefore is not fully supported. It should only be used for testing  and should not be deployed in a production environment.
+    This feature is available in Ansible 2.8 as a *Technology Preview* and therefore is not fully supported. It should only be used for testing and should not be deployed in a production environment.
     Future Galaxy or Ansible releases may introduce breaking changes.
 
 
 .. contents::
    :local:
+   :depth: 2
 
 Collection structure
 ====================
 
-Collections follow a simple data structure. None of the directories are required unless you have specific content that belongs in one of them. They do require a ``galaxy.yml`` file at the root level of the collection. This file contains all of the metadata that Galaxy
+Collections follow a simple data structure. None of the directories are required unless you have specific content that belongs in one of them. A collection does require a ``galaxy.yml`` file at the root level of the collection. This file contains all of the metadata that Galaxy
 and other tools need in order to package, build and publish the collection.::
 
     collection/
@@ -47,8 +48,8 @@ and other tools need in order to package, build and publish the collection.::
 
 
 .. note::
-    * We will only accept ``.yml`` extensions for galaxy.yml.
-    * A full structure can be found at `Draft collection <https://github.com/bcoca/collection>`_
+    * Ansible only accepts ``.yml`` extensions for galaxy.yml.
+    * See the `draft collection <https://github.com/bcoca/collection>`_ for an example of a full collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 
 
@@ -56,15 +57,17 @@ galaxy.yml
 ----------
 
 A collection must have a ``galaxy.yml`` file that contains the necessary information to build a collection artifact.
-See :ref:`collections_galaxy_meta` for details on how this file is structured.
+See :ref:`collections_galaxy_meta` for details.
 
 
 docs directory
 ---------------
 
-Keep general documentation for the collection here. Plugins and modules will still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Currently we are looking at Markdown as the standard format for documentation files, but this is subject to change.
+Keep general documentation for the collection here. Plugins and modules still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Currently we are looking at Markdown as the standard format for documentation files, but this is subject to change.
 
-We are `updating ansible-doc <https://github.com/ansible/ansible/pull/57764>`_ to allow showing documentation for plugins inside a collection::
+Use ``ansible-doc`` to view documentation for plugins inside a collection:
+
+.. code-block:: bash
 
     ansible-doc -t lookup mycol.myname.lookup1
 
@@ -74,7 +77,7 @@ The ``ansible-doc`` command requires the fully qualified collection name (FQCN) 
 plugins directory
 ------------------
 
- Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by any other plugin by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by any other plugin by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
 
 
 roles directory
@@ -83,7 +86,7 @@ roles directory
 Collection roles are mostly the same as existing roles, but with a couple of limitations:
 
  - Role names are now limited to contain only lowercase alphanumeric characters, plus ``_`` and start with an alpha character.
- - Roles cannot have their own plugins any more. The plugins must live in the collection ``plugins`` directory and will be accessible to the collection roles.
+ - Roles in a collection cannot contain plugins any more. Plugins must live in the collection ``plugins`` directory tree. Each plugin is accessible to all roles in the collection.
 
 The directory name of the role is used as the role name. Therefore, the directory name must comply with the
 above role name rules.
@@ -111,63 +114,106 @@ TBD. Expect tests for the collection itself to reside here.
 .. _creating_collections:
 
 Creating collections
-====================
+======================
 
-This is currently is a work in progress. We created the `Mazer <https://galaxy.ansible.com/docs/mazer/>`_ command line tool
-available at the `Ansible Mazer project <https://github.com/ansible/mazer>`_. as a proof of concept for packaging,
-distributing and installing collections. You can install ``mazer`` with ``pip install mazer`` or checkout the code directly.
+To create a collection:
 
-.. Note::
-    All the documentation below that use ``mazer`` might be updated to use another tool in the future as ``mazer`` will not be updated in the future.
+#. Initialize a collection with :ref:`ansible-galaxy collection init<creating_collections_skeleton>` to create the skeleton directory structure.
+#. Add your content to the collection.
+#. Build the collection into a collection artifact with :ref:`ansible-galaxy collection build<building_collections>`.
+#. Publish the collection artifact to Galaxy with :ref:`ansible-galaxy collection publish<publishing_collections>`.
 
-We are working on integrating this into Ansible itself for 2.9. Currently we have an `ansible-galaxy PR <https://github.com/ansible/ansible/pull/57106>`_ incorporating some of the commands into ``ansible-galaxy``. Currently it is not installable outside Ansible, but we hope to land this into development soon so early adopters can test.
+A user can then install your collection on their systems.
 
-.. Note::
-    Any references to ``ansible-galaxy`` below will be of a 'working version' either in this PR or subsequently in development. As such, the command and this documentation section is subject to frequent change.
+.. note::
+    Any references to ``ansible-galaxy`` below will be of a 'working version' that is in development for the 2.9
+    release. As such, the command and this documentation section is subject to frequent changes.
 
-In the end, to get started with authoring a new collection it should be as simple as:
+Currently the ``ansible-galaxy collection`` command implements the following sub commands:
+
+* ``init``: Create a basic collection skeleton based on the default template included with Ansible or your own template.
+* ``build``: Create a collection artifact that can be uploaded to Galaxy or your own repository.
+* ``publish``: Publish a built collection artifact to Galaxy.
+* ``install``: Install one or more collections.
+
+To learn more about the ``ansible-galaxy`` cli tool, see the :ref:`ansible-galaxy` man page.
+
+.. _creating_collections_skeleton:
+
+Creating a collection skeleton
+------------------------------
+
+To start a new collection:
 
 .. code-block:: bash
 
-    collection_dir#>ansible-galaxy collection init
+    collection_dir#> ansible-galaxy collection init my_namespace.my_collection
 
+Then you can populate the directories with the content you want inside the collection. See
+https://github.com/bcoca/collection to get a better idea of what you can place inside a collection.
 
-And then populating the directories with the content you want inside the collection. For now you can optionally clone from https://github.com/bcoca/collection to get the directory structure (or just create the directories as you need them).
 
 .. _building_collections:
 
 Building collections
-====================
+--------------------
 
-Collections are built by running ``mazer build`` from inside the collection's root directory.
-This will create a ``releases/`` directory inside the collection with the build artifacts,
-which can be uploaded to Galaxy.::
+To build a collection, run ``ansible-galaxy collection build`` from inside the root directory of the collection:
 
-    collection/
+.. code-block:: bash
+
+    collection_dir#> ansible-galaxy collection build my_namespace.my_collection
+
+This creates
+a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
+
+    my_collection/
+    ├── galaxy.yml
     ├── ...
-    ├── releases/
-    │   └── namespace_name-collection_name-1.0.12.tar.gz
+    ├── my_namespace_name-collection_name-1.0.0.tar.gz
     └── ...
 
+
 .. note::
-        Changing the filename of the tarball in the release directory so that it doesn't match
-        the data in ``galaxy.yml`` will cause the import to fail.
+    Certain files and folders are excluded when building the collection artifact. This is not currently configurable
+    and is a work in progress so the collection artifact may contain files you would not wish to distribute.
 
+This tarball is mainly intended to upload to Galaxy
+as a distribution method, but you can use it directly to install the collection on target systems.
 
-This tarball itself can be used to install the collection on target systems. It is mainly intended to upload to Galaxy as a distribution method, but you should be able to use directly.
+.. _publishing_collections:
 
 Publishing collections
-======================
+----------------------
 
-We are in the process of updating Ansible Galaxy to manage collections as it currently manages roles.
+You can publish collections to Galaxy using the ``ansible-galaxy collection publish`` command or the Galaxy UI itself.
 
+.. note:: Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before you upload it.
+
+Upload using ansible-galaxy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To upload the collection artifact with the ``ansible-galaxy`` command:
+
+.. code-block:: bash
+
+     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz --api-key=SECRET
+
+The above command triggers an import process, just as if you uploaded the collection through the Galaxy website.
+The command waits until the import process completes before reporting the status back. If you wish to continue
+without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
+`My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
+
+The API key is a secret token used by Ansible Galaxy to protect your content. You can find your API key at your
+`Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page.
 
 Upload from the Galaxy website
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Go to the `My Content <https://galaxy.ansible.com/my-content/namespaces>`_ page, and click the **Add Content** button on one of your namespaces. From
-the **Add Content** dialogue, click **Upload New Collection**, and select the collection archive file from your local
-filesystem.
+To upload your collection artifact directly on Galaxy:
+
+#. Go to the `My Content <https://galaxy.ansible.com/my-content/namespaces>`_ page, and click the **Add Content** button on one of your namespaces.
+#. From the **Add Content** dialogue, click **Upload New Collection**, and select the collection archive file from your local filesystem.
 
 When uploading collections it doesn't matter which namespace you select. The collection will be uploaded to the
 namespace specified in the collection metadata in the ``galaxy.yml`` file. If you're not an owner of the
@@ -175,22 +221,6 @@ namespace, the upload request will fail.
 
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
 import process, including any errors or warnings about the metadata and content contained in the collection.
-
-Upload using mazer
-------------------
-
-You can upload collection artifacts with ``mazer``, as shown in the following example:
-
-.. code-block:: bash
-
-    mazer publish --api-key=SECRET path/to/namespace_name-collection_name-1.0.12.tar.gz
-
-The above command triggers an import process, just as if the collection had been uploaded through the Galaxy website. Use the **My Imports**
-page to view the output from the import process.
-
-Your API key can be found on `the preferences page in Galaxy <https://galaxy.ansible.com/me/preferences>`_.
-
-To learn more about Mazer, see `Mazer <https://galaxy.ansible.com/docs/mazer/>`_.
 
 
 Collection versions
@@ -202,48 +232,113 @@ will be the version displayed everywhere in Galaxy; however, users will still be
 
 
 Installing collections
-======================
+----------------------
 
-The recommended way to install a collection is:
+You can use the ``ansible-galaxy collection install`` command to install a collection on your system. The collection by default is installed at ``/path/ansible_collections/my_namespace/my_collection``. You can optionally add the ``-p`` option to specify an alternate location.
 
-.. code-block:: bash
-
-   #> ansible-galaxy collection install mycollection -p /path
-
-assuming the collection is hosted in Galaxy.
-
-You can also use a tarball resulting from your build:
+To install a collection hosted in Galaxy:
 
 .. code-block:: bash
 
-   #> ansible-galaxy install mynamespace.mycollection.0.1.0.tgz -p /path
+   ansible-galaxy collection install my_namespace.my_collection -p /path
 
 
-As a path you should use one of the values configured in `COLLECTIONS_PATHS <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#collections-paths>`_. This is also where Ansible itself will expect to find collections when attempting to use them.
+You can also directly use the tarball from your build:
 
-You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collection/`` directory structure.
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections/ansible_collections
+
+.. note::
+    The install command automatically appends the path ``ansible_collections`` to the one specified  with the ``-p`` option unless the
+    parent directory is already in a folder called ``ansible_collections``.
+
+
+You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them.
+
+You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collections/`` directory structure.
 
 ::
 
     play.yml
     ├── collections/
-    │   └── ansbile_collection/
-    │               └── myname/
-    │                   └── mycol/<collection structure lives here>
+    │   └── ansible_collections/
+    │               └── my_namespace/
+    │                   └── my_collection/<collection structure lives here>
 
 
+Installing an older version of a collection
+-------------------------------------------
+
+By default ``ansible-galaxy`` installs the latest collection that is available but you can add a version range
+identifier to install a specific version.
+
+To install the 1.0.0 version of the collection:
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection:1.0.0
+
+To install the 1.0.0-beta.1 version of the collection:
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection:==1.0.0-beta.1
+
+To install the collections that are greater than or equal to 1.0.0 or less than 2.0.0:
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection:>=1.0.0,<2.0.0
+
+
+You can specify multiple range identifiers which are split by ``,``. You can use the following range identifiers:
+
+* ``*``: Any version, this is the default used when no range specified is set.
+* ``!=``: Version is not equal to the one specified.
+* ``==``: Version must be the one specified.
+* ``>=``: Version is greater than or equal to the one specified.
+* ``>``: Version is greater than the one specified.
+* ``<=``: Version is less than or equal to the one specified.
+* ``<``: Version is less than the one specified.
+
+.. note::
+    The ``ansible-galaxy`` command ignores any pre-release versions unless the ``==`` range identifier is used to
+    explicitly set to that pre-release version.
+
+
+.. _collection_requirements_file:
+
+Install multiple collections with a requirements file
+-----------------------------------------------------
+
+You can also setup a ``requirements.yml`` file to install multiple collections in one command. This file is a YAML file in the format:
+
+.. code-block:: yaml+jinja
+
+   ---
+   collections:
+   # With just the collection name
+   - my_namespace.my_collection
+
+   # With the collection name, version, and source options
+   - name: my_namespace.my_collection
+     version: 'version range identifiers (default: ``*``)'
+     source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
+
+The ``version`` key can take in the same range identifier format documented above.
 
 
 Using collections
 =================
 
-Once installed, you can reference collection content by its FQCN:
+Once installed, you can reference a collection content by its FQCN:
 
 .. code-block:: yaml
 
      - hosts: all
        tasks:
-         - myname.mycol.mymodule:
+         - my_namespace.my_collection.mymodule:
              option1: value
 
 This works for roles or any type of plugin distributed within the collection:
@@ -253,12 +348,12 @@ This works for roles or any type of plugin distributed within the collection:
      - hosts: all
        tasks:
          - include_role:
-             name : myname.mycol.role1
-         - myname.mycol.mymodule:
+             name : my_namespace.my_collection.role1
+         - my_namespace.mycollection.mymodule:
              option1: value
 
          - debug:
-             msg: '{{ lookup("myname.mycol.lookup1", 'param1')| myname.mycol.filter1 }}'
+             msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
 
 To avoid a lot of typing, you can use the ``collections`` keyword added in Ansbile 2.8:
@@ -268,7 +363,7 @@ To avoid a lot of typing, you can use the ``collections`` keyword added in Ansbi
 
      - hosts: all
        collections:
-        - myname.mycol
+        - my_namespace.my_collection
        tasks:
          - include_role:
              name: role1
@@ -276,7 +371,7 @@ To avoid a lot of typing, you can use the ``collections`` keyword added in Ansbi
              option1: value
 
          - debug:
-             msg: '{{ lookup("myname.mycol.lookup1", 'param1')| myname.mycol.filter1 }}'
+             msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
 This keyword creates a 'search path' for non namespaced plugin references. It does not import roles or anything else.
 Notice that you still need the FQCN for non-action or module plugins.

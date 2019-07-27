@@ -366,7 +366,7 @@ files:
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
-  $modules/network/vyos/: Qalthos samdoran NilashishC
+  $modules/network/vyos/: Qalthos NilashishC
   $modules/notification/_osx_say.py: $team_ansible
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
@@ -455,7 +455,9 @@ files:
     notified: jlozadad
   $modules/storage/hpe3par/: farhan7500 gautamphegde
   $modules/storage/infinidat/: GR360RY vmalloc
-  $modules/storage/netapp/: $team_netapp
+  $modules/storage/netapp/: 
+    maintainers: $team_netapp
+    support: community
   $modules/storage/purestorage/:
     maintainers: $team_purestorage
     labels: pure_storage
@@ -726,6 +728,7 @@ files:
     maintainers: $team_networking sganesh-infoblox
   $module_utils/netapp:
     maintainers: $team_netapp
+    support: community
   $module_utils/network:
     labels: networking
   $module_utils/network/a10:
@@ -1191,6 +1194,8 @@ files:
 # plugins/inventory
   $plugins/inventory/__init__.py:
     support: core
+  $plugins/inventory/aws_ec2.py:
+    maintainers: s-hertel
   $plugins/inventory/docker: *docker
   $plugins/inventory/docker_swarm.py:
     <<: *docker
@@ -1388,7 +1393,7 @@ files:
     maintainers: $team_extreme
   $plugins/terminal/vyos.py:
     support: network
-    maintainers: $team_networking samdoran
+    maintainers: $team_networking
 ###############################
 # plugins/test
   $plugins/test:
@@ -1486,6 +1491,9 @@ files:
   test/integration/targets/mso_: *aci
   test/integration/targets/mysql: *mysql
   test/integration/targets/nxos_: *nxos
+  test/integration/targets/netapp:
+    maintainers: $team_netapp
+    support: community
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
   test/integration/targets/scaleway_: *scaleway
