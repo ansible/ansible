@@ -12,7 +12,7 @@ module: ios_traceroute
 short_description: Identify the path used to reach the target from Cisco IOS network devices
 description:
 - By using traceroute command, identify the path used to reach the target
-- from Cisco IOS network devices. 
+- from Cisco IOS network devices.
 author:
 - Tachashi (@tech_kitara)
 version_added: '2.9'
@@ -175,7 +175,7 @@ def parse_trace(trace_line):
     for trace_num_item in trace_line_list[:3]:
         match_num = num_re.search(trace_num_item)
         if match_num:
-            break    
+            break
 
     if match_num:
         ip_list = [match_num.group()]
