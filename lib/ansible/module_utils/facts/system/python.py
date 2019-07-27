@@ -16,7 +16,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
+import sys, site
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -46,7 +46,9 @@ class PythonFactCollector(BaseFactCollector):
             },
             'version_info': list(sys.version_info),
             'executable': sys.executable,
-            'has_sslcontext': HAS_SSLCONTEXT
+            'has_sslcontext': HAS_SSLCONTEXT,
+            'site_package_path': site.getsitepackages(),
+            'user_package_path': site.getusersitepackages()
         }
 
         try:
