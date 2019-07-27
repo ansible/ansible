@@ -248,13 +248,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # set vars in inventory from hostvars
         for host in hostvars:
 
-            # create composite vars
-            self._set_composite_vars(
-                self._config_data.get('compose'), hostvars[host], host)
-
             # actually update inventory
             for key in hostvars[host]:
                 self.inventory.set_variable(host, key, hostvars[host][key])
+
+            # create composite vars
+            self._set_composite_vars(
+                self._config_data.get('compose'), hostvars[host], host)
 
             # constructed groups based on conditionals
             self._add_host_to_composed_groups(
