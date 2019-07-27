@@ -46,11 +46,18 @@ class PythonFactCollector(BaseFactCollector):
             },
             'version_info': list(sys.version_info),
             'executable': sys.executable,
-            'has_sslcontext': HAS_SSLCONTEXT,
-            'site_package_path': site.getsitepackages(),
-            'user_package_path': site.getusersitepackages()
+            'has_sslcontext': HAS_SSLCONTEXT
         }
-
+        try:
+            site_package_path = site.getsitepackages()
+            python_facts['python'].update({'site_package_path':site_package_path})
+        except:
+            pass
+        try:
+            user_package_path = site.getusersitepackages()
+            python_facts['python'].update({'user_package_path':user_package_path})
+        except:
+            pass
         try:
             python_facts['python']['type'] = sys.subversion[0]
         except AttributeError:
