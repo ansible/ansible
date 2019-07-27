@@ -158,7 +158,7 @@ def build_trace(module, dest, source=None, probe=None, port=None, ttl_min=None, 
         if arg:
             cmd += " {0} {1}".format(command, arg)
 
-    if ttl_min is not None and ttl_max is not None :
+    if ttl_min is not None and ttl_max is not None:
         cmd += " {0} {1} {2}".format("ttl", ttl_min, ttl_max)
 
     return cmd
