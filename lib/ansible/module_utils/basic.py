@@ -8,15 +8,23 @@ import json
 import sys
 import typing as t
 
+from ._json_streams_rfc7464 import LF_DELIMITER, RS_DELIMITER
+
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY_MIN = (3, 8)
 
 if sys.version_info < _PY_MIN:
-    print(json.dumps(dict(
-        failed=True,
-        msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
-    )))
+    sys.stdout.buffer.write(
+        b''.join((
+            RS_DELIMITER,
+            json.dumps(dict(
+                failed=True,
+                msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
+            )).encode('utf-8'),
+            LF_DELIMITER,
+        )),
+    )
     sys.exit(1)
 
 # Ansible modules can be written in any language.
@@ -70,6 +78,7 @@ except ImportError:
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
+
 
 from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
@@ -330,7 +339,15 @@ def _load_params():
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
         # This helper is used too early for fail_json to work.
-        print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
+        sys.stdout.buffer.write(
+            b''.join((
+                RS_DELIMITER,
+                b'{"msg": "Error: Module unable to decode stdin/parameters as '
+                b'valid JSON.  Unable to parse what parameters were passed", '
+                b'"failed": true}',
+                LF_DELIMITER,
+            )),
+        )
         sys.exit(1)
 
     try:
@@ -338,8 +355,16 @@ def _load_params():
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in JSON data from stdin. Unable to figure out what parameters were passed", '
-              '"failed": true}')
+        sys.stdout.buffer.write(
+            b''.join((
+                RS_DELIMITER,
+                b'{"msg": "Error: Module unable to locate '
+                b'ANSIBLE_MODULE_ARGS in JSON data from '
+                b'stdin. Unable to figure out what '
+                b'parameters were passed", "failed": true}',
+                LF_DELIMITER,
+            )),
+        )
         sys.exit(1)
 
 
@@ -1438,7 +1463,14 @@ class AnsibleModule(object):
         # return preserved
         kwargs.update(preserved)
 
-        print('\n%s' % self.jsonify(kwargs))
+        sys.stdout.buffer.write(
+            b'\n%s%s%s'
+            % (
+                RS_DELIMITER,
+                to_bytes(self.jsonify(kwargs)),
+                LF_DELIMITER,
+            ),
+        )
 
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """

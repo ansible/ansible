@@ -18,8 +18,14 @@ import signal
 import time
 import syslog
 import multiprocessing
+from io import BytesIO
 
 from ansible.module_utils.common.text.converters import to_text, to_bytes
+from ansible.module_utils._json_streams_rfc7464 import (
+    LF_DELIMITER,
+    RS_DELIMITER,
+    read_json_documents,
+)
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
@@ -36,7 +42,13 @@ def notice(msg):
 
 def end(res=None, exit_msg=0):
     if res is not None:
-        print(json.dumps(res))
+        sys.stdout.buffer.write(
+            b''.join((
+                RS_DELIMITER,
+                to_bytes(json.dumps(res)),
+                LF_DELIMITER,
+            ))
+        )
     sys.stdout.flush()
     sys.exit(exit_msg)
 
@@ -157,7 +169,6 @@ def _run_module(wrapped_cmd, jid):
     ipc_notifier.close()
 
     outdata = ''
-    filtered_outdata = ''
     stderr = ''
     try:
         cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(wrapped_cmd)]
@@ -179,9 +190,8 @@ def _run_module(wrapped_cmd, jid):
 
         (outdata, stderr) = script.communicate()
 
-        (filtered_outdata, json_warnings) = _filter_non_json_lines(outdata)
-
-        result = json.loads(filtered_outdata)
+        json_warnings = ()
+        result = next(read_json_documents(BytesIO(outdata.encode())))
 
         if json_warnings:
             # merge JSON junk warnings with any existing module warnings
