@@ -41,8 +41,8 @@
 - name: check if the traceroute result includes specific transit ip address in hop 1
   assert: 
     that:
-        - esp1.hop['1'] == ['{{ management_ip }}']
-        - esp2.hop['1'] == ['{{ management_ip }}']
+      - esp1.hop['1'] == ['{{ management_ip }}']
+      - esp2.hop['1'] == ['{{ management_ip }}']
 
 - name: unexpected unsuccessful ping1
   ios_traceroute:
@@ -65,4 +65,4 @@
 - name: assert
   assert:
     that:
-    - uup1.failed == uup2.failed == true
+      - uup1.failed == uup2.failed == true
