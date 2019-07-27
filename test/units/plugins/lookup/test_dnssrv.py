@@ -1,5 +1,3 @@
-# (c)2016 Andrew Zenk <azenk@umn.edu>
-#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -36,11 +34,11 @@ MOCK_RECORDS = [
     rdata.from_text(IN, SRV, '20 40 8443 demo-4.example.com.')
 ]
 MOCK_ANSWER = [
-    [{'priority': 10, 'weight': 3 / 6. * 100, 'target': 'demo-3.example.com:8443'},
-     {'priority': 10, 'weight': 2 / 6. * 100, 'target': 'demo-2.example.com:8443'},
-     {'priority': 10, 'weight': 1 / 6. * 100, 'target': 'demo-0.example.com:8443'}],
-    [{'priority': 20, 'weight': 4 / 5. * 100, 'target': 'demo-4.example.com:8443'},
-     {'priority': 20, 'weight': 1 / 5. * 100, 'target': 'demo-1.example.com:8443'}]
+    [{'priority': 10, 'weight': 3 / 6 * 100, 'target': 'demo-3.example.com:8443'},
+     {'priority': 10, 'weight': 2 / 6 * 100, 'target': 'demo-2.example.com:8443'},
+     {'priority': 10, 'weight': 1 / 6 * 100, 'target': 'demo-0.example.com:8443'}],
+    [{'priority': 20, 'weight': 4 / 5 * 100, 'target': 'demo-4.example.com:8443'},
+     {'priority': 20, 'weight': 1 / 5 * 100, 'target': 'demo-1.example.com:8443'}]
 ]
 
 
