@@ -182,7 +182,6 @@
     - async_result.changed == true
     - async_result is changed
     - async_result is successful
-    - async_result.warnings[0] is search('trailing junk after module output')
 
 - name: test stderr handling
   async_test:
