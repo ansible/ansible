@@ -42,7 +42,7 @@ options:
         junos-eznc library to be installed on control node and the device login credentials
         must be given in C(provider) option.
     required: false
-    default: ['!config', '!ofacts']
+    default: ['!config']
     version_added: "2.3"
   config_format:
     description:
@@ -51,11 +51,21 @@ options:
          only when C(config) value is present in I(gather_subset).
          The I(config_format) should be supported by the junos version running on
          device. This value is not applicable while fetching old style facts that is
-         when C(ofacts) value is present in value if I(gather_subset) value.
+         when C(ofacts) value is present in value if I(gather_subset) value. This option
+         is valid only for C(gather_subset) values.
     required: false
     default: 'text'
     choices: ['xml', 'text', 'set', 'json']
     version_added: "2.3"
+  gather_network_resources:
+    description:
+      - When supplied, this argument will restrict the facts collected
+        to a given subset. Possible values for this argument include
+        all and the resources like interfaces, vlans etc.
+        Can specify a list of values to include a larger subset.
+    choices: ['all', 'interfaces', 'lag_interfaces']
+    required: false
+    version_added: "2.9"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -78,6 +88,11 @@ EXAMPLES = """
 - name: collect default set of facts and configuration
   junos_facts:
     gather_subset: config
+
+- name: Gather legacy and resource facts
+  junos_facts:
+    gather_subset: all
+    gather_network_resources: all
 """
 
 RETURN = """
@@ -86,316 +101,28 @@ ansible_facts:
   returned: always
   type: dict
 """
-
-import platform
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.netconf import exec_rpc
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param, tostring
-from ansible.module_utils.network.junos.junos import get_configuration, get_capabilities
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
-
-
-try:
-    from lxml.etree import Element, SubElement
-except ImportError:
-    from xml.etree.ElementTree import Element, SubElement
-
-try:
-    from jnpr.junos import Device
-    from jnpr.junos.exception import ConnectError
-    HAS_PYEZ = True
-except ImportError:
-    HAS_PYEZ = False
-
-USE_PERSISTENT_CONNECTION = True
-
-
-class FactsBase(object):
-
-    def __init__(self, module):
-        self.module = module
-        self.facts = dict()
-
-    def populate(self):
-        raise NotImplementedError
-
-    def cli(self, command):
-        reply = command(self.module, command)
-        output = reply.find('.//output')
-        if not output:
-            self.module.fail_json(msg='failed to retrieve facts for command %s' % command)
-        return str(output.text).strip()
-
-    def rpc(self, rpc):
-        return exec_rpc(self.module, tostring(Element(rpc)))
-
-    def get_text(self, ele, tag):
-        try:
-            return str(ele.find(tag).text).strip()
-        except AttributeError:
-            pass
-
-
-class Default(FactsBase):
-
-    def populate(self):
-        self.facts.update(self.platform_facts())
-
-        reply = self.rpc('get-chassis-inventory')
-        data = reply.find('.//chassis-inventory/chassis')
-        self.facts['serialnum'] = self.get_text(data, 'serial-number')
-
-    def platform_facts(self):
-        platform_facts = {}
-
-        resp = get_capabilities(self.module)
-        device_info = resp['device_info']
-
-        platform_facts['system'] = device_info['network_os']
-
-        for item in ('model', 'image', 'version', 'platform', 'hostname'):
-            val = device_info.get('network_os_%s' % item)
-            if val:
-                platform_facts[item] = val
-
-        platform_facts['api'] = resp['network_api']
-        platform_facts['python_version'] = platform.python_version()
-
-        return platform_facts
-
-
-class Config(FactsBase):
-
-    def populate(self):
-        config_format = self.module.params['config_format']
-        reply = get_configuration(self.module, format=config_format)
-
-        if config_format == 'xml':
-            config = tostring(reply.find('configuration')).strip()
-
-        elif config_format == 'text':
-            config = self.get_text(reply, 'configuration-text')
-
-        elif config_format == 'json':
-            config = self.module.from_json(reply.text.strip())
-
-        elif config_format == 'set':
-            config = self.get_text(reply, 'configuration-set')
-
-        self.facts['config'] = config
-
-
-class Hardware(FactsBase):
-
-    def populate(self):
-
-        reply = self.rpc('get-system-memory-information')
-        data = reply.find('.//system-memory-information/system-memory-summary-information')
-
-        self.facts.update({
-            'memfree_mb': int(self.get_text(data, 'system-memory-free')),
-            'memtotal_mb': int(self.get_text(data, 'system-memory-total'))
-        })
-
-        reply = self.rpc('get-system-storage')
-        data = reply.find('.//system-storage-information')
-
-        filesystems = list()
-        for obj in data:
-            filesystems.append(self.get_text(obj, 'filesystem-name'))
-        self.facts['filesystems'] = filesystems
-
-        reply = self.rpc('get-route-engine-information')
-        data = reply.find('.//route-engine-information')
-
-        routing_engines = dict()
-        for obj in data:
-            slot = self.get_text(obj, 'slot')
-            routing_engines.update({slot: {}})
-            routing_engines[slot].update({'slot': slot})
-            for child in obj:
-                if child.text != "\n":
-                    routing_engines[slot].update({child.tag.replace("-", "_"): child.text})
-
-        self.facts['routing_engines'] = routing_engines
-
-        if len(data) > 1:
-            self.facts['has_2RE'] = True
-        else:
-            self.facts['has_2RE'] = False
-
-        reply = self.rpc('get-chassis-inventory')
-        data = reply.findall('.//chassis-module')
-
-        modules = list()
-        for obj in data:
-            mod = dict()
-            for child in obj:
-                if child.text != "\n":
-                    mod.update({child.tag.replace("-", "_"): child.text})
-            modules.append(mod)
-
-        self.facts['modules'] = modules
-
-
-class Interfaces(FactsBase):
-
-    def populate(self):
-        ele = Element('get-interface-information')
-        SubElement(ele, 'detail')
-        reply = exec_rpc(self.module, tostring(ele))
-
-        interfaces = {}
-
-        for item in reply[0]:
-            name = self.get_text(item, 'name')
-            obj = {
-                'oper-status': self.get_text(item, 'oper-status'),
-                'admin-status': self.get_text(item, 'admin-status'),
-                'speed': self.get_text(item, 'speed'),
-                'macaddress': self.get_text(item, 'hardware-physical-address'),
-                'mtu': self.get_text(item, 'mtu'),
-                'type': self.get_text(item, 'if-type'),
-            }
-
-            interfaces[name] = obj
-
-        self.facts['interfaces'] = interfaces
-
-
-class OFacts(FactsBase):
-    def _connect(self, module):
-        host = get_param(module, 'host')
-
-        kwargs = {
-            'port': get_param(module, 'port') or 830,
-            'user': get_param(module, 'username')
-        }
-
-        if get_param(module, 'password'):
-            kwargs['passwd'] = get_param(module, 'password')
-
-        if get_param(module, 'ssh_keyfile'):
-            kwargs['ssh_private_key_file'] = get_param(module, 'ssh_keyfile')
-
-        kwargs['gather_facts'] = False
-        try:
-            device = Device(host, **kwargs)
-            device.open()
-            device.timeout = get_param(module, 'timeout') or 10
-        except ConnectError as exc:
-            module.fail_json('unable to connect to %s: %s' % (host, to_native(exc)))
-
-        return device
-
-    def populate(self):
-
-        device = self._connect(self.module)
-        facts = dict(device.facts)
-
-        if '2RE' in facts:
-            facts['has_2RE'] = facts['2RE']
-            del facts['2RE']
-
-        facts['version_info'] = dict(facts['version_info'])
-        if 'junos_info' in facts:
-            for key, value in facts['junos_info'].items():
-                if 'object' in value:
-                    value['object'] = dict(value['object'])
-
-        return facts
-
-
-FACT_SUBSETS = dict(
-    default=Default,
-    hardware=Hardware,
-    config=Config,
-    interfaces=Interfaces,
-    ofacts=OFacts
-)
-
-VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+from ansible.module_utils.network.junos.argspec.facts.facts import FactsArgs
+from ansible.module_utils.network.junos.facts.facts import Facts
+from ansible.module_utils.network.junos.junos import junos_argument_spec
 
 
 def main():
     """ Main entry point for AnsibleModule
     """
-    argument_spec = dict(
-        gather_subset=dict(default=['!config', '!ofacts'], type='list'),
-        config_format=dict(default='text', choices=['xml', 'text', 'set', 'json']),
-    )
-
+    argument_spec = FactsArgs.argument_spec
     argument_spec.update(junos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    warnings = list()
-    gather_subset = module.params['gather_subset']
+    warnings = ['default value for `gather_subset` '
+                'will be changed to `min` from `!config` v2.11 onwards']
 
-    runable_subsets = set()
-    exclude_subsets = set()
+    result = Facts(module).get_facts()
 
-    for subset in gather_subset:
-        if subset == 'all':
-            runable_subsets.update(VALID_SUBSETS)
-            continue
-
-        if subset.startswith('!'):
-            subset = subset[1:]
-            if subset == 'all':
-                exclude_subsets.update(VALID_SUBSETS)
-                continue
-            exclude = True
-        else:
-            exclude = False
-
-        if subset not in VALID_SUBSETS:
-            module.fail_json(msg='Subset must be one of [%s], got %s' %
-                             (', '.join(sorted([subset for subset in
-                                                VALID_SUBSETS])), subset))
-
-        if exclude:
-            exclude_subsets.add(subset)
-        else:
-            runable_subsets.add(subset)
-
-    if not runable_subsets:
-        runable_subsets.update(VALID_SUBSETS)
-
-    runable_subsets.difference_update(exclude_subsets)
-    runable_subsets.add('default')
-
-    # handle fetching old style facts separately
-    runable_subsets.discard('ofacts')
-
-    facts = dict()
-    facts['gather_subset'] = list(runable_subsets)
-
-    instances = list()
-    ansible_facts = dict()
-
-    # fetch old style facts only when explicitly mentioned in gather_subset option
-    if 'ofacts' in gather_subset:
-        if HAS_PYEZ:
-            ansible_facts.update(OFacts(module).populate())
-        else:
-            warnings += ['junos-eznc is required to gather old style facts but does not appear to be installed. '
-                         'It can be installed using `pip  install junos-eznc`']
-        facts['gather_subset'].append('ofacts')
-
-    for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](module))
-
-    for inst in instances:
-        inst.populate()
-        facts.update(inst.facts)
-
-    for key, value in iteritems(facts):
-        key = 'ansible_net_%s' % key
-        ansible_facts[key] = value
+    ansible_facts, additional_warnings = result
+    warnings.extend(additional_warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 

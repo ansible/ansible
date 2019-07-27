@@ -18,6 +18,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.common.network import is_mac
 from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
 
 
@@ -70,19 +71,6 @@ def module_to_xapi_vm_power_state(power_state):
     }
 
     return vm_power_state_map.get(power_state)
-
-
-def is_valid_mac_addr(mac_addr):
-    """Validates given string as MAC address.
-
-    Args:
-        mac_addr (str): string to validate as MAC address.
-
-    Returns:
-        bool: True if string is valid MAC address, else False.
-    """
-    mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
-    return bool(mac_addr_regex.match(mac_addr.lower()))
 
 
 def is_valid_ip_addr(ip_addr):

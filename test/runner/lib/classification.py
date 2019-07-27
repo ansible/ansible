@@ -1,6 +1,6 @@
 """Classify changes in Ansible code."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import collections
 import os
@@ -19,18 +19,22 @@ from lib.target import (
 
 from lib.util import (
     display,
+    is_subdir,
 )
 
 from lib.import_analysis import (
     get_python_module_utils_imports,
+    get_python_module_utils_name,
 )
 
 from lib.csharp_import_analysis import (
     get_csharp_module_utils_imports,
+    get_csharp_module_utils_name,
 )
 
 from lib.powershell_import_analysis import (
     get_powershell_module_utils_imports,
+    get_powershell_module_utils_name,
 )
 
 from lib.config import (
@@ -40,6 +44,10 @@ from lib.config import (
 
 from lib.metadata import (
     ChangeDescription,
+)
+
+from lib.data import (
+    data_context,
 )
 
 FOCUSED_TARGET = '__focused__'
@@ -170,7 +178,7 @@ def categorize_changes(args, paths, verbose_command=None):
     return changes
 
 
-class PathMapper(object):
+class PathMapper:
     """Map file paths to test commands and targets."""
     def __init__(self, args):
         """
@@ -184,7 +192,7 @@ class PathMapper(object):
         self.compile_targets = list(walk_compile_targets())
         self.units_targets = list(walk_units_targets())
         self.sanity_targets = list(walk_sanity_targets())
-        self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.ps1']
+        self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] in ('.ps1', '.psm1')]
         self.csharp_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.cs']
 
         self.units_modules = set(t.module for t in self.units_targets if t.module)
@@ -258,7 +266,7 @@ class PathMapper(object):
         """
         ext = os.path.splitext(os.path.split(path)[1])[1]
 
-        if path.startswith('lib/ansible/module_utils/'):
+        if is_subdir(path, data_context().content.module_utils_path):
             if ext == '.py':
                 return self.get_python_module_utils_usage(path)
 
@@ -288,10 +296,7 @@ class PathMapper(object):
             after = time.time()
             display.info('Processed %d python module_utils in %d second(s).' % (len(self.python_module_utils_imports), after - before))
 
-        name = os.path.splitext(path)[0].replace('/', '.')[4:]
-
-        if name.endswith('.__init__'):
-            name = name[:-9]
+        name = get_python_module_utils_name(path)
 
         return sorted(self.python_module_utils_imports[name])
 
@@ -307,7 +312,7 @@ class PathMapper(object):
             after = time.time()
             display.info('Processed %d powershell module_utils in %d second(s).' % (len(self.powershell_module_utils_imports), after - before))
 
-        name = os.path.splitext(os.path.basename(path))[0]
+        name = get_powershell_module_utils_name(path)
 
         return sorted(self.powershell_module_utils_imports[name])
 
@@ -323,7 +328,7 @@ class PathMapper(object):
             after = time.time()
             display.info('Processed %d C# module_utils in %d second(s).' % (len(self.csharp_module_utils_imports), after - before))
 
-        name = os.path.splitext(os.path.basename(path))[0]
+        name = get_csharp_module_utils_name(path)
 
         return sorted(self.csharp_module_utils_imports[name])
 

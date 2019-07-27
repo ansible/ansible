@@ -1,8 +1,11 @@
 """Sanity test using yamllint."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
+
+import lib.types as t
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -14,48 +17,57 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
     display,
+    ANSIBLE_ROOT,
+    is_subdir,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
     SanityConfig,
 )
 
+from lib.data import (
+    data_context,
+)
+
 
 class YamllintTest(SanitySingleVersion):
     """Sanity test using yamllint."""
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'ansible-test'
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        paths = [
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')],
+        settings = self.load_processor(args)
 
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-             os.path.basename(i.path) != '__init__.py' and
-             i.path.startswith('lib/ansible/plugins/')],
+        paths = [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')]
 
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-             os.path.basename(i.path) != '__init__.py' and
-             i.path.startswith('lib/ansible/modules/')],
+        for plugin_type, plugin_path in sorted(data_context().content.plugin_paths.items()):
+            if plugin_type == 'module_utils':
+                continue
 
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-             os.path.basename(i.path) != '__init__.py' and
-             i.path.startswith('lib/ansible/plugins/doc_fragments/')],
-        ]
+            paths.extend([target.path for target in targets.include if
+                          os.path.splitext(target.path)[1] == '.py' and
+                          os.path.basename(target.path) != '__init__.py' and
+                          is_subdir(target.path, plugin_path)])
 
-        paths = [sorted(p) for p in paths if p]
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name)
 
-        results = []
-
-        for test_paths in paths:
-            results += self.test_paths(args, test_paths)
+        results = self.test_paths(args, paths)
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results)
@@ -71,7 +83,7 @@ class YamllintTest(SanitySingleVersion):
         """
         cmd = [
             args.python_executable,
-            'test/sanity/yamllint/yamllinter.py',
+            os.path.join(ANSIBLE_ROOT, 'test/sanity/yamllint/yamllinter.py'),
         ]
 
         data = '\n'.join(paths)

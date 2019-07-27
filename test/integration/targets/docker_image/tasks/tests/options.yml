@@ -290,3 +290,55 @@
     that:
       - path_1 is changed
       - path_2 is not changed
+
+####################################################################
+## target ##########################################################
+####################################################################
+
+- name: Build multi-stage image
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockerfile: "StagedDockerfile"
+      target: first
+      pull: no
+    source: build
+  register: dockerfile_2
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - dockerfile_2 is changed
+    - dockerfile_2.image.Config.WorkingDir == '/first'
+
+####################################################################
+## build.etc_hosts #################################################
+####################################################################
+
+- name: Build image with custom etc_hosts
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockefile: "EtcHostsDockerfile"
+      pull: no
+      etc_hosts:
+        some-custom-host: "127.0.0.1"
+    source: build
+  register: path_1
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+      - path_1 is changed

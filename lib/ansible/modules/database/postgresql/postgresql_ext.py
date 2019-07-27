@@ -79,6 +79,15 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.8'
+  version:
+    description:
+      - Extension version to add or update to. Has effect with I(state=present) only.
+      - If not specified, the latest extension version will be created.
+      - It can't downgrade an extension version.
+        When version downgrade is needed, remove the extension and create new one with appropriate version.
+      - Set I(version=latest) to update the extension to the latest available version.
+    type: str
+    version_added: '2.9'
 notes:
 - The default authentication assumes that you are either logging in as
   or sudo'ing to the C(postgres) account on the host.
@@ -92,6 +101,8 @@ requirements: [ psycopg2 ]
 author:
 - Daniel Schep (@dschep)
 - Thomas O'Donnell (@andytom)
+- Sandro Santilli (@strk)
+- Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
 '''
 
@@ -122,6 +133,18 @@ EXAMPLES = r'''
     db: acme
     cascade: yes
     state: absent
+
+- name: Create extension foo of version 1.2 or update it if it's already created
+  postgresql_ext:
+    db: acme
+    name: foo
+    version: 1.2
+
+- name: Assuming extension foo is created, update it to the latest version
+  postgresql_ext:
+    db: acme
+    name: foo
+    version: latest
 '''
 
 RETURN = r'''
@@ -134,6 +157,8 @@ query:
 '''
 
 import traceback
+
+from distutils.version import LooseVersion
 
 try:
     from psycopg2.extras import DictCursor
@@ -149,7 +174,6 @@ from ansible.module_utils.postgres import (
     postgres_common_argument_spec,
 )
 from ansible.module_utils._text import to_native
-from ansible.module_utils.database import pg_quote_identifier
 
 executed_queries = []
 
@@ -180,18 +204,81 @@ def ext_delete(cursor, ext, cascade):
         return False
 
 
-def ext_create(cursor, ext, schema, cascade):
-    if not ext_exists(cursor, ext):
-        query = "CREATE EXTENSION \"%s\"" % ext
-        if schema:
-            query += " WITH SCHEMA \"%s\"" % schema
-        if cascade:
-            query += " CASCADE"
-        cursor.execute(query)
-        executed_queries.append(query)
-        return True
+def ext_update_version(cursor, ext, version):
+    """Update extension version.
+
+    Return True if success.
+
+    Args:
+      cursor (cursor) -- cursor object of psycopg2 library
+      ext (str) -- extension name
+      version (str) -- extension version
+    """
+    if version != 'latest':
+        query = ("ALTER EXTENSION \"%s\" UPDATE TO '%s'" % (ext, version))
     else:
-        return False
+        query = ("ALTER EXTENSION \"%s\" UPDATE" % ext)
+    cursor.execute(query)
+    executed_queries.append(query)
+    return True
+
+
+def ext_create(cursor, ext, schema, cascade, version):
+    query = "CREATE EXTENSION \"%s\"" % ext
+    if schema:
+        query += " WITH SCHEMA \"%s\"" % schema
+    if version:
+        query += " VERSION '%s'" % version
+    if cascade:
+        query += " CASCADE"
+    cursor.execute(query)
+    executed_queries.append(query)
+    return True
+
+
+def ext_get_versions(cursor, ext):
+    """
+    Get the current created extension version and available versions.
+
+    Return tuple (current_version, [list of available versions]).
+
+    Note: the list of available versions contains only versions
+          that higher than the current created version.
+          If the extension is not created, this list will contain all
+          available versions.
+
+    Args:
+      cursor (cursor) -- cursor object of psycopg2 library
+      ext (str) -- extension name
+    """
+
+    # 1. Get the current extension version:
+    query = ("SELECT extversion FROM pg_catalog.pg_extension "
+             "WHERE extname = '%s'" % ext)
+
+    current_version = '0'
+    cursor.execute(query)
+    res = cursor.fetchone()
+    if res:
+        current_version = res[0]
+
+    # 2. Get available versions:
+    query = ("SELECT version FROM pg_available_extension_versions "
+             "WHERE name = '%s'" % ext)
+    cursor.execute(query)
+    res = cursor.fetchall()
+
+    available_versions = []
+    if res:
+        # Make the list of available versions:
+        for line in res:
+            if LooseVersion(line[0]) > LooseVersion(current_version):
+                available_versions.append(line['version'])
+
+    if current_version == '0':
+        current_version = False
+
+    return (current_version, available_versions)
 
 # ===========================================
 # Module execution.
@@ -207,6 +294,7 @@ def main():
         state=dict(type="str", default="present", choices=["absent", "present"]),
         cascade=dict(type="bool", default=False),
         session_role=dict(type="str"),
+        version=dict(type="str"),
     )
 
     module = AnsibleModule(
@@ -218,24 +306,82 @@ def main():
     schema = module.params["schema"]
     state = module.params["state"]
     cascade = module.params["cascade"]
+    version = module.params["version"]
     changed = False
+
+    if version and state == 'absent':
+        module.warn("Parameter version is ignored when state=absent")
 
     conn_params = get_conn_params(module, module.params)
     db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
-        if module.check_mode:
-            if state == "present":
-                changed = not ext_exists(cursor, ext)
-            elif state == "absent":
-                changed = ext_exists(cursor, ext)
-        else:
-            if state == "absent":
-                changed = ext_delete(cursor, ext, cascade)
+        # Get extension info and available versions:
+        curr_version, available_versions = ext_get_versions(cursor, ext)
 
-            elif state == "present":
-                changed = ext_create(cursor, ext, schema, cascade)
+        if state == "present":
+            if version == 'latest':
+                if available_versions:
+                    version = available_versions[-1]
+                else:
+                    version = ''
+
+            if version:
+                # If the specific version is passed and it is not available for update:
+                if version not in available_versions:
+                    if not curr_version:
+                        module.fail_json(msg="Passed version '%s' is not available" % version)
+
+                    elif LooseVersion(curr_version) == LooseVersion(version):
+                        changed = False
+
+                    else:
+                        module.fail_json(msg="Passed version '%s' is lower than "
+                                             "the current created version '%s' or "
+                                             "the passed version is not available" % (version, curr_version))
+
+                # If the specific version is passed and it is higher that the current version:
+                if curr_version and version:
+                    if LooseVersion(curr_version) < LooseVersion(version):
+                        if module.check_mode:
+                            changed = True
+                        else:
+                            changed = ext_update_version(cursor, ext, version)
+
+                    # If the specific version is passed and it is created now:
+                    if curr_version == version:
+                        changed = False
+
+                # If the ext doesn't exist and installed:
+                elif not curr_version and available_versions:
+                    if module.check_mode:
+                        changed = True
+                    else:
+                        changed = ext_create(cursor, ext, schema, cascade, version)
+
+            # If version is not passed:
+            else:
+                if not curr_version:
+                    # If the ext doesn't exist and it's installed:
+                    if available_versions:
+                        if module.check_mode:
+                            changed = True
+                        else:
+                            changed = ext_create(cursor, ext, schema, cascade, version)
+
+                    # If the ext doesn't exist and not installed:
+                    else:
+                        module.fail_json(msg="Extension %s is not installed" % ext)
+
+        elif state == "absent":
+            if curr_version:
+                if module.check_mode:
+                    changed = True
+                else:
+                    changed = ext_delete(cursor, ext, cascade)
+            else:
+                changed = False
 
     except Exception as e:
         db_connection.close()

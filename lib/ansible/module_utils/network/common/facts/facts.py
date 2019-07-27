@@ -23,13 +23,13 @@ class FactsBase(object):
         self._connection = get_resource_connection(module)
 
         self.ansible_facts = {'ansible_network_resources': {}}
-        self.ansible_facts['ansible_gather_network_resources'] = list()
+        self.ansible_facts['ansible_net_gather_network_resources'] = list()
         self.ansible_facts['ansible_net_gather_subset'] = list()
 
         if not self._gather_subset:
             self._gather_subset = ['!config']
         if not self._gather_network_resources:
-            self._gather_network_resources = ['all']
+            self._gather_network_resources = ['!all']
 
     def gen_runable(self, subsets, valid_subsets):
         """ Generate the runable subset
@@ -65,7 +65,8 @@ class FactsBase(object):
                 exclude = False
 
             if subset not in valid_subsets:
-                self._module.fail_json(msg='Bad subset')
+                self._module.fail_json(msg='Subset must be one of [%s], got %s' %
+                                           (', '.join(sorted([item for item in valid_subsets])), subset))
 
             if exclude:
                 exclude_subsets.add(subset)
@@ -75,7 +76,6 @@ class FactsBase(object):
         if not runable_subsets:
             runable_subsets.update(valid_subsets)
         runable_subsets.difference_update(exclude_subsets)
-
         return runable_subsets
 
     def get_network_resources_facts(self, net_res_choices, facts_resource_obj_map, resource_facts_type=None, data=None):
@@ -95,7 +95,7 @@ class FactsBase(object):
 
             restorun_subsets = self.gen_runable(resource_facts_type, frozenset(net_res_choices))
             if restorun_subsets:
-                self.ansible_facts['gather_network_resources'] = list(restorun_subsets)
+                self.ansible_facts['ansible_net_gather_network_resources'] = list(restorun_subsets)
                 instances = list()
                 for key in restorun_subsets:
                     fact_cls_obj = facts_resource_obj_map.get(key)
@@ -112,9 +112,10 @@ class FactsBase(object):
             legacy_facts_type = self._gather_subset
 
         runable_subsets = self.gen_runable(legacy_facts_type, frozenset(fact_legacy_obj_map.keys()))
+        runable_subsets.add('default')
         if runable_subsets:
             facts = dict()
-            facts['gather_subset'] = list(runable_subsets)
+            self.ansible_facts['ansible_net_gather_subset'] = list(runable_subsets)
 
             instances = list()
             for key in runable_subsets:

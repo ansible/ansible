@@ -1243,7 +1243,7 @@ def diff_instance_and_params(instance, params, ec2=None, skip=None):
 
     for mapping in param_mappings:
         if params.get(mapping.param_key) is not None and mapping.instance_key not in skip:
-            value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
+            value = AWSRetry.jittered_backoff()(ec2.describe_instance_attribute)(Attribute=mapping.attribute_name, InstanceId=id_)
             if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
                 arguments = dict(
                     InstanceId=instance['InstanceId'],
@@ -1496,7 +1496,7 @@ def handle_existing(existing_matches, changed, ec2, state):
         )
     changes = diff_instance_and_params(existing_matches[0], module.params)
     for c in changes:
-        ec2.modify_instance_attribute(**c)
+        AWSRetry.jittered_backoff()(ec2.modify_instance_attribute)(**c)
     changed |= bool(changes)
     changed |= add_or_update_instance_profile(existing_matches[0], module.params.get('instance_role'))
     changed |= change_network_attachments(existing_matches[0], module.params, ec2)

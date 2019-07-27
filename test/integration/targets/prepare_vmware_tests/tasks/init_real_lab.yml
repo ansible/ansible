@@ -21,3 +21,9 @@
       when: setup_dvswitch is defined
     - include_tasks: setup_resource_pool.yml
       when: setup_resource_pool is defined
+    - include_tasks: setup_category.yml
+      when: setup_category is defined
+    - include_tasks: setup_tag.yml
+      when: setup_tag is defined
+    - include_tasks: setup_content_library.yml
+      when: setup_content_library is defined

@@ -5,7 +5,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: "vm"
-    name: CDROM-Test
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: Resources
@@ -38,7 +38,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: "vm"
-    name: CDROM-Test
+    name: test_vm1
     datastore: "{{ ds2 }}"
     cdrom:
       type: iso
@@ -61,7 +61,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-Test
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cdrom:
       type: client
@@ -83,7 +83,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-Test
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cdrom:
       type: none
@@ -105,7 +105,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-Test-38679
+    name: test_vm2
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: Resources
@@ -148,7 +148,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         folder: "{{ f0 }}"
-        name: CDROM-Test-38679
+        name: test_vm2
         datacenter: "{{ dc1 }}"
         cluster: "{{ ccr1 }}"
         resource_pool: Resources

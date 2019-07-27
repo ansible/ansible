@@ -332,7 +332,7 @@ options:
                 description:
                     - Custom MAC address of the network interface, by default it's obtained from MAC pool.
                     - "NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
-                    To manage NICs of the VM in more depth please use M(ovirt_nics) module instead."
+                    To manage NICs of the VM in more depth please use M(ovirt_nic) module instead."
     disks:
         description:
             - List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
@@ -356,7 +356,7 @@ options:
                 description:
                     - I(True) if the disk should be activated, default is activated.
                     - "NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only attach disks.
-                    To manage disks of the VM in more depth please use M(ovirt_disks) module instead."
+                    To manage disks of the VM in more depth please use M(ovirt_disk) module instead."
                 type: bool
     sysprep:
         description:
@@ -441,6 +441,24 @@ options:
             nic_gateway:
                 description:
                     - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+            nic_boot_protocol_v6:
+                description:
+                    - Set boot protocol of the network interface of Virtual Machine.
+                choices: ['none', 'dhcp', 'static']
+                version_added: "2.9"
+            nic_ip_address_v6:
+                description:
+                    - If boot protocol is static, set this IP address to network interface of Virtual Machine.
+                version_added: "2.9"
+            nic_netmask_v6:
+                description:
+                    - If boot protocol is static, set this netmask to network interface of Virtual Machine.
+                version_added: "2.9"
+            nic_gateway_v6:
+                description:
+                    - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+                    - For IPv6 addresses the value is an integer in the range of 0-128, which represents the subnet prefix.
+                version_added: "2.9"
             nic_name:
                 description:
                     - Set name to network interface of Virtual Machine.
@@ -467,6 +485,23 @@ options:
             nic_gateway:
                 description:
                     - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+            nic_boot_protocol_v6:
+                description:
+                    - Set boot protocol of the network interface of Virtual Machine. Can be one of C(none), C(dhcp) or C(static).
+                version_added: "2.9"
+            nic_ip_address_v6:
+                description:
+                    - If boot protocol is static, set this IP address to network interface of Virtual Machine.
+                version_added: "2.9"
+            nic_netmask_v6:
+                description:
+                    - If boot protocol is static, set this netmask to network interface of Virtual Machine.
+                version_added: "2.9"
+            nic_gateway_v6:
+                description:
+                    - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+                    - For IPv6 addresses the value is an integer in the range of 0-128, which represents the subnet prefix.
+                version_added: "2.9"
             nic_name:
                 description:
                     - Set name to network interface of Virtual Machine.
@@ -770,7 +805,7 @@ options:
         version_added: "2.8"
     force_migrate:
         description:
-            - "If I(true), the VM will migrate even if it is defined as non-migratable."
+            - If I(true), the VM will migrate when I(placement_policy=user-migratable) but not when I(placement_policy=pinned).
         version_added: "2.8"
         type: bool
     migrate:
@@ -795,6 +830,11 @@ options:
             - "Source VM to clone VM from."
             - "VM should have snapshot specified by C(snapshot)."
             - "If C(snapshot_name) specified C(snapshot_vm) is required."
+        version_added: "2.9"
+    template_cluster:
+        description:
+            - "Template cluster name. When not defined C(cluster) is used."
+            - "Allows you to create virtual machine in diffrent cluster than template cluster name."
         version_added: "2.9"
 
 notes:
@@ -971,6 +1011,16 @@ EXAMPLES = '''
       nic_netmask: 255.255.252.0
       nic_gateway: 10.34.63.254
       nic_on_boot: true
+    # IP version 6 parameters are supported since ansible 2.9
+    - nic_name: eth2
+      nic_boot_protocol_v6: static
+      nic_ip_address_v6: '2620:52:0:2282:b898:1f69:6512:36c5'
+      nic_gateway_v6: '2620:52:0:2282:b898:1f69:6512:36c9'
+      nic_netmask_v6: '120'
+      nic_on_boot: true
+    - nic_name: eth3
+      nic_on_boot: true
+      nic_boot_protocol_v6: dhcp
 
 - name: Run VM with sysprep
   ovirt_vm:
@@ -1117,7 +1167,7 @@ EXAMPLES = '''
 # Execute remote viever to VM
 - block:
   - name: Create a ticket for console for a running VM
-    ovirt_vms:
+    ovirt_vm:
       name: myvm
       ticket: true
       state: running
@@ -1220,9 +1270,14 @@ class VmsModule(BaseModule):
         template = None
         templates_service = self._connection.system_service().templates_service()
         if self.param('template'):
+            cluster = self.param('template_cluster') if self.param('template_cluster') else self.param('cluster')
             templates = templates_service.list(
-                search='name=%s and cluster=%s' % (self.param('template'), self.param('cluster'))
+                search='name=%s and cluster=%s' % (self.param('template'), cluster)
             )
+            if not templates:
+                templates = templates_service.list(
+                    search='name=%s' % self.param('template')
+                )
             if self.param('template_version'):
                 templates = [
                     t for t in templates
@@ -1233,7 +1288,7 @@ class VmsModule(BaseModule):
                     "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
                         self.param('template'),
                         self.param('template_version'),
-                        self.param('cluster')
+                        cluster
                     )
                 )
             template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
@@ -1605,7 +1660,6 @@ class VmsModule(BaseModule):
         vm_service = self._service.service(entity.id)
         self._wait_for_UP(vm_service)
         self._attach_cd(vm_service.get())
-        self._migrate_vm(vm_service.get())
 
     def _attach_cd(self, entity):
         cd_iso = self.param('cd_iso')
@@ -1932,20 +1986,38 @@ class VmsModule(BaseModule):
                         boot_protocol=otypes.BootProtocol(
                             nic.pop('nic_boot_protocol').lower()
                         ) if nic.get('nic_boot_protocol') else None,
+                        ipv6_boot_protocol=otypes.BootProtocol(
+                            nic.pop('nic_boot_protocol_v6').lower()
+                        ) if nic.get('nic_boot_protocol_v6') else None,
                         name=nic.pop('nic_name', None),
                         on_boot=nic.pop('nic_on_boot', None),
                         ip=otypes.Ip(
                             address=nic.pop('nic_ip_address', None),
                             netmask=nic.pop('nic_netmask', None),
                             gateway=nic.pop('nic_gateway', None),
+                            version=otypes.IpVersion('v4')
                         ) if (
                             nic.get('nic_gateway') is not None or
                             nic.get('nic_netmask') is not None or
                             nic.get('nic_ip_address') is not None
                         ) else None,
+                        ipv6=otypes.Ip(
+                            address=nic.pop('nic_ip_address_v6', None),
+                            netmask=nic.pop('nic_netmask_v6', None),
+                            gateway=nic.pop('nic_gateway_v6', None),
+                            version=otypes.IpVersion('v6')
+                        ) if (
+                            nic.get('nic_gateway_v6') is not None or
+                            nic.get('nic_netmask_v6') is not None or
+                            nic.get('nic_ip_address_v6') is not None
+                        ) else None,
                     )
                     for nic in cloud_init_nics
                     if (
+                        nic.get('nic_boot_protocol_v6') is not None or
+                        nic.get('nic_ip_address_v6') is not None or
+                        nic.get('nic_gateway_v6') is not None or
+                        nic.get('nic_netmask_v6') is not None or
                         nic.get('nic_gateway') is not None or
                         nic.get('nic_netmask') is not None or
                         nic.get('nic_ip_address') is not None or
@@ -2236,6 +2308,7 @@ def main():
         cluster=dict(type='str'),
         allow_partial_import=dict(type='bool'),
         template=dict(type='str'),
+        template_cluster=dict(type='str'),
         template_version=dict(type='int'),
         use_latest_template_version=dict(type='bool'),
         storage_domain=dict(type='str'),
@@ -2342,6 +2415,8 @@ def main():
         )
         vm = vms_module.search_entity(list_params={'all_content': True})
 
+        # Boolean variable to mark if vm existed before module was executed
+        vm_existed = True if vm else False
         control_state(vm, vms_service, module)
         if state in ('present', 'running', 'next_run'):
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
@@ -2386,8 +2461,8 @@ def main():
                     ),
                     wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     # Start action kwargs:
-                    use_cloud_init=True if not module.params.get('cloud_init_persist') and module.params.get('cloud_init') is not None else None,
-                    use_sysprep=True if not module.params.get('cloud_init_persist') and module.params.get('sysprep') is not None else None,
+                    use_cloud_init=True if not module.params.get('cloud_init_persist') and module.params.get('cloud_init') else None,
+                    use_sysprep=True if not module.params.get('cloud_init_persist') and module.params.get('sysprep') else None,
                     vm=otypes.Vm(
                         placement_policy=otypes.VmPlacementPolicy(
                             hosts=[otypes.Host(name=module.params['host'])]
@@ -2425,6 +2500,9 @@ def main():
                         action_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
+            # Allow migrate vm when state present.
+            if vm_existed:
+                vms_module._migrate_vm(vm)
             ret['changed'] = vms_module.changed
         elif state == 'stopped':
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:

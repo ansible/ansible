@@ -126,7 +126,7 @@ EXAMPLES = '''
 
        # Previous task generated I(ovirt_auth) fact, which you can later use
        # in different modules as follows:
-       - ovirt_vms:
+       - ovirt_vm:
            auth: "{{ ovirt_auth }}"
            state: absent
            name: myvm

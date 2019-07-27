@@ -1,13 +1,11 @@
 """Miscellaneous utility functions and classes."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-from __future__ import absolute_import, print_function
-
-import atexit
 import contextlib
 import errno
 import fcntl
 import inspect
-import json
 import os
 import pkgutil
 import random
@@ -18,8 +16,6 @@ import stat
 import string
 import subprocess
 import sys
-import tempfile
-import textwrap
 import time
 
 from struct import unpack, pack
@@ -33,27 +29,40 @@ except ImportError:
 
 try:
     # noinspection PyCompatibility
-    from ConfigParser import SafeConfigParser as ConfigParser
-except ImportError:
-    # noinspection PyCompatibility
     from configparser import ConfigParser
+except ImportError:
+    # noinspection PyCompatibility,PyUnresolvedReferences
+    from ConfigParser import SafeConfigParser as ConfigParser
 
 try:
+    # noinspection PyProtectedMember
     from shlex import quote as cmd_quote
 except ImportError:
+    # noinspection PyProtectedMember
     from pipes import quote as cmd_quote
 
-DOCKER_COMPLETION = {}  # type: dict[str, dict[str, str]]
-REMOTE_COMPLETION = {}  # type: dict[str, dict[str, str]]
-PYTHON_PATHS = {}  # type: dict[str, str]
+import lib.types as t
 
 try:
+    C = t.TypeVar('C')
+except AttributeError:
+    C = None
+
+
+DOCKER_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
+REMOTE_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
+PYTHON_PATHS = {}  # type: t.Dict[str, str]
+
+try:
+    # noinspection PyUnresolvedReferences
     MAXFD = subprocess.MAXFD
 except AttributeError:
     MAXFD = -1
 
 COVERAGE_CONFIG_PATH = '.coveragerc'
 COVERAGE_OUTPUT_PATH = 'coverage'
+
+ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -68,6 +77,42 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
+
+ENCODING = 'utf-8'
+
+Text = type(u'')
+
+
+def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
+    """Return the given value as bytes encoded using UTF-8 if not already bytes, or None if the value is None."""
+    return None if value is None else to_bytes(value, errors)
+
+
+def to_optional_text(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[t.Text]
+    """Return the given value as text decoded using UTF-8 if not already text, or None if the value is None."""
+    return None if value is None else to_text(value, errors)
+
+
+def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
+    """Return the given value as bytes encoded using UTF-8 if not already bytes."""
+    if isinstance(value, bytes):
+        return value
+
+    if isinstance(value, Text):
+        return value.encode(ENCODING, errors)
+
+    raise Exception('value is not bytes or text: %s' % type(value))
+
+
+def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
+    """Return the given value as text decoded using UTF-8 if not already text."""
+    if isinstance(value, bytes):
+        return value.decode(ENCODING, errors)
+
+    if isinstance(value, Text):
+        return value
+
+    raise Exception('value is not bytes or text: %s' % type(value))
 
 
 def get_docker_completion():
@@ -91,7 +136,7 @@ def get_parameterized_completion(cache, name):
     :rtype: dict[str, dict[str, str]]
     """
     if not cache:
-        images = read_lines_without_comments('test/runner/completion/%s.txt' % name, remove_blank_lines=True)
+        images = read_lines_without_comments(os.path.join(ANSIBLE_ROOT, 'test/runner/completion/%s.txt' % name), remove_blank_lines=True)
 
         cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp))
 
@@ -129,12 +174,15 @@ def remove_file(path):
         os.remove(path)
 
 
-def read_lines_without_comments(path, remove_blank_lines=False):
+def read_lines_without_comments(path, remove_blank_lines=False, optional=False):  # type: (str, bool, bool) -> t.List[str]
     """
-    :type path: str
-    :type remove_blank_lines: bool
-    :rtype: list[str]
+    Returns lines from the specified text file with comments removed.
+    Comments are any content from a hash symbol to the end of a line.
+    Any spaces immediately before a comment are also removed.
     """
+    if optional and not os.path.exists(path):
+        return []
+
     with open(path, 'r') as path_fd:
         lines = path_fd.read().splitlines()
 
@@ -144,127 +192,6 @@ def read_lines_without_comments(path, remove_blank_lines=False):
         lines = [line for line in lines if line]
 
     return lines
-
-
-def get_python_path(args, interpreter):
-    """
-    :type args: TestConfig
-    :type interpreter: str
-    :rtype: str
-    """
-    # When the python interpreter is already named "python" its directory can simply be added to the path.
-    # Using another level of indirection is only required when the interpreter has a different name.
-    if os.path.basename(interpreter) == 'python':
-        return os.path.dirname(interpreter)
-
-    python_path = PYTHON_PATHS.get(interpreter)
-
-    if python_path:
-        return python_path
-
-    prefix = 'python-'
-    suffix = '-ansible'
-
-    root_temp_dir = '/tmp'
-
-    if args.explain:
-        return os.path.join(root_temp_dir, ''.join((prefix, 'temp', suffix)))
-
-    python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
-    injected_interpreter = os.path.join(python_path, 'python')
-
-    # A symlink is faster than the execv wrapper, but isn't compatible with virtual environments.
-    # Attempt to detect when it is safe to use a symlink by checking the real path of the interpreter.
-    use_symlink = os.path.dirname(os.path.realpath(interpreter)) == os.path.dirname(interpreter)
-
-    if use_symlink:
-        display.info('Injecting "%s" as a symlink to the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
-
-        os.symlink(interpreter, injected_interpreter)
-    else:
-        display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
-
-        code = textwrap.dedent('''
-        #!%s
-
-        from __future__ import absolute_import
-
-        from os import execv
-        from sys import argv
-
-        python = '%s'
-
-        execv(python, [python] + argv[1:])
-        ''' % (interpreter, interpreter)).lstrip()
-
-        with open(injected_interpreter, 'w') as python_fd:
-            python_fd.write(code)
-
-        os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
-
-    os.chmod(python_path, MODE_DIRECTORY)
-
-    if not PYTHON_PATHS:
-        atexit.register(cleanup_python_paths)
-
-    PYTHON_PATHS[interpreter] = python_path
-
-    return python_path
-
-
-def cleanup_python_paths():
-    """Clean up all temporary python directories."""
-    for path in sorted(PYTHON_PATHS.values()):
-        display.info('Cleaning up temporary python directory: %s' % path, verbosity=2)
-        shutil.rmtree(path)
-
-
-def get_coverage_environment(args, target_name, version, temp_path, module_coverage):
-    """
-    :type args: TestConfig
-    :type target_name: str
-    :type version: str
-    :type temp_path: str
-    :type module_coverage: bool
-    :rtype: dict[str, str]
-    """
-    if temp_path:
-        # integration tests (both localhost and the optional testhost)
-        # config and results are in a temporary directory
-        coverage_config_base_path = temp_path
-        coverage_output_base_path = temp_path
-    else:
-        # unit tests, sanity tests and other special cases (localhost only)
-        # config and results are in the source tree
-        coverage_config_base_path = os.getcwd()
-        coverage_output_base_path = os.path.abspath(os.path.join('test/results'))
-
-    config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_PATH)
-    coverage_file = os.path.join(coverage_output_base_path, COVERAGE_OUTPUT_PATH, '%s=%s=%s=%s=coverage' % (
-        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version))
-
-    if args.coverage_check:
-        # cause the 'coverage' module to be found, but not imported or enabled
-        coverage_file = ''
-
-    # Enable code coverage collection on local Python programs (this does not include Ansible modules).
-    # Used by the injectors in test/runner/injector/ to support code coverage.
-    # Used by unit tests in test/units/conftest.py to support code coverage.
-    # The COVERAGE_FILE variable is also used directly by the 'coverage' module.
-    env = dict(
-        COVERAGE_CONF=config_file,
-        COVERAGE_FILE=coverage_file,
-    )
-
-    if module_coverage:
-        # Enable code coverage collection on Ansible modules (both local and remote).
-        # Used by the AnsiballZ wrapper generator in lib/ansible/executor/module_common.py to support code coverage.
-        env.update(dict(
-            _ANSIBLE_COVERAGE_CONFIG=config_file,
-            _ANSIBLE_COVERAGE_OUTPUT=coverage_file,
-        ))
-
-    return env
 
 
 def find_executable(executable, cwd=None, path=None, required=True):
@@ -343,68 +270,6 @@ def generate_pip_command(python):
     return [python, '-m', 'pip.__main__']
 
 
-def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, module_coverage=True,
-                      virtualenv=None):
-    """
-    :type args: TestConfig
-    :type cmd: collections.Iterable[str]
-    :type target_name: str
-    :type env: dict[str, str]
-    :type capture: bool
-    :type data: str | None
-    :type cwd: str | None
-    :type python_version: str | None
-    :type temp_path: str | None
-    :type module_coverage: bool
-    :type virtualenv: str | None
-    :rtype: str | None, str | None
-    """
-    if not env:
-        env = common_environment()
-
-    cmd = list(cmd)
-    version = python_version or args.python_version
-    interpreter = virtualenv or find_python(version)
-    inject_path = os.path.abspath('test/runner/injector')
-
-    if not virtualenv:
-        # injection of python into the path is required when not activating a virtualenv
-        # otherwise scripts may find the wrong interpreter or possibly no interpreter
-        python_path = get_python_path(args, interpreter)
-        inject_path = python_path + os.path.pathsep + inject_path
-
-    env['PATH'] = inject_path + os.path.pathsep + env['PATH']
-    env['ANSIBLE_TEST_PYTHON_VERSION'] = version
-    env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
-
-    if args.coverage:
-        # add the necessary environment variables to enable code coverage collection
-        env.update(get_coverage_environment(args, target_name, version, temp_path, module_coverage))
-
-    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
-
-
-def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
-                cmd_verbosity=1, str_errors='strict'):
-    """
-    :type args: CommonConfig
-    :type cmd: collections.Iterable[str]
-    :type capture: bool
-    :type env: dict[str, str] | None
-    :type data: str | None
-    :type cwd: str | None
-    :type always: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :type cmd_verbosity: int
-    :type str_errors: str
-    :rtype: str | None, str | None
-    """
-    explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
-                       cmd_verbosity=cmd_verbosity, str_errors=str_errors)
-
-
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
                 cmd_verbosity=1, str_errors='strict'):
     """
@@ -468,21 +333,19 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     try:
         try:
-            process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
+            cmd_bytes = [to_bytes(c) for c in cmd]
+            env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
+            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
         except OSError as ex:
             if ex.errno == errno.ENOENT:
                 raise ApplicationError('Required program "%s" not found.' % cmd[0])
             raise
 
         if communicate:
-            encoding = 'utf-8'
-            if data is None or isinstance(data, bytes):
-                data_bytes = data
-            else:
-                data_bytes = data.encode(encoding, 'surrogateescape')
+            data_bytes = to_optional_bytes(data)
             stdout_bytes, stderr_bytes = process.communicate(data_bytes)
-            stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
-            stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
+            stdout_text = to_optional_text(stdout_bytes, str_errors) or u''
+            stderr_text = to_optional_text(stderr_bytes, str_errors) or u''
         else:
             process.wait()
             stdout_text, stderr_text = None, None
@@ -589,7 +452,7 @@ def remove_tree(path):
     :type path: str
     """
     try:
-        shutil.rmtree(path)
+        shutil.rmtree(to_bytes(path))
     except OSError as ex:
         if ex.errno != errno.ENOENT:
             raise
@@ -600,7 +463,7 @@ def make_dirs(path):
     :type path: str
     """
     try:
-        os.makedirs(path)
+        os.makedirs(to_bytes(path))
     except OSError as ex:
         if ex.errno != errno.EEXIST:
             raise
@@ -684,7 +547,7 @@ def generate_password():
     return password
 
 
-class Display(object):
+class Display:
     """Manages color console output."""
     clear = '\033[0m'
     red = '\033[31m'
@@ -703,7 +566,7 @@ class Display(object):
 
     def __init__(self):
         self.verbosity = 0
-        self.color = True
+        self.color = sys.stdout.isatty()
         self.warnings = []
         self.warnings_unique = set()
         self.info_stderr = False
@@ -788,8 +651,8 @@ class Display(object):
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
 
-        if sys.version_info[0] == 2 and isinstance(message, type(u'')):
-            message = message.encode('utf-8')
+        if sys.version_info[0] == 2:
+            message = to_bytes(message)
 
         print(message, file=fd)
         fd.flush()
@@ -797,12 +660,10 @@ class Display(object):
 
 class ApplicationError(Exception):
     """General application error."""
-    pass
 
 
 class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
-    pass
 
 
 class SubprocessError(ApplicationError):
@@ -847,28 +708,6 @@ class MissingEnvironmentVariable(ApplicationError):
         self.name = name
 
 
-class CommonConfig(object):
-    """Configuration common to all commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        self.command = command
-
-        self.color = args.color  # type: bool
-        self.explain = args.explain  # type: bool
-        self.verbosity = args.verbosity  # type: int
-        self.debug = args.debug  # type: bool
-        self.truncate = args.truncate  # type: int
-        self.redact = args.redact  # type: bool
-
-        if is_shippable():
-            self.redact = True
-
-        self.cache = {}
-
-
 def docker_qualify_image(name):
     """
     :type name: str
@@ -877,29 +716,6 @@ def docker_qualify_image(name):
     config = get_docker_completion().get(name, {})
 
     return config.get('name', name)
-
-
-@contextlib.contextmanager
-def named_temporary_file(args, prefix, suffix, directory, content):
-    """
-    :param args: CommonConfig
-    :param prefix: str
-    :param suffix: str
-    :param directory: str
-    :param content: str | bytes | unicode
-    :rtype: str
-    """
-    if not isinstance(content, bytes):
-        content = content.encode('utf-8')
-
-    if args.explain:
-        yield os.path.join(directory, '%stemp%s' % (prefix, suffix))
-    else:
-        with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
-            tempfile_fd.write(content)
-            tempfile_fd.flush()
-
-            yield tempfile_fd.name
 
 
 def parse_to_list_of_dict(pattern, value):
@@ -937,11 +753,8 @@ def get_available_port():
         return socket_fd.getsockname()[1]
 
 
-def get_subclasses(class_type):
-    """
-    :type class_type: type
-    :rtype: set[str]
-    """
+def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
+    """Returns the set of types that are concrete subclasses of the given type."""
     subclasses = set()
     queue = [class_type]
 
@@ -957,26 +770,64 @@ def get_subclasses(class_type):
     return subclasses
 
 
-def import_plugins(directory):
-    """
-    :type directory: str
-    """
-    path = os.path.join(os.path.dirname(__file__), directory)
-    prefix = 'lib.%s.' % directory
+def is_subdir(candidate_path, path):  # type: (str, str) -> bool
+    """Returns true if candidate_path is path or a subdirectory of path."""
+    if not path.endswith(os.sep):
+        path += os.sep
 
-    for (_, name, _) in pkgutil.iter_modules([path], prefix=prefix):
-        __import__(name)
+    if not candidate_path.endswith(os.sep):
+        candidate_path += os.sep
+
+    return candidate_path.startswith(path)
 
 
-def load_plugins(base_type, database):
+def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
     """
-    :type base_type: type
-    :type database: dict[str, type]
+    Import plugins from the given directory relative to the given root.
+    If the root is not provided, the 'lib' directory for the test runner will be used.
     """
-    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: dict [str, type]
+    if root is None:
+        root = os.path.dirname(__file__)
+
+    path = os.path.join(root, directory)
+    prefix = 'lib.%s.' % directory.replace(os.sep, '.')
+
+    for (_module_loader, name, _ispkg) in pkgutil.iter_modules([path], prefix=prefix):
+        module_path = os.path.join(root, name[4:].replace('.', os.sep) + '.py')
+        load_module(module_path, name)
+
+
+def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C]]) -> None
+    """
+    Load plugins of the specified type and track them in the specified database.
+    Only plugins which have already been imported will be loaded.
+    """
+    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: t.Dict[str, t.Type[C]]
 
     for plugin in plugins:
         database[plugin] = plugins[plugin]
+
+
+def load_module(path, name):  # type: (str, str) -> None
+    """Load a Python module using the given name and path."""
+    if sys.version_info >= (3, 4):
+        # noinspection PyUnresolvedReferences
+        import importlib.util
+
+        # noinspection PyUnresolvedReferences
+        spec = importlib.util.spec_from_file_location(name, path)
+        # noinspection PyUnresolvedReferences
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        sys.modules[name] = module
+    else:
+        # noinspection PyDeprecation
+        import imp
+
+        with open(path, 'r') as module_file:
+            # noinspection PyDeprecation
+            imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

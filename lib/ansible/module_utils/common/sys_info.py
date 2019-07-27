@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import os
 import platform
 
 from ansible.module_utils import distro

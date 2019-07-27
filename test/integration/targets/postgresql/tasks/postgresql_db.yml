@@ -8,7 +8,7 @@
     db_name: acme
     block_parameters: &block_parameters
       become_user: "{{ pg_user }}"
-      become: True
+      become: yes
     task_parameters: &task_parameters
       register: result
     pg_parameters: &pg_parameters
@@ -37,7 +37,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 0 because actually nothing changed
     <<: *task_parameters
@@ -64,7 +64,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 1
     <<: *task_parameters
@@ -91,7 +91,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   # Try to change tablespace in check_mode:
   - name: postgresql_db_tablespace - Change tablespace in check_mode
@@ -105,7 +105,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 1 because actually nothing changed
     <<: *task_parameters
@@ -132,7 +132,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 1
     <<: *task_parameters

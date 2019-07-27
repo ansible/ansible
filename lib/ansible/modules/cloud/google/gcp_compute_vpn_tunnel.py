@@ -55,10 +55,12 @@ options:
       be a lowercase letter, and all following characters must be a dash, lowercase
       letter, or digit, except the last character, which cannot be a dash.
     required: true
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   target_vpn_gateway:
     description:
     - URL of the Target VPN gateway with which this VPN tunnel is associated.
@@ -68,6 +70,7 @@ options:
       name-of-resource` to a gcp_compute_target_vpn_gateway task and then set this
       target_vpn_gateway field to "{{ name-of-resource }}"'
     required: false
+    type: dict
   router:
     description:
     - URL of router resource to be used for dynamic routing.
@@ -77,21 +80,25 @@ options:
       to a gcp_compute_router task and then set this router field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   peer_ip:
     description:
     - IP address of the peer VPN gateway. Only IPv4 is supported.
     required: false
+    type: str
   shared_secret:
     description:
     - Shared secret used to set the secure session between the Cloud VPN gateway and
       the peer VPN gateway.
     required: true
+    type: str
   ike_version:
     description:
     - IKE protocol version to use when establishing the VPN tunnel with peer VPN gateway.
     - Acceptable IKE versions are 1 or 2. Default version is 2.
     required: false
     default: '2'
+    type: int
   local_traffic_selector:
     description:
     - Local traffic selector to use when establishing the VPN tunnel with peer VPN
@@ -99,6 +106,7 @@ options:
       The ranges should be disjoint.
     - Only IPv4 is supported.
     required: false
+    type: list
   remote_traffic_selector:
     description:
     - Remote traffic selector to use when establishing the VPN tunnel with peer VPN
@@ -106,10 +114,12 @@ options:
       The ranges should be disjoint.
     - Only IPv4 is supported.
     required: false
+    type: list
   region:
     description:
     - The region where the tunnel is located.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/vpnTunnels)'

@@ -31,6 +31,7 @@
 import collections
 import json
 import re
+import sys
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -48,10 +49,10 @@ except ImportError:
     HAS_YAML = False
 
 try:
-    if PY3:
-        from collections import OrderedDict
-    else:
+    if sys.version_info[:2] < (2, 7):
         from ordereddict import OrderedDict
+    else:
+        from collections import OrderedDict
     HAS_ORDEREDDICT = True
 except ImportError:
     HAS_ORDEREDDICT = False
@@ -1115,7 +1116,7 @@ def nxosCmdRef_import_check():
     """Return import error messages or empty string"""
     msg = ''
     if PY2:
-        if not HAS_ORDEREDDICT:
+        if not HAS_ORDEREDDICT and sys.version_info[:2] < (2, 7):
             msg += "Mandatory python library 'ordereddict' is not present, try 'pip install ordereddict'\n"
         if not HAS_YAML:
             msg += "Mandatory python library 'yaml' is not present, try 'pip install yaml'\n"
@@ -1134,8 +1135,9 @@ def is_text(cmd):
 
 
 def is_local_nxapi(module):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
+    transport = module.params.get('transport')
+    provider = module.params.get('provider')
+    provider_transport = provider['transport'] if provider else None
     return 'nxapi' in (transport, provider_transport)
 
 

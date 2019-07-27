@@ -169,9 +169,16 @@ class SysctlModule(object):
         elif self.file_values[thisname] != self.args['value']:
             self.changed = True
             self.write_file = True
+        # with reload=yes we should check if the current system values are
+        # correct, so that we know if we should reload
+        elif self.args['reload']:
+            if self.proc_value is None:
+                self.changed = True
+            elif not self._values_is_equal(self.proc_value, self.args['value']):
+                self.changed = True
 
         # use the sysctl command or not?
-        if self.args['sysctl_set']:
+        if self.args['sysctl_set'] and self.args['state'] == "present":
             if self.proc_value is None:
                 self.changed = True
             elif not self._values_is_equal(self.proc_value, self.args['value']):
@@ -182,7 +189,7 @@ class SysctlModule(object):
         if not self.module.check_mode:
             if self.write_file:
                 self.write_sysctl()
-            if self.write_file and self.args['reload']:
+            if self.changed and self.args['reload']:
                 self.reload_sysctl()
             if self.set_proc:
                 self.set_token_value(self.args['name'], self.args['value'])

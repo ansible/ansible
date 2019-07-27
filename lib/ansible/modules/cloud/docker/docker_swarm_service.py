@@ -1051,9 +1051,10 @@ from ansible.module_utils.docker.common import (
     DifferenceTracker,
     DockerBaseClass,
     convert_duration_to_nanosecond,
-    parse_healthcheck
-
+    parse_healthcheck,
+    RequestException,
 )
+
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
@@ -2813,6 +2814,8 @@ def main():
         client.module.exit_json(**results)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

@@ -32,12 +32,13 @@ options:
         description:
             - When supplied, this argument will restrict the facts collected
                 to a given subset.  Possible values for this argument include
-                "aggregate_info", "cluster_node_info", "igroup_info", "lun_info", "net_ifgrp_info",
+                "aggregate_info", "cluster_node_info", "igroup_info", "lun_info", "net_dns_info",
+                "net_ifgrp_info",
                 "net_interface_info", "net_port_info", "nvme_info", "nvme_interface_info",
                 "nvme_namespace_info", "nvme_subsystem_info", "ontap_version",
                 "qos_adaptive_policy_info", "qos_policy_info", "security_key_manager_key_info",
                 "security_login_account_info", "storage_failover_info", "volume_info",
-                "vserver_info", "vserver_login_banner_info", "vserver_motd_info"
+                "vserver_info", "vserver_login_banner_info", "vserver_motd_info", "vserver_nfs_info"
                 Can specify a list of values to include a larger subset.  Values can also be used
                 with an initial C(M(!)) to specify that a specific subset should
                 not be collected.
@@ -92,6 +93,7 @@ ontap_facts:
         "ontap_facts": {
             "aggregate_info": {...},
             "cluster_node_info": {...},
+            "net_dns_info": {...},
             "net_ifgrp_info": {...},
             "net_interface_info": {...},
             "net_port_info": {...},
@@ -103,6 +105,7 @@ ontap_facts:
             "vserver_login_banner_info": {...},
             "vserver_motd_info": {...},
             "vserver_info": {...},
+            "vserver_nfs_info": {...},
             "ontap_version": {...},
             "igroup_info": {...},
             "qos_policy_info": {...},
@@ -142,6 +145,16 @@ class NetAppONTAPGatherFacts(object):
         # min_version identifies the ontapi version which supports this ZAPI
         # use 0 if it is supported since 9.1
         self.fact_subsets = {
+            'net_dns_info': {
+                'method': self.get_generic_get_iter,
+                'kwargs': {
+                    'call': 'net-dns-get-iter',
+                    'attribute': 'net-dns-info',
+                    'field': 'vserver-name',
+                    'query': {'max-records': '1024'},
+                },
+                'min_version': '0',
+            },
             'net_interface_info': {
                 'method': self.get_generic_get_iter,
                 'kwargs': {
@@ -177,7 +190,7 @@ class NetAppONTAPGatherFacts(object):
                 'kwargs': {
                     'call': 'security-login-get-iter',
                     'attribute': 'security-login-account-info',
-                    'field': ('user-name', 'application', 'authentication-method'),
+                    'field': ('vserver', 'user-name', 'application', 'authentication-method'),
                     'query': {'max-records': '1024'},
                 },
                 'min_version': '0',
@@ -258,6 +271,16 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'vserver-get-iter',
                     'attribute': 'vserver-info',
                     'field': 'vserver-name',
+                    'query': {'max-records': '1024'},
+                },
+                'min_version': '0',
+            },
+            'vserver_nfs_info': {
+                'method': self.get_generic_get_iter,
+                'kwargs': {
+                    'call': 'nfs-service-get-iter',
+                    'attribute': 'nfs-info',
+                    'field': 'vserver',
                     'query': {'max-records': '1024'},
                 },
                 'min_version': '0',

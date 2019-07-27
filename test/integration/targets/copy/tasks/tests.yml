@@ -50,7 +50,6 @@
       - copy_result.dest == remote_file_expanded
       - "'group' in copy_result"
       - "'gid' in copy_result"
-      - "'md5sum' in copy_result"
       - "'checksum' in copy_result"
       - "'owner' in copy_result"
       - "'size' in copy_result"
@@ -1068,16 +1067,19 @@
   file:
     path: 'source_recursive'
     state: directory
+  delegate_to: localhost
 
 - name: Create a file inside of the directory
   copy:
     content: "testing"
     dest: 'source_recursive/file'
+  delegate_to: localhost
 
 - name: Create a directory to place the test output in
   file:
     path: 'destination'
     state: directory
+  delegate_to: localhost
 
 - name: Copy the directory and files within (no trailing slash)
   copy:
@@ -1323,9 +1325,10 @@
 
 - assert:
     that:
-      - "file_attrs.stat.uid == 0"
-      - "file_attrs.stat.pw_name == 'root'"
       - "file_attrs.stat.mode == '0604'"
+      # The below assertions make an invalid assumption, these were not explicitly set
+      # - "file_attrs.stat.uid == 0"
+      # - "file_attrs.stat.pw_name == 'root'"
 
 - name: check that the containing directory did not change attributes
   stat: path={{ remote_dir }}/directory/
@@ -1343,7 +1346,8 @@
 #
 # Recursive copying with symlinks tests
 #
-- block:
+- delegate_to: localhost
+  block:
   - name: Create a test dir to copy
     file:
       path: '{{ local_temp_dir }}/top_dir'
@@ -1376,7 +1380,6 @@
       path: '{{ local_temp_dir }}/top_dir/subdir/circle'
       src: '{{ local_temp_dir }}/top_dir/'
       state: link
-    delegate_to: localhost
 
 - name: Copy the directory's link
   copy:
@@ -1936,22 +1939,26 @@
     user:
       name: '{{ ansible_copy_test_user_name }}'
       state: present
+    become: true
     register: ansible_copy_test_user
 
   - name: execute - create a group for test
     group:
       name: '{{ ansible_copy_test_user_name }}'
       state: present
+    become: true
     register: ansible_copy_test_group
 
   - name: execute - Copy the directory on remote with chown
     copy:
       remote_src: True
-      src: '{{ remote_dir }}/remote_dir_src/'
-      dest: '{{ remote_dir }}/new_dir_with_chown'
+      src: '{{ remote_dir_expanded }}/remote_dir_src/'
+      dest: '{{ remote_dir_expanded }}/new_dir_with_chown'
       owner: '{{ ansible_copy_test_user_name }}'
       group: '{{ ansible_copy_test_user_name }}'
+      follow: true
     register: testcase5
+    become: true
 
   - name: gather - Stat the new_dir_with_chown
     stat:
@@ -2009,11 +2016,13 @@
         name: '{{ ansible_copy_test_user_name }}'
         state: absent
         remove: yes
+      become: true
 
     - name: execute - remove the group for test
       group:
         name: '{{ ansible_copy_test_user_name }}'
         state: absent
+      become: true
 
 ## testcase last - make sure remote_dir_src not change
 - block:

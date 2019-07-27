@@ -64,6 +64,7 @@ options:
             traffic_filter_override: False,
         }
         aliases: ['port_policy']
+        type: dict
     vlan_trunk_range:
         description:
             - The VLAN trunk range that should be configured with the uplink portgroup.
@@ -82,6 +83,7 @@ options:
             status: 'disabled',
             mode: 'passive',
         }
+        type: dict
     netflow_enabled:
         description:
             - Indicates if NetFlow is enabled on the uplink portgroup.

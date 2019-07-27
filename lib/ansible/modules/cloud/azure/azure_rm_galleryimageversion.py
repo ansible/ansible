@@ -403,7 +403,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
             response = json.loads(response.text)
         except Exception:
             response = {'text': response.text}
-            pass
 
         while response['properties']['provisioningState'] == 'Creating':
             time.sleep(60)

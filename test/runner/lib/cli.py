@@ -1,6 +1,6 @@
 """Test runner for all Ansible tests."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import errno
 import os
@@ -80,18 +80,25 @@ from lib.cloud import (
     initialize_cloud_plugins,
 )
 
+from lib.data import (
+    data_context,
+)
+
+from lib.util_common import (
+    CommonConfig,
+)
+
 import lib.cover
 
 
 def main():
     """Main program function."""
     try:
-        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
-        os.chdir(git_root)
+        os.chdir(data_context().content.root)
         initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
-        config = args.config(args)
+        config = args.config(args)  # type: CommonConfig
         display.verbosity = config.verbosity
         display.truncate = config.truncate
         display.redact = config.redact
@@ -106,8 +113,13 @@ def main():
 
         try:
             args.func(config)
+            delegate_args = None
         except Delegate as ex:
-            delegate(config, ex.exclude, ex.require, ex.integration_targets)
+            # save delegation args for use once we exit the exception handler
+            delegate_args = (ex.exclude, ex.require, ex.integration_targets)
+
+        if delegate_args:
+            delegate(config, *delegate_args)
 
         display.review_warnings()
     except ApplicationWarning as ex:
@@ -170,6 +182,7 @@ def parse_args():
                         action='store_true',
                         help='run ansible commands in debug mode')
 
+    # noinspection PyTypeChecker
     common.add_argument('--truncate',
                         dest='truncate',
                         metavar='COLUMNS',
@@ -381,6 +394,11 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
+    # noinspection PyTypeChecker
+    units.add_argument('--num-workers',
+                       type=int,
+                       help='number of workers to use (default: auto)')
+
     units.add_argument('--requirements-mode',
                        choices=('only', 'skip'),
                        help=argparse.SUPPRESS)
@@ -527,6 +545,7 @@ def parse_args():
                      action='store_true',
                      help='dump environment to disk')
 
+    # noinspection PyTypeChecker
     env.add_argument('--timeout',
                      type=int,
                      metavar='MINUTES',
@@ -607,24 +626,30 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               action='store_true',
                               help='run from the local environment')
 
-    if tox_version:
-        environments.add_argument('--tox',
-                                  metavar='VERSION',
-                                  nargs='?',
-                                  default=None,
-                                  const='.'.join(str(i) for i in sys.version_info[:2]),
-                                  choices=SUPPORTED_PYTHON_VERSIONS,
-                                  help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+    if data_context().content.is_ansible:
+        if tox_version:
+            environments.add_argument('--tox',
+                                      metavar='VERSION',
+                                      nargs='?',
+                                      default=None,
+                                      const='.'.join(str(i) for i in sys.version_info[:2]),
+                                      choices=SUPPORTED_PYTHON_VERSIONS,
+                                      help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+        else:
+            environments.add_argument('--tox',
+                                      action='store_true',
+                                      help='run from a tox virtualenv')
+
+        tox = parser.add_argument_group(title='tox arguments')
+
+        tox.add_argument('--tox-sitepackages',
+                         action='store_true',
+                         help='allow access to globally installed packages')
     else:
-        environments.add_argument('--tox',
-                                  action='store_true',
-                                  help='run from a tox virtualenv')
-
-    tox = parser.add_argument_group(title='tox arguments')
-
-    tox.add_argument('--tox-sitepackages',
-                     action='store_true',
-                     help='allow access to globally installed packages')
+        environments.set_defaults(
+            tox=None,
+            tox_sitepackages=False,
+        )
 
     if tox_only:
         environments.set_defaults(
@@ -732,9 +757,14 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
-    docker.add_argument('--docker-keep-git',
-                        action='store_true',
-                        help='transfer git related files into the docker container')
+    if data_context().content.is_ansible:
+        docker.add_argument('--docker-keep-git',
+                            action='store_true',
+                            help='transfer git related files into the docker container')
+    else:
+        docker.set_defaults(
+            docker_keep_git=False,
+        )
 
     docker.add_argument('--docker-seccomp',
                         metavar='SC',
@@ -749,6 +779,7 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
+    # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
 
@@ -840,13 +871,12 @@ def complete_network_testcase(prefix, parsed_args, **_):
         return []
 
     test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
-    connections = os.listdir(test_dir)
+    connection_dirs = data_context().content.get_dirs(test_dir)
 
-    for conn in connections:
-        if os.path.isdir(os.path.join(test_dir, conn)):
-            for testcase in os.listdir(os.path.join(test_dir, conn)):
-                if testcase.startswith(prefix):
-                    testcases.append(testcase.split('.')[0])
+    for connection_dir in connection_dirs:
+        for testcase in [os.path.basename(path) for path in data_context().content.get_files(connection_dir)]:
+            if testcase.startswith(prefix):
+                testcases.append(testcase.split('.')[0])
 
     return testcases
 

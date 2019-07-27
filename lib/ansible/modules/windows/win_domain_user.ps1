@@ -13,6 +13,7 @@ try {
 
 $result = @{
     changed = $false
+    created = $false
     password_updated = $false
 }
 
@@ -79,7 +80,7 @@ if ($null -ne $domain_server) {
 try {
     $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
 }
-catch {
+catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
     $user_obj = $null
 }
 
@@ -96,6 +97,7 @@ If ($state -eq 'present') {
             New-ADUser -Name $username -WhatIf:$check_mode @extra_args
         }
         $new_user = $true
+	$result.created = $true
         $result.changed = $true
         If ($check_mode) {
             Exit-Json $result

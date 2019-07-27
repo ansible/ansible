@@ -9,7 +9,9 @@ infra:
       type: nfs
       server: gateway.test
       path: /srv/share/isos
-      ro: true
+      # https://github.com/ansible/ansible/issues/58541 prevents us
+      # from using the "ro: true" mode
+      ro: false
     LocalDS_1:
       type: nfs
       server: gateway.test
@@ -27,3 +29,5 @@ virtual_machines_in_cluster:
   - name: DC0_C0_RP0_VM1
     folder: '{{ f0 }}'
     cluster: '{{ ccr1 }}'
+cluster_tag: test_cluster_tag_0001
+cluster_category: test_cluster_cat_0001

@@ -57,19 +57,23 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   labels:
     description:
     - Labels to apply to this disk. A list of key->value pairs.
     required: false
+    type: dict
   licenses:
     description:
     - Any applicable publicly visible licenses.
     required: false
+    type: list
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -79,6 +83,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   size_gb:
     description:
     - Size of the persistent disk, specified in GB. You can specify this field when
@@ -88,6 +93,7 @@ options:
       of sizeGb must not be less than the size of the sourceImage or the size of the
       snapshot.
     required: false
+    type: int
   physical_block_size_bytes:
     description:
     - Physical block size of the persistent disk, in bytes. If not present in a request,
@@ -96,19 +102,23 @@ options:
     - If an unsupported value is requested, the error message will list the supported
       values for the caller's project.
     required: false
+    type: int
   replica_zones:
     description:
     - URLs of the zones where the disk should be replicated to.
     required: true
+    type: list
   type:
     description:
     - URL of the disk type resource describing which disk type to use to create the
       disk. Provide this when creating the disk.
     required: false
+    type: str
   region:
     description:
     - A reference to the region where the disk resides.
     required: true
+    type: str
   disk_encryption_key:
     description:
     - Encrypts the disk using a customer-supplied encryption key.
@@ -120,12 +130,14 @@ options:
       will be encrypted using an automatically generated key and you do not need to
       provide a key to use the disk later.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
+        type: str
   source_snapshot:
     description:
     - The source snapshot used to create this disk. You can provide this as a partial
@@ -136,17 +148,20 @@ options:
       to a gcp_compute_snapshot task and then set this source_snapshot field to "{{
       name-of-resource }}"'
     required: false
+    type: dict
   source_snapshot_encryption_key:
     description:
     - The customer-supplied encryption key of the source snapshot. Required if the
       source snapshot is protected by a customer-supplied encryption key.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
+        type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/regionDisks)'
@@ -157,7 +172,7 @@ EXAMPLES = '''
 - name: create a region disk
   gcp_compute_region_disk:
     name: test_object
-    size_gb: 50
+    size_gb: 500
     disk_encryption_key:
       raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
     region: us-central1

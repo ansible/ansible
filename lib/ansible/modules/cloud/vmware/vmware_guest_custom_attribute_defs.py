@@ -36,6 +36,7 @@ options:
      - Name of the custom attribute definition.
      - This is required parameter, if C(state) is set to C(present) or C(absent).
      required: False
+     type: str
    state:
      description:
      - Manage definition of custom attributes.
@@ -46,6 +47,7 @@ options:
      default: 'present'
      choices: ['present', 'absent']
      required: True
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

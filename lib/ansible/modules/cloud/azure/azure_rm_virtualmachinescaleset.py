@@ -19,13 +19,11 @@ module: azure_rm_virtualmachinescaleset
 
 version_added: "2.4"
 
-short_description: Manage Azure virtual machine scale sets.
+short_description: Manage Azure virtual machine scale sets
 
 description:
     - Create and update a virtual machine scale set.
-
-notes:
-    - This module was called C(azure_rm_virtualmachine_scaleset) before Ansible 2.8. The usage did not change.
+    - Note that this module was called M(azure_rm_virtualmachine_scaleset) before Ansible 2.8. The usage did not change.
 
 options:
     resource_group:
@@ -41,7 +39,6 @@ options:
             - Assert the state of the virtual machine scale set.
             - State C(present) will check that the machine exists with the requested configuration. If the configuration
               of the existing machine does not match, the machine will be updated.
-              state.
             - State C(absent) will remove the virtual machine scale set.
         default: present
         choices:
@@ -52,11 +49,11 @@ options:
             - Valid Azure location. Defaults to location of the resource group.
     short_hostname:
         description:
-            - Short host name
+            - Short host name.
     vm_size:
         description:
-            - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
-              subscription and location. Check your subscription for available choices.
+            - A valid Azure VM size value. For example, C(Standard_D4).
+            - The list of choices varies depending on the subscription and location. Check your subscription for available choices.
     capacity:
         description:
             - Capacity of VMSS.
@@ -79,35 +76,29 @@ options:
             - Admin username used to access the host after it is created. Required when creating a VM.
     admin_password:
         description:
-            - Password for the admin username. Not required if the os_type is Linux and SSH password authentication
-              is disabled by setting ssh_password_enabled to false.
+            - Password for the admin username.
+            - Not required if the os_type is Linux and SSH password authentication is disabled by setting I(ssh_password_enabled=false).
     ssh_password_enabled:
         description:
-            - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
-              and require use of SSH keys.
+            - When the os_type is Linux, setting I(ssh_password_enabled=false) will disable SSH password authentication and require use of SSH keys.
         type: bool
         default: true
     ssh_public_keys:
         description:
-            - "For os_type Linux provide a list of SSH keys. Each item in the list should be a dictionary where the
-              dictionary contains two keys: path and key_data. Set the path to the default location of the
-              authorized_keys files. On an Enterprise Linux host, for example, the path will be
-              /home/<admin username>/.ssh/authorized_keys. Set key_data to the actual value of the public key."
+            - For I(os_type=Linux) provide a list of SSH keys.
+            - Each item in the list should be a dictionary where the dictionary contains two keys, C(path) and C(key_data).
+            - Set the C(path) to the default location of the authorized_keys files.
+            - On an Enterprise Linux host, for example, the I(path=/home/<admin username>/.ssh/authorized_keys).
+              Set C(key_data) to the actual value of the public key.
     image:
         description:
             - Specifies the image used to build the VM.
-            - If a string, the image is sourced from a custom image based on the
-              name.
-            - 'If a dict with the keys C(publisher), C(offer), C(sku), and
-              C(version), the image is sourced from a Marketplace image. NOTE:
-              set image.version to C(latest) to get the most recent version of a
-              given image.'
-            - 'If a dict with the keys C(name) and C(resource_group), the image
-              is sourced from a custom image based on the C(name) and
-              C(resource_group) set. NOTE: the key C(resource_group) is optional
-              and if omitted, all images in the subscription will be searched for
-              by C(name).'
-            - Custom image support was added in Ansible 2.5
+            - If a string, the image is sourced from a custom image based on the name.
+            - If a dict with the keys I(publisher), I(offer), I(sku), and I(version), the image is sourced from a Marketplace image.
+               Note that set I(version=latest) to get the most recent version of a given image.
+            - If a dict with the keys I(name) and I(resource_group), the image is sourced from a custom image based on the I(name) and I(resource_group) set.
+              Note that the key I(resource_group) is optional and if omitted, all images in the subscription will be searched for by I(name).
+            - Custom image support was added in Ansible 2.5.
         required: true
     os_disk_caching:
         description:
@@ -163,7 +154,8 @@ options:
     virtual_network_resource_group:
         description:
             - When creating a virtual machine, if a specific virtual network from another resource group should be
-              used, use this parameter to specify the resource group to use.
+              used.
+            - Use this parameter to specify the resource group to use.
         version_added: "2.5"
     virtual_network_name:
         description:
@@ -185,8 +177,8 @@ options:
         version_added: "2.8"
     remove_on_absent:
         description:
-            - When removing a VM using state 'absent', also remove associated resources.
-            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']."
+            - When removing a VM using I(state=absent), also remove associated resources.
+            - It can be C(all) or a list with any of the following ['network_interfaces', 'virtual_storage', 'public_ips'].
             - Any other input will be ignored.
         default: ['all']
     enable_accelerated_networking:
@@ -198,8 +190,8 @@ options:
         description:
             - Existing security group with which to associate the subnet.
             - It can be the security group name which is in the same resource group.
-            - It can be the resource Id.
-            - It can be a dict which contains C(name) and C(resource_group) of the security group.
+            - It can be the resource ID.
+            - It can be a dict which contains I(name) and I(resource_group) of the security group.
         version_added: "2.7"
         aliases:
             - security_group_name
@@ -209,6 +201,12 @@ options:
         type: bool
         default: True
         version_added: "2.8"
+    single_placement_group:
+        description:
+            - When true this limits the scale set to a single placement group, of max size 100 virtual machines.
+        type: bool
+        default: True
+        version_added: "2.9"
     zones:
         description:
             - A list of Availability Zones for your virtual machine scale set.
@@ -216,9 +214,9 @@ options:
         version_added: "2.8"
     custom_data:
         description:
-            - Data which is made available to the virtual machine and used by e.g., cloud-init.
-            - Many images in the marketplace are not cloud-init ready. Thus, data
-              sent to I(custom_data) would be ignored. If the image you are attempting to use is not listed in
+            - Data which is made available to the virtual machine and used by e.g., C(cloud-init).
+            - Many images in the marketplace are not cloud-init ready. Thus, data sent to I(custom_data) would be ignored.
+            - If the image you are attempting to use is not listed in
               U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
               follow these steps U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
         version_added: "2.8"
@@ -228,7 +226,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Sertac Ozercan (@sozercan)"
+    - Sertac Ozercan (@sozercan)
 
 '''
 EXAMPLES = '''
@@ -273,6 +271,21 @@ EXAMPLES = '''
     managed_disk_type: Standard_LRS
     image: customimage001
 
+- name: Create a VMSS with over 100 instances
+  azure_rm_virtualmachinescaleset:
+    resource_group: myResourceGroup
+    name: testvmss
+    vm_size: Standard_DS1_v2
+    capacity: 120
+    single_placement_group: False
+    virtual_network_name: testvnet
+    upgrade_policy: Manual
+    subnet_name: testsubnet
+    admin_username: adminUser
+    admin_password: password01
+    managed_disk_type: Standard_LRS
+    image: customimage001
+
 - name: Create a VMSS with a custom image from a particular resource group
   azure_rm_virtualmachinescaleset:
     resource_group: myResourceGroup
@@ -292,10 +305,12 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_vmss:
-    description: Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
+    description:
+        - Facts about the current state of the object.
+        - Note that facts are not part of the registered output but available directly.
     returned: always
-    type: complex
-    contains: {
+    type: dict
+    sample: {
         "properties": {
             "overprovision": true,
             "singlePlacementGroup": true,
@@ -436,6 +451,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
             overprovision=dict(type='bool', default=True),
+            single_placement_group=dict(type='bool', default=True),
             zones=dict(type='list'),
             custom_data=dict(type='str')
         )
@@ -468,6 +484,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.enable_accelerated_networking = None
         self.security_group = None
         self.overprovision = None
+        self.single_placement_group = None
         self.zones = None
         self.custom_data = None
 
@@ -571,8 +588,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     image_reference = self.get_custom_image_reference(
                         self.image.get('name'),
                         self.image.get('resource_group'))
+                elif self.image.get('id'):
+                    try:
+                        image_reference = self.compute_models.ImageReference(id=self.image['id'])
+                    except Exception as exc:
+                        self.fail("id Error: Cannot get image from the reference id - {0}".format(self.image['id']))
                 else:
-                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]")
+                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version], [name, resource_group] or [id]")
             elif self.image and isinstance(self.image, str):
                 custom_image = True
                 image_reference = self.get_custom_image_reference(self.image)
@@ -647,6 +669,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                 if bool(self.overprovision) != bool(vmss_dict['properties']['overprovision']):
                     differences.append('overprovision')
+                    changed = True
+
+                if bool(self.single_placement_group) != bool(vmss_dict['properties']['singlePlacementGroup']):
+                    differences.append('single_placement_group')
                     changed = True
 
                 vmss_dict['zones'] = [int(i) for i in vmss_dict['zones']] if 'zones' in vmss_dict and vmss_dict['zones'] else None
@@ -739,6 +765,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         location=self.location,
                         overprovision=self.overprovision,
+                        single_placement_group=self.single_placement_group,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -836,6 +863,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
+                    vmss_resource.single_placement_group = self.single_placement_group
 
                     if support_lb_change:
                         if self.load_balancer:

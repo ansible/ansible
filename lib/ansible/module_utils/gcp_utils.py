@@ -18,7 +18,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 import ast
 import os
 import json
@@ -156,7 +156,12 @@ class GcpSession(object):
             path = os.path.realpath(os.path.expanduser(self.module.params['service_account_file']))
             return service_account.Credentials.from_service_account_file(path).with_scopes(self.module.params['scopes'])
         elif cred_type == 'serviceaccount' and self.module.params.get('service_account_contents'):
-            cred = json.loads(self.module.params.get('service_account_contents'))
+            try:
+                cred = json.loads(self.module.params.get('service_account_contents'))
+            except json.decoder.JSONDecodeError as e:
+                self.module.fail_json(
+                    msg="Unable to decode service_account_contents as JSON : %s" % to_native(e)
+                )
             return service_account.Credentials.from_service_account_info(cred).with_scopes(self.module.params['scopes'])
         elif cred_type == 'machineaccount':
             return google.auth.compute_engine.Credentials(
@@ -165,9 +170,14 @@ class GcpSession(object):
             self.module.fail_json(msg="Credential type '%s' not implemented" % cred_type)
 
     def _headers(self):
-        return {
-            'User-Agent': "Google-Ansible-MM-{0}".format(self.product)
-        }
+        if self.module.params.get('env_type'):
+            return {
+                'User-Agent': "Google-Ansible-MM-{0}-{1}".format(self.product, self.module.params.get('env_type'))
+            }
+        else:
+            return {
+                'User-Agent': "Google-Ansible-MM-{0}".format(self.product)
+            }
 
     def _merge_dictionaries(self, a, b):
         new = a.copy()
@@ -189,7 +199,7 @@ class GcpModule(AnsibleModule):
                     type='str',
                     fallback=(env_fallback, ['GCP_PROJECT'])),
                 auth_kind=dict(
-                    required=False,
+                    required=True,
                     fallback=(env_fallback, ['GCP_AUTH_KIND']),
                     choices=['machineaccount', 'serviceaccount', 'application'],
                     type='str'),
@@ -208,7 +218,11 @@ class GcpModule(AnsibleModule):
                 scopes=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_SCOPES']),
-                    type='list')
+                    type='list'),
+                env_type=dict(
+                    required=False,
+                    fallback=(env_fallback, ['GCP_ENV_TYPE']),
+                    type='str')
             )
         )
 

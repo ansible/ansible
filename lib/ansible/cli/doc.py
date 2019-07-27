@@ -28,8 +28,12 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 display = Display()
+
+
+def jdump(text):
+    display.display(json.dumps(text, sort_keys=True, indent=4))
 
 
 class DocCLI(CLI):
@@ -60,6 +64,8 @@ class DocCLI(CLI):
                                  help='Choose which plugin type (defaults to "module"). '
                                       'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
                                  choices=C.DOCUMENTABLE_PLUGINS)
+        self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
+                                 help='Change output into json format.')
 
         exclusive = self.parser.add_mutually_exclusive_group()
         exclusive.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
@@ -68,7 +74,7 @@ class DocCLI(CLI):
                                help='List available plugins')
         exclusive.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                                help='Show playbook snippet for specified plugin(s)')
-        exclusive.add_argument("-j", "--json", action="store_true", default=False, dest='json_dump',
+        exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
                                help='**For internal testing only** Dump json metadata for all plugins.')
 
     def post_process_args(self, options):
@@ -83,6 +89,8 @@ class DocCLI(CLI):
         super(DocCLI, self).run()
 
         plugin_type = context.CLIARGS['type']
+
+        do_json = context.CLIARGS['json_format']
 
         if plugin_type in C.DOCUMENTABLE_PLUGINS:
             loader = getattr(plugin_loader, '%s_loader' % plugin_type)
@@ -109,21 +117,55 @@ class DocCLI(CLI):
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
-            list_text = self.get_plugin_list_filenames(loader)
-            DocCLI.pager(list_text)
-            return 0
+            plugins = self._get_plugin_list_filenames(loader)
+            if do_json:
+                jdump(plugins)
+            else:
+                # format for user
+                displace = max(len(x) for x in self.plugin_list)
+                linelimit = display.columns - displace - 5
+                text = []
 
-        # list plugins for type
-        if context.CLIARGS['list_dir']:
+                for plugin in plugins.keys():
+                    filename = plugins[plugin]
+                    text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
+
+                DocCLI.pager("\n".join(text))
+
+        # list file plugins for type (does not read docs, very fast)
+        elif context.CLIARGS['list_dir']:
             paths = loader._get_paths()
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
-            DocCLI.pager(self.get_plugin_list_text(loader))
-            return 0
+            descs = self._get_plugin_list_descriptions(loader)
+            if do_json:
+                jdump(descs)
+            else:
+                displace = max(len(x) for x in self.plugin_list)
+                linelimit = display.columns - displace - 5
+                text = []
+                deprecated = []
+                for plugin in descs.keys():
+
+                    desc = DocCLI.tty_ify(descs[plugin])
+
+                    if len(desc) > linelimit:
+                        desc = desc[:linelimit] + '...'
+
+                    if plugin.startswith('_'):  # Handle deprecated
+                        deprecated.append("%-*s %-*.*s" % (displace, plugin[1:], linelimit, len(desc), desc))
+                    else:
+                        text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
+
+                    if len(deprecated) > 0:
+                        text.append("\nDEPRECATED:")
+                        text.extend(deprecated)
+
+                DocCLI.pager("\n".join(text))
 
         # dump plugin desc/metadata as JSON
-        if context.CLIARGS['json_dump']:
+        elif context.CLIARGS['dump']:
             plugin_data = {}
             plugin_names = DocCLI.get_all_plugins_of_type(plugin_type)
             for plugin_name in plugin_names:
@@ -131,23 +173,35 @@ class DocCLI(CLI):
                 if plugin_info is not None:
                     plugin_data[plugin_name] = plugin_info
 
-            DocCLI.pager(json.dumps(plugin_data, sort_keys=True, indent=4))
+            jdump(plugin_data)
 
-            return 0
+        else:
+            # display specific plugin docs
+            if len(context.CLIARGS['args']) == 0:
+                raise AnsibleOptionsError("Incorrect options passed")
 
-        if len(context.CLIARGS['args']) == 0:
-            raise AnsibleOptionsError("Incorrect options passed")
+            # process command line list
+            if do_json:
+                dump = {}
+                for plugin in context.CLIARGS['args']:
+                    doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, plugin_type, search_paths)
+                    try:
+                        returndocs = yaml.load(returndocs)
+                    except Exception:
+                        pass
+                    if doc:
+                        dump[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
+                jdump(dump)
+            else:
+                text = ''
+                for plugin in context.CLIARGS['args']:
+                    textret = DocCLI.format_plugin_doc(plugin, loader, plugin_type, search_paths)
 
-        # process command line list
-        text = ''
-        for plugin in context.CLIARGS['args']:
-            textret = DocCLI.format_plugin_doc(plugin, loader, plugin_type, search_paths)
+                    if textret:
+                        text += textret
 
-            if textret:
-                text += textret
-
-        if text:
-            DocCLI.pager(text)
+                if text:
+                    DocCLI.pager(text)
 
         return 0
 
@@ -207,9 +261,9 @@ class DocCLI(CLI):
         return clean_ns
 
     @staticmethod
-    def format_plugin_doc(plugin, loader, plugin_type, search_paths):
-        text = ''
+    def _get_plugin_doc(plugin, loader, plugin_type, search_paths):
 
+        doc = plainexamples = returndocs = metadata = {}
         try:
             # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
             filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
@@ -217,56 +271,47 @@ class DocCLI(CLI):
                 display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
                 return
 
-            if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
-                return
-
-            try:
-                doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader,
-                                                                         verbose=(context.CLIARGS['verbosity'] > 0))
-            except Exception:
-                display.vvv(traceback.format_exc())
-                display.error(
-                    "%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin),
-                    wrap_text=False)
-                return
-
-            if doc is not None:
-
-                # assign from other sections
-                doc['plainexamples'] = plainexamples
-                doc['returndocs'] = returndocs
-                doc['metadata'] = metadata
-
-                # generate extra data
-                if plugin_type == 'module':
-                    # is there corresponding action plugin?
-                    if plugin in action_loader:
-                        doc['action'] = True
-                    else:
-                        doc['action'] = False
+            if not any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
+                doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
                 doc['filename'] = filename
-                doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
-                if 'docuri' in doc:
-                    doc['docuri'] = doc[plugin_type].replace('_', '-')
 
-                if context.CLIARGS['show_snippet'] and plugin_type == 'module':
-                    text += DocCLI.get_snippet_text(doc)
-                else:
-                    text += DocCLI.get_man_text(doc)
-
-                return text
-            else:
-                if 'removed' in metadata['status']:
-                    display.warning("%s %s has been removed\n" % (plugin_type, plugin))
-                    return
-
-                # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
-                # probably a quoting issue.
-                raise AnsibleError("Parsing produced an empty object.")
         except Exception as e:
             display.vvv(traceback.format_exc())
-            raise AnsibleError(
-                "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e)))
+            raise AnsibleError("%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e)))
+        return doc, plainexamples, returndocs, metadata
+
+    @staticmethod
+    def format_plugin_doc(plugin, loader, plugin_type, search_paths):
+        text = ''
+
+        doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, plugin_type, search_paths)
+        if doc is not None:
+
+            # assign from other sections
+            doc['plainexamples'] = plainexamples
+            doc['returndocs'] = returndocs
+            doc['metadata'] = metadata
+
+            # generate extra data
+            if plugin_type == 'module':
+                # is there corresponding action plugin?
+                if plugin in action_loader:
+                    doc['action'] = True
+                else:
+                    doc['action'] = False
+            doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
+            if 'docuri' in doc:
+                doc['docuri'] = doc[plugin_type].replace('_', '-')
+
+            if context.CLIARGS['show_snippet'] and plugin_type == 'module':
+                text += DocCLI.get_snippet_text(doc)
+            else:
+                text += DocCLI.get_man_text(doc)
+
+        elif 'removed' in metadata['status']:
+            display.warning("%s %s has been removed\n" % (plugin_type, plugin))
+
+        return text
 
     @staticmethod
     def find_plugins(path, ptype):
@@ -311,12 +356,39 @@ class DocCLI(CLI):
 
         return plugin_list
 
-    def get_plugin_list_text(self, loader):
-        columns = display.columns
-        displace = max(len(x) for x in self.plugin_list)
-        linelimit = columns - displace - 5
-        text = []
-        deprecated = []
+    def _get_plugin_list_descriptions(self, loader):
+
+        descs = {}
+        plugins = self._get_plugin_list_filenames(loader)
+        for plugin in plugins.keys():
+
+            filename = plugins[plugin]
+
+            doc = None
+            try:
+                doc = read_docstub(filename)
+            except Exception:
+                display.warning("%s has a documentation formatting error" % plugin)
+                continue
+
+            if not doc or not isinstance(doc, dict):
+                with open(filename) as f:
+                    metadata = extract_metadata(module_data=f.read())
+                if metadata[0]:
+                    if 'removed' not in metadata[0].get('status', []):
+                        display.warning("%s parsing did not produce documentation." % plugin)
+                    else:
+                        continue
+                desc = 'UNDOCUMENTED'
+            else:
+                desc = doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip()
+
+            descs[plugin] = desc
+
+        return descs
+
+    def _get_plugin_list_filenames(self, loader):
+        pfiles = {}
         for plugin in sorted(self.plugin_list):
 
             try:
@@ -330,65 +402,12 @@ class DocCLI(CLI):
                 if os.path.isdir(filename):
                     continue
 
-                doc = None
-                try:
-                    doc = read_docstub(filename)
-                except Exception:
-                    display.warning("%s has a documentation formatting error" % plugin)
-                    continue
-
-                if not doc or not isinstance(doc, dict):
-                    with open(filename) as f:
-                        metadata = extract_metadata(module_data=f.read())
-                    if metadata[0]:
-                        if 'removed' not in metadata[0].get('status', []):
-                            display.warning("%s parsing did not produce documentation." % plugin)
-                        else:
-                            continue
-                    desc = 'UNDOCUMENTED'
-                else:
-                    desc = DocCLI.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
-
-                if len(desc) > linelimit:
-                    desc = desc[:linelimit] + '...'
-
-                if plugin.startswith('_'):  # Handle deprecated
-                    deprecated.append("%-*s %-*.*s" % (displace, plugin[1:], linelimit, len(desc), desc))
-                else:
-                    text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
-            except Exception as e:
-                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
-
-        if len(deprecated) > 0:
-            text.append("\nDEPRECATED:")
-            text.extend(deprecated)
-        return "\n".join(text)
-
-    def get_plugin_list_filenames(self, loader):
-        columns = display.columns
-        displace = max(len(x) for x in self.plugin_list)
-        linelimit = columns - displace - 5
-        text = []
-
-        for plugin in sorted(self.plugin_list):
-
-            try:
-                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-
-                if filename is None:
-                    continue
-                if filename.endswith(".ps1"):
-                    continue
-                if os.path.isdir(filename):
-                    continue
-
-                text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
+                pfiles[plugin] = filename
 
             except Exception as e:
                 raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
-        return "\n".join(text)
+        return pfiles
 
     @staticmethod
     def print_paths(finder):
@@ -591,19 +610,12 @@ class DocCLI(CLI):
         if 'seealso' in doc and doc['seealso']:
             text.append("SEE ALSO:")
             for item in doc['seealso']:
-                if 'module' in item and 'description' in item:
+                if 'module' in item:
                     text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
-                                limit - 6, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
-                elif 'module' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
-                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify('The official documentation on the %s module.' % item['module']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                    description = item.get('description', 'The official documentation on the %s module.' % item['module'])
+                    text.append(textwrap.fill(DocCLI.tty_ify(description), limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
                     text.append(textwrap.fill(DocCLI.tty_ify(item['name']),
@@ -617,7 +629,7 @@ class DocCLI(CLI):
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
                     text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
+                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
 
             text.append('')

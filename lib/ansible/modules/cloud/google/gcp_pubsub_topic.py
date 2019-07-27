@@ -51,10 +51,21 @@ options:
     description:
     - Name of the topic.
     required: true
+    type: str
+  kms_key_name:
+    description:
+    - The resource name of the Cloud KMS CryptoKey to be used to protect access to
+      messsages published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
+      must have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
+    - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
+    required: false
+    type: str
+    version_added: 2.9
   labels:
     description:
     - A set of key/value label pairs to assign to this Topic.
     required: false
+    type: dict
     version_added: 2.8
 extends_documentation_fragment: gcp
 notes:
@@ -78,6 +89,14 @@ name:
   - Name of the topic.
   returned: success
   type: str
+kmsKeyName:
+  description:
+  - The resource name of the Cloud KMS CryptoKey to be used to protect access to messsages
+    published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
+    must have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
+  - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
+  returned: success
+  type: str
 labels:
   description:
   - A set of key/value label pairs to assign to this Topic.
@@ -91,6 +110,7 @@ labels:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
 import json
+import re
 
 ################################################################################
 # Main
@@ -102,7 +122,10 @@ def main():
 
     module = GcpModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'), name=dict(required=True, type='str'), labels=dict(type='dict')
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, type='str'),
+            kms_key_name=dict(type='str'),
+            labels=dict(type='dict'),
         )
     )
 
@@ -162,8 +185,11 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {u'name': module.params.get('name'), u'labels': module.params.get('labels')}
-    request = encode_request(request, module)
+    request = {
+        u'name': name_pattern(module.params.get('name'), module),
+        u'kmsKeyName': module.params.get('kms_key_name'),
+        u'labels': module.params.get('labels'),
+    }
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -200,8 +226,6 @@ def return_if_object(module, response, allow_not_found=False):
     except getattr(json.decoder, 'JSONDecodeError', ValueError):
         module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
-    result = decode_request(result, module)
-
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
 
@@ -211,7 +235,6 @@ def return_if_object(module, response, allow_not_found=False):
 def is_different(module, response):
     request = resource_to_request(module)
     response = response_to_hash(module, response)
-    request = decode_request(request, module)
 
     # Remove all output-only from response.
     response_vals = {}
@@ -230,18 +253,19 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'name': module.params.get('name'), u'labels': response.get(u'labels')}
+    return {u'name': name_pattern(module.params.get('name'), module), u'kmsKeyName': module.params.get('kms_key_name'), u'labels': response.get(u'labels')}
 
 
-def decode_request(response, module):
-    if 'name' in response:
-        response['name'] = response['name'].split('/')[-1]
-    return response
+def name_pattern(name, module):
+    if name is None:
+        return
 
+    regex = r"projects/.*/topics/.*"
 
-def encode_request(request, module):
-    request['name'] = '/'.join(['projects', module.params['project'], 'topics', module.params['name']])
-    return request
+    if not re.match(regex, name):
+        name = "projects/{project}/topics/{name}".format(**module.params)
+
+    return name
 
 
 if __name__ == '__main__':

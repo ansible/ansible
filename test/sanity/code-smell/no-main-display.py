@@ -1,20 +1,14 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-import os
-import re
 import sys
 
 MAIN_DISPLAY_IMPORT = 'from __main__ import display'
 
 
 def main():
-    skip = set()
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path in skip:
-            continue
-
         with open(path, 'r') as f:
             for i, line in enumerate(f.readlines()):
                 if MAIN_DISPLAY_IMPORT in line:

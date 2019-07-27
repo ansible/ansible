@@ -52,3 +52,4 @@
         state: present
         managed_policy: "{{ iam_managed_policies | json_query('results[].policy.policy_name') }}"
         profile: "{{ profile|default(omit) }}"
+        purge_policy: yes

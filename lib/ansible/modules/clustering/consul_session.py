@@ -162,7 +162,7 @@ def lookup_sessions(module):
         if state == 'list':
             sessions_list = consul_client.session.list(dc=datacenter)
             # Ditch the index, this can be grabbed from the results
-            if sessions_list and sessions_list[1]:
+            if sessions_list and len(sessions_list) >= 2:
                 sessions_list = sessions_list[1]
             module.exit_json(changed=True,
                              sessions=sessions_list)
@@ -232,7 +232,9 @@ def remove_session(module):
 
 def get_consul_api(module):
     return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'))
+                         port=module.params.get('port'),
+                         scheme=module.params.get('scheme'),
+                         verify=module.params.get('validate_certs'))
 
 
 def test_dependencies(module):

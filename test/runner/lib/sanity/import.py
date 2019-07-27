@@ -1,5 +1,6 @@
 """Sanity test for proper import exception handling."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 
@@ -13,14 +14,17 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
-    intercept_command,
     remove_tree,
     display,
     find_python,
-    read_lines_without_comments,
     parse_to_list_of_dict,
     make_dirs,
+    is_subdir,
+)
+
+from lib.util_common import (
+    intercept_command,
+    run_command,
 )
 
 from lib.ansible_util import (
@@ -35,6 +39,15 @@ from lib.config import (
     SanityConfig,
 )
 
+from lib.coverage_util import (
+    coverage_context,
+)
+
+from lib.data import (
+    data_context,
+    ANSIBLE_ROOT,
+)
+
 
 class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
@@ -45,17 +58,16 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/import/skip.txt'
-        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True)
-        skip_paths_set = set(skip_paths)
+        settings = self.load_processor(args, python_version)
 
         paths = sorted(
             i.path
             for i in targets.include
             if os.path.splitext(i.path)[1] == '.py' and
-            (i.path.startswith('lib/ansible/modules/') or i.path.startswith('lib/ansible/module_utils/')) and
-            i.path not in skip_paths_set
+            (is_subdir(i.path, data_context().content.module_path) or is_subdir(i.path, data_context().content.module_utils_path))
         )
+
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name, python_version=python_version)
@@ -80,7 +92,7 @@ class ImportTest(SanityMultipleVersion):
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
         if not args.explain:
-            os.symlink(os.path.abspath('test/sanity/import/importer.py'), importer_path)
+            os.symlink(os.path.abspath(os.path.join(ANSIBLE_ROOT, 'test/sanity/import/importer.py')), importer_path)
 
         # create a minimal python library
         python_path = os.path.abspath('test/runner/.tox/import/lib')
@@ -89,13 +101,30 @@ class ImportTest(SanityMultipleVersion):
         ansible_link = os.path.join(ansible_path, 'module_utils')
 
         if not args.explain:
+            remove_tree(ansible_path)
+
             make_dirs(ansible_path)
 
             with open(ansible_init, 'w'):
                 pass
 
-            if not os.path.exists(ansible_link):
-                os.symlink('../../../../../../lib/ansible/module_utils', ansible_link)
+            os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/module_utils'), ansible_link)
+
+            if data_context().content.collection:
+                # inject just enough Ansible code for the collections loader to work on all supported Python versions
+                # the __init__.py files are needed only for Python 2.x
+                # the empty modules directory is required for the collection loader to generate the synthetic packages list
+
+                make_dirs(os.path.join(ansible_path, 'utils'))
+                with open(os.path.join(ansible_path, 'utils/__init__.py'), 'w'):
+                    pass
+
+                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/collection_loader.py'), os.path.join(ansible_path, 'utils/collection_loader.py'))
+                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/singleton.py'), os.path.join(ansible_path, 'utils/singleton.py'))
+
+                make_dirs(os.path.join(ansible_path, 'modules'))
+                with open(os.path.join(ansible_path, 'modules/__init__.py'), 'w'):
+                    pass
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
@@ -119,7 +148,9 @@ class ImportTest(SanityMultipleVersion):
         virtualenv_python = os.path.join(virtual_environment_bin, 'python')
 
         try:
-            stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version, virtualenv=virtualenv_python)
+            with coverage_context(args):
+                stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
+                                                   virtualenv=virtualenv_python)
 
             if stdout or stderr:
                 raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
@@ -138,7 +169,7 @@ class ImportTest(SanityMultipleVersion):
                 column=int(r['column']),
             ) for r in results]
 
-            results = [result for result in results if result.path not in skip_paths_set]
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results, python_version=python_version)

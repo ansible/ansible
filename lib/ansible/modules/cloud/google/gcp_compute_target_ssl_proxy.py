@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -61,12 +63,14 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   proxy_header:
     description:
     - Specifies the type of proxy header to append before sending data to the backend,
       either NONE or PROXY_V1. The default is NONE.
     - 'Some valid choices include: "NONE", "PROXY_V1"'
     required: false
+    type: str
   service:
     description:
     - A reference to the BackendService resource.
@@ -76,12 +80,14 @@ options:
       name-of-resource` to a gcp_compute_backend_service task and then set this service
       field to "{{ name-of-resource }}"'
     required: true
+    type: dict
   ssl_certificates:
     description:
     - A list of SslCertificate resources that are used to authenticate connections
       between users and the load balancer. Currently, exactly one SSL certificate
       must be specified.
     required: true
+    type: list
   ssl_policy:
     description:
     - A reference to the SslPolicy resource that will be associated with the TargetSslProxy
@@ -93,6 +99,7 @@ options:
       to a gcp_compute_ssl_policy task and then set this ssl_policy field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
     version_added: 2.8
 extends_documentation_fragment: gcp
 notes:
@@ -132,7 +139,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-targetsslproxy
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     protocol: SSL
@@ -146,18 +153,30 @@ EXAMPLES = '''
   gcp_compute_ssl_certificate:
     name: sslcert-targetsslproxy
     description: A certificate for testing. Do not use this certificate in production
-    certificate: "-----BEGIN CERTIFICATE----- MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
-      EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
-      b3JtMR8wHQYDVQQDDBZ3d3cubXktc2VjdXJlLXNpdGUuY29tMSEwHwYJKoZIhvcN AQkBFhJuZWxzb25hQGdvb2dsZS5jb20wHhcNMTcwNjI4MDQ1NjI2WhcNMjcwNjI2
-      MDQ1NjI2WjCBsDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCldhc2hpbmd0b24xETAP BgNVBAcMCEtpcmtsYW5kMRUwEwYDVQQKDAxHb29nbGUsIEluYy4xHjAcBgNVBAsM
-      FUdvb2dsZSBDbG91ZCBQbGF0Zm9ybTEfMB0GA1UEAwwWd3d3Lm15LXNlY3VyZS1z aXRlLmNvbTEhMB8GCSqGSIb3DQEJARYSbmVsc29uYUBnb29nbGUuY29tMFkwEwYH
-      KoZIzj0CAQYIKoZIzj0DAQcDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ 4mzkzTv0dXyB750fOGN02HtkpBOZzzvUARTR10JQoSe2/5PIwaNQME4wHQYDVR0O
-      BBYEFKIQC3A2SDpxcdfn0YLKineDNq/BMB8GA1UdIwQYMBaAFKIQC3A2SDpxcdfn 0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
-      M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ zqGNhIPGq2ULqXKK8BY=
-      -----END CERTIFICATE-----"
-    private_key: "-----BEGIN EC PRIVATE KEY----- MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
-      AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-      -----END EC PRIVATE KEY-----"
+    certificate: |-
+      -----BEGIN CERTIFICATE-----
+      MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
+      EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
+      BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
+      b3JtMR8wHQYDVQQDDBZ3d3cubXktc2VjdXJlLXNpdGUuY29tMSEwHwYJKoZIhvcN
+      AQkBFhJuZWxzb25hQGdvb2dsZS5jb20wHhcNMTcwNjI4MDQ1NjI2WhcNMjcwNjI2
+      MDQ1NjI2WjCBsDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCldhc2hpbmd0b24xETAP
+      BgNVBAcMCEtpcmtsYW5kMRUwEwYDVQQKDAxHb29nbGUsIEluYy4xHjAcBgNVBAsM
+      FUdvb2dsZSBDbG91ZCBQbGF0Zm9ybTEfMB0GA1UEAwwWd3d3Lm15LXNlY3VyZS1z
+      aXRlLmNvbTEhMB8GCSqGSIb3DQEJARYSbmVsc29uYUBnb29nbGUuY29tMFkwEwYH
+      KoZIzj0CAQYIKoZIzj0DAQcDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ
+      4mzkzTv0dXyB750fOGN02HtkpBOZzzvUARTR10JQoSe2/5PIwaNQME4wHQYDVR0O
+      BBYEFKIQC3A2SDpxcdfn0YLKineDNq/BMB8GA1UdIwQYMBaAFKIQC3A2SDpxcdfn
+      0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
+      M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
+      zqGNhIPGq2ULqXKK8BY=
+      -----END CERTIFICATE-----
+    private_key: |-
+      -----BEGIN EC PRIVATE KEY-----
+      MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
+      AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
+      OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
+      -----END EC PRIVATE KEY-----
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
     service_account_file: "{{ gcp_cred_file }}"

@@ -112,7 +112,7 @@ options:
         default: no
     depth:
         description:
-            - Set the maximum number of levels to decend into.
+            - Set the maximum number of levels to descend into.
             - Setting recurse to C(no) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
@@ -201,12 +201,12 @@ files:
 matched:
     description: Number of matches
     returned: success
-    type: str
+    type: int
     sample: 14
 examined:
     description: Number of filesystem objects looked at
     returned: success
-    type: str
+    type: int
     sample: 34
 '''
 

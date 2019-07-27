@@ -1,4 +1,4 @@
-  - python_requirements_facts:
+  - python_requirements_info:
       dependencies:
         - openshift
         - kubernetes
