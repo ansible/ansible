@@ -593,7 +593,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                     # Based on power state of virtual machine
                     if "runtime.powerState" in vm_properties:
-                        vm_power = str(self.pyv._get_object_prop(vm_obj.obj, ["runtime","powerState"]))
+                        vm_power = str(self.pyv._get_object_prop(vm_obj.obj, ["runtime", "powerState"]))
                         if vm_power not in cacheable_results:
                             cacheable_results[vm_power] = {'hosts': []}
                             self.inventory.add_group(vm_power)
