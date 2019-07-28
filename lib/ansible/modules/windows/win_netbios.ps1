@@ -14,6 +14,7 @@ $spec = @{
 }
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+$module.Result.reboot_required = $false
 
 $state = $module.Params.state
 $adapter_names = $module.Params.adapter_names
@@ -58,7 +59,7 @@ foreach($adapter in $target_adapters_config)
             $result = Invoke-CimMethod -InputObject $adapter -MethodName SetTcpipNetbios -Arguments @{TcpipNetbiosOptions=$netbiosoption}
             switch ( $result.ReturnValue )
             {
-                0 { $module.Result.reboot_required = $false}
+                0 { <# Success no reboot required #> }
                 1 { $module.Result.reboot_required = $true }
                 100 { $module.Warn("DHCP not enabled on adapter $($adapter.MacAddress). Unable to set default. Try using disabled or enabled options instead.") }
                 default { $module.FailJson("An error occurred while setting TcpipNetbios options on adapter $($adapter.MacAddress). Return code $($result.ReturnValue).") }
