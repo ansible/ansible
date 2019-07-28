@@ -70,7 +70,7 @@ DOCUMENTATION = '''
                        'config.instanceUuid', 'config.hardware.numCPU', 'config.template',
                        'config.name', 'guest.hostName', 'guest.ipAddress',
                        'guest.guestId', 'guest.guestState', 'runtime.maxMemoryUsage',
-                       'customValue'
+                       'runtime.powerState', 'customValue'
                        ]
             version_added: "2.9"
 '''
@@ -536,6 +536,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             self._populate_from_cache(source_data)
             return source_data
 
+        vm_properties = set(self.get_option('properties')) or set()
+
         cacheable_results = {'_meta': {'hostvars': {}}}
         hostvars = {}
 
@@ -543,7 +545,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         # Otherwise they are fetched when we try to access them for the first time
         # and as we're looping over the list the properties would be fetched at a one by one basis
         # resulting in linear instead of konstant execution time.
-        query_properties = [x for x in set(self.get_option('properties')) if x != "customValue"] or ["name"]
+        query_properties = [x for x in vm_properties if x != "customValue"] or ["name"]
         objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
                                                            properties=query_properties)
 
@@ -556,9 +558,15 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             for tag in tags:
                 tag_obj = tag_svc.get(tag)
                 tags_info[tag_obj.id] = tag_obj.name
+                if tag_obj.name not in cacheable_results:
+                    cacheable_results[tag_obj.name] = {'hosts': []}
+                    self.inventory.add_group(tag_obj.name)
 
         for vm_obj in objects:
             for vm_obj_property in vm_obj.propSet:
+                if not vm_obj.obj.config:
+                    # Sometime orphaned VMs return no configurations
+                    continue
                 # VMware does not provide a way to uniquely identify a VM by its name
                 # i.e. there can be two virtual machines with same name
                 # The full name instead is unique and recognizable to users.
@@ -568,7 +576,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     hostvars[current_host] = {}
                     self.inventory.add_host(current_host)
 
-                    self._populate_host_properties(vm_obj, current_host)
+                    self._populate_host_properties(vm_obj, current_host, vm_properties)
 
                     # Only gather facts related to tag if vCloud and vSphere is installed.
                     if HAS_VSPHERE and self.pyv.with_tags:
@@ -580,6 +588,26 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                         for tag_id in attached_tags:
                             # TODO: Test and set value to false if tag is not attached
                             self.inventory.set_variable(current_host, 'vmware.tags.' + tags_info[tag_id], True)
+                            self.inventory.add_child(tags_info[tag_id], current_host)
+                            cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
+
+                    # Based on power state of virtual machine
+                    if "runtime.powerState" in vm_properties:
+                        vm_power = str(self.pyv._get_object_prop(vm_obj.obj, ["runtime","powerState"]))
+                        if vm_power not in cacheable_results:
+                            cacheable_results[vm_power] = {'hosts': []}
+                            self.inventory.add_group(vm_power)
+                        cacheable_results[vm_power]['hosts'].append(current_host)
+                        self.inventory.add_child(vm_power, current_host)
+
+                    # Based on guest id
+                    if "guest.guestId" in vm_properties:
+                        vm_guest_id = str(self.pyv._get_object_prop(vm_obj.obj, ["guest", "guestId"]))
+                        if vm_guest_id and vm_guest_id not in cacheable_results:
+                            cacheable_results[vm_guest_id] = {'hosts': []}
+                            self.inventory.add_group(vm_guest_id)
+                        cacheable_results[vm_guest_id]['hosts'].append(current_host)
+                        self.inventory.add_child(vm_guest_id, current_host)
 
                     # Based on folder of virtual machine
                     folders = current_host.split('/')
@@ -609,10 +637,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         return cacheable_results
 
-    def _populate_host_properties(self, vm_obj, current_host):
-        # Load VM properties in host_vars
-        vm_properties = set(self.get_option('properties')) or set()
-
+    def _populate_host_properties(self, vm_obj, current_host, vm_properties):
         if "customValue" in vm_properties:
             field_mgr = []
             if self.pyv.content.customFieldsManager:
