@@ -1,0 +1,70 @@
+---
+- debug:
+    msg: "START junos_l2_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_revert_output:
+      - name: ge-0/0/2
+        trunk:
+          allowed_vlans:
+          - vlan100
+          native_vlan: "200"
+        enhanced_layer: True
+        unit: 0
+
+- block:
+    - name: Apply the provided configuration (base config)
+      junos_l2_interfaces:
+        config:
+          - name: ge-0/0/2
+            trunk:
+              allowed_vlans:
+              - vlan100
+              native_vlan: "200"
+        state: merged
+      register: base_config
+
+    - name: Gather interfaces facts
+      junos_facts:
+        gather_subset:
+          - default
+        gather_network_resources:
+          - l2_interfaces
+
+    - name: Apply the provided configuration (config to be reverted)
+      junos_l2_interfaces:
+        config:
+          - name: ge-0/0/1
+            trunk:
+              allowed_vlans:
+                - vlan100
+                - vlan300
+              native_vlan: "400"
+          - name: ge-0/0/2
+            access:
+              vlan: vlan200
+        state: replaced
+      register: result
+
+    - name: Assert that changes were applied
+      assert:
+        that: "result['changed'] == true"
+
+    - name: Revert back to base config using facts round trip
+      junos_l2_interfaces:
+        config: "{{ ansible_facts['network_resources']['l2_interfaces'] }}"
+        state: overridden
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ expected_revert_output | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_l2_interfaces round trip integration tests on connection={{ ansible_connection }}"
