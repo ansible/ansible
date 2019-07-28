@@ -1,0 +1,2 @@
+minor_changes:
+  - Fix call from "merge_dictionaries" to "_merge_dictionaries" in GcpSession object (https://github.com/ansible/ansible/issues/57140).
