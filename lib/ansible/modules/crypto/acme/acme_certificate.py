@@ -412,6 +412,7 @@ from ansible.module_utils.acme import (
     openssl_get_csr_identifiers,
     cryptography_get_cert_days,
     set_crypto_backend,
+    process_links,
 )
 
 import base64
@@ -427,14 +428,6 @@ from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
-from ansible.module_utils.six.moves.urllib.parse import unquote
-
-
-def process_links(info, callback):
-    if 'link' in info:
-        link = info['link']
-        for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
-            callback(unquote(url), relation)
 
 
 def get_cert_days(module, cert_file):
