@@ -123,12 +123,12 @@ tasks:
       commands:
 	- command: 'evr_2d01_vfrwd-evr1#dd'
 	  prompt: 'error input: element does not exist'
-	- ansible.cfg:
+	- additional_regex.txt:
 	- command: '[\r\n]+ error input: .*'
 
 	- command: 'evr_2d01_vfrwd-evr1#aaa'
 	  prompt: 'aaa#'
-	- ansible.cfg:
+	- additional_regex.txt:
 	- command: 'a{3}?#'
 """
 
