@@ -144,7 +144,7 @@ options:
     - Currently this is only honored for appx and msix setups.
     type: bool
     default: yes
-    version_added: '2.8'
+    version_added: '2.9'
     aliases: [ AllUsers, isAllUser ]
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
