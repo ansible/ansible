@@ -16,6 +16,47 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- set_fact:
+    get_netbios_script: |
+      $adapter = Get-CimInstance -ClassName Win32_NetworkAdapter -Filter "NetConnectionID='{{ test_adapter }}'"
+      $config = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter "Index=$($adapter.DeviceID)"
+      $config.TcpipNetbiosOptions
+
+- name: disable netbios single adapter (check mode)
+  win_netbios:
+    adapter_names: '{{ test_adapter }}'
+    state: disabled
+  register: set_single_check
+  check_mode: yes
+
+- name: get result of disable a single adapter test (check mode)
+  win_shell: '{{ get_netbios_script }}'
+  changed_when: no
+  register: set_single_actual_check
+
+- name: assert disable a single adapter (check mode)
+  assert:
+    that:
+    - set_single_check is changed
+    - set_single_actual_check.stdout_lines == ["0"]
+
+- name: disable netbios single adapter
+  win_netbios:
+    adapter_names: '{{ test_adapter }}'
+    state: disabled
+  register: set_single
+
+- name: get result of disable a single adapter test
+  win_shell: '{{ get_netbios_script }}'
+  changed_when: no
+  register: set_single_actual
+
+- name: assert disable a single adapter
+  assert:
+    that:
+    - set_single_check is changed
+    - set_single_actual.stdout_lines == ["2"]
+
 - name: fail with invalid network adapter name
   win_netbios:
     state: disabled
@@ -24,18 +65,18 @@
   register: invalid_adapter
   failed_when: invalid_adapter.msg != "Not all of the target adapter names could be found on the system. No configuration changes have been made. FakeAdapterName"
 
-- name: disable netbios with check_mode
+- name: disable netbios all adapters (check mode)
   win_netbios:
     state: disabled
   check_mode: yes
   register: disable_check
 
-- name: assert disable netbios check_mode
+- name: assert disable netbios (check mode)
   assert:
     that:
       - disable_check.changed
 
-- name: disable netbios without check_mode
+- name: disable netbios all adapters
   win_netbios:
     state: disabled
   register: netbios_disable
@@ -55,18 +96,18 @@
     that:
       - not netbios_disable.changed
 
-- name: enable netbios with check_mode
+- name: enable netbios all adapters (check mode)
   win_netbios:
     state: enabled
   check_mode: yes
   register: enable_check
 
-- name: assert enable netbios check_mode
+- name: assert enable netbios all adapters (check mode)
   assert:
     that:
       - enable_check.changed
 
-- name: enable netbios without check_mode
+- name: enable netbios all adapters
   win_netbios:
     state: enabled
   register: netbios_enable
@@ -86,23 +127,23 @@
     that:
       - not netbios_enable.changed
 
-- name: default netbios with check_mode
+- name: default netbios all adapters (check mode)
   win_netbios:
     state: default
   check_mode: yes
   register: default_check
 
-- name: assert default netbios check_mode
+- name: assert default netbios (check mode)
   assert:
     that:
       - default_check.changed
 
-- name: default netbios without check_mode
+- name: default netbios all adapters
   win_netbios:
     state: default
   register: default_enable
 
-- name: assert netbios default
+- name: assert netbios default all adapters
   assert:
     that:
       - default_enable.changed

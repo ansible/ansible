@@ -40,8 +40,7 @@ options:
 author:
   - Thomas Moore (@tmmruk)
 notes:
-  - This command requires the WMI class Win32_NetworkAdapterConfiguration to be available on the target.
-  - This change does not usually require a reboot and will take effect immediately. UDP port 137/138/139 will no longer be listening once NetBIOS is disabled.
+  - Changing NetBIOS settings does not usually require a reboot and will take effect immediately. UDP port 137/138/139 will no longer be listening once NetBIOS is disabled.
 '''
 
 EXAMPLES = r'''
@@ -69,4 +68,9 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+reboot_required:
+    description: Boolean value stating whether a system reboot is required.
+    returned: on change
+    type: bool
+    sample: true
 '''

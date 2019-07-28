@@ -28,12 +28,21 @@ switch ( $state )
 if(-not $adapter_names)
 {
     # Target all network adapters on the system
-    $target_adapters_config = Get-CimInstance -Class Win32_NetworkAdapterConfiguration | Where-Object {$_.IPEnabled -eq $true}
+    $get_params = @{
+        ClassName = 'Win32_NetworkAdapterConfiguration'
+        Filter = 'IPEnabled=true'
+        Property = @('MacAddress', 'TcpipNetbiosOptions')
+    }
+    $target_adapters_config = Get-CimInstance @get_params
 }
 else
 {
-    $target_adapters = Get-CimInstance -Class Win32_NetworkAdapter | Where-Object NetConnectionId -in $adapter_names | Select-Object MacAddress,NetConnectionId
-    $target_adapters_config = Get-CimInstance -Class Win32_NetworkAdapterConfiguration | Where-Object MacAddress -in $target_adapters.MacAddress
+    $get_params = @{
+        Class = 'Win32_NetworkAdapter'
+        Filter = ($adapter_names | ForEach-Object -Process { "NetConnectionId='$_'" }) -join " OR "
+        KeyOnly = $true
+    }
+    $target_adapters_config = Get-CimInstance @get_params | Get-CimAssociatedInstance -ResultClass 'Win32_NetworkAdapterConfiguration'
     if(($target_adapters_config | Measure-Object).Count -ne $adapter_names.Count)
     {
         $module.FailJson("Not all of the target adapter names could be found on the system. No configuration changes have been made. $adapter_names")
@@ -42,7 +51,6 @@ else
 
 foreach($adapter in $target_adapters_config)
 {
-
     if($adapter.TcpipNetbiosOptions -ne $netbiosoption)
     {
         if(-not $module.CheckMode)
@@ -50,7 +58,7 @@ foreach($adapter in $target_adapters_config)
             $result = Invoke-CimMethod -InputObject $adapter -MethodName SetTcpipNetbios -Arguments @{TcpipNetbiosOptions=$netbiosoption}
             switch ( $result.ReturnValue )
             {
-                0 { <#Success no reboot#> }
+                0 { $module.Result.reboot_required = $false}
                 1 { $module.Result.reboot_required = $true }
                 100 { $module.Warn("DHCP not enabled on adapter $($adapter.MacAddress). Unable to set default. Try using disabled or enabled options instead.") }
                 default { $module.FailJson("An error occurred while setting TcpipNetbios options on adapter $($adapter.MacAddress). Return code $($result.ReturnValue).") }
@@ -58,8 +66,6 @@ foreach($adapter in $target_adapters_config)
         }
         $module.Result.changed = $true
     }
-
-
 }
 
 $module.ExitJson()
