@@ -65,7 +65,7 @@ def add_fragments(doc, filename, fragment_loader):
             fragment_var = 'DOCUMENTATION'
 
         if fragment_class is None:
-            raise AnsibleAssertionError('fragment_class is None')
+            raise AnsibleAssertionError('Could not find documentation fragment %s' % fragment_slug)
 
         fragment_yaml = getattr(fragment_class, fragment_var, '{}')
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
