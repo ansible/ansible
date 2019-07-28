@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: aws_acm_export_certificate
+module: aws_acm_export_certificates
 short_description: Exports a private certificate issued by a private certificate authority (CA) for use anywhere
 description:
   - Exports a private certificate issued by a private certificate authority (CA) for use anywhere
@@ -43,7 +43,7 @@ EXAMPLES = '''
 # Exporting a private certificate and private key (more details: https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-export-private.html#export-cli)
 
 - name: obtain specific privates certificate
-  aws_acm_export_certificate:
+  aws_acm_export_certificates:
     certificate_arn: "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
     passphrase: secretpassword
   register: acm_certificate
