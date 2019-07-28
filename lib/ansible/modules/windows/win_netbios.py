@@ -7,6 +7,9 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -40,7 +43,7 @@ options:
 author:
   - Thomas Moore (@tmmruk)
 notes:
-  - Changing NetBIOS settings does not usually require a reboot and will take effect immediately. 
+  - Changing NetBIOS settings does not usually require a reboot and will take effect immediately.
   - UDP port 137/138/139 will no longer be listening once NetBIOS is disabled.
 '''
 
