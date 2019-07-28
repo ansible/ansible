@@ -538,8 +538,14 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         cacheable_results = {'_meta': {'hostvars': {}}}
         hostvars = {}
+
+        # It's way faster to fetch all wanted properties right now.
+        # Otherwise they are fetched when we try to access them for the first time
+        # and as we're looping over the list the properties would be fetched at a one by one basis
+        # resulting in linear instead of konstant execution time.
+        query_properties = [x for x in set(self.get_option('properties')) if x != "customValue"] or ["name"]
         objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
-                                                           properties=['name'])
+                                                           properties=query_properties)
 
         if self.pyv.with_tags:
             tag_svc = self.pyv.rest_content.tagging.Tag
