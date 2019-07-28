@@ -239,6 +239,8 @@ def main():
                 "failed": 1,
                 "msg": "could not create: %s" % jobdir
             }))
+            sys.exit(1)
+
     # immediately exit this process, leaving an orphaned process
     # running which immediately forks a supervisory timing process
 
