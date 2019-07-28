@@ -40,7 +40,8 @@ options:
 author:
   - Thomas Moore (@tmmruk)
 notes:
-  - Changing NetBIOS settings does not usually require a reboot and will take effect immediately. UDP port 137/138/139 will no longer be listening once NetBIOS is disabled.
+  - Changing NetBIOS settings does not usually require a reboot and will take effect immediately. 
+  - UDP port 137/138/139 will no longer be listening once NetBIOS is disabled.
 '''
 
 EXAMPLES = r'''
