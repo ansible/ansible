@@ -79,6 +79,41 @@ plugins directory
 
 Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by any other plugin by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
 
+module_utils
+^^^^^^^^^^^^
+
+When working with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
+
+The following example snippet shows a module using both default Ansible ``module_utils`` and
+those provided by a collection. In this example the collection is
+``ansible_example``, the namespace is ``community``, and the ``module_util`` in
+question is called ``qradar`` such that the FQCN is ``ansible_example.community.plugins.module_utils.qradar``:
+
+.. code-block:: python
+
+    from ansible.module_utils.basic import AnsibleModule
+    from ansible.module_utils._text import to_text
+
+    from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
+    from ansible.module_utils.six.moves.urllib.error import HTTPError
+    from ansible_collections.ansible_example.community.plugins.module_utils.qradar import QRadarRequest
+
+    argspec = dict(
+        name=dict(required=True, type='str'),
+        state=dict(choices=['present', 'absent'], required=True),
+    )
+
+    module = AnsibleModule(
+        argument_spec=argspec,
+        supports_check_mode=True
+    )
+
+    qradar_request = QRadarRequest(
+        module,
+        headers={"Content-Type": "application/json"},
+        not_rest_data_keys=['state']
+    )
+
 
 roles directory
 ----------------
