@@ -74,7 +74,7 @@ EXAMPLES = r'''
 RETURN = r'''
 reboot_required:
     description: Boolean value stating whether a system reboot is required.
-    returned: on change
+    returned: always
     type: bool
     sample: true
 '''
