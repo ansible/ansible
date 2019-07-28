@@ -214,7 +214,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import load_config
-from ansible.module_utils.network.cloudengine.ce import get_connection
+from ansible.module_utils.network.cloudengine.ce import get_connection, rm_config_prefix
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
