@@ -84,10 +84,10 @@ class Namespace(object):
         if rc != 0:
             self.module.fail_json(msg=to_text(err))
 
-        out = json.load(out)
+        out = json.loads(out)
 
         for netns in out:
-            if self.name == netns.name:
+            if self.name == netns["name"]:
                 return True
 
         return False
