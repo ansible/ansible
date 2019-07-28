@@ -39,7 +39,7 @@ class TestOmeDeviceInfo(object):
 
     @pytest.fixture
     def response_mock(self, mocker):
-        response_class_mock = mocker.patch('ansible.module_utils.remote_management.dellemc.OpenURLResponse')
+        response_class_mock = mocker.patch('ansible.module_utils.remote_management.dellemc.ome.OpenURLResponse')
         return response_class_mock
 
     @pytest.fixture
