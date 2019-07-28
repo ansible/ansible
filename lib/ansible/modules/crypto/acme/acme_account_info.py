@@ -29,20 +29,20 @@ notes:
    - "This module was called C(acme_account_facts) before Ansible 2.8. The usage
       did not change."
 options:
-  - retrieve_orders:
-      description:
-        - Whether to retrieve the list of order URLs or order objects, if provided
-          by the ACME server.
-        - A value of C(ignore) will not fetch the list of orders.
-        - Currently, Let's Encrypt does not return orders, so the C(orders) result
-          will always be empty.
-      type: str
-      choices:
-        - ignore
-        - url_list
-        - object_list
-      default: ignore
-      version_added: "2.9"
+  retrieve_orders:
+    description:
+      - "Whether to retrieve the list of order URLs or order objects, if provided
+         by the ACME server."
+      - "A value of C(ignore) will not fetch the list of orders."
+      - "Currently, Let's Encrypt does not return orders, so the C(orders) result
+         will always be empty."
+    type: str
+    choices:
+      - ignore
+      - url_list
+      - object_list
+    default: ignore
+    version_added: "2.9"
 seealso:
   - module: acme_account
     description: Allows to create, modify or delete an ACME account.
@@ -120,9 +120,9 @@ account:
 
 orders:
   description:
-    - The list of orders.
-    - If I(retrieve_orders) is C(url_list), this will be a list of URLs.
-    - If I(retrieve_orders) is C(object_list), this will be a list of objects.
+    - "The list of orders."
+    - "If I(retrieve_orders) is C(url_list), this will be a list of URLs."
+    - "If I(retrieve_orders) is C(object_list), this will be a list of objects."
   type: list
   returned: if account exists and I(retrieve_orders) is not C(ignore)
   contains:
@@ -154,8 +154,8 @@ orders:
           description: Name of identifier. Hostname or IP address.
           type: str
         wildcard:
-          description: Whether I(value) is actually a wildcard. The wildcard
-                       prefix C(*.) is not included in I(value) if this is C(true).
+          description: "Whether I(value) is actually a wildcard. The wildcard
+                        prefix C(*.) is not included in I(value) if this is C(true)."
           type: bool
           returned: required to be included if the identifier is wildcarded
     notBefore:
