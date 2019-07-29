@@ -210,7 +210,7 @@ def main():
             api_id = create_empty_api(module, client, endpoint_type)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id=api_id, api_data=api_data)
+        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id, api_data)
     if state == "absent":
         del_res = delete_rest_api(module, client, api_id)
 
@@ -264,13 +264,13 @@ def delete_rest_api(module, client, api_id):
     Deletes entire REST API setup
     """
     try:
-        delete_response = delete_api(client, api_id=api_id)
+        delete_response = delete_api(client, api_id)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="deleting API {0}".format(api_id))
     return delete_response
 
 
-def ensure_api_in_correct_state(module, client, api_id=None, api_data=None):
+def ensure_api_in_correct_state(module, client, api_id, api_data):
     """Make sure that we have the API configured and deployed as instructed.
 
     This function first configures the API correctly uploading the
@@ -282,7 +282,7 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None):
 
     configure_response = None
     try:
-        configure_response = configure_api(client, api_data=api_data, api_id=api_id)
+        configure_response = configure_api(client, api_id, api_data=api_data)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="configuring API {0}".format(api_id))
 
@@ -291,17 +291,7 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None):
     stage = module.params.get('stage')
     if stage:
         try:
-            deploy_response = create_deployment(
-                client,
-                api_id=api_id,
-                stage=stage,
-                description=module.params.get('deploy_desc'),
-                cache_enabled=module.params.get('cache_enabled'),
-                cache_size=module.params.get('cache_size'),
-                variables=module.params.get('stage_variables'),
-                canary_settings=module.params.get('stage_canary_settings'),
-                tracing_enabled=module.params.get('tracing_enabled')
-            )
+            deploy_response = create_deployment(client, api_id, **module.params)
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {0} to stage {1}".format(api_id, stage)
             module.fail_json_aws(e, msg)
@@ -318,38 +308,39 @@ def create_api(client, name=None, description=None, endpoint_type=None):
 
 
 @AWSRetry.backoff(**retry_params)
-def delete_api(client, api_id=None):
+def delete_api(client, api_id):
     return client.delete_rest_api(restApiId=api_id)
 
 
 @AWSRetry.backoff(**retry_params)
-def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
-    return client.put_rest_api(body=api_data, restApiId=api_id, mode=mode)
+def configure_api(client, api_id, api_data=None, mode="overwrite"):
+    return client.put_rest_api(restApiId=api_id, mode=mode, body=api_data)
 
 
 @AWSRetry.backoff(**retry_params)
-def create_deployment(client, api_id=None, stage=None, description=None, cache_enabled=False, cache_size='0.5',
-        variables=None, canary_settings=None, tracing_enabled=False):
+def create_deployment(client, rest_api_id, **params):
+    canary_settings = params.get('stage_canary_settings')
+
     if canary_settings and len(canary_settings) > 0:
         result = client.create_deployment(
-            restApiId=api_id,
-            stageName=stage,
-            description=description,
-            cacheClusterEnabled=cache_enabled,
-            cacheClusterSize=cache_size,
-            variables=variables,
+            restApiId=rest_api_id,
+            stageName=params.get('stage'),
+            description=params.get('deploy_desc'),
+            cacheClusterEnabled=params.get('cache_enabled'),
+            cacheClusterSize=params.get('cache_size'),
+            variables=params.get('stage_variables'),
             canarySettings=canary_settings,
-            tracingEnabled=tracing_enabled
+            tracingEnabled=params.get('tracing_enabled')
         )
     else:
         result = client.create_deployment(
-            restApiId=api_id,
-            stageName=stage,
-            description=description,
-            cacheClusterEnabled=cache_enabled,
-            cacheClusterSize=cache_size,
-            variables=variables,
-            tracingEnabled=tracing_enabled
+            restApiId=rest_api_id,
+            stageName=params.get('stage'),
+            description=params.get('deploy_desc'),
+            cacheClusterEnabled=params.get('cache_enabled'),
+            cacheClusterSize=params.get('cache_size'),
+            variables=params.get('stage_variables'),
+            tracingEnabled=params.get('tracing_enabled')
         )
 
     return result
