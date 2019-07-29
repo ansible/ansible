@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - The name of this cluster. The name must be unique within this project and location,
