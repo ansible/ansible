@@ -58,6 +58,37 @@ class InventoryData(object):
             self.add_group(group)
         self.add_child('all', 'ungrouped')
 
+    def __getstate__(self):
+        return self.serialize()
+
+    def __setstate__(self, data):
+        return self.deserialize(data)
+
+    def __eq__(self, other):
+        return not self.__ne__(other)
+
+    def __ne__(self, other):
+        if not isinstance(other, InventoryData):
+            return True
+
+        inventory_1 = self.serialize()
+        inventory_2 = other.serialize()
+
+        if set(inventory_1['groups'].keys()) != set(inventory_2['groups'].keys()):
+            return True
+        if set(inventory_1['hosts'].keys()) != set(inventory_2['hosts'].keys()):
+            return True
+
+        for group in inventory_1['groups']:
+            if inventory_1['groups'][group] != inventory_2['groups'][group]:
+                return True
+
+        for host in inventory_1['hosts']:
+            if inventory_1['hosts'][host] != inventory_2['hosts'][host]:
+                return True
+
+        return False
+
     def serialize(self):
         self._groups_dict_cache = None
         data = {
@@ -74,6 +105,28 @@ class InventoryData(object):
         self.groups = data.get('groups')
         self.localhost = data.get('local')
         self.current_source = data.get('source')
+
+        # Each host and group that is deserialized should have a list of associated group names
+        # InventoryData is responsible for reinstating the corresponding objects
+
+        for host in self.hosts.values():
+            if not host.groups:
+                for group_name in host._group_names:
+                    host.groups.append(self.groups[group_name])
+
+            host._group_names = []
+
+        for group in self.groups.values():
+            if not group.parent_groups:
+                for group_name in group._parent_group_names:
+                    group.parent_groups.append(self.groups[group_name])
+
+            if not group.child_groups:
+                for group_name in group._child_group_names:
+                    group.child_groups.append(self.groups[group_name])
+
+            group._parent_group_names = []
+            group._child_group_names = []
 
     def _create_implicit_localhost(self, pattern):
 

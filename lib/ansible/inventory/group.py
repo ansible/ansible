@@ -67,6 +67,9 @@ class Group:
 
     def __init__(self, name=None):
 
+        self._parent_group_names = []
+        self._child_group_names = []
+
         self.depth = 0
         self.name = to_safe_group_name(name)
         self.hosts = []
@@ -83,6 +86,21 @@ class Group:
     def __str__(self):
         return self.get_name()
 
+    def __hash__(self):
+        return id(self)
+
+    def __eq__(self, other):
+        return not self.__ne__(other)
+
+    def __ne__(self, other):
+        if not isinstance(other, Group):
+            return True
+
+        if self.serialize() != other.serialize():
+            return True
+
+        return False
+
     def __getstate__(self):
         return self.serialize()
 
@@ -90,9 +108,8 @@ class Group:
         return self.deserialize(data)
 
     def serialize(self):
-        parent_groups = []
-        for parent in self.parent_groups:
-            parent_groups.append(parent.serialize())
+        parent_groups = [g.name for g in self.parent_groups]
+        child_groups = [g.name for g in self.child_groups]
 
         self._hosts = None
 
@@ -100,6 +117,7 @@ class Group:
             name=self.name,
             vars=self.vars.copy(),
             parent_groups=parent_groups,
+            child_groups=child_groups,
             depth=self.depth,
             hosts=self.hosts,
         )
@@ -114,11 +132,8 @@ class Group:
         self.hosts = data.get('hosts', [])
         self._hosts = None
 
-        parent_groups = data.get('parent_groups', [])
-        for parent_data in parent_groups:
-            g = Group()
-            g.deserialize(parent_data)
-            self.parent_groups.append(g)
+        self._parent_group_names = data.get('parent_groups', [])
+        self._child_group_names = data.get('child_groups', [])
 
     def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
         '''
@@ -168,7 +183,7 @@ class Group:
     @property
     def host_names(self):
         if self._hosts is None:
-            self._hosts = set(self.hosts)
+            self._hosts = set([h.name for h in self.hosts])
         return self._hosts
 
     def get_name(self):

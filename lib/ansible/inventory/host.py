@@ -55,9 +55,7 @@ class Host:
         return self.get_name()
 
     def serialize(self):
-        groups = []
-        for group in self.groups:
-            groups.append(group.serialize())
+        groups = [g.name for g in self.groups]
 
         return dict(
             name=self.name,
@@ -77,13 +75,11 @@ class Host:
         self._uuid = data.get('uuid', None)
         self.implicit = data.get('implicit', False)
 
-        groups = data.get('groups', [])
-        for group_data in groups:
-            g = Group()
-            g.deserialize(group_data)
-            self.groups.append(g)
+        self._group_names = data.get('groups', [])
 
     def __init__(self, name=None, port=None, gen_uuid=True):
+
+        self._group_names = []
 
         self.vars = {}
         self.groups = []

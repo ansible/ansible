@@ -26,6 +26,7 @@ import re
 import itertools
 import traceback
 
+from copy import deepcopy
 from operator import attrgetter
 from random import shuffle
 
@@ -253,6 +254,9 @@ class InventoryManager(object):
                 if not parsed:
                     parsed = parsed_this_one
         else:
+            # preserve inventory in case a plugin modifies inventory and then fails before completion
+            needs_new_copy = True
+
             # left with strings or files, let plugins figure it out
 
             # set so new hosts can use for inventory_file/dir vars
@@ -272,6 +276,9 @@ class InventoryManager(object):
                     plugin_wants = False
 
                 if plugin_wants:
+                    if needs_new_copy:
+                        inventory = deepcopy(self._inventory)
+
                     try:
                         # FIXME in case plugin fails 1/2 way we have partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
@@ -291,6 +298,17 @@ class InventoryManager(object):
                         display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
                         tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
+                    finally:
+                        if not parsed and inventory != self._inventory:
+                            display.warning(u'\n restoring inventory because %s was partially parsed by %s' % (source, plugin_name))
+                            needs_new_copy = True
+                            self._inventory = inventory
+                        elif not parsed:
+                            # Failed but didn't modify inventory
+                            needs_new_copy = False
+                        else:
+                            # Successfully updated inventory
+                            needs_new_copy = True
                 else:
                     display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
             else:
