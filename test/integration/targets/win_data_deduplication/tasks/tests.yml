@@ -1,0 +1,48 @@
+---
+
+- name: Enable Data Deduplication on the T drive
+  win_data_deduplication:
+    drive_letter: "T"
+    enabled: true
+    settings:
+      - NoCompress: true
+      - MinimumFileAgeDays: 2
+      - MinimumFileSize: 0
+  register: win_data_deduplication_enable
+
+- name: Check that it was successful with a change
+  assert:
+    that:
+      - win_data_deduplication_enable is changed
+
+- name: Enable Data Deduplication on the T drive
+  win_data_deduplication:
+    drive_letter: "T"
+    enabled: true
+    settings:
+      - NoCompress: true
+      - MinimumFileAgeDays: 2
+      - MinimumFileSize: 0
+  register: win_data_deduplication_enable_again
+
+- name: Check that it was successful without a change
+  assert:
+    that:
+      - win_data_deduplication_enable is not changed
+
+- name: Enable Data Deduplication on the T drive with start job
+  win_data_deduplication:
+    drive_letter: "T"
+    enabled: true
+    settings:
+      - NoCompress: true
+      - MinimumFileAgeDays: 2
+      - MinimumFileSize: 0
+    dedup_job:
+      - Type: "Optimization"
+  register: win_data_deduplication_enable_with_job
+
+- name: Check that it was successful and job was spawned
+  assert:
+    that:
+      - win_data_deduplication_enable_with_job is changed
