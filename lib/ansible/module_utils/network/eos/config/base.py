@@ -6,6 +6,9 @@
 The base class for all eos resource modules
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils.connection import Connection
 
 class ConfigBase(object): #pylint: disable=R0205,R0903
