@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2019 github@rnsc.be
+# Copyright: 2019, rnsc(@rnsc) <github@rnsc.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -17,7 +17,6 @@ description:
 - This module can be used to enable Data Deduplication on a Windows volume.
 - You have to have the FS-Data-Deduplication feature installed.
 - This module doesn't support check_mode due to a lack of WhatIf support.
-- Windows 2012 R2 and lower require a reboot for the feature to be active.
 options:
   drive_letter:
     description:
@@ -50,25 +49,21 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Set volume deduplication
-  hosts: all
-  gather_facts: false
-  tasks:
-    - name: FS-Data-Deduplication
-      win_feature:
-        name: FS-Data-Deduplication
-        include_sub_features: true
-        state: present
-    - name: Enable Data Deduplication on D
-      win_data_deduplication:
-        drive_letter: 'D'
-        enabled: true
-        settings:
-          - NoCompress: true
-          - MinimumFileAgeDays: 1
-          - MinimumFileSize: 0
-        dedup_job:
-          - Type: 'Optimization'
+- name: FS-Data-Deduplication
+	win_feature:
+		name: FS-Data-Deduplication
+		include_sub_features: true
+		state: present
+- name: Enable Data Deduplication on D
+	win_data_deduplication:
+		drive_letter: 'D'
+		enabled: true
+		settings:
+			- NoCompress: true
+			- MinimumFileAgeDays: 1
+			- MinimumFileSize: 0
+		dedup_job:
+			- Type: 'Optimization'
 '''
 
 RETURN = r'''
