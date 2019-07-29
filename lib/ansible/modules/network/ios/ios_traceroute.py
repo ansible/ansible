@@ -23,26 +23,32 @@ options:
   probe:
     description:
     - Number of packets to send per hop.
+    type: int
   dest:
     description:
     - The IP Address or hostname (resolvable by switch) of the remote node.
+    type: str
     required: true
   source:
     description:
     - The source IP Address.
+    type: str
   port:
     description:
     - The port number of UDP packets to send.
+    type: int
   ttl_min:
     description:
     - The minimum time to live. (ttl_min and ttl_max options must be specified at the same time.)
+    type: int
   ttl_max:
     description:
     - The maximum time to live. (ttl_min and ttl_max options must be specified at the same time.)
+    type: int
   vrf:
     description:
     - The VRF to use for forwarding.
-    default: default
+    type: str
 '''
 
 EXAMPLES = r'''
@@ -95,7 +101,6 @@ def main():
         port=dict(type="int"),
         ttl_min=dict(type="int"),
         ttl_max=dict(type="int"),
-        state=dict(type="str", choices=["absent", "present"], default="present"),
         vrf=dict(type="str")
     )
 
@@ -126,9 +131,9 @@ def main():
     parse_result = []
     for trace_line in trace_results_list:
         hop_result = parse_trace(trace_line)
-        if type(hop_result) is list:
+        if isinstance(hop_result, list):
             parse_result.append(hop_result)
-        elif type(hop_result) is str and parse_result != []:
+        elif isinstance(hop_result, str) and parse_result != []:
             parse_result[-1].append(hop_result)
 
     parse_result_dict = {}
