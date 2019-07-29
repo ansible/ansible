@@ -3,27 +3,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import re
 import sys
 
 
 def main():
-    skip = set([
-        'test/sanity/code-smell/%s' % os.path.basename(__file__),
-    ])
-
-    prune = set([
-        'docs/docsite/_build/',
-    ])
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path in skip:
-            continue
-
-        if any(path.startswith(p) for p in prune):
-            continue
-
         with open(path, 'rb') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
                 try:
