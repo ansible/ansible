@@ -38,36 +38,43 @@ options:
     - Whether the specified LDAP client configuration exist or not.
     choices: ['present', 'absent']
     default: 'present'
+    type: str
 
   vserver:
     description:
     - vserver/svm that holds LDAP client configuration
     required: true
+    type: str
 
   client_config:
     description:
     - The name of LDAP client configuration
     required: true
+    type: str
 
   ldap_servers:
     description:
     - Comma separated list of LDAP servers. FQDN's or IP addreses
     - Required when state=present
+    type: list
 
   schema:
     description:
     - LDAP schema
     - Required when state=present
     choices: ['AD-IDMU', 'AD-SFU', 'MS-AD-BIS', 'RFC-2307']
+    type: str
 
   base_dn:
     description:
     - LDAP base DN
+    type: str
 
   base_scope:
     description:
     - LDAP search scope
     choices: ['subtree', 'onelevel', 'base']
+    type: str
 
   port:
     description:
@@ -83,29 +90,34 @@ options:
     description:
     - Minimal LDAP server bind level.
     choices: ['anonymous', 'simple', 'sasl']
+    type: str
 
   bind_dn:
     description:
     - LDAP bind user DN
+    type: str
 
   bind_password:
     description:
     - LDAP bind user password
+    type: str
 
   use_start_tls:
     description:
     - Start TLS on LDAP connection
     choices: ['true', 'false']
+    type: str
 
   referral_enabled:
     description:
     - LDAP Referral Chasing
     choices: ['true', 'false']
 
-  session-security:
+  session_security:
     description:
     - Client Session Security
     choices: ['true', 'false']
+    type: str
 '''
 
 EXAMPLES = '''
