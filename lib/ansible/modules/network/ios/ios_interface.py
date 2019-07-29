@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage Interface on Cisco IOS network devices
 description:
   - This module provides declarative management of Interfaces
     on Cisco IOS network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: ios_vlans
+  why: Newer and updated modules released with more functionality in Ansible 2.9
 notes:
   - Tested against IOS 15.6
 options:
