@@ -4,7 +4,6 @@ netact_cm_command unit tests
 
 # -*- coding: utf-8 -*-
 
-
 # (c) 2017, Nokia
 # This file is part of Ansible
 #
@@ -27,8 +26,6 @@ netact_cm_command unit tests
 from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
-
-import json
 
 from units.compat import unittest
 from ansible.module_utils import basic

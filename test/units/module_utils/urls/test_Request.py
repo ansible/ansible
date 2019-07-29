@@ -8,7 +8,7 @@ __metaclass__ = type
 import datetime
 import os
 
-from ansible.module_utils.urls import (Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, ConnectionError, RequestWithMethod,
+from ansible.module_utils.urls import (Request, open_url, urllib_request, HAS_SSLCONTEXT, cookiejar, RequestWithMethod,
                                        UnixHTTPHandler, UnixHTTPSConnection, httplib)
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 

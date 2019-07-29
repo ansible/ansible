@@ -4,8 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_dscp_map_pri_map
 from units.modules.utils import set_module_args

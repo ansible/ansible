@@ -27,8 +27,6 @@ import types
 from units.compat import unittest
 from units.compat.mock import patch, mock_open, MagicMock
 
-import pytest
-
 from ansible.plugins.callback import CallbackBase
 
 
