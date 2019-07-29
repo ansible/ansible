@@ -36,7 +36,7 @@ options:
    dedup_job:
       description:
       - Start a dedup job immediately.
-      - `Type` parameter is mandatory in case you want to run a dedup job.
+      - "Type" parameter is mandatory in case you want to run a dedup job.
       - Please see the Microsoft Powershell for Windows documentation for all the available options.
       - https://docs.microsoft.com/en-us/powershell/module/deduplication/start-dedupjob
       - Note: this option is not idempotent.
