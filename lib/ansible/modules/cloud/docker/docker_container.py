@@ -1453,13 +1453,16 @@ class TaskParameters(DockerBaseClass):
                 port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client)]
             elif p_len == 3:
                 # We only allow IPv4 and IPv6 addresses for the bind address
-                if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', parts[0]):
+                ipaddr = parts[0]
+                if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', ipaddr):
                     self.fail(('Bind addresses for published ports must be IPv4 or IPv6 addresses, not hostnames. '
-                               'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(parts[0]))
+                               'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(ipaddr))
+                if re.match(r'^\[[0-9a-fA-F:]+\]$', ipaddr):
+                    ipaddr = ipaddr[1:-1]
                 if parts[1]:
-                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client)]
+                    port_binds = [(ipaddr, port) for port in parse_port_range(parts[1], self.client)]
                 else:
-                    port_binds = len(container_ports) * [(parts[0],)]
+                    port_binds = len(container_ports) * [(ipaddr,)]
 
             for bind, container_port in zip(port_binds, container_ports):
                 idx = '{0}/{1}'.format(container_port, protocol) if protocol else container_port
