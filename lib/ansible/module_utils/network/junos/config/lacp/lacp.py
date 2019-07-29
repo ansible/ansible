@@ -20,7 +20,6 @@ from ansible.module_utils.network.junos.facts.facts import Facts
 from ansible.module_utils.network.junos.junos import locked_config, load_config, commit_configuration, discard_changes, tostring
 
 
-
 class Lacp(ConfigBase):
     """
     The junos_lacp class

@@ -42,6 +42,6 @@ class LacpArgs(object):
                                                                 'type': 'str'},
                                             'system_priority': {'type': 'int'}},
                                 },
-                     'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+                     'state': {'choices': ['merged', 'replaced', 'deleted'],
                                'default': 'merged',
                                'type': 'str'}}
