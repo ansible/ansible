@@ -42,61 +42,61 @@ COPYRIGHT = "Copyright 2019 Red Hat"
 
 DOCUMENTATION = """
 ---
-  module: ios_interfaces
-  version_added: 2.9
-  short_description: Manages interface attributes of Cisco IOS network devices
-  description: This module manages the interface attributes of Cisco IOS network devices.
-  author: Sumit Jaiswal (@justjais)
-  notes:
-  - Tested against Cisco IOSv Version 15.2 on VIRL
-  options:
-    config:
-      description: A dictionary of interface options
-      type: list
-      elements: dict
-      suboptions:
-        name:
-          description:
-          - Full name of interface, e.g. GigabitEthernet0/2, loopback999.
-          type: str
-          required: True
-        description:
-          description:
-          - Interface description.
-          type: str
-        enabled:
-          description:
-          - Administrative state of the interface.
-          - Set the value to C(true) to administratively enable the interface or C(false) to disable it.
-          type: bool
-          default: true
-        speed:
-          description:
-          - Interface link speed. Applicable for Ethernet interfaces only.
-          type: str
-        mtu:
-          description:
-          - MTU for a specific interface. Must be a number between 64 and 9600.
-            Applicable for Ethernet interfaces only.
-          type: str
-        duplex:
-          default: automatic
-          description:
-          - Interface link status. Applicable for Ethernet interfaces only, either in half duplex,
-            full duplex or in automatic state which negotiates the duplex automatically.
-          type: str
-          default: auto
-          choices: ['full', 'half', 'auto']
-    state:
-      choices:
-      - merged
-      - replaced
-      - overridden
-      - deleted
-      default: merged
+module: ios_interfaces
+version_added: 2.9
+short_description: Manages interface attributes of Cisco IOS network devices
+description: This module manages the interface attributes of Cisco IOS network devices.
+author: Sumit Jaiswal (@justjais)
+notes:
+- Tested against Cisco IOSv Version 15.2 on VIRL
+options:
+config:
+  description: A dictionary of interface options
+  type: list
+  elements: dict
+  suboptions:
+    name:
       description:
-      - The state the configuration should be left in
+      - Full name of interface, e.g. GigabitEthernet0/2, loopback999.
       type: str
+      required: True
+    description:
+      description:
+      - Interface description.
+      type: str
+    enabled:
+      description:
+      - Administrative state of the interface.
+      - Set the value to C(true) to administratively enable the interface or C(false) to disable it.
+      type: bool
+      default: true
+    speed:
+      description:
+      - Interface link speed. Applicable for Ethernet interfaces only.
+      type: str
+    mtu:
+      description:
+      - MTU for a specific interface. Must be a number between 64 and 9600.
+        Applicable for Ethernet interfaces only.
+      type: str
+    duplex:
+      default: automatic
+      description:
+      - Interface link status. Applicable for Ethernet interfaces only, either in half duplex,
+        full duplex or in automatic state which negotiates the duplex automatically.
+      type: str
+      default: auto
+      choices: ['full', 'half', 'auto']
+state:
+  choices:
+  - merged
+  - replaced
+  - overridden
+  - deleted
+  default: merged
+  description:
+  - The state the configuration should be left in
+  type: str
 """
 
 EXAMPLES = """
