@@ -1,0 +1,2 @@
+bugfixes:
+- ce_config - Optimize multi-level views & fix a bug. (https://github.com/ansible/ansible/pull/59523)
