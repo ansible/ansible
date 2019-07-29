@@ -1,0 +1,14 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      description this is interface1
+      mtu 65
+      speed 100
+      interface GigabitEthernet 0/2
+      description this is interface2
+      duplex full
+      speed 100

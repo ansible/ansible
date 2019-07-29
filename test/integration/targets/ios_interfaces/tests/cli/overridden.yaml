@@ -1,0 +1,51 @@
+---
+- debug:
+      msg: "START Overridden ios_interfaces state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Override device configuration of all interfaces with provided configuration
+      ios_interfaces: &overridden
+        config:
+          - name: GigabitEthernet0/2
+            description: 'Configured and Overridden by Ansible Network'
+            enabled: False
+            duplex: full
+            mtu: 2000
+        state: overridden
+      register: result
+
+    - name: Assert that configuration is reflected correctly on host
+      assert:
+        that:
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ populate == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] == result['after'] }}"
+
+    - name: Override device configuration of all VLANs with provided configuration (IDEMPOTENT)
+      ios_interfaces: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] == result['before'] }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

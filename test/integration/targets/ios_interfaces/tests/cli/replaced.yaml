@@ -1,0 +1,52 @@
+---
+- debug:
+      msg: "START Replaced ios_interfaces state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Replaces device configuration of listed interfaces with provided configuration
+      ios_interfaces: &replaced
+        config:
+          - name: GigabitEthernet0/3
+            description: 'Configured and Replaced by Ansible Network'
+            enabled: False
+            duplex: auto
+            mtu: 2500
+            speed: 1000
+        state: replaced
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ populate == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] == result['after'] }}"
+
+    - name: Replaces device configuration of listed VLANs with provided configuration (IDEMPOTENT)
+      ios_interfaces: *replaced
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] == result['before'] }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

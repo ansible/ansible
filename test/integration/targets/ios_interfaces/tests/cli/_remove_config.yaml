@@ -1,0 +1,14 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      no description
+      no mtu
+      no speed
+      interface GigabitEthernet 0/2
+      no description
+      no duplex
+      no speed
