@@ -27,13 +27,13 @@
       - '!min'
     gather_network_resources: lag_interfaces
 
-- name: Merged
+- name: Overridden
   nxos_lag_interfaces: &overridden
     config:
       - name: port-channel19
         members:
           - member: "{{ test_int3 }}"
-    state: merged
+    state: overridden
   register: result
 
 - assert:
