@@ -1,0 +1,2 @@
+bugfixes:
+- ce_mtu - bug-info - unable to parse request, to fix the bug (https://github.com/ansible/ansible/pull/59343)
