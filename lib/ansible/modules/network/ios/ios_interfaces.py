@@ -69,7 +69,6 @@ config:
       - Administrative state of the interface.
       - Set the value to C(true) to administratively enable the interface or C(false) to disable it.
       type: bool
-      default: true
     speed:
       description:
       - Interface link speed. Applicable for Ethernet interfaces only.
@@ -80,12 +79,10 @@ config:
         Applicable for Ethernet interfaces only.
       type: str
     duplex:
-      default: automatic
       description:
       - Interface link status. Applicable for Ethernet interfaces only, either in half duplex,
         full duplex or in automatic state which negotiates the duplex automatically.
       type: str
-      default: auto
       choices: ['full', 'half', 'auto']
 state:
   choices:
