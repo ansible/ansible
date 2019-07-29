@@ -10,6 +10,10 @@ for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 from copy import deepcopy
 import re
 from ansible.module_utils.network.common import utils

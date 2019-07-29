@@ -10,6 +10,9 @@ necessary to bring the current configuration to it's desired end-state is
 created
 """
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
