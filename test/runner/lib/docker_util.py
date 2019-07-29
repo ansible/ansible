@@ -163,7 +163,7 @@ def docker_images(args, image):
         stdout, _dummy = docker_command(args, ['images', image, '--format', '{{json .}}'], capture=True, always=True)
     except SubprocessError as ex:
         if 'no such image' in ex.stderr:
-            stdout = '' # podman does not handle this gracefully, exits 125
+            stdout = ''  # podman does not handle this gracefully, exits 125
         else:
             raise ex
     results = [json.loads(line) for line in stdout.splitlines()]
@@ -179,7 +179,7 @@ def docker_rm(args, container_id):
         docker_command(args, ['rm', '-f', container_id], capture=True)
     except SubprocessError as ex:
         if 'no such container' in ex.stderr:
-            pass # podman does not handle this gracefully, exits 1
+            pass  # podman does not handle this gracefully, exits 1
         else:
             raise ex
 
@@ -198,7 +198,7 @@ def docker_inspect(args, container_id):
         return json.loads(stdout)
     except SubprocessError as ex:
         if 'no such image' in ex.stderr:
-            return [] # podman does not handle this gracefully, exits 125
+            return []  # podman does not handle this gracefully, exits 125
         try:
             return json.loads(ex.stdout)
         except Exception:
