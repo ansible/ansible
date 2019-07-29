@@ -19,18 +19,18 @@ description:
 - This module doesn't support check_mode due to a lack of WhatIf support.
 - Note: Windows 2012 R2 and lower require a reboot for the feature to be active.
 options:
-   drive_letter:
+    drive_letter:
       description:
       - Windows drive letter on which to enable data deduplication.
       required: true
       type: str
-   enabled:
+    enabled:
       description:
       - Wether to enable or disable data deduplication on the selected volume.
       required: false
       default: true
       type: bool
-   settings:
+    settings:
       description:
       - List of settings to pass to the `Set-DedupVolume` powershell command.
       - Please see the Microsoft Powershell for Windows documentation for all the available options.
@@ -38,10 +38,10 @@ options:
       - Note: MinimumFileSize will default to 32768 if not defined or if the value is less than 32768.
       required: false
       type: list
-   dedup_job:
+    dedup_job:
       description:
       - Start a dedup job immediately.
-      - "Type" parameter is mandatory in case you want to run a dedup job.
+      - Type parameter is mandatory in case you want to run a dedup job.
       - Please see the Microsoft Powershell for Windows documentation for all the available options.
       - https://docs.microsoft.com/en-us/powershell/module/deduplication/start-dedupjob
       - Note: this option is not idempotent.
@@ -49,7 +49,7 @@ options:
       default: false
       type: list
 author: 
-   - "rnsc"
+    - "rnsc"
 '''
 
 EXAMPLES = '''
