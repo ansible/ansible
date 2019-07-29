@@ -8,14 +8,7 @@ import sys
 
 
 def main():
-    prune = set([
-        'docs/docsite/_build/',
-    ])
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if any(path.startswith(p) for p in prune):
-            continue
-
         with open(path, 'rb') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
                 try:
