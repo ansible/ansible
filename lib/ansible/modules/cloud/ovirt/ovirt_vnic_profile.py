@@ -179,18 +179,18 @@ class EntityVnicPorfileModule(BaseModule):
 
     def _get_network_filter(self):
         network_filter = None
-        if self.param('network_filter'):
-            network_filter = otypes.NetworkFilter(id=self._get_network_filter_id())
-        elif self.param('network_filter') == '' or self.param('pass_through') == 'enabled':
+        if self.param('network_filter') == '' or self.param('pass_through') == 'enabled':
             network_filter = otypes.NetworkFilter()
+        elif self.param('network_filter'):
+            network_filter = otypes.NetworkFilter(id=self._get_network_filter_id())
         return network_filter
 
     def _get_qos(self):
         qos = None
-        if self.param('qos'):
-            qos = otypes.Qos(id=self._get_qos_id())
-        elif self.param('qos') == '' or self.param('pass_through') == 'enabled':
+        if self.param('qos') == '' or self.param('pass_through') == 'enabled':
             qos = otypes.Qos()
+        elif self.param('qos'):
+            qos = otypes.Qos(id=self._get_qos_id())
         return qos
 
     def _get_port_mirroring(self):
