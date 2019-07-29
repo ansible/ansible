@@ -8,7 +8,7 @@
 
 - block:
     - name: Replaces device configuration of listed VLANs with provided configuration
-      ios_vlans:
+      ios_vlans: &replaced
         config:
           - vlan_id: 20
             name: Test_VLAN20

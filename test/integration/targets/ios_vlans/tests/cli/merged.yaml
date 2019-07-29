@@ -6,7 +6,7 @@
 
 - block:
     - name: Merge provided configuration with device configuration
-      ios_vlans:
+      ios_vlans: &merged
         config:
           - name: Vlan_10
             vlan_id: 10

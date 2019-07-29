@@ -8,7 +8,7 @@
 
 - block:
     - name: Override device configuration of all VLANs with provided configuration
-      ios_vlans:
+      ios_vlans: &overridden
         config:
           - name: Vlan_10
             vlan_id: 10

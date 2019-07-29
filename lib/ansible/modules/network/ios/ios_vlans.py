@@ -57,7 +57,7 @@ module: ios_vlans
         name:
           description:
           - Ascii name of the VLAN.
-          - "NOTE: I(name) should not be named/appended with 'default' as it's reserved for device default vlans"
+          - NOTE, I(name) should not be named/appended with I(default) as it is reserved for device default vlans.
           type: str
         vlan_id:
           description:
