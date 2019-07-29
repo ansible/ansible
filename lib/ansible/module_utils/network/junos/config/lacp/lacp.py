@@ -10,6 +10,9 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.netconf import build_root_xml_node, build_child_xml_node, build_subtree
 from ansible.module_utils.network.common.utils import to_list
