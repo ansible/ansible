@@ -1,0 +1,2 @@
+bugfixes:
+- ce_startup - update to fix a bug - netconf and cli are all used to load configure at a time (https://github.com/ansible/ansible/pull/59346 )
