@@ -1,0 +1,2 @@
+minor_changes:
+  - ec2_eip - Added support for BYOIP to ec2_eip module and filtering reusable addresses based on tags (https://github.com/ansible/ansible/pull/59180).

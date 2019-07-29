@@ -69,6 +69,24 @@ options:
     default: 'no'
     type: bool
     version_added: "2.5"
+  tag_name:
+    description:
+      - When reuse_existing_ip_allowed is true, suppplement with this option to only reuse
+        an Elastic IP if it is tagged with tag_name.
+    default: 'no'
+    version_added: "2.9"
+  tag_value:
+    description:
+      - Supplements tag_name but also checks that the value of the tag provided in tag_name matches tag_value.
+        matches the tag_value
+    default: 'no'
+    version_added: "2.9"
+  public_ipv4_pool:
+    description:
+      - Allocates the new Elastic IP from the provided public IPv4 pool (BYOIP)
+        only applies to newly allocated Elastic IPs, isn't validated when reuse_existing_ip_allowed is true.
+    default: 'no'
+    version_added: "2.9"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -151,6 +169,44 @@ EXAMPLES = '''
 - name: output the IP
   debug:
     msg: "Allocated IP inside a VPC is {{ eip.public_ip }}"
+
+- name: allocate eip - reuse unallocated ips (if found) with FREE tag
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: FREE
+
+- name: allocate eip - reuse unallocted ips if tag reserved is nope
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: reserved
+    tag_value: nope
+
+- name: allocate new eip - from servers given ipv4 pool
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+- name: allocate eip - from a given pool (if no free addresses where dev-servers tag is dynamic)
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: dev-servers
+    public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+- name: allocate eip from pool - check if tag reserved_for exists and value is our hostname
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: reserved_for
+    tag_value: "{{ inventory_hostname }}"
+    public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
 '''
 
 RETURN = '''
@@ -168,6 +224,7 @@ public_ip:
 
 try:
     import boto.exception
+    from boto.ec2.address import Address
 except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO
 
@@ -179,13 +236,13 @@ class EIPException(Exception):
     pass
 
 
-def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation, check_mode, isinstance=True):
-    if address_is_associated_with_device(ec2, address, device_id, isinstance):
+def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation, check_mode, is_instance=True):
+    if address_is_associated_with_device(ec2, address, device_id, is_instance):
         return {'changed': False}
 
     # If we're in check mode, nothing else to do
     if not check_mode:
-        if isinstance:
+        if is_instance:
             if address.domain == "vpc":
                 res = ec2.associate_address(device_id,
                                             allocation_id=address.allocation_id,
@@ -207,8 +264,8 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_r
     return {'changed': True}
 
 
-def disassociate_ip_and_device(ec2, address, device_id, check_mode, isinstance=True):
-    if not address_is_associated_with_device(ec2, address, device_id, isinstance):
+def disassociate_ip_and_device(ec2, address, device_id, check_mode, is_instance=True):
+    if not address_is_associated_with_device(ec2, address, device_id, is_instance):
         return {'changed': False}
 
     # If we're in check mode, nothing else to do
@@ -233,8 +290,8 @@ def _find_address_by_ip(ec2, public_ip):
             raise
 
 
-def _find_address_by_device_id(ec2, device_id, isinstance=True):
-    if isinstance:
+def _find_address_by_device_id(ec2, device_id, is_instance=True):
+    if is_instance:
         addresses = ec2.get_all_addresses(None, {'instance-id': device_id})
     else:
         addresses = ec2.get_all_addresses(None, {'network-interface-id': device_id})
@@ -242,31 +299,35 @@ def _find_address_by_device_id(ec2, device_id, isinstance=True):
         return addresses[0]
 
 
-def find_address(ec2, public_ip, device_id, isinstance=True):
+def find_address(ec2, public_ip, device_id, is_instance=True):
     """ Find an existing Elastic IP address """
     if public_ip:
         return _find_address_by_ip(ec2, public_ip)
-    elif device_id and isinstance:
+    elif device_id and is_instance:
         return _find_address_by_device_id(ec2, device_id)
     elif device_id:
-        return _find_address_by_device_id(ec2, device_id, isinstance=False)
+        return _find_address_by_device_id(ec2, device_id, is_instance=False)
 
 
-def address_is_associated_with_device(ec2, address, device_id, isinstance=True):
+def address_is_associated_with_device(ec2, address, device_id, is_instance=True):
     """ Check if the elastic IP is currently associated with the device """
     address = ec2.get_all_addresses(address.public_ip)
     if address:
-        if isinstance:
+        if is_instance:
             return address and address[0].instance_id == device_id
         else:
             return address and address[0].network_interface_id == device_id
     return False
 
 
-def allocate_address(ec2, domain, reuse_existing_ip_allowed):
+def allocate_address(ec2, domain, reuse_existing_ip_allowed, check_mode, tag_dict=None, public_ipv4_pool=None):
     """ Allocate a new elastic IP address (when needed) and return it """
     if reuse_existing_ip_allowed:
         domain_filter = {'domain': domain or 'standard'}
+
+        if tag_dict is not None:
+            domain_filter.update(tag_dict)
+
         all_addresses = ec2.get_all_addresses(filters=domain_filter)
 
         if domain == 'vpc':
@@ -277,6 +338,9 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
                                       if not a.instance_id]
         if unassociated_addresses:
             return unassociated_addresses[0], False
+
+    if public_ipv4_pool:
+        return allocate_address_from_pool(ec2, domain, check_mode, public_ipv4_pool), True
 
     return ec2.allocate_address(domain=domain), True
 
@@ -292,10 +356,10 @@ def release_address(ec2, address, check_mode):
     return {'changed': True}
 
 
-def find_device(ec2, module, device_id, isinstance=True):
+def find_device(ec2, module, device_id, is_instance=True):
     """ Attempt to find the EC2 instance and return it """
 
-    if isinstance:
+    if is_instance:
         try:
             reservations = ec2.get_all_reservations(instance_ids=[device_id])
         except boto.exception.EC2ResponseError as e:
@@ -318,7 +382,7 @@ def find_device(ec2, module, device_id, isinstance=True):
 
 
 def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                   reuse_existing_ip_allowed, allow_reassociation, check_mode, isinstance=True):
+                   reuse_existing_ip_allowed, allow_reassociation, check_mode, is_instance=True):
     changed = False
 
     # Return the EIP object since we've been given a public IP
@@ -326,11 +390,11 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
         if check_mode:
             return {'changed': True}
 
-        address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
+        address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed, check_mode)
 
     if device_id:
         # Allocate an IP for instance since no public_ip was provided
-        if isinstance:
+        if is_instance:
             instance = find_device(ec2, module, device_id)
             if reuse_existing_ip_allowed:
                 if instance.vpc_id and len(instance.vpc_id) > 0 and domain is None:
@@ -339,10 +403,10 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
             assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
                                                    check_mode)
         else:
-            instance = find_device(ec2, module, device_id, isinstance=False)
+            instance = find_device(ec2, module, device_id, is_instance=False)
             # Associate address object (provided or allocated) with instance
             assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
-                                                   check_mode, isinstance=False)
+                                                   check_mode, is_instance=False)
 
         if instance.vpc_id:
             domain = 'vpc'
@@ -352,21 +416,56 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
     return {'changed': changed, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
 
 
-def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
+def ensure_absent(ec2, address, device_id, check_mode, is_instance=True):
     if not address:
         return {'changed': False}
 
     # disassociating address from instance
     if device_id:
-        if isinstance:
+        if is_instance:
             return disassociate_ip_and_device(ec2, address, device_id,
                                               check_mode)
         else:
             return disassociate_ip_and_device(ec2, address, device_id,
-                                              check_mode, isinstance=False)
+                                              check_mode, is_instance=False)
     # releasing address
     else:
         return release_address(ec2, address, check_mode)
+
+
+def allocate_address_from_pool(ec2, domain, check_mode, public_ipv4_pool):
+    # type: (EC2Connection, str, bool, str) -> Address
+    """ Overrides boto's allocate_address function to support BYOIP """
+    params = {}
+
+    if domain is not None:
+        params['Domain'] = domain
+
+    if public_ipv4_pool is not None:
+        ec2.APIVersion = "2016-11-15"  # Workaround to force amazon to accept this attribute
+        params['PublicIpv4Pool'] = public_ipv4_pool
+
+    if check_mode:
+        params['DryRun'] = 'true'
+
+    return ec2.get_object('AllocateAddress', params, Address, verb='POST')
+
+
+def generate_tag_dict(module, tag_name, tag_value):
+    # type: (AnsibleModule, str, str) -> Optional[Dict]
+    """ Generates a dictionary to be passed as a filter to Amazon """
+    if tag_name and not tag_value:
+        if tag_name.startswith('tag:'):
+            tag_name = tag_name.strip('tag:')
+        return {'tag-key': tag_name}
+
+    elif tag_name and tag_value:
+        if not tag_name.startswith('tag:'):
+            tag_name = 'tag:' + tag_name
+        return {tag_name: tag_value}
+
+    elif tag_value and not tag_name:
+        module.fail_json(msg="parameters are required together: ('tag_name', 'tag_value')")
 
 
 def main():
@@ -382,7 +481,10 @@ def main():
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
         wait_timeout=dict(default=300, type='int'),
-        private_ip_address=dict(required=False, default=None, type='str')
+        private_ip_address=dict(),
+        tag_name=dict(),
+        tag_value=dict(),
+        public_ipv4_pool=dict()
     ))
 
     module = AnsibleModule(
@@ -408,6 +510,9 @@ def main():
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
     allow_reassociation = module.params.get('allow_reassociation')
+    tag_name = module.params.get('tag_name')
+    tag_value = module.params.get('tag_value')
+    public_ipv4_pool = module.params.get('public_ipv4_pool')
 
     if instance_id:
         warnings = ["instance_id is no longer used, please use device_id going forward"]
@@ -421,9 +526,11 @@ def main():
                 module.fail_json(msg="If you are specifying an ENI, in_vpc must be true")
             is_instance = False
 
+    tag_dict = generate_tag_dict(module, tag_name, tag_value)
+
     try:
         if device_id:
-            address = find_address(ec2, public_ip, device_id, isinstance=is_instance)
+            address = find_address(ec2, public_ip, device_id, is_instance=is_instance)
         else:
             address = find_address(ec2, public_ip, None)
 
@@ -431,16 +538,16 @@ def main():
             if device_id:
                 result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                                         reuse_existing_ip_allowed, allow_reassociation,
-                                        module.check_mode, isinstance=is_instance)
+                                        module.check_mode, is_instance=is_instance)
             else:
                 if address:
                     changed = False
                 else:
-                    address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
+                    address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed, module.check_mode, tag_dict, public_ipv4_pool)
                 result = {'changed': changed, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
         else:
             if device_id:
-                disassociated = ensure_absent(ec2, domain, address, device_id, module.check_mode, isinstance=is_instance)
+                disassociated = ensure_absent(ec2, address, device_id, module.check_mode, is_instance=is_instance)
 
                 if release_on_disassociation and disassociated['changed']:
                     released = release_address(ec2, address, module.check_mode)
