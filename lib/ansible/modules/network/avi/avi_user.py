@@ -92,10 +92,12 @@ options:
     user_profile_ref:
         description:
             - Refer user profile.
+            - This can also be full URI same as it comes in response payload
         type: str
     default_tenant_ref:
         description:
             - Default tenant reference.
+            - This can also be full URI same as it comes in response payload
         default: /api/tenant?name=admin
         type: str
 
@@ -114,7 +116,7 @@ EXAMPLES = '''
       name: "testuser"
       obj_username: "testuser"
       obj_password: "test123"
-      email: "test@abc.com"
+      email: "test@abc.test"
       access:
         - role_ref: "/api/role?name=Tenant-Admin"
           tenant_ref: "/api/tenant/admin#admin"
@@ -122,6 +124,24 @@ EXAMPLES = '''
       is_active: true
       is_superuser: true
       default_tenant_ref: "/api/tenant?name=admin"
+
+  - name: user creation
+    avi_user:
+      controller: ""
+      username: ""
+      password: ""
+      api_version: ""
+      name: "testuser"
+      obj_username: "testuser2"
+      obj_password: "password"
+      email: "testuser2@abc.test"
+      access:
+        - role_ref: "https://192.0.2.10/api/role?name=Tenant-Admin"
+          tenant_ref: "https://192.0.2.10/api/tenant/admin#admin"
+      user_profile_ref: "https://192.0.2.10/api/useraccountprofile?name=Default-User-Account-Profile"
+      is_active: true
+      is_superuser: true
+      default_tenant_ref: "https://192.0.2.10/api/tenant?name=admin"
 '''
 
 RETURN = '''
