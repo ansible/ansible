@@ -37,6 +37,7 @@ import subprocess
 import sys
 import traceback
 import shutil
+from io import BytesIO
 
 from ansible.release import __version__
 import ansible.utils.vars as utils_vars
@@ -47,9 +48,8 @@ from ansible.plugins.loader import init_plugin_loader
 from ansible.executor import module_common
 import ansible.constants as C
 from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils._json_streams_rfc7464 import read_json_documents
 from ansible.template import Templar
-
-import json
 
 
 def parse():
@@ -230,15 +230,15 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
         invoke = "%s %s" % (invoke, argspath)
 
     cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    out, err = to_text(out), to_text(err)
+    (orig_out, err) = cmd.communicate()
+    out, err = to_text(orig_out), to_text(err)
 
     try:
         print("*" * 35)
         print("RAW OUTPUT")
         print(out)
         print(err)
-        results = json.loads(out)
+        results = next(read_json_documents(BytesIO(orig_out)))
     except Exception:
         print("*" * 35)
         print("INVALID OUTPUT FORMAT")
