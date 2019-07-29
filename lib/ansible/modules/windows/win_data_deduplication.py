@@ -50,20 +50,20 @@ author:
 
 EXAMPLES = r'''
 - name: FS-Data-Deduplication
-	win_feature:
-		name: FS-Data-Deduplication
-		include_sub_features: true
-		state: present
+  win_feature:
+    name: FS-Data-Deduplication
+    include_sub_features: true
+    state: present
 - name: Enable Data Deduplication on D
-	win_data_deduplication:
-		drive_letter: 'D'
-		enabled: true
-		settings:
-			- NoCompress: true
-			- MinimumFileAgeDays: 1
-			- MinimumFileSize: 0
-		dedup_job:
-			- Type: 'Optimization'
+  win_data_deduplication:
+    drive_letter: 'D'
+    enabled: true
+    settings:
+      - NoCompress: true
+      - MinimumFileAgeDays: 1
+      - MinimumFileSize: 0
+    dedup_job:
+      - Type: 'Optimization'
 '''
 
 RETURN = r'''
