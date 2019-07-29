@@ -144,25 +144,11 @@ CE_NC_GET_FILE_INFO = """
 </filter>
 """
 
-CE_NC_GET_SCP_ENABLE_R19 = """
+CE_NC_GET_SCP_ENABLE = """
 <filter type="subtree">
       <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-        <sshServerEnable>
-          <scpIpv4Enable></scpIpv4Enable>
-          <scpIpv6Enable></scpIpv6Enable>
-        </sshServerEnable>
       </sshs>
     </filter>
-"""
-
-CE_NC_GET_SCP_ENABLE_R3 = """
-<filter type="subtree">
-  <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <sshServer>
-      <scpEnable></scpEnable>
-    </sshServer>
-  </sshs>
-</filter>
 """
 
 
@@ -324,12 +310,9 @@ class FileCopy(object):
 
         ret_xml = ''
         try:
-            ret_xml = get_nc_config(self.module, CE_NC_GET_SCP_ENABLE_R3)
+            ret_xml = get_nc_config(self.module, CE_NC_GET_SCP_ENABLE)
         except ConnectionError:
-            try:
-                ret_xml = get_nc_config(self.module, CE_NC_GET_SCP_ENABLE_R19)
-            except ConnectionError:
-                self.module.fail_json(msg='Error: The NETCONF API of scp_enable is not supported.')
+            self.module.fail_json(msg='Error: The NETCONF API of scp_enable is not supported.')
 
         if "<data/>" in ret_xml:
             return False
