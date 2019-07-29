@@ -195,6 +195,7 @@ def main():
         anp=dict(type='str', required=True),
         epg=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         bd=dict(type='dict', options=mso_reference_spec()),
+	vrf=dict(type='dict', options=mso_reference_spec()),
         display_name=dict(type='str'),
         useg_epg=dict(type='bool'),
         intra_epg_isolation=dict(type='str', choices=['enforced', 'unenforced']),
@@ -218,6 +219,7 @@ def main():
     epg = module.params['epg']
     display_name = module.params['display_name']
     bd = module.params['bd']
+    vrf = module.params['vrf']
     useg_epg = module.params['useg_epg']
     intra_epg_isolation = module.params['intra_epg_isolation']
     intersite_multicaste_source = module.params['intersite_multicaste_source']
@@ -272,6 +274,7 @@ def main():
 
     elif state == 'present':
         bd_ref = mso.make_reference(bd, 'bd', schema_id, template)
+        vrf_ref = mso.make_reference(vrf, 'vrf', schema_id, template)
         subnets = mso.make_subnets(subnets)
 
         if display_name is None and not mso.existing:
@@ -288,6 +291,7 @@ def main():
             contractRelationships=[],
             subnets=subnets,
             bdRef=bd_ref,
+  	    vrfRef=vrf_ref,
         )
 
         mso.sanitize(payload, collate=True)
