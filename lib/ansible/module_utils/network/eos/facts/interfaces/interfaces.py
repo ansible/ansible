@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -22,7 +21,6 @@ from ansible.module_utils.network.eos.argspec.interfaces.interfaces import Inter
 class InterfacesFacts(object):
     """ The eos interfaces fact class
     """
-
 
     def __init__(self, module, subspec='config', options='options'):
         self._module = module

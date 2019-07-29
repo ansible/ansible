@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -56,4 +55,4 @@ class Facts(FactsBase):
     @staticmethod
     def _get_interfaces(module, connection):
         return InterfacesFacts(InterfacesArgs.argument_spec, 'config', 'options') \
-                              .populate_facts(module, connection)
+            .populate_facts(module, connection)
