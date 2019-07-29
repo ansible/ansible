@@ -9,10 +9,7 @@ from ansible.modules.storage.netapp.netapp_e_host import Host
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
-import unittest
 import mock
-import pytest
-import json
 from units.compat.mock import patch
 from ansible.module_utils._text import to_bytes
 

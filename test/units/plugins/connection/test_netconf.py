@@ -21,8 +21,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import sys
-import re
-import json
 import pytest
 
 from io import StringIO

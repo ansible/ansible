@@ -1,5 +1,3 @@
-import pytest
-
 from ansible.modules.cloud.amazon import ec2_group as group_module
 
 

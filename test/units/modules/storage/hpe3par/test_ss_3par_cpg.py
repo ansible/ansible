@@ -4,7 +4,6 @@
 
 
 import mock
-import pytest
 import sys
 sys.modules['hpe3par_sdk'] = mock.Mock()
 sys.modules['hpe3par_sdk.client'] = mock.Mock()
