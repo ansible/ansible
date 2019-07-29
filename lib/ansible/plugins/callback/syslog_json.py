@@ -16,14 +16,28 @@ DOCUMENTATION = '''
       - This plugin logs ansible-playbook and ansible runs to a syslog server in JSON format
       - Before 2.9 only environment variables were available for configuration
     options:
-      server:
-        description: syslog server that will receive the event
+      destination:
+        description: syslog receiver destination, can use UNIX socket but this is system-dependent (e.g. Linux '/dev/log' or macOS '/var/run/syslog')
         env:
-        - name: SYSLOG_SERVER
+        - name: SYSLOG_DEST
         default: localhost
         ini:
           - section: callback_syslog_json
-            key: syslog_server
+            key: syslog_dest
+        version_added: "2.9"
+      protocol:
+        description: protocol in which to connect with the syslog server
+        env:
+        - name: SYSLOG_PROTO
+        default: udp
+        choices:
+          - tcp
+          - udp
+          - unix
+        ini:
+          - section: callback_syslog_json
+            key: syslog_proto
+        version_added: "2.9"
       port:
         description: port on which the syslog server is listening
         env:
@@ -69,16 +83,27 @@ class CallbackModule(CallbackBase):
 
         self.set_options()
 
-        syslog_host = self.get_option("server")
+        syslog_destination = self.get_option("destination")
         syslog_port = int(self.get_option("port"))
         syslog_facility = self.get_option("facility")
+
+        syslog_address = (syslog_destination, syslog_port)
+
+        if self.get_option("protocol") == 'tcp':
+            syslog_protocol = socket.SOCK_STREAM
+        elif self.get_option("protocol") == 'udp':
+            syslog_protocol = socket.SOCK_DGRAM
+        elif self.get_option("protocol") == 'unix':
+            syslog_address = syslog_destination
+            syslog_protocol = None
 
         self.logger = logging.getLogger('ansible logger')
         self.logger.setLevel(logging.DEBUG)
 
         self.handler = logging.handlers.SysLogHandler(
-            address=(syslog_host, syslog_port),
-            facility=syslog_facility
+            address=syslog_address,
+            facility=syslog_facility,
+            socktype=syslog_protocol
         )
         self.logger.addHandler(self.handler)
         self.hostname = socket.gethostname()

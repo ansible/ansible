@@ -1,0 +1,2 @@
+minor_changes:
+  - syslog_json - Add TCP and UNIX socket options to callback syslog_json plugin
