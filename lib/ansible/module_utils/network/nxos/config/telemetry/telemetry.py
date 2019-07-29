@@ -23,7 +23,8 @@ from ansible.module_utils.network.nxos.cmdref.telemetry.telemetry import TMS_GLO
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import normalize_data, remove_duplicate_context
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import valiate_input, get_setval_path
 from ansible.module_utils.network.nxos.utils.telemetry.telemetry import get_module_params_subsection
-from ansible.module_utils.network.nxos.nxos import NxosCmdRef, normalize_interface
+from ansible.module_utils.network.nxos.utils.utils import normalize_interface
+from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 
 
 class Telemetry(ConfigBase):
