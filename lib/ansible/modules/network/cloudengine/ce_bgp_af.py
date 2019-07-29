@@ -2597,6 +2597,8 @@ class BgpAf(object):
         rr_filter_number = module.params['rr_filter_number']
         if rr_filter_number:
             conf_str += "<rrFilterNumber>%s</rrFilterNumber>" % rr_filter_number
+            cmd = 'rr-filter %s' % rr_filter_number
+            cmds.append(cmd)
 
         policy_vpn_target = module.params['policy_vpn_target']
         if policy_vpn_target != 'no_use':
