@@ -38,21 +38,25 @@ options:
     - Whether the LDAP is present or not.
     choices: ['present', 'absent']
     default: 'present'
+    type: str
 
   vserver:
     description:
     - vserver/svm configured to use LDAP
     required: true
+    type: str
 
   client_config:
     description:
     - The name of LDAP client configuration
     required: true
+    type: str
 
   skip_config_validation:
     description:
     - Skip LDAP validation
     choices: ['true', 'false']
+    type: str
 '''
 
 EXAMPLES = '''
