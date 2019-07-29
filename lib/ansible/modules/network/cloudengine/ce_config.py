@@ -220,7 +220,8 @@ backup_path:
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.config import NetworkConfig as _NetworkConfig, dumps, ConfigLine, ignore_line
+from ansible.module_utils.network.common.config import NetworkConfig as _NetworkConfig
+from ansible.module_utils.network.common.config import dumps, ConfigLine, ignore_line
 from ansible.module_utils.network.cloudengine.ce import get_config, run_commands, exec_command, cli_err_msg
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, load_config
 from ansible.module_utils.network.cloudengine.ce import check_args as ce_check_args
