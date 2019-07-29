@@ -51,6 +51,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - The name of the node pool.
