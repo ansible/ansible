@@ -28,9 +28,6 @@ The module file for eos_interfaces
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.eos.config.interfaces.interfaces import Interfaces
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -47,6 +44,7 @@ author: ['Nathaniel Case (@qalthos)']
 options:
   config:
     description: The provided configuration
+    type: list
     suboptions:
       description:
         description:
@@ -258,10 +256,12 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: The configuration returned will always be in the same format of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: The configuration returned will always be in the same format of the parameters above.
 commands:
   description: The set of commands pushed to the remote device.
@@ -269,6 +269,10 @@ commands:
   type: list
   sample: ['command 1', 'command 2', 'command 3']
 """
+
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.eos.config.interfaces.interfaces import Interfaces
 
 
 def main():
