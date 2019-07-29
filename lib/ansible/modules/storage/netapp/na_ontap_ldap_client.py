@@ -114,6 +114,7 @@ EXAMPLES = '''
       na_ontap_ldap_client:
         state:         present
         client_config: 'example_ldap'
+        vserver:       'vserver1'
         ldap_servers:  'ldap1.example.company.com,ldap2.example.company.com'
         base_dn:       'dc=example,dc=company,dc=com'
         hostname:      "{{ netapp_hostname }}"
