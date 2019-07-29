@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-import sys
 
 from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.plugins.filter.core import get_encrypted_password
