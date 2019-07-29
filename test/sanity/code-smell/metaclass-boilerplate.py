@@ -6,21 +6,7 @@ import sys
 
 
 def main():
-    # These files pre-date the boilerplate test and should be fixed up as time goes on
-    prune = (
-        'contrib/inventory/',
-        'contrib/vault/',
-        'docs/',
-        'examples/',
-        'test/integration/',
-        'test/legacy/',
-        'test/units/',
-    )
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if any(path.startswith(p) for p in prune):
-            continue
-
         with open(path, 'rb') as path_fd:
             lines = path_fd.read().splitlines()
 

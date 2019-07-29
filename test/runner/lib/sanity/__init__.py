@@ -577,6 +577,7 @@ class SanityCodeSmellTest(SanityTest):
             always = self.config.get('always')
             text = self.config.get('text')
             ignore_changes = self.config.get('ignore_changes')
+            ignore_self = self.config.get('ignore_self')
 
             if output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
@@ -608,6 +609,12 @@ class SanityCodeSmellTest(SanityTest):
 
             if files:
                 paths = [p for p in paths if os.path.basename(p) in files]
+
+            if ignore_self and data_context().content.is_ansible:
+                relative_self_path = os.path.relpath(self.path, data_context().content.root)
+
+                if relative_self_path in paths:
+                    paths.remove(relative_self_path)
 
             paths = settings.filter_skipped_paths(paths)
 
