@@ -45,7 +45,7 @@ options:
     - Note: this option is not idempotent.
     required: no
     type: list
-author: 
+author:
 - rnsc (@rnsc)
 '''
 
