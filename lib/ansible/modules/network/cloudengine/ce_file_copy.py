@@ -146,9 +146,9 @@ CE_NC_GET_FILE_INFO = """
 
 CE_NC_GET_SCP_ENABLE = """
 <filter type="subtree">
-      <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-      </sshs>
-    </filter>
+  <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+  </sshs>
+</filter>
 """
 
 
