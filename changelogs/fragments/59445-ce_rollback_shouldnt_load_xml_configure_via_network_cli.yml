@@ -1,0 +1,2 @@
+bugfixes:
+- ce_rollback - shouldn't load xml configure via network_cli(https://github.com/ansible/ansible/pull/59345)
