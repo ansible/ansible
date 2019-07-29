@@ -22,7 +22,7 @@ options:
     version_added: '2.4'
 notes:
 - Beware fetching files from windows machines when creating templates because certain tools, such as Powershell ISE,
-  and regedit's export facility add a Byte Order Mark as the first character of the file, which can cause tracebacks. 
+  and regedit's export facility add a Byte Order Mark as the first character of the file, which can cause tracebacks.
 - You can use the M(win_copy) module with the C(content:) option if you prefer the template inline, as part of the
   playbook.
 - For Linux you can use M(template) which uses '\\n' as C(newline_sequence) by default.
