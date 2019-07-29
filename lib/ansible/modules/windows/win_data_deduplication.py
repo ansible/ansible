@@ -50,8 +50,6 @@ author:
 '''
 
 EXAMPLES = r'''
-# Playbook example
----
 - name: Set volume deduplication
   hosts: all
   gather_facts: false
@@ -71,4 +69,8 @@ EXAMPLES = r'''
           - MinimumFileSize: 0
         dedup_job:
           - Type: 'Optimization'
+'''
+
+RETURN = r'''
+#
 '''
