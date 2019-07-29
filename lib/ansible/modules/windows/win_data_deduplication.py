@@ -49,11 +49,11 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: FS-Data-Deduplication
-  win_feature:
-    name: FS-Data-Deduplication
-    include_sub_features: true
-    state: present
+- name: Enable Data Deduplication on D
+  win_data_deduplication:
+    drive_letter: 'D'
+    enabled: true
+
 - name: Enable Data Deduplication on D
   win_data_deduplication:
     drive_letter: 'D'
