@@ -1,0 +1,23 @@
+
+Switch: 1
+
+System Description............................. LY9, Runtime Code 18.12, Linux 3.8.13-rt9, U-Boot 2010.12 (Dec 10 2015 - 13:45:31) - ONIE 2015.05-v1.0
+Machine Type................................... LY9
+Machine Model.................................. QUANTA LY9
+Serial Number.................................. QTFCNB6100010
+Part Number.................................... 1LY9BZZ0001
+Burned In MAC Address.......................... 54:AB:3A:64:F7:F8
+Software Version............................... 18.12
+Software Storage............................... SD card
+License Key Status............................. Trial Key - expired
+Operating System............................... Linux 3.8.13-rt9
+Network Processing Device...................... BCM56854_A2
+Additional Packages............................ BGP-4
+                                                QOS
+                                                Multicast
+                                                IPv6
+                                                Routing
+                                                Data Center
+                                                OpEN API
+                                                Prototype Open API
+
