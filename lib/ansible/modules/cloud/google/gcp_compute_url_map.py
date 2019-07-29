@@ -48,6 +48,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   default_service:
     description:
     - A reference to BackendService resource if none of the hostRules match.

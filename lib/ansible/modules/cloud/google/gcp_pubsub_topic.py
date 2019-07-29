@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Name of the topic.
