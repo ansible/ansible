@@ -35,7 +35,7 @@ options:
     type: list
   pesize:
     description:
-    - The size of the physical extent. pesize must be a power of 2, or multiple of 128KiB.
+    - The size of the physical extent. pesize must be a power of 2.
     - Since Ansible 2.6, pesize can be optionally suffixed by a UNIT (k/K/m/M/g/G), default unit is megabyte.
     type: str
     default: "4"
