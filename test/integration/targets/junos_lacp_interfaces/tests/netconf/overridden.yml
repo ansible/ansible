@@ -1,0 +1,76 @@
+---
+- debug:
+    msg: "START junos_lacp_interfaces overide integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_overridden_output:
+      - name: ae1
+        period: fast
+        sync_reset: enable
+        system:
+          priority: 100
+          mac:
+            address: 00:00:00:00:00:01
+
+- block:
+    - name: Configure initial state for lacp interface
+      junos_lacp_interfaces:
+        config:
+          - name: ae1
+            period: fast
+            sync_reset: enable
+            system:
+              priority: 100
+              mac:
+                address: 00:00:00:00:00:02
+          - name: ge-0/0/1
+            port_priority: 100
+            force_up: True
+          - name: ae2
+            period: slow
+            sync_reset: disable
+            system:
+              priority: 200
+              mac:
+                address: 00:00:00:00:00:04
+          - name: ge-0/0/3
+            port_priority: 300
+            force_up: False
+        state: merged
+      register: result
+
+    - name: Override the provided configuration with the exisiting running configuration
+      junos_lacp_interfaces: &overridden
+        config:
+          - name: ae1
+            period: fast
+            sync_reset: enable
+            system:
+              priority: 100
+              mac:
+                address: 00:00:00:00:00:01
+        state: overridden
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_overridden_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Override the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_lacp_interfaces: *overridden
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_lacp_interfaces override integration tests on connection={{ ansible_connection }}"
