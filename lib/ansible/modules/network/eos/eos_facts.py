@@ -34,6 +34,7 @@ options:
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
+    type: list
     default: '!config'
   gather_network_resources:
     description:
@@ -41,6 +42,7 @@ options:
         to a given subset. Possible values for this argument include
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
+    type: list
     choices: ['all', 'interfaces']
     version_added: "2.9"
 """

@@ -11,7 +11,7 @@ __metaclass__ = type
 from ansible.module_utils.connection import Connection
 
 
-class ConfigBase(object): #pylint: disable=R0205,R0903
+class ConfigBase(object):
     """ The base class for all eos resource modules
     """
     _connection = None
