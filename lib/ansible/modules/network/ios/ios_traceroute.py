@@ -47,12 +47,10 @@ EXAMPLES = r'''
 - name: Identify the path to 10.10.10.10 using default vrf
   ios_traceroute:
     dest: 10.10.10.10
-
 - name: Identify the path to 10.20.20.20 using prod vrf
   ios_traceroute:
     dest: 10.20.20.20
     vrf: prod
-
 - name: Identify the path to 10.40.40.40 from 10.30.30.30 with setting probe and ttl
   ios_traceroute:
     dest: 10.40.40.40
@@ -135,7 +133,7 @@ def main():
 
     for ip_item in parse_result:
         key = ip_item[0]
-        value = ip_item[1:]
+        value = list(set(ip_item[1:]))
         parse_result_dict[key] = value
 
     results["output"] = trace_results_list
