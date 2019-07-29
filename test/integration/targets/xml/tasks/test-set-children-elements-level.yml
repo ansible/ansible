@@ -11,12 +11,12 @@
       xpath: /business/beers
       set_children: &children
         - beer:
-            name: 90 Minute IPA
             alcohol: "0.5"
+            name: 90 Minute IPA
             _:
               - Water:
-                  quantity: 200g
                   liter: "0.2"
+                  quantity: 200g
               - Starch:
                   quantity: 10g
               - Hops:
@@ -24,12 +24,12 @@
               - Yeast:
                   quantity: 20g
         - beer:
-            name: Harvest Pumpkin Ale
             alcohol: "0.3"
+            name: Harvest Pumpkin Ale
             _:
               - Water:
-                  quantity: 200g
                   liter: "0.2"
+                  quantity: 200g
               - Hops:
                   quantity: 25g
               - Yeast:
