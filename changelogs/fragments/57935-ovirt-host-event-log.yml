@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_host - add event log on failure (https://github.com/oVirt/ovirt-ansible-infra/issues/8)
