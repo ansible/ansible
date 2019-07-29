@@ -1,7 +1,3 @@
 ---
 win_output_dir: 'C:\ansible_testing'
 output_dir: ~/ansible_testing
-netapp_e_api_host: 10.113.1.192
-netapp_e_api_username: admin
-netapp_e_api_password: infiniti
-netapp_e_ssid: 1
