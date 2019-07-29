@@ -1,0 +1,5 @@
+bugfixes:
+- postgresql_db.py - Fix code formatting (https://github.com/ansible/ansible/pull/59497)
+- postgresql_ext.py - Remove pg_quote_identifier unused import (https://github.com/ansible/ansible/pull/59497)
+- postgresql_lang.py - Remove pg_quote_identifier and to_native unused imports (https://github.com/ansible/ansible/pull/59497)
+- postgresql_table.py - Fix code formatting (https://github.com/ansible/ansible/pull/59497)
