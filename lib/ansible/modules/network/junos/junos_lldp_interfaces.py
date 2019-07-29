@@ -166,6 +166,7 @@ EXAMPLES = """
 # }
 - name: Delete lldp interface configuration (this will not delete other lldp configuration)
   junos_lldp_interfaces:
+    config:
     - name: ge-0/0/1
     - name: ge-0/0/3
     state: deleted
