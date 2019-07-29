@@ -14,6 +14,7 @@ CHOICES = [
     'lag_interfaces',
     'l2_interfaces',
     'l3_interfaces',
+    'lldp_global',
     'lldp_interfaces',
     'vlans',
 ]
