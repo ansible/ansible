@@ -4,12 +4,18 @@ __metaclass__ = type
 
 import os
 
+import lib.types as t
+
 from lib.sanity import (
     SanityMultipleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+    SanityTargets,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
@@ -18,6 +24,7 @@ from lib.util import (
     find_python,
     parse_to_list_of_dict,
     ANSIBLE_ROOT,
+    is_subdir,
 )
 
 from lib.util_common import (
@@ -31,6 +38,10 @@ from lib.config import (
 
 class CompileTest(SanityMultipleVersion):
     """Sanity test for proper python syntax."""
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
+
     def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
@@ -40,11 +51,7 @@ class CompileTest(SanityMultipleVersion):
         """
         settings = self.load_processor(args, python_version)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/'))
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name, python_version=python_version)
+        paths = [target.path for target in targets.include]
 
         cmd = [find_python(python_version), os.path.join(ANSIBLE_ROOT, 'test/sanity/compile/compile.py')]
 
