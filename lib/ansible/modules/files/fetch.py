@@ -20,7 +20,7 @@ short_description: Fetch files from remote nodes
 description:
 - This module works like M(copy), but in reverse.
 - It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname.
-- Files that already exist at C(dest) will be overwritten if they are different than the C(src).
+- Files that already exist at I(dest) will be overwritten if they are different than the I(src).
 - This module is also supported for Windows targets.
 version_added: '0.2'
 options:
