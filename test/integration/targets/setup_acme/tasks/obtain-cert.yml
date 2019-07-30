@@ -111,6 +111,8 @@
     terms_agreed: "{{ terms_agreed }}"
     account_email: "{{ account_email }}"
     data: "{{ challenge_data }}"
+    retrieve_all_alternates: "{{ retrieve_all_alternates | default(omit) }}"
+  register: certificate_obtain_result
   when: challenge_data is changed
 - name: ({{ certgen_title }}) Deleting HTTP challenges
   uri:
