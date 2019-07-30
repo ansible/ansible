@@ -168,7 +168,6 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
-from ansible.module_utils.netapp import OntapRestAPI
 from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
@@ -179,7 +178,7 @@ class NetAppONTAPNdmp(object):
     modify vserver cifs security
     '''
     def __init__(self):
-        self.use_rest = False
+
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.modifiable_options = dict(
             abort_on_disk_error=dict(required=False, type='bool'),
@@ -217,41 +216,34 @@ class NetAppONTAPNdmp(object):
         self.na_helper = NetAppModule()
         self.parameters = self.na_helper.set_parameters(self.module.params)
 
-        self.restApi = OntapRestAPI(self.parameters['username'], self.parameters['password'], self.parameters['hostname'], self.parameters['validate_certs'])
-        if self.restApi.is_rest():
-            self.use_rest = True
+        if HAS_NETAPP_LIB is False:
+            self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            if HAS_NETAPP_LIB is False:
-                self.module.fail_json(msg="the python NetApp-Lib module is required")
-            else:
-                self.server = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.parameters['vserver'])
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.parameters['vserver'])
 
     def ndmp_get_iter(self):
         """
         get current vserver ndmp attributes.
         :return: a dict of ndmp attributes.
         """
-        if self.use_rest:
+        ndmp_get = netapp_utils.zapi.NaElement('ndmp-vserver-attributes-get-iter')
+        query = netapp_utils.zapi.NaElement('query')
+        ndmp_info = netapp_utils.zapi.NaElement('ndmp-vserver-attributes-info')
+        ndmp_info.add_new_child('vserver', self.parameters['vserver'])
+        query.add_child_elem(ndmp_info)
+        ndmp_get.add_child_elem(query)
+        ndmp_details = dict()
+        try:
+            result = self.server.invoke_successfully(ndmp_get, enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error fetching ndmp from %s: %s'
+                                      % (self.parameters['vserver'], to_native(error)),
+                                  exception=traceback.format_exc())
 
-        else:
-            ndmp_get = netapp_utils.zapi.NaElement('ndmp-vserver-attributes-get-iter')
-            query = netapp_utils.zapi.NaElement('query')
-            ndmp_info = netapp_utils.zapi.NaElement('ndmp-vserver-attributes-info')
-            ndmp_info.add_new_child('vserver', self.parameters['vserver'])
-            query.add_child_elem(ndmp_info)
-            ndmp_get.add_child_elem(query)
-            ndmp_details = dict()
-            try:
-                result = self.server.invoke_successfully(ndmp_get, enable_tunneling=True)
-            except netapp_utils.zapi.NaApiError as error:
-                self.module.fail_json(msg='Error fetching ndmp from %s: %s'
-                                          % (self.parameters['vserver'], to_native(error)),
-                                      exception=traceback.format_exc())
-
-            if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) > 0:
-                ndmp_attributes = result.get_child_by_name('attributes-list').get_child_by_name('ndmp-vserver-attributes-info')
-                self.get_ndmp_details(ndmp_details, ndmp_attributes)
-            return ndmp_details
+        if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) > 0:
+            ndmp_attributes = result.get_child_by_name('attributes-list').get_child_by_name('ndmp-vserver-attributes-info')
+            self.get_ndmp_details(ndmp_details, ndmp_attributes)
+        return ndmp_details
 
     def get_ndmp_details(self, ndmp_details, ndmp_attributes):
         """
@@ -313,7 +305,7 @@ class NetAppONTAPNdmp(object):
 
     def apply(self):
         """Call modify operations."""
-        netapp_utils.ems_log_event("na_ontap_ndmp", self.server)
+        self.asup_log_for_cserver("na_ontap_ndmp")
         current = self.ndmp_get_iter()
         modify = self.na_helper.get_modified_attributes(current, self.parameters)
         if self.na_helper.changed:
@@ -323,6 +315,17 @@ class NetAppONTAPNdmp(object):
                 if modify:
                     self.modify_ndmp(modify)
         self.module.exit_json(changed=self.na_helper.changed)
+
+    def asup_log_for_cserver(self, event_name):
+        """
+        Fetch admin vserver for the given cluster
+        Create and Autosupport log event with the given module name
+        :param event_name: Name of the event log
+        :return: None
+        """
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event(event_name, cserver)
 
 
 def main():
