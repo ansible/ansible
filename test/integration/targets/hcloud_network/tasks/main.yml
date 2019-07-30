@@ -1,0 +1,110 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup
+  hcloud_network:
+    name: "{{ hcloud_network_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result is success
+
+- name: test missing ip_range parameter on create Network
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+  register: result
+  ignore_errors: yes
+- name: verify fail missing ip_range parameter on create Network result
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "missing required arguments: ip_range"'
+
+- name: test create Network with check mode
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    ip_range: "10.0.0.0/16"
+  register: result
+  check_mode: yes
+- name: verify create Network with check mode result
+  assert:
+    that:
+      - result is changed
+
+- name: test create Network
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    ip_range: "10.0.0.0/16"
+  register: network
+- name: verify test create Network result
+  assert:
+    that:
+      - network is changed
+      - network.hcloud_network.name == "{{hcloud_network_name}}"
+      - network.hcloud_network.ip_range == "10.0.0.0/16"
+
+- name: test create Network idempotence
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    ip_range: "10.0.0.0/16"
+  register: network
+- name: verify test create network
+  assert:
+    that:
+      - network is not changed
+
+- name: test update Network label
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    labels:
+      key: value
+  register: network
+- name: verify test update Network label
+  assert:
+    that:
+      - network is changed
+      - network.hcloud_network.labels.key == "value"
+
+- name: test update Network label idempotency
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    labels:
+      key: value
+  register: network
+- name: verify test update Network label idempotency
+  assert:
+    that:
+      - network is not changed
+
+- name: test update Network ip range
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    ip_range: "10.0.0.0/8"
+  register: network
+- name: verify test update Network ip range
+  assert:
+    that:
+      - network is changed
+      - network.hcloud_network.ip_range == "10.0.0.0/8"
+
+- name: test update Network ip range idempotency
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    ip_range: "10.0.0.0/8"
+  register: network
+- name: verify test update Network ip range idempotency
+  assert:
+    that:
+      - network is not changed
+
+- name: test delete Network
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    state: absent
+  register: result
+- name: verify delete Network
+  assert:
+    that:
+      - result is success
