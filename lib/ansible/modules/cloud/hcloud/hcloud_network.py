@@ -109,7 +109,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.hcloud import Hcloud
 
-from hcloud import APIException
+try:
+    from hcloud import APIException
+except ImportError:
+    APIException = None
 
 
 class AnsibleHcloudNetwork(Hcloud):
