@@ -81,134 +81,168 @@ options:
             arps:
                 description:
                     - Number of gratuitous ARPs (1 _ 60). Lower to reduce traffic. Higher to reduce failover time.
+                type: int
             arps_interval:
                 description:
                     - Time between gratuitous ARPs  (1 _ 20 sec). Lower to reduce failover time. Higher to reduce traffic.
+                type: int
             authentication:
                 description:
                     - Enable/disable heartbeat message authentication.
+                type: str
                 choices:
                     - enable
                     - disable
             cpu_threshold:
                 description:
                     - Dynamic weighted load balancing CPU usage weight and high and low thresholds.
+                type: str
             encryption:
                 description:
                     - Enable/disable heartbeat message encryption.
+                type: str
                 choices:
                     - enable
                     - disable
             ftp_proxy_threshold:
                 description:
                     - Dynamic weighted load balancing weight and high and low number of FTP proxy sessions.
+                type: str
             gratuitous_arps:
                 description:
                     - Enable/disable gratuitous ARPs. Disable if link_failed_signal enabled.
+                type: str
                 choices:
                     - enable
                     - disable
             group_id:
                 description:
                     - Cluster group ID  (0 _ 255). Must be the same for all members.
+                type: int
             group_name:
                 description:
                     - Cluster group name. Must be the same for all members.
+                type: str
             ha_direct:
                 description:
                     - Enable/disable using ha_mgmt interface for syslog, SNMP, remote authentication (RADIUS), FortiAnalyzer, and FortiSandbox.
+                type: str
                 choices:
                     - enable
                     - disable
             ha_eth_type:
                 description:
                     - HA heartbeat packet Ethertype (4_digit hex).
+                type: str
             ha_mgmt_interfaces:
                 description:
                     - Reserve interfaces to manage individual cluster units.
+                type: list
                 suboptions:
                     dst:
                         description:
                             - Default route destination for reserved HA management interface.
+                        type: str
                     gateway:
                         description:
                             - Default route gateway for reserved HA management interface.
+                        type: str
                     gateway6:
                         description:
                             - Default IPv6 gateway for reserved HA management interface.
+                        type: str
                     id:
                         description:
                             - Table ID.
                         required: true
+                        type: int
                     interface:
                         description:
                             - Interface to reserve for HA management. Source system.interface.name.
+                        type: str
             ha_mgmt_status:
                 description:
                     - Enable to reserve interfaces to manage individual cluster units.
+                type: str
                 choices:
                     - enable
                     - disable
             ha_uptime_diff_margin:
                 description:
                     - Normally you would only reduce this value for failover testing.
+                type: int
             hb_interval:
                 description:
                     - Time between sending heartbeat packets (1 _ 20 (100*ms)). Increase to reduce false positives.
+                type: int
             hb_lost_threshold:
                 description:
                     - Number of lost heartbeats to signal a failure (1 _ 60). Increase to reduce false positives.
+                type: int
             hbdev:
                 description:
                     - Heartbeat interfaces. Must be the same for all members.
+                type: str
             hc_eth_type:
                 description:
                     - Transparent mode HA heartbeat packet Ethertype (4_digit hex).
+                type: str
             hello_holddown:
                 description:
                     - Time to wait before changing from hello to work state (5 _ 300 sec).
+                type: int
             http_proxy_threshold:
                 description:
                     - Dynamic weighted load balancing weight and high and low number of HTTP proxy sessions.
+                type: str
             imap_proxy_threshold:
                 description:
                     - Dynamic weighted load balancing weight and high and low number of IMAP proxy sessions.
+                type: str
             inter_cluster_session_sync:
                 description:
                     - Enable/disable synchronization of sessions among HA clusters.
+                type: str
                 choices:
                     - enable
                     - disable
             key:
                 description:
                     - key
+                type: str
             l2ep_eth_type:
                 description:
                     - Telnet session HA heartbeat packet Ethertype (4_digit hex).
+                type: str
             link_failed_signal:
                 description:
                     - Enable to shut down all interfaces for 1 sec after a failover. Use if gratuitous ARPs do not update network.
+                type: str
                 choices:
                     - enable
                     - disable
             load_balance_all:
                 description:
                     - Enable to load balance TCP sessions. Disable to load balance proxy sessions only.
+                type: str
                 choices:
                     - enable
                     - disable
             memory_compatible_mode:
                 description:
                     - Enable/disable memory compatible mode.
+                type: str
                 choices:
                     - enable
                     - disable
             memory_threshold:
                 description:
                     - Dynamic weighted load balancing memory usage weight and high and low thresholds.
+                type: str
             mode:
                 description:
                     - HA mode. Must be the same for all members. FGSP requires standalone.
+                type: str
                 choices:
                     - standalone
                     - a-a
@@ -216,57 +250,73 @@ options:
             monitor:
                 description:
                     - Interfaces to check for port monitoring (or link failure). Source system.interface.name.
+                type: str
             multicast_ttl:
                 description:
                     - HA multicast TTL on master (5 _ 3600 sec).
+                type: int
             nntp_proxy_threshold:
                 description:
                     - Dynamic weighted load balancing weight and high and low number of NNTP proxy sessions.
+                type: str
             override:
                 description:
                     - Enable and increase the priority of the unit that should always be primary (master).
+                type: str
                 choices:
                     - enable
                     - disable
             override_wait_time:
                 description:
                     - Delay negotiating if override is enabled (0 _ 3600 sec). Reduces how often the cluster negotiates.
+                type: int
             password:
                 description:
                     - Cluster password. Must be the same for all members.
+                type: str
             pingserver_failover_threshold:
                 description:
                     - Remote IP monitoring failover threshold (0 _ 50).
+                type: int
             pingserver_flip_timeout:
                 description:
                     - Time to wait in minutes before renegotiating after a remote IP monitoring failover.
+                type: int
             pingserver_monitor_interface:
                 description:
                     - Interfaces to check for remote IP monitoring. Source system.interface.name.
+                type: str
             pingserver_slave_force_reset:
                 description:
                     - Enable to force the cluster to negotiate after a remote IP monitoring failover.
+                type: str
                 choices:
                     - enable
                     - disable
             pop3_proxy_threshold:
                 description:
                     - Dynamic weighted load balancing weight and high and low number of POP3 proxy sessions.
+                type: str
             priority:
                 description:
                     - Increase the priority to select the primary unit (0 _ 255).
+                type: int
             route_hold:
                 description:
                     - Time to wait between routing table updates to the cluster (0 _ 3600 sec).
+                type: int
             route_ttl:
                 description:
                     - TTL for primary unit routes (5 _ 3600 sec). Increase to maintain active routes during failover.
+                type: int
             route_wait:
                 description:
                     - Time to wait before sending new routes to the cluster (0 _ 3600 sec).
+                type: int
             schedule:
                 description:
                     - Type of A_A load balancing. Use none if you have external load balancers.
+                type: str
                 choices:
                     - none
                     - hub
@@ -279,133 +329,162 @@ options:
             secondary_vcluster:
                 description:
                     - Configure virtual cluster 2.
+                type: dict
                 suboptions:
                     monitor:
                         description:
                             - Interfaces to check for port monitoring (or link failure). Source system.interface.name.
+                        type: str
                     override:
                         description:
                             - Enable and increase the priority of the unit that should always be primary (master).
+                        type: str
                         choices:
                             - enable
                             - disable
                     override_wait_time:
                         description:
                             - Delay negotiating if override is enabled (0 _ 3600 sec). Reduces how often the cluster negotiates.
+                        type: int
                     pingserver_failover_threshold:
                         description:
                             - Remote IP monitoring failover threshold (0 _ 50).
+                        type: int
                     pingserver_monitor_interface:
                         description:
                             - Interfaces to check for remote IP monitoring. Source system.interface.name.
+                        type: str
                     pingserver_slave_force_reset:
                         description:
                             - Enable to force the cluster to negotiate after a remote IP monitoring failover.
+                        type: str
                         choices:
                             - enable
                             - disable
                     priority:
                         description:
                             - Increase the priority to select the primary unit (0 _ 255).
+                        type: int
                     vcluster_id:
                         description:
                             - Cluster ID.
+                        type: int
                     vdom:
                         description:
                             - VDOMs in virtual cluster 2.
+                        type: str
             session_pickup:
                 description:
                     - Enable/disable session pickup. Enabling it can reduce session down time when fail over happens.
+                type: str
                 choices:
                     - enable
                     - disable
             session_pickup_connectionless:
                 description:
                     - Enable/disable UDP and ICMP session sync for FGSP.
+                type: str
                 choices:
                     - enable
                     - disable
             session_pickup_delay:
                 description:
                     - Enable to sync sessions longer than 30 sec. Only longer lived sessions need to be synced.
+                type: str
                 choices:
                     - enable
                     - disable
             session_pickup_expectation:
                 description:
                     - Enable/disable session helper expectation session sync for FGSP.
+                type: str
                 choices:
                     - enable
                     - disable
             session_pickup_nat:
                 description:
                     - Enable/disable NAT session sync for FGSP.
+                type: str
                 choices:
                     - enable
                     - disable
             session_sync_dev:
                 description:
                     - Offload session sync to one or more interfaces to distribute traffic and prevent delays if needed. Source system.interface.name.
+                type: str
             smtp_proxy_threshold:
                 description:
                     - Dynamic weighted load balancing weight and high and low number of SMTP proxy sessions.
+                type: str
             standalone_config_sync:
                 description:
                     - Enable/disable FGSP configuration synchronization.
+                type: str
                 choices:
                     - enable
                     - disable
             standalone_mgmt_vdom:
                 description:
                     - Enable/disable standalone management VDOM.
+                type: str
                 choices:
                     - enable
                     - disable
             sync_config:
                 description:
                     - Enable/disable configuration synchronization.
+                type: str
                 choices:
                     - enable
                     - disable
             sync_packet_balance:
                 description:
                     - Enable/disable HA packet distribution to multiple CPUs.
+                type: str
                 choices:
                     - enable
                     - disable
             unicast_hb:
                 description:
                     - Enable/disable unicast heartbeat.
+                type: str
                 choices:
                     - enable
                     - disable
             unicast_hb_netmask:
                 description:
                     - Unicast heartbeat netmask.
+                type: str
             unicast_hb_peerip:
                 description:
                     - Unicast heartbeat peer IP.
+                type: str
             uninterruptible_upgrade:
                 description:
                     - Enable to upgrade a cluster without blocking network traffic.
+                type: str
                 choices:
                     - enable
                     - disable
             vcluster_id:
                 description:
                     - Cluster ID.
+                type: int
             vcluster2:
                 description:
                     - Enable/disable virtual cluster 2 for virtual clustering.
+                type: str
                 choices:
                     - enable
                     - disable
             vdom:
                 description:
                     - VDOMs in virtual cluster 1.
+                type: str
             weight:
                 description:
                     - Weight_round_robin weight for each cluster unit. Syntax <priority> <weight>.
+                type: str
 '''
 
 EXAMPLES = '''
