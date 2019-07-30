@@ -877,12 +877,8 @@
     name: root
     local: yes
   register: local_existing
-
-- name: Ensure no warning was issued
-  assert:
-    msg: A warning was issued and it should not be
-    that:
-      - local_existing.warnings is not defined
+  tags:
+    - user_test_local_mode
 
 - name: Create local_ansibulluser
   user:
@@ -954,8 +950,6 @@
   assert:
     that:
       - local_user_test_1 is changed
-      - local_user_test_1.warnings is defined
-      - local_user_test_1.warnings | first is search('The local user account may already exist')
       - local_user_test_2 is not changed
       - local_user_test_3 is failed
       - "local_user_test_3['msg'] is search('parameters are mutually exclusive: groups|local')"
@@ -966,10 +960,12 @@
   tags:
     - user_test_local_mode
 
-- name: Ensure warnings were displayed
+- name: Ensure warnings were displayed properly
   assert:
     that:
       - local_user_test_1['warnings'] | length > 0
-      - "'user was not found in /etc/passwd. The local user account may already exist if the local account
-        database exists somewhere other than /etc/passwd.' in local_user_test_1['warnings'][0]"
+      - local_user_test_1['warnings'] | first is search('The local user account may already exist')
+      - local_existing['warnings'] is not defined
   when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
