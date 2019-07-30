@@ -2411,12 +2411,19 @@ class BgpAf(object):
         vrf_rid_auto_sel = module.params['vrf_rid_auto_sel']
         if vrf_rid_auto_sel != 'no_use':
             conf_str += "<vrfRidAutoSel>%s</vrfRidAutoSel>" % vrf_rid_auto_sel
-
+            family = "ipv4-family"
+            if af_type == "ipv6uni":
+                family = "ipv6-family"
             if vrf_rid_auto_sel == "true":
-                cmd = "router-id %s vpn-instance auto-select" % router_id
+                cmd = "%s vpn-instance %s" %s (family, vrf_name)
+                cmds.append(cmd)
+                cmd = "router-id auto-select"
+                cmds.append(cmd)
             else:
-                cmd = "undo router-id %s vpn-instance auto-select" % router_id
-            cmds.append(cmd)
+                cmd = "%s vpn-instance %s" %s (family, vrf_name)
+                cmds.append(cmd)
+                cmd = "undo router-id auto-select"
+                cmds.append(cmd)
 
         nexthop_third_party = module.params['nexthop_third_party']
         if nexthop_third_party != 'no_use':
@@ -2470,7 +2477,7 @@ class BgpAf(object):
             cmds.append(cmd)
 
         rib_only_policy_name = module.params['rib_only_policy_name']
-        if rib_only_policy_name:
+        if rib_only_policy_name and rib_only_enable == "true":
             conf_str += "<ribOnlyPolicyName>%s</ribOnlyPolicyName>" % rib_only_policy_name
 
             cmd = "routing-table rib-only route-policy %s" % rib_only_policy_name
@@ -2500,7 +2507,7 @@ class BgpAf(object):
         if med_none_as_maximum != 'no_use':
             conf_str += "<medNoneAsMaximum>%s</medNoneAsMaximum>" % med_none_as_maximum
 
-            if med_none_as_maximum:
+            if med_none_as_maximum == "true":
                 cmd = "bestroute med-none-as-maximum"
             else:
                 cmd = "undo bestroute med-none-as-maximum"
@@ -2828,7 +2835,10 @@ class BgpAf(object):
             module.fail_json(msg='Error: Create bgp import route failed.')
 
         cmds = []
-        cmd = "import-route %s %s" % (import_protocol, import_process_id)
+        if import_process_id == "0":
+            cmd = "import-route %s" % import_protocol
+        else:
+            cmd = "import-route %s %s" % (import_protocol, import_process_id)
         cmds.append(cmd)
 
         return cmds
