@@ -1,3 +1,2 @@
 ---
 - include: pre_test.yml
-  when: module_present.stdout | trim | bool
