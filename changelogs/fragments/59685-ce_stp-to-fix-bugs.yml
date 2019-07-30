@@ -1,0 +1,2 @@
+bugfixes:
+- ce_stp - update to fix some bugs - The config of first time showing is same as second because of 'get_config', using regular to search & show config (https://github.com/ansible/ansible/pull/59347 )
