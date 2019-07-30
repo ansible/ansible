@@ -107,26 +107,32 @@ class InventoryData(object):
         self.current_source = data.get('source')
 
         # Each host and group that is deserialized should have a list of associated group names
+        # Each group also has a list of associated host names
         # InventoryData is responsible for reinstating the corresponding objects
 
         for host in self.hosts.values():
             if not host.groups:
-                for group_name in host._group_names:
+                for group_name in host._deserialized_group_names:
                     host.groups.append(self.groups[group_name])
 
             host._group_names = []
 
         for group in self.groups.values():
             if not group.parent_groups:
-                for group_name in group._parent_group_names:
+                for group_name in group._deserialized_parent_group_names:
                     group.parent_groups.append(self.groups[group_name])
 
             if not group.child_groups:
-                for group_name in group._child_group_names:
+                for group_name in group._deserialized_child_group_names:
                     group.child_groups.append(self.groups[group_name])
 
-            group._parent_group_names = []
-            group._child_group_names = []
+            if not group.hosts:
+                for host_name in group._deserialized_host_names:
+                    group.hosts.append(self.hosts[host_name])
+
+            group._deserialized_parent_group_names = []
+            group._deserialized_child_group_names = []
+            group._deserialized_host_names = []
 
     def _create_implicit_localhost(self, pattern):
 

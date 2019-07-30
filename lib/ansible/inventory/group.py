@@ -67,8 +67,9 @@ class Group:
 
     def __init__(self, name=None):
 
-        self._parent_group_names = []
-        self._child_group_names = []
+        self._deserialized_parent_group_names = []
+        self._deserialized_child_group_names = []
+        self._deserialized_host_names = []
 
         self.depth = 0
         self.name = to_safe_group_name(name)
@@ -110,8 +111,7 @@ class Group:
     def serialize(self):
         parent_groups = [g.name for g in self.parent_groups]
         child_groups = [g.name for g in self.child_groups]
-
-        self._hosts = None
+        host_names = [h.name for h in self.hosts]
 
         result = dict(
             name=self.name,
@@ -119,7 +119,7 @@ class Group:
             parent_groups=parent_groups,
             child_groups=child_groups,
             depth=self.depth,
-            hosts=self.hosts,
+            hosts=host_names,
         )
 
         return result
@@ -129,11 +129,10 @@ class Group:
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', [])
-        self._hosts = None
 
-        self._parent_group_names = data.get('parent_groups', [])
-        self._child_group_names = data.get('child_groups', [])
+        self._deserialized_host_names = data.get('hosts', [])
+        self._deserialized_parent_group_names = data.get('parent_groups', [])
+        self._deserialized_child_group_names = data.get('child_groups', [])
 
     def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
         '''

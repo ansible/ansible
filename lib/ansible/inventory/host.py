@@ -75,11 +75,11 @@ class Host:
         self._uuid = data.get('uuid', None)
         self.implicit = data.get('implicit', False)
 
-        self._group_names = data.get('groups', [])
+        self._deserialized_group_names = data.get('groups', [])
 
     def __init__(self, name=None, port=None, gen_uuid=True):
 
-        self._group_names = []
+        self._deserialized_group_names = []
 
         self.vars = {}
         self.groups = []
