@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
+from .FakeAnsibleModule import FailJsonException
 
 
 def test_xapi_to_module_vm_power_state_bad_power_state(xenserver):

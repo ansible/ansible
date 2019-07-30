@@ -25,7 +25,7 @@ import uuid
 
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
@@ -418,7 +418,7 @@ class TestStrategyBase(unittest.TestCase):
         # self.assertEqual(strategy_base._pending_results, 1)
 
         # queue_items.append(('bad'))
-        # self.assertRaises(AnsibleError, strategy_base._process_pending_results, iterator=mock_iterator)
+        # self.assertRaises(strategy_base._process_pending_results, iterator=mock_iterator)
         strategy_base.cleanup()
 
     def test_strategy_base_load_included_file(self):
