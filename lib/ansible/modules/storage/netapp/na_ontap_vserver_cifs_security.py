@@ -27,6 +27,7 @@ options:
     description:
     - name of the vserver.
     required: true
+    type: str
 
   kerberos_clock_skew:
     description:
