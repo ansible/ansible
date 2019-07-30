@@ -1,4 +1,4 @@
-#
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -53,7 +53,6 @@ options:
   config:
     description: A dictionary of interface options
     type: list
-    elements: dict
     suboptions:
       name:
         description:
@@ -291,7 +290,7 @@ EXAMPLES = """
 #  duplex full
 #  speed 1000
 
-- name: Delete attributes of given interfaces (Note: This won't delete the interface itself)
+- name: "Delete attributes of given interfaces (Note: This won't delete the interface itself)"
   ios_interfaces:
     config:
       - name: GigabitEthernet0/2

@@ -9,6 +9,58 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils.six import iteritems
+
+
+def remove_command_from_interface(interface, cmd, commands):
+    # To delete the passed config
+    if interface not in commands:
+        commands.insert(0, interface)
+    commands.append('no %s' % cmd)
+    return commands
+
+
+def add_command_to_interface(interface, cmd, commands):
+    # To set the passed config
+    if interface not in commands:
+        commands.insert(0, interface)
+    commands.append(cmd)
+
+
+def dict_diff(sample_dict):
+    # Generate a set with passed dictionary for comparison
+    test_dict = {}
+    for k, v in iteritems(sample_dict):
+        if v is not None:
+            test_dict.update({k: v})
+    return_set = set(tuple(test_dict.items()))
+    return return_set
+
+
+def filter_dict_having_none_value(want, have):
+    # Generate dict with have dict value which is None in want dict
+    test_dict = dict()
+    test_dict['name'] = want.get('name')
+    for k, v in iteritems(want):
+        if v is None:
+            val = have.get(k)
+            test_dict.update({k: val})
+    return test_dict
+
+
+def remove_duplicate_interface(commands):
+    # Remove duplicate interface from commands
+    set_cmd = []
+    for each in commands:
+        if 'interface' in each:
+            interface = each
+            if interface not in set_cmd:
+                set_cmd.append(each)
+        else:
+            set_cmd.append(each)
+
+    return set_cmd
+
 
 def search_obj_in_list(name, lst):
     for o in lst:

@@ -6,20 +6,6 @@
 
 - include_tasks: _populate_config.yaml
 
-- set_fact:
-    expected_output:
-      - duplex: auto
-        name: GigabitEthernet0/0
-        speed: auto
-      - duplex: auto
-        name: GigabitEthernet0/1
-        speed: auto
-      - description: Configured and Overridden by Ansible-Network
-        duplex: full
-        mtu: 2000
-        enabled: false
-        name: GigabitEthernet0/2
-
 - block:
     - name: Override device configuration of all interfaces with provided configuration
       ios_interfaces: &overridden
@@ -33,12 +19,26 @@
       register: result
 
     - debug:
-        msg: "{{ expected_output | symmetric_difference(result['after']) }}"
+        msg:
+        - "{{ overridden['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+        - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
+        - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
-    - name: Assert that configuration is reflected correctly on host
+
+    - name: Assert that correct set of commands were generated
       assert:
         that:
-          - "{{ expected_output | symmetric_difference(result['after']) | length == 0 }}"
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
     - name: Override device configuration of all VLANs with provided configuration (IDEMPOTENT)
       ios_interfaces: *overridden

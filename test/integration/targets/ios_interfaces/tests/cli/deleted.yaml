@@ -6,18 +6,6 @@
 
 - include_tasks: _populate_config.yaml
 
-- set_fact:
-    expected_output:
-      - duplex: auto
-        name: GigabitEthernet0/0
-        speed: auto
-      - duplex: auto
-        name: GigabitEthernet0/1
-        speed: auto
-      - duplex: auto
-        name: GigabitEthernet0/2
-        speed: auto
-
 - block:
     - name: Delete attributes of all configured interfaces
       ios_interfaces: &deleted
@@ -25,12 +13,26 @@
       register: result
 
     - debug:
-        msg: "{{ expected_output | symmetric_difference(result['after']) }}"
+        msg:
+        - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+        - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
+        - "{{ deleted['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
-    - name: Assert that the correct set of commands were generated
+
+    - name: Assert that correct set of commands were generated
       assert:
         that:
-          - "{{ expected_output | symmetric_difference(result['after']) | length == 0 }}"
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
     - name: Delete attributes of all configured interfaces (IDEMPOTENT)
       ios_interfaces: *deleted

@@ -4,11 +4,18 @@
     config: "{{ lines }}"
   vars:
     lines: |
-      interface GigabitEthernet 0/1
+      interface loopback888
+      no description
+      no shutdown
+      interface loopback999
+      no description
+      no shutdown
+      interface GigabitEthernet0/1
       no description
       no mtu
+      no duplex
       no speed
-      interface GigabitEthernet 0/2
+      interface GigabitEthernet0/2
       no description
       no mtu
       no duplex

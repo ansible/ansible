@@ -6,22 +6,6 @@
 
 - include_tasks: _populate_config.yaml
 
-- set_fact:
-    expected_output:
-      - duplex: auto
-        name: GigabitEthernet0/0
-        speed: auto
-      - description: Configured and Replaced by Ansible-Network
-        duplex: full
-        mtu: 110
-        name: GigabitEthernet0/1
-        speed: 10
-      - description: Configured and Replaced by Ansible-Network
-        duplex: full
-        enabled: false
-        name: GigabitEthernet0/2
-        speed: 10
-
 - block:
     - name: Replaces device configuration of listed interfaces with provided configuration
       ios_interfaces: &replaced
@@ -36,12 +20,26 @@
       register: result
 
     - debug:
-        msg: "{{ expected_output | symmetric_difference(result['after']) }}"
+        msg:
+        - "{{ replaced['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+        - "{{ replaced['before'] | symmetric_difference(result['before']) | length == 0 }}"
+        - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
 
     - name: Assert that correct set of commands were generated
       assert:
         that:
-          - "{{ expected_output | symmetric_difference(result['after']) |length == 0 }}"
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ replaced['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
     - name: Replaces device configuration of listed VLANs with provided configuration (IDEMPOTENT)
       ios_interfaces: *replaced
