@@ -21,10 +21,10 @@ $result = @{
 
 # Enable-DedupVolume -Volume <String>
 
-function Set-DataDeduplication($drive) {
+function Set-DataDeduplication($volume) {
 
 	try {
-		$dedup_info = Get-DedupVolume -Volume "$($drive.Name):"
+		$dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
 	} catch {
 		$dedup_info = $null
 	}
@@ -38,13 +38,13 @@ function Set-DataDeduplication($drive) {
 	if ($is_enabled -ne $enabled) {
 		if($enabled) {
 			try {
-				Enable-DedupVolume -Volume "$($drive.Name):"
+				Enable-DedupVolume -Volume "$($volume.DriveLetter):"
 			} catch {
 				Fail-Json $result $_.Exception.Message
 			}
 		} else {
 			try {
-				Disable-DedupVolume -Volume "$($drive.Name):"
+				Disable-DedupVolume -Volume "$($volume.DriveLetter):"
 			} catch {
 				Fail-Json $result $_.Exception.Message
 			}
@@ -61,10 +61,10 @@ function Set-DataDeduplication($drive) {
 #                 -MinimumFileAgeDays <UInt32> `
 #                 -MinimumFileSize <UInt32> (minimum 32768)
 
-function Set-DataDedupJobSettings ($drive) {
+function Set-DataDedupJobSettings ($volume) {
 
 	try {
-		$dedup_info = Get-DedupVolume -Volume "$($drive.Name):"
+		$dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
 	} catch {
 		$dedup_info = $null
 	}
@@ -89,7 +89,7 @@ function Set-DataDedupJobSettings ($drive) {
 			}
 
 			try {
-				Set-DedupVolume -Volume "$($drive.Name):" @command_param
+				Set-DedupVolume -Volume "$($volume.DriveLetter):" @command_param
 				$result.msg += " Setting DedupVolume settings for $update_key"
 
 			} catch {
@@ -104,9 +104,9 @@ function Set-DataDedupJobSettings ($drive) {
 
 # Start-DedupJob -Volume <String> `
 # 	       -Type <String>
-function Start-DataDedupJob($drive) {
+function Start-DataDedupJob($volume) {
 
-	$dedup_job_queue = Get-DedupJob -Volume "$($drive.Name):" -ErrorAction SilentlyContinue
+	$dedup_job_queue = Get-DedupJob -Volume "$($volume.DriveLetter):" -ErrorAction SilentlyContinue
 
 	if(( $dedup_job_queue | Select-Object -ExpandProperty State) -ne "Queued" ) {
 
@@ -121,7 +121,7 @@ function Start-DataDedupJob($drive) {
 
 		}
 
-		$dedup_job_start = Start-DedupJob -Volume "$($drive.Name):" @command_param
+		$dedup_job_start = Start-DedupJob -Volume "$($volume.DriveLetter):" @command_param
 		$result.msg += " DedupJob "+($dedup_job_start | Select-Object -ExpandProperty State)
 
 		$result.changed = $true
@@ -131,18 +131,18 @@ function Start-DataDedupJob($drive) {
 
 }
 
-function DataDeduplication($drive) {
+function DataDeduplication($volume) {
 
 	if ($null -ne $enabled) {
-		Set-DataDeduplication -drive $drive
+		Set-DataDeduplication -drive $volume
 	}
 
 	if ($null -ne $settings -and $enabled) {
-		Set-DataDedupJobSettings -drive $drive
+		Set-DataDedupJobSettings -drive $volume
 	}
 
 	if ($null -ne $dedup_job -and $enabled) {
-		Start-DataDedupJob -drive $drive
+		Start-DataDedupJob -drive $volume
 	}
 
 }
@@ -156,10 +156,10 @@ if (!$feature.Installed) {
   Exit-Json -obj $result
 }
 
-$drive = Get-PSDrive -Name $drive_letter
-if ($drive) {
+$volume = Get-PSVolume -DriveLetter $drive_letter
+if ($volume) {
   $result.msg += "Start setting FileDeduplication"
-  DataDeduplication -drive $drive
+  DataDeduplication -drive $volume
 }
 
 Exit-Json -obj $result
