@@ -203,7 +203,7 @@ def download_file(module):
 def upload_file(module):
     auth = GcpSession(module, 'storage')
     with open(module.params['src'], 'r') as f:
-        results = return_if_object(module, auth.post_contents(upload_link(module), f, object_headers(module)))
+        results = return_if_object(module, auth.post_contents(upload_link(module), f.read(), object_headers(module)))
     results['changed'] = True
     return results
 
