@@ -1,1 +1,1 @@
-hcloud ; python_version >= '2.7' and python_version <= '3.7'  # Python 2.6 and 3.8 are not supported
+hcloud>=1.3.0 ; python_version >= '2.7' # Python 2.6 is not supported (sanity_ok); Only hcloud >= 1.3.0 supports Networks.
