@@ -12,10 +12,6 @@
          no shutdown
          mtu 3000
          speed auto
-      interface Management1
-         description "Management interface"
-         no shutdown
-         no mtu
   become: yes
 
 - eos_facts:
@@ -23,7 +19,7 @@
   become: yes
 
 - set_fact:
-    expected_output:
+    expected_config:
       - name: Ethernet1
         description: Interface 1
         speed: 40g
@@ -33,10 +29,7 @@
         enabled: True
         mtu: "3000"
         duplex: auto
-      - name: Management1
-        description: Management interface
-        enabled: True
 
 - assert:
     that:
-      - "ansible_facts.network_resources.interfaces|symmetric_difference(expected_output)|length == 0"
+      - "expected_config|difference(ansible_facts.network_resources.interfaces) == []"

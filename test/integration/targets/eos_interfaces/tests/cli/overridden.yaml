@@ -36,9 +36,6 @@
     that:
       - "ansible_facts.network_resources.interfaces|symmetric_difference(result.after)|length == 0"
 
-- set_fact:
-    expected_config: "{{ config }}"
-
 - assert:
     that:
-      - "ansible_facts.network_resources.interfaces|symmetric_difference(expected_config)|length == 0"
+      - "config|difference(ansible_facts.network_resources.interfaces)|length == 0"
