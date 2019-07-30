@@ -1516,6 +1516,9 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
+  test/units/module_utils/test_netapp.py:
+    maintainers: $team_netapp
+    support: community
   test/units/module_utils/hwc:
     maintainers: $team_huawei
   test/units/module_utils/acme: *crypto
