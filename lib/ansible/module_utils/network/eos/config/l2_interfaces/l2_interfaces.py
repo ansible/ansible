@@ -14,9 +14,9 @@ __metaclass__ = type
 
 from ansible.module_utils.network.common.utils import to_list
 
-from ansible.module_utils.eos.argspec.l2_interfaces.l2_interfaces import L2_interfacesArgs
-from ansible.module_utils.eos.config.base import ConfigBase
-from ansible.module_utils.eos.facts.facts import Facts
+from ansible.module_utils.network.eos.argspec.l2_interfaces.l2_interfaces import L2_interfacesArgs
+from ansible.module_utils.network.eos.config.base import ConfigBase
+from ansible.module_utils.network.eos.facts.facts import Facts
 
 
 class L2_interfaces(ConfigBase, L2_interfacesArgs):
@@ -231,5 +231,5 @@ def clear_interface(want, have):
         commands.append("no switchport trunk native vlan")
 
     if commands:
-        commands.insert(0, "interface {}".format(want["name"]))
+        commands.insert(0, "interface {0}".format(want["name"]))
     return commands

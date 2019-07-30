@@ -40,10 +40,10 @@ class L2_interfacesArgs(object):
             'elements': 'dict',
             'options': {
                 'access': {'options': {'vlan': {'type': 'int'}},
-                    'type': 'dict'},
-                'name': {'required': True, 'type': 'str'
+                           'type': 'dict'},
+                'name': {'required': True, 'type': 'str'},
                 'trunk': {'options': {'native_vlan': {'type': 'int'}, 'trunk_allowed_vlans': {'type': 'list'}},
-                    'type': 'dict'}},
+                          'type': 'dict'}},
             'type': 'list'},
         'state': {'default': 'merged', 'choices': ['merged', 'replaced', 'overridden', 'deleted'], 'required': False, 'type': 'str'}
     }

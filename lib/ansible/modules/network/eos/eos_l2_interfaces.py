@@ -29,9 +29,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'network'
 }
 
 DOCUMENTATION = """
@@ -256,17 +256,18 @@ EXAMPLES = """
 # interface Management1
 #    ip address dhcp
 #    ipv6 address auto-config
-
-
 """
+
 RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: The configuration returned will always be in the same format of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: The configuration returned will always be in the same format of the parameters above.
 commands:
   description: The set of commands pushed to the remote device.
@@ -274,6 +275,7 @@ commands:
   type: list
   sample: ['command 1', 'command 2', 'command 3']
 """
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.eos.config.l2_interfaces.l2_interfaces import L2_interfaces

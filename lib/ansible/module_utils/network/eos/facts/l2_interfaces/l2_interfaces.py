@@ -15,7 +15,7 @@ from copy import deepcopy
 import re
 
 from ansible.module_utils.network.common import utils
-from ansible.module_utils.network.eos.argspec.interfaces.interfaces import InterfacesArgs
+from ansible.module_utils.network.eos.argspec.l2_interfaces.l2_interfaces import L2_interfacesArgs
 
 
 class L2_interfacesFacts(object):
@@ -24,7 +24,7 @@ class L2_interfacesFacts(object):
 
     def __init__(self, module, subspec='config', options='options'):
         self._module = module
-        self.argument_spec = InterfacesArgs.argument_spec
+        self.argument_spec = L2_interfacesArgs.argument_spec
         spec = deepcopy(self.argument_spec)
         if subspec:
             if options:
