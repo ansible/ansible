@@ -11,7 +11,7 @@ import sys
 def main():
     base_dir = os.getcwd() + os.path.sep
     docs_dir = os.path.abspath('docs/docsite')
-    cmd = ['make', 'singlehtmldocs']
+    cmd = ['make', 'base_singlehtmldocs']
 
     sphinx = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=docs_dir)
     stdout, stderr = sphinx.communicate()

@@ -11,29 +11,30 @@ Module Maintenance & Support
 Maintenance
 ===========
 
-To clarify who maintains each included module, adding features and fixing bugs, each included module now has associated metadata that provides information about maintenance.
+Modules are maintained by the owners of the collection with which they ship.
 
 Core
 ----
 
-:ref:`Core Maintained<core_supported>` modules are maintained by the Ansible Engineering Team.
-These modules are integral to the basic foundations of the Ansible distribution.
+Core Maintained modules are maintained by the Ansible Engineering Team.  These modules are integral
+to the basic foundations of the Ansible distribution.  They are shipped with Ansible itself.
 
 Network
 -------
 
-:ref:`Network Maintained<network_supported>` modules are are maintained by the Ansible Network Team. Please note there are additional networking modules that are categorized as Certified or Community not maintained by Ansible.
+The Ansible Content Team maintains a set of collections for customers of Ansible.
 
 
-Certified
----------
+Partner Vendors
+---------------
 
-`Certified <https://access.redhat.com/articles/3642632>`_ modules are maintained by Ansible Partners.
+Individual vendors maintain a large number of modules in collections hosted on Ansible Automation
+Hub.  These collections replace the `List of Ansible Certified Modules <https://access.redhat.com/articles/3642632>`_ as the canonical list of what vendors are maintaining which content.
 
-Community
----------
+Ansible Community
+-----------------
 
-:ref:`Community Maintained<community_supported>` modules are submitted and maintained by the Ansible community.  These modules are not maintained by Ansible, and are included as a convenience.
+Modules in the Ansible Community collection are maintained by a group of volunteers who are committed to providing modules that make Ansible usable in a large number of different situations.
 
 Issue Reporting
 ===============
@@ -64,8 +65,6 @@ please refer to the following `knowledge base article <https://access.redhat.com
        Examples of using modules with /usr/bin/ansible-playbook
    :ref:`developing_modules`
        How to write your own modules
-   `List of Ansible Certified Modules <https://access.redhat.com/articles/3642632>`_
-       High level list of Ansible certified modules from Partners
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
