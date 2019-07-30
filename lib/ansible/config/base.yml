@@ -955,12 +955,14 @@ DEFAULT_SCP_IF_SSH:
   - {key: scp_if_ssh, section: ssh_connection}
 DEFAULT_SELINUX_SPECIAL_FS:
   name: Problematic file systems
-  default: fuse, nfs, vboxsf, ramfs, 9p
+  default: fuse, nfs, vboxsf, ramfs, 9p, vfat
   description:
     - "Some filesystems do not support safe operations and/or return inconsistent errors,
        this setting makes Ansible 'tolerate' those in the list w/o causing fatal errors."
     - Data corruption may occur and writes are not always verified when a filesystem is in the list.
-  env: []
+  env:
+  - name: ANSIBLE_SELINUX_SPECIAL_FS
+    version_added: "2.9"
   ini:
   - {key: special_context_filesystems, section: selinux}
   type: list
