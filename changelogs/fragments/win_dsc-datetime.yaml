@@ -1,0 +1,2 @@
+bugfixes:
+- win_dsc - Be more leniant around the accepted DateTime values for backwards compatibility - https://github.com/ansible/ansible/issues/59667
