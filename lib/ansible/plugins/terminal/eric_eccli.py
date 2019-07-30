@@ -31,6 +31,7 @@ from ansible.module_utils.six import PY3
 
 display = Display()
 
+
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
