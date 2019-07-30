@@ -3,3 +3,4 @@ pyyaml
 sphinx
 sphinx-notfound-page
 straight.plugin
+antsibull

@@ -5,7 +5,8 @@
 Using collections
 *****************
 
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins.
+Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. As modules move from the core Ansible repository into collections, the module documentation will move to the `collections documentation page <https://docs.ansible.com/collections/>`_
+
 You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
 * For details on how to *develop* collections see :ref:`developing_collections`.
