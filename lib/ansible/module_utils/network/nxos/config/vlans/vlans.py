@@ -34,6 +34,8 @@ class Vlans(ConfigBase):
         'vlans',
     ]
 
+    exclude_params = ['name', 'state']
+
     def __init__(self, module):
         super(Vlans, self).__init__(module)
 
@@ -132,6 +134,11 @@ class Vlans(ConfigBase):
         merged_commands = self.set_commands(w, have)
         if 'vlan_id' not in diff:
             diff['vlan_id'] = w['vlan_id']
+        wkeys = w.keys()
+        dkeys = diff.keys()
+        for k in wkeys:
+            if k in self.exclude_params and k in dkeys:
+                del diff[k]
         replaced_commands = self.del_all(diff)
 
         if merged_commands:
@@ -154,6 +161,13 @@ class Vlans(ConfigBase):
             obj_in_want = search_obj_in_list(h['vlan_id'], want, 'vlan_id')
             if h == obj_in_want:
                 continue
+            for w in want:
+                if h['vlan_id'] == w['vlan_id']:
+                    wkeys = w.keys()
+                    hkeys = h.keys()
+                    for k in wkeys:
+                        if k in self.exclude_params and k in hkeys:
+                            del h[k]
             commands.extend(self.del_all(h))
         for w in want:
             commands.extend(self.set_commands(w, have))

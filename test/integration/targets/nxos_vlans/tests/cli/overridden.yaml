@@ -9,49 +9,57 @@
       no vlan 6
       no vlan 9
 
-- name: setup
-  cli_config:
-    config: |
-      vlan 5
-      name test-vlan5
-      state suspend
-      vlan 6
+- block:
+  - name: setup
+    cli_config:
+      config: |
+        vlan 5
+        name test-vlan5
+        state suspend
+        vlan 6
 
-- name: Gather vlans facts
-  nxos_facts: &facts
-    gather_subset:
-      - '!all'
-      - '!min'
-    gather_network_resources: vlans
+  - name: Gather vlans facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: vlans
 
-- name: Overridden
-  nxos_vlans: &overridden
-    config:
-      - vlan_id: 9
-        name: test-vlan9
-        enabled: false
-    state: overridden
-  register: result
+  - name: Overridden
+    nxos_vlans: &overridden
+      config:
+        - vlan_id: 9
+          name: test-vlan9
+          enabled: false
+      state: overridden
+    register: result
 
-- assert:
-    that:
-      - "ansible_facts.network_resources.vlans|symmetric_difference(result.before)|length == 0"
-      - "result.changed == true"
+  - assert:
+      that:
+        - "ansible_facts.network_resources.vlans|symmetric_difference(result.before)|length == 0"
+        - "result.changed == true"
+        - "'vlan 5' in result.commands"
+        - "'no name' in result.commands"
+        - "'no state' in result.commands"
+        - "'vlan 9' in result.commands"
+        - "'name test-vlan9' in result.commands"
+        - "'shutdown' in result.commands"
 
-- name: Gather vlans post facts
-  nxos_facts: *facts
+  - name: Gather vlans post facts
+    nxos_facts: *facts
 
-- assert:
-    that:
-      - "ansible_facts.network_resources.vlans|symmetric_difference(result.after)|length == 0"
+  - assert:
+      that:
+        - "ansible_facts.network_resources.vlans|symmetric_difference(result.after)|length == 0"
 
-- name: Idempotence - Overridden
-  nxos_vlans: *overridden
-  register: result
+  - name: Idempotence - Overridden
+    nxos_vlans: *overridden
+    register: result
 
-- assert:
-    that:
-      - "result.changed == false"
+  - assert:
+      that:
+        - "result.changed == false"
 
-- name: teardown
-  cli_config: *cleanup
+  always:
+  - name: teardown
+    cli_config: *cleanup

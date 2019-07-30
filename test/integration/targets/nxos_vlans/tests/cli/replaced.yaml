@@ -8,48 +8,53 @@
       no vlan 5
       no vlan 6
 
-- name: setup2
-  cli_config:
-    config: |
-      vlan 5
-      name test-vlan5
-      vlan 6
-      name test-vlan6
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        vlan 5
+        name test-vlan5
+        vlan 6
+        name test-vlan6
 
-- name: Gather vlans facts
-  nxos_facts: &facts
-    gather_subset:
-      - '!all'
-      - '!min'
-    gather_network_resources: vlans
+  - name: Gather vlans facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: vlans
 
-- name: Replaced
-  nxos_vlans: &replaced
-    config:
-      - vlan_id: 6
-        state: suspend
-    state: replaced
-  register: result
+  - name: Replaced
+    nxos_vlans: &replaced
+      config:
+        - vlan_id: 6
+          state: suspend
+      state: replaced
+    register: result
 
-- assert:
-    that:
-      - "ansible_facts.network_resources.vlans|symmetric_difference(result.before)|length == 0"
-      - "result.changed == true"
+  - assert:
+      that:
+        - "ansible_facts.network_resources.vlans|symmetric_difference(result.before)|length == 0"
+        - "result.changed == true"
+        - "'vlan 6' in result.commands"
+        - "'no name' in result.commands"
+        - "'state suspend' in result.commands"
 
-- name: Gather vlans post facts
-  nxos_facts: *facts
+  - name: Gather vlans post facts
+    nxos_facts: *facts
 
-- assert:
-    that:
-      - "ansible_facts.network_resources.vlans|symmetric_difference(result.after)|length == 0"
+  - assert:
+      that:
+        - "ansible_facts.network_resources.vlans|symmetric_difference(result.after)|length == 0"
 
-- name: Idempotence - Replaced
-  nxos_vlans: *replaced
-  register: result
+  - name: Idempotence - Replaced
+    nxos_vlans: *replaced
+    register: result
 
-- assert:
-    that:
-      - "result.changed == false"
+  - assert:
+      that:
+        - "result.changed == false"
 
-- name: teardown
-  cli_config: *cleanup
+  always:
+  - name: teardown
+    cli_config: *cleanup
