@@ -251,47 +251,41 @@
     that:
     - not template_to_dir_again is changed
 
-# VERIFY MODE
-# can't set file mode on windows so commenting this test out
-#- name: set file mode
-#  win_file: path={{win_output_dir}}/foo.templated mode=0644
-#  register: file_result
+- name: template a file with utf-8 encoding
+  win_template:
+    src: foo.utf-8.j2
+    dest: '{{ win_output_dir }}\foo.encoding.txt'
+  register: template_utf8
 
-#- name: ensure file mode did not change
-#  assert:
-#    that:
-#      - "file_result.changed != True"
+- name: slurp utf-8 templated file
+  slurp:
+    path: '{{ win_output_dir }}\foo.encoding.txt'
+  register: template_utf8_actual
 
-# commenting out all the following tests as expanduser and file modes not windows concepts.
+- name: get expected templated contents
+  set_fact:
+    expected_content: '{{ lookup("template", "foo.utf-8.j2") | trim }}'
 
-# VERIFY dest as a directory does not break file attributes
-# Note: expanduser is needed to go down the particular codepath that was broken before
-#- name: setup directory for test
-#  win_file: state=directory dest={{win_output_dir | expanduser}}/template-dir mode=0755 owner=nobody group=root
+- name: assert template a file with utf-8 encoding
+  assert:
+    that:
+    - template_utf8 is changed
+    - template_utf8_actual.content | b64decode(encoding='utf-8') == expected_content + "\r\n"
 
-#- name: set file mode when the destination is a directory
-#  win_template: src=foo.j2 dest={{win_output_dir | expanduser}}/template-dir/ mode=0600 owner=root group=root
+- name: template a file with windows-1252 encoding
+  win_template:
+    src: foo.utf-8.j2
+    dest: '{{ win_output_dir }}\foo.encoding.txt'
+    output_encoding: windows-1252
+  register: template_windows_1252
 
-#- name: set file mode when the destination is a directory
-#  win_template: src=foo.j2 dest={{win_output_dir | expanduser}}/template-dir/ mode=0600 owner=root group=root
-#  register: file_result
-#
-#- name: check that the file has the correct attributes
-#  win_stat: path={{win_output_dir | expanduser}}/template-dir/foo.j2
-#  register: file_attrs
-#
-#- assert:
-#    that:
-#      - "file_attrs.stat.uid == 0"
-#      - "file_attrs.stat.pw_name == 'root'"
-#      - "file_attrs.stat.mode == '0600'"
-#
-#- name: check that the containing directory did not change attributes
-#  win_stat: path={{win_output_dir | expanduser}}/template-dir/
-#  register: dir_attrs
-#
-#- assert:
-#    that:
-#      - "dir_attrs.stat.uid != 0"
-#      - "dir_attrs.stat.pw_name == 'nobody'"
-#      - "dir_attrs.stat.mode == '0755'"
+- name: slurp windows-1252 encoding
+  slurp:
+    path: '{{ win_output_dir }}\foo.encoding.txt'
+  register: template_windows_1252_actual
+
+- name: assert template a file with windows-1252 encoding
+  assert:
+    that:
+    - template_windows_1252 is changed
+    - template_windows_1252_actual.content | b64decode(encoding='windows-1252') == expected_content + "\r\n"
