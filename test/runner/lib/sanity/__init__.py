@@ -551,6 +551,32 @@ class SanityCodeSmellTest(SanityTest):
         if self.config:
             self.enabled = not self.config.get('disabled')
 
+            self.output = self.config.get('output')  # type: t.Optional[str]
+            self.extensions = self.config.get('extensions')  # type: t.List[str]
+            self.prefixes = self.config.get('prefixes')  # type: t.List[str]
+            self.files = self.config.get('files')  # type: t.List[str]
+            self.always = self.config.get('always')  # type: bool
+            self.text = self.config.get('text')  # type: t.Optional[bool]
+            self.ignore_changes = self.config.get('ignore_changes')  # type: bool
+            self.ignore_self = self.config.get('ignore_self')  # type: bool
+
+            if self.ignore_changes:
+                self.always = False
+        else:
+            self.output = None
+            self.extensions = []
+            self.prefixes = []
+            self.files = []
+            self.always = False
+            self.text = None  # type: t.Optional[bool]
+            self.ignore_changes = False
+            self.ignore_self = False
+
+    @property
+    def can_skip(self):  # type: () -> bool
+        """True if the test supports skip entries."""
+        return not self.always
+
     def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
@@ -570,47 +596,37 @@ class SanityCodeSmellTest(SanityTest):
         paths = []
 
         if self.config:
-            output = self.config.get('output')
-            extensions = self.config.get('extensions')
-            prefixes = self.config.get('prefixes')
-            files = self.config.get('files')
-            always = self.config.get('always')
-            text = self.config.get('text')
-            ignore_changes = self.config.get('ignore_changes')
-            ignore_self = self.config.get('ignore_self')
-
-            if output == 'path-line-column-message':
+            if self.output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
-            elif output == 'path-message':
+            elif self.output == 'path-message':
                 pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
             else:
-                pattern = ApplicationError('Unsupported output type: %s' % output)
+                pattern = ApplicationError('Unsupported output type: %s' % self.output)
 
-            if ignore_changes:
+            if self.ignore_changes:
                 paths = sorted(i.path for i in targets.targets)
-                always = False
             else:
                 paths = sorted(i.path for i in targets.include)
 
-            if always:
+            if self.always:
                 paths = []
 
-            if text is not None:
-                if text:
+            if self.text is not None:
+                if self.text:
                     paths = [p for p in paths if not is_binary_file(p)]
                 else:
                     paths = [p for p in paths if is_binary_file(p)]
 
-            if extensions:
-                paths = [p for p in paths if os.path.splitext(p)[1] in extensions or (p.startswith('bin/') and '.py' in extensions)]
+            if self.extensions:
+                paths = [p for p in paths if os.path.splitext(p)[1] in self.extensions or (p.startswith('bin/') and '.py' in self.extensions)]
 
-            if prefixes:
-                paths = [p for p in paths if any(p.startswith(pre) for pre in prefixes)]
+            if self.prefixes:
+                paths = [p for p in paths if any(p.startswith(pre) for pre in self.prefixes)]
 
-            if files:
-                paths = [p for p in paths if os.path.basename(p) in files]
+            if self.files:
+                paths = [p for p in paths if os.path.basename(p) in self.files]
 
-            if ignore_self and data_context().content.is_ansible:
+            if self.ignore_self and data_context().content.is_ansible:
                 relative_self_path = os.path.relpath(self.path, data_context().content.root)
 
                 if relative_self_path in paths:
@@ -618,7 +634,7 @@ class SanityCodeSmellTest(SanityTest):
 
             paths = settings.filter_skipped_paths(paths)
 
-            if not paths and not always:
+            if not paths and not self.always:
                 return SanitySkipped(self.name)
 
             data = '\n'.join(paths)
