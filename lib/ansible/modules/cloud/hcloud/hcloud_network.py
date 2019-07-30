@@ -24,7 +24,7 @@ version_added: "2.9"
 
 description:
     - Create, update and manage cloud Networks on the Hetzner Cloud.
-    - You need at least hcloud-python 1.3.0
+    - You need at least hcloud-python 1.3.0.
 
 author:
     - Lukas Kaemmerling (@lkaemmerling)
@@ -33,7 +33,7 @@ options:
     id:
         description:
             - The ID of the Hetzner Cloud Networks to manage.
-            - Only required if no Network I(name) is given
+            - Only required if no Network I(name) is given.
         type: int
     name:
         description:
@@ -42,7 +42,7 @@ options:
         type: str
     ip_range:
         description:
-            - IP-Range of the Network
+            - IP range of the Network.
             - Required if Network does not exists.
         type: str
     labels:
@@ -78,7 +78,7 @@ EXAMPLES = """
 RETURN = """
 hcloud_network:
     description: The Network
-    returned: Always
+    returned: always
     type: complex
     contains:
         id:
@@ -117,7 +117,7 @@ except ImportError:
 
 class AnsibleHcloudNetwork(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_network")
+        super(AnsibleHcloudNetwork, self).__init__(module, "hcloud_network")
         self.hcloud_network = None
 
     def _prepare_result(self):
@@ -206,7 +206,7 @@ def main():
     module = AnsibleHcloudNetwork.define_module()
 
     hcloud = AnsibleHcloudNetwork(module)
-    state = module.params.get("state")
+    state = module.params["state"]
     if state == "absent":
         hcloud.delete_network()
     elif state == "present":
