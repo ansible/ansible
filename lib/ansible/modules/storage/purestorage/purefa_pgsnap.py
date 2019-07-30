@@ -60,6 +60,21 @@ options:
     - If not supplied this will default to the volume defined in I(restore)
     type: str
     version_added: 2.8
+  now:
+    description: Whether to initiate a snapshot of the protection group immeadiately
+    type: bool
+    default: False
+    version_added: 2.9
+  apply_retention:
+    description: Apply retention schedule settings to the snapshot
+    type: bool
+    default: False
+    version_added: 2.9
+  remote:
+    description: Force immeadiate snapshot to remote targets
+    type: bool
+    default: False
+    version_added: 2.9
 extends_documentation_fragment:
 - purestorage.fa
 '''
@@ -101,6 +116,17 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
     state: copy
+
+- name: Create snapshot of existing pgroup foo with suffix and force immeadiate copy to remote targets
+  purefa_pgsnap:
+    name: pgname
+    suffix: force
+    now: True
+    apply_retention: True
+    remote: True
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: copy
 '''
 
 RETURN = r'''
@@ -135,7 +161,7 @@ def get_rpgsnapshot(module, array):
     """Return iReplicated Snapshot or None"""
     try:
         snapname = module.params['name'] + "." + module.params['suffix'] + "." + module.params['restore']
-        for snap in array.list_volumes(snap='true'):
+        for snap in array.list_volumes(snap=True):
             if snap['name'] == snapname:
                 return snapname
     except Exception:
@@ -143,10 +169,10 @@ def get_rpgsnapshot(module, array):
 
 
 def get_pgsnapshot(module, array):
-    """Return Snapshot or None"""
+    """Return Snapshot (active or deleted) or None"""
     try:
         snapname = module.params['name'] + "." + module.params['suffix']
-        for snap in array.get_pgroup(module.params['name'], snap='true'):
+        for snap in array.get_pgroup(module.params['name'], snap=True, pending=True):
             if snap['name'] == snapname:
                 return snapname
     except Exception:
@@ -155,48 +181,63 @@ def get_pgsnapshot(module, array):
 
 def create_pgsnapshot(module, array):
     """Create Protection Group Snapshot"""
-    try:
-        array.create_pgroup_snapshot(source=module.params['name'],
-                                     suffix=module.params['suffix'],
-                                     snap=True,
-                                     apply_retention=True)
-        changed = True
-    except Exception:
-        changed = False
+    changed = True
+    if not module.check_mode:
+        try:
+            if module.params['now'] and array.get_pgroup(module.params['name'])['targets'] is not None:
+                array.create_pgroup_snapshot(source=module.params['name'],
+                                             suffix=module.params['suffix'],
+                                             snap=True,
+                                             apply_retention=module.params['apply_retention'],
+                                             replicate_now=module.params['remote'])
+            else:
+                array.create_pgroup_snapshot(source=module.params['name'],
+                                             suffix=module.params['suffix'],
+                                             snap=True,
+                                             apply_retention=module.params['apply_retention'])
+        except Exception:
+            module.fail_json(msg="Snapshot of pgroup {0} failed.".format(module.params['name']))
     module.exit_json(changed=changed)
 
 
 def restore_pgsnapvolume(module, array):
     """Restore a Protection Group Snapshot Volume"""
-    volume = module.params['name'] + "." + module.params['suffix'] + "." + module.params['restore']
-    try:
-        array.copy_volume(volume, module.params['target'], overwrite=module.params['overwrite'])
-        changed = True
-    except Exception:
-        changed = False
+    changed = True
+    if not module.check_mode:
+        if ":" in module.params['name']:
+            if get_rpgsnapshot(module, array)is None:
+                module.fail_json(msg="Selected restore snapshot {0} does not exist in the Protection Group".format(module.params['restore']))
+        else:
+            if get_pgroupvolume(module, array) is None:
+                module.fail_json(msg="Selected restore volume {0} does not exist in the Protection Group".format(module.params['restore']))
+        volume = module.params['name'] + "." + module.params['suffix'] + "." + module.params['restore']
+        try:
+            array.copy_volume(volume, module.params['target'], overwrite=module.params['overwrite'])
+        except Exception:
+            module.fail_json(msg="Failed to restore {0} from pgroup {1}".format(volume, module.params['name']))
     module.exit_json(changed=changed)
 
 
 def update_pgsnapshot(module, array):
     """Update Protection Group Snapshot"""
-    changed = False
+    changed = True
     module.exit_json(changed=changed)
 
 
 def delete_pgsnapshot(module, array):
     """ Delete Protection Group Snapshot"""
-    snapname = module.params['name'] + "." + module.params['suffix']
-    try:
-        array.destroy_pgroup(snapname)
-        changed = True
-        if module.params['eradicate']:
-            try:
-                array.eradicate_pgroup(snapname)
-                changed = True
-            except Exception:
-                changed = False
-    except Exception:
-        changed = False
+    changed = True
+    if not module.check_mode:
+        snapname = module.params['name'] + "." + module.params['suffix']
+        try:
+            array.destroy_pgroup(snapname)
+            if module.params['eradicate']:
+                try:
+                    array.eradicate_pgroup(snapname)
+                except Exception:
+                    module.fail_json(msg="Failed to eradicate pgroup {0}".format(snapname))
+        except Exception:
+            module.fail_json(msg="Failed to delete pgroup {0}".format(snapname))
     module.exit_json(changed=changed)
 
 
@@ -209,6 +250,9 @@ def main():
         overwrite=dict(type='bool', default=False),
         target=dict(type='str'),
         eradicate=dict(type='bool', default=False),
+        now=dict(type='bool', default=False),
+        apply_retention=dict(type='bool', default=False),
+        remote=dict(type='bool', default=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'copy']),
     ))
 
@@ -216,7 +260,7 @@ def main():
 
     module = AnsibleModule(argument_spec,
                            required_if=required_if,
-                           supports_check_mode=False)
+                           supports_check_mode=True)
 
     if module.params['suffix'] is None:
         suffix = "snap-" + str((datetime.utcnow() - datetime(1970, 1, 1, 0, 0, 0, 0)).total_seconds())
@@ -229,26 +273,14 @@ def main():
     array = get_system(module)
     pgroup = get_pgroup(module, array)
     if pgroup is None:
-        module.fail_json(msg="Protection Group {0} does not exist".format(module.params['name']))
+        module.fail_json(msg="Protection Group {0} does not exist.".format(module.params['name']))
     pgsnap = get_pgsnapshot(module, array)
-    if pgsnap is None:
-        module.fail_json(msg="Selected volume {0} does not exist in the Protection Group".format(module.params['name']))
-    if ":" in module.params['name']:
-        rvolume = get_rpgsnapshot(module, array)
-        if rvolume is None:
-            module.fail_json(msg="Selected restore snapshot {0} does not exist in the Protection Group".format(module.params['restore']))
-    else:
-        rvolume = get_pgroupvolume(module, array)
-        if rvolume is None:
-            module.fail_json(msg="Selected restore volume {0} does not exist in the Protection Group".format(module.params['restore']))
 
-    if state == 'copy' and rvolume:
+    if state == 'copy':
         restore_pgsnapvolume(module, array)
-    elif state == 'present' and pgroup and not pgsnap:
+    elif state == 'present' and not pgsnap:
         create_pgsnapshot(module, array)
-    elif state == 'present' and pgroup and pgsnap:
-        update_pgsnapshot(module, array)
-    elif state == 'present' and not pgroup:
+    elif state == 'present' and pgsnap:
         update_pgsnapshot(module, array)
     elif state == 'absent' and pgsnap:
         delete_pgsnapshot(module, array)
