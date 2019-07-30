@@ -133,7 +133,7 @@ class ActionModule(ActionBase):
 
             dest = dest.replace("//", "/")
 
-            if remote_checksum in ('0', '1', '2', '3', '4', '5'):
+            if validate_checksum and remote_checksum in ('0', '1', '2', '3', '4', '5'):
                 result['changed'] = False
                 result['file'] = source
                 if remote_checksum == '0':
