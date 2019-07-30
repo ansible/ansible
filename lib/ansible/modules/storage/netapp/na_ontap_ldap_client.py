@@ -6,12 +6,6 @@ GNU General Public License v3.0+
 '''
 
 from __future__ import absolute_import, division, print_function
-import traceback
-import ansible.module_utils.netapp as netapp_utils
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.netapp_module import NetAppModule
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -46,7 +40,7 @@ options:
     required: true
     type: str
 
-  client_config:
+  name:
     description:
     - The name of LDAP client configuration
     required: true
@@ -55,13 +49,13 @@ options:
   ldap_servers:
     description:
     - Comma separated list of LDAP servers. FQDN's or IP addreses
-    - Required when state=present
+    - Required if I(state=present).
     type: list
 
   schema:
     description:
     - LDAP schema
-    - Required when state=present
+    - Required if I(state=present).
     choices: ['AD-IDMU', 'AD-SFU', 'MS-AD-BIS', 'RFC-2307']
     type: str
 
@@ -112,6 +106,7 @@ options:
     description:
     - LDAP Referral Chasing
     choices: ['true', 'false']
+    type: str
 
   session_security:
     description:
@@ -125,7 +120,7 @@ EXAMPLES = '''
     - name: Create LDAP client
       na_ontap_ldap_client:
         state:         present
-        client_config: 'example_ldap'
+        name:          'example_ldap'
         vserver:       'vserver1'
         ldap_servers:  'ldap1.example.company.com,ldap2.example.company.com'
         base_dn:       'dc=example,dc=company,dc=com'
@@ -137,6 +132,12 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
+
+import traceback
+import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -153,13 +154,13 @@ class NetAppOntapLDAPClient(object):
             base_scope=dict(required=False, default=None, choices=['subtree', 'onelevel', 'base']),
             bind_dn=dict(required=False, default=None, type='str'),
             bind_password=dict(type='str', required=False, default=None, no_log=True),
-            client_config=dict(required=True, type='str'),
-            ldap_servers=dict(required=False, type='list'),
+            name=dict(required=True, type='str'),
+            ldap_servers=dict(required_if=[["state", "present"]], type='list'),
             min_bind_level=dict(required=False, default=None, choices=['anonymous', 'simple', 'sasl']),
             port=dict(required=False, default=None, type='int'),
             query_timeout=dict(required=False, default=None, type='int'),
             referral_enabled=dict(required=False, default=None, choices=['true', 'false']),
-            schema=dict(required=False, default=None, type='str', choices=['AD-IDMU', 'AD-SFU', 'MS-AD-BIS', 'RFC-2307']),
+            schema=dict(required_if=[["state", "present"]], default=None, type='str', choices=['AD-IDMU', 'AD-SFU', 'MS-AD-BIS', 'RFC-2307']),
             session_security=dict(required=False, default=None, choices=['true', 'false']),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             use_start_tls=dict(required=False, default=None, choices=['true', 'false']),
@@ -192,21 +193,7 @@ class NetAppOntapLDAPClient(object):
             'use_start_tls'
         ]
 
-        # Handle required parameters for state=present
-        if self.module.params.get('state') == 'present':
-            required_when_present = ('ldap_servers', 'schema')
-            msg = ""
-            missing_param = False
-
-            for param in required_when_present:
-                if not self.module.params.get(param):
-                    msg += "Option '" + str(param) + "' is required  when 'state' = 'present'.\n"
-                    missing_param = True
-
-            if missing_param:
-                self.module.fail_json(msg=msg)
-
-    def get_ldap_client(self, client_config_name=None):
+    def get_ldap_client(self, client_config_name=None, vserver_name=None):
         '''
         Checks if LDAP client config exists.
 
@@ -219,15 +206,19 @@ class NetAppOntapLDAPClient(object):
         client_config_info = netapp_utils.zapi.NaElement('ldap-client-get-iter')
 
         if client_config_name is None:
-            client_config_name = self.parameters['client_config']
+            client_config_name = self.parameters['name']
 
-        query_details = netapp_utils.zapi.NaElement.create_node_with_children('ldap-client', **{'ldap-client-config': client_config_name})
+        if vserver_name is None:
+            vserver_name = '*'
+
+        query_details = netapp_utils.zapi.NaElement.create_node_with_children('ldap-client',
+                                                                              **{'ldap-client-config': client_config_name, 'vserver': vserver_name})
 
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         client_config_info.add_child_elem(query)
 
-        result = self.server.invoke_successfully(client_config_info, enable_tunneling=True)
+        result = self.server.invoke_successfully(client_config_info, enable_tunneling=False)
 
         # Get LDAP client configuration details
         client_config_details = None
@@ -244,7 +235,7 @@ class NetAppOntapLDAPClient(object):
                     ldap_server_list.append(ldap_server.get_content())
 
             # Define config details structure
-            client_config_details = {'client_config': client_config_info.get_child_content('ldap-client-config'),
+            client_config_details = {'name': client_config_info.get_child_content('ldap-client-config'),
                                      'ldap_servers': client_config_info.get_child_content('ldap-servers'),
                                      'base_dn': client_config_info.get_child_content('base-dn'),
                                      'base_scope': client_config_info.get_child_content('base-scope'),
@@ -273,7 +264,7 @@ class NetAppOntapLDAPClient(object):
             ldap_servers_element.add_new_child('string', ldap_server_name)
 
         options = {
-            'ldap-client-config': self.parameters['client_config'],
+            'ldap-client-config': self.parameters['name'],
             'schema': self.parameters['schema'],
         }
 
@@ -290,7 +281,7 @@ class NetAppOntapLDAPClient(object):
         try:
             self.server.invoke_successfully(ldap_client_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as errcatch:
-            self.module.fail_json(msg='Error creating LDAP client %s: %s' % (self.parameters['client_config'], to_native(errcatch)),
+            self.module.fail_json(msg='Error creating LDAP client %s: %s' % (self.parameters['name'], to_native(errcatch)),
                                   exception=traceback.format_exc())
 
     def delete_ldap_client(self):
@@ -298,7 +289,7 @@ class NetAppOntapLDAPClient(object):
         Delete LDAP client configuration
         '''
         ldap_client_delete = netapp_utils.zapi.NaElement.create_node_with_children(
-            'ldap-client-delete', **{'ldap-client-config': self.parameters['client_config']})
+            'ldap-client-delete', **{'ldap-client-config': self.parameters['name']})
 
         try:
             self.server.invoke_successfully(ldap_client_delete, enable_tunneling=True)
@@ -312,7 +303,7 @@ class NetAppOntapLDAPClient(object):
         :param modify: list of modify attributes
         '''
         ldap_client_modify = netapp_utils.zapi.NaElement('ldap-client-modify')
-        ldap_client_modify.add_new_child('ldap-client-config', self.parameters['client_config'])
+        ldap_client_modify.add_new_child('ldap-client-config', self.parameters['name'])
 
         for attribute in modify:
             # LDAP_servers
@@ -330,7 +321,7 @@ class NetAppOntapLDAPClient(object):
         try:
             self.server.invoke_successfully(ldap_client_modify, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as errcatch:
-            self.module.fail_json(msg='Error modifying LDAP client %s: %s' % (self.parameters['client_config'], to_native(errcatch)),
+            self.module.fail_json(msg='Error modifying LDAP client %s: %s' % (self.parameters['name'], to_native(errcatch)),
                                   exception=traceback.format_exc())
 
     def apply(self):
