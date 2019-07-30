@@ -209,7 +209,7 @@
   - assert:
      that:
        - local_duplicate_gid_result['results'][0] is success
-       - local_duplicate_gid_result['results'][1]['msg'] == "GID '1337' already exists"
+       - local_duplicate_gid_result['results'][1]['msg'] == "GID '1337' already exists with group 'group1_local_test'"
   always:
     - name: Cleanup
       group:
