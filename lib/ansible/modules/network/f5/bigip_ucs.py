@@ -34,6 +34,7 @@ options:
         ignored and only the filename will be used to select a UCS for removal.
         Therefore you could specify C(/mickey/mouse/test.ucs) and this module
         would only look for C(test.ucs).
+    type: str
   force:
     description:
       - If C(yes) will upload the file every time and replace the file on the
@@ -70,11 +71,12 @@ options:
         When C(absent), the UCS will be removed from the system. When
         C(installed), the uploading of the UCS is idempotent, however the
         installation of that configuration is not idempotent.
-    default: present
+    type: str
     choices:
       - absent
       - installed
       - present
+    default: present
 notes:
    - Only the most basic checks are performed by this module. Other checks and
      considerations need to be taken into account. See the following URL.
@@ -105,60 +107,66 @@ author:
 EXAMPLES = r'''
 - name: Upload UCS
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS.
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS without installing the license portion
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
     no_license: yes
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS except the license, and bypassing the platform check
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
     no_license: yes
     no_platform_check: yes
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS using a passphrase necessary to load the UCS
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
     passphrase: MyPassphrase1234
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove uploaded UCS file
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: bigip.localhost.localdomain.ucs
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -178,20 +186,14 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import tmos_version
     from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import tmos_version
     from ansible.module_utils.network.f5.icontrol import upload_file
 
@@ -300,8 +302,9 @@ class UsableChanges(Changes):
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
-        self.client = kwargs.get('client', None)
         self.kwargs = kwargs
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
 
     def exec_module(self):
         if self.is_version_v1():
@@ -335,7 +338,7 @@ class Difference(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
 
@@ -703,16 +706,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

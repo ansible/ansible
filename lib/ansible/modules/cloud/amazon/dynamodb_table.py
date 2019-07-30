@@ -128,7 +128,7 @@ RETURN = '''
 table_status:
     description: The current status of the table.
     returned: success
-    type: string
+    type: str
     sample: ACTIVE
 '''
 

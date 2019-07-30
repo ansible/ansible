@@ -29,22 +29,27 @@ options:
     all_facts:
         description:
             - Get all stack information for the stack
+        type: bool
         default: 'no'
     stack_events:
         description:
             - Get stack events for the stack
+        type: bool
         default: 'no'
     stack_template:
         description:
             - Get stack template body for the stack
+        type: bool
         default: 'no'
     stack_resources:
         description:
             - Get stack resources for the stack
+        type: bool
         default: 'no'
     stack_policy:
         description:
             - Get stack policy for the stack
+        type: bool
         default: 'no'
 extends_documentation_fragment:
     - aws
@@ -251,7 +256,7 @@ class CloudFormationServiceManager:
 def to_dict(items, key, value):
     ''' Transforms a list of items to a Key/Value dictionary '''
     if items:
-        return dict(zip([i[key] for i in items], [i[value] for i in items]))
+        return dict(zip([i.get(key) for i in items], [i.get(value) for i in items]))
     else:
         return dict()
 

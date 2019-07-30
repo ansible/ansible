@@ -112,17 +112,36 @@ EXAMPLES = '''
     record: "puppet"
     type: "CNAME"
     state: absent
+
+- name: Add 1.1.168.192.in-addr.arpa. PTR for ansible.example.org
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    record: "1.1.168.192.in-addr.arpa."
+    type: "PTR"
+    value: "ansible.example.org."
+    state: present
+
+- name: Remove 1.1.168.192.in-addr.arpa. PTR
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    record: "1.1.168.192.in-addr.arpa."
+    type: "PTR"
+    state: absent
 '''
 
 RETURN = '''
 changed:
     description: If module has modified record
     returned: success
-    type: string
+    type: str
 record:
     description: DNS record
     returned: success
-    type: string
+    type: str
     sample: 'ansible'
 ttl:
     description: DNS record TTL
@@ -132,7 +151,7 @@ ttl:
 type:
     description: DNS record type
     returned: success
-    type: string
+    type: str
     sample: 'CNAME'
 value:
     description: DNS record value(s)
@@ -142,7 +161,7 @@ value:
 zone:
     description: DNS record zone
     returned: success
-    type: string
+    type: str
     sample: 'example.org.'
 dns_rc:
     description: dnspython return code
@@ -152,13 +171,16 @@ dns_rc:
 dns_rc_str:
     description: dnspython return code (string representation)
     returned: always
-    type: string
+    type: str
     sample: 'REFUSED'
 '''
+
+import traceback
 
 from binascii import Error as binascii_error
 from socket import error as socket_error
 
+DNSPYTHON_IMP_ERR = None
 try:
     import dns.update
     import dns.query
@@ -168,9 +190,10 @@ try:
 
     HAVE_DNSPYTHON = True
 except ImportError:
+    DNSPYTHON_IMP_ERR = traceback.format_exc()
     HAVE_DNSPYTHON = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -396,7 +419,7 @@ def main():
     )
 
     if not HAVE_DNSPYTHON:
-        module.fail_json(msg='python library dnspython required: pip install dnspython')
+        module.fail_json(msg=missing_required_lib('dnspython'), exception=DNSPYTHON_IMP_ERR)
 
     if len(module.params["record"]) == 0:
         module.fail_json(msg='record cannot be empty.')

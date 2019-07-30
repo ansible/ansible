@@ -1,12 +1,16 @@
 """OpenNebula plugin for integration tests."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from lib.cloud import (
     CloudProvider,
-    CloudEnvironment
+    CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
     display,
+    ConfigParser,
 )
 
 
@@ -15,7 +19,6 @@ class OpenNebulaCloudProvider(CloudProvider):
 
     def filter(self, targets, exclude):
         """ no need to filter modules, they can either run from config file or from fixtures"""
-        pass
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
@@ -43,14 +46,19 @@ class OpenNebulaCloudEnvironment(CloudEnvironment):
     """
     Updates integration test environment after delegation. Will setup the config file as parameter.
     """
-
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        cmd.append('-e')
-        cmd.append('@%s' % self.config_path)
+        parser = ConfigParser()
+        parser.read(self.config_path)
 
-        cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
+        ansible_vars = dict(
+            resource_prefix=self.resource_prefix,
+        )
+
+        ansible_vars.update(dict(parser.items('default')))
+
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+        )

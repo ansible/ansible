@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlfirewallrule_facts
 version_added: "2.8"
-short_description: Get Azure PostgreSQL Firewall Rule facts.
+short_description: Get Azure PostgreSQL Firewall Rule facts
 description:
     - Get facts of Azure PostgreSQL Firewall Rule.
 
@@ -38,32 +38,33 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Get instance of PostgreSQL Firewall Rule
     azure_rm_postgresqlfirewallrule_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       server_name: server_name
       name: firewall_rule_name
 
   - name: List instances of PostgreSQL Firewall Rule
     azure_rm_postgresqlfirewallrule_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       server_name: server_name
 '''
 
 RETURN = '''
 rules:
-    description: A list of dictionaries containing facts for PostgreSQL Firewall Rule.
+    description:
+        - A list of dictionaries containing facts for PostgreSQL Firewall Rule.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/fire

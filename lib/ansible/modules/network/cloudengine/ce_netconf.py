@@ -28,7 +28,7 @@ short_description: Run an arbitrary netconf command on HUAWEI CloudEngine switch
 description:
     - Sends an arbitrary netconf command on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     rpc:
         description:
@@ -109,7 +109,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 end_state:
     description: k/v pairs of aaa params after module execution
@@ -180,7 +180,7 @@ def main():
         if "<data/>" in response:
             end_state["result"] = "<data/>"
         else:
-            tmp1 = response.xml.split(r"<data>")
+            tmp1 = response.split(r"<data>")
             tmp2 = tmp1[1].split(r"</data>")
             result = tmp2[0].split("\n")
 

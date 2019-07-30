@@ -1,0 +1,21 @@
+---
+- set_fact:
+    AnsibleVhdx: '{{ remote_tmp_dir }}\AnsiblePart.vhdx'
+
+- name: Copy VHDX scripts
+  win_template:
+    src: "{{ item.src }}"
+    dest: '{{ remote_tmp_dir }}\{{ item.dest }}'
+  loop:
+    - { src: partition_creation_script.j2, dest: partition_creation_script.txt }
+    - { src: partition_deletion_script.j2, dest: partition_deletion_script.txt }
+
+- name: Create partition
+  win_command: diskpart.exe /s {{ remote_tmp_dir }}\partition_creation_script.txt
+
+- name: Run tests
+  block:
+    - include: tests.yml
+  always:
+    - name: Detach disk
+      win_command: diskpart.exe /s {{ remote_tmp_dir }}\partition_deletion_script.txt

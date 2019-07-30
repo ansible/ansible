@@ -1,0 +1,4 @@
+---
+repository_name: My Get
+repository_sourcelocation: https://www.myget.org/F/powershellgetdemo/api/v2
+repository_sourcelocation2: '{{ remote_tmp_dir }}'

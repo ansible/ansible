@@ -60,20 +60,20 @@ If you make multiple changes to the documentation, or add more than a line to it
 #. Test your changes for rST errors.
 #. Build the page, and preferably the entire documentation site, locally.
 
-To work with documentation on your local machine, you need the following packages installed:
+To work with documentation on your local machine, you need to have python-3.5 or greater and the
+following packages installed:
 
-.. code-block:: none
-
-   - libyaml
-   - PyYAML
-   - nose
-   - six
-   - tornado
-   - pyparsing
-   - gcc
-   - jinja2
-   - rstcheck
-   - sphinx
+- gcc
+- jinja2
+- libyaml
+- Pygments >= 2.4.0
+- pyparsing
+- PyYAML
+- rstcheck
+- six
+- sphinx
+- sphinx-notfound-page
+- straight.plugin
 
 .. note::
 
@@ -162,6 +162,19 @@ For example:
 .. code-block:: bash
 
   sphinx-build -b html -c rst/ rst/dev_guide/ _build/html/dev_guide/ rst/dev_guide/developing_modules_documenting.rst
+
+Running the final tests
+^^^^^^^^^^^^^^^^^^^^^^^
+
+When you submit a documentation pull request, automated tests are run. Those same tests can be run locally. To do so, navigate to the repository's top directory and run:
+
+.. code-block:: bash
+
+  make clean &&
+  bin/ansible-test sanity --test docs-build &&
+  bin/ansible-test sanity --test rstcheck
+
+Unfortunately, leftover rST-files from previous document-generating can occasionally confuse these tests. It is therefore safest to run them on a clean copy of the repository, which is the purpose of ``make clean``. If you type these three lines one at a time and manually check the success of each, you do not need the ``&&``.
 
 Joining the documentation working group
 =======================================

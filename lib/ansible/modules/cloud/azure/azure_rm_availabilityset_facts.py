@@ -1,7 +1,7 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2016 Julien Stroheker, <juliens@microsoft.com>
+# -*- coding: utf-8 -*-
 
+# Copyright: (c) 2016, Julien Stroheker <juliens@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -17,7 +17,7 @@ module: azure_rm_availabilityset_facts
 
 version_added: "2.4"
 
-short_description: Get availability set facts.
+short_description: Get Azure Availability Set facts
 
 description:
     - Get facts for a specific availability set or all availability sets.
@@ -25,30 +25,30 @@ description:
 options:
     name:
         description:
-            - Limit results to a specific availability set
+            - Limit results to a specific availability set.
     resource_group:
         description:
-            - The resource group to search for the desired availability set
+            - The resource group to search for the desired availability set.
     tags:
         description:
-            - List of tags to be matched
+            - List of tags to be matched.
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Julien Stroheker (@julienstroheker)"
+    - Julien Stroheker (@julienstroheker)
 '''
 
 EXAMPLES = '''
     - name: Get facts for one availability set
       azure_rm_availabilityset_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all availability sets in a specific resource group
       azure_rm_availabilityset_facts:
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
 '''
 
@@ -56,25 +56,60 @@ RETURN = '''
 azure_availabilityset:
     description: List of availability sets dicts.
     returned: always
-    type: list
-    example: [{
-        "location": "eastus2",
-        "name": "myavailabilityset",
-        "properties": {
-            "platformFaultDomainCount": 3,
-            "platformUpdateDomainCount": 2,
-            "virtualMachines": []
-        },
-        "sku": "Aligned",
-        "type": "Microsoft.Compute/availabilitySets"
-    }]
+    type: complex
+    contains:
+        location:
+            description:
+                - Location where the resource lives.
+            type: str
+            sample: eastus2
+        name:
+            description:
+                - Resource name.
+            type: str
+            sample: myAvailabilitySet
+        properties:
+            description:
+                - The properties of the resource.
+            type: dict
+            contains:
+                platformFaultDomainCount:
+                    description:
+                        - Fault Domain count.
+                    type: int
+                    sample: 3
+                platformUpdateDomainCount:
+                    description:
+                        - Update Domain count.
+                    type: int
+                    sample: 2
+                virtualMachines:
+                    description:
+                        - A list of references to all virtualmachines in the availability set.
+                    type: list
+                    sample: []
+        sku:
+            description:
+                - Location where the resource lives.
+            type: str
+            sample: Aligned
+        type:
+            description:
+                - Resource type.
+            type: str
+            sample: "Microsoft.Compute/availabilitySets"
+        tags:
+            description:
+                - Resource tags.
+            type: dict
+            sample: { env: sandbox }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 
@@ -126,7 +161,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
     def get_item(self):
         """Get a single availability set"""
 
-        self.log('Get properties for {}'.format(self.name))
+        self.log('Get properties for {0}'.format(self.name))
 
         item = None
         result = []
@@ -153,7 +188,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
         try:
             response = self.compute_client.availability_sets.list(self.resource_group)
         except CloudError as exc:
-            self.fail('Failed to list all items - {}'.format(str(exc)))
+            self.fail('Failed to list all items - {0}'.format(str(exc)))
 
         results = []
         for item in response:

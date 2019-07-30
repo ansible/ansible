@@ -23,7 +23,7 @@ short_description: NetApp Element Software Create Volume Clone
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create volume clones on Element OS
 
@@ -95,7 +95,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
 
 """
 
@@ -233,7 +233,7 @@ class ElementOSVolumeClone(object):
         result_message = ""
 
         if self.get_account_id() is None:
-                self.module.fail_json(msg="Account id not found: %s" % (self.account_id))
+            self.module.fail_json(msg="Account id not found: %s" % (self.account_id))
 
         # there is only one state. other operations
         # are part of the volume module
@@ -245,7 +245,7 @@ class ElementOSVolumeClone(object):
             if self.get_src_volume_id() is not None:
                 # check for a valid snapshot
                 if self.src_snapshot_id and not self.get_snapshot_id():
-                        self.module.fail_json(msg="Snapshot id not found: %s" % (self.src_snapshot_id))
+                    self.module.fail_json(msg="Snapshot id not found: %s" % (self.src_snapshot_id))
                 # change required
                 changed = True
             else:

@@ -8,11 +8,11 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -29,20 +29,18 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_snmp import ApiParameters
-        from ansible.modules.network.f5.bigip_snmp import ModuleParameters
-        from ansible.modules.network.f5.bigip_snmp import ModuleManager
-        from ansible.modules.network.f5.bigip_snmp import ArgumentSpec
+    from ansible.modules.network.f5.bigip_snmp import ApiParameters
+    from ansible.modules.network.f5.bigip_snmp import ModuleParameters
+    from ansible.modules.network.f5.bigip_snmp import ModuleManager
+    from ansible.modules.network.f5.bigip_snmp import ArgumentSpec
 
-        # Ansible 2.8 imports
-        from units.compat import unittest
-        from units.compat.mock import Mock
-        from units.compat.mock import patch
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
 
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -74,9 +72,6 @@ class TestParameters(unittest.TestCase):
             contact='Alice@foo.org',
             device_warning_traps='enabled',
             location='Lunar orbit',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = ModuleParameters(params=args)
         assert p.agent_status_traps == 'enabled'
@@ -90,9 +85,6 @@ class TestParameters(unittest.TestCase):
             agent_status_traps='disabled',
             agent_authentication_traps='disabled',
             device_warning_traps='disabled',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = ModuleParameters(params=args)
         assert p.agent_status_traps == 'disabled'
@@ -134,9 +126,11 @@ class TestManager(unittest.TestCase):
     def test_update_agent_status_traps(self, *args):
         set_module_args(dict(
             agent_status_traps='enabled',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -170,9 +164,11 @@ class TestManager(unittest.TestCase):
                 'foo',
                 'baz.foo.com'
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -206,9 +202,11 @@ class TestManager(unittest.TestCase):
             allowed_addresses=[
                 'default'
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -238,9 +236,11 @@ class TestManager(unittest.TestCase):
     def test_update_allowed_addresses_empty(self, *args):
         set_module_args(dict(
             allowed_addresses=[''],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the

@@ -151,9 +151,9 @@ import sys
 import argparse
 import warnings
 import collections
-import ConfigParser
 
-from six import iteritems
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import configparser as ConfigParser
 
 import json
 
@@ -242,7 +242,7 @@ def _list_into_cache(regions):
             # pylint: disable=unexpected-keyword-arg
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, islist=True))
-    except:
+    except Exception:
         ip_versions = [4]
     else:
         ip_versions = [v for v in ip_versions if v in [4, 6]]

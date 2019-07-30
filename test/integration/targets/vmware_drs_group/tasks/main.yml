@@ -1,0 +1,99 @@
+# Test code for the vmware_drs_group module
+# Copyright: (c) 2018, Karsten Kaj Jakobsen <kj@patientsky.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+
+- name: Create VMs
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    folder: '{{ f0 }}'
+    name: test_vm1
+    state: poweredoff
+    guest_id: debian8_64Guest
+    disk:
+    - size_gb: 1
+      type: thin
+      datastore: '{{ ds2 }}'
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+      scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[{{ ds1 }}] fedora.iso"
+    networks:
+    - name: VM Network
+
+- name: Create DRS VM group
+  vmware_drs_group:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    # Options
+    cluster_name: '{{ ccr1 }}'
+    datacenter_name: '{{ dc1 }}'
+    group_name: TEST_VM_01
+    vms: "{{ virtual_machines_in_cluster | map(attribute='name') | list }}"
+    state: present
+  register: drs_vm_group_01_results
+
+- debug:
+    var: drs_vm_group_01_results
+
+- assert:
+    that:
+      - "drs_vm_group_01_results.changed"
+
+- when: vcsim is defined or esxi_hosts | length >= 3
+  block:
+  - name: Create DRS Host group
+    vmware_drs_group:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      cluster_name: '{{ ccr1 }}'
+      datacenter_name: '{{ dc1 }}'
+      group_name: TEST_HOST_01
+      hosts: "{{ esxi_hosts[0:3] }}"
+      state: present
+    register: drs_host_group_01_results
+
+  - debug:
+      var: drs_host_group_01_results
+
+  - assert:
+      that:
+        - "drs_host_group_01_results.changed"
+
+  - name: Delete DRS Host group
+    vmware_drs_group:
+      # Login creds
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      # Options
+      cluster_name: DC0_C0
+      datacenter_name: DC0
+      group_name: TEST_HOST_01
+      hosts: []
+      state: absent
+    register: drs_host_group_01_delete_results
+
+  - debug:
+      var: drs_host_group_01_delete_results
+
+  - assert:
+      that:
+        - "drs_host_group_01_delete_results.changed"

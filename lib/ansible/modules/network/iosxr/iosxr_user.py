@@ -83,6 +83,14 @@ options:
         `admin` user and the current defined set of users.
     type: bool
     default: false
+  admin:
+    description:
+      - Enters into administration configuration mode for making config
+        changes to the device.
+      - Applicable only when using network_cli transport
+    type: bool
+    default: false
+    version_added: "2.8"
   state:
     description:
       - Configures the state of the username definition
@@ -122,6 +130,12 @@ EXAMPLES = """
   iosxr_user:
     name: ansible
     configured_password: mypassword
+    state: present
+- name: create a new user in admin configuration mode
+  iosxr_user:
+    name: ansible
+    configured_password: mypassword
+    admin: True
     state: present
 - name: remove all users except admin
   iosxr_user:
@@ -192,6 +206,7 @@ from copy import deepcopy
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, is_netconf, is_cliconf
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_findall
@@ -201,12 +216,6 @@ try:
     HAS_B64 = True
 except ImportError:
     HAS_B64 = False
-
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 
 
 class PublicKeyManager(object):
@@ -478,7 +487,8 @@ class CliConfiguration(ConfigBase):
         self._result['commands'] = []
         if commands:
             commit = not self._module.check_mode
-            diff = load_config(self._module, commands, commit=commit)
+            admin = self._module.params['admin']
+            diff = load_config(self._module, commands, commit=commit, admin=admin)
             if diff:
                 self._result['diff'] = dict(prepared=diff)
 
@@ -638,6 +648,8 @@ def main():
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
+        admin=dict(type='bool', default=False),
+
         public_key=dict(),
         public_key_contents=dict(),
 
@@ -673,7 +685,7 @@ def main():
                 msg='library base64 is required but does not appear to be '
                     'installed. It can be installed using `pip install base64`'
             )
-        if not HAS_PARAMIKO:
+        if paramiko is None:
             module.fail_json(
                 msg='library paramiko is required but does not appear to be '
                     'installed. It can be installed using `pip install paramiko`'
@@ -688,8 +700,9 @@ def main():
 
     config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_user' is deprecated. Use transport netconf instead",
-                         version="2.9")
+        # Commenting the below cliconf deprecation support call for Ansible 2.9 as it'll be continued to be supported
+        # module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
+        #                  version='2.9')
         config_object = CliConfiguration(module, result)
     elif is_netconf(module):
         config_object = NCConfiguration(module, result)

@@ -13,7 +13,10 @@ from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
 from pylint.checkers import utils
 from pylint.checkers.utils import check_messages
-from pylint.checkers.strings import parse_format_method_string
+try:
+    from pylint.checkers.utils import parse_format_method_string
+except ImportError:
+    from pylint.checkers.strings import parse_format_method_string
 
 _PY3K = sys.version_info[:2] >= (3, 0)
 
@@ -71,7 +74,7 @@ class AnsibleStringFormatChecker(BaseChecker):
         if node.starargs or node.kwargs:
             return
         try:
-            fields, num_args, manual_pos = parse_format_method_string(strnode.value)
+            num_args = parse_format_method_string(strnode.value)[1]
         except utils.IncompleteFormatString:
             return
 

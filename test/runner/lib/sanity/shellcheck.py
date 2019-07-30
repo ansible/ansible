@@ -1,5 +1,6 @@
 """Sanity test using shellcheck."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 
@@ -8,8 +9,10 @@ from xml.etree.ElementTree import (
     Element,
 )
 
+import lib.types as t
+
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
@@ -18,8 +21,12 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
     read_lines_without_comments,
+    ANSIBLE_ROOT,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -27,21 +34,26 @@ from lib.config import (
 )
 
 
-class ShellcheckTest(SanitySingleVersion):
+class ShellcheckTest(SanityVersionNeutral):
     """Sanity test using shellcheck."""
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'AT1000'
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/shellcheck/skip.txt'
-        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True))
+        exclude_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/shellcheck/exclude.txt')
+        exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
 
-        exclude_file = 'test/sanity/shellcheck/exclude.txt'
-        exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True))
+        settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh' and i.path not in skip_paths)
+        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh')
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name)
@@ -81,6 +93,8 @@ class ShellcheckTest(SanitySingleVersion):
                     level=entry.attrib['severity'],
                     code=entry.attrib['source'].replace('ShellCheck.', ''),
                 ))
+
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results)

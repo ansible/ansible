@@ -1,0 +1,252 @@
+{
+    "fmgr_antivirus_profile_modify": [
+        {
+            "paramgram_used": {
+                "comment": null,
+                "smtp": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "extended-log": null,
+                "analytics-db": null,
+                "analytics-wl-filetype": null,
+                "av-virus-log": null,
+                "content-disarm": {
+                    "office-hylink": null,
+                    "pdf-act-gotor": null,
+                    "pdf-act-java": null,
+                    "original-file-destination": null,
+                    "cover-page": null,
+                    "pdf-act-sound": null,
+                    "detect-only": null,
+                    "office-embed": null,
+                    "office-linked": null,
+                    "pdf-javacode": null,
+                    "pdf-hyperlink": null,
+                    "pdf-embedfile": null,
+                    "office-macro": null,
+                    "pdf-act-form": null,
+                    "pdf-act-launch": null,
+                    "pdf-act-movie": null
+                },
+                "ftp": {
+                    "archive-block": null,
+                    "emulator": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "options": null
+                },
+                "mapi": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "options": null
+                },
+                "analytics-max-upload": null,
+                "nntp": {
+                    "archive-block": null,
+                    "emulator": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "options": null
+                },
+                "smb": {
+                    "archive-block": null,
+                    "emulator": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "options": null
+                },
+                "analytics-bl-filetype": null,
+                "http": {
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "adom": "ansible",
+                "av-block-log": null,
+                "pop3": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "inspection-mode": null,
+                "ftgd-analytics": null,
+                "imap": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "replacemsg-group": null,
+                "name": "Ansible_AV_Profile",
+                "scan-mode": null,
+                "nac-quar": {
+                    "infected": null,
+                    "log": null,
+                    "expiry": null
+                },
+                "mode": "delete",
+                "mobile-malware-db": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/antivirus/profile/Ansible_AV_Profile"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/antivirus/profile"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible Module TEST",
+                "ftp": {
+                    "outbreak-prevention": "files",
+                    "options": "scan",
+                    "archive-log": "timeout",
+                    "emulator": "disable",
+                    "archive-block": "encrypted"
+                },
+                "name": "Ansible_AV_Profile",
+                "scan-mode": "full",
+                "av-block-log": "enable",
+                "inspection-mode": "proxy",
+                "av-virus-log": "enable",
+                "ftgd-analytics": "everything",
+                "mobile-malware-db": "enable"
+            },
+            "paramgram_used": {
+                "comment": "Created by Ansible Module TEST",
+                "av-block-log": "enable",
+                "extended-log": null,
+                "analytics-db": null,
+                "analytics-wl-filetype": null,
+                "av-virus-log": "enable",
+                "content-disarm": {
+                    "pdf-act-movie": null,
+                    "pdf-act-gotor": null,
+                    "pdf-act-java": null,
+                    "original-file-destination": null,
+                    "cover-page": null,
+                    "pdf-act-sound": null,
+                    "detect-only": null,
+                    "office-embed": null,
+                    "pdf-embedfile": null,
+                    "office-linked": null,
+                    "pdf-javacode": null,
+                    "pdf-hyperlink": null,
+                    "office-hylink": null,
+                    "office-macro": null,
+                    "pdf-act-form": null,
+                    "pdf-act-launch": null
+                },
+                "ftp": {
+                    "outbreak-prevention": "files",
+                    "options": "scan",
+                    "archive-log": "timeout",
+                    "emulator": "disable",
+                    "archive-block": "encrypted"
+                },
+                "smtp": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "mapi": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "options": null
+                },
+                "analytics-max-upload": null,
+                "nntp": {
+                    "outbreak-prevention": null,
+                    "options": null,
+                    "archive-log": null,
+                    "emulator": null,
+                    "archive-block": null
+                },
+                "smb": {
+                    "outbreak-prevention": null,
+                    "options": null,
+                    "archive-log": null,
+                    "emulator": null,
+                    "archive-block": null
+                },
+                "analytics-bl-filetype": null,
+                "http": {
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "adom": "ansible",
+                "scan-mode": "full",
+                "pop3": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "inspection-mode": "proxy",
+                "ftgd-analytics": "everything",
+                "imap": {
+                    "executables": null,
+                    "archive-log": null,
+                    "outbreak-prevention": null,
+                    "emulator": null,
+                    "archive-block": null,
+                    "content-disarm": null,
+                    "options": null
+                },
+                "name": "Ansible_AV_Profile",
+                "replacemsg-group": null,
+                "nac-quar": {
+                    "infected": null,
+                    "log": null,
+                    "expiry": null
+                },
+                "mode": "set",
+                "mobile-malware-db": "enable"
+            },
+            "post_method": "set"
+        }
+    ]
+}

@@ -26,11 +26,14 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import traceback
+import json
 
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.network.common.netconf import NetconfConnection
 from ansible.module_utils.network.common.parsing import Cli
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
 
@@ -201,3 +204,31 @@ def register_transport(transport, default=False):
 
 def add_argument(key, value):
     NET_CONNECTION_ARGS[key] = value
+
+
+def get_resource_connection(module):
+    if hasattr(module, '_connection'):
+        return module._connection
+
+    capabilities = get_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
+        module._connection = Connection(module._socket_path)
+    elif network_api == 'netconf':
+        module._connection = NetconfConnection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type {0!s}'.format(network_api))
+
+    return module._connection
+
+
+def get_capabilities(module):
+    if hasattr(module, 'capabilities'):
+        return module._capabilities
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    module._capabilities = json.loads(capabilities)
+
+    return module._capabilities

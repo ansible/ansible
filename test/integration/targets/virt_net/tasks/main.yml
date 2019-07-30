@@ -1,0 +1,85 @@
+---
+- include_vars: '{{ item }}'
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_version}}.yml"
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - "default.yml"
+
+- block:
+    - name: Install libvirt packages
+      package:
+        name: "{{ virt_net_packages }}"
+
+    - name: Start libvirt
+      service:
+        name: libvirtd
+        state: started
+
+    - name: Define the foobar network
+      virt_net:
+        command: define
+        name: foobar
+        xml: '{{ lookup("file", "foobar.xml") }}'
+    
+    - name: Define the foobar network (again)
+      virt_net:
+        command: define
+        name: foobar
+        xml: '{{ lookup("file", "foobar.xml") }}'
+      register: second_virt_net_define
+    
+    - name: Start the default network
+      virt_net:
+        uri: qemu:///system
+        command: start
+        name: foobar
+    
+    - name: Start the default network (again)
+      virt_net:
+        uri: qemu:///system
+        command: start
+        name: foobar
+      register: second_virt_net_start
+
+    - name: Get facts for default network
+      virt_net:
+        uri: qemu:///system
+        command: facts
+        name: foobar
+      register: virt_net_facts
+
+    - name: Destroy the foobar network
+      virt_net:
+        command: destroy
+        name: foobar
+
+    - name: Undefine the foobar network
+      virt_net:
+        command: undefine
+        name: foobar
+      register: second_virt_net_define
+
+    - name: Undefine the foobar network (again)
+      virt_net:
+        command: undefine
+        name: foobar
+      register: second_virt_net_undefine
+
+    - name: Ensure the second calls return "unchanged"
+      assert:
+        that:
+          - "second_virt_net_start is not changed"
+          - "second_virt_net_define is not changed"
+          - "second_virt_net_undefine is not changed"
+    
+  always:
+    - name: Stop libvirt
+      service:
+        name: libvirtd
+        state: stopped
+
+    - name: Remove only the libvirt packages
+      package:
+        name: "{{ virt_net_packages|select('match', '.*libvirt.*')|list }}"
+        state: absent

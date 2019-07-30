@@ -1,0 +1,9 @@
+---
+default_rule_set: "{{ resource_prefix }}-default-rule-set"
+second_rule_set: "{{ resource_prefix }}-second-rule-set"
+
+# See comment in obtain-lock.yaml for definitions of these variables
+max_obtain_lock_attempts: 10
+obtain_lock_delay_seconds: 30
+lock_timeout_seconds: 900
+lock_log_group_prefix: "ansible-testing-locks/aws_ses_rule_set"

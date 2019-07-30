@@ -262,7 +262,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid).isActive()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if not state:
                 return self.module.exit_json(changed=True)
@@ -293,7 +293,7 @@ class LibvirtConnection(object):
             try:
                 state = self.find_entry(entryid).isActive()
                 return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
-            except:
+            except Exception:
                 return ENTRY_STATE_ACTIVE_MAP.get("inactive", "unknown")
 
     def get_uuid(self, entryid):
@@ -319,14 +319,14 @@ class LibvirtConnection(object):
                 result.append(device.get('path'))
         try:
             return result
-        except:
+        except Exception:
             raise ValueError('No devices specified')
 
     def get_format(self, entryid):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/pool/source/format')[0].get('type')
-        except:
+        except Exception:
             raise ValueError('Format not specified')
         return result
 
@@ -334,7 +334,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/pool/source/host')[0].get('name')
-        except:
+        except Exception:
             raise ValueError('Host not specified')
         return result
 
@@ -342,7 +342,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/pool/source/dir')[0].get('path')
-        except:
+        except Exception:
             raise ValueError('Source path not specified')
         return result
 
@@ -360,7 +360,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid)
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if not state:
                 return self.module.exit_json(changed=True)
@@ -371,7 +371,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid)
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if state:
                 return self.module.exit_json(changed=True)
@@ -386,7 +386,7 @@ class LibvirtConnection(object):
         else:
             try:
                 return self.find_entry(entryid).autostart()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
 
     def set_autostart(self, entryid, val):
@@ -395,7 +395,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid).autostart()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if bool(state) != val:
                 return self.module.exit_json(changed=True)
@@ -413,7 +413,7 @@ class LibvirtConnection(object):
         else:
             try:
                 self.find_entry(entryid)
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
 
 
@@ -578,7 +578,7 @@ def core(module):
 
         res['changed'] = False
         if state in ['active']:
-            if v.status(name) is not 'active':
+            if v.status(name) != 'active':
                 res['changed'] = True
                 res['msg'] = v.start(name)
         elif state in ['present']:
@@ -592,20 +592,20 @@ def core(module):
         elif state in ['inactive']:
             entries = v.list_pools()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     res['changed'] = True
                     res['msg'] = v.destroy(name)
         elif state in ['undefined', 'absent']:
             entries = v.list_pools()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     v.destroy(name)
                 res['changed'] = True
                 res['msg'] = v.undefine(name)
         elif state in ['deleted']:
             entries = v.list_pools()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     v.destroy(name)
                 v.delete(name, mode)
                 res['changed'] = True

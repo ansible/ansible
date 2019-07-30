@@ -18,7 +18,7 @@
     docker_container:
       name: "{{ item }}"
       state: absent
-      stop_timeout: 1
+      force_kill: yes
     loop: "{{ cnames }}"
   - name: "Make sure all networks are removed"
     docker_network:
@@ -27,5 +27,7 @@
       force: yes
     loop: "{{ dnetworks }}"
 
-  # Skip for CentOS 6
-  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
+  when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.20', '>=')  # FIXME: find out API version!
+
+- fail: msg="Too old docker / docker-py version to run docker_network tests!"
+  when: not(docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

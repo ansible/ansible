@@ -3,6 +3,8 @@
 # a script to check for illegal filenames on various Operating Systems. The
 # main rules are derived from restrictions on Windows
 # https://msdn.microsoft.com/en-us/library/aa365247#naming_conventions
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import re
@@ -55,8 +57,8 @@ ILLEGAL_END_CHARS = [
 
 def check_path(path, is_dir=False):
     type_name = 'directory' if is_dir else 'file'
-    parent, file_name = os.path.split(path)
-    name, ext = os.path.splitext(file_name)
+    file_name = os.path.basename(path)
+    name = os.path.splitext(file_name)[0]
 
     if name.upper() in ILLEGAL_NAMES:
         print("%s: illegal %s name %s" % (path, type_name, name.upper()))

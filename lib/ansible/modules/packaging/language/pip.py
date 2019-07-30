@@ -24,13 +24,16 @@ options:
     description:
       - The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of the remote package.
       - This can be a list (since 2.2) and contain version specifiers (since 2.7).
+    type: list
   version:
     description:
       - The version number to install of the Python library specified in the I(name) parameter.
+    type: str
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
         File can be specified as a relative path if using the chdir option.
+    type: str
   virtualenv:
     description:
       - An optional path to a I(virtualenv) directory to install into.
@@ -39,6 +42,7 @@ options:
         If the virtualenv does not exist, it will be created before installing
         packages. The optional virtualenv_site_packages, virtualenv_command,
         and virtualenv_python options affect the creation of the virtualenv.
+    type: path
   virtualenv_site_packages:
     description:
       - Whether the virtual environment will inherit packages from the
@@ -54,6 +58,7 @@ options:
       - The command or a pathname to the command to create the virtual
         environment with. For example C(pyvenv), C(virtualenv),
         C(virtualenv2), C(~/bin/virtualenv), C(/usr/local/bin/virtualenv).
+    type: path
     default: virtualenv
     version_added: "1.1"
   virtualenv_python:
@@ -63,16 +68,19 @@ options:
         Python version used to run the ansible module is used. This parameter
         should not be used when C(virtualenv_command) is using C(pyvenv) or
         the C(-m venv) module.
+    type: str
     version_added: "2.0"
   state:
     description:
       - The state of module
       - The 'forcereinstall' option is only available in Ansible 2.1 and above.
+    type: str
     choices: [ absent, forcereinstall, latest, present ]
     default: present
   extra_args:
     description:
       - Extra arguments passed to pip.
+    type: str
     version_added: "1.0"
   editable:
     description:
@@ -83,6 +91,7 @@ options:
   chdir:
     description:
       - cd into this directory before running the command
+    type: path
     version_added: "1.3"
   executable:
     description:
@@ -93,14 +102,16 @@ options:
         It cannot be specified together with the 'virtualenv' parameter (added in 2.1).
         By default, it will take the appropriate version for the python interpreter
         use by ansible, e.g. pip3 on python 3, and pip2 or pip on python 2.
+    type: path
     version_added: "1.3"
   umask:
     description:
       - The system umask to apply before installing the pip package. This is
         useful, for example, when installing on systems that have a very
-        restrictive umask by default (e.g., 0077) and you want to pip install
+        restrictive umask by default (e.g., "0077") and you want to pip install
         packages which are to be used by all users. Note that this requires you
-        to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
+        to specify desired umask mode as an octal string, (e.g., "0022").
+    type: str
     version_added: "2.1"
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
@@ -190,6 +201,11 @@ EXAMPLES = '''
     requirements: /my_app/requirements.txt
     extra_args: -i https://example.com/pypi/simple
 
+# Install specified python requirements offline from a local directory with downloaded packages.
+- pip:
+    requirements: /my_app/requirements.txt
+    extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
+
 # Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
 - pip:
     name: bottle
@@ -211,7 +227,7 @@ RETURN = '''
 cmd:
   description: pip command used by the module
   returned: success
-  type: string
+  type: str
   sample: pip2 install ansible six
 name:
   description: list of python modules targetted by pip
@@ -221,17 +237,17 @@ name:
 requirements:
   description: Path to the requirements file
   returned: success, if a requirements file was provided
-  type: string
+  type: str
   sample: "/srv/git/project/requirements.txt"
 version:
   description: Version of the package specified in 'name'
   returned: success, if a name and version were provided
-  type: string
+  type: str
   sample: "2.5.1"
 virtualenv:
   description: Path to the virtualenv
   returned: success, if a virtualenv path was provided
-  type: string
+  type: str
   sample: "/tmp/virtualenv"
 '''
 
@@ -350,10 +366,11 @@ def _is_present(module, req, installed_pkgs, pkg_command):
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
+            pkg_name = Package.canonicalize_name(pkg_name)
         else:
             continue
 
-        if pkg_name.lower() == req.package_name and req.is_satisfied_by(pkg_version):
+        if pkg_name == req.package_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
@@ -499,6 +516,8 @@ class Package:
     test whether a package is already satisfied.
     """
 
+    _CANONICALIZE_RE = re.compile(r'[-_.]+')
+
     def __init__(self, name_string, version_string=None):
         self._plain_package = False
         self.package_name = name_string
@@ -510,12 +529,12 @@ class Package:
             name_string = separator.join((name_string, version_string))
         try:
             self._requirement = Requirement.parse(name_string)
-            # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
-            if self._requirement.project_name == "distribute":
+            # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
+            if self._requirement.project_name == "distribute" and "setuptools" in name_string:
                 self.package_name = "setuptools"
                 self._requirement.project_name = "setuptools"
             else:
-                self.package_name = self._requirement.project_name
+                self.package_name = Package.canonicalize_name(self._requirement.project_name)
             self._plain_package = True
         except ValueError as e:
             pass
@@ -539,6 +558,11 @@ class Package:
                 for op, ver in self._requirement.specs
             )
 
+    @staticmethod
+    def canonicalize_name(name):
+        # This is taken from PEP 503.
+        return Package._CANONICALIZE_RE.sub("-", name).lower()
+
     def __str__(self):
         if self._plain_package:
             return to_native(self._requirement)
@@ -556,14 +580,13 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', default='present', choices=state_map.keys()),
-            name=dict(type='list'),
+            name=dict(type='list', elements='str'),
             version=dict(type='str'),
             requirements=dict(type='str'),
             virtualenv=dict(type='path'),
             virtualenv_site_packages=dict(type='bool', default=False),
             virtualenv_command=dict(type='path', default='virtualenv'),
             virtualenv_python=dict(type='str'),
-            use_mirrors=dict(type='bool', default=True),
             extra_args=dict(type='str'),
             editable=dict(type='bool', default=False),
             chdir=dict(type='path'),

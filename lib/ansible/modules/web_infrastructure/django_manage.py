@@ -80,16 +80,19 @@ options:
      - Will skip over out-of-order missing migrations, you can only use this parameter with I(migrate)
     required: false
     version_added: "1.3"
+    type: bool
   merge:
     description:
      - Will run out-of-order or missing migrations as they are not rollback migrations, you can only use this parameter with 'migrate' command
     required: false
     version_added: "1.3"
+    type: bool
   link:
     description:
      - Will create links to the files instead of copying them, you can only use this parameter with 'collectstatic' command
     required: false
     version_added: "1.3"
+    type: bool
 notes:
   - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
   - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.

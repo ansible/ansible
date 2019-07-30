@@ -1114,6 +1114,29 @@
           - 'result.changed'
       when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
+    # =========================================================================================
+    - name: add rules without descriptions ready for adding descriptions to existing rules
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        # purge the other rules so assertions work for the subsequent tests for rule descriptions
+        purge_rules_egress: true
+        purge_rules: true
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+      register: result
+
     # ============================================================
     - name: test adding a rule and egress rule descriptions (expected changed=true)
       ec2_group:
@@ -1187,6 +1210,7 @@
       # compatibility with this feature.
       assert:
         that:
+          - 'result.ip_permissions | length > 0'
           - 'result.changed'
       when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
 

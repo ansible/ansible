@@ -31,10 +31,12 @@ options:
     description:
     - Name of the cluster from all host systems to be used for facts gathering.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname to gather facts from.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -58,7 +60,7 @@ EXAMPLES = r'''
   register: features_set
 - set_fact:
     ssbd : "{{ item.value }}"
-  with_items: "{{ features_set.host_feature_facts[esxi_hostname] |json_query(name) }}"
+  loop: "{{ features_set.host_feature_facts[esxi_hostname] |json_query(name) }}"
   vars:
     name: "[?key=='cpuid.SSBD']"
 - assert:

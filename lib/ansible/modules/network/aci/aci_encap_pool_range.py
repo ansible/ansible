@@ -16,37 +16,36 @@ module: aci_encap_pool_range
 short_description: Manage encap ranges assigned to pools (fvns:EncapBlk, fvns:VsanEncapBlk)
 description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
-notes:
-- The C(pool) must exist in order to add or delete a range.
-- More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.5'
 options:
   allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, inherit, static]
     aliases: [ mode ]
   description:
     description:
     - Description for the pool range.
+    type: str
     aliases: [ descr ]
   pool:
     description:
     - The name of the pool that the range should be assigned to.
+    type: str
     aliases: [ pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, static]
     aliases: [ pool_mode ]
   pool_type:
     description:
     - The encap type of C(pool).
+    type: str
     required: yes
     aliases: [ type ]
     choices: [ vlan, vxlan, vsan]
@@ -58,6 +57,7 @@ options:
   range_name:
     description:
     - The name to give to the encap range.
+    type: str
     aliases: [ name, range ]
   range_start:
     description:
@@ -68,62 +68,103 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(pool) must exist in order to add or delete a range.
+seealso:
+- module: aci_encap_pool
+- module: aci_vlan_pool_encap_block
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
-- name: Add a new VLAN range
-  aci_vlan_pool_encap_block:
+- name: Add a new VLAN pool range
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
     pool_type: vlan
-    encap_start: 20
-    encap_end: 50
+    pool_allocation_mode: static
+    range_name: anstest
+    range_start: 20
+    range_end: 40
+    allocation_mode: inherit
     state: present
   delegate_to: localhost
 
-- name: Remove a VLAN range
-  aci_vlan_pool_encap_block:
+- name: Remove a VLAN pool range
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
     pool_type: vlan
-    encap_start: 20
-    encap_end: 50
+    pool_allocation_mode: static
+    range_name: anstest
+    range_start: 20
+    range_end: 40
     state: absent
   delegate_to: localhost
 
 - name: Query a VLAN range
-  aci_vlan_pool_encap_block:
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
     pool_type: vlan
-    encap_start: 20
-    encap_end: 50
+    pool_allocation_mode: static
+    range_name: anstest
+    range_start: 20
+    range_end: 50
     state: query
   delegate_to: localhost
   register: query_result
 
-- name: Query a VLAN pool for ranges
-  aci_vlan_pool_encap_block:
+- name: Query a VLAN pool for ranges by range_name
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
-    pool: production
     pool_type: vlan
+    range_name: anstest
     state: query
   delegate_to: localhost
   register: query_result
 
-- name: Query all VLAN ranges
-  aci_vlan_pool_encap_block:
+- name: Query a VLAN pool for ranges by range_start
+  aci_encap_pool_range:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    pool_type: vlan
+    range_start: 20
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query a VLAN pool for ranges by range_start and range_end
+  aci_encap_pool_range:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    pool_type: vlan
+    range_start: 20
+    range_end: 40
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all VLAN pool ranges
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -165,7 +206,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -214,17 +255,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -234,12 +275,12 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 ACI_POOL_MAPPING = dict(
     vlan=dict(
@@ -260,11 +301,11 @@ ACI_POOL_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
+        pool_type=dict(type='str', required=True, aliases=['type'], choices=['vlan', 'vxlan', 'vsan']),
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'inherit', 'static']),
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
-        pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
         range_end=dict(type='int', aliases=['end']),  # Not required for querying all objects
         range_name=dict(type='str', aliases=["name", "range"]),  # Not required for querying all objects
         range_start=dict(type='int', aliases=["start"]),  # Not required for querying all objects

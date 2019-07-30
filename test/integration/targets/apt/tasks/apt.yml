@@ -258,3 +258,62 @@
   assert:
     that:
       - apt_result is not changed
+
+# check policy_rc_d parameter 
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Uninstall unscd
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+  register: policy_rc_d
+
+- name: Check if /usr/sbin/policy-rc.d was correctly backed-up during unscd install
+  assert:
+    that: policy_rc_d is not changed
+
+- name: Delete /usr/sbin/policy-rc.d
+  file:
+    path: /usr/sbin/policy-rc.d
+    state: absent

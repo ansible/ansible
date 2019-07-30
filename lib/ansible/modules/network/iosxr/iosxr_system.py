@@ -17,7 +17,7 @@ module: iosxr_system
 version_added: "2.3"
 author:
   - "Peter Sprygada (@privateip)"
-  - "Kedar Kekan @kedarX"
+  - "Kedar Kekan (@kedarX)"
 short_description: Manage the system attributes on Cisco IOS XR devices
 description:
   - This module provides declarative management of node system attributes
@@ -573,8 +573,9 @@ def main():
 
     config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_system' is deprecated. Use transport netconf instead",
-                         version="2.9")
+        # Commenting the below cliconf deprecation support call for Ansible 2.9 as it'll be continued to be supported
+        # module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
+        #                  version='2.9')
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)

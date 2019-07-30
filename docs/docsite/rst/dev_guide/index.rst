@@ -1,3 +1,5 @@
+.. _developer_guide:
+
 ***************
 Developer Guide
 ***************
@@ -15,18 +17,27 @@ Find the task that best describes what you want to do:
    * I want to :ref:`add a custom plugin or module locally <developing_locally>`.
    * I want to figure out if :ref:`developing a module is the right approach <module_dev_should_you>` for my use case.
 
-* I'm ready to start developing:
+* I've read the info above, and I'm sure I want to develop a module:
 
+   * What do I need to know before I start coding?
    * I want to :ref:`set up my Python development environment <environment_setup>`.
    * I want to :ref:`get started writing a module <developing_modules_general>`.
-   * I want to :ref:`write a Windows module <developing_modules_general_windows>`.
+   * I want to write a specific kind of module:
+      * a :ref:`network module <developing_modules_network>`
+      * a :ref:`Windows module <developing_modules_general_windows>`.
+      * an :ref:`Amazon module <AWS_module_development>`.
+      * an :ref:`OpenStack module <OpenStack_module_development>`.
+      * an :ref:`oVirt/RHV module <oVirt_module_development>`.
+      * a :ref:`VMware module <VMware_module_development>`.
    * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
 
 * I want to refine my code:
 
    * I want to :ref:`debug my module code <debugging>`.
-   * I want to :ref:`test my module <developing_testing>`.
+   * I want to :ref:`add tests <developing_testing>`.
    * I want to :ref:`document my module <module_documenting>`.
+   * I want to :ref:`document my set of modules for a network platform <documenting_modules_network>`.
+   * I want to follow :ref:`conventions and tips for clean, usable module code <developing_modules_best_practices>`.
    * I want to :ref:`make sure my code runs on Python 2 and Python 3 <developing_python_3>`.
 
 * I want to work on other development projects:
@@ -37,6 +48,7 @@ Find the task that best describes what you want to do:
 
 * I want to contribute back to the Ansible project:
 
+  * I want to :ref:`understand how to contribute to Ansible <ansible_community_guide>`.
   * I want to :ref:`contribute my module or plugin <developing_modules_checklist>`.
   * I want to :ref:`understand the license agreement <contributor_license_agreement>` for contributions to Ansible.
 
@@ -55,6 +67,10 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_modules_documenting
    developing_modules_general_windows
    developing_modules_general_aci
+   platforms/aws_guidelines
+   platforms/openstack_guidelines
+   platforms/ovirt_dev_guide
+   platforms/vmware_guidelines
    developing_modules_in_groups
    testing
    module_lifecycle
@@ -65,4 +81,6 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_api
    developing_rebasing
    developing_module_utilities
+   collections_tech_preview
+   collections_galaxy_meta
    overview_architecture

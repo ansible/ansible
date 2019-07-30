@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages L3 attributes for IPv4 and IPv6 interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Layer 3 attributes for IPv4 and IPv6 interfaces on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - Interface must already be a L3 port when using this module.
     - Logical interfaces (loopback, vlanif) must be created first.
@@ -141,7 +141,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

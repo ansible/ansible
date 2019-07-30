@@ -1,0 +1,8 @@
+wf_tmp_dir: '{{ remote_tmp_dir }}/wildfly_tmp'
+wf_homedir: '{{ wf_tmp_dir }}/wildfly'
+wf_service_file_path: /etc/systemd/system/wildfly.service
+wf_version: 16.0.0.Final
+wf_user: wildfly
+jboss_root: '{{ wf_homedir }}'
+deploy_dir: '{{ jboss_root }}/standalone/deployments'
+default_deploy_root: /var/lib/jbossas/standalone/deployments

@@ -25,7 +25,7 @@ short_description:  NetApp Element Software Restore Snapshot
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Element OS Cluster restore snapshot to volume.
 
@@ -74,7 +74,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
 
 """
 import traceback

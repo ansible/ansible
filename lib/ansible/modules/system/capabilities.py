@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: capabilities
 short_description: Manage Linux capabilities
@@ -22,28 +22,31 @@ options:
     path:
         description:
             - Specifies the path to the file to be managed.
+        type: str
         required: yes
+        aliases: [ key ]
     capability:
         description:
             - Desired capability to set (with operator and flags, if state is C(present)) or remove (if state is C(absent))
+        type: str
         required: yes
         aliases: [ cap ]
     state:
         description:
             - Whether the entry should be present or absent in the file's capabilities.
+        type: str
         choices: [ absent, present ]
         default: present
 notes:
-    - The capabilities system will automatically transform operators and flags
-      into the effective set, so (for example, cap_foo=ep will probably become
-      cap_foo+ep). This module does not attempt to determine the final operator
-      and flags to compare, so you will want to ensure that your capabilities
-      argument matches the final capabilities.
+    - The capabilities system will automatically transform operators and flags into the effective set,
+      so for example, C(cap_foo=ep) will probably become C(cap_foo+ep).
+    - This module does not attempt to determine the final operator and flags to compare,
+      so you will want to ensure that your capabilities argument matches the final capabilities.
 author:
 - Nate Coraor (@natefoo)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set cap_sys_chroot+ep on /foo
   capabilities:
     path: /foo
@@ -145,7 +148,7 @@ class CapabilitiesModule(object):
             while opind == -1:
                 opind = cap.find(OPS[i])
                 i += 1
-        except:
+        except Exception:
             if op_required:
                 self.module.fail_json(msg="Couldn't find operator (one of: %s)" % str(OPS))
             else:

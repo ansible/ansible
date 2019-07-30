@@ -1,2 +1,0 @@
-minor_changes:
-- "docker_image - Allow to use image ID instead of image name for deleting images."

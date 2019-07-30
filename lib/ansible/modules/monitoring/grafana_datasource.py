@@ -17,6 +17,7 @@ DOCUMENTATION = '''
 module: grafana_datasource
 author:
   - Thierry Sallé (@seuf)
+  - Martin Wang (@martinwangjian)
 version_added: "2.5"
 short_description: Manage Grafana datasources
 description:
@@ -34,7 +35,7 @@ options:
     description:
      - The type of the datasource.
     required: true
-    choices: [ graphite, prometheus, elasticsearch, influxdb, opentsdb, mysql, postgres, alexanderzobnin-zabbix-datasource]
+    choices: [ graphite, prometheus, elasticsearch, influxdb, opentsdb, mysql, postgres, cloudwatch, alexanderzobnin-zabbix-datasource]
   url:
     description:
       - The URL of the datasource.
@@ -183,6 +184,56 @@ options:
     default: 'yes'
     type: bool
     version_added: 2.8
+  aws_auth_type:
+    description:
+      - Type for AWS authentication for CloudWatch datasource type (authType of grafana api)
+    default: 'keys'
+    choices: [ keys, credentials, arn ]
+    version_added: 2.8
+  aws_default_region:
+    description:
+      - AWS default region for CloudWatch datasource type
+    default: 'us-east-1'
+    choices: [
+      ap-northeast-1, ap-northeast-2, ap-southeast-1, ap-southeast-2, ap-south-1,
+      ca-central-1,
+      cn-north-1, cn-northwest-1,
+      eu-central-1, eu-west-1, eu-west-2, eu-west-3,
+      sa-east-1,
+      us-east-1, us-east-2, us-gov-west-1, us-west-1, us-west-2
+    ]
+    version_added: 2.8
+  aws_credentials_profile:
+    description:
+      - Profile for AWS credentials for CloudWatch datasource type when C(aws_auth_type) is C(credentials)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_access_key:
+    description:
+      - AWS access key for CloudWatch datasource type when C(aws_auth_type) is C(keys)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_secret_key:
+    description:
+      - AWS secret key for CloudWatch datasource type when C(aws_auth_type) is C(keys)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_assume_role_arn:
+    description:
+      - AWS IAM role arn to assume for CloudWatch datasource type when C(aws_auth_type) is C(arn)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_custom_metrics_namespaces:
+    description:
+      - Namespaces of Custom Metrics for CloudWatch datasource type
+    default: ''
+    required: false
+    version_added: 2.8
+
 '''
 
 EXAMPLES = '''
@@ -194,7 +245,7 @@ EXAMPLES = '''
     grafana_user: "admin"
     grafana_password: "xxxxxx"
     org_id: "1"
-    ds_type: "elasticisearch"
+    ds_type: "elasticsearch"
     ds_url: "https://elastic.company.com:9200"
     database: "[logstash_]YYYY.MM.DD"
     basic_auth_user: "grafana"
@@ -218,6 +269,35 @@ EXAMPLES = '''
     database: "telegraf"
     time_interval: ">10s"
     tls_ca_cert: "/etc/ssl/certs/ca.pem"
+
+- name: Create postgres datasource
+  grafana_datasource:
+    name: "datasource-postgres"
+    grafana_url: "https://grafana.company.com"
+    grafana_user: "admin"
+    grafana_password: "xxxxxx"
+    org_id: "1"
+    ds_type: "postgres"
+    ds_url: "postgres.company.com:5432"
+    database: "db"
+    user: "postgres"
+    password: "iampgroot"
+    sslmode: "verify-full"
+
+- name: Create cloudwatch datasource
+  grafana_datasource:
+    name: "datasource-cloudwatch"
+    grafana_url: "https://grafana.company.com"
+    grafana_user: "admin"
+    grafana_password: "xxxxxx"
+    org_id: "1"
+    ds_type: "cloudwatch"
+    url: "http://monitoring.us-west-1.amazonaws.com"
+    aws_auth_type: "keys"
+    aws_default_region: "us-west-1"
+    aws_access_key: "speakFriendAndEnter"
+    aws_secret_key: "mel10n"
+    aws_custom_metrics_namespaces: "n1,n2"
 '''
 
 RETURN = '''
@@ -225,7 +305,7 @@ RETURN = '''
 name:
   description: name of the datasource created.
   returned: success
-  type: string
+  type: str
   sample: test-ds
 id:
   description: Id of the datasource
@@ -400,6 +480,20 @@ def grafana_create_datasource(module, data):
         if data.get('trends'):
             json_data['trends'] = True
 
+    if data['ds_type'] == 'cloudwatch':
+        if data.get('aws_credentials_profle'):
+            payload['database'] = data.get('aws_credentials_profile')
+
+        json_data['authType'] = data['aws_auth_type']
+        json_data['defaultRegion'] = data['aws_default_region']
+
+        if data.get('aws_custom_metrics_namespaces'):
+            json_data['customMetricsNamespaces'] = data.get('aws_custom_metrics_namespaces')
+        if data.get('aws_assume_role_arn'):
+            json_data['assumeRoleArn'] = data.get('aws_assume_role_arn')
+        if data.get('aws_access_key') and data.get('aws_secret_key'):
+            payload['secureJsonData'] = {'accessKey': data.get('aws_access_key'), 'secretKey': data.get('aws_secret_key')}
+
     payload['jsonData'] = json_data
 
     # define http header
@@ -509,6 +603,7 @@ def main():
                               'opentsdb',
                               'mysql',
                               'postgres',
+                              'cloudwatch',
                               'alexanderzobnin-zabbix-datasource']),
         url=dict(required=True, type='str', aliases=['ds_url']),
         access=dict(default='proxy', choices=['proxy', 'direct']),
@@ -534,6 +629,18 @@ def main():
         tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
         sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
         trends=dict(default=False, type='bool'),
+        aws_auth_type=dict(default='keys', choices=['keys', 'credentials', 'arn']),
+        aws_default_region=dict(default='us-east-1', choices=['ap-northeast-1', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2', 'ap-south-1',
+                                                              'ca-central-1',
+                                                              'cn-north-1', 'cn-northwest-1',
+                                                              'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3',
+                                                              'sa-east-1',
+                                                              'us-east-1', 'us-east-2', 'us-gov-west-1', 'us-west-1', 'us-west-2']),
+        aws_access_key=dict(default='', no_log=True, type='str'),
+        aws_secret_key=dict(default='', no_log=True, type='str'),
+        aws_credentials_profile=dict(default='', type='str'),
+        aws_assume_role_arn=dict(default='', type='str'),
+        aws_custom_metrics_namespaces=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -547,6 +654,7 @@ def main():
             ['ds_type', 'elasticsearch', ['database', 'es_version', 'time_field', 'interval']],
             ['ds_type', 'mysql', ['database']],
             ['ds_type', 'postgres', ['database', 'sslmode']],
+            ['ds_type', 'cloudwatch', ['aws_auth_type', 'aws_default_region']],
             ['es_version', 56, ['max_concurrent_shard_requests']]
         ],
     )

@@ -14,11 +14,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "9001"
+    - "9002"
     published_ports:
     - all
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_1
 
 - name: published_ports -- all (idempotency)
@@ -28,11 +28,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "9001"
+    - "9002"
     published_ports:
     - all
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_2
 
 - name: published_ports -- all (writing out 'all')
@@ -42,12 +42,12 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "9001"
+    - "9002"
     published_ports:
-    - 8080
-    - 8081
-    stop_timeout: 1
+    - "9001"
+    - "9002"
+    force_kill: yes
   register: published_ports_3
 
 - name: published_ports -- all (idempotency 2)
@@ -57,12 +57,12 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "9001"
+    - "9002"
     published_ports:
-    - 8080
-    - 8081
-    stop_timeout: 1
+    - "9002"
+    - "9001"
+    force_kill: yes
   register: published_ports_4
 
 - name: published_ports -- all (switching back to 'all')
@@ -72,18 +72,19 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "9001"
+    - "9002"
     published_ports:
     - all
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_5
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -104,12 +105,12 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 5000-5040
+    - "9001"
+    - "9010-9050"
     published_ports:
-    - 8080:8080
-    - 5000-5040:5000-5040
-    stop_timeout: 1
+    - "9001:9001"
+    - "9010-9050:9010-9050"
+    force_kill: yes
   register: published_ports_1
 
 - name: published_ports -- port range (idempotency)
@@ -119,12 +120,12 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 5000-5040
+    - "9001"
+    - "9010-9050"
     published_ports:
-    - 8080:8080
-    - 5000-5040:5000-5040
-    stop_timeout: 1
+    - "9001:9001"
+    - "9010-9050:9010-9050"
+    force_kill: yes
   register: published_ports_2
 
 - name: published_ports -- port range (different range)
@@ -134,19 +135,20 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 5000-5040
+    - "9001"
+    - "9010-9050"
     published_ports:
-    - 8080:8080
-    - 5010-5050:5010-5050
-    stop_timeout: 1
+    - "9001:9001"
+    - "9020-9060:9020-9060"
+    force_kill: yes
   register: published_ports_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -165,8 +167,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - "[::1]:8080:8080"
-    stop_timeout: 1
+    - "[::1]:9001:9001"
+    force_kill: yes
   register: published_ports_1
 
 - name: published_ports -- IPv6 (idempotency)
@@ -176,8 +178,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - "[::1]:8080:8080"
-    stop_timeout: 1
+    - "[::1]:9001:9001"
+    force_kill: yes
   register: published_ports_2
 
 - name: published_ports -- IPv6 (different IP)
@@ -187,8 +189,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 127.0.0.1:8080:8080
-    stop_timeout: 1
+    - "127.0.0.1:9001:9001"
+    force_kill: yes
   register: published_ports_3
 
 - name: published_ports -- IPv6 (hostname)
@@ -198,8 +200,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - localhost:8080:8080
-    stop_timeout: 1
+    - "localhost:9001:9001"
+    force_kill: yes
   register: published_ports_4
   ignore_errors: yes
 
@@ -207,7 +209,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:

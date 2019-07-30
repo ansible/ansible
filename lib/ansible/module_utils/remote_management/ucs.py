@@ -5,7 +5,7 @@
 # to the complete work.
 #
 # (c) 2016 Red Hat Inc.
-# (c) 2017 Cisco Systems Inc.
+# (c) 2019 Cisco Systems Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -27,11 +27,16 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import traceback
 
+from ansible.module_utils.basic import missing_required_lib
+
+UCSMSDK_IMP_ERR = None
 try:
     import ucsmsdk
     HAS_UCSMSDK = True
-except:
+except Exception:
+    UCSMSDK_IMP_ERR = traceback.format_exc()
     HAS_UCSMSDK = False
 
 ucs_argument_spec = dict(
@@ -51,7 +56,7 @@ class UCSModule():
         self.module = module
         self.result = {}
         if not HAS_UCSMSDK:
-            self.module.fail_json(msg='ucsmsdk is required for this module')
+            self.module.fail_json(msg=missing_required_lib('ucsmsdk'), exception=UCSMSDK_IMP_ERR)
         self.login()
 
     def __del__(self):
@@ -71,12 +76,14 @@ class UCSModule():
             proxy = {}
 
         try:
-            handle = UcsHandle(ip=self.module.params['hostname'],
-                               username=self.module.params['username'],
-                               password=self.module.params['password'],
-                               port=self.module.params['port'],
-                               secure=self.module.params['use_ssl'],
-                               proxy=proxy)
+            handle = UcsHandle(
+                ip=self.module.params['hostname'],
+                username=self.module.params['username'],
+                password=self.module.params['password'],
+                port=self.module.params['port'],
+                secure=self.module.params['use_ssl'],
+                proxy=proxy
+            )
             handle.login()
         except Exception as e:
             self.result['msg'] = str(e)
@@ -84,7 +91,7 @@ class UCSModule():
         self.login_handle = handle
 
     def logout(self):
-        if self.login_handle:
+        if hasattr(self, 'login_handle'):
             self.login_handle.logout()
             return True
         return False

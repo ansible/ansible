@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - the behavior is improved in case ``image`` is not specified, but needed for (re-)creating the container."

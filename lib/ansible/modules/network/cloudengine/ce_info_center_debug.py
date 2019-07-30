@@ -28,7 +28,7 @@ short_description: Manages information center debug configuration on HUAWEI Clou
 description:
     - Manages information center debug configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
@@ -113,7 +113,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -292,7 +292,7 @@ class InfoCenterDebug(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                global_cfg = root.findall("data/syslog/globalParam")
+                global_cfg = root.findall("syslog/globalParam")
                 if global_cfg:
                     for tmp in global_cfg:
                         tmp_dict = dict()
@@ -370,7 +370,7 @@ class InfoCenterDebug(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                source_cfg = root.findall("data/syslog/icSources/icSource")
+                source_cfg = root.findall("syslog/icSources/icSource")
                 if source_cfg:
                     for tmp in source_cfg:
                         tmp_dict = dict()

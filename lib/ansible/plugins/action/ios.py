@@ -19,28 +19,26 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
 import sys
 import copy
 
-from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.ios.ios import ios_provider_spec
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'ios_config' else False
         socket_path = None
 
         if self._play_context.connection == 'network_cli':
@@ -88,10 +86,9 @@ class ActionModule(_ActionModule):
         conn = Connection(socket_path)
         try:
             out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.send_command('exit')
-                out = conn.get_prompt()
+            if re.search(r'config.*\)#', to_text(out, errors='surrogate_then_replace').strip()):
+                display.vvvv('wrong context, sending end to device', self._play_context.remote_addr)
+                conn.send_command('end')
         except ConnectionError as exc:
             return {'failed': True, 'msg': to_text(exc)}
 

@@ -28,40 +28,40 @@ requirements:
     - "ssh-keygen"
 options:
     state:
-        required: false
-        default: present
-        choices: [ present, absent ]
         description:
             - Whether the private and public keys should exist or not, taking action if the state is different from what is stated.
+        type: str
+        default: present
+        choices: [ present, absent ]
     size:
-        required: false
         description:
             - "Specifies the number of bits in the private key to create. For RSA keys, the minimum size is 1024 bits and the default is 4096 bits.
               Generally, 2048 bits is considered sufficient.  DSA keys must be exactly 1024 bits as specified by FIPS 186-2.
               For ECDSA keys, size determines the key length by selecting from one of three elliptic curve sizes: 256, 384 or 521 bits.
               Attempting to use bit lengths other than these three values for ECDSA keys will cause this module to fail.
               Ed25519 keys have a fixed length and the size will be ignored."
+        type: int
     type:
-        required: false
-        default: rsa
-        choices: ['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519']
         description:
             - "The algorithm used to generate the SSH private key. C(rsa1) is for protocol version 1.
               C(rsa1) is deprecated and may not be supported by every version of ssh-keygen."
+        type: str
+        default: rsa
+        choices: ['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519']
     force:
-        required: false
-        default: false
-        type: bool
         description:
             - Should the key be regenerated even if it already exists
+        type: bool
+        default: false
     path:
-        required: true
         description:
             - Name of the files containing the public and private key. The file containing the public key will have the extension C(.pub).
+        type: path
+        required: true
     comment:
-        required: false
         description:
             - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
+        type: str
 
 extends_documentation_fragment: files
 '''
@@ -96,21 +96,27 @@ size:
 type:
     description: Algorithm used to generate the SSH private key
     returned: changed or success
-    type: string
+    type: str
     sample: rsa
 filename:
     description: Path to the generated SSH private key file
     returned: changed or success
-    type: string
+    type: str
     sample: /tmp/id_ssh_rsa
 fingerprint:
     description: The fingerprint of the key.
     returned: changed or success
-    type: string
-    sample: 4096 SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM example@example.com (RSA)
+    type: str
+    sample: SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM
+public_key:
+    description: The public key of the generated SSH private key
+    returned: changed or success
+    type: str
+    sample: ssh-rsa AAAAB3Nza(...omitted...)veL4E3Xcw== test_key
 '''
 
 import os
+import stat
 import errno
 
 from ansible.module_utils.basic import AnsibleModule
@@ -134,6 +140,7 @@ class Keypair(object):
         self.check_mode = module.check_mode
         self.privatekey = None
         self.fingerprint = {}
+        self.public_key = {}
 
         if self.type in ('rsa', 'rsa1'):
             self.size = 4096 if self.size is None else self.size
@@ -174,10 +181,17 @@ class Keypair(object):
                 args.extend(['-C', ""])
 
             try:
+                if os.path.exists(self.path) and not os.access(self.path, os.W_OK):
+                    os.chmod(self.path, stat.S_IWUSR + stat.S_IRUSR)
                 self.changed = True
-                module.run_command(args)
+                stdin_data = None
+                if os.path.exists(self.path):
+                    stdin_data = 'y'
+                module.run_command(args, data=stdin_data)
                 proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
                 self.fingerprint = proc[1].split()
+                pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
+                self.public_key = pubkey[1].strip('\n')
             except Exception as e:
                 self.remove()
                 module.fail_json(msg="%s" % to_native(e))
@@ -193,8 +207,16 @@ class Keypair(object):
             return os.path.exists(self.path)
 
         if _check_state():
-            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
+            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path], check_rc=False)
+            if not proc[0] == 0:
+                if os.path.isdir(self.path):
+                    module.fail_json(msg='%s is a directory. Please specify a path to a file.' % (self.path))
+
+                return False
+
             fingerprint = proc[1].split()
+            pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
+            pubkey = pubkey[1].strip('\n')
             keysize = int(fingerprint[0])
             keytype = fingerprint[-1][1:-1].lower()
         else:
@@ -211,6 +233,7 @@ class Keypair(object):
             return self.size == keysize
 
         self.fingerprint = fingerprint
+        self.public_key = pubkey
 
         if not perms_required:
             return _check_state() and _check_type() and _check_size()
@@ -221,13 +244,14 @@ class Keypair(object):
         # return result as a dict
 
         """Serialize the object into a dictionary."""
-
         result = {
             'changed': self.changed,
             'size': self.size,
             'type': self.type,
             'filename': self.path,
-            'fingerprint': self.fingerprint,
+            # On removal this has no value
+            'fingerprint': self.fingerprint[1] if self.fingerprint else '',
+            'public_key': self.public_key,
         }
 
         return result
@@ -260,11 +284,11 @@ def main():
     # Define Ansible Module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             size=dict(type='int'),
-            type=dict(default='rsa', choices=['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519'], type='str'),
-            force=dict(default=False, type='bool'),
-            path=dict(required=True, type='path'),
+            type=dict(type='str', default='rsa', choices=['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519']),
+            force=dict(type='bool', default=False),
+            path=dict(type='path', required=True),
             comment=dict(type='str'),
         ),
         supports_check_mode=True,
@@ -272,7 +296,7 @@ def main():
     )
 
     # Check if Path exists
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

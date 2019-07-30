@@ -16,8 +16,8 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import abc
 import argparse
@@ -38,6 +38,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
@@ -62,7 +63,8 @@ else:
 
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\(.*')
+TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
+SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 BLACKLIST_IMPORTS = {
     'requests': {
         'new_only': True,
@@ -92,7 +94,7 @@ class ReporterEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-class Reporter(object):
+class Reporter:
     def __init__(self):
         self.files = OrderedDict()
 
@@ -184,7 +186,7 @@ class Reporter(object):
 
         warnings is not respected in this output
         """
-        ret = [len(r['errors']) for _, r in self.files.items()]
+        ret = [len(r['errors']) for r in self.files.values()]
 
         with Reporter._output_handle(output) as handle:
             print(json.dumps(Reporter._filter_out_ok(self.files), indent=4, cls=ReporterEncoder), file=handle)
@@ -229,6 +231,9 @@ class ModuleValidator(Validator):
         'slurp.ps1',
         'setup.ps1'
     ))
+    PS_ARG_VALIDATE_BLACKLIST = frozenset((
+        'win_dsc.ps1',  # win_dsc is a dynamic arg spec, the docs won't ever match
+    ))
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
@@ -237,7 +242,7 @@ class ModuleValidator(Validator):
 
         self.path = path
         self.basename = os.path.basename(self.path)
-        self.name, _ = os.path.splitext(self.basename)
+        self.name = os.path.splitext(self.basename)[0]
 
         self.analyze_arg_spec = analyze_arg_spec
 
@@ -371,13 +376,20 @@ class ModuleValidator(Validator):
                 )
 
     def _check_for_sys_exit(self):
-        if 'sys.exit(' in self.text:
-            # TODO: Add line/col
-            self.reporter.error(
-                path=self.object_path,
-                code=205,
-                msg='sys.exit() call found. Should be exit_json/fail_json'
-            )
+        # Optimize out the happy path
+        if 'sys.exit' not in self.text:
+            return
+
+        for line_no, line in enumerate(self.text.splitlines()):
+            sys_exit_usage = SYS_EXIT_REGEX.match(line)
+            if sys_exit_usage:
+                # TODO: add column
+                self.reporter.error(
+                    path=self.object_path,
+                    code=205,
+                    msg='sys.exit() call found. Should be exit_json/fail_json',
+                    line=line_no + 1
+                )
 
     def _check_gpl3_header(self):
         header = '\n'.join(self.text.split('\n')[:20])
@@ -702,6 +714,7 @@ class ModuleValidator(Validator):
         # check "shape" of each module name
 
         module_requires = r'(?im)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'
+        csharp_requires = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*(Ansible\..+)'
         found_requires = False
 
         for req_stmt in re.finditer(module_requires, self.text):
@@ -725,12 +738,33 @@ class ModuleValidator(Validator):
                     msg='Module #Requires should not end in .psm1: "%s"' % module_name
                 )
 
+        for req_stmt in re.finditer(csharp_requires, self.text):
+            found_requires = True
+            # this will bomb on dictionary format - "don't do that"
+            module_list = [x.strip() for x in req_stmt.group(1).split(',')]
+            if len(module_list) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=210,
+                    msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
+                )
+                continue
+
+            module_name = module_list[0]
+
+            if module_name.lower().endswith('.cs'):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=211,
+                    msg='Module #AnsibleRequires -CSharpUtil should not end in .cs: "%s"' % module_name
+                )
+
         # also accept the legacy #POWERSHELL_COMMON replacer signal
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
                 code=207,
-                msg='No Ansible.ModuleUtils module requirements/imports found'
+                msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 
     def _find_ps_docs_py_file(self):
@@ -743,6 +777,7 @@ class ModuleValidator(Validator):
                 code=503,
                 msg='Missing python documentation file'
             )
+        return py_path
 
     def _get_docs(self):
         docs = {
@@ -851,6 +886,7 @@ class ModuleValidator(Validator):
             filename_deprecated_or_removed = True
 
         # Have to check the metadata first so that we know if the module is removed or deprecated
+        metadata = None
         if not bool(doc_info['ANSIBLE_METADATA']['value']):
             self.reporter.error(
                 path=self.object_path,
@@ -858,7 +894,6 @@ class ModuleValidator(Validator):
                 msg='No ANSIBLE_METADATA provided'
             )
         else:
-            metadata = None
             if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict):
                 metadata = ast.literal_eval(
                     doc_info['ANSIBLE_METADATA']['value']
@@ -955,6 +990,8 @@ class ModuleValidator(Validator):
                                 msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                             )
 
+                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
                             path=self.object_path,
@@ -975,8 +1012,8 @@ class ModuleValidator(Validator):
                         # This is the normal case
                         self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
 
-                    self._check_version_added(doc)
-                    self._check_for_new_args(doc)
+                    existing_doc = self._check_for_new_args(doc, metadata)
+                    self._check_version_added(doc, existing_doc)
 
             if not bool(doc_info['EXAMPLES']['value']):
                 self.reporter.error(
@@ -985,9 +1022,9 @@ class ModuleValidator(Validator):
                     msg='No EXAMPLES provided'
                 )
             else:
-                _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
-                                               doc_info['EXAMPLES']['lineno'],
-                                               self.name, 'EXAMPLES', load_all=True)
+                _doc, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
+                                                  doc_info['EXAMPLES']['lineno'],
+                                                  self.name, 'EXAMPLES', load_all=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -1052,19 +1089,29 @@ class ModuleValidator(Validator):
 
         return doc_info, doc
 
-    def _check_version_added(self, doc):
-        if not self._is_new_module():
-            return
-
+    def _check_version_added(self, doc, existing_doc):
+        version_added_raw = doc.get('version_added')
         try:
             version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
+            if self._is_new_module() or version_added != 'historical':
+                self.reporter.error(
+                    path=self.object_path,
+                    code=306,
+                    msg='version_added is not a valid version number: %r' % version_added
+                )
+                return
+
+        if existing_doc and str(version_added_raw) != str(existing_doc.get('version_added')):
             self.reporter.error(
                 path=self.object_path,
-                code=306,
-                msg='version_added is not a valid version number: %r' % version_added
+                code=307,
+                msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'),
+                                                                  version_added_raw)
             )
+
+        if not self._is_new_module():
             return
 
         should_be = '.'.join(ansible_version.split('.')[:2])
@@ -1075,7 +1122,7 @@ class ModuleValidator(Validator):
             self.reporter.error(
                 path=self.object_path,
                 code=307,
-                msg='version_added should be %s. Currently %s' % (should_be, version_added)
+                msg='version_added should be %r. Currently %r' % (should_be, version_added_raw)
             )
 
     def _validate_ansible_module_call(self, docs):
@@ -1097,15 +1144,19 @@ class ModuleValidator(Validator):
 
         self._validate_argument_spec(docs, spec, kwargs)
 
-    def _validate_argument_spec(self, docs, spec, kwargs):
+    def _validate_argument_spec(self, docs, spec, kwargs, context=None):
         if not self.analyze_arg_spec:
             return
 
         if docs is None:
             docs = {}
 
+        if context is None:
+            context = []
+
         try:
-            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+            if not context:
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
         except Exception:
             # Cannot merge fragments
             return
@@ -1118,10 +1169,14 @@ class ModuleValidator(Validator):
         deprecated_args_from_argspec = set()
         for arg, data in spec.items():
             if not isinstance(data, dict):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must be a dictionary/hash when used"
                 self.reporter.error(
                     path=self.object_path,
                     code=331,
-                    msg="argument '%s' in argument_spec must be a dictionary/hash when used" % arg,
+                    msg=msg,
                 )
                 continue
             if not data.get('removed_in_version', None):
@@ -1131,18 +1186,28 @@ class ModuleValidator(Validator):
                 deprecated_args_from_argspec.add(arg)
                 deprecated_args_from_argspec.update(data.get('aliases', []))
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
-                # Record provider options from network modules, for later comparison
-                for provider_arg, provider_data in data.get('options', {}).items():
-                    provider_args.add(provider_arg)
-                    provider_args.update(provider_data.get('aliases', []))
+                if data.get('options') is not None and not isinstance(data.get('options'), Mapping):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=331,
+                        msg="Argument 'options' in argument_spec['provider'] must be a dictionary/hash when used",
+                    )
+                elif data.get('options'):
+                    # Record provider options from network modules, for later comparison
+                    for provider_arg, provider_data in data.get('options', {}).items():
+                        provider_args.add(provider_arg)
+                        provider_args.update(provider_data.get('aliases', []))
 
             if data.get('required') and data.get('default', object) != object:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is marked as required but specifies a default. Arguments with a" \
+                       " default should not be marked as required"
                 self.reporter.error(
                     path=self.object_path,
                     code=317,
-                    msg=('"%s" is marked as required but specifies '
-                         'a default. Arguments with a default '
-                         'should not be marked as required' % arg)
+                    msg=msg
                 )
 
             if arg in provider_args:
@@ -1156,22 +1221,40 @@ class ModuleValidator(Validator):
             else:
                 _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
 
-            # TODO: needs to recursively traverse suboptions
+            _elements = data.get('elements')
+            if _elements:
+                if not callable(_elements):
+                    module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_elements)
+                if _type != 'list':
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " defines elements as %s but it is valid only when value of parameter type is list" % _elements
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=339,
+                        msg=msg
+                    )
+
             arg_default = None
             if 'default' in data and not is_empty(data['default']):
                 try:
                     with CaptureStd():
                         arg_default = _type_checker(data['default'])
                 except (Exception, SystemExit):
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " defines default as (%r) but this is incompatible with parameter type %r" % (data['default'], _type)
                     self.reporter.error(
                         path=self.object_path,
                         code=329,
-                        msg=('Default value from the argument_spec (%r) is not compatible '
-                             'with type %r defined in the argument_spec' % (data['default'], _type))
+                        msg=msg
                     )
                     continue
             elif data.get('default') is None and _type == 'bool' and 'options' not in data:
                 arg_default = False
+
             try:
                 doc_default = None
                 doc_options_arg = docs.get('options', {}).get(arg, {})
@@ -1181,32 +1264,73 @@ class ModuleValidator(Validator):
                 elif doc_options_arg.get('default') is None and _type == 'bool' and 'suboptions' not in doc_options_arg:
                     doc_default = False
             except (Exception, SystemExit):
+                msg = "Argument '%s' in documentation" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines default as (%r) but this is incompatible with parameter type %r" % (doc_options_arg.get('default'), _type)
                 self.reporter.error(
                     path=self.object_path,
                     code=327,
-                    msg=('Default value from the documentation (%r) is not compatible '
-                         'with type %r defined in the argument_spec' % (doc_options_arg.get('default'), _type))
+                    msg=msg
                 )
                 continue
 
             if arg_default != doc_default:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines default as (%r) but documentation defines default as (%r)" % (arg_default, doc_default)
                 self.reporter.error(
                     path=self.object_path,
                     code=324,
-                    msg=('Value for "default" from the argument_spec (%r) for "%s" does not match the '
-                         'documentation (%r)' % (arg_default, arg, doc_default))
+                    msg=msg
                 )
 
-            # TODO: needs to recursively traverse suboptions
-            doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
-            if 'type' in data and data['type'] == 'bool' and doc_type != 'bool':
-                self.reporter.error(
-                    path=self.object_path,
-                    code=325,
-                    msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
-                )
+            doc_type = docs.get('options', {}).get(arg, {}).get('type')
+            if 'type' in data and data['type'] is not None:
+                if doc_type is None:
+                    if not arg.startswith('_'):  # hidden parameter, for example _raw_params
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " defines type as %r but documentation doesn't define type" % (data['type'])
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=337,
+                            msg=msg
+                        )
+                elif data['type'] != doc_type:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " defines type as %r but documentation defines type as %r" % (data['type'], doc_type)
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=325,
+                        msg=msg
+                    )
+            else:
+                if doc_type is None:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " uses default type ('str') but documentation doesn't define type"
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=338,
+                        msg=msg
+                    )
+                elif doc_type != 'str':
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += "implies type as 'str' but documentation defines as %r" % doc_type
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=335,
+                        msg=msg
+                    )
 
-            # TODO: needs to recursively traverse suboptions
             doc_choices = []
             try:
                 for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
@@ -1214,11 +1338,14 @@ class ModuleValidator(Validator):
                         with CaptureStd():
                             doc_choices.append(_type_checker(choice))
                     except (Exception, SystemExit):
+                        msg = "Argument '%s' in documentation" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
                         self.reporter.error(
                             path=self.object_path,
                             code=328,
-                            msg=('Choices value from the documentation (%r) is not compatible '
-                                 'with type %r defined in the argument_spec' % (choice, _type))
+                            msg=msg
                         )
                         raise StopIteration()
             except StopIteration:
@@ -1231,22 +1358,55 @@ class ModuleValidator(Validator):
                         with CaptureStd():
                             arg_choices.append(_type_checker(choice))
                     except (Exception, SystemExit):
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
                         self.reporter.error(
                             path=self.object_path,
                             code=330,
-                            msg=('Choices value from the argument_spec (%r) is not compatible '
-                                 'with type %r defined in the argument_spec' % (choice, _type))
+                            msg=msg
                         )
                         raise StopIteration()
             except StopIteration:
                 continue
 
             if not compare_unordered_lists(arg_choices, doc_choices):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines choices as (%r) but documentation defines choices as (%r)" % (arg_choices, doc_choices)
                 self.reporter.error(
                     path=self.object_path,
                     code=326,
-                    msg=('Value for "choices" from the argument_spec (%r) for "%s" does not match the '
-                         'documentation (%r)' % (arg_choices, arg, doc_choices))
+                    msg=msg
+                )
+
+            spec_suboptions = data.get('options')
+            doc_suboptions = docs.get('options', {}).get(arg, {}).get('suboptions', {})
+            if spec_suboptions:
+                if not doc_suboptions:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has sub-options but documentation does not define it"
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=340,
+                        msg=msg
+                    )
+                self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs, context=context + [arg])
+
+        for arg in args_from_argspec:
+            if not str(arg).isidentifier():
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is not a valid python identifier"
+                self.reporter.error(
+                    path=self.object_path,
+                    code=336,
+                    msg=msg
                 )
 
         if docs:
@@ -1271,29 +1431,37 @@ class ModuleValidator(Validator):
                     # Provider args are being removed from network module top level
                     # So they are likely not documented on purpose
                     continue
+                msg = "Argument '%s'" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is listed in the argument_spec, but not documented in the module documentation"
                 self.reporter.error(
                     path=self.object_path,
                     code=322,
-                    msg='"%s" is listed in the argument_spec, but not documented in the module' % arg
+                    msg=msg
                 )
             for arg in docs_missing_from_args:
                 # args_from_docs contains argument not in the argument_spec
                 if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
+                msg = "Argument '%s'" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is listed in DOCUMENTATION.options, but not accepted by the module argument_spec"
                 self.reporter.error(
                     path=self.object_path,
                     code=323,
-                    msg='"%s" is listed in DOCUMENTATION.options, but not accepted by the module' % arg
+                    msg=msg
                 )
 
-    def _check_for_new_args(self, doc):
+    def _check_for_new_args(self, doc, metadata):
         if not self.base_branch or self._is_new_module():
             return
 
         with CaptureStd():
             try:
-                existing_doc = get_docstring(self.base_module, fragment_loader, verbose=True)[0]
+                existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(self.base_module, fragment_loader, verbose=True)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -1311,18 +1479,27 @@ class ModuleValidator(Validator):
                 self.reporter.warning(
                     path=self.object_path,
                     code=391,
-                    msg=('Unknown pre-existing DOCUMENTATION '
-                         'error, see TRACE. Submodule refs may '
-                         'need updated')
+                    msg=('Unknown pre-existing DOCUMENTATION error, see TRACE. Submodule refs may need updated')
                 )
                 return
 
         try:
-            mod_version_added = StrictVersion(
+            mod_version_added = StrictVersion()
+            mod_version_added.parse(
                 str(existing_doc.get('version_added', '0.0'))
             )
         except ValueError:
             mod_version_added = StrictVersion('0.0')
+
+        if self.base_branch and 'stable-' in self.base_branch:
+            metadata.pop('metadata_version', None)
+            metadata.pop('version', None)
+            if metadata != existing_metadata:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=334,
+                    msg=('ANSIBLE_METADATA cannot be changed in a point release for a stable branch')
+                )
 
         options = doc.get('options', {}) or {}
 
@@ -1337,10 +1514,24 @@ class ModuleValidator(Validator):
                 continue
 
             if any(name in existing_options for name in names):
+                for name in names:
+                    existing_version = existing_options.get(name, {}).get('version_added')
+                    if existing_version:
+                        break
+                current_version = details.get('version_added')
+                if str(current_version) != str(existing_version):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=309,
+                        msg=('version_added for new option (%s) should '
+                             'be %r. Currently %r' %
+                             (option, existing_version, current_version))
+                    )
                 continue
 
             try:
-                version_added = StrictVersion(
+                version_added = StrictVersion()
+                version_added.parse(
                     str(details.get('version_added', '0.0'))
                 )
             except ValueError:
@@ -1366,14 +1557,16 @@ class ModuleValidator(Validator):
                     path=self.object_path,
                     code=309,
                     msg=('version_added for new option (%s) should '
-                         'be %s. Currently %s' %
+                         'be %r. Currently %r' %
                          (option, should_be, version_added))
                 )
+
+        return existing_doc
 
     @staticmethod
     def is_blacklisted(path):
         base_name = os.path.basename(path)
-        file_name, _ = os.path.splitext(base_name)
+        file_name = os.path.splitext(base_name)[0]
 
         if file_name.startswith('_') and os.path.islink(path):
             return True
@@ -1419,7 +1612,7 @@ class ModuleValidator(Validator):
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
-            if 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
+            if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict) and 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
                 end_of_deprecation_should_be_removed_only = True
             elif docs and 'deprecated' in docs and docs['deprecated'] is not None:
                 try:
@@ -1444,7 +1637,14 @@ class ModuleValidator(Validator):
 
         if self._powershell_module():
             self._validate_ps_replacers()
-            self._find_ps_docs_py_file()
+            docs_path = self._find_ps_docs_py_file()
+
+            # We can only validate PowerShell arg spec if it is using the new Ansible.Basic.AnsibleModule util
+            pattern = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*Ansible\.Basic'
+            if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_BLACKLIST:
+                with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
+                    docs = docs_mv._validate_docs()[1]
+                    self._validate_ansible_module_call(docs)
 
         self._check_gpl3_header()
         if not self._just_docs() and not end_of_deprecation_should_be_removed_only:
@@ -1578,7 +1778,7 @@ def main():
         sys.exit(reporter.json(warnings=args.warnings, output=args.output))
 
 
-class GitCache(object):
+class GitCache:
     def __init__(self, base_branch):
         self.base_branch = base_branch
 

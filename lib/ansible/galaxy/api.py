@@ -24,6 +24,7 @@ __metaclass__ = type
 
 import json
 
+from ansible import context
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.token import GalaxyToken
@@ -32,12 +33,9 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def g_connect(method):
@@ -66,7 +64,7 @@ class GalaxyAPI(object):
         self.galaxy = galaxy
         self.token = GalaxyToken()
         self._api_server = C.GALAXY_SERVER
-        self._validate_certs = not galaxy.options.ignore_certs
+        self._validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
         self.version = None
         self.initialized = False
@@ -74,8 +72,8 @@ class GalaxyAPI(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         # set the API server
-        if galaxy.options.api_server != C.GALAXY_SERVER:
-            self._api_server = galaxy.options.api_server
+        if context.CLIARGS['api_server'] != C.GALAXY_SERVER:
+            self._api_server = context.CLIARGS['api_server']
 
     def __auth_header(self):
         token = self.token.get()
@@ -186,7 +184,7 @@ class GalaxyAPI(object):
             role_name = parts[-1]
             if notify:
                 display.display("- downloading role '%s', owned by %s" % (role_name, user_name))
-        except:
+        except Exception:
             raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
@@ -202,6 +200,7 @@ class GalaxyAPI(object):
         The url comes from the 'related' field of the role.
         """
 
+        results = []
         try:
             url = '%s/roles/%s/%s/?page_size=50' % (self.baseurl, role_id, related)
             data = self.__call_galaxy(url)
@@ -212,9 +211,9 @@ class GalaxyAPI(object):
                 data = self.__call_galaxy(url)
                 results += data['results']
                 done = (data.get('next_link', None) is None)
-            return results
-        except:
-            return None
+        except Exception as e:
+            display.vvvv("Unable to retrive role (id=%s) data (%s), but this is not fatal so we continue: %s" % (role_id, related, to_text(e)))
+        return results
 
     @g_connect
     def get_list(self, what):
@@ -238,7 +237,7 @@ class GalaxyAPI(object):
                 done = (data.get('next_link', None) is None)
             return results
         except Exception as error:
-            raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
+            raise AnsibleError("Failed to download the %s list: %s" % (what, to_native(error)))
 
     @g_connect
     def search_roles(self, search, **kwargs):

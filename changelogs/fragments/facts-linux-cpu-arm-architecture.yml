@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - handle situation where ``ansible_architecture`` may not be defined (https://github.com/ansible/ansible/issues/55400)

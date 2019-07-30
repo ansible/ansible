@@ -32,10 +32,12 @@ options:
     description:
     - Name of the cluster from which the ESXi host belong to.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname to gather facts from.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -67,7 +69,13 @@ hosts_firewall_facts:
                 {
                     "allowed_hosts": {
                         "all_ip": true,
-                        "ip_address": []
+                        "ip_address": [
+                            "10.10.10.1",
+                        ],
+                        "ip_network": [
+                            "11.111.112.0/22",
+                            "192.168.10.1/24"
+                        ],
                     },
                     "enabled": true,
                     "key": "CIMHttpServer",
@@ -117,6 +125,7 @@ class FirewallFactsManager(PyVmomi):
         allowed_host = rule_obj.allowedHosts
         rule_allow_host = dict()
         rule_allow_host['ip_address'] = [ip for ip in allowed_host.ipAddress]
+        rule_allow_host['ip_network'] = [ip.network + "/" + str(ip.prefixLength) for ip in allowed_host.ipNetwork]
         rule_allow_host['all_ip'] = allowed_host.allIp
         rule_dict['allowed_hosts'] = rule_allow_host
         return rule_dict

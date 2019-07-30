@@ -1,7 +1,10 @@
 """Test metadata for passing data to delegated tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
+
+import lib.types as t
 
 from lib.util import (
     display,
@@ -14,14 +17,14 @@ from lib.diff import (
 )
 
 
-class Metadata(object):
+class Metadata:
     """Metadata object for passing data to delegated tests."""
     def __init__(self):
         """Initialize metadata."""
-        self.changes = {}  # type: dict [str, tuple[tuple[int, int]]
-        self.cloud_config = None  # type: dict [str, str]
-        self.instance_config = None  # type: list[dict[str, str]]
-        self.change_description = None  # type: ChangeDescription
+        self.changes = {}  # type: t.Dict[str, t.Tuple[t.Tuple[int, int]]]
+        self.cloud_config = None  # type: t.Optional[t.Dict[str, str]]
+        self.instance_config = None  # type: t.Optional[t.List[t.Dict[str, str]]]
+        self.change_description = None  # type: t.Optional[ChangeDescription]
 
         if is_shippable():
             self.ci_provider = 'shippable'
@@ -33,7 +36,7 @@ class Metadata(object):
         :type diff: list[str] | None
         """
         patches = parse_diff(diff)
-        patches = sorted(patches, key=lambda k: k.new.path)  # type: list [FileDiff]
+        patches = sorted(patches, key=lambda k: k.new.path)  # type: t.List[FileDiff]
 
         self.changes = dict((patch.new.path, tuple(patch.new.ranges)) for patch in patches)
 
@@ -99,15 +102,15 @@ class Metadata(object):
         return metadata
 
 
-class ChangeDescription(object):
+class ChangeDescription:
     """Description of changes."""
     def __init__(self):
         self.command = ''  # type: str
-        self.changed_paths = []  # type: list[str]
-        self.deleted_paths = []  # type: list[str]
-        self.regular_command_targets = {}  # type: dict[str, list[str]]
-        self.focused_command_targets = {}  # type: dict[str, list[str]]
-        self.no_integration_paths = []  # type: list[str]
+        self.changed_paths = []  # type: t.List[str]
+        self.deleted_paths = []  # type: t.List[str]
+        self.regular_command_targets = {}  # type: t.Dict[str, t.List[str]]
+        self.focused_command_targets = {}  # type: t.Dict[str, t.List[str]]
+        self.no_integration_paths = []  # type: t.List[str]
 
     @property
     def targets(self):

@@ -1,6 +1,6 @@
 """Code coverage utilities."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import re
@@ -13,8 +13,11 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    run_command,
     common_environment,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -25,6 +28,10 @@ from lib.config import (
 from lib.executor import (
     Delegate,
     install_command_requirements,
+)
+
+from lib.data import (
+    data_context,
 )
 
 COVERAGE_DIR = 'test/results/coverage'
@@ -44,7 +51,7 @@ def command_coverage_combine(args):
     coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
 
     ansible_path = os.path.abspath('lib/ansible/') + '/'
-    root_path = os.getcwd() + '/'
+    root_path = data_context().content.root + '/'
 
     counter = 0
     groups = {}
@@ -55,7 +62,35 @@ def command_coverage_combine(args):
         sources = []
 
     if args.stub:
-        groups['=stub'] = dict((source, set()) for source in sources)
+        stub_group = []
+        stub_groups = [stub_group]
+        stub_line_limit = 500000
+        stub_line_count = 0
+
+        for source in sources:
+            with open(source, 'r') as source_fd:
+                source_line_count = len(source_fd.read().splitlines())
+
+            stub_group.append(source)
+            stub_line_count += source_line_count
+
+            if stub_line_count > stub_line_limit:
+                stub_line_count = 0
+                stub_group = []
+                stub_groups.append(stub_group)
+
+        for stub_index, stub_group in enumerate(stub_groups):
+            if not stub_group:
+                continue
+
+            groups['=stub-%02d' % (stub_index + 1)] = dict((source, set()) for source in stub_group)
+
+    if data_context().content.collection:
+        collection_search_re = re.compile(r'/%s/' % data_context().content.collection.directory)
+        collection_sub_re = re.compile(r'^.*?/%s/' % data_context().content.collection.directory)
+    else:
+        collection_search_re = None
+        collection_sub_re = None
 
     for coverage_file in coverage_files:
         counter += 1
@@ -92,6 +127,10 @@ def command_coverage_combine(args):
                 new_name = re.sub('^.*/ansible_modlib.zip/ansible/', ansible_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
+            elif collection_search_re and collection_search_re.search(filename):
+                new_name = os.path.abspath(collection_sub_re.sub('', filename))
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
             elif re.search(r'/ansible_[^/]+_payload\.zip/ansible/', filename):
                 # Rewrite the module_utils path from the remote host to match the controller. Ansible 2.7 and later.
                 new_name = re.sub(r'^.*/ansible_[^/]+_payload\.zip/ansible/', ansible_path, filename)
@@ -122,6 +161,11 @@ def command_coverage_combine(args):
                 new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
+            elif '/.ansible/test/tmp/' in filename:
+                # Rewrite the path of code running from an integration test temporary directory.
+                new_name = re.sub(r'^.*/\.ansible/test/tmp/[^/]+/', root_path, filename)
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
 
             if group not in groups:
                 groups[group] = {}
@@ -134,6 +178,8 @@ def command_coverage_combine(args):
             arc_data[filename].update(arcs)
 
     output_files = []
+    invalid_path_count = 0
+    invalid_path_chars = 0
 
     for group in sorted(groups):
         arc_data = groups[group]
@@ -142,7 +188,16 @@ def command_coverage_combine(args):
 
         for filename in arc_data:
             if not os.path.isfile(filename):
-                display.warning('Invalid coverage path: %s' % filename)
+                if collection_search_re and collection_search_re.search(filename) and os.path.basename(filename) == '__init__.py':
+                    # the collection loader uses implicit namespace packages, so __init__.py does not need to exist on disk
+                    continue
+
+                invalid_path_count += 1
+                invalid_path_chars += len(filename)
+
+                if args.verbosity > 1:
+                    display.warning('Invalid coverage path: %s' % filename)
+
                 continue
 
             updated.add_arcs({filename: list(arc_data[filename])})
@@ -154,6 +209,9 @@ def command_coverage_combine(args):
             output_file = COVERAGE_FILE + group
             updated.write_file(output_file)
             output_files.append(output_file)
+
+    if invalid_path_count > 0:
+        display.warning('Ignored %d characters from %d invalid coverage path(s).' % (invalid_path_chars, invalid_path_count))
 
     return sorted(output_files)
 

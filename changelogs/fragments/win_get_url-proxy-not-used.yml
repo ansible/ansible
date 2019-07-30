@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_get_url - Fix proxy_url not used correctly (https://github.com/ansible/ansible/issues/58691)"

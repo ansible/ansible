@@ -113,7 +113,7 @@ EXAMPLES = '''
 RETURN = '''
 name:
     description: The name used to create, modify or delete the host
-    type: string
+    type: str
     returned: always
 data:
     description: The data structure used for create, modify or delete of the host
@@ -134,13 +134,16 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 class icinga2_api:
     module = None
 
+    def __init__(self, module):
+        self.module = module
+
     def call_url(self, path, data='', method='GET'):
         headers = {
             'Accept': 'application/json',
             'X-HTTP-Method-Override': method,
         }
         url = self.module.params.get("url") + "/" + path
-        rsp, info = fetch_url(module=self.module, url=url, data=data, headers=headers, method=method)
+        rsp, info = fetch_url(module=self.module, url=url, data=data, headers=headers, method=method, use_proxy=self.module.params['use_proxy'])
         body = ''
         if rsp:
             body = json.loads(rsp.read())
@@ -248,8 +251,7 @@ def main():
     variables = module.params["variables"]
 
     try:
-        icinga = icinga2_api()
-        icinga.module = module
+        icinga = icinga2_api(module=module)
         icinga.check_connection()
     except Exception as e:
         module.fail_json(msg="unable to connect to Icinga. Exception message: %s" % (e))

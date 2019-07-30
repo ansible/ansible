@@ -6,6 +6,27 @@
 # Copyright: (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+
+# ATTENTION CONTRIBUTORS!
+#
+# TL;DR: Run this module's integration tests manually before opening a pull request
+#
+# Long explanation:
+# The integration tests for this module are currently NOT run on the Ansible project's continuous
+# delivery pipeline. So please: When you make changes to this module, make sure that you run the
+# included integration tests manually for both Python 2 and Python 3:
+#
+#   Python 2:
+#       ansible-test integration -v --docker fedora28 --docker-privileged --allow-unsupported --python 2.7 flatpak_remote
+#   Python 3:
+#       ansible-test integration -v --docker fedora28 --docker-privileged --allow-unsupported --python 3.6 flatpak_remote
+#
+# Because of external dependencies, the current integration tests are somewhat too slow and brittle
+# to be included right now. I have plans to rewrite the integration tests based on a local flatpak
+# repository so that they can be included into the normal CI pipeline.
+# //oolongbrothers
+
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -26,7 +47,7 @@ description:
 - Existing remotes will not be updated.
 - See the M(flatpak) module for managing flatpaks.
 author:
-- John Kwiatkoski (@jaykayy)
+- John Kwiatkoski (@JayKayy)
 - Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak
@@ -94,12 +115,12 @@ RETURN = r'''
 command:
   description: The exact flatpak command that was executed
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "/usr/bin/flatpak remote-add --system flatpak-test https://dl.flathub.org/repo/flathub.flatpakrepo"
 msg:
   description: Module error message
   returned: failure
-  type: string
+  type: str
   sample: "Executable '/usr/local/bin/flatpak' was not found on the system."
 rc:
   description: Return code from flatpak binary
@@ -109,12 +130,12 @@ rc:
 stderr:
   description: Error output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "error: GPG verification enabled, but no summary found (check that the configured URL in remote config is correct)\n"
 stdout:
   description: Output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "flathub\tFlathub\thttps://dl.flathub.org/repo/\t1\t\n"
 '''
 
@@ -148,7 +169,9 @@ def remote_exists(module, binary, name, method):
     output = _flatpak_command(module, False, command)
     for line in output.splitlines():
         listed_remote = line.split()
-        if listed_remote[0] == name:
+        if len(listed_remote) == 0:
+            continue
+        if listed_remote[0] == to_native(name):
             return True
     return False
 

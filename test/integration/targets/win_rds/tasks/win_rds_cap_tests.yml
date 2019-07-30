@@ -1,0 +1,264 @@
+---
+- name: test create a new CAP (check mode)
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    user_groups:
+      - administrators
+      - users@builtin
+    state: present
+  register: new_cap_check
+  check_mode: yes
+
+- name: get result of create a new CAP (check mode)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}")
+  register: new_cap_actual_check
+
+- name: assert results of create a new CAP (check mode)
+  assert:
+    that:
+    - new_cap_check.changed == true
+    - new_cap_actual_check.stdout_lines[0] == "False"
+
+- name: test create a new CAP
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    user_groups:
+      - administrators
+      - users@builtin
+    state: present
+  register: new_cap
+
+- name: get result of create a new CAP
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}")
+  register: new_cap_actual
+
+- name: assert results of create a new CAP
+  assert:
+    that:
+    - new_cap.changed == true
+    - new_cap_actual.stdout_lines[0] == "True"
+
+- name: test create a new CAP (idempotent)
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    user_groups:
+      - administrators
+      - users@builtin
+    state: present
+  register: new_cap_again
+
+- name: get result of create a new CAP (idempotent)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}")
+  register: new_cap_actual_again
+
+- name: assert results of create a new CAP (idempotent)
+  assert:
+    that:
+    - new_cap_again.changed == false
+    - new_cap_actual_again.stdout_lines[0] == "True"
+
+- name: test edit a CAP
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    user_groups:
+      # Test with different group name formats
+      - users@builtin
+      - .\guests
+    computer_groups:
+      - administrators
+    auth_method: both
+    session_timeout: 20
+    session_timeout_action: reauth
+    allow_only_sdrts_servers: true
+    idle_timeout: 10
+    redirect_clipboard: false
+    redirect_drives: false
+    redirect_printers: false
+    redirect_serial: false
+    redirect_pnp: false
+    state: disabled
+  register: edit_cap
+
+- name: get result of edit a CAP
+  win_shell: |
+    Import-Module RemoteDesktopServices;
+    $cap_path = "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}"
+    $cap = @{}
+    Get-ChildItem -Path "$cap_path" | foreach { $cap.Add($_.Name,$_.CurrentValue) }
+    $cap.DeviceRedirection = @{}
+    Get-ChildItem -Path "$cap_path\DeviceRedirection" | foreach { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
+    $cap.UserGroups = @(Get-ChildItem -Path "$cap_path\UserGroups" | Select -ExpandProperty Name)
+    $cap.ComputerGroups = @(Get-ChildItem -Path "$cap_path\ComputerGroups" | Select -ExpandProperty Name)
+    $cap | ConvertTo-Json
+  register: edit_cap_actual_json
+
+- name: parse result of edit a CAP.
+  set_fact:
+    edit_cap_actual: '{{ edit_cap_actual_json.stdout | from_json }}'
+
+- name: assert results of edit a CAP
+  assert:
+    that:
+    - edit_cap.changed == true
+    - edit_cap_actual.Status == "0"
+    - edit_cap_actual.EvaluationOrder == "1"
+    - edit_cap_actual.AllowOnlySDRTSServers == "1"
+    - edit_cap_actual.AuthMethod == "3"
+    - edit_cap_actual.IdleTimeout == "10"
+    - edit_cap_actual.SessionTimeoutAction == "1"
+    - edit_cap_actual.SessionTimeout == "20"
+    - edit_cap_actual.DeviceRedirection.Clipboard == false
+    - edit_cap_actual.DeviceRedirection.DiskDrives == false
+    - edit_cap_actual.DeviceRedirection.PlugAndPlayDevices == false
+    - edit_cap_actual.DeviceRedirection.Printers == false
+    - edit_cap_actual.DeviceRedirection.SerialPorts == false
+    - edit_cap_actual.UserGroups | length == 2
+    - edit_cap_actual.UserGroups[0] == "Users@BUILTIN"
+    - edit_cap_actual.UserGroups[1] == "Guests@BUILTIN"
+    - edit_cap_actual.ComputerGroups | length == 1
+    - edit_cap_actual.ComputerGroups[0] == "Administrators@BUILTIN"
+
+- name: test remove all computer groups of CAP
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    computer_groups: []
+  register: remove_computer_groups_cap
+
+- name: get result of remove all computer groups of CAP
+  win_shell: |
+    Import-Module RemoteDesktopServices;
+    $cap_path = "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}"
+    Write-Host @(Get-ChildItem -Path "$cap_path\ComputerGroups" | Select -ExpandProperty Name).Count
+  register: remove_computer_groups_cap_actual
+
+- name: assert results of remove all computer groups of CAP
+  assert:
+    that:
+    - remove_computer_groups_cap.changed == true
+    - remove_computer_groups_cap_actual.stdout_lines[0] == "0"
+
+- name: test create a CAP in second position
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }} Second'
+    user_groups:
+      - users@builtin
+    order: 2
+    state: present
+  register: second_cap
+
+- name: get result of create a CAP in second position
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Get-Item "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }} Second\EvaluationOrder").CurrentValue
+  register: second_cap_actual
+
+- name: assert results of create a CAP in second position
+  assert:
+    that:
+    - second_cap.changed == true
+    - second_cap.warnings is not defined
+    - second_cap_actual.stdout_lines[0] == "2"
+
+- name: test create a CAP with order greater than existing CAP count
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }} Last'
+    user_groups:
+      - users@builtin
+    order: 50
+    state: present
+  register: cap_big_order
+
+- name: get result of create a CAP with order greater than existing CAP count
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Get-Item "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }} Last\EvaluationOrder").CurrentValue
+  register: cap_big_order_actual
+
+- name: assert results of create a CAP with order greater than existing CAP count
+  assert:
+    that:
+    - cap_big_order.changed == true
+    - cap_big_order.warnings | length == 1
+    - cap_big_order_actual.stdout_lines[0] == "3"
+
+- name: test remove CAP (check mode)
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    state: absent
+  register: remove_cap_check
+  check_mode: yes
+
+- name: get result of remove CAP (check mode)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}")
+  register: remove_cap_actual_check
+
+- name: assert results of remove CAP (check mode)
+  assert:
+    that:
+    - remove_cap_check.changed == true
+    - remove_cap_actual_check.stdout_lines[0] == "True"
+
+- name: test remove CAP
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    state: absent
+  register: remove_cap_check
+
+- name: get result of remove CAP
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}")
+  register: remove_cap_actual_check
+
+- name: assert results of remove CAP
+  assert:
+    that:
+    - remove_cap_check.changed == true
+    - remove_cap_actual_check.stdout_lines[0] == "False"
+
+- name: test remove CAP (idempotent)
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    state: absent
+  register: remove_cap_check
+
+- name: get result of remove CAP (idempotent)
+  win_shell: Import-Module RemoteDesktopServices; Write-Host (Test-Path "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}")
+  register: remove_cap_actual_check
+
+- name: assert results of remove CAP (idempotent)
+  assert:
+    that:
+    - remove_cap_check.changed == false
+    - remove_cap_actual_check.stdout_lines[0] == "False"
+
+- name: fail when create a new CAP without user group
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    state: present
+  register: new_cap_without_group
+  check_mode: yes
+  failed_when: "new_cap_without_group.msg != 'User groups must be defined to create a new CAP.'"
+
+- name: fail when create a new CAP with an empty user group list
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    user_groups: []
+    state: present
+  register: new_cap_empty_group_list
+  check_mode: yes
+  failed_when: "new_cap_empty_group_list.msg is not search('cannot be an empty list')"
+
+- name: fail when create a new CAP with an invalid user group
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    user_groups:
+      - fake_group
+    state: present
+  register: new_cap_invalid_user_group
+  check_mode: yes
+  failed_when: new_cap_invalid_user_group.changed != false or new_cap_invalid_user_group.msg is not search('is not a valid account')
+
+- name: fail when create a new CAP with an invalid computer group
+  win_rds_cap:
+    name: '{{ test_win_rds_cap_name }}'
+    computer_groups:
+      - fake_group
+    state: present
+  register: new_cap_invalid_computer_group
+  check_mode: yes
+  failed_when: new_cap_invalid_computer_group.changed != false or new_cap_invalid_computer_group.msg is not search('is not a valid account')

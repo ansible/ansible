@@ -12,4 +12,4 @@
   win_get_url:
     url: https://download.sysinternals.com/files/SysinternalsSuite.zip
     dest: C:\Windows\Temp\SysinternalsSuite.zip
-    skip_certificate_validation: yes
+    validate_certs: no

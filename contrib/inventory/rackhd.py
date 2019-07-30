@@ -69,7 +69,7 @@ def parse_args():
 try:
     # check if rackhd url(ie:10.1.1.45:8080) is specified in the environment
     RACKHD_URL = 'http://' + str(os.environ['RACKHD_URL'])
-except:
+except Exception:
     # use default values
     pass
 
@@ -81,7 +81,7 @@ if (parse_args().host):
     try:
         nodeids += parse_args().host.split(',')
         RackhdInventory(nodeids)
-    except:
+    except Exception:
         pass
 if (parse_args().list):
     try:
@@ -92,5 +92,5 @@ if (parse_args().list):
             if entry['type'] == 'compute':
                 nodeids.append(entry['id'])
         RackhdInventory(nodeids)
-    except:
+    except Exception:
         pass

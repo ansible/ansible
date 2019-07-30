@@ -8,14 +8,11 @@ import json
 import traceback
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six import binary_type
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class JsonRpcServer(object):
@@ -31,16 +28,8 @@ class JsonRpcServer(object):
             error = self.invalid_request()
             return json.dumps(error)
 
-        params = request.get('params')
+        args, kwargs = request.get('params')
         setattr(self, '_identifier', request.get('id'))
-
-        args = []
-        kwargs = {}
-
-        if all((params, isinstance(params, list))):
-            args = params
-        elif all((params, isinstance(params, dict))):
-            kwargs = params
 
         rpc_method = None
         for obj in self._objects:
@@ -54,6 +43,13 @@ class JsonRpcServer(object):
         else:
             try:
                 result = rpc_method(*args, **kwargs)
+            except ConnectionError as exc:
+                display.vvv(traceback.format_exc())
+                try:
+                    error = self.error(code=exc.code, message=to_text(exc))
+                except AttributeError:
+                    error = self.internal_error(data=to_text(exc))
+                response = json.dumps(error)
             except Exception as exc:
                 display.vvv(traceback.format_exc())
                 error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))

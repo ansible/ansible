@@ -1,0 +1,137 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Bruno Calogero <brunocalogero@hotmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Ensuring Interface Policy Leaf profile exists for kick off
+  aci_interface_policy_leaf_profile: &aci_interface_policy_leaf_profile_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    leaf_interface_profile: leafintprftest
+  register: leaf_profile_present
+
+- name: Ensure Interface Access Port Selector exists for kick of
+  aci_access_port_to_interface_policy_leaf_profile: &aci_access_port_to_interface_policy_leaf_profile_present
+    <<: *aci_interface_policy_leaf_profile_present
+    access_port_selector: anstest_accessportselector
+
+# TODO: Ensure that leaf Policy Group Exists (module missing) (infra:AccPortGrp)
+
+- name: Bind an Access Sub Port Block to an Interface Access Port Selector - check mode works
+  aci_access_sub_port_block_to_access_port: &aci_access_sub_port_block_to_access_port_present
+    <<: *aci_access_port_to_interface_policy_leaf_profile_present
+    leaf_port_blk: anstest_leafportblkname
+    leaf_port_blk_description: anstest_leafportblkdesc
+    fromPort: 13
+    toPort: 13
+    fromSubPort: 1
+    toSubPort: 3
+  check_mode: yes
+  register: accesssubportblock_to_accessport_check_mode_present
+
+- name: Bind an Access Sub Port Block to an Interface Access Port Selector - creation works
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_sub_port_block_to_access_port_present
+  register: accesssubportblock_to_accessport_present
+
+- name: Bind an Access Sub Port Block to an Interface Access Port Selector - idempotency works
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_sub_port_block_to_access_port_present
+  register: accesssubportblock_to_accessport_idempotent
+
+- name: Bind an Access Sub Port Block to an Interface Access Port Selector - update works
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_sub_port_block_to_access_port_present
+    toSubPort: 2
+  register: accesssubportblock_to_accessport_update
+
+# TODO: also test for errors
+- name: present assertions
+  assert:
+    that:
+    - accesssubportblock_to_accessport_check_mode_present is changed
+    - accesssubportblock_to_accessport_present is changed
+    - accesssubportblock_to_accessport_present.previous == []
+    - 'accesssubportblock_to_accessport_present.sent == {"infraSubPortBlk": {"attributes": {"descr": "anstest_leafportblkdesc", "name": "anstest_leafportblkname", "fromPort": "13", "toPort": "13", "fromSubPort": "1", "toSubPort": "3"}}}'
+    - accesssubportblock_to_accessport_idempotent is not changed
+    - accesssubportblock_to_accessport_idempotent.sent == {}
+    - accesssubportblock_to_accessport_update is changed
+    - 'accesssubportblock_to_accessport_update.sent == {"infraSubPortBlk": {"attributes": {"toSubPort": "2"}}}'
+
+
+- name: Query Specific sub port block and access_port_selector binding
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_sub_port_block_to_access_port_present
+    state: query
+  register: binding_query
+
+- name: present assertions
+  assert:
+    that:
+      - binding_query is not changed
+      - binding_query.current | length >= 1
+      - '"api/mo/uni/infra/accportprof-leafintprftest/hports-anstest_accessportselector-typ-range/subportblk-anstest_leafportblkname.json" in binding_query.url'
+
+- name: Remove binding of Access Sub Port Block and Interface Access Port Selector - check mode
+  aci_access_sub_port_block_to_access_port: &aci_access_sub_port_block_to_access_port_absent
+    <<: *aci_access_sub_port_block_to_access_port_present
+    state: absent
+  check_mode: yes
+  register: accesssubportblock_to_accessport_check_mode_absent
+
+- name: Remove binding of Access Sub Port Block and Interface Access Port Selector - delete works
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_sub_port_block_to_access_port_absent
+  register: accesssubportblock_to_accessport_absent
+
+- name: Remove binding of Access Sub Port Block and Interface Access Port Selector - idempotency works
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_sub_port_block_to_access_port_absent
+  register: accesssubportblock_to_accessport_absent_idempotent
+
+- name: Remove binding of Access Sub Port Block and Interface Access Port Selector - check mode
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_port_to_interface_policy_leaf_profile_present
+    #leaf_port_blk: anstest_leafportblkname
+    state: absent
+  ignore_errors: yes
+  register: accesssubportblock_to_accessport_absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - accesssubportblock_to_accessport_check_mode_absent is changed
+      - accesssubportblock_to_accessport_check_mode_absent.previous != []
+      - accesssubportblock_to_accessport_absent is changed
+      - accesssubportblock_to_accessport_absent.previous == accesssubportblock_to_accessport_check_mode_absent.previous
+      - accesssubportblock_to_accessport_absent_idempotent is not changed
+      - accesssubportblock_to_accessport_absent_idempotent.previous == []
+      - accesssubportblock_to_accessport_absent_missing_param is failed
+      - 'accesssubportblock_to_accessport_absent_missing_param.msg == "state is absent but all of the following are missing: leaf_port_blk"'
+
+
+- name: Remove binding of Access Sub Port Block and Interface Access Port Selector - Clean up
+  aci_access_sub_port_block_to_access_port:
+    <<: *aci_access_sub_port_block_to_access_port_present
+    state: absent
+
+- name: Remove Interface Access Port Selector  - Cleanup
+  aci_access_port_to_interface_policy_leaf_profile:
+    <<: *aci_access_port_to_interface_policy_leaf_profile_present
+    state: absent
+
+- name: Remove Interface policy leaf profile - Cleanup
+  aci_interface_policy_leaf_profile:
+    <<: *aci_interface_policy_leaf_profile_present
+    state: absent

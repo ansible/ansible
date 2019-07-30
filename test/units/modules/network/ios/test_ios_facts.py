@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from units.compat.mock import patch
 from ansible.modules.network.ios import ios_facts
+from ansible.module_utils.six import assertCountEqual
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
@@ -32,9 +33,23 @@ class TestIosFactsModule(TestIosModule):
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.ios.ios_facts.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {
+            'device_info': {
+                'network_os': 'ios',
+                'network_os_hostname': 'an-ios-01',
+                'network_os_image': 'flash0:/vios-adventerprisek9-m',
+                'network_os_model': 'WS-C3750-24TS',
+                'network_os_version': '15.6(3)M2'
+            },
+            'network_api': 'cliconf'
+        }
+
     def tearDown(self):
         super(TestIosFactsModule, self).tearDown()
         self.mock_run_commands.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):
@@ -86,4 +101,21 @@ class TestIosFactsModule(TestIosModule):
         )
         self.assertEqual(
             result['ansible_facts']['ansible_net_filesystems_info']['bootflash:']['spacefree_kb'], 6453180.0
+        )
+
+    def test_ios_facts_neighbors(self):
+        set_module_args(dict(gather_subset='interfaces'))
+        result = self.execute_module()
+        assertCountEqual(
+            self,
+            result['ansible_facts']['ansible_net_neighbors'].keys(), ['GigabitEthernet1', 'GigabitEthernet3']
+        )
+        assertCountEqual(
+            self,
+            result['ansible_facts']['ansible_net_neighbors']['GigabitEthernet1'],
+            [{'host': 'R2', 'port': 'GigabitEthernet2'}, {'host': 'R3', 'port': 'GigabitEthernet3'}]
+        )
+        assertCountEqual(
+            self,
+            result['ansible_facts']['ansible_net_neighbors']['GigabitEthernet3'], [{'host': 'Rtest', 'port': 'Gi1'}]
         )

@@ -60,7 +60,7 @@ options:
     choices: [ "present", "absent" ]
 
 requirements: [ "profitbricks" ]
-author: Matt Baldwin (baldwin@stackpointcloud.com)
+author: Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
 '''
 
 EXAMPLES = '''
@@ -210,7 +210,7 @@ def main():
             subscription_user=dict(),
             subscription_password=dict(no_log=True),
             wait=dict(type='bool', default=True),
-            wait_timeout=dict(default=600),
+            wait_timeout=dict(default=600, type='int'),
             state=dict(default='present'),
         )
     )

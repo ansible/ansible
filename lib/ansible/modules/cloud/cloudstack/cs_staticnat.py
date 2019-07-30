@@ -15,46 +15,56 @@ module: cs_staticnat
 short_description: Manages static NATs on Apache CloudStack based clouds.
 description:
     - Create, update and remove static NATs.
-version_added: "2.0"
-author: "René Moser (@resmo)"
+version_added: '2.0'
+author: René Moser (@resmo)
 options:
   ip_address:
     description:
       - Public IP address the static NAT is assigned to.
+    type: str
     required: true
   vm:
     description:
       - Name of virtual machine which we make the static NAT for.
       - Required if I(state=present).
+    type: str
   vm_guest_ip:
     description:
       - VM guest NIC secondary IP address for the static NAT.
+    type: str
   network:
     description:
       - Network the IP address is related to.
-    version_added: "2.2"
+    type: str
+    version_added: '2.2'
   vpc:
     description:
       - VPC the network related to.
-    version_added: "2.3"
+    type: str
+    version_added: '2.3'
   state:
     description:
       - State of the static NAT.
+    type: str
     default: present
     choices: [ present, absent ]
   domain:
     description:
       - Domain the static NAT is related to.
+    type: str
   account:
     description:
       - Account the static NAT is related to.
+    type: str
   project:
     description:
       - Name of the project the static NAT is related to.
+    type: str
   zone:
     description:
       - Name of the zone in which the virtual machine is in.
       - If not set, default zone is used.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -65,16 +75,16 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Create a static NAT for IP 1.2.3.4 to web01
-  local_action:
-    module: cs_staticnat
+  cs_staticnat:
     ip_address: 1.2.3.4
     vm: web01
+  delegate_to: localhost
 
 - name: Remove a static NAT
-  local_action:
-    module: cs_staticnat
+  cs_staticnat:
     ip_address: 1.2.3.4
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -82,47 +92,47 @@ RETURN = '''
 id:
   description: UUID of the ip_address.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 vm_name:
   description: Name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_display_name:
   description: Display name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_guest_ip:
   description: IP of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: 10.101.65.152
 zone:
   description: Name of zone the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 '''
 

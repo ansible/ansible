@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - ``oom_killer`` and ``oom_score_adj`` options are available since docker-py 1.8.0, not 2.0.0 as assumed by the version check."

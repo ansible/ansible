@@ -37,12 +37,7 @@ class ActionModule(ActionBase):
         else:
             # inject the async directory based on the shell option into the
             # module args
-            try:
-                async_dir = self._connection._shell.get_option('async_dir')
-            except KeyError:
-                # here for 3rd party shell plugin compatibility in case they do
-                # not define the async_dir option
-                async_dir = "~/.ansible_async"
+            async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
 
         module_args = dict(jid=jid, mode=mode, _async_dir=async_dir)
         status = self._execute_module(task_vars=task_vars,

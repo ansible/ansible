@@ -1,22 +1,31 @@
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2017, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import traceback
+
+from ansible.module_utils.basic import missing_required_lib
+
+REQUESTS_IMP_ERR = None
 try:
     import requests.exceptions
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
+INFLUXDB_IMP_ERR = None
 try:
     from influxdb import InfluxDBClient
     from influxdb import __version__ as influxdb_version
     from influxdb import exceptions
     HAS_INFLUXDB = True
 except ImportError:
+    INFLUXDB_IMP_ERR = traceback.format_exc()
     HAS_INFLUXDB = False
 
 
@@ -33,25 +42,25 @@ class InfluxDb():
 
     def check_lib(self):
         if not HAS_REQUESTS:
-            self.module.fail_json(msg='This module requires "requests" module.')
+            self.module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMP_ERR)
 
         if not HAS_INFLUXDB:
-            self.module.fail_json(msg='This module requires influxdb python package.')
+            self.module.fail_json(msg=missing_required_lib('influxdb'), exception=INFLUXDB_IMP_ERR)
 
     @staticmethod
     def influxdb_argument_spec():
         return dict(
-            hostname=dict(default='localhost', type='str'),
-            port=dict(default=8086, type='int'),
-            username=dict(default='root', type='str', aliases=['login_username']),
-            password=dict(default='root', type='str', no_log=True, aliases=['login_password']),
-            ssl=dict(default=False, type='bool'),
-            validate_certs=dict(default=True, type='bool'),
+            hostname=dict(type='str', default='localhost'),
+            port=dict(type='int', default=8086),
+            username=dict(type='str', default='root', aliases=['login_username']),
+            password=dict(type='str', default='root', no_log=True, aliases=['login_password']),
+            ssl=dict(type='bool', default=False),
+            validate_certs=dict(type='bool', default=True),
             timeout=dict(type='int'),
-            retries=dict(default=3, type='int'),
-            proxies=dict(default={}, type='dict'),
-            use_udp=dict(default=False, type='bool'),
-            udp_port=dict(type=int)
+            retries=dict(type='int', default=3),
+            proxies=dict(type='dict', default={}),
+            use_udp=dict(type='bool', default=False),
+            udp_port=dict(type='int'),
         )
 
     def connect_to_influxdb(self):

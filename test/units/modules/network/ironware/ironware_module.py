@@ -22,7 +22,6 @@ __metaclass__ = type
 import os
 import json
 
-from ansible.module_utils import basic
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 
@@ -41,7 +40,7 @@ def load_fixture(name):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data

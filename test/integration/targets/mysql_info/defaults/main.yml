@@ -1,0 +1,5 @@
+---
+# defaults file for test_mysql_info
+db_name: data
+user_name: alice
+user_pass: alice

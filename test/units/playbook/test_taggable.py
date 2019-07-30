@@ -98,8 +98,5 @@ class TestTaggable(unittest.TestCase):
     def test_evaluate_tags_accepts_lists(self):
         self.assert_evaluate_equal(True, ['tag1', 'tag2'], ['tag2'], [])
 
-    def test_evaluate_tags_accepts_strings(self):
-        self.assert_evaluate_equal(True, 'tag1,tag2', ['tag2'], [])
-
     def test_evaluate_tags_with_repeated_tags(self):
         self.assert_evaluate_equal(False, ['tag', 'tag'], [], ['tag'])

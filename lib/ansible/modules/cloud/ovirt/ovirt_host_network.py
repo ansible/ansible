@@ -74,14 +74,23 @@ options:
         type: bool
     save:
         description:
-            - "If I(true) network configuration will be persistent, by default they are temporarily."
+            - "If I(true) network configuration will be persistent, otherwise it is temporary. Default I(true) since Ansible 2.8."
         type: bool
+        default: True
+    sync_networks:
+        description:
+            - "If I(true) all networks will be synchronized before modification"
+        type: bool
+        default: false
+        version_added: 2.8
 extends_documentation_fragment: ovirt
 '''
 
 EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
+
+# In all examples the durability of the configuration created is dependent on the 'save' option value:
 
 # Create bond on eth0 and eth1 interface, and put 'myvlan' network on top of it and persist the new configuration:
 - name: Bonds
@@ -102,7 +111,7 @@ EXAMPLES = '''
         gateway: 1.2.3.4
         version: v4
 
-# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon temporarily:
+# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon:
 - name: Bonds
   ovirt_host_network:
     name: myhost
@@ -115,14 +124,14 @@ EXAMPLES = '''
         - eth1
         - eth2
 
-# Remove bond0 bond from host interfaces temporarily:
+# Remove bond0 bond from host interfaces:
 - ovirt_host_network:
     state: absent
     name: myhost
     bond:
       name: bond0
 
-# Assign myvlan1 and myvlan2 vlans to host eth0 interface temporarily:
+# Assign myvlan1 and myvlan2 vlans to host eth0 interface:
 - ovirt_host_network:
     name: myhost
     interface: eth0
@@ -130,7 +139,7 @@ EXAMPLES = '''
       - name: myvlan1
       - name: myvlan2
 
-# Remove myvlan2 vlan from host eth0 interface temporarily:
+# Remove myvlan2 vlan from host eth0 interface:
 - ovirt_host_network:
     state: absent
     name: myhost
@@ -138,7 +147,7 @@ EXAMPLES = '''
     networks:
       - name: myvlan2
 
-# Remove all networks/vlans from host eth0 interface temporarily:
+# Remove all networks/vlans from host eth0 interface:
 - ovirt_host_network:
     state: absent
     name: myhost
@@ -177,6 +186,7 @@ from ansible.module_utils.ovirt import (
     get_link_name,
     ovirt_full_argument_spec,
     search_by_name,
+    engine_supported
 )
 
 
@@ -314,10 +324,19 @@ class HostNetworksModule(BaseModule):
         return update
 
     def _action_save_configuration(self, entity):
-        if self._module.params['save']:
-            if not self._module.check_mode:
-                self._service.service(entity.id).commit_net_config()
-            self.changed = True
+        if not self._module.check_mode:
+            self._service.service(entity.id).commit_net_config()
+        self.changed = True
+
+
+def needs_sync(nics_service):
+    nics = nics_service.list()
+    for nic in nics:
+        nic_service = nics_service.nic_service(nic.id)
+        for network_attachment_service in nic_service.network_attachments_service().list():
+            if not network_attachment_service.in_sync:
+                return True
+    return False
 
 
 def main():
@@ -332,7 +351,8 @@ def main():
         networks=dict(default=None, type='list'),
         labels=dict(default=None, type='list'),
         check=dict(default=None, type='bool'),
-        save=dict(default=None, type='bool'),
+        save=dict(default=True, type='bool'),
+        sync_networks=dict(default=False, type='bool'),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -362,8 +382,15 @@ def main():
         nics_service = host_service.nics_service()
         nic = search_by_name(nics_service, nic_name)
 
+        if module.params["sync_networks"]:
+            if needs_sync(nics_service):
+                if not module.check_mode:
+                    host_service.sync_all_networks()
+                host_networks_module.changed = True
+
         network_names = [network['name'] for network in networks or []]
         state = module.params['state']
+
         if (
             state == 'present' and
             (nic is None or host_networks_module.has_update(nics_service.service(nic.id)))
@@ -387,10 +414,9 @@ def main():
                         removed_bonds.append(otypes.HostNic(id=host_nic.id))
 
             # Assign the networks:
-            host_networks_module.action(
+            setup_params = dict(
                 entity=host,
                 action='setup_networks',
-                post_action=host_networks_module._action_save_configuration,
                 check_connectivity=module.params['check'],
                 removed_bonds=removed_bonds if removed_bonds else None,
                 modified_bonds=[
@@ -439,6 +465,11 @@ def main():
                     ) for network in networks
                 ] if networks else None,
             )
+            if engine_supported(connection, '4.3'):
+                setup_params['commit_on_success'] = module.params['save']
+            elif module.params['save']:
+                setup_params['post_action'] = host_networks_module._action_save_configuration
+            host_networks_module.action(**setup_params)
         elif state == 'absent' and nic:
             attachments = []
             nic_service = nics_service.nic_service(nic.id)
@@ -464,10 +495,9 @@ def main():
             # Need to check if there are any labels to be removed, as backend fail
             # if we try to send remove non existing label, for bond and attachments it's OK:
             if (labels and set(labels).intersection(attached_labels)) or bond or attachments:
-                host_networks_module.action(
+                setup_params = dict(
                     entity=host,
                     action='setup_networks',
-                    post_action=host_networks_module._action_save_configuration,
                     check_connectivity=module.params['check'],
                     removed_bonds=[
                         otypes.HostNic(
@@ -479,6 +509,11 @@ def main():
                     ] if labels else None,
                     removed_network_attachments=attachments if attachments else None,
                 )
+                if engine_supported(connection, '4.3'):
+                    setup_params['commit_on_success'] = module.params['save']
+                elif module.params['save']:
+                    setup_params['post_action'] = host_networks_module._action_save_configuration
+                host_networks_module.action(**setup_params)
 
         nic = search_by_name(nics_service, nic_name)
         module.exit_json(**{

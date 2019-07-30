@@ -18,7 +18,7 @@ module: manageiq_alert_profiles
 short_description: Configuration of alert profiles for ManageIQ
 extends_documentation_fragment: manageiq
 version_added: '2.5'
-author: Elad Alfassa (ealfassa@redhat.com)
+author: Elad Alfassa (@elad661) <ealfassa@redhat.com>
 description:
   - The manageiq_alert_profiles module supports adding, updating and deleting alert profiles in ManageIQ.
 
@@ -61,7 +61,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete an alert profile from ManageIQ
   manageiq_alert_profiles:
@@ -71,7 +71,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''

@@ -1,0 +1,6 @@
+- testns.testcoll.plugin_lookup:
+  register: included_plugin_lookup_out
+
+- assert:
+    that:
+    - included_plugin_lookup_out.collection_list == ['bogus.bogus', 'ansible.legacy']

@@ -1,12 +1,13 @@
 """NIOS plugin for integration tests."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 
 from . import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from ..util import (
@@ -174,12 +175,18 @@ class NiosEnvironment(CloudEnvironment):
 
     Updates integration test environment after delegation.
     """
-
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
+        ansible_vars = dict(
+            nios_provider=dict(
+                host=self._get_cloud_config('NIOS_HOST'),
+                username='admin',
+                password='infoblox',
+            ),
+        )
 
-        # Send the container IP down to the integration test(s)
-        env['NIOS_HOST'] = self._get_cloud_config('NIOS_HOST')
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+        )

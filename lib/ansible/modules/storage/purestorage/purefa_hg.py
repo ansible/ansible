@@ -19,21 +19,25 @@ short_description: Manage hostgroups on Pure Storage FlashArrays
 description:
 - Create, delete or modifiy hostgroups on Pure Storage FlashArrays.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   hostgroup:
     description:
     - The name of the hostgroup.
+    type: str
     required: true
   state:
     description:
     - Define whether the hostgroup should exist or not.
+    type: str
     default: present
     choices: [ absent, present ]
   host:
+    type: list
     description:
     - List of existing hosts to add to hostgroup.
   volume:
+    type: list
     description:
     - List of existing volumes to add to hostgroup.
 extends_documentation_fragment:
@@ -125,7 +129,7 @@ def make_hostgroup(module, array):
 
     try:
         array.create_hgroup(module.params['hostgroup'])
-    except:
+    except Exception:
         changed = False
     if module.params['host']:
         array.set_hgroup(module.params['hostgroup'], hostlist=module.params['host'])
@@ -146,7 +150,7 @@ def update_hostgroup(module, array):
                 try:
                     array.set_hgroup(module.params['hostgroup'], addhostlist=new_hosts)
                     changed = True
-                except:
+                except Exception:
                     module.fail_josn(msg='Failed to add host(s) to hostgroup')
         if module.params['volume']:
             if volumes:
@@ -156,14 +160,14 @@ def update_hostgroup(module, array):
                     try:
                         array.connect_hgroup(module.params['hostgroup'], cvol)
                         changed = True
-                    except:
+                    except Exception:
                         changed = False
             else:
                 for cvol in module.params['volume']:
                     try:
                         array.connect_hgroup(module.params['hostgroup'], cvol)
                         changed = True
-                    except:
+                    except Exception:
                         changed = False
     else:
         if module.params['host']:
@@ -172,7 +176,7 @@ def update_hostgroup(module, array):
                 try:
                     array.set_hgroup(module.params['hostgroup'], remhostlist=old_hosts)
                     changed = True
-                except:
+                except Exception:
                     changed = False
         if module.params['volume']:
             old_volumes = list(set(module.params['volume']).difference(set([vol['name'] for vol in volumes])))
@@ -180,7 +184,7 @@ def update_hostgroup(module, array):
                 try:
                     array.disconnect_hgroup(module.params['hostgroup'], cvol)
                     changed = True
-                except:
+                except Exception:
                     changed = False
 
     module.exit_json(changed=changed)
@@ -193,18 +197,18 @@ def delete_hostgroup(module, array):
         for vol in vols:
             try:
                 array.disconnect_hgroup(module.params['hostgroup'], vol["vol"])
-            except:
+            except Exception:
                 changed = False
         host = array.get_hgroup(module.params['hostgroup'])
         try:
             array.set_hgroup(module.params['hostgroup'], remhostlist=host['hosts'])
             try:
                 array.delete_hgroup(module.params['hostgroup'])
-            except:
+            except Exception:
                 changed = False
-        except:
+        except Exception:
             changed = False
-    except:
+    except Exception:
         changed = False
     module.exit_json(changed=changed)
 
@@ -231,14 +235,14 @@ def main():
         try:
             for hst in module.params['host']:
                 array.get_host(hst)
-        except:
+        except Exception:
             module.fail_json(msg='Host {0} not found'.format(hst))
 
     if module.params['volume']:
         try:
             for vol in module.params['volume']:
                 array.get_volume(vol)
-        except:
+        except Exception:
             module.fail_json(msg='Volume {0} not found'.format(vol))
 
     if hostgroup and state == 'present':

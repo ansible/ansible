@@ -136,7 +136,6 @@ class VmwareHostIPv6(PyVmomi):
                         results['result'][host.name]['msg'] = "IPv6 is already enabled and active for host '%s'" % \
                                                               host.name
                     if not host_network_info.ipV6Enabled:
-                        changed = True
                         results['result'][host.name]['msg'] = ("IPv6 is already enabled for host '%s', but a reboot"
                                                                " is required!" % host.name)
                 # Enable IPv6

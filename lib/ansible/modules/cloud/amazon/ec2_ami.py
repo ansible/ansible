@@ -71,7 +71,7 @@ options:
     description:
       - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters).
       - >
-        Valid properties include: device_name, volume_type, size/volume_size (in GB), delete_on_termination (boolean), no_device (boolean),
+        Valid properties include: device_name, volume_type, size/volume_size (in GiB), delete_on_termination (boolean), no_device (boolean),
         snapshot_id, iops (for io1 volume_type), encrypted
   delete_snapshot:
     description:
@@ -86,6 +86,7 @@ options:
     description: Whether to remove existing tags that aren't passed in the C(tags) parameter
     version_added: "2.5"
     default: "no"
+    type: bool
   launch_permissions:
     description:
       - Users and groups that should be able to launch the AMI. Expects dictionary with a key of user_ids and/or group_names. user_ids should
@@ -100,6 +101,7 @@ options:
     description:
       - A boolean representing whether enhanced networking with ENA is enabled or not.
     version_added: "2.5"
+    type: bool
   billing_products:
     description:
       - A list of valid billing codes. To be used with valid accounts by aws marketplace vendors.
@@ -213,7 +215,7 @@ RETURN = '''
 architecture:
     description: architecture of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "x86_64"
 block_device_mapping:
     description: block device mapping associated with image
@@ -231,22 +233,22 @@ block_device_mapping:
 creationDate:
     description: creation date of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "2015-10-15T22:43:44.000Z"
 description:
     description: description of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "nat-server"
 hypervisor:
     description: type of hypervisor
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "xen"
 image_id:
     description: id of the image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "ami-1234abcd"
 is_public:
     description: whether image is public
@@ -262,37 +264,37 @@ launch_permission:
 location:
     description: location of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "315210894379/nat-server"
 name:
     description: ami name of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "nat-server"
 ownerId:
     description: owner of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "435210894375"
 platform:
     description: platform of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: null
 root_device_name:
     description: root device name of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "/dev/sda1"
 root_device_type:
     description: root device type of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "ebs"
 state:
     description: state of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "available"
 tags:
     description: a dictionary of tags assigned to image
@@ -305,7 +307,7 @@ tags:
 virtualization_type:
     description: image virtualization type
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "hvm"
 snapshots_deleted:
     description: a list of snapshot ids deleted after deregistering image
@@ -654,7 +656,7 @@ def main():
         wait_timeout=dict(default=900, type='int'),
         description=dict(default=''),
         no_reboot=dict(default=False, type='bool'),
-        state=dict(default='present'),
+        state=dict(default='present', choices=['present', 'absent']),
         device_mapping=dict(type='list'),
         tags=dict(type='dict'),
         launch_permissions=dict(type='dict'),

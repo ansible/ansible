@@ -21,44 +21,44 @@ module: azure_rm_virtualmachine_facts
 
 version_added: "2.7"
 
-short_description: Get virtual machine facts.
+short_description: Get virtual machine facts
 
 description:
-  - Get facts for all virtual machines of a resource group.
+    - Get facts for one or all virtual machines in a resource group.
 
 options:
     resource_group:
         description:
-        - Name of the resource group containing the virtual machines (required when filtering by vm name).
+            - Name of the resource group containing the virtual machines (required when filtering by vm name).
     name:
         description:
-        - Name of the virtual machine.
+            - Name of the virtual machine.
     tags:
         description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
-  - azure
+    - azure
 
 author:
-  - "Gustavo Muniz do Carmo (@gustavomcarmo)"
-  - "Zim Kalinowski (@zikalino)"
+    - Gustavo Muniz do Carmo (@gustavomcarmo)
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Get facts for all virtual machines of a resource group
     azure_rm_virtualmachine_facts:
-      resource_group: Testing
+      resource_group: myResourceGroup
 
   - name: Get facts by name
     azure_rm_virtualmachine_facts:
-      resource_group: Testing
-      name: vm
+      resource_group: myResourceGroup
+      name: myVm
 
   - name: Get facts by tags
     azure_rm_virtualmachine_facts:
-      resource_group: Testing
+      resource_group: myResourceGroup
       tags:
         - testing
         - foo:bar
@@ -66,7 +66,8 @@ EXAMPLES = '''
 
 RETURN = '''
 vms:
-    description: List of virtual machines.
+    description:
+        - List of virtual machines.
     returned: always
     type: complex
     contains:
@@ -76,6 +77,40 @@ vms:
             returned: always
             type: str
             sample: admin
+        boot_diagnostics:
+            description:
+                - Information about the boot diagnostics settings.
+            returned: always
+            type: complex
+            contains:
+                enabled:
+                    description:
+                        - Indicates if boot diagnostics are enabled.
+                    returned: always
+                    type: bool
+                    sample: true
+                storage_uri:
+                    description:
+                        - Indicates the storage account used by boot diagnostics.
+                    returned: always
+                    type: str
+                    sample: https://mystorageaccountname.blob.core.windows.net/
+                console_screenshot_uri:
+                    description:
+                        - Contains a URI to grab a console screenshot.
+                        - Only present if enabled.
+                    returned: always
+                    type: str
+                    sample: https://mystorageaccountname.blob.core.windows.net/bootdiagnostics-myvm01-a4db09a6-ab7f-4d80-9da8-fbceaef9288a/
+                            myVm.a4db09a6-ab7f-4d80-9da8-fbceaef9288a.screenshot.bmp
+                serial_console_log_uri:
+                    description:
+                        - Contains a URI to grab the serial console log.
+                        - Only present if enabled.
+                    returned: always
+                    type: str
+                    sample: https://mystorageaccountname.blob.core.windows.net/bootdiagnostics-myvm01-a4db09a6-ab7f-4d80-9da8-fbceaef9288a/
+                            myVm.a4db09a6-ab7f-4d80-9da8-fbceaef9288a.serialconsole.log
         data_disks:
             description:
                 - List of attached data disks.
@@ -85,21 +120,25 @@ vms:
                 caching:
                     description:
                         - Type of data disk caching.
+                    returned: always
                     type: str
                     sample: ReadOnly
                 disk_size_gb:
                     description:
-                        - The initial disk size in GB for blank data disks
+                        - The initial disk size in GB for blank data disks.
+                    returned: always
                     type: int
                     sample: 64
                 lun:
                     description:
-                        - The logical unit number for data disk
+                        - The logical unit number for data disk.
+                    returned: always
                     type: int
                     sample: 0
                 managed_disk_type:
                     description:
-                        - Managed data disk type
+                        - Managed data disk type.
+                    returned: always
                     type: str
                     sample: Standard_LRS
         id:
@@ -107,33 +146,43 @@ vms:
                 - Resource ID.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/myclusterrg/providers/Microsoft.Compute/virtualMachines/mycluster-node-2
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVm
         image:
             description:
-                - Image specification
+                - Image specification.
             returned: always
             type: complex
             contains:
                 offer:
                     description:
-                        - Offer.
+                        - The offer of the platform image or marketplace image used to create the virtual machine.
                     type: str
+                    returned: when created from marketplace image
                     sample: RHEL
                 publisher:
                     description:
                         - Publisher name.
                     type: str
+                    returned: when created from marketplace image
                     sample: RedHat
                 sku:
                     description:
                         - SKU name.
                     type: str
+                    returned: when created from marketplace image
                     sample: 7-RAW
                 version:
                     description:
                         - Image version.
                     type: str
+                    returned: when created from marketplace image
                     sample: 7.5.2018050901
+                id:
+                    description:
+                        - Custom image resource ID.
+                    type: str
+                    returned: when created from custom image
+                    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage
         location:
             description:
                 - Resource location.
@@ -145,57 +194,67 @@ vms:
                 - Resource name.
             returned: always
             type: str
-            sample: mycluster-node-2
+            sample: myVm
         network_interface_names:
             description:
                 - List of attached network interfaces.
+            returned: always
             type: list
             sample: [
-                "mycluster-node-2-nic"
+                "myNetworkInterface"
             ]
         os_disk_caching:
             description:
                 - Type of OS disk caching.
+            returned: always
             type: str
             sample: ReadOnly
         os_type:
             description:
                 - Base type of operating system.
+            returned: always
             type: str
             sample: Linux
         resource_group:
             description:
                 - Resource group.
+            returned: always
             type: str
+            sample: myResourceGroup
         state:
             description:
                 - State of the resource.
+            returned: always
             type: str
             sample: present
         tags:
             description:
-                - Tags.
+                - Resource tags.
+            returned: always
             type: dict
+            sample: { "key1":"value1" }
         vm_size:
             description:
                 - Virtual machine size.
+            returned: always
             type: str
             sample: Standard_D4
         power_state:
             description:
                 - Power state of the virtual machine.
+            returned: always
             type: str
             sample: running
 '''
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+    from msrestazure.tools import parse_resource_id
+except Exception:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
-from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 import re
 
@@ -237,8 +296,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             self.fail("Parameter error: resource group required when filtering by name.")
         if self.name:
             self.results['vms'] = self.get_item()
+        elif self.resource_group:
+            self.results['vms'] = self.list_items_by_resourcegroup()
         else:
-            self.results['vms'] = self.list_items()
+            self.results['vms'] = self.list_all_items()
 
         return self.results
 
@@ -247,17 +308,14 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         item = None
         result = []
 
-        try:
-            item = self.compute_client.virtual_machines.get(self.resource_group, self.name)
-        except CloudError as err:
-            self.module.warn("Error getting virtual machine {0} - {1}".format(self.name, str(err)))
+        item = self.get_vm(self.resource_group, self.name)
 
-        if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_vm(item)]
+        if item and self.has_tags(item.get('tags'), self.tags):
+            result = [item]
 
         return result
 
-    def list_items(self):
+    def list_items_by_resourcegroup(self):
         self.log('List all items')
         try:
             items = self.compute_client.virtual_machines.list(self.resource_group)
@@ -267,18 +325,31 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_vm(self.get_vm(item.name)))
+                results.append(self.get_vm(self.resource_group, item.name))
         return results
 
-    def get_vm(self, name):
+    def list_all_items(self):
+        self.log('List all items')
+        try:
+            items = self.compute_client.virtual_machines.list_all()
+        except CloudError as exc:
+            self.fail("Failed to list all items - {0}".format(str(exc)))
+
+        results = []
+        for item in items:
+            if self.has_tags(item.tags, self.tags):
+                results.append(self.get_vm(parse_resource_id(item.id).get('resource_group'), item.name))
+        return results
+
+    def get_vm(self, resource_group, name):
         '''
         Get the VM with expanded instanceView
 
         :return: VirtualMachine object
         '''
         try:
-            vm = self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceview')
-            return vm
+            vm = self.compute_client.virtual_machines.get(resource_group, name, expand='instanceview')
+            return self.serialize_vm(vm)
         except Exception as exc:
             self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
 
@@ -291,7 +362,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
-        resource_group = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        resource_group = parse_resource_id(result['id']).get('resource_group')
         instance = None
         power_state = None
 
@@ -305,6 +376,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             code = instance['statuses'][index]['code'].split('/')
             if code[0] == 'PowerState':
                 power_state = code[1]
+            elif code[0] == 'OSState' and code[1] == 'generalized':
+                power_state = 'generalized'
+                break
 
         new_result = {}
         new_result['power_state'] = power_state
@@ -314,15 +388,34 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         new_result['state'] = 'present'
         new_result['location'] = vm.location
         new_result['vm_size'] = result['properties']['hardwareProfile']['vmSize']
-        new_result['admin_username'] = result['properties']['osProfile']['adminUsername']
+        os_profile = result['properties'].get('osProfile')
+        if os_profile is not None:
+            new_result['admin_username'] = os_profile.get('adminUsername')
         image = result['properties']['storageProfile'].get('imageReference')
         if image is not None:
-            new_result['image'] = {
-                'publisher': image['publisher'],
-                'sku': image['sku'],
-                'offer': image['offer'],
-                'version': image['version']
-            }
+            if image.get('publisher', None) is not None:
+                new_result['image'] = {
+                    'publisher': image['publisher'],
+                    'sku': image['sku'],
+                    'offer': image['offer'],
+                    'version': image['version']
+                }
+            else:
+                new_result['image'] = {
+                    'id': image.get('id', None)
+                }
+
+        new_result['boot_diagnostics'] = {
+            'enabled': 'diagnosticsProfile' in result['properties'] and
+                       'bootDiagnostics' in result['properties']['diagnosticsProfile'] and
+                       result['properties']['diagnosticsProfile']['bootDiagnostics']['enabled'] or False,
+            'storage_uri': 'diagnosticsProfile' in result['properties'] and
+                           'bootDiagnostics' in result['properties']['diagnosticsProfile'] and
+                           result['properties']['diagnosticsProfile']['bootDiagnostics']['storageUri'] or None
+        }
+        if new_result['boot_diagnostics']['enabled']:
+            new_result['boot_diagnostics']['console_screenshot_uri'] = result['properties']['instanceView']['bootDiagnostics']['consoleScreenshotBlobUri']
+            new_result['boot_diagnostics']['serial_console_log_uri'] = result['properties']['instanceView']['bootDiagnostics']['serialConsoleLogBlobUri']
 
         vhd = result['properties']['storageProfile']['osDisk'].get('vhd')
         if vhd is not None:
@@ -337,10 +430,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         disks = result['properties']['storageProfile']['dataDisks']
         for disk_index in range(len(disks)):
             new_result['data_disks'].append({
-                'lun': disks[disk_index]['lun'],
-                'disk_size_gb': disks[disk_index]['diskSizeGB'],
-                'managed_disk_type': disks[disk_index]['managedDisk']['storageAccountType'],
-                'caching': disks[disk_index]['caching']
+                'lun': disks[disk_index].get('lun'),
+                'disk_size_gb': disks[disk_index].get('diskSizeGB'),
+                'managed_disk_type': disks[disk_index].get('managedDisk', {}).get('storageAccountType'),
+                'caching': disks[disk_index].get('caching')
             })
 
         new_result['network_interface_names'] = []

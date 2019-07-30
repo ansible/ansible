@@ -60,6 +60,7 @@ options:
         required: False
         description:
             - "A boolean flag that indicates if the server TLS certificate and host name should be checked."
+        type: bool
     ca_file:
         required: False
         description:
@@ -82,12 +83,13 @@ options:
                the server to send compressed responses. The default is I(True).
                Note that this is a hint for the server, and that it may return
                uncompressed data even when this parameter is set to I(True)."
+        type: bool
     kerberos:
         required: False
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
-
+        type: bool
     headers:
         required: False
         description:
@@ -96,14 +98,14 @@ options:
 
 requirements:
   - python >= 2.7
-  - ovirt-engine-sdk-python >= 4.2.4
+  - ovirt-engine-sdk-python >= 4.3.0
 notes:
   - "Everytime you use ovirt_auth module to obtain ticket, you need to also revoke the ticket,
      when you no longer need it, otherwise the ticket would be revoked by engine when it expires.
      For an example of how to achieve that, please take a look at I(examples) section."
   - "In order to use this module you have to install oVirt/RHV Python SDK.
      To ensure it's installed with correct version you can create the following task:
-     I(pip: name=ovirt-engine-sdk-python version=4.2.4)"
+     I(pip: name=ovirt-engine-sdk-python version=4.3.0)"
   - "Note that in oVirt/RHV 4.1 if you want to use a user which is not administrator
      you must enable the I(ENGINE_API_FILTER_BY_DEFAULT) variable in engine. In
      oVirt/RHV 4.2 and later it's enabled by default."
@@ -124,7 +126,7 @@ EXAMPLES = '''
 
        # Previous task generated I(ovirt_auth) fact, which you can later use
        # in different modules as follows:
-       - ovirt_vms:
+       - ovirt_vm:
            auth: "{{ ovirt_auth }}"
            state: absent
            name: myvm
@@ -157,12 +159,12 @@ ovirt_auth:
         token:
             description: SSO token which is used for connection to oVirt/RHV engine.
             returned: success
-            type: string
+            type: str
             sample: "kdfVWp9ZgeewBXV-iq3Js1-xQJZPSEQ334FLb3eksoEPRaab07DhZ8ED8ghz9lJd-MQ2GqtRIeqhvhCkrUWQPw"
         url:
             description: URL of the oVirt/RHV engine API endpoint.
             returned: success
-            type: string
+            type: str
             sample: "https://ovirt.example.com/ovirt-engine/api"
         ca_file:
             description: CA file, which is used to verify SSL/TLS connection.

@@ -58,6 +58,7 @@ options:
       - Whether or not to alter existing targets in the group to match what is passed with the module
     required: false
     default: yes
+    type: bool
   name:
     description:
       - The name of the target group.
@@ -98,8 +99,9 @@ options:
     default: lb_cookie
   successful_response_codes:
     description:
-      - The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, "200,202") or a range of
-        values (for example, "200-299").
+      - The HTTP codes to use when checking for a successful response from a target.
+      - Accepts multiple values (for example, "200,202") or a range of         values (for example, "200-299").
+      - Requires the I(health_check_protocol) parameter to be set.
     required: false
   tags:
     description:
@@ -226,17 +228,17 @@ health_check_interval_seconds:
 health_check_path:
     description: The destination for the health check request.
     returned: when state present
-    type: string
+    type: str
     sample: /index.html
 health_check_port:
     description: The port to use to connect with the target.
     returned: when state present
-    type: string
+    type: str
     sample: traffic-port
 health_check_protocol:
     description: The protocol to use to connect with the target.
     returned: when state present
-    type: string
+    type: str
     sample: HTTP
 health_check_timeout_seconds:
     description: The amount of time, in seconds, during which no response means a failed health check.
@@ -268,7 +270,7 @@ port:
 protocol:
     description: The protocol to use for routing traffic to the targets.
     returned: when state present
-    type: string
+    type: str
     sample: HTTP
 stickiness_enabled:
     description: Indicates whether sticky sessions are enabled.
@@ -283,7 +285,7 @@ stickiness_lb_cookie_duration_seconds:
 stickiness_type:
     description: The type of sticky sessions.
     returned: when state present
-    type: string
+    type: str
     sample: lb_cookie
 tags:
     description: The tags attached to the target group.
@@ -295,12 +297,12 @@ tags:
 target_group_arn:
     description: The Amazon Resource Name (ARN) of the target group.
     returned: when state present
-    type: string
+    type: str
     sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
 target_group_name:
     description: The name of the target group.
     returned: when state present
-    type: string
+    type: str
     sample: mytargetgroup
 unhealthy_threshold_count:
     description: The number of consecutive health check failures required before considering the target unhealthy.
@@ -310,7 +312,7 @@ unhealthy_threshold_count:
 vpc_id:
     description: The ID of the VPC for the targets.
     returned: when state present
-    type: string
+    type: str
     sample: vpc-0123456
 '''
 

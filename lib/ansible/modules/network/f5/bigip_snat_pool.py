@@ -24,21 +24,32 @@ options:
     description:
       - List of members to put in the SNAT pool. When a C(state) of present is
         provided, this parameter is required. Otherwise, it is optional.
+    type: list
     aliases:
       - member
+  description:
+    description:
+      - A general description of the SNAT pool, provided by the user for their
+        benefit. It is optional.
+    type: str
+    version_added: 2.9
   name:
-    description: The name of the SNAT pool.
+    description:
+      - The name of the SNAT pool.
+    type: str
     required: True
   state:
     description:
       - Whether the SNAT pool should exist or not.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 extends_documentation_fragment: f5
@@ -50,33 +61,50 @@ author:
 EXAMPLES = r'''
 - name: Add the SNAT pool 'my-snat-pool'
   bigip_snat_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my-snat-pool
     state: present
     members:
       - 10.10.10.10
       - 20.20.20.20
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Change the SNAT pool's members to a single member
   bigip_snat_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my-snat-pool
     state: present
     member: 30.30.30.30
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove the SNAT pool 'my-snat-pool'
   bigip_snat_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: johnd
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
+
+- name: Add the SNAT pool 'my-snat-pool' with a description
+  bigip_snat_pool:
+    name: my-snat-pool
+    state: present
+    members:
+      - 10.10.10.10
+      - 20.20.20.20
+    description: A SNAT pool description
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -98,39 +126,38 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {}
 
     updatables = [
-        'members'
+        'members',
+        'description',
     ]
 
     returnables = [
-        'members'
+        'members',
+        'description',
     ]
 
     api_attributes = [
-        'members'
+        'members',
+        'description',
     ]
 
 
@@ -162,6 +189,14 @@ class ModuleParameters(Parameters):
             address = self._format_member_address(member)
             result.update([address])
         return list(result)
+
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -214,11 +249,16 @@ class Difference(object):
         result = list(set(self.want.members))
         return result
 
+    @property
+    def description(self):
+        result = cmp_str_with_none(self.want.description, self.have.description)
+        return result
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -414,6 +454,7 @@ class ArgumentSpec(object):
                 type='list',
                 aliases=['member']
             ),
+            description=dict(),
             state=dict(
                 default='present',
                 choices=['absent', 'present']
@@ -440,16 +481,12 @@ def main():
         required_if=spec.required_if
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

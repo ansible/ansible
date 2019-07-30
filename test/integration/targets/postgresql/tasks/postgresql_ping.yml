@@ -1,0 +1,35 @@
+# Test code for the postgresql_ping module
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: postgresql_ping - test return values
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ping:
+    db: "{{ db_default }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.is_available == true
+      - result.server_version != {}
+      - result.server_version.major != false
+      - result.server_version.minor != false
+      - result is not changed
+
+- name: postgresql_ping - check ping of non-existing database doesn't return anything
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ping:
+    db: "{{ db_name_nonexist }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.is_available == false
+      - result.server_version == {}
+      - result is not changed

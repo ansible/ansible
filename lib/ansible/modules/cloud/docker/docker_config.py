@@ -30,44 +30,46 @@ options:
   data:
     description:
       - The value of the config. Required when state is C(present).
-    required: false
     type: str
+  data_is_b64:
+    description:
+      - If set to C(true), the data is assumed to be Base64 encoded and will be
+        decoded before being used.
+      - To use binary C(data), it is better to keep it Base64 encoded and let it
+        be decoded by this option.
+    type: bool
+    default: no
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
       - If new meta data is provided, or existing meta data is modified, the config will be updated by removing it and creating it again.
-    required: false
     type: dict
   force:
     description:
       - Use with state C(present) to always remove and recreate an existing config.
       - If I(true), an existing config will be replaced, even if it has not been changed.
-    default: false
     type: bool
+    default: no
   name:
     description:
       - The name of the config.
-    required: true
     type: str
+    required: yes
   state:
     description:
       - Set to C(present), if the config should exist, and C(absent), if it should not.
-    required: false
+    type: str
     default: present
     choices:
       - absent
       - present
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_2_documentation
 
 requirements:
-  - "python >= 2.7"
-  - "docker >= 2.6.0"
-  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-     module has been superseded by L(docker,https://pypi.org/project/docker/)
-     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-     Version 2.6.0 or newer is only available with the C(docker) module."
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.6.0"
   - "Docker API >= 1.30"
 
 author:
@@ -80,7 +82,11 @@ EXAMPLES = '''
 - name: Create config foo (from a file on the control machine)
   docker_config:
     name: foo
-    data: "{{ lookup('file', '/path/to/config/file') }}"
+    # If the file is JSON or binary, Ansible might modify it (because
+    # it is first decoded and later re-encoded). Base64-encoding the
+    # file directly after reading it prevents this to happen.
+    data: "{{ lookup('file', '/path/to/config/file') | b64encode }}"
+    data_is_b64: true
     state: present
 
 - name: Change the config data
@@ -140,19 +146,26 @@ config_id:
   description:
     - The ID assigned by Docker to the config object.
   returned: success and C(state == "present")
-  type: string
+  type: str
   sample: 'hzehrmyjigmcp2gb6nlhmjqcv'
 '''
 
+import base64
 import hashlib
+import traceback
 
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, compare_generic
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    compare_generic,
+    RequestException,
+)
 from ansible.module_utils._text import to_native, to_bytes
 
 
@@ -170,13 +183,18 @@ class ConfigManager(DockerBaseClass):
         self.name = parameters.get('name')
         self.state = parameters.get('state')
         self.data = parameters.get('data')
+        if self.data is not None:
+            if parameters.get('data_is_b64'):
+                self.data = base64.b64decode(self.data)
+            else:
+                self.data = to_bytes(self.data)
         self.labels = parameters.get('labels')
         self.force = parameters.get('force')
         self.data_key = None
 
     def __call__(self):
         if self.state == 'present':
-            self.data_key = hashlib.sha224(to_bytes(self.data)).hexdigest()
+            self.data_key = hashlib.sha224(self.data).hexdigest()
             self.present()
         elif self.state == 'absent':
             self.absent()
@@ -250,8 +268,9 @@ class ConfigManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', choices=['absent', 'present'], default='present'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         data=dict(type='str'),
+        data_is_b64=dict(type='bool', default=False),
         labels=dict(type='dict'),
         force=dict(type='bool', default=False)
     )
@@ -268,12 +287,17 @@ def main():
         min_docker_api_version='1.30',
     )
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    ConfigManager(client, results)()
-    client.module.exit_json(**results)
+        ConfigManager(client, results)()
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: onepassword_facts
 author:
-    - Ryan Conway (@rylon)
+    - Ryan Conway (@Rylon)
 version_added: "2.7"
 requirements:
     - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
@@ -28,7 +28,7 @@ notes:
     - This module stores potentially sensitive data from 1Password as Ansible facts.
       Facts are subject to caching if enabled, which means this data could be stored in clear text
       on disk or in a database.
-      - Tested with C(op) version 0.5.3
+      - Tested with C(op) version 0.5.5
 short_description: Gather items from 1Password and set them as facts
 description:
     - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1Password items and return as Ansible facts.
@@ -174,6 +174,10 @@ class OnePasswordFacts(object):
         self.terms = self.parse_search_terms(terms)
 
     def _run(self, args, expected_rc=0, command_input=None, ignore_errors=False):
+        if self.token:
+            # Adds the session token to all commands if we're logged in.
+            args += [to_bytes('--session=') + self.token]
+
         command = [self.cli_path] + args
         p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         out, err = p.communicate(input=command_input)
@@ -188,24 +192,32 @@ class OnePasswordFacts(object):
         if ('documentAttributes' in data['details']):
             # This is actually a document, let's fetch the document data instead!
             document = self._run(["get", "document", data['overview']['title']])
-            return {'document': document[0].strip()}
+            return {'document': document[1].strip()}
 
         else:
             # This is not a document, let's try to find the requested field
-            if section_title is None:
-                for field_data in data['details'].get('fields', []):
-                    if field_data.get('name').lower() == field_name.lower():
-                        return {field_name: field_data.get('value', '')}
 
-            # Not found it yet, so now lets see if there are any sections defined
-            # and search through those for the field. If a section was given, we skip
-            # any non-matching sections, otherwise we search them all until we find the field.
-            for section_data in data['details'].get('sections', []):
-                if section_title is not None and section_title.lower() != section_data['title'].lower():
-                    continue
-                for field_data in section_data.get('fields', []):
-                    if field_data.get('t').lower() == field_name.lower():
-                        return {field_name: field_data.get('v', '')}
+            # Some types of 1Password items have a 'password' field directly alongside the 'fields' attribute,
+            # not inside it, so we need to check there first.
+            if (field_name in data['details']):
+                return {field_name: data['details'][field_name]}
+
+            # Otherwise we continue looking inside the 'fields' attribute for the specified field.
+            else:
+                if section_title is None:
+                    for field_data in data['details'].get('fields', []):
+                        if field_data.get('name', '').lower() == field_name.lower():
+                            return {field_name: field_data.get('value', '')}
+
+                # Not found it yet, so now lets see if there are any sections defined
+                # and search through those for the field. If a section was given, we skip
+                # any non-matching sections, otherwise we search them all until we find the field.
+                for section_data in data['details'].get('sections', []):
+                    if section_title is not None and section_title.lower() != section_data['title'].lower():
+                        continue
+                    for field_data in section_data.get('fields', []):
+                        if field_data.get('t', '').lower() == field_name.lower():
+                            return {field_name: field_data.get('v', '')}
 
         # We will get here if the field could not be found in any section and the item wasn't a document to be downloaded.
         optional_section_title = '' if section_title is None else " in the section '%s'" % section_title
@@ -234,8 +246,6 @@ class OnePasswordFacts(object):
             args = ["get", "item", item_id]
             if vault is not None:
                 args += ['--vault={0}'.format(vault)]
-            if not self.logged_in:
-                args += [to_bytes('--session=') + self.token]
             rc, output, dummy = self._run(args)
             return output
 

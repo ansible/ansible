@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+import copy
 import os
 import unittest
 
@@ -248,7 +248,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
     def test_path_params_invalid_params(self):
         self.url_params_invalid_params(method='validate_path_params', parameters_type='path')
 
-    def test_path_params_invalid_params(self):
+    def test_query_params_invalid_params(self):
         self.url_params_invalid_params(method='validate_query_params', parameters_type='query')
 
     @staticmethod
@@ -384,7 +384,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
             'someParam': 1.2,
             'p_integer': "1",
             'p_boolean': "",
-            'p_number': "2"
+            'p_number': "2.1"
         }
         valid, rez = getattr(validator, method)('getNetwork', data)
         assert not valid
@@ -406,19 +406,32 @@ class TestFdmSwaggerValidator(unittest.TestCase):
                     'actually_value': 1.2
                 },
                 {
-                    'path': 'p_integer',
-                    'expected_type': 'integer',
-                    'actually_value': "1"
-                },
-                {
                     'path': 'p_boolean',
                     'expected_type': 'boolean',
                     'actually_value': ""
+                }
+            ]
+        }) == sort_validator_rez(rez)
+
+        data = {
+            'objId': "123",
+            'parentId': "1",
+            'someParam': None,
+            'p_integer': None
+        }
+        valid, rez = getattr(validator, method)('getNetwork', data)
+        assert not valid
+        assert sort_validator_rez({
+            'invalid_type': [
+                {
+                    'path': 'someParam',
+                    'expected_type': 'string',
+                    'actually_value': None
                 },
                 {
-                    'path': 'p_number',
-                    'expected_type': 'number',
-                    'actually_value': "2"
+                    'path': 'p_integer',
+                    'expected_type': 'integer',
+                    'actually_value': None
                 }
             ]
         }) == sort_validator_rez(rez)
@@ -603,6 +616,25 @@ class TestFdmSwaggerValidator(unittest.TestCase):
         assert valid
         assert rez is None
 
+    def test_pass_only_required_fields_with_none_values(self):
+        data = {
+            'subType': 'NETWORK',
+            'type': 'networkobject',
+            'value': None
+        }
+        valid, rez = FdmSwaggerValidator(mock_data).validate_data('getNetworkObjectList', data)
+        assert not valid
+        assert {'required': ['value']} == rez
+
+    def test_pass_no_data_with_no_required_fields(self):
+        spec = copy.deepcopy(mock_data)
+        del spec['models']['NetworkObject']['required']
+
+        valid, rez = FdmSwaggerValidator(spec).validate_data('getNetworkObjectList', {})
+
+        assert valid
+        assert rez is None
+
     def test_pass_all_fields_with_correct_data(self):
         data = {
             'id': 'id-di',
@@ -726,6 +758,17 @@ class TestFdmSwaggerValidator(unittest.TestCase):
         assert valid
         assert rez is None
 
+        valid_data = {
+            "f_string": None,
+            "f_number": None,
+            "f_boolean": None,
+            "f_integer": None
+        }
+
+        valid, rez = FdmSwaggerValidator(local_mock_data).validate_data('getdata', valid_data)
+        assert valid
+        assert rez is None
+
     def test_invalid_simple_types(self):
         local_mock_data = {
             'models': {
@@ -818,7 +861,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
             "f_string": False,
             "f_number": "1",
             "f_boolean": "",
-            "f_integer": 1.2
+            "f_integer": "1.2"
         }
 
         valid, rez = FdmSwaggerValidator(local_mock_data).validate_data('getdata', invalid_data)
@@ -831,11 +874,6 @@ class TestFdmSwaggerValidator(unittest.TestCase):
                     'actually_value': False
                 },
                 {
-                    'path': 'f_number',
-                    'expected_type': 'number',
-                    'actually_value': "1"
-                },
-                {
                     'path': 'f_boolean',
                     'expected_type': 'boolean',
                     'actually_value': ""
@@ -843,7 +881,7 @@ class TestFdmSwaggerValidator(unittest.TestCase):
                 {
                     'path': 'f_integer',
                     'expected_type': 'integer',
-                    'actually_value': 1.2
+                    'actually_value': '1.2'
                 }
             ]
         }) == sort_validator_rez(rez)

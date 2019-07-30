@@ -26,24 +26,23 @@ options:
     description:
       - Name of the record.
     required: true
+    type: str
   state:
     description:
       - State of the resource.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: exoscale
 '''
 
 EXAMPLES = '''
 - name: Create a domain
-  local_action:
-    module: exo_dns_domain
+  exo_dns_domain:
     name: example.com
 
 - name: Remove a domain
-  local_action:
-    module: exo_dns_domain
+  exo_dns_domain:
     name: example.com
     state: absent
 '''
@@ -68,12 +67,12 @@ exo_dns_domain:
         created_at:
             description: When the domain was created
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         expires_on:
             description: When the domain expires
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         id:
             description: ID of the domain
@@ -88,7 +87,7 @@ exo_dns_domain:
         name:
             description: Domain name
             returned: success
-            type: string
+            type: str
             sample: example.com
         record_count:
             description: Number of records related to this domain
@@ -108,22 +107,22 @@ exo_dns_domain:
         state:
             description: State of the domain
             returned: success
-            type: string
+            type: str
             sample: "hosted"
         token:
             description: Token
             returned: success
-            type: string
+            type: str
             sample: "r4NzTRp6opIeFKfaFYvOd6MlhGyD07jl"
         unicode_name:
             description: Domain name as unicode
             returned: success
-            type: string
+            type: str
             sample: "example.com"
         updated_at:
             description: When the domain was updated last.
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         user_id:
             description: ID of the user
@@ -186,8 +185,8 @@ class ExoDnsDomain(ExoDns):
 def main():
     argument_spec = exo_dns_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
-        state=dict(choices=['present', 'absent'], default='present'),
+        name=dict(type='str', required=True),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(

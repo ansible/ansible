@@ -20,44 +20,50 @@ short_description: Manages security groups on Apache CloudStack based clouds.
 description:
     - Create and remove security groups.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the security group.
+    type: str
     required: true
   description:
     description:
       - Description of the security group.
+    type: str
   state:
     description:
       - State of the security group.
+    type: str
     default: present
     choices: [ present, absent ]
   domain:
     description:
       - Domain the security group is related to.
+    type: str
   account:
     description:
       - Account the security group is related to.
+    type: str
   project:
     description:
       - Name of the project the security group to be created in.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: create a security group
-  local_action:
-    module: cs_securitygroup
+  cs_securitygroup:
     name: default
     description: default security group
+  delegate_to: localhost
 
 - name: remove a security group
-  local_action:
-    module: cs_securitygroup
+  cs_securitygroup:
     name: default
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -65,37 +71,37 @@ RETURN = '''
 id:
   description: UUID of the security group.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of security group.
   returned: success
-  type: string
+  type: str
   sample: app
 description:
   description: Description of security group.
   returned: success
-  type: string
+  type: str
   sample: application security group
 tags:
   description: List of resource tags associated with the security group.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 project:
   description: Name of project the security group is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 domain:
   description: Domain the security group is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the security group is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 '''
 

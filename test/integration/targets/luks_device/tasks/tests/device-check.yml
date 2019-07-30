@@ -1,0 +1,48 @@
+---
+- name: Create with invalid device name (check)
+  luks_device:
+    device: /dev/asdfasdfasdf
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  check_mode: yes
+  ignore_errors: yes
+  become: yes
+  register: create_check
+- name: Create with invalid device name
+  luks_device:
+    device: /dev/asdfasdfasdf
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  ignore_errors: yes
+  become: yes
+  register: create
+- assert:
+    that:
+      - create_check is failed
+      - create is failed
+      - "'o such file or directory' in create_check.msg"
+      - "'o such file or directory' in create.msg"
+
+- name: Create with something which is not a device (check)
+  luks_device:
+    device: /tmp/
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  check_mode: yes
+  ignore_errors: yes
+  become: yes
+  register: create_check
+- name: Create with something which is not a device
+  luks_device:
+    device: /tmp/
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  ignore_errors: yes
+  become: yes
+  register: create
+- assert:
+    that:
+      - create_check is failed
+      - create is failed
+      - "'is not a device' in create_check.msg"
+      - "'is not a device' in create.msg"

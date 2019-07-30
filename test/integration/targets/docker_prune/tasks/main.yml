@@ -27,7 +27,7 @@
       images: yes
       networks: yes
       volumes: yes
-      builder_cache: yes
+      builder_cache: "{{ docker_py_version is version('3.3.0', '>=') }}"
     register: result
 
   # Analyze result
@@ -35,17 +35,18 @@
   - assert:
       that:
       # containers
-      - container.ansible_facts.docker_container.Id in result.containers
+      - container.container.Id in result.containers
       - "'containers_space_reclaimed' in result"
       # images
       - "'images_space_reclaimed' in result"
       # networks
-      - network.ansible_facts.docker_network.Name in result.networks
+      - network.network.Name in result.networks
       # volumes
-      - volume.ansible_facts.docker_volume.Name in result.volumes
+      - volume.volume.Name in result.volumes
       - "'volumes_space_reclaimed' in result"
       # builder_cache
-      - "'builder_cache_space_reclaimed' in result"
+      - "'builder_cache_space_reclaimed' in result or docker_py_version is version('3.3.0', '<')"
+      - "'builder_cache_space_reclaimed' not in result or docker_py_version is version('3.3.0', '>=')"
 
   # Test with filters
   - docker_prune:
@@ -56,5 +57,7 @@
 
   - debug: var=result
 
-  # Skip for CentOS 6
-  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
+  when: docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_prune tests!"
+  when: not(docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

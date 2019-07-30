@@ -375,8 +375,8 @@ This will return a large amount of variable data, which may look like this on An
             "SELINUX_USE_CURRENT_RANGE": "",
             "SHELL": "/bin/bash",
             "SHLVL": "2",
-            "SSH_CLIENT": "23.253.245.60 55672 22",
-            "SSH_CONNECTION": "23.253.245.60 55672 104.130.127.149 22",
+            "SSH_CLIENT": "REDACTED 55672 22",
+            "SSH_CONNECTION": "REDACTED 55672 REDACTED 22",
             "USER": "zuul",
             "XDG_RUNTIME_DIR": "/run/user/1000",
             "XDG_SESSION_ID": "1",
@@ -790,12 +790,10 @@ directory (ansible will attempt to create the directory if one does not exist).
 Registering variables
 =====================
 
-Another major use of variables is running a command and registering the result of that command as a variable. Results will vary from module to module. Use of ``-v`` when executing playbooks will show possible values for the results.
-
-The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
+Another major use of variables is running a command and registering the result of that command as a variable. When you execute a task and save the return value in a variable for use in later tasks, you create a registered variable. There are more examples of this in the
 :ref:`playbooks_conditionals` chapter.
 
-While it's mentioned elsewhere in that document too, here's a quick syntax example::
+For example::
 
    - hosts: web_servers
 
@@ -808,10 +806,11 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
         - shell: /usr/bin/bar
           when: foo_result.rc == 5
 
-Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
-in Ansible.  Effectively registered variables are just like facts.
+Results will vary from module to module. Each module's documentation includes a ``RETURN`` section describing that module's return values. To see the values for a particular task, run your playbook with ``-v``.
 
-When using ``register`` with a loop, the data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :ref:`playbooks_loops` section on using register with a loop.
+Registered variables are similar to facts, with a few key differences. Like facts, registered variables are host-level variables. However, registered variables are only stored in memory. (Ansible facts are backed by whatever cache plugin you have configured.) Registered variables are only valid on the host for the rest of the current playbook run. Finally, registered variables and facts have different :ref:`precedence levels <ansible_variable_precedence>`.
+
+When you register a variable in a task with a loop, the registered variable contains a value for each item in the loop. The data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :ref:`playbooks_loops` section on using register with a loop.
 
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
@@ -963,30 +962,10 @@ key=value format::
 .. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
           Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
-.. versionadded:: 1.2
-
 JSON string format::
 
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
-
-.. versionadded:: 1.3
-
-YAML string format::
-
-    ansible-playbook release.yml --extra-vars '
-    version: "1.23.45"
-    other_variable: foo'
-
-    ansible-playbook arcade.yml --extra-vars '
-    pacman: mrs
-    ghosts:
-    - inky
-    - pinky
-    - clyde
-    - sue'
-
-.. versionadded:: 1.3
 
 vars from a JSON or YAML file::
 
@@ -996,16 +975,12 @@ This is useful for, among other things, setting the hosts group or the user for 
 
 Escaping quotes and other special characters:
 
-.. versionadded:: 1.2
-
 Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for
 the shell you're operating in.::
 
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
     ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
-
-.. versionadded:: 1.3
 
 In these cases, it's probably best to use a JSON or YAML file containing the variable
 definitions.
@@ -1031,28 +1006,28 @@ If multiple variables of the same name are defined in different places, they get
 
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
-  * command line values (eg "-u user")
-  * role defaults [1]_
-  * inventory file or script group vars [2]_
-  * inventory group_vars/all [3]_
-  * playbook group_vars/all [3]_
-  * inventory group_vars/* [3]_
-  * playbook group_vars/* [3]_
-  * inventory file or script host vars [2]_
-  * inventory host_vars/* [3]_
-  * playbook host_vars/* [3]_
-  * host facts / cached set_facts [4]_
-  * play vars
-  * play vars_prompt
-  * play vars_files
-  * role vars (defined in role/vars/main.yml)
-  * block vars (only for tasks in block)
-  * task vars (only for the task)
-  * include_vars
-  * set_facts / registered vars
-  * role (and include_role) params
-  * include params
-  * extra vars (always win precedence)
+  #. command line values (eg "-u user")
+  #. role defaults [1]_
+  #. inventory file or script group vars [2]_
+  #. inventory group_vars/all [3]_
+  #. playbook group_vars/all [3]_
+  #. inventory group_vars/* [3]_
+  #. playbook group_vars/* [3]_
+  #. inventory file or script host vars [2]_
+  #. inventory host_vars/* [3]_
+  #. playbook host_vars/* [3]_
+  #. host facts / cached set_facts [4]_
+  #. play vars
+  #. play vars_prompt
+  #. play vars_files
+  #. role vars (defined in role/vars/main.yml)
+  #. block vars (only for tasks in block)
+  #. task vars (only for the task)
+  #. include_vars
+  #. set_facts / registered vars
+  #. role (and include_role) params
+  #. include params
+  #. extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
@@ -1072,7 +1047,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
           This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
 
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example, if your inventory specifies ``ansible_ssh_user: ramon`` and you run::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords. See :ref:`general_precedence_rules` for more details. For example, if your inventory specifies ``ansible_user: ramon`` and you run::
 
     ansible -u lola myhost
 
@@ -1085,7 +1060,7 @@ For plays/tasks this is also true for ``remote_user``. Assuming the same invento
     - command: I'll connect as ramon still
       remote_user: lola
 
-will have the value of ``remote_user`` overwritten by ``ansible_ssh_user`` in the inventory.
+will have the value of ``remote_user`` overwritten by ``ansible_user`` in the inventory.
 
 This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
 but they behave like other variables.
@@ -1094,7 +1069,11 @@ If you want to override the remote user globally (even over inventory) you can u
 
     ansible... -e "ansible_user=maria" -u lola
 
-the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``ansible_ssh_user``, or ``remote_user``) might be set.
+the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``remote_user``) might be set.
+
+A connection-specific version of a variable takes precedence over more generic
+versions.  For example, ``ansible_ssh_user`` specified as a group_var would have
+a higher precedence than ``ansible_user`` specified as a host_var.
 
 You can also override as a normal variable in a play::
 

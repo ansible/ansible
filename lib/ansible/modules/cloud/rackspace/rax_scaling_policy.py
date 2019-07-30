@@ -46,6 +46,7 @@ options:
     description:
       - Whether the value in I(change) is a percent value
     default: false
+    type: bool
   name:
     description:
       - Name to give the policy

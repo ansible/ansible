@@ -130,32 +130,32 @@ RETURN = '''
 creation_time:
     description: timestamp of creation date
     returned: always
-    type: string
+    type: str
     sample: "2015-11-16 07:30:57-05:00"
 creation_token:
     description: EFS creation token
     returned: always
-    type: string
+    type: str
     sample: "console-88609e04-9a0e-4a2e-912c-feaa99509961"
 file_system_id:
     description: ID of the file system
     returned: always
-    type: string
+    type: str
     sample: "fs-xxxxxxxx"
 life_cycle_state:
     description: state of the EFS file system
     returned: always
-    type: string
+    type: str
     sample: "creating, available, deleting, deleted"
 mount_point:
     description: url of file system with leading dot from the time when AWS EFS required to add a region suffix to the address
     returned: always
-    type: string
+    type: str
     sample: ".fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
 filesystem_address:
     description: url of file system valid for use with mount
     returned: always
-    type: string
+    type: str
     sample: "fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
 mount_targets:
     description: list of mount targets
@@ -180,7 +180,7 @@ mount_targets:
 name:
     description: name of the file system
     returned: always
-    type: string
+    type: str
     sample: "my-efs"
 number_of_mount_targets:
     description: the number of targets mounted
@@ -190,7 +190,7 @@ number_of_mount_targets:
 owner_id:
     description: AWS account ID of EFS owner
     returned: always
-    type: string
+    type: str
     sample: "XXXXXXXXXXXX"
 size_in_bytes:
     description: size of the file system in bytes as of a timestamp
@@ -204,7 +204,7 @@ size_in_bytes:
 performance_mode:
     description: performance mode of the file system
     returned: always
-    type: string
+    type: str
     sample: "generalPurpose"
 tags:
     description: tags on the efs instance

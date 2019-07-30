@@ -1,5 +1,6 @@
 """CloudStack plugin for integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -9,6 +10,7 @@ import time
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -32,6 +34,7 @@ from lib.docker_util import (
     docker_inspect,
     docker_pull,
     docker_network_inspect,
+    docker_exec,
     get_docker_container_id,
 )
 
@@ -44,7 +47,7 @@ class CsCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(CsCloudProvider, self).__init__(args, config_extension='.ini')
+        super(CsCloudProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
@@ -156,6 +159,11 @@ class CsCloudProvider(CloudProvider):
             display.info('Starting a new CloudStack simulator docker container.', verbosity=1)
             docker_pull(self.args, self.image)
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
+
+            # apply work-around for OverlayFS issue
+            # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
+            docker_exec(self.args, self.container_name, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
+
             if not self.args.explain:
                 display.notice('The CloudStack simulator will probably be ready in 2 - 4 minutes.')
 
@@ -218,7 +226,7 @@ class CsCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True)
         endpoint = self.endpoint
 
-        for _ in range(1, 30):
+        for _iteration in range(1, 30):
             display.info('Waiting for CloudStack service: %s' % endpoint, verbosity=1)
 
             try:
@@ -238,7 +246,7 @@ class CsCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True)
         endpoint = '%s/admin.json' % self.endpoint
 
-        for _ in range(1, 30):
+        for _iteration in range(1, 30):
             display.info('Waiting for CloudStack credentials: %s' % endpoint, verbosity=1)
 
             response = client.get(endpoint)
@@ -256,16 +264,27 @@ class CsCloudProvider(CloudProvider):
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        changes = dict(
-            CLOUDSTACK_CONFIG=self.config_path,
+        parser = ConfigParser()
+        parser.read(self.config_path)
+
+        config = dict(parser.items('default'))
+
+        env_vars = dict(
+            CLOUDSTACK_ENDPOINT=config['endpoint'],
+            CLOUDSTACK_KEY=config['key'],
+            CLOUDSTACK_SECRET=config['secret'],
+            CLOUDSTACK_TIMEOUT=config['timeout'],
         )
 
-        env.update(changes)
+        ansible_vars = dict(
+            cs_resource_prefix=self.resource_prefix,
+        )
 
-        cmd.append('-e')
-        cmd.append('cs_resource_prefix=%s' % self.resource_prefix)
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

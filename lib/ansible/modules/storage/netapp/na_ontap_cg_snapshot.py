@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 short_description: NetApp ONTAP manage consistency group snapshot
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - Create consistency group snapshot for ONTAP volumes.
 extends_documentation_fragment:
@@ -53,7 +53,7 @@ EXAMPLES = """
         state: present
         vserver: vserver_name
         snapshot: snapshot name
-        volume: vol_name
+        volumes: vol_name
         username: "{{ netapp username }}"
         password: "{{ netapp password }}"
         hostname: "{{ netapp hostname }}"

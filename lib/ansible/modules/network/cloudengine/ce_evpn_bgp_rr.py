@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages RR for the VXLAN Network on HUAWEI CloudEngine switches.
 description:
     - Configure an RR in BGP-EVPN address family view on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that BGP view is existed.
     - The peer, peer_type, and reflect_client arguments must all exist or not exist.
@@ -163,7 +163,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -270,6 +270,10 @@ class EvpnBgpRr(object):
 
         flags.append(exp)
         config = get_config(self.module, flags)
+        cmd = 'display current-configuration ' + exp
+        config = config.strip() if config else ""
+        if cmd == config:
+            return ''
 
         return config
 
@@ -354,6 +358,8 @@ class EvpnBgpRr(object):
                                   'bgp_evpn_enable'],
                               reflect_client=self.cur_config['reflect_client'],
                               policy_vpn_target=self.cur_config['policy_vpn_target'])
+        if self.end_state == self.existing:
+            self.changed = False
 
     def show_result(self):
         """Show result"""

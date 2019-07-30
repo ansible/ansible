@@ -55,6 +55,10 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
+  thread_id:
+    version_added: 2.8
+    description:
+      - Optional. Timestamp of message to thread this message to as a float. https://api.slack.com/docs/message-threading
   username:
     description:
       - This is the sender of the message.
@@ -88,13 +92,10 @@ options:
   color:
     version_added: "2.0"
     description:
-      - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
+      - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message.
+      - Allowed values for color can be one of 'normal', 'good', 'warning', 'danger', any valid 3 digit or 6 digit hex color value.
+      - Specifying value in hex is supported from version 2.8.
     default: 'normal'
-    choices:
-      - 'normal'
-      - 'good'
-      - 'warning'
-      - 'danger'
   attachments:
     description:
       - Define a list of attachments. This list mirrors the Slack JSON API.
@@ -113,6 +114,7 @@ EXAMPLES = """
     token: thetoken/generatedby/slack
     msg: '{{ inventory_hostname }} completed'
     channel: '#ansible'
+    thread_id: 1539917263.000100
     username: 'Ansible on {{ inventory_hostname }}'
     icon_url: http://www.example.com/some-image-file.png
     link_names: 0
@@ -124,6 +126,14 @@ EXAMPLES = """
     token: thetoken/generatedby/slack
     msg: '{{ inventory_hostname }} is alive!'
     color: good
+    username: ''
+    icon_url: ''
+
+- name: insert a color bar in front of the message with valid hex color value
+  slack:
+    token: thetoken/generatedby/slack
+    msg: 'This message uses color in hex value'
+    color: '#00aacc'
     username: ''
     icon_url: ''
 
@@ -153,6 +163,7 @@ EXAMPLES = """
     msg: This message has &lt;brackets&gt; &amp; ampersands in plain text.
 """
 
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
@@ -168,12 +179,19 @@ escape_table = {
 }
 
 
+def is_valid_hex_color(color_choice):
+    if re.match(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', color_choice):
+        return True
+    return False
+
+
 def escape_quotes(text):
     '''Backslash any quotes within text.'''
     return "".join(escape_table.get(c, c) for c in text)
 
 
-def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
+def build_payload_for_slack(module, text, channel, thread_id, username, icon_url, icon_emoji, link_names,
+                            parse, color, attachments):
     payload = {}
     if color == "normal" and text is not None:
         payload = dict(text=escape_quotes(text))
@@ -185,6 +203,8 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
             payload['channel'] = channel
         else:
             payload['channel'] = '#' + channel
+    if thread_id is not None:
+        payload['thread_ts'] = thread_id
     if username is not None:
         payload['username'] = username
     if icon_emoji is not None:
@@ -228,7 +248,8 @@ def do_notify_slack(module, domain, token, payload):
         slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (token)
     else:
         if not domain:
-            module.fail_json(msg="Slack has updated its webhook API.  You need to specify a token of the form XXXX/YYYY/ZZZZ in your playbook")
+            module.fail_json(msg="Slack has updated its webhook API.  You need to specify a token of the form "
+                                 "XXXX/YYYY/ZZZZ in your playbook")
         slack_incoming_webhook = OLD_SLACK_INCOMING_WEBHOOK % (domain, token)
 
     headers = {
@@ -249,13 +270,14 @@ def main():
             token=dict(type='str', required=True, no_log=True),
             msg=dict(type='str', required=False, default=None),
             channel=dict(type='str', default=None),
+            thread_id=dict(type='float', default=None),
             username=dict(type='str', default='Ansible'),
             icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
             icon_emoji=dict(type='str', default=None),
             link_names=dict(type='int', default=1, choices=[0, 1]),
             parse=dict(type='str', default=None, choices=['none', 'full']),
             validate_certs=dict(default='yes', type='bool'),
-            color=dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            color=dict(type='str', default='normal'),
             attachments=dict(type='list', required=False, default=None)
         )
     )
@@ -264,6 +286,7 @@ def main():
     token = module.params['token']
     text = module.params['msg']
     channel = module.params['channel']
+    thread_id = module.params['thread_id']
     username = module.params['username']
     icon_url = module.params['icon_url']
     icon_emoji = module.params['icon_emoji']
@@ -272,7 +295,13 @@ def main():
     color = module.params['color']
     attachments = module.params['attachments']
 
-    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments)
+    color_choices = ['normal', 'good', 'warning', 'danger']
+    if color not in color_choices and not is_valid_hex_color(color):
+        module.fail_json(msg="Color value specified should be either one of %r "
+                             "or any valid hex value with length 3 or 6." % color_choices)
+
+    payload = build_payload_for_slack(module, text, channel, thread_id, username, icon_url, icon_emoji, link_names,
+                                      parse, color, attachments)
     do_notify_slack(module, domain, token, payload)
 
     module.exit_json(msg="OK")

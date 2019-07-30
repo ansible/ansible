@@ -17,11 +17,16 @@ version_added: '2.8'
 short_description: Create a facts collection for Chocolatey
 description:
 - This module shows information from Chocolatey, such as installed packages, configuration, feature and sources.
+notes:
+- Chocolatey must be installed beforehand, use M(win_chocolatey) to do this.
+seealso:
+- module: win_chocolatey
+- module: win_chocolatey_config
+- module: win_chocolatey_feature
+- module: win_chocolatey_source
 author:
 - Simon Bärlocher (@sbaerlocher)
 - ITIGO AG (@itigoag)
-notes:
-- Chocolatey must be installed beforehand, use M(win_chocolatey) to do this.
 '''
 
 EXAMPLES = r'''
@@ -94,7 +99,7 @@ ansible_facts:
             certificate:
               description: Pth to a PFX certificate for X509 authenticated feeds
               returned: always
-              type: string
+              type: str
               sample: C:\chocolatey\cert.pfx
             disabled:
               description: Is the source disabled
@@ -104,7 +109,7 @@ ansible_facts:
             name:
               description: Name of the source
               returned: always
-              type: string
+              type: str
               sample: chocolatey
             priority:
               description: The priority order of this source, lower is better, 0 is no priority
@@ -114,12 +119,12 @@ ansible_facts:
             source:
               description: The source, can be a folder/file or an url
               returned: always
-              type: string
+              type: str
               sample: https://chocolatey.org/api/v2/
             source_username:
               description: Username used to access authenticated feeds
               returned: always
-              type: string
+              type: str
               sample: username
         packages:
           description: List of installed Packages
@@ -129,11 +134,11 @@ ansible_facts:
             package:
               description: Name of the package
               returned: always
-              type: string
+              type: str
               sample: vscode
             version:
               description: Version of the package
               returned: always
-              type: string
+              type: str
               sample: '1.27.2'
 '''

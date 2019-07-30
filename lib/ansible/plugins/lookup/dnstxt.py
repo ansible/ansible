@@ -84,6 +84,8 @@ class LookupModule(LookupBase):
                 string = 'NXDOMAIN'
             except dns.resolver.Timeout:
                 string = ''
+            except dns.resolver.NoAnswer:
+                string = ''
             except DNSException as e:
                 raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
 

@@ -16,64 +16,70 @@ description:
     - Create, update and remove CloudStack role permissions.
     - Managing role permissions only supported in CloudStack >= 4.9.
 version_added: '2.6'
-author: "David Passante (@dpassante)"
+author: David Passante (@dpassante)
 options:
   name:
     description:
       - The API name of the permission.
+    type: str
     required: true
   role:
     description:
       - Name or ID of the role.
+    type: str
     required: true
   permission:
     description:
       - The rule permission, allow or deny. Defaulted to deny.
+    type: str
     choices: [ allow, deny ]
     default: deny
   state:
     description:
       - State of the role permission.
+    type: str
     choices: [ present, absent ]
     default: present
   description:
     description:
       - The description of the role permission.
+    type: str
   parent:
     description:
       - The parent role permission uuid. use 0 to move this rule at the top of the list.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a role permission
-- local_action:
-    module: cs_role_permission
-    role: "My_Custom_role"
-    name: "createVPC"
-    permission: "allow"
-    description: "My comments"
+- name: Create a role permission
+  cs_role_permission:
+    role: My_Custom_role
+    name: createVPC
+    permission: allow
+    description: My comments
+  delegate_to: localhost
 
-# Remove a role permission
-- local_action:
-    module: cs_role_permission
+- name: Remove a role permission
+  cs_role_permission:
     state: absent
-    role: "My_Custom_role"
-    name: "createVPC"
+    role: My_Custom_role
+    name: createVPC
+  delegate_to: localhost
 
-# Update a system role permission
-- local_action:
-    module: cs_role_permission
-    role: "Domain Admin"
-    name: "createVPC"
-    permission: "deny"
+- name: Update a system role permission
+  cs_role_permission:
+    role: Domain Admin
+    name: createVPC
+    permission: deny
+  delegate_to: localhost
 
-# Update rules order. Move the rule at the top of list
-- local_action:
-    module: cs_role_permission
-    role: "Domain Admin"
-    name: "createVPC"
+- name: Update rules order. Move the rule at the top of list
+  cs_role_permission:
+    role: Domain Admin
+    name: createVPC
     parent: 0
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -81,27 +87,27 @@ RETURN = '''
 id:
   description: The ID of the role permission.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: The API name of the permission.
   returned: success
-  type: string
+  type: str
   sample: createVPC
 permission:
   description: The permission type of the api name.
   returned: success
-  type: string
+  type: str
   sample: allow
 role_id:
   description: The ID of the role to which the role permission belongs.
   returned: success
-  type: string
+  type: str
   sample: c6f7a5fc-43f8-11e5-a151-feff819cdc7f
 description:
   description: The description of the role permission
   returned: success
-  type: string
+  type: str
   sample: Deny createVPC for users
 '''
 

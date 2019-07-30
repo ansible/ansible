@@ -1,5 +1,6 @@
 """Tower plugin for integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import time
@@ -8,14 +9,18 @@ from lib.util import (
     display,
     ApplicationError,
     is_shippable,
-    run_command,
     SubprocessError,
     ConfigParser,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.core_ci import (
@@ -29,7 +34,7 @@ class TowerCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(TowerCloudProvider, self).__init__(args, config_extension='.cfg')
+        super(TowerCloudProvider, self).__init__(args)
 
         self.aci = None
         self.version = ''
@@ -68,6 +73,8 @@ class TowerCloudProvider(CloudProvider):
         tower_cli_version_map = {
             '3.1.5': '3.1.8',
             '3.2.3': '3.3.0',
+            '3.3.5': '3.3.3',
+            '3.4.3': '3.3.3',
         }
 
         cli_version = tower_cli_version_map.get(self.version, fallback)
@@ -162,17 +169,23 @@ class TowerCloudEnvironment(CloudEnvironment):
 
             time.sleep(5)
 
-    def configure_environment(self, env, cmd):
-        """Configuration which should be done once for each test target.
-        :type env: dict[str, str]
-        :type cmd: list[str]
+    def get_environment_config(self):
+        """
+        :rtype: CloudEnvironmentConfig
         """
         config = TowerConfig.parse(self.config_path)
 
-        env.update(config.environment)
+        env_vars = config.environment
+
+        ansible_vars = dict((key.lower(), value) for key, value in env_vars.items())
+
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )
 
 
-class TowerConfig(object):
+class TowerConfig:
     """Tower settings."""
     def __init__(self, values):
         self.version = values.get('version')
@@ -213,7 +226,7 @@ class TowerConfig(object):
             'password',
         )
 
-        values = dict((k, parser.get('general', k)) for k in keys)
+        values = dict((k, parser.get('default', k)) for k in keys)
         config = TowerConfig(values)
 
         missing = [k for k in keys if not values.get(k)]

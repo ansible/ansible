@@ -15,8 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 import re
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.common.collections import is_string
+from ansible.module_utils.six import iteritems
 
 INVALID_IDENTIFIER_SYMBOLS = r'[^a-zA-Z0-9_]'
 
@@ -38,7 +41,10 @@ class ResponseParams:
 
 
 class FtdConfigurationError(Exception):
-    pass
+    def __init__(self, msg, obj=None):
+        super(FtdConfigurationError, self).__init__(msg)
+        self.msg = msg
+        self.obj = obj
 
 
 class FtdServerError(Exception):
@@ -48,13 +54,18 @@ class FtdServerError(Exception):
         self.code = code
 
 
+class FtdUnexpectedResponse(Exception):
+    """The exception to be raised in case of unexpected responses from 3d parties."""
+    pass
+
+
 def construct_ansible_facts(response, params):
     facts = dict()
     if response:
         response_body = response['items'] if 'items' in response else response
         if params.get('register_as'):
             facts[params['register_as']] = response_body
-        elif 'name' in response_body and 'type' in response_body:
+        elif type(response_body) is dict and response_body.get('name') and response_body.get('type'):
             object_name = re.sub(INVALID_IDENTIFIER_SYMBOLS, '_', response_body['name'].lower())
             fact_name = '%s_%s' % (response_body['type'], object_name)
             facts[fact_name] = response_body
@@ -149,6 +160,11 @@ def equal_values(v1, v2):
     :return: True if types and content of passed values are equal. Otherwise, returns False.
     :rtype: bool
     """
+
+    # string-like values might have same text but different types, so checking them separately
+    if is_string(v1) and is_string(v2):
+        return to_text(v1) == to_text(v2)
+
     if type(v1) != type(v2):
         return False
     value_type = type(v1)
@@ -165,13 +181,58 @@ def equal_objects(d1, d2):
     """
     Checks whether two objects are equal. Ignores special object properties (e.g. 'id', 'version') and
     properties with None and empty values. In case properties contains a reference to the other object,
-    only object identities (ids and types) are checked.
+    only object identities (ids and types) are checked. Also, if an array field contains multiple references
+    to the same object, duplicates are ignored when comparing objects.
 
     :type d1: dict
     :type d2: dict
     :return: True if passed objects and their properties are equal. Otherwise, returns False.
     """
-    d1 = dict((k, d1[k]) for k in d1.keys() if k not in NON_COMPARABLE_PROPERTIES and d1[k])
-    d2 = dict((k, d2[k]) for k in d2.keys() if k not in NON_COMPARABLE_PROPERTIES and d2[k])
 
+    def prepare_data_for_comparison(d):
+        d = dict((k, d[k]) for k in d.keys() if k not in NON_COMPARABLE_PROPERTIES and d[k])
+        d = delete_ref_duplicates(d)
+        return d
+
+    d1 = prepare_data_for_comparison(d1)
+    d2 = prepare_data_for_comparison(d2)
     return equal_dicts(d1, d2, compare_by_reference=False)
+
+
+def delete_ref_duplicates(d):
+    """
+    Removes reference duplicates from array fields: if an array contains multiple items and some of
+    them refer to the same object, only unique references are preserved (duplicates are removed).
+
+    :param d: dict with data
+    :type d: dict
+    :return: dict without reference duplicates
+    """
+
+    def delete_ref_duplicates_from_list(refs):
+        if all(type(i) == dict and is_object_ref(i) for i in refs):
+            unique_refs = set()
+            unique_list = list()
+            for i in refs:
+                key = (i['id'], i['type'])
+                if key not in unique_refs:
+                    unique_refs.add(key)
+                    unique_list.append(i)
+
+            return list(unique_list)
+
+        else:
+            return refs
+
+    if not d:
+        return d
+
+    modified_d = {}
+    for k, v in iteritems(d):
+        if type(v) == list:
+            modified_d[k] = delete_ref_duplicates_from_list(v)
+        elif type(v) == dict:
+            modified_d[k] = delete_ref_duplicates(v)
+        else:
+            modified_d[k] = v
+    return modified_d

@@ -4,12 +4,10 @@
 - name: setup
   cli_config: &rm1
     config: delete interfaces ge-0/0/1
-  become: yes
 
 - name: setup
   cli_config: &rm2
     config: delete interfaces ge-0/0/2
-  become: yes
 
 - name: configure device with config
   cli_config: &conf1
@@ -42,6 +40,17 @@
     that:
       - "result.changed == true"
       - "'ge-0/0/2' in result.diff.prepared"
+
+- name: remove root-authethication (test error scenario)
+  cli_config:
+    config: "delete system root-authentication"
+  ignore_errors: True
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'Missing mandatory statement' in result.msg"
 
 - name: teardown
   cli_config: *rm1

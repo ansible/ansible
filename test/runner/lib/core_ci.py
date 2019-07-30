@@ -1,6 +1,6 @@
 """Access Ansible Core CI remote services."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -8,7 +8,8 @@ import traceback
 import uuid
 import errno
 import time
-import shutil
+
+import lib.types as t
 
 from lib.http import (
     HttpClient,
@@ -18,14 +19,22 @@ from lib.http import (
 
 from lib.util import (
     ApplicationError,
-    run_command,
     make_dirs,
     display,
     is_shippable,
+    to_text,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
     EnvironmentConfig,
+)
+
+from lib.data import (
+    data_context,
 )
 
 AWS_ENDPOINTS = {
@@ -34,7 +43,7 @@ AWS_ENDPOINTS = {
 }
 
 
-class AnsibleCoreCI(object):
+class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
     def __init__(self, args, platform, version, stage='prod', persist=True, load=True, name=None, provider=None):
         """
@@ -71,12 +80,16 @@ class AnsibleCoreCI(object):
                 'ios',
                 'tower',
                 'rhel',
+                'hetzner',
             ),
             azure=(
                 'azure',
             ),
             parallels=(
                 'osx',
+            ),
+            vmware=(
+                'vmware'
             ),
         )
 
@@ -130,6 +143,11 @@ class AnsibleCoreCI(object):
 
             self.ssh_key = SshKey(args)
             self.port = None
+        elif self.provider == 'vmware':
+            self.ssh_key = SshKey(args)
+            self.endpoints = ['https://access.ws.testing.ansible.com']
+            self.max_threshold = 1
+
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
 
@@ -174,7 +192,7 @@ class AnsibleCoreCI(object):
         display.info('Getting available endpoints...', verbosity=1)
         sleep = 3
 
-        for _ in range(1, 10):
+        for _iteration in range(1, 10):
             response = client.get('https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt')
 
             if response.status_code == 200:
@@ -300,7 +318,7 @@ class AnsibleCoreCI(object):
             )
 
             if self.connection.password:
-                display.sensitive.add(self.connection.password)
+                display.sensitive.add(str(self.connection.password))
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -312,7 +330,7 @@ class AnsibleCoreCI(object):
 
     def wait(self):
         """Wait for the instance to become ready."""
-        for _ in range(1, 90):
+        for _iteration in range(1, 90):
             if self.get().running:
                 return
             time.sleep(10)
@@ -330,7 +348,7 @@ class AnsibleCoreCI(object):
 
         if self.platform == 'windows':
             with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'rb') as winrm_config_fd:
-                winrm_config = winrm_config_fd.read().decode('utf-8')
+                winrm_config = to_text(winrm_config_fd.read())
         else:
             winrm_config = None
 
@@ -452,7 +470,7 @@ class AnsibleCoreCI(object):
         :type config: dict[str, str]
         :rtype: bool
         """
-        self.instance_id = config['instance_id']
+        self.instance_id = str(config['instance_id'])
         self.endpoint = config['endpoint']
         self.started = True
 
@@ -496,7 +514,14 @@ class AnsibleCoreCI(object):
         elif 'errorMessage' in response_json:
             message = response_json['errorMessage'].strip()
             if 'stackTrace' in response_json:
-                trace = '\n'.join([x.rstrip() for x in traceback.format_list(response_json['stackTrace'])])
+                traceback_lines = response_json['stackTrace']
+
+                # AWS Lambda on Python 2.7 returns a list of tuples
+                # AWS Lambda on Python 3.7 returns a list of strings
+                if traceback_lines and isinstance(traceback_lines[0], list):
+                    traceback_lines = traceback.format_list(traceback_lines)
+
+                trace = '\n'.join([x.rstrip() for x in traceback_lines])
                 stack_trace = ('\nTraceback (from remote server):\n%s' % trace)
         else:
             message = str(response_json)
@@ -518,7 +543,7 @@ class CoreHttpError(HttpError):
         self.remote_stack_trace = remote_stack_trace
 
 
-class SshKey(object):
+class SshKey:
     """Container for SSH key used to connect to remote instances."""
     KEY_NAME = 'id_rsa'
     PUB_NAME = 'id_rsa.pub'
@@ -527,10 +552,13 @@ class SshKey(object):
         """
         :type args: EnvironmentConfig
         """
-        cache_dir = 'test/cache'
+        cache_dir = os.path.join(data_context().content.root, 'test/cache')
 
         self.key = os.path.join(cache_dir, self.KEY_NAME)
         self.pub = os.path.join(cache_dir, self.PUB_NAME)
+
+        key_dst = os.path.relpath(self.key, data_context().content.root)
+        pub_dst = os.path.relpath(self.pub, data_context().content.root)
 
         if not os.path.isfile(self.key) or not os.path.isfile(self.pub):
             base_dir = os.path.expanduser('~/.ansible/test/')
@@ -544,9 +572,15 @@ class SshKey(object):
             if not os.path.isfile(key) or not os.path.isfile(pub):
                 run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
 
-            if not args.explain:
-                shutil.copy2(key, self.key)
-                shutil.copy2(pub, self.pub)
+            self.key = key
+            self.pub = pub
+
+            def ssh_key_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+                """Add the SSH keys to the payload file list."""
+                files.append((key, key_dst))
+                files.append((pub, pub_dst))
+
+            data_context().register_payload_callback(ssh_key_callback)
 
         if args.explain:
             self.pub_contents = None
@@ -555,7 +589,7 @@ class SshKey(object):
                 self.pub_contents = pub_fd.read().strip()
 
 
-class InstanceConnection(object):
+class InstanceConnection:
     """Container for remote instance status and connection details."""
     def __init__(self, running, hostname, port, username, password):
         """

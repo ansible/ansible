@@ -23,14 +23,14 @@ version_added: 2.2
 options:
     token:
         description:
-            - GitHub Personal Access Token for authenticating
+            - GitHub Personal Access Token for authenticating. Mutually exclusive with C(password).
     user:
         description:
             - The GitHub account that owns the repository
         required: true
     password:
         description:
-            - The GitHub account password for the user
+            - The GitHub account password for the user. Mutually exclusive with C(token).
         version_added: "2.4"
     repo:
         description:
@@ -77,6 +77,12 @@ requirements:
 '''
 
 EXAMPLES = '''
+- name: Get latest release of a public repository
+  github_release:
+    user: ansible
+    repo: ansible
+    action: latest_release
+
 - name: Get latest release of testuseer/testrepo
   github_release:
     token: tokenabc1234567890
@@ -110,25 +116,29 @@ create_release:
     - Version of the created release
     - "For Ansible version 2.5 and later, if specified release version already exists, then State is unchanged"
     - "For Ansible versions prior to 2.5, if specified release version already exists, then State is skipped"
-    type: string
+    type: str
     returned: success
     sample: 1.1.0
 
 latest_release:
     description: Version of the latest release
-    type: string
+    type: str
     returned: success
     sample: 1.1.0
 '''
 
+import traceback
+
+GITHUB_IMP_ERR = None
 try:
     import github3
 
     HAS_GITHUB_API = True
 except ImportError:
+    GITHUB_IMP_ERR = traceback.format_exc()
     HAS_GITHUB_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -149,14 +159,14 @@ def main():
             prerelease=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        required_one_of=(('password', 'token'),),
         mutually_exclusive=(('password', 'token'),),
-        required_if=[('action', 'create_release', ['tag'])],
+        required_if=[('action', 'create_release', ['tag']),
+                     ('action', 'create_release', ['password', 'token'], True)],
     )
 
     if not HAS_GITHUB_API:
-        module.fail_json(msg='Missing required github3 module (check docs or '
-                             'install with: pip install github3.py==1.0.0a4)')
+        module.fail_json(msg=missing_required_lib('github3.py >= 1.0.0a3'),
+                         exception=GITHUB_IMP_ERR)
 
     repo = module.params['repo']
     user = module.params['user']
@@ -172,14 +182,17 @@ def main():
 
     # login to github
     try:
-        if user and password:
+        if password:
             gh_obj = github3.login(user, password=password)
         elif login_token:
             gh_obj = github3.login(token=login_token)
+        else:
+            gh_obj = github3.GitHub()
 
         # test if we're actually logged in
-        gh_obj.me()
-    except github3.AuthenticationFailed as e:
+        if password or login_token:
+            gh_obj.me()
+    except github3.exceptions.AuthenticationFailed as e:
         module.fail_json(msg='Failed to connect to GitHub: %s' % to_native(e),
                          details="Please check username and password or token "
                                  "for repository %s" % repo)

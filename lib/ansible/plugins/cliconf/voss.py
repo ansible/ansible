@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: voss
+short_description: Use voss cliconf to run command on Extreme VOSS platform
+description:
+  - This voss plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Extreme VOSS network devices.
+version_added: "2.7"
+"""
+
 import re
 import json
 
@@ -144,8 +154,8 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_device_info(self):
         device_info = {}
@@ -192,10 +202,8 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = dict()
-        result['rpc'] = self.get_base_rpc() + ['get_diff', 'run_commands', 'get_defaults_flag']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['get_diff', 'run_commands', 'get_defaults_flag']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)

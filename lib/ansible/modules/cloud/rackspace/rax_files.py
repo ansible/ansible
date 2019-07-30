@@ -38,9 +38,11 @@ options:
       - Used to set a container as private, removing it from the CDN.  B(Warning!)
         Private containers, if previously made public, can have live objects
         available until the TTL on cached objects expires
+    type: bool
   public:
     description:
       - Used to set a container as public, available via the Cloud Files CDN
+    type: bool
   region:
     description:
       - Region to create an instance in

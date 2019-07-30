@@ -87,20 +87,20 @@ RETURN = """
 msg:
     description: Success message
     returned: on success
-    type: string
+    type: str
     sample: The iSCSI target settings have been updated.
 alias:
     description:
         - The alias assigned to the iSCSI target.
     returned: on success
     sample: myArray
-    type: string
+    type: str
 iqn:
     description:
         - The iqn (iSCSI Qualified Name), assigned to the iSCSI target.
     returned: on success
     sample: iqn.1992-08.com.netapp:2800.000a132000b006d2000000005a0e8f45
-    type: string
+    type: str
 """
 import json
 import logging
@@ -157,7 +157,7 @@ class IscsiTarget(object):
 
         if not self.url.endswith('/'):
             self.url += '/'
-        self._logger.info(self.chap_secret)
+
         if self.chap_secret is not None:
             if len(self.chap_secret) < 12 or len(self.chap_secret) > 16:
                 self.module.fail_json(msg="The provided CHAP secret is not valid, it must be between 12 and 16"
@@ -234,8 +234,6 @@ class IscsiTarget(object):
         elif target['chap']:
             update = True
             body.update(dict(enableChapAuthentication=False))
-
-        self._logger.info(pformat(body))
 
         if update and not self.check_mode:
             try:

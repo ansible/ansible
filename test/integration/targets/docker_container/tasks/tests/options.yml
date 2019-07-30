@@ -5,23 +5,9 @@
     cname_h1: "{{ cname_prefix ~ '-options-h1' }}"
     cname_h2: "{{ cname_prefix ~ '-options-h2' }}"
     cname_h3: "{{ cname_prefix ~ '-options-h3' }}"
-    nname_1: "{{ cname_prefix ~ '-network-1' }}"
-    nname_2: "{{ cname_prefix ~ '-network-2' }}"
 - name: Registering container name
   set_fact:
-    cnames: "{{ cnames }} + [cname, cname_h1, cname_h2, cname_h3]"
-    dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"
-
-- name: Create networks
-  docker_network:
-    name: "{{ network_name }}"
-    state: present
-  loop:
-  - "{{ nname_1 }}"
-  - "{{ nname_2 }}"
-  loop_control:
-    loop_var: network_name
-  when: docker_py_version is version('1.10.0', '>=')
+    cnames: "{{ cnames + [cname, cname_h1, cname_h2, cname_h3] }}"
 
 ####################################################################
 ## auto_remove #####################################################
@@ -56,7 +42,8 @@
 - assert:
     that:
     - auto_remove_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.1.0') in auto_remove_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in auto_remove_1.msg"
+    - "'Minimum version required is 2.1.0 ' in auto_remove_1.msg"
   when: docker_py_version is version('2.1.0', '<')
 
 ####################################################################
@@ -88,19 +75,20 @@
     name: "{{ cname }}"
     state: started
     blkio_weight: 234
-    stop_timeout: 1
+    force_kill: yes
   register: blkio_weight_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
     - blkio_weight_1 is changed
-    - blkio_weight_2 is not changed
+    - "blkio_weight_2 is not changed or 'Docker warning: Your kernel does not support Block I/O weight or the cgroup is not mounted. Weight discarded.' in blkio_weight_2.warnings"
     - blkio_weight_3 is changed
 
 ####################################################################
@@ -152,14 +140,15 @@
     - setgid
     cap_drop:
     - all
-    stop_timeout: 1
+    force_kill: yes
   register: capabilities_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -194,14 +183,15 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: command_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -216,7 +206,7 @@
 - name: cpu_period
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_period: 90000
     state: started
@@ -225,7 +215,7 @@
 - name: cpu_period (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_period: 90000
     state: started
@@ -238,14 +228,15 @@
     name: "{{ cname }}"
     cpu_period: 50000
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: cpu_period_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -260,7 +251,7 @@
 - name: cpu_quota
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_quota: 150000
     state: started
@@ -269,7 +260,7 @@
 - name: cpu_quota (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_quota: 150000
     state: started
@@ -282,14 +273,15 @@
     name: "{{ cname }}"
     cpu_quota: 50000
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: cpu_quota_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -304,7 +296,7 @@
 - name: cpu_shares
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_shares: 900
     state: started
@@ -313,7 +305,7 @@
 - name: cpu_shares (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_shares: 900
     state: started
@@ -326,14 +318,15 @@
     name: "{{ cname }}"
     cpu_shares: 1100
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: cpu_shares_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -348,18 +341,18 @@
 - name: cpuset_cpus
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_1
 
 - name: cpuset_cpus (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_2
 
@@ -368,9 +361,9 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 1
+    cpuset_cpus: "1"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   # This will fail if the system the test is run on doesn't have
   # multiple CPUs/cores available.
   ignore_errors: yes
@@ -380,7 +373,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -395,18 +389,18 @@
 - name: cpuset_mems
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_1
 
 - name: cpuset_mems (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_2
 
@@ -415,9 +409,9 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 1
+    cpuset_mems: "1"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   # This will fail if the system the test is run on doesn't have
   # multiple MEMs available.
   ignore_errors: yes
@@ -427,7 +421,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -460,7 +455,7 @@
     image: alpine:3.8
     name: "{{ cname }}"
     state: stopped
-    stop_timeout: 1
+    force_kill: yes
     debug: yes
   register: debug_3
 
@@ -469,7 +464,7 @@
     name: "{{ cname }}"
     state: absent
     debug: yes
-    stop_timeout: 1
+    force_kill: yes
   register: debug_4
 
 - assert:
@@ -495,6 +490,7 @@
     name: "{{ cname }}"
     state: absent
   register: detach_no_cleanup_cleanup
+  diff: no
 
 - name: detach with cleanup
   docker_container:
@@ -509,6 +505,7 @@
     name: "{{ cname }}"
     state: absent
   register: detach_cleanup_cleanup
+  diff: no
 
 - name: detach with auto_remove and cleanup
   docker_container:
@@ -525,6 +522,7 @@
     name: "{{ cname }}"
     state: absent
   register: detach_auto_remove_cleanup
+  diff: no
 
 - assert:
     that:
@@ -532,15 +530,15 @@
     #      of hello-world. We don't know why this happens, but it happens
     #      often enough to be annoying. That's why we disable this for now,
     #      and simply test that 'Output' is contained in the result.
-    - "'Output' in detach_no_cleanup.ansible_facts.docker_container"
-    # - "'Hello from Docker!' in detach_no_cleanup.ansible_facts.docker_container.Output"
+    - "'Output' in detach_no_cleanup.container"
+    # - "'Hello from Docker!' in detach_no_cleanup.container.Output"
     - detach_no_cleanup_cleanup is changed
-    - "'Output' in detach_cleanup.ansible_facts.docker_container"
-    # - "'Hello from Docker!' in detach_cleanup.ansible_facts.docker_container.Output"
+    - "'Output' in detach_cleanup.container"
+    # - "'Hello from Docker!' in detach_cleanup.container.Output"
     - detach_cleanup_cleanup is not changed
 - assert:
     that:
-    - "'Cannot retrieve result as auto_remove is enabled' == detach_auto_remove.ansible_facts.docker_container.Output"
+    - "'Cannot retrieve result as auto_remove is enabled' == detach_auto_remove.container.Output"
     - detach_auto_remove_cleanup is not changed
   when: docker_py_version is version('2.1.0', '>=')
 
@@ -589,14 +587,15 @@
     devices:
     - "/dev/random:/dev/virt-random:rwm"
     - "/dev/null:/dev/virt-null:rwm"
-    stop_timeout: 1
+    force_kill: yes
   register: devices_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -660,7 +659,7 @@
         rate: 10M
       - path: /dev/urandom
         rate: 5K
-    stop_timeout: 1
+    force_kill: yes
   register: device_read_bps_4
   ignore_errors: yes
 
@@ -668,7 +667,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -680,7 +680,8 @@
 - assert:
     that:
     - device_read_bps_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.9.0') in device_read_bps_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in device_read_bps_1.msg"
+    - "'Minimum version required is 1.9.0 ' in device_read_bps_1.msg"
   when: docker_py_version is version('1.9.0', '<')
 
 ####################################################################
@@ -709,7 +710,7 @@
     state: started
     device_read_iops:
       - path: /dev/urandom
-        rate: 20
+        rate: "20"
       - path: /dev/random
         rate: 10
   register: device_read_iops_2
@@ -738,7 +739,7 @@
         rate: 30
       - path: /dev/urandom
         rate: 50
-    stop_timeout: 1
+    force_kill: yes
   register: device_read_iops_4
   ignore_errors: yes
 
@@ -746,7 +747,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -758,7 +760,8 @@
 - assert:
     that:
     - device_read_iops_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.9.0') in device_read_iops_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in device_read_iops_1.msg"
+    - "'Minimum version required is 1.9.0 ' in device_read_iops_1.msg"
   when: docker_py_version is version('1.9.0', '<')
 
 ####################################################################
@@ -807,7 +810,7 @@
     device_write_iops:
       - path: /dev/urandom
         rate: 100
-    stop_timeout: 1
+    force_kill: yes
   register: device_write_limit_3
   ignore_errors: yes
 
@@ -815,7 +818,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -826,7 +830,8 @@
 - assert:
     that:
     - device_write_limit_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.9.0') in device_write_limit_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in device_write_limit_1.msg"
+    - "'Minimum version required is 1.9.0 ' in device_write_limit_1.msg"
   when: docker_py_version is version('1.9.0', '<')
 
 ####################################################################
@@ -877,7 +882,7 @@
     dns_opts:
     - "timeout:10"
     - no-check-names
-    stop_timeout: 1
+    force_kill: yes
   register: dns_opts_4
   ignore_errors: yes
 
@@ -885,7 +890,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -897,7 +903,8 @@
 - assert:
     that:
     - dns_opts_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in dns_opts_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in dns_opts_1.msg"
+    - "'Minimum version required is 1.10.0 ' in dns_opts_1.msg"
   when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
@@ -935,6 +942,7 @@
     dns_search_domains:
     - example.org
     - example.com
+    force_kill: yes
   register: dns_search_domains_3
 
 - name: dns_search_domains (changed elements)
@@ -946,14 +954,15 @@
     dns_search_domains:
     - ansible.com
     - example.com
-    stop_timeout: 1
+    force_kill: yes
   register: dns_search_domains_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -997,6 +1006,7 @@
     dns_servers:
     - 8.8.8.8
     - 1.1.1.1
+    force_kill: yes
   register: dns_servers_3
 
 - name: dns_servers (changed elements)
@@ -1008,14 +1018,15 @@
     dns_servers:
     - 8.8.8.8
     - 9.9.9.9
-    stop_timeout: 1
+    force_kill: yes
   register: dns_servers_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1031,7 +1042,7 @@
 - name: domainname
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     domainname: example.com
     state: started
@@ -1040,7 +1051,7 @@
 - name: domainname (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     domainname: example.com
     state: started
@@ -1053,14 +1064,15 @@
     name: "{{ cname }}"
     domainname: example.org
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: domainname_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1096,7 +1108,7 @@
     state: started
   register: entrypoint_2
 
-- name: entrypoint (change order idempotency)
+- name: entrypoint (change order, should not be idempotent)
   docker_container:
     image: alpine:3.8
     entrypoint:
@@ -1106,6 +1118,7 @@
     - "-v"
     name: "{{ cname }}"
     state: started
+    force_kill: yes
   register: entrypoint_3
 
 - name: entrypoint (less parameters)
@@ -1117,7 +1130,7 @@
     - "'sleep 10m'"
     name: "{{ cname }}"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: entrypoint_4
 
 - name: entrypoint (other parameters)
@@ -1129,14 +1142,15 @@
     - "'sleep 5m'"
     name: "{{ cname }}"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: entrypoint_5
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1159,6 +1173,9 @@
     env:
       TEST1: val1
       TEST2: val2
+      TEST3: "False"
+      TEST4: "true"
+      TEST5: "yes"
   register: env_1
 
 - name: env (idempotency)
@@ -1170,6 +1187,9 @@
     env:
       TEST2: val2
       TEST1: val1
+      TEST5: "yes"
+      TEST3: "False"
+      TEST4: "true"
   register: env_2
 
 - name: env (less environment variables)
@@ -1191,14 +1211,27 @@
     env:
       TEST1: val1
       TEST3: val3
-    stop_timeout: 1
+    force_kill: yes
   register: env_4
+
+- name: env (fail unwrapped values)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    env:
+      TEST1: true
+    force_kill: yes
+  register: env_5
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1206,6 +1239,8 @@
     - env_2 is not changed
     - env_3 is not changed
     - env_4 is changed
+    - env_5 is failed
+    - "('Non-string value found for env option.') in env_5.msg"
 
 ####################################################################
 ## env_file #########################################################
@@ -1233,7 +1268,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1285,14 +1321,15 @@
     etc_hosts:
       example.com: 1.2.3.4
       example.us: 1.2.3.5
-    stop_timeout: 1
+    force_kill: yes
   register: etc_hosts_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1312,8 +1349,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 5678
+    - "9001"
+    - "9002"
   register: exposed_ports_1
 
 - name: exposed_ports (idempotency)
@@ -1323,8 +1360,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 5678
-    - 1234
+    - "9002"
+    - "9001"
   register: exposed_ports_2
 
 - name: exposed_ports (less ports)
@@ -1334,7 +1371,7 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
+    - "9002"
   register: exposed_ports_3
 
 - name: exposed_ports (more ports)
@@ -1344,16 +1381,17 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 1235
-    stop_timeout: 1
+    - "9002"
+    - "9003"
+    force_kill: yes
   register: exposed_ports_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1379,8 +1417,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 5678
+    - "1234"
+    - "5678"
   register: groups_1
 
 - name: groups (idempotency)
@@ -1390,8 +1428,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 5678
-    - 1234
+    - "5678"
+    - "1234"
   register: groups_2
 
 - name: groups (less groups)
@@ -1401,7 +1439,7 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
+    - "1234"
   register: groups_3
 
 - name: groups (more groups)
@@ -1411,16 +1449,17 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 2345
-    stop_timeout: 1
+    - "1234"
+    - "2345"
+    force_kill: yes
   register: groups_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1447,7 +1486,7 @@
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_1
   ignore_errors: yes
 
@@ -1465,7 +1504,7 @@
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_2
   ignore_errors: yes
 
@@ -1483,7 +1522,7 @@
       timeout: 3s
       interval: 0h1m2s3ms4us
       retries: 3
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_3
   ignore_errors: yes
 
@@ -1493,7 +1532,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_4
   ignore_errors: yes
 
@@ -1506,7 +1545,7 @@
     healthcheck:
       test:
       - NONE
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_5
   ignore_errors: yes
 
@@ -1519,7 +1558,7 @@
     healthcheck:
       test:
       - NONE
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_6
   ignore_errors: yes
 
@@ -1531,7 +1570,7 @@
     state: started
     healthcheck:
       test: "sleep 1"
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_7
   ignore_errors: yes
 
@@ -1543,7 +1582,7 @@
     state: started
     healthcheck:
       test: "sleep 1"
-    stop_timeout: 1
+    force_kill: yes
   register: healthcheck_8
   ignore_errors: yes
 
@@ -1551,7 +1590,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1567,7 +1607,8 @@
 - assert:
     that:
     - healthcheck_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in healthcheck_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in healthcheck_1.msg"
+    - "'Minimum version required is 2.0.0 ' in healthcheck_1.msg"
   when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
@@ -1577,7 +1618,7 @@
 - name: hostname
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     hostname: me.example.com
     state: started
@@ -1586,7 +1627,7 @@
 - name: hostname (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     hostname: me.example.com
     state: started
@@ -1599,14 +1640,15 @@
     name: "{{ cname }}"
     hostname: me.example.org
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: hostname_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1621,7 +1663,7 @@
 - name: init
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     init: yes
     state: started
@@ -1631,7 +1673,7 @@
 - name: init (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     init: yes
     state: started
@@ -1645,7 +1687,7 @@
     name: "{{ cname }}"
     init: no
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: init_3
   ignore_errors: yes
 
@@ -1653,7 +1695,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1664,7 +1707,8 @@
 - assert:
     that:
     - init_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.2.0') in init_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in init_1.msg"
+    - "'Minimum version required is 2.2.0 ' in init_1.msg"
   when: docker_py_version is version('2.2.0', '<')
 
 ####################################################################
@@ -1674,7 +1718,7 @@
 - name: interactive
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     interactive: yes
     state: started
@@ -1683,7 +1727,7 @@
 - name: interactive (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     interactive: yes
     state: started
@@ -1696,14 +1740,15 @@
     name: "{{ cname }}"
     interactive: no
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: interactive_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1750,14 +1795,15 @@
     image: hello-world
     name: "{{ cname }}"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: image_change
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1773,9 +1819,10 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
+    ipc_mode: shareable
   loop:
   - "{{ cname_h1 }}"
   loop_control:
@@ -1808,19 +1855,20 @@
     name: "{{ cname }}"
     state: started
     ipc_mode: private
-    stop_timeout: 1
+    force_kill: yes
   register: ipc_mode_3
 
 - name: cleanup
   docker_container:
     name: "{{ container_name }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   loop:
   - "{{ cname }}"
   - "{{ cname_h1 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -1835,20 +1883,22 @@
 - name: kernel_memory
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     kernel_memory: 8M
     state: started
   register: kernel_memory_1
+  ignore_errors: yes
 
 - name: kernel_memory (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     kernel_memory: 8M
     state: started
   register: kernel_memory_2
+  ignore_errors: yes
 
 - name: kernel_memory (change)
   docker_container:
@@ -1857,20 +1907,24 @@
     name: "{{ cname }}"
     kernel_memory: 6M
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: kernel_memory_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
+  ignore_errors: yes
 
 - assert:
     that:
     - kernel_memory_1 is changed
     - kernel_memory_2 is not changed
     - kernel_memory_3 is changed
+  when: kernel_memory_1 is not failed or 'kernel memory accounting disabled in this runc build' not in kernel_memory_1.msg
 
 ####################################################################
 ## kill_signal #####################################################
@@ -1923,14 +1977,15 @@
     labels:
       ansible.test.1: hello
       ansible.test.3: ansible
-    stop_timeout: 1
+    force_kill: yes
   register: labels_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1946,7 +2001,7 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
   loop:
@@ -1997,14 +2052,14 @@
     links:
     - "{{ cname_h1 }}:test1"
     - "{{ cname_h3 }}:test3"
-    stop_timeout: 1
+    force_kill: yes
   register: links_4
 
 - name: cleanup
   docker_container:
     name: "{{ container_name }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   loop:
   - "{{ cname }}"
   - "{{ cname_h1 }}"
@@ -2012,6 +2067,7 @@
   - "{{ cname_h3 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -2049,14 +2105,15 @@
     name: "{{ cname }}"
     state: started
     log_driver: syslog
-    stop_timeout: 1
+    force_kill: yes
   register: log_driver_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2078,6 +2135,7 @@
     log_options:
       labels: production_status
       env: os,customer
+      max-file: 5
   register: log_options_1
 
 - name: log_options (idempotency)
@@ -2090,6 +2148,7 @@
     log_options:
       env: os,customer
       labels: production_status
+      max-file: 5
   register: log_options_2
 
 - name: log_options (less log options)
@@ -2112,20 +2171,23 @@
     log_driver: json-file
     log_options:
       labels: production_status
-      max-file: 1
-    stop_timeout: 1
+      max-size: 10m
+    force_kill: yes
   register: log_options_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
     - log_options_1 is changed
     - log_options_2 is not changed
+    - "'Non-string value found for log_options option \\'max-file\\'. The value is automatically converted to \\'5\\'. If this is not correct, or you want to
+avoid such warnings, please quote the value.' in log_options_2.warnings"
     - log_options_3 is not changed
     - log_options_4 is changed
 
@@ -2136,7 +2198,7 @@
 - name: mac_address
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:33
     state: started
@@ -2145,7 +2207,7 @@
 - name: mac_address (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:33
     state: started
@@ -2158,14 +2220,15 @@
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:44
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: mac_address_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2180,7 +2243,7 @@
 - name: memory
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory: 64M
     state: started
@@ -2189,7 +2252,7 @@
 - name: memory (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory: 64M
     state: started
@@ -2202,14 +2265,15 @@
     name: "{{ cname }}"
     memory: 48M
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: memory_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2224,7 +2288,7 @@
 - name: memory_reservation
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_reservation: 64M
     state: started
@@ -2233,7 +2297,7 @@
 - name: memory_reservation (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_reservation: 64M
     state: started
@@ -2246,14 +2310,15 @@
     name: "{{ cname }}"
     memory_reservation: 48M
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: memory_reservation_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2268,7 +2333,7 @@
 - name: memory_swap
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     # Docker daemon does not accept memory_swap if memory is not specified
     memory: 32M
@@ -2280,7 +2345,7 @@
 - name: memory_swap (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     # Docker daemon does not accept memory_swap if memory is not specified
     memory: 32M
@@ -2298,7 +2363,7 @@
     memory: 32M
     memory_swap: 48M
     state: started
-    stop_timeout: 1
+    force_kill: yes
     debug: yes
   register: memory_swap_3
 
@@ -2306,14 +2371,15 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
     - memory_swap_1 is changed
     # Sometimes (in particular during integration tests, maybe when not running
     # on a proper VM), memory_swap cannot be set and will be -1 afterwards.
-    - memory_swap_2 is not changed or memory_swap_2.ansible_facts.docker_container.HostConfig.MemorySwap == -1
+    - memory_swap_2 is not changed or memory_swap_2.container.HostConfig.MemorySwap == -1
     - memory_swap_3 is changed
 
 - debug: var=memory_swap_1
@@ -2330,7 +2396,7 @@
 - name: memory_swappiness
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_swappiness: 40
     state: started
@@ -2339,7 +2405,7 @@
 - name: memory_swappiness (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_swappiness: 40
     state: started
@@ -2352,14 +2418,15 @@
     name: "{{ cname }}"
     memory_swappiness: 60
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: memory_swappiness_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2368,151 +2435,26 @@
     - memory_swappiness_3 is changed
 
 ####################################################################
-## network_mode ####################################################
-####################################################################
-
-- name: network_mode
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: host
-  register: network_mode_1
-
-- name: network_mode (idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: host
-  register: network_mode_2
-
-- name: network_mode (change)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: none
-    stop_timeout: 1
-  register: network_mode_3
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    stop_timeout: 1
-
-- assert:
-    that:
-    - network_mode_1 is changed
-    - network_mode_2 is not changed
-    - network_mode_3 is changed
-
-####################################################################
-## networks, purge_networks ########################################
-####################################################################
-
-- block:
-  - name: networks, purge_networks
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-      - name: "{{ nname_1 }}"
-    register: networks_1
-
-  - name: networks, purge_networks (idempotency)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: "{{ nname_1 }}"
-      - name: bridge
-    register: networks_2
-
-  - name: networks (less networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      networks:
-      - name: bridge
-    register: networks_3
-
-  - name: networks, purge_networks (less networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-    register: networks_4
-
-  - name: networks, purge_networks (more networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-      - name: "{{ nname_2 }}"
-      stop_timeout: 1
-    register: networks_5
-
-  - name: cleanup
-    docker_container:
-      name: "{{ cname }}"
-      state: absent
-      stop_timeout: 1
-
-  - assert:
-      that:
-      - networks_1 is changed
-      - networks_2 is not changed
-      - networks_3 is not changed
-      - networks_4 is changed
-      - networks_5 is changed
-
-  when: docker_py_version is version('1.10.0', '>=')
-
-####################################################################
 ## oom_killer ######################################################
 ####################################################################
 
 - name: oom_killer
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_killer: yes
     state: started
   register: oom_killer_1
-  ignore_errors: yes
 
 - name: oom_killer (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_killer: yes
     state: started
   register: oom_killer_2
-  ignore_errors: yes
 
 - name: oom_killer (change)
   docker_container:
@@ -2521,27 +2463,21 @@
     name: "{{ cname }}"
     oom_killer: no
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: oom_killer_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
     - oom_killer_1 is changed
     - oom_killer_2 is not changed
     - oom_killer_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_killer_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_killer_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## oom_score_adj ###################################################
@@ -2550,22 +2486,20 @@
 - name: oom_score_adj
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_score_adj: 5
     state: started
   register: oom_score_adj_1
-  ignore_errors: yes
 
 - name: oom_score_adj (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_score_adj: 5
     state: started
   register: oom_score_adj_2
-  ignore_errors: yes
 
 - name: oom_score_adj (change)
   docker_container:
@@ -2574,27 +2508,21 @@
     name: "{{ cname }}"
     oom_score_adj: 7
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: oom_score_adj_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
     - oom_score_adj_1 is changed
     - oom_score_adj_2 is not changed
     - oom_score_adj_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_score_adj_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_score_adj_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## output_logs #####################################################
@@ -2613,7 +2541,7 @@
     name: "{{ cname }}"
     state: started
     paused: yes
-    stop_timeout: 1
+    force_kill: yes
   register: paused_1
 
 - name: inspect paused
@@ -2627,17 +2555,17 @@
     name: "{{ cname }}"
     state: started
     paused: yes
-    stop_timeout: 1
+    force_kill: yes
   register: paused_3
 
 - name: paused (continue)
   docker_container:
     image: alpine:3.8
-    command: "/bin/sh -c 'sleep 1s ; yes'"
+    command: "/bin/sh -c 'sleep 10m'"
     name: "{{ cname }}"
     state: started
     paused: no
-    stop_timeout: 1
+    force_kill: yes
   register: paused_4
 
 - name: inspect paused
@@ -2648,7 +2576,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2665,7 +2594,7 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname_h1 }}"
     state: started
   register: pid_mode_helper
@@ -2676,7 +2605,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
-    pid_mode: "container:{{ pid_mode_helper.ansible_facts.docker_container.Id }}"
+    pid_mode: "container:{{ pid_mode_helper.container.Id }}"
   register: pid_mode_1
   ignore_errors: yes
   # docker-py < 2.0 does not support "arbitrary" pid_mode values
@@ -2699,19 +2628,20 @@
     name: "{{ cname }}"
     state: started
     pid_mode: host
-    stop_timeout: 1
+    force_kill: yes
   register: pid_mode_3
 
 - name: cleanup
   docker_container:
     name: "{{ container_name }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   loop:
   - "{{ cname }}"
   - "{{ cname_h1 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -2727,13 +2657,68 @@
   when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
+## pids_limit ######################################################
+####################################################################
+
+- name: pids_limit
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    pids_limit: 10
+  register: pids_limit_1
+  ignore_errors: yes
+
+- name: pids_limit (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    pids_limit: 10
+  register: pids_limit_2
+  ignore_errors: yes
+
+- name: pids_limit (changed)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    pids_limit: 20
+    force_kill: yes
+  register: pids_limit_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - pids_limit_1 is changed
+    - pids_limit_2 is not changed
+    - pids_limit_3 is changed
+  when: docker_py_version is version('1.10.0', '>=')
+- assert:
+    that:
+    - pids_limit_1 is failed
+    - "('version is ' ~ docker_py_version ~ ' ') in pids_limit_1.msg"
+    - "'Minimum version required is 1.10.0 ' in pids_limit_1.msg"
+  when: docker_py_version is version('1.10.0', '<')
+
+####################################################################
 ## privileged ######################################################
 ####################################################################
 
 - name: privileged
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     privileged: yes
     state: started
@@ -2742,7 +2727,7 @@
 - name: privileged (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     privileged: yes
     state: started
@@ -2755,14 +2740,15 @@
     name: "{{ cname }}"
     privileged: no
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: privileged_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2781,8 +2767,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
-    - 5678
+    - '9001'
+    - '9002'
   register: published_ports_1
 
 - name: published_ports (idempotency)
@@ -2792,8 +2778,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 5678
-    - 1234
+    - '9002'
+    - '9001'
   register: published_ports_2
 
 - name: published_ports (less published_ports)
@@ -2803,7 +2789,7 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
+    - '9002'
   register: published_ports_3
 
 - name: published_ports (more published_ports)
@@ -2813,16 +2799,17 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
-    - 2345
-    stop_timeout: 1
+    - '9002'
+    - '9003'
+    force_kill: yes
   register: published_ports_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2844,7 +2831,7 @@
 - name: read_only
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     read_only: yes
     state: started
@@ -2853,7 +2840,7 @@
 - name: read_only (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     read_only: yes
     state: started
@@ -2866,14 +2853,15 @@
     name: "{{ cname }}"
     read_only: no
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: read_only_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2882,114 +2870,13 @@
     - read_only_3 is changed
 
 ####################################################################
-## recreate ########################################################
-####################################################################
-
-- name: recreate (created)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: present
-    stop_timeout: 1
-  register: recreate_1
-
-- name: recreate (created, recreate)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    name: "{{ cname }}"
-    recreate: yes
-    state: present
-    stop_timeout: 1
-  register: recreate_2
-
-- name: recreate (started)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    stop_timeout: 1
-  register: recreate_3
-
-- name: recreate (started, recreate)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    name: "{{ cname }}"
-    recreate: yes
-    state: started
-    stop_timeout: 1
-  register: recreate_4
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    stop_timeout: 1
-
-- debug: var=recreate_1
-- debug: var=recreate_2
-- debug: var=recreate_3
-- debug: var=recreate_4
-
-- assert:
-    that:
-    - recreate_1 is changed
-    - recreate_2 is changed
-    - recreate_3 is changed
-    - recreate_4 is changed
-    - recreate_1.ansible_facts.docker_container.Id != recreate_2.ansible_facts.docker_container.Id
-    - recreate_2.ansible_facts.docker_container.Id == recreate_3.ansible_facts.docker_container.Id
-    - recreate_3.ansible_facts.docker_container.Id != recreate_4.ansible_facts.docker_container.Id
-
-####################################################################
-## restart #########################################################
-####################################################################
-
-- name: restart
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    stop_timeout: 1
-  register: restart_1
-
-- name: restart (restart)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    name: "{{ cname }}"
-    restart: yes
-    state: started
-    stop_timeout: 1
-  register: restart_2
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    stop_timeout: 1
-
-- debug: var=restart_1
-- debug: var=restart_2
-
-- assert:
-    that:
-    - restart_1 is changed
-    - restart_2 is changed
-    - restart_1.ansible_facts.docker_container.Id == restart_2.ansible_facts.docker_container.Id
-
-####################################################################
 ## restart_policy ##################################################
 ####################################################################
 
 - name: restart_policy
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: always
     state: started
@@ -2998,7 +2885,7 @@
 - name: restart_policy (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: always
     state: started
@@ -3011,14 +2898,15 @@
     name: "{{ cname }}"
     restart_policy: unless-stopped
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: restart_policy_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3033,7 +2921,7 @@
 - name: restart_retries
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: on-failure
     restart_retries: 5
@@ -3043,7 +2931,7 @@
 - name: restart_retries (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: on-failure
     restart_retries: 5
@@ -3058,14 +2946,15 @@
     restart_policy: on-failure
     restart_retries: 2
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: restart_retries_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3080,7 +2969,7 @@
 - name: runtime
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     runtime: runc
     state: started
@@ -3090,7 +2979,7 @@
 - name: runtime (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     runtime: runc
     state: started
@@ -3101,7 +2990,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3111,7 +3001,8 @@
 - assert:
     that:
     - runtime_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.4.0') in runtime_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in runtime_1.msg"
+    - "'Minimum version required is 2.4.0 ' in runtime_1.msg"
   when: docker_py_version is version('2.4.0', '<')
 
 ####################################################################
@@ -3175,14 +3066,15 @@
     security_opts:
     - "label:disable"
     - "no-new-privileges"
-    stop_timeout: 1
+    force_kill: yes
   register: security_opts_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3198,7 +3090,7 @@
 - name: shm_size
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     shm_size: 96M
     state: started
@@ -3207,7 +3099,7 @@
 - name: shm_size (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     shm_size: 96M
     state: started
@@ -3220,14 +3112,15 @@
     name: "{{ cname }}"
     shm_size: 75M
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: shm_size_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3242,18 +3135,18 @@
 - name: stop_signal
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_1
 
 - name: stop_signal (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_2
 
@@ -3262,16 +3155,17 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 9
+    stop_signal: "9"
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: stop_signal_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3315,7 +3209,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3381,7 +3276,7 @@
     sysctls:
       net.ipv4.icmp_echo_ignore_all: 1
       net.ipv6.conf.default.accept_redirects: 0
-    stop_timeout: 1
+    force_kill: yes
   register: sysctls_4
   ignore_errors: yes
 
@@ -3389,7 +3284,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3401,7 +3297,8 @@
 - assert:
     that:
     - sysctls_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in sysctls_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in sysctls_1.msg"
+    - "'Minimum version required is 1.10.0 ' in sysctls_1.msg"
   when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
@@ -3449,14 +3346,15 @@
     tmpfs:
     - "/test1:rw,noexec,nosuid,size=65536k"
     - "/test3:rw,noexec,nosuid,size=65536k"
-    stop_timeout: 1
+    force_kill: yes
   register: tmpfs_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3478,7 +3376,7 @@
 - name: tty
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     tty: yes
     state: started
@@ -3487,7 +3385,7 @@
 - name: tty (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     tty: yes
     state: started
@@ -3500,14 +3398,15 @@
     name: "{{ cname }}"
     tty: no
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: tty_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3560,14 +3459,15 @@
     ulimits:
     - "nofile:1234:1234"
     - "sigpending:100:200"
-    stop_timeout: 1
+    force_kill: yes
   register: ulimits_4
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3583,7 +3483,7 @@
 - name: user
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     user: nobody
     state: started
@@ -3592,7 +3492,7 @@
 - name: user (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     user: nobody
     state: started
@@ -3605,14 +3505,15 @@
     name: "{{ cname }}"
     user: root
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: user_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3627,7 +3528,7 @@
 - name: userns_mode
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     userns_mode: host
     state: started
@@ -3637,7 +3538,7 @@
 - name: userns_mode (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     userns_mode: host
     state: started
@@ -3651,7 +3552,7 @@
     name: "{{ cname }}"
     userns_mode: ""
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: userns_mode_3
   ignore_errors: yes
 
@@ -3659,7 +3560,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3670,7 +3572,8 @@
 - assert:
     that:
     - userns_mode_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in userns_mode_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in userns_mode_1.msg"
+    - "'Minimum version required is 1.10.0 ' in userns_mode_1.msg"
   when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
@@ -3680,7 +3583,7 @@
 - name: uts
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     uts: host
     state: started
@@ -3690,7 +3593,7 @@
 - name: uts (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     uts: host
     state: started
@@ -3704,7 +3607,7 @@
     name: "{{ cname }}"
     uts: ""
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: uts_3
   ignore_errors: yes
 
@@ -3712,7 +3615,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3723,7 +3627,8 @@
 - assert:
     that:
     - uts_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 3.5.0') in uts_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in uts_1.msg"
+    - "'Minimum version required is 3.5.0 ' in uts_1.msg"
   when: docker_py_version is version('3.5.0', '<')
 
 ####################################################################
@@ -3739,7 +3644,7 @@
 - name: volume_driver
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     volume_driver: local
     state: started
@@ -3748,7 +3653,7 @@
 - name: volume_driver (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     volume_driver: local
     state: started
@@ -3761,14 +3666,15 @@
     name: "{{ cname }}"
     volume_driver: /
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: volume_driver_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3821,7 +3727,7 @@
     volumes:
     - "/tmp:/tmp"
     - "/tmp:/somewhereelse:ro,Z"
-    stop_timeout: 1
+    force_kill: yes
   register: volumes_4
 
 - name: volumes (different modes)
@@ -3833,14 +3739,15 @@
     volumes:
     - "/tmp:/tmp"
     - "/tmp:/somewhereelse:ro"
-    stop_timeout: 1
+    force_kill: yes
   register: volumes_5
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3857,7 +3764,7 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
     volumes:
@@ -3893,20 +3800,21 @@
     name: "{{ cname }}"
     state: started
     volumes_from: "{{ cname_h2 }}"
-    stop_timeout: 1
+    force_kill: yes
   register: volumes_from_3
 
 - name: cleanup
   docker_container:
     name: "{{ container_name }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   loop:
   - "{{ cname }}"
   - "{{ cname_h1 }}"
   - "{{ cname_h2 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -3921,7 +3829,7 @@
 - name: working_dir
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     working_dir: /tmp
     state: started
@@ -3930,7 +3838,7 @@
 - name: working_dir (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     working_dir: /tmp
     state: started
@@ -3943,14 +3851,15 @@
     name: "{{ cname }}"
     working_dir: /
     state: started
-    stop_timeout: 1
+    force_kill: yes
   register: working_dir_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3961,15 +3870,3 @@
 ####################################################################
 ####################################################################
 ####################################################################
-
-- name: Delete networks
-  docker_network:
-    name: "{{ network_name }}"
-    state: absent
-    force: yes
-  loop:
-  - "{{ nname_1 }}"
-  - "{{ nname_2 }}"
-  loop_control:
-    loop_var: network_name
-  when: docker_py_version is version('1.10.0', '>=')

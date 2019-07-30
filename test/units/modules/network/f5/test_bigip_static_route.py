@@ -8,11 +8,11 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -29,20 +29,18 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_static_route import ApiParameters
-        from ansible.modules.network.f5.bigip_static_route import ModuleParameters
-        from ansible.modules.network.f5.bigip_static_route import ModuleManager
-        from ansible.modules.network.f5.bigip_static_route import ArgumentSpec
+    from ansible.modules.network.f5.bigip_static_route import ApiParameters
+    from ansible.modules.network.f5.bigip_static_route import ModuleParameters
+    from ansible.modules.network.f5.bigip_static_route import ModuleManager
+    from ansible.modules.network.f5.bigip_static_route import ArgumentSpec
 
-        # Ansible 2.8 imports
-        from units.compat import unittest
-        from units.compat.mock import Mock
-        from units.compat.mock import patch
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
 
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -159,13 +157,15 @@ class TestManager(unittest.TestCase):
     def test_create_blackhole(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
-            reject='yes'
+            reject='yes',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -185,13 +185,15 @@ class TestManager(unittest.TestCase):
     def test_create_route_to_pool(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
-            pool="test-pool"
+            pool="test-pool",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -212,13 +214,15 @@ class TestManager(unittest.TestCase):
     def test_create_route_to_vlan(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
-            vlan="test-vlan"
+            vlan="test-vlan",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -239,11 +243,13 @@ class TestManager(unittest.TestCase):
     def test_update_description(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
-            description='foo description'
+            description='foo description',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -266,11 +272,13 @@ class TestManager(unittest.TestCase):
     def test_update_description_idempotent(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
-            description='asdasd'
+            description='asdasd',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -294,10 +302,12 @@ class TestManager(unittest.TestCase):
     def test_delete(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
-            state='absent'
+            state='absent',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -318,11 +328,13 @@ class TestManager(unittest.TestCase):
     def test_invalid_unknown_params(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
-            foo="bar"
+            foo="bar",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
         with patch('ansible.module_utils.f5_utils.AnsibleModule.fail_json') as mo:
             mo.return_value = True
@@ -336,14 +348,16 @@ class TestManager(unittest.TestCase):
     def test_create_with_route_domain(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
             route_domain=1,
-            reject='yes'
+            reject='yes',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

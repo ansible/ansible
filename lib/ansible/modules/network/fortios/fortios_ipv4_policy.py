@@ -121,8 +121,8 @@ options:
   comment:
     description:
       - free text to describe policy.
-notes:
-  - This module requires pyFG library.
+requirements:
+  - pyFG
 """
 
 EXAMPLES = """
@@ -184,15 +184,15 @@ RETURN = """
 firewall_address_config:
   description: full firewall addresses config string
   returned: always
-  type: string
+  type: str
 change_string:
   description: The commands executed by the module
   returned: only if config changed
-  type: string
+  type: str
 msg_error_list:
   description: "List of errors returned by CLI (use -vvv for better readability)."
   returned: only when error
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule

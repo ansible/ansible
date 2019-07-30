@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvault
 version_added: "2.5"
-short_description: Manage Key Vault instance.
+short_description: Manage Key Vault instance
 description:
     - Create, update and delete instance of Key Vault.
 
@@ -28,7 +28,7 @@ options:
         required: True
     vault_name:
         description:
-            - Name of the vault
+            - Name of the vault.
         required: True
     location:
         description:
@@ -38,12 +38,11 @@ options:
             - The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault.
     sku:
         description:
-            - SKU details
+            - SKU details.
         suboptions:
             family:
                 description:
-                    - SKU family name
-                required: True
+                    - SKU family name.
             name:
                 description:
                     - SKU name to specify whether the key vault is a standard vault or a premium vault.
@@ -53,8 +52,8 @@ options:
                     - 'premium'
     access_policies:
         description:
-            - "An array of 0 to 16 identities that have access to the key vault. All identities in the array must use the same tenant ID as the key vault's
-               tenant ID."
+            - An array of 0 to 16 identities that have access to the key vault.
+            - All identities in the array must use the same tenant ID as the key vault's tenant ID.
         suboptions:
             tenant_id:
                 description:
@@ -62,16 +61,16 @@ options:
                     - Current keyvault C(tenant_id) value will be used if not specified.
             object_id:
                 description:
-                    - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
-                       unique for the list of access policies."
-                    - Please note this is not application id. Object id can be obtained by running "az ad show sp --id <application id>".
+                    - The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault.
+                    - The object ID must be unique for the list of access policies.
+                    - Please note this is not application id. Object id can be obtained by running "az ad sp show --id <application id>".
                 required: True
             application_id:
                 description:
-                    -  Application ID of the client making request on behalf of a principal
+                    -  Application ID of the client making request on behalf of a principal.
             keys:
                 description:
-                    - List of permissions to keys
+                    - List of permissions to keys.
                 choices:
                     - 'encrypt'
                     - 'decrypt'
@@ -91,7 +90,7 @@ options:
                     - 'purge'
             secrets:
                 description:
-                    - List of permissions to secrets
+                    - List of permissions to secrets.
                 choices:
                     - 'get'
                     - 'list'
@@ -103,7 +102,7 @@ options:
                     - 'purge'
             certificates:
                 description:
-                    - List of permissions to certificates
+                    - List of permissions to certificates.
                 choices:
                     - 'get'
                     - 'list'
@@ -121,7 +120,7 @@ options:
                     - 'purge'
             storage:
                 description:
-                    - List of permissions to storage accounts
+                    - List of permissions to storage accounts.
     enabled_for_deployment:
         description:
             - Property to specify whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault.
@@ -144,7 +143,7 @@ options:
         type: bool
     state:
         description:
-            - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+            - Assert the state of the KeyVault. Use C(present) to create or update an KeyVault and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -155,14 +154,14 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Create instance of Key Vault
     azure_rm_keyvault:
-      resource_group: myresourcegroup
+      resource_group: myResourceGroup
       vault_name: samplekeyvault
       enabled_for_deployment: yes
       vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
@@ -191,8 +190,8 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.keyvault import KeyVaultManagementClient
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -326,7 +325,8 @@ class AzureRMVaults(AzureRMModuleBase):
         response = None
 
         self.mgmt_client = self.get_mgmt_svc_client(KeyVaultManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
+                                                    base_url=self._cloud_environment.endpoints.resource_manager,
+                                                    api_version="2018-02-14")
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -449,7 +449,7 @@ class AzureRMVaults(AzureRMModuleBase):
             response = self.mgmt_client.vaults.create_or_update(resource_group_name=self.resource_group,
                                                                 vault_name=self.vault_name,
                                                                 parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

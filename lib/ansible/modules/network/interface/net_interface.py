@@ -22,6 +22,7 @@ short_description: Manage Interface on network devices
 description:
   - This module provides declarative management of Interfaces
     on network devices.
+extends_documentation_fragment: network_agnostic
 options:
   name:
     description:
@@ -108,7 +109,7 @@ EXAMPLES = """
     mtu: 512
 
 - name: Delete interface using aggregate
-  junos_interface:
+  net_interface:
     aggregate:
       - { name: ge-0/0/1 }
       - { name: ge-0/0/2 }

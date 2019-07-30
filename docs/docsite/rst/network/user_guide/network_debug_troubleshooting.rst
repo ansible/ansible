@@ -4,6 +4,9 @@
 Network Debug and Troubleshooting Guide
 ***************************************
 
+.. contents::
+   :local:
+
 
 Introduction
 ============
@@ -11,8 +14,6 @@ Introduction
 Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogeneous networking devices. Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
 
 This section discusses how to debug and troubleshoot network modules in Ansible 2.3.
-
-
 
 
 
@@ -32,8 +33,6 @@ Errors generally fall into one of the following categories:
   * May actually be masking a authentication issue
 :Playbook issues:
   * Use of ``delegate_to``, instead of ``ProxyCommand``. See :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>` for more information.
-  * Not using ``connection: local``
-
 
 .. warning:: ``unable to open shell``
 
@@ -98,6 +97,64 @@ From the log notice:
 Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::
 
   grep "p=28990" $ANSIBLE_LOG_PATH
+
+
+Enabling Networking device interaction logging
+----------------------------------------------
+
+**Platforms:** Any
+
+Ansible 2.8 features added logging of device interaction in log file to help diagnose and troubleshoot
+issues regarding Ansible Networking modules. The messages are logged in file pointed by ``log_path`` configuration
+option in Ansible configuration file or by set :envvar:`ANSIBLE_LOG_PATH` as mentioned in above section.
+
+.. warning::
+  The device interaction messages consist of command executed on target device and the returned response, as this
+  log data can contain sensitive information including passwords in plain text it is disabled by default.
+  Additionally, in order to prevent accidental leakage of data, a warning will be shown on every task with this
+  setting enabled specifying which host has it enabled and where the data is being logged.
+
+Be sure to fully understand the security implications of enabling this option. The device interaction logging can be enabled either globally by setting in configuration file or by setting environment or enabled on per task basis by passing special variable to task.
+
+Before running ``ansible-playbook`` run the following commands to enable logging::
+
+   # Specify the location for the log file
+   export ANSIBLE_LOG_PATH=~/ansible.log
+
+
+Enable device interaction logging for a given task
+
+.. code-block:: yaml
+
+  - name: get version information
+    ios_command:
+      commands:
+        - show version
+    vars:
+      ansible_persistent_log_messages: True
+
+
+To make this a global setting, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   log_messages = True
+
+or enable environment variable `ANSIBLE_PERSISTENT_LOG_MESSAGES`
+
+   # Enable device interaction logging
+   export ANSIBLE_PERSISTENT_LOG_MESSAGES=True
+
+If the task is failing at the time on connection initialization itself it is recommended to enable this option
+globally else if an individual task is failing intermittently this option can be enabled for that task itself to
+find the root cause.
+
+After Ansible has finished running you can inspect the log file which has been created on the ansible-controller
+
+.. note:: Be sure to fully understand the security implications of enabling this option as it can log sensitive
+          information in log file thus creating security vulnerability.
+
 
 Isolating an error
 ------------------
@@ -182,7 +239,7 @@ If the identified error message from the log file is:
 
 .. code-block:: yaml
 
-   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 30 secs
 
 or
 
@@ -254,7 +311,7 @@ For example:
 
 Suggestions to resolve:
 
-* If you are using the ``provider:`` options ensure that it's suboption ``host:`` is set correctly.
+* If you are using the ``provider:`` options ensure that its suboption ``host:`` is set correctly.
 * If you are not using ``provider:`` nor top-level arguments ensure your inventory file is correct.
 
 
@@ -384,11 +441,10 @@ of inactivity), simple delete the socket file.
 Timeout issues
 ==============
 
-Timeouts
---------
-Persistent connection idle timeout:
+Persistent connection idle timeout
+----------------------------------
 
-For example:
+By default, ``ANSIBLE_PERSISTENT_CONNECT_TIMEOUT`` is set to 30 (seconds). You may see the following error if this value is too low:
 
 .. code-block:: yaml
 
@@ -409,71 +465,77 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    connect_timeout = 60
 
-Command timeout:
-For example:
+Command timeout
+---------------
+
+By default, ``ANSIBLE_PERSISTENT_COMMAND_TIMEOUT`` is set to 30 (seconds). Prior versions of Ansible had this value set to 10 seconds by default.
+You may see the following error if this value is too low:
+
 
 .. code-block:: yaml
 
-   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 30 secs
 
 Suggestions to resolve:
 
-Options 1 (Global command timeout setting):
-Increase value of command timeout in configuration file or by setting environment variable.
+* Option 1 (Global command timeout setting):
+  Increase value of command timeout in configuration file or by setting environment variable.
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=30
+     export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=60
 
-To make this a permanent change, add the following to your ``ansible.cfg`` file:
+  To make this a permanent change, add the following to your ``ansible.cfg`` file:
 
-.. code-block:: ini
+  .. code-block:: ini
 
-   [persistent_connection]
-   command_timeout = 30
+     [persistent_connection]
+     command_timeout = 60
 
-Option 2 (Per task command timeout setting):
-Increase command timeout per task basis. All network modules support a
-timeout value that can be set on a per task basis.
-The timeout value controls the amount of time in seconds before the
-task will fail if the command has not returned.
+* Option 2 (Per task command timeout setting):
+  Increase command timeout per task basis. All network modules support a
+  timeout value that can be set on a per task basis.
+  The timeout value controls the amount of time in seconds before the
+  task will fail if the command has not returned.
 
-For local connection type:
+  For local connection type:
 
-.. FIXME: Detail error here
+  .. FIXME: Detail error here
 
-Suggestions to resolve:
+  Suggestions to resolve:
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-    - name: save running-config
-      ios_command:
-        commands: copy running-config startup-config
-        provider: "{{ cli }}"
-        timeout: 30
+      - name: save running-config
+        ios_command:
+          commands: copy running-config startup-config
+          provider: "{{ cli }}"
+          timeout: 30
 
-For network_cli, netconf connection type (applicable from 2.7 onwards):
+  For network_cli, netconf connection type (applicable from 2.7 onwards):
 
-.. FIXME: Detail error here
+  .. FIXME: Detail error here
 
-Suggestions to resolve:
+  Suggestions to resolve:
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-    - name: save running-config
-      ios_command:
-        commands: copy running-config startup-config
-      vars:
-        ansible_command_timeout: 30
+      - name: save running-config
+        ios_command:
+          commands: copy running-config startup-config
+        vars:
+          ansible_command_timeout: 60
 
-Some operations take longer than the default 10 seconds to complete.  One good
+Some operations take longer than the default 30 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value from the default 10 seconds to 30
+In this case, changing the timeout value from the default 30 seconds to 60
 seconds will prevent the task from failing before the command completes
 successfully.
 
-Persistent socket connect timeout:
-For example:
+Persistent connection retry timeout
+-----------------------------------
+
+By default, ``ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT`` is set to 15 (seconds). You may see the following error if this value is too low:
 
 .. code-block:: yaml
 
@@ -505,31 +567,6 @@ Playbook issues
 
 This section details issues are caused by issues with the Playbook itself.
 
-Error: "invalid connection specified, expected connection=local, got ssh"
--------------------------------------------------------------------------
-
-**Platforms:** Any
-
-Network modules require that the connection is set to ``local``.  Any other
-connection setting will cause the playbook to fail.  Ansible will now detect
-this condition and return an error message:
-
-.. code-block:: console
-
-    fatal: [nxos01]: FAILED! => {
-        "changed": false,
-        "failed": true,
-        "msg": "invalid connection specified, expected connection=local, got ssh"
-    }
-
-
-To fix this issue, set the connection value to ``local`` using one of the
-following methods:
-
-* Set the play to use ``connection: local``
-* Set the task to use ``connection: local``
-* Run ansible-playbook using the ``-c local`` setting
-
 Error: "Unable to enter configuration mode"
 -------------------------------------------
 
@@ -551,6 +588,7 @@ For example:
 
 Suggestions to resolve:
 
+In Ansible prior to 2.5 :
 Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
@@ -576,6 +614,9 @@ Add ``authorize: yes`` to the task. For example:
       authorize: yes
       auth_pass: "{{ mypasswordvar }}"
   register: result
+
+
+.. note:: Starting with Ansible 2.5 we recommend using ``connection: network_cli`` and ``become: yes``
 
 
 Proxy Issues
@@ -609,6 +650,12 @@ no additional changes necessary.  The network module will now connect to the
 network device by first connecting to the host specified in
 ``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
 
+You can also set the proxy target for all hosts by using environment variables.
+
+.. code-block:: sh
+
+    export ANSIBLE_SSH_ARGS='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
+
 Using bastion/jump host with netconf connection
 -----------------------------------------------
 
@@ -638,21 +685,21 @@ Example ssh config file (~/.ssh/config)
     IdentityFile "/path/to/ssh-key.pem"
     Port 22
 
-  # Note: Due to the way that Paramiko reads the SSH Config file, 
+  # Note: Due to the way that Paramiko reads the SSH Config file,
   # you need to specify the NETCONF port that the host uses.
   # i.e. It does not automatically use ansible_port
   # As a result you need either:
-  
+
   Host junos01
     HostName junos01
     ProxyCommand ssh -W %h:22 jumphost
-    
+
   # OR
-  
+
   Host junos01
     HostName junos01
     ProxyCommand ssh -W %h:830 jumphost
-    
+
   # Depending on the netconf port used.
 
 Example Ansible inventory file
@@ -666,7 +713,7 @@ Example Ansible inventory file
     ansible_connection=netconf
     ansible_network_os=junos
     ansible_user=myuser
-    ansible_ssh_pass=!vault...
+    ansible_password=!vault...
 
 
 .. note:: Using ``ProxyCommand`` with passwords via variables

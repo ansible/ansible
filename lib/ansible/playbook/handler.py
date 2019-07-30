@@ -21,14 +21,17 @@ __metaclass__ = type
 
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
+from ansible.module_utils.six import string_types
 
 
 class Handler(Task):
 
-    _listen = FieldAttribute(isa='list')
+    _listen = FieldAttribute(isa='list', default=list, listof=string_types, static=True)
 
     def __init__(self, block=None, role=None, task_include=None):
-        self._flagged_hosts = []
+        self.notified_hosts = []
+
+        self.cached_name = False
 
         super(Handler, self).__init__(block=block, role=role, task_include=task_include)
 
@@ -41,13 +44,14 @@ class Handler(Task):
         t = Handler(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def flag_for_host(self, host):
-        # assert instanceof(host, Host)
-        if host not in self._flagged_hosts:
-            self._flagged_hosts.append(host)
+    def notify_host(self, host):
+        if not self.is_host_notified(host):
+            self.notified_hosts.append(host)
+            return True
+        return False
 
-    def has_triggered(self, host):
-        return host in self._flagged_hosts
+    def is_host_notified(self, host):
+        return host in self.notified_hosts
 
     def serialize(self):
         result = super(Handler, self).serialize()

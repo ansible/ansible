@@ -24,7 +24,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -33,34 +33,38 @@ short_description: Uploads files to Cisco FTD devices over HTTP(S)
 description:
   - Uploads files to Cisco FTD devices including disk files, backups, and upgrades.
 version_added: "2.7"
-author: "Cisco Systems, Inc."
+author: "Cisco Systems, Inc. (@annikulin)"
 options:
   operation:
     description:
       - The name of the operation to execute.
       - Only operations that upload file can be used in this module.
     required: true
-  fileToUpload:
+    type: str
+  file_to_upload:
     description:
       - Absolute path to the file that should be uploaded.
     required: true
+    type: path
+    version_added: "2.8"
   register_as:
     description:
       - Specifies Ansible fact name that is used to register received response from the FTD device.
+    type: str
 """
 
 EXAMPLES = """
 - name: Upload disk file
   ftd_file_upload:
     operation: 'postuploaddiskfile'
-    fileToUpload: /tmp/test1.txt
+    file_to_upload: /tmp/test1.txt
 """
 
 RETURN = """
 msg:
-    description: the error message describing why the module failed
+    description: The error message describing why the module failed.
     returned: error
-    type: string
+    type: str
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
@@ -75,7 +79,7 @@ def is_upload_operation(op_spec):
 def main():
     fields = dict(
         operation=dict(type='str', required=True),
-        fileToUpload=dict(type='path', required=True),
+        file_to_upload=dict(type='path', required=True),
         register_as=dict(type='str'),
     )
     module = AnsibleModule(argument_spec=fields,
@@ -94,7 +98,7 @@ def main():
     try:
         if module.check_mode:
             module.exit_json()
-        resp = connection.upload_file(params['fileToUpload'], op_spec[OperationField.URL])
+        resp = connection.upload_file(params['file_to_upload'], op_spec[OperationField.URL])
         module.exit_json(changed=True, response=resp, ansible_facts=construct_ansible_facts(resp, module.params))
     except FtdServerError as e:
         module.fail_json(msg='Upload request for %s operation failed. Status code: %s. '

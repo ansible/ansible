@@ -29,6 +29,12 @@ options:
         description:
             - Name of the host
         required: true
+    use:
+        description:
+            - Which strategy to use to update the hostname.
+            - If not set we try to autodetect, but this can be problematic, specially with containers as they can present misleading information.
+        choices: ['generic', 'debian','sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd']
+        version_added: '2.9'
 '''
 
 EXAMPLES = '''
@@ -49,6 +55,9 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_native
+
+STRATS = {'generic': 'Generic', 'debian': 'Debian', 'sles': 'SLES', 'redhat': 'RedHat', 'alpine': 'Alpine',
+          'systemd': 'Systemd', 'openrc': 'OpenRC', 'openbsd': 'OpenBSD', 'solaris': 'Solaris', 'freebsd': 'FreeBSD'}
 
 
 class UnimplementedStrategy(object):
@@ -107,7 +116,12 @@ class Hostname(object):
     def __init__(self, module):
         self.module = module
         self.name = module.params['name']
-        if self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
+        self.use = module.params['use']
+
+        if self.use is not None:
+            strat = globals()['%sStrategy' % STRATS[self.use]]
+            self.strategy = strat(module)
+        elif self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             self.strategy = SystemdStrategy(module)
         else:
             self.strategy = self.strategy_class(module)
@@ -179,7 +193,7 @@ class GenericStrategy(object):
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
-        return None
+        return 'UNKNOWN'
 
     def set_permanent_hostname(self, name):
         pass
@@ -403,20 +417,22 @@ class OpenRCStrategy(GenericStrategy):
     HOSTNAME_FILE = '/etc/conf.d/hostname'
 
     def get_permanent_hostname(self):
+        name = 'UNKNOWN'
         try:
             try:
                 f = open(self.HOSTNAME_FILE, 'r')
                 for line in f:
                     line = line.strip()
                     if line.startswith('hostname='):
-                        return line[10:].strip('"')
+                        name = line[10:].strip('"')
+                        break
             except Exception as e:
                 self.module.fail_json(msg="failed to read hostname: %s" %
                                           to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
-        return None
+        return name
 
     def set_permanent_hostname(self, name):
         try:
@@ -515,6 +531,7 @@ class FreeBSDStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
 
+        name = 'UNKNOWN'
         if not os.path.isfile(self.HOSTNAME_FILE):
             try:
                 open(self.HOSTNAME_FILE, "a").write("hostname=temporarystub\n")
@@ -527,14 +544,15 @@ class FreeBSDStrategy(GenericStrategy):
                 for line in f:
                     line = line.strip()
                     if line.startswith('hostname='):
-                        return line[10:].strip('"')
+                        name = line[10:].strip('"')
+                        break
             except Exception as e:
                 self.module.fail_json(msg="failed to read hostname: %s" %
                                           to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
-        return None
+        return name
 
     def set_permanent_hostname(self, name):
         try:
@@ -565,7 +583,7 @@ class FedoraHostname(Hostname):
 
 class SLESHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Suse linux enterprise server '
+    distribution = 'Sles'
     try:
         distribution_version = get_distribution_version()
         # cast to float may raise ValueError on non SLES, we use float for a little more safety over int
@@ -579,7 +597,13 @@ class SLESHostname(Hostname):
 
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Opensuse '
+    distribution = 'Opensuse'
+    strategy_class = SystemdStrategy
+
+
+class OpenSUSELeapHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Opensuse-leap'
     strategy_class = SystemdStrategy
 
 
@@ -589,33 +613,15 @@ class ArchHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
-class RedHat5Hostname(Hostname):
+class ArchARMHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Redhat'
-    strategy_class = RedHatStrategy
+    distribution = 'Archarm'
+    strategy_class = SystemdStrategy
 
 
 class RHELHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Red hat enterprise linux'
-    strategy_class = RedHatStrategy
-
-
-class RedHatServerHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux server'
-    strategy_class = RedHatStrategy
-
-
-class RedHatWorkstationHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux workstation'
-    strategy_class = RedHatStrategy
-
-
-class RedHatAtomicHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux atomic host'
+    distribution = 'Redhat'
     strategy_class = RedHatStrategy
 
 
@@ -625,10 +631,10 @@ class CentOSHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class CentOSLinuxHostname(Hostname):
+class ClearLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Centos linux'
-    strategy_class = RedHatStrategy
+    distribution = 'Clear-linux-os'
+    strategy_class = SystemdStrategy
 
 
 class CloudlinuxHostname(Hostname):
@@ -637,10 +643,10 @@ class CloudlinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class CloudlinuxServerHostname(Hostname):
+class CoreosHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Cloudlinux server'
-    strategy_class = RedHatStrategy
+    distribution = 'Coreos'
+    strategy_class = SystemdStrategy
 
 
 class ScientificHostname(Hostname):
@@ -649,27 +655,15 @@ class ScientificHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class ScientificLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Scientific linux'
-    strategy_class = RedHatStrategy
-
-
-class ScientificLinuxCERNHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Scientific linux cern slc'
-    strategy_class = RedHatStrategy
-
-
 class OracleLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Oracle linux server'
+    distribution = 'Oracle'
     strategy_class = RedHatStrategy
 
 
 class VirtuozzoLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Virtuozzo linux'
+    distribution = 'Virtuozzo'
     strategy_class = RedHatStrategy
 
 
@@ -679,15 +673,15 @@ class AmazonLinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class SangomaLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Derived from red hat enterprise linux '
-    strategy_class = RedHatStrategy
-
-
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'
+    strategy_class = DebianStrategy
+
+
+class CumulusHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cumulus-linux'
     strategy_class = DebianStrategy
 
 
@@ -721,9 +715,15 @@ class DevuanHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class RaspbianHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Raspbian'
+    strategy_class = DebianStrategy
+
+
 class GentooHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Gentoo base system'
+    distribution = 'Gentoo'
     strategy_class = OpenRCStrategy
 
 
@@ -772,7 +772,8 @@ class NeonHostname(Hostname):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True)
+            name=dict(type='str', required=True),
+            use=dict(type='str', choices=STRATS.keys())
         ),
         supports_check_mode=True,
     )

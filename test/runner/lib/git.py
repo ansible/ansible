@@ -1,22 +1,20 @@
 """Wrapper around git command-line tools."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-from __future__ import absolute_import, print_function
+import lib.types as t
 
 from lib.util import (
-    CommonConfig,
     SubprocessError,
-    run_command,
+    raw_command,
 )
 
 
-class Git(object):
+class Git:
     """Wrapper around git command-line tools."""
-    def __init__(self, args):
-        """
-        :type args: CommonConfig
-        """
-        self.args = args
+    def __init__(self, root=None):  # type: (t.Optional[str]) -> None
         self.git = 'git'
+        self.root = root
 
     def get_diff(self, args, git_options=None):
         """
@@ -59,6 +57,24 @@ class Git(object):
         cmd = ['symbolic-ref', '--short', 'HEAD']
         return self.run_git(cmd).strip()
 
+    def get_rev_list(self, commits=None, max_count=None):
+        """
+        :type commits: list[str] | None
+        :type max_count: int | None
+        :rtype: list[str]
+        """
+        cmd = ['rev-list']
+
+        if commits:
+            cmd += commits
+        else:
+            cmd += ['HEAD']
+
+        if max_count:
+            cmd += ['--max-count', '%s' % max_count]
+
+        return self.run_git_split(cmd)
+
     def get_branch_fork_point(self, branch):
         """
         :type branch: str
@@ -99,4 +115,4 @@ class Git(object):
         :type str_errors: str
         :rtype: str
         """
-        return run_command(self.args, [self.git] + cmd, capture=True, always=True, str_errors=str_errors)[0]
+        return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]

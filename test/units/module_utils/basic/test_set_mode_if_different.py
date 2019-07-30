@@ -151,3 +151,6 @@ def test_missing_lchmod_is_link(am, mock_stats, mocker, check_mode):
         assert not m_chmod.called
     else:
         m_chmod.assert_called_with(b'/path/to/file/no_lchmod', 0o660)
+
+    mocker.resetall()
+    mocker.stopall()

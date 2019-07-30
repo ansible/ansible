@@ -34,6 +34,7 @@ options:
     - A directory to save the file into.
     - For example, if the I(dest) directory is C(/backup) a I(src) file named C(/etc/profile) on host
       C(host.example.com), would be saved into C(/backup/host.example.com/etc/profile).
+      The host name is based on the inventory name.
     required: yes
   fail_on_missing:
     version_added: '1.1'
@@ -57,9 +58,6 @@ options:
     - Obviously this is only handy if the filenames are unique.
     type: bool
     default: no
-author:
-- Ansible Core Team
-- Michael DeHaan
 notes:
 - When running fetch with C(become), the M(slurp) module will also be
   used to fetch the contents of the file for determining the remote
@@ -74,6 +72,12 @@ notes:
   also explicitly set C(fail_on_missing) to C(no) to get the
   non-failing behaviour.
 - This module is also supported for Windows targets.
+seealso:
+- module: copy
+- module: slurp
+author:
+- Ansible Core Team
+- Michael DeHaan
 '''
 
 EXAMPLES = r'''

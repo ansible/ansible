@@ -1,41 +1,62 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015 Matt Martz <matt@sivel.net>
-# Copyright (C) 2015 Rackspace US, Inc.
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Required, Schema, Self
+# Copyright: (c) 2015, Matt Martz <matt@sivel.net>
+# Copyright: (c) 2015, Rackspace US, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import re
+from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Invalid, Required, Schema, Self
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.collections import is_iterable
 list_string_types = list(string_types)
+tuple_string_types = tuple(string_types)
 any_string_types = Any(*string_types)
+
+# Valid DOCUMENTATION.author lines
+# Based on Ansibulbot's extract_github_id()
+#   author: First Last (@name) [optional anything]
+#     "Ansible Core Team" - Used by the Bot
+#     "Michael DeHaan" - nop
+#     "Name (!UNKNOWN)" - For the few untraceable authors
+author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$')
 
 
 def sequence_of_sequences(min=None, max=None):
     return All(
         Any(
             None,
-            [Length(min=min, max=max)],
-            tuple([Length(min=min, max=max)]),
-        ),
-        Any(
-            None,
             [Any(list, tuple)],
             tuple([Any(list, tuple)]),
         ),
+        Any(
+            None,
+            [Length(min=min, max=max)],
+            tuple([Length(min=min, max=max)]),
+        ),
     )
 
+
+seealso_schema = Schema(
+    [
+        Any(
+            {
+                Required('module'): Any(*string_types),
+                'description': Any(*string_types),
+            },
+            {
+                Required('ref'): Any(*string_types),
+                Required('description'): Any(*string_types),
+            },
+            {
+                Required('name'): Any(*string_types),
+                Required('link'): Any(*string_types),
+                Required('description'): Any(*string_types),
+            },
+        ),
+    ]
+)
 
 ansible_module_kwargs_schema = Schema(
     {
@@ -49,6 +70,7 @@ ansible_module_kwargs_schema = Schema(
         'add_file_common_args': bool,
         'supports_check_mode': bool,
         'required_if': sequence_of_sequences(min=3),
+        'required_by': Schema({str: Any(list_string_types, tuple_string_types, *string_types)}),
     }
 )
 
@@ -61,7 +83,9 @@ suboption_schema = Schema(
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'str', 'list', 'dict', 'bool', 'int', 'float', 'path', 'raw', 'jsonarg', 'json', 'bytes', 'bits'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        # in case of type='list' elements define type of individual item in list
+        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
         # Recursive suboptions
         'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
     },
@@ -82,7 +106,9 @@ option_schema = Schema(
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'str', 'list', 'dict', 'bool', 'int', 'float', 'path', 'raw', 'jsonarg', 'json', 'bytes', 'bits'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        # in case of type='list' elements define type of individual item in list
+        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
     },
     extra=PREVENT_EXTRA
 )
@@ -111,7 +137,7 @@ return_schema = Any(
                 any_string_types: {
                     Required('description'): Any(list_string_types, *string_types),
                     Required('returned'): Any(*string_types),
-                    Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
+                    Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                     'version_added': Any(float, *string_types),
                     'sample': Any(None, list, dict, int, float, *string_types),
                     'example': Any(None, list, dict, int, float, *string_types),
@@ -131,13 +157,24 @@ deprecation_schema = Schema(
         # Deprecation cycle changed at 2.4 (though not retroactively)
         # 2.3 -> removed_in: "2.5" + n for docs stub
         # 2.4 -> removed_in: "2.8" + n for docs stub
-        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12"),
+        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12", "2.13"),
         Required('why'): Any(*string_types),
         Required('alternative'): Any(*string_types),
         'removed': Any(True),
     },
     extra=PREVENT_EXTRA
 )
+
+
+def author(value):
+
+    if not is_iterable(value):
+        value = [value]
+
+    for line in value:
+        m = author_line.search(line)
+        if not m:
+            raise Invalid("Invalid author")
 
 
 def doc_schema(module_name):
@@ -151,8 +188,9 @@ def doc_schema(module_name):
         Required('short_description'): Any(*string_types),
         Required('description'): Any(list_string_types, *string_types),
         Required('version_added'): Any(float, *string_types),
-        Required('author'): Any(None, list_string_types, *string_types),
+        Required('author'): All(Any(None, list_string_types, *string_types), author),
         'notes': Any(None, list_string_types),
+        'seealso': Any(None, seealso_schema),
         'requirements': list_string_types,
         'todo': Any(None, list_string_types, *string_types),
         'options': Any(None, *list_dict_option_schema),

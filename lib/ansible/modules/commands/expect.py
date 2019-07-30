@@ -29,21 +29,26 @@ options:
       - The command module takes command to run.
     required: true
   creates:
+    type: path
     description:
       - A filename, when it already exists, this step will B(not) be run.
   removes:
+    type: path
     description:
       - A filename, when it does not exist, this step will B(not) be run.
   chdir:
+    type: path
     description:
       - Change into this directory before running the command.
   responses:
+    type: dict
     description:
       - Mapping of expected string/regex and string to respond with. If the
         response is a list, successive matches return successive
         responses. List functionality is new in 2.1.
     required: true
   timeout:
+    type: int
     description:
       - Amount of time in seconds to wait for the expected strings. Use
         C(null) to disable timeout.
@@ -52,6 +57,7 @@ options:
     description:
       - Whether or not to echo out your response strings.
     default: false
+    type: bool
 requirements:
   - python >= 2.6
   - pexpect >= 3.3
@@ -68,6 +74,9 @@ notes:
   - The M(expect) module is designed for simple scenarios. For more complex
     needs, consider the use of expect code with the M(shell) or M(script)
     modules. (An example is part of the M(shell) module documentation)
+seealso:
+- module: script
+- module: shell
 author: "Matt Martz (@sivel)"
 '''
 
@@ -94,13 +103,15 @@ import datetime
 import os
 import traceback
 
+PEXPECT_IMP_ERR = None
 try:
     import pexpect
     HAS_PEXPECT = True
 except ImportError:
+    PEXPECT_IMP_ERR = traceback.format_exc()
     HAS_PEXPECT = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_text
 
 
@@ -133,7 +144,8 @@ def main():
     )
 
     if not HAS_PEXPECT:
-        module.fail_json(msg='The pexpect python module is required')
+        module.fail_json(msg=missing_required_lib("pexpect"),
+                         exception=PEXPECT_IMP_ERR)
 
     chdir = module.params['chdir']
     args = module.params['command']

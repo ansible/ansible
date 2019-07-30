@@ -6,11 +6,12 @@
   when: ansible_distribution == 'Fedora'
 
 - block:
-  - name: Activate flatpak ppa on Ubuntu
+  - name: Activate flatpak ppa on Ubuntu versions older than 18.04/bionic
     apt_repository:
       repo: "ppa:alexlarsson/flatpak"
       state: present
       mode: 0644
+    when: ansible_lsb.major_release | int < 18
 
   - name: Install flatpak package on Ubuntu
     apt:
@@ -19,8 +20,8 @@
 
   when: ansible_distribution == 'Ubuntu'
 
-- name: Install flatpak_remote for testing check mode
+- name: Install flatpak remote for testing check mode
   flatpak_remote:
     name: check-mode-test-remote
-    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
     state: present

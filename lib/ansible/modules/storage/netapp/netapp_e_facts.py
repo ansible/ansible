@@ -34,6 +34,7 @@ options:
     default: true
     description:
     - Should https certificates be validated?
+    type: bool
   ssid:
     required: true
     description:
@@ -60,7 +61,7 @@ RETURN = """
 msg:
     description: Gathered facts for <StorageArrayId>.
     returned: always
-    type: string
+    type: str
 """
 import json
 
@@ -88,7 +89,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

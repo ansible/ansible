@@ -1,0 +1,6 @@
+---
+vultr_resource_prefix: "vultr-test-prefix"
+vultr_server_name: "{{ vultr_resource_prefix }}_vm"
+vultr_server_os: CentOS 7 x64
+vultr_server_plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+vultr_server_region: Amsterdam

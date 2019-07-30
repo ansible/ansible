@@ -1,6 +1,6 @@
 """Python threading tools."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import threading
 import sys
@@ -30,10 +30,13 @@ class WrappedThread(threading.Thread):
         Run action and capture results or exception.
         Do not override. Do not call directly. Executed by the start() method.
         """
+        # We truly want to catch anything that the worker thread might do including call sys.exit.
+        # Therefore we catch *everything* (including old-style class exceptions)
         # noinspection PyBroadException, PyPep8
         try:
             self._result.put((self.action(), None))
-        except:  # pylint: disable=locally-disabled, bare-except
+        # pylint: disable=locally-disabled, bare-except
+        except:  # noqa
             self._result.put((None, sys.exc_info()))
 
     def wait_for_result(self):

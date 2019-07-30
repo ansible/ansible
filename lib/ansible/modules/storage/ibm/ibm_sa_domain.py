@@ -17,11 +17,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ibm_sa_domain
-short_description: Manages domains in IBM Spectrum Accelerate storage systems.
+short_description: Manages domains on IBM Spectrum Accelerate Family storage systems
 version_added: "2.8"
 
 description:
-    - "This module can be used to adds domains to or removes them from IBM Spectrum Accelerate storage systems"
+    - "This module can be used to add domains to or removes them from IBM Spectrum Accelerate Family storage systems."
 
 options:
     domain:
@@ -104,7 +104,7 @@ RETURN = '''
 msg:
     description: module return status.
     returned: as needed
-    type: string
+    type: str
     sample: "domain 'domain_name' created successfully."
 '''
 

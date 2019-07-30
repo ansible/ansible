@@ -1,0 +1,82 @@
+Memory statistics for zebra:
+System allocator statistics:
+  Total heap allocated:  4200 KiB
+  Holding block headers: 0 bytes
+  Used small blocks:     0 bytes
+  Used ordinary blocks:  2927 KiB
+  Free small blocks:     2096 bytes
+  Free ordinary blocks:  1273 KiB
+  Ordinary blocks:       14
+  Small blocks:          60
+  Holding blocks:        0
+(see system documentation for 'mallinfo' for meaning)
+--- qmem libfrr ---
+Buffer                        :         18      24                 448
+Buffer data                   :          1    4120                4120
+Host config                   :          4  (variably sized)        96
+Command Tokens                :       3162      72              228128
+Command Token Text            :       2362  (variably sized)     77344
+Command Token Help            :       2362  (variably sized)     56944
+Command Argument              :          2  (variably sized)        48
+Command Argument Name         :        534  (variably sized)     12912
+FRR POSIX Thread              :         28  (variably sized)      2016
+POSIX synchronization primitives:         28  (variably sized)      1344
+Graph                         :         24       8                 576
+Graph Node                    :       3744      32              150112
+Hash                          :       2495  (variably sized)    119880
+Hash Bucket                   :        778      32               31296
+Hash Index                    :       1248  (variably sized)    363040
+Hook entry                    :         12      48                 672
+Interface                     :          3     248                 744
+Connected                     :          8      40                 320
+Informational Link Parameters :          1      96                 104
+Link List                     :         43      40                1720
+Link Node                     :       1308      24               31456
+Logging                       :          1      80                  88
+Temporary memory              :         23  (variably sized)     42584
+Nexthop                       :         27     112                3256
+NetNS Context                 :          2  (variably sized)       128
+NetNS Name                    :          1      18                  24
+Priority queue                :         15      32                 600
+Priority queue data           :         15     256                3960
+Prefix                        :         12      48                 672
+Privilege information         :          2  (variably sized)        80
+Stream                        :         36  (variably sized)    591264
+Stream FIFO                   :         28      64                2016
+Route table                   :         14      48                 784
+Route node                    :         43  (variably sized)      4920
+Thread                        :         51     176                9384
+Thread master                 :         59  (variably sized)    251016
+Thread Poll Info              :         30    8192              246000
+Thread stats                  :         52      64                3744
+Vector                        :       7543      16              181432
+Vector index                  :       7543  (variably sized)    246776
+VRF                           :          1     184                 184
+VRF bit-map                   :         28       8                 672
+VTY                           :          6  (variably sized)     19440
+Work queue                    :          2  (variably sized)       224
+Work queue name string        :          1      22                  24
+Redistribution instance IDs   :          1       2                  24
+--- qmem Label Manager ---
+Label Manager Chunk           :          1      16                  24
+--- qmem zebra ---
+ZEBRA VRF                     :          1     656                 664
+Route Entry                   :         27      80                2392
+RIB destination               :         19      48                1080
+RIB table info                :          4      16                  96
+Nexthop tracking object       :          2     200                 400
+Zebra Name Space              :          1     312                 312
+PTM BFD process registration table.:          3      32                 120
+--- qmem Table Manager ---
+
+Memory statistics for ripd:
+System allocator statistics:
+  Total heap allocated:  936 KiB
+  Holding block headers: 0 bytes
+  Used small blocks:     0 bytes
+  Used ordinary blocks:  901 KiB
+  Free small blocks:     1504 bytes
+  Free ordinary blocks:  35 KiB
+  Ordinary blocks:       4
+  Small blocks:          44
+  Holding blocks:        0

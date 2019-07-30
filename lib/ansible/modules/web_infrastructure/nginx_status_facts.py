@@ -89,13 +89,14 @@ nginx_status_facts.waiting:
 nginx_status_facts.data:
   description: HTTP response as is.
   returned: success
-  type: string
+  type: str
   sample: "Active connections: 2340 \nserver accepts handled requests\n 81769947 81769947 144332345 \nReading: 0 Writing: 241 Waiting: 2092 \n"
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 
 class NginxStatusFacts(object):
@@ -121,7 +122,7 @@ class NginxStatusFacts(object):
         if not response:
             module.fail_json(msg="No valid or no response from url %s within %s seconds (timeout)" % (self.url, self.timeout))
 
-        data = response.read()
+        data = to_text(response.read(), errors='surrogate_or_strict')
         if not data:
             return result
 

@@ -26,7 +26,7 @@
     that:
       - 'result.changed == true'
       - '"set interfaces ethernet eth1" in result.commands'
-      - '"set interfaces ethernet eth1 description test-interface" in result.commands'
+      - '"set interfaces ethernet eth1 description ''test-interface''" in result.commands'
 
 - name: Configure interface params using platform agnostic module
   net_interface:
@@ -42,7 +42,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set interfaces ethernet eth1 description test-interface-1" in result.commands'
+      - '"set interfaces ethernet eth1 description ''test-interface-1''" in result.commands'
       - '"set interfaces ethernet eth1 speed 100" in result.commands'
       - '"set interfaces ethernet eth1 duplex half" in result.commands'
       - '"set interfaces ethernet eth1 mtu 256" in result.commands'

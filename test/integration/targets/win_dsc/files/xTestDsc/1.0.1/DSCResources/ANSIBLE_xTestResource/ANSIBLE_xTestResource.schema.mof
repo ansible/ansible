@@ -1,0 +1,63 @@
+[ClassVersion("1.0.1")]
+class ANSIBLE_xTestClass
+{
+    [Key] String KeyValue;
+    [Write, ValueMap{"Choice1", "Choice2"}, Values{"Choice1", "Choice2"}] String Choice;
+    [Write] String StringValue;
+    [Write] SInt32 IntValue;
+    [Write] String StringArrayValue[];
+};
+
+[ClassVersion("1.0.1")]
+class ANSIBLE_xNestedClass
+{
+    [Key] String KeyValue;
+    [Write, EmbeddedInstance("ANSIBLE_xTestClass")] String CimValue;
+    [Write, EmbeddedInstance("ANSIBLE_xTestClass")] String CimArrayValue[];
+    [Write, EmbeddedInstance("MSFT_KeyValuePair")] String HashValue[];
+    [Write] SInt16 IntValue;
+};
+
+[ClassVersion("1.0.1"), FriendlyName("xTestResource")]
+class ANSIBLE_xTestResource : OMI_BaseResource
+{
+    [Key] String Path;
+    [Required, ValueMap{"Present", "Absent"}, Values{"Present", "Absent"}] String Ensure;
+    [Read] String ReadParam;
+    [Write] String DefaultParam;
+    [Write] String StringParam;
+    [Write] String StringArrayParam[];
+    [Write] SInt8 Int8Param;
+    [Write] SInt8 Int8ArrayParam[];
+    [Write] UInt8 UInt8Param;
+    [Write] UInt8 UInt8ArrayParam[];
+    [Write] SInt16 Int16Param;
+    [Write] SInt16 Int16ArrayParam[];
+    [Write] UInt16 UInt16Param;
+    [Write] UInt16 UInt16ArrayParam[];
+    [Write] SInt32 Int32Param;
+    [Write] SInt32 Int32ArrayParam[];
+    [Write] UInt32 UInt32Param;
+    [Write] UInt32 UInt32ArrayParam[];
+    [Write] SInt64 Int64Param;
+    [Write] SInt64 Int64ArrayParam[];
+    [Write] UInt64 UInt64Param;
+    [Write] UInt64 UInt64ArrayParam[];
+    [Write] Boolean BooleanParam;
+    [Write] Boolean BooleanArrayParam[];
+    [Write] Char16 CharParam;
+    [Write] Char16 CharArrayParam[];
+    [Write] Real32 SingleParam;
+    [Write] Real32 SingleArrayParam[];
+    [Write] Real64 DoubleParam;
+    [Write] Real64 DoubleArrayParam[];
+    [Write] DateTime DateTimeParam;
+    [Write] DateTime DateTimeArrayParam[];
+    [Write, EmbeddedInstance("MSFT_Credential")] String PSCredentialParam;
+    [Write, EmbeddedInstance("MSFT_KeyValuePair")] String HashtableParam[];
+    [Write, EmbeddedInstance("ANSIBLE_xTestClass")] String CimInstanceParam;
+    [Write, EmbeddedInstance("ANSIBLE_xTestClass")] String CimInstanceArrayParam[];
+    [Write, EmbeddedInstance("ANSIBLE_xNestedClass")] String NestedCimInstanceParam;
+    [Write, EmbeddedInstance("ANSIBLE_xNestedClass")] String NestedCimInstanceArrayParam[];
+};
+

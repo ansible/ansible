@@ -58,78 +58,92 @@ options:
           - Get all cloudfront lists that do not require parameters.
         required: false
         default: false
+        type: bool
     origin_access_identity:
         description:
           - Get information about an origin access identity. Requires I(origin_access_identity_id)
             to be specified.
         required: false
         default: false
+        type: bool
     origin_access_identity_config:
         description:
           - Get the configuration information about an origin access identity. Requires
             I(origin_access_identity_id) to be specified.
         required: false
         default: false
+        type: bool
     distribution:
         description:
           - Get information about a distribution. Requires I(distribution_id) or I(domain_name_alias)
             to be specified.
         required: false
         default: false
+        type: bool
     distribution_config:
         description:
           - Get the configuration information about a distribution. Requires I(distribution_id)
             or I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     invalidation:
         description:
             - Get information about an invalidation. Requires I(invalidation_id) to be specified.
         required: false
         default: false
+        type: bool
     streaming_distribution:
         description:
             - Get information about a specified RTMP distribution. Requires I(distribution_id) or
               I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     streaming_distribution_config:
         description:
             - Get the configuration information about a specified RTMP distribution.
               Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     list_origin_access_identities:
         description:
             - Get a list of cloudfront origin access identities. Requires I(origin_access_identity_id) to be set.
         required: false
         default: false
+        type: bool
     list_distributions:
         description:
             - Get a list of cloudfront distributions.
         required: false
         default: false
+        type: bool
     list_distributions_by_web_acl_id:
         description:
             - Get a list of distributions using web acl id as a filter. Requires I(web_acl_id) to be set.
         required: false
         default: false
+        type: bool
     list_invalidations:
         description:
             - Get a list of invalidations. Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     list_streaming_distributions:
         description:
             - Get a list of streaming distributions.
         required: false
         default: false
+        type: bool
     summary:
         description:
             - Returns a summary of all distributions, streaming distributions and origin_access_identities.
               This is the default behaviour if no option is selected.
         required: false
         default: false
+        type: bool
 
 extends_documentation_fragment:
     - aws
@@ -223,6 +237,12 @@ streaming_distribution_config:
 summary:
     description: Gives a summary of distributions, streaming distributions and origin access identities.
     returned: as default or if summary is true
+    type: dict
+result:
+    description: >
+        Result dict not nested under the cloudfront id to access results of module without the knowledge of that id
+        as figuring out the DistributionId is usually the reason one uses this module in the first place.
+    returned: always
     type: dict
 '''
 
@@ -531,6 +551,10 @@ class CloudFrontServiceManager:
 
 def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
     facts[distribution_id].update(details)
+    # also have a fixed key for accessing results/details returned
+    facts['result'] = details
+    facts['result']['DistributionId'] = distribution_id
+
     for alias in aliases:
         facts[alias].update(details)
     return facts

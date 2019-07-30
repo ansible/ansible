@@ -18,8 +18,8 @@ set -eux
 
 ANSIBLE_ROLES_PATH=../ \
 ANSIBLE_CONFIG=../../integration.cfg \
-    ansible-playbook -i ../../inventory -e@../../integration_config.yml playbooks/install_dependencies.yml -v "$@"
+    ansible-playbook -e@../../integration_config.yml playbooks/install_dependencies.yml -v "$@"
 
 ANSIBLE_ROLES_PATH=../ \
 ANSIBLE_CONFIG=../../integration.cfg \
-    ansible-playbook -i ../../inventory -e@../../integration_config.yml playbooks/test_lookup_hashi_vault.yml -v "$@"
+    ansible-playbook -e@../../integration_config.yml playbooks/test_lookup_hashi_vault.yml -v "$@"

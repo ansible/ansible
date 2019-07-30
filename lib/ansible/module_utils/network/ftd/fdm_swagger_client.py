@@ -17,10 +17,11 @@
 #
 
 from ansible.module_utils.network.ftd.common import HTTPMethod
-from ansible.module_utils.six import integer_types, string_types
+from ansible.module_utils.six import integer_types, string_types, iteritems
 
 FILE_MODEL_NAME = '_File'
 SUCCESS_RESPONSE_CODE = '200'
+DELETE_PREFIX = 'delete'
 
 
 class OperationField:
@@ -28,12 +29,16 @@ class OperationField:
     METHOD = 'method'
     PARAMETERS = 'parameters'
     MODEL_NAME = 'modelName'
+    DESCRIPTION = 'description'
+    RETURN_MULTIPLE_ITEMS = 'returnMultipleItems'
+    TAGS = "tags"
 
 
 class SpecProp:
     DEFINITIONS = 'definitions'
     OPERATIONS = 'operations'
     MODELS = 'models'
+    MODEL_OPERATIONS = 'model_operations'
 
 
 class PropName:
@@ -51,6 +56,7 @@ class PropName:
     PROPERTIES = 'properties'
     RESPONSES = 'responses'
     NAME = 'name'
+    DESCRIPTION = 'description'
 
 
 class PropType:
@@ -66,6 +72,10 @@ class PropType:
 class OperationParams:
     PATH = 'path'
     QUERY = 'query'
+
+
+class QueryParams:
+    FILTER = 'filter'
 
 
 def _get_model_name_from_url(schema_ref):
@@ -89,16 +99,23 @@ class ValidationError(ValueError):
 
 class FdmSwaggerParser:
     _definitions = None
+    _base_path = None
 
-    def parse_spec(self, spec):
+    def parse_spec(self, spec, docs=None):
         """
-        This method simplifies a swagger format and also resolves a model name for each operation
-        :param spec: dict
-                    expect data in the swagger format see <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md>
-        :rtype: (bool, string|dict)
+        This method simplifies a swagger format, resolves a model name for each operation, and adds documentation for
+        each operation and model if it is provided.
+
+        :param spec: An API specification in the swagger format, see
+            <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md>
+        :type spec: dict
+        :param spec: A documentation map containing descriptions for models, operations and operation parameters.
+        :type docs: dict
+        :rtype: dict
         :return:
         Ex.
-            The models field contains model definition from swagger see <#https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#definitions>
+            The models field contains model definition from swagger see
+            <#https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#definitions>
             {
                 'models':{
                     'model_name':{...},
@@ -111,6 +128,7 @@ class FdmSwaggerParser:
                         'modelName': 'NetworkObject', # it is a link to the model from 'models'
                                                       # None - for a delete operation or we don't have information
                                                       # '_File' - if an endpoint works with files
+                        'returnMultipleItems': False, # shows if the operation returns a single item or an item list
                         'parameters': {
                             'path':{
                                 'param_name':{
@@ -129,26 +147,54 @@ class FdmSwaggerParser:
                         }
                     },
                     ...
+                },
+                'model_operations':{
+                    'model_name':{ # a list of operations available for the current model
+                        'operation_name':{
+                            ... # the same as in the operations section
+                        },
+                        ...
+                    },
+                    ...
                 }
             }
         """
         self._definitions = spec[SpecProp.DEFINITIONS]
-        config = {
+        self._base_path = spec[PropName.BASE_PATH]
+        operations = self._get_operations(spec)
+
+        if docs:
+            operations = self._enrich_operations_with_docs(operations, docs)
+            self._definitions = self._enrich_definitions_with_docs(self._definitions, docs)
+
+        return {
             SpecProp.MODELS: self._definitions,
-            SpecProp.OPERATIONS: self._get_operations(spec)
+            SpecProp.OPERATIONS: operations,
+            SpecProp.MODEL_OPERATIONS: self._get_model_operations(operations)
         }
-        return config
+
+    @property
+    def base_path(self):
+        return self._base_path
+
+    def _get_model_operations(self, operations):
+        model_operations = {}
+        for operations_name, params in iteritems(operations):
+            model_name = params[OperationField.MODEL_NAME]
+            model_operations.setdefault(model_name, {})[operations_name] = params
+        return model_operations
 
     def _get_operations(self, spec):
-        base_path = spec[PropName.BASE_PATH]
         paths_dict = spec[PropName.PATHS]
         operations_dict = {}
-        for url, operation_params in paths_dict.items():
-            for method, params in operation_params.items():
+        for url, operation_params in iteritems(paths_dict):
+            for method, params in iteritems(operation_params):
                 operation = {
                     OperationField.METHOD: method,
-                    OperationField.URL: base_path + url,
-                    OperationField.MODEL_NAME: self._get_model_name(method, params)
+                    OperationField.URL: self._base_path + url,
+                    OperationField.MODEL_NAME: self._get_model_name(method, params),
+                    OperationField.RETURN_MULTIPLE_ITEMS: self._return_multiple_items(params),
+                    OperationField.TAGS: params.get(OperationField.TAGS, [])
                 }
                 if OperationField.PARAMETERS in params:
                     operation[OperationField.PARAMETERS] = self._get_rest_params(params[OperationField.PARAMETERS])
@@ -157,13 +203,69 @@ class FdmSwaggerParser:
                 operations_dict[operation_id] = operation
         return operations_dict
 
+    def _enrich_operations_with_docs(self, operations, docs):
+        def get_operation_docs(op):
+            op_url = op[OperationField.URL][len(self._base_path):]
+            return docs[PropName.PATHS].get(op_url, {}).get(op[OperationField.METHOD], {})
+
+        for operation in operations.values():
+            operation_docs = get_operation_docs(operation)
+            operation[OperationField.DESCRIPTION] = operation_docs.get(PropName.DESCRIPTION, '')
+
+            if OperationField.PARAMETERS in operation:
+                param_descriptions = dict((
+                    (p[PropName.NAME], p[PropName.DESCRIPTION])
+                    for p in operation_docs.get(OperationField.PARAMETERS, {})
+                ))
+
+                for param_name, params_spec in operation[OperationField.PARAMETERS][OperationParams.PATH].items():
+                    params_spec[OperationField.DESCRIPTION] = param_descriptions.get(param_name, '')
+
+                for param_name, params_spec in operation[OperationField.PARAMETERS][OperationParams.QUERY].items():
+                    params_spec[OperationField.DESCRIPTION] = param_descriptions.get(param_name, '')
+
+        return operations
+
+    def _enrich_definitions_with_docs(self, definitions, docs):
+        for model_name, model_def in definitions.items():
+            model_docs = docs[SpecProp.DEFINITIONS].get(model_name, {})
+            model_def[PropName.DESCRIPTION] = model_docs.get(PropName.DESCRIPTION, '')
+            for prop_name, prop_spec in model_def.get(PropName.PROPERTIES, {}).items():
+                prop_spec[PropName.DESCRIPTION] = model_docs.get(PropName.PROPERTIES, {}).get(prop_name, '')
+                prop_spec[PropName.REQUIRED] = prop_name in model_def.get(PropName.REQUIRED, [])
+        return definitions
+
     def _get_model_name(self, method, params):
         if method == HTTPMethod.GET:
             return self._get_model_name_from_responses(params)
         elif method == HTTPMethod.POST or method == HTTPMethod.PUT:
             return self._get_model_name_for_post_put_requests(params)
+        elif method == HTTPMethod.DELETE:
+            return self._get_model_name_from_delete_operation(params)
         else:
             return None
+
+    @staticmethod
+    def _return_multiple_items(op_params):
+        """
+        Defines if the operation returns one item or a list of items.
+
+        :param op_params: operation specification
+        :return: True if the operation returns a list of items, otherwise False
+        """
+        try:
+            schema = op_params[PropName.RESPONSES][SUCCESS_RESPONSE_CODE][PropName.SCHEMA]
+            return PropName.ITEMS in schema[PropName.PROPERTIES]
+        except KeyError:
+            return False
+
+    def _get_model_name_from_delete_operation(self, params):
+        operation_id = params[PropName.OPERATION_ID]
+        if operation_id.startswith(DELETE_PREFIX):
+            model_name = operation_id[len(DELETE_PREFIX):]
+            if model_name in self._definitions:
+                return model_name
+        return None
 
     def _get_model_name_for_post_put_requests(self, params):
         model_name = None
@@ -401,7 +503,7 @@ class FdmSwaggerValidator:
             if prop_name in params:
                 expected_type = prop[PropName.TYPE]
                 value = params[prop_name]
-                if prop_name in params and not self._is_correct_simple_types(expected_type, value):
+                if prop_name in params and not self._is_correct_simple_types(expected_type, value, allow_null=False):
                     self._add_invalid_type_report(status, '', prop_name, expected_type, value)
 
     def _validate_object(self, status, model, data, path):
@@ -413,9 +515,9 @@ class FdmSwaggerValidator:
     def _is_enum(self, model):
         return self._is_string_type(model) and PropName.ENUM in model
 
-    def _check_enum(self, status, model, value, path):
-        if value not in model[PropName.ENUM]:
-            self._add_invalid_type_report(status, path, '', PropName.ENUM, value)
+    def _check_enum(self, status, model, data, path):
+        if data is not None and data not in model[PropName.ENUM]:
+            self._add_invalid_type_report(status, path, '', PropName.ENUM, data)
 
     def _add_invalid_type_report(self, status, path, prop_name, expected_type, actually_value):
         status[PropName.INVALID_TYPE].append({
@@ -425,11 +527,15 @@ class FdmSwaggerValidator:
         })
 
     def _check_object(self, status, model, data, path):
+        if data is None:
+            return
+
         if not isinstance(data, dict):
             self._add_invalid_type_report(status, path, '', PropType.OBJECT, data)
             return None
 
-        self._check_required_fields(status, model[PropName.REQUIRED], data, path)
+        if PropName.REQUIRED in model:
+            self._check_required_fields(status, model[PropName.REQUIRED], data, path)
 
         model_properties = model[PropName.PROPERTIES]
         for prop in model_properties.keys():
@@ -457,12 +563,14 @@ class FdmSwaggerValidator:
 
     def _check_required_fields(self, status, required_fields, data, path):
         missed_required_fields = [self._create_path_to_field(path, field) for field in
-                                  required_fields if field not in data.keys()]
+                                  required_fields if field not in data.keys() or data[field] is None]
         if len(missed_required_fields) > 0:
             status[PropName.REQUIRED] += missed_required_fields
 
     def _check_array(self, status, model, data, path):
-        if not isinstance(data, list):
+        if data is None:
+            return
+        elif not isinstance(data, list):
             self._add_invalid_type_report(status, path, '', PropType.ARRAY, data)
         else:
             item_model = model[PropName.ITEMS]
@@ -471,15 +579,28 @@ class FdmSwaggerValidator:
                                   '')
 
     @staticmethod
-    def _is_correct_simple_types(expected_type, value):
-        if expected_type == PropType.STRING:
+    def _is_correct_simple_types(expected_type, value, allow_null=True):
+        def is_numeric_string(s):
+            try:
+                float(s)
+                return True
+            except ValueError:
+                return False
+
+        if value is None and allow_null:
+            return True
+        elif expected_type == PropType.STRING:
             return isinstance(value, string_types)
         elif expected_type == PropType.BOOLEAN:
             return isinstance(value, bool)
         elif expected_type == PropType.INTEGER:
-            return isinstance(value, integer_types) and not isinstance(value, bool)
+            is_integer = isinstance(value, integer_types) and not isinstance(value, bool)
+            is_digit_string = isinstance(value, string_types) and value.isdigit()
+            return is_integer or is_digit_string
         elif expected_type == PropType.NUMBER:
-            return isinstance(value, (integer_types, float)) and not isinstance(value, bool)
+            is_number = isinstance(value, (integer_types, float)) and not isinstance(value, bool)
+            is_numeric_string = isinstance(value, string_types) and is_numeric_string(value)
+            return is_number or is_numeric_string
         return False
 
     @staticmethod

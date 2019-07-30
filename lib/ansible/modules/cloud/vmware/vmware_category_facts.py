@@ -32,7 +32,6 @@ requirements:
 - python >= 2.6
 - PyVmomi
 - vSphere Automation SDK
-- vCloud Suite SDK
 extends_documentation_fragment: vmware_rest_client.documentation
 '''
 
@@ -55,7 +54,7 @@ EXAMPLES = r'''
 
 - set_fact:
     category_id: "{{ item.category_id }}"
-  with_items: "{{ tag_category_results.tag_category_facts|json_query(query) }}"
+  loop: "{{ tag_category_results.tag_category_facts|json_query(query) }}"
   vars:
     query: "[?category_name==`Category0001`]"
 - debug: var=category_id
@@ -91,16 +90,12 @@ tag_category_facts:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
-try:
-    from com.vmware.cis.tagging_client import Category
-except ImportError:
-    pass
 
 
 class VmwareCategoryFactsManager(VmwareRestClient):
     def __init__(self, module):
         super(VmwareCategoryFactsManager, self).__init__(module)
-        self.category_service = Category(self.connect)
+        self.category_service = self.api_client.tagging.Category
 
     def get_all_tag_categories(self):
         """Retrieve all tag category information."""

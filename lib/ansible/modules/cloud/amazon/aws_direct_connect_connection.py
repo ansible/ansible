@@ -101,47 +101,47 @@ connection:
     aws_device:
       description: The endpoint which the physical connection terminates on.
       returned: when the requested state is no longer 'requested'
-      type: string
+      type: str
       sample: EqDC2-12pmo7hemtz1z
     bandwidth:
       description: The bandwidth of the connection.
       returned: always
-      type: string
+      type: str
       sample: 1Gbps
     connection_id:
       description: The ID of the connection.
       returned: always
-      type: string
+      type: str
       sample: dxcon-ffy9ywed
     connection_name:
       description: The name of the connection.
       returned: always
-      type: string
+      type: str
       sample: ansible-test-connection
     connection_state:
       description: The state of the connection.
       returned: always
-      type: string
+      type: str
       sample: pending
     loa_issue_time:
       description: The issue time of the connection's Letter of Authorization - Connecting Facility Assignment.
       returned: when the LOA-CFA has been issued (the connection state will no longer be 'requested')
-      type: string
+      type: str
       sample: '2018-03-20T17:36:26-04:00'
     location:
       description: The location of the connection.
       returned: always
-      type: string
+      type: str
       sample: EqDC2
     owner_account:
       description: The account that owns the direct connect connection.
       returned: always
-      type: string
+      type: str
       sample: '123456789012'
     region:
       description: The region in which the connection exists.
       returned: always
-      type: string
+      type: str
       sample: us-east-1
 """
 
@@ -153,7 +153,7 @@ from ansible.module_utils.aws.direct_connect import (DirectConnectError, delete_
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
-except:
+except Exception:
     pass
     # handled by imported AnsibleAWSModule
 

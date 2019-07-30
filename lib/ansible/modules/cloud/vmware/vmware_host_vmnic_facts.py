@@ -36,19 +36,19 @@ requirements:
 options:
   capabilities:
     description:
-    - Gather facts about general capabilities (Auto negotioation, Wake On LAN, and Network I/O Control).
+    - Gather facts about general capabilities (Auto negotiation, Wake On LAN, and Network I/O Control).
     type: bool
     default: false
     version_added: 2.8
   directpath_io:
     description:
-    - Gather facts about DirectPath I/O capabilites and configuration.
+    - Gather facts about DirectPath I/O capabilities and configuration.
     type: bool
     default: false
     version_added: 2.8
   sriov:
     description:
-    - Gather facts about SR-IOV capabilites and configuration.
+    - Gather facts about SR-IOV capabilities and configuration.
     type: bool
     default: false
     version_added: 2.8
@@ -193,10 +193,9 @@ class HostVmnicMgr(PyVmomi):
             host_nw_system = host.configManager.networkSystem
             if host_nw_system:
                 nw_config = host_nw_system.networkConfig
+                vmnics = [pnic.device for pnic in nw_config.pnic if pnic.device.startswith('vmnic')]
                 host_vmnic_facts['all'] = [pnic.device for pnic in nw_config.pnic]
-                host_vmnic_facts['num_vmnics'] = (
-                    len(filter(lambda s: s.startswith('vmnic'), [pnic.device for pnic in nw_config.pnic]))
-                )
+                host_vmnic_facts['num_vmnics'] = len(vmnics)
                 host_vmnic_facts['vmnic_details'] = []
                 for pnic in host.config.network.pnic:
                     pnic_facts = dict()

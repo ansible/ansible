@@ -74,7 +74,7 @@ options:
     description:
     - The timeout in seconds to wait when receiving the initial SMB negotiate
       response from the server.
-    type: str
+    type: int
     default: 60
   executable:
     description:
@@ -203,6 +203,11 @@ notes:
   see U(https://support.microsoft.com/en-us/help/951016/description-of-user-account-control-and-remote-restrictions-in-windows).
 - For more information on this module and the various host requirements, see
   U(https://github.com/jborean93/pypsexec).
+seealso:
+- module: raw
+- module: win_command
+- module: win_psexec
+- module: win_shell
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -276,7 +281,7 @@ EXAMPLES = r'''
 
 - name: Download and run ConfigureRemotingForAnsible.ps1 to setup WinRM
   psexec:
-    hostname: '{{ ansible_host }}'
+    hostname: '{{ hostvars[inventory_hostname]["ansible_host"] | default(inventory_hostname) }}'
     connection_username: '{{ ansible_user }}'
     connection_password: '{{ ansible_password }}'
     encrypt: yes

@@ -27,7 +27,6 @@ options:
     state:
       description:
       - Whether the bindings should be present or absent.
-      - Only present implemented at the momemt.
       choices: [ "present", "absent" ]
       default: present
     name:
@@ -76,16 +75,18 @@ EXAMPLES = '''
 '''
 
 import json
+import traceback
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
-
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
 from ansible.module_utils.six.moves.urllib import parse as urllib_parse
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.rabbitmq import rabbitmq_argument_spec
 
 
@@ -106,9 +107,10 @@ class RabbitMqBinding(object):
         self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
         self.routing_key = self.module.params['routing_key']
         self.arguments = self.module.params['arguments']
-        self.verify = self.module.params['cacert']
-        self.cert = self.module.params['cert']
-        self.key = self.module.params['key']
+        self.verify = self.module.params['ca_cert']
+        self.cert = self.module.params['client_cert']
+        self.key = self.module.params['client_key']
+        self.props = urllib_parse.quote(self.routing_key) if self.routing_key != '' else '~'
         self.base_url = '{0}://{1}:{2}/api/bindings'.format(self.login_protocol,
                                                             self.login_host,
                                                             self.login_port)
@@ -117,7 +119,7 @@ class RabbitMqBinding(object):
                                                       urllib_parse.quote(self.name, safe=''),
                                                       self.destination_type,
                                                       urllib_parse.quote(self.destination, safe=''),
-                                                      urllib_parse.quote(self.routing_key))
+                                                      self.props)
         self.result = {
             'changed': False,
             'name': self.module.params['name'],
@@ -135,7 +137,7 @@ class RabbitMqBinding(object):
             201: True,
             204: True,
         }
-        self.api_result = self.request.get(self.url, auth=self.authentication)
+        self.api_result = self.request.get(self.url, auth=self.authentication, verify=self.verify, cert=(self.cert, self.key))
 
     def run(self):
         """
@@ -158,6 +160,9 @@ class RabbitMqBinding(object):
         """
         if self.module.params['state'] == 'present':
             if not self.is_present():
+                return True
+        elif self.module.params['state'] == 'absent':
+            if self.is_present():
                 return True
         return False
 
@@ -253,7 +258,7 @@ class RabbitMqBinding(object):
         """
         :return:
         """
-        self.api_result = self.request.delete(self.url, auth=self.authentication)
+        self.api_result = self.request.delete(self.url, auth=self.authentication, verify=self.verify, cert=(self.cert, self.key))
 
     def fail(self):
         """
@@ -283,7 +288,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_REQUESTS:
-        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
+        module.fail_json(msg=missing_required_lib("requests"), exception=REQUESTS_IMP_ERR)
 
     RabbitMqBinding(module).run()
 

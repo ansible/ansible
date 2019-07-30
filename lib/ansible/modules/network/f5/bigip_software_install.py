@@ -23,9 +23,11 @@ options:
   image:
     description:
       - Image to install on the remote device.
+    type: str
   volume:
     description:
       - The volume to install the software image to.
+    type: str
   state:
     description:
       - When C(installed), ensures that the software is installed on the volume
@@ -33,10 +35,11 @@ options:
         into the new software.
       - When C(activated), performs the same operation as C(installed), but
         the system is rebooted to the new software.
-    default: activated
+    type: str
     choices:
       - activated
       - installed
+    default: activated
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -72,24 +75,19 @@ RETURN = r'''
 import time
 import ssl
 
+from ansible.module_utils.urls import urlparse
 from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -138,7 +136,7 @@ class ApiParameters(Parameters):
                 return []
         if 'items' not in response:
             return []
-        return [x['name'] for x in response['items']]
+        return [x['name'].split('/')[0] for x in response['items']]
 
 
 class ModuleParameters(Parameters):
@@ -190,21 +188,22 @@ class ModuleParameters(Parameters):
         return None
 
     def read_image_from_device(self, type):
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/{2}/{3}".format(
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/{2}/".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
             type,
-            self.image,
         )
         resp = self.client.api.get(uri)
+
         try:
             response = resp.json()
-        except ValueError:
-            return None
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 404]:
-            return None
-        return response
+        if 'items' in response:
+            for item in response['items']:
+                if item['name'].startswith(self.image):
+                    return item
 
 
 class Changes(Parameters):
@@ -252,10 +251,11 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params, client=self.client)
         self.have = ApiParameters(client=self.client)
         self.changes = UsableChanges()
+        self.volume_url = None
 
     def _set_changed_options(self):
         changed = {}
@@ -315,17 +315,38 @@ class ModuleManager(object):
         else:
             return self.update()
 
-    def exists(self):
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/volume/{2}".format(
+    def _set_volume_url(self, item):
+        path = urlparse(item['selfLink']).path
+        self.volume_url = "https://{0}:{1}{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.volume
+            path
+        )
+
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/volume/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
         resp = self.client.api.get(uri)
+
+        try:
+            collection = resp.json()
+        except ValueError:
+            return False
+
+        for item in collection['items']:
+            if item['name'].startswith(self.want.volume):
+                self._set_volume_url(item)
+                break
+
+        resp = self.client.api.get(self.volume_url)
+
         try:
             response = resp.json()
         except ValueError:
             return False
+
         if resp.status == 404 or 'code' in response and response['code'] == 404:
             return False
 
@@ -344,12 +365,8 @@ class ModuleManager(object):
         return False
 
     def volume_exists(self):
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/volume/{2}".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-            self.want.volume
-        )
-        resp = self.client.api.get(uri)
+        resp = self.client.api.get(self.volume_url)
+
         try:
             response = resp.json()
         except ValueError:
@@ -364,7 +381,7 @@ class ModuleManager(object):
 
         if self.want.image and self.want.image not in self.have.image_names:
             raise F5ModuleError(
-                "The specified image was not found on the device"
+                "The specified image was not found on the device."
             )
 
         options = list()
@@ -444,13 +461,8 @@ class ModuleManager(object):
                 raise F5ModuleError
 
     def read_volume_from_device(self):
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/volume/{2}".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-            self.want.volume
-        )
         try:
-            resp = self.client.api.get(uri)
+            resp = self.client.api.get(self.volume_url)
             response = resp.json()
         except ValueError as ex:
             raise F5ModuleError(str(ex))
@@ -492,14 +504,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

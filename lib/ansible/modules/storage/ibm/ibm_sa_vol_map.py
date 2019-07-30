@@ -17,12 +17,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ibm_sa_vol_map
-short_description: Handles volume mapping on an IBM Spectrum Accelerate storage array.
+short_description: Handles volume mapping on IBM Spectrum Accelerate Family storage systems.
 version_added: "2.8"
 
 description:
     - "This module maps volumes to or unmaps them from the hosts on
-        IBM Spectrum Accelerate storage systems."
+        IBM Spectrum Accelerate Family storage systems."
 
 options:
     vol:
@@ -57,7 +57,7 @@ extends_documentation_fragment:
     - ibm_storage
 
 author:
-    - Tzur Eliyahu (tzure@il.ibm.com)
+    - Tzur Eliyahu (@tzure)
 '''
 
 EXAMPLES = '''

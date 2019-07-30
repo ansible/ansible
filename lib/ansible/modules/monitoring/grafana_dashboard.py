@@ -65,7 +65,7 @@ options:
   uid:
     version_added: 2.7
     description:
-      - uid of the dasboard to export when C(state) is C(export) or C(absent).
+      - uid of the dashboard to export when C(state) is C(export) or C(absent).
   path:
     description:
       - The path to the json file containing the Grafana dashboard to import or export.
@@ -131,7 +131,7 @@ RETURN = '''
 uid:
   description: uid or slug of the created / deleted / exported dashboard.
   returned: success
-  type: string
+  type: str
   sample: 000000063
 '''
 
@@ -140,6 +140,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text
 
 __metaclass__ = type
 
@@ -182,8 +183,10 @@ def get_grafana_version(module, grafana_url, headers):
     r, info = fetch_url(module, '%s/api/frontend/settings' % grafana_url, headers=headers, method='GET')
     if info['status'] == 200:
         try:
-            settings = json.loads(r.read())
-            grafana_version = str.split(settings['buildInfo']['version'], '.')[0]
+            settings = json.loads(to_text(r.read()))
+            grafana_version = settings['buildInfo']['version'].split('.')[0]
+        except UnicodeError as e:
+            raise GrafanaAPIException('Unable to decode version string to Unicode')
         except Exception as e:
             raise GrafanaAPIException(e)
     else:
@@ -224,6 +227,10 @@ def grafana_create_dashboard(module, data):
             payload = json.load(json_file)
     except Exception as e:
         raise GrafanaAPIException("Can't load json file %s" % to_native(e))
+
+    # Check that the dashboard JSON is nested under the 'dashboard' key
+    if 'dashboard' not in payload:
+        payload = {'dashboard': payload}
 
     # define http header
     headers = grafana_headers(module, data)
@@ -277,8 +284,6 @@ def grafana_create_dashboard(module, data):
                 raise GrafanaAPIException('Unable to update the dashboard %s : %s' % (uid, body['message']))
     else:
         # create
-        if 'dashboard' not in payload:
-            payload = {'dashboard': payload}
         r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
             result['msg'] = "Dashboard %s created" % uid
@@ -418,7 +423,7 @@ def main():
     except GrafanaMalformedJson as e:
         module.fail_json(
             failed=True,
-            msg="error : json file does not contain a meta section with a slug parameter, or you did'nt specify the slug parameter"
+            msg="error : json file does not contain a meta section with a slug parameter, or you did not specify the slug parameter"
         )
         return
     except GrafanaDeleteException as e:

@@ -41,8 +41,8 @@ all: Contains all hosts defined in Scaleway.
 import copy
 import os
 import requests
-import six
-from six.moves import configparser
+from ansible.module_utils import six
+from ansible.module_utils.six.moves import configparser
 import sys
 import time
 import traceback

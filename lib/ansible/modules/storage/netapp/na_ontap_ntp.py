@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -18,7 +18,7 @@ short_description: NetApp ONTAP NTP server
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create or delete or modify NTP server in ONTAP
 options:
@@ -43,12 +43,14 @@ EXAMPLES = """
       na_ontap_ntp:
         state: present
         version: auto
+        server_name: "{{ server_name }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
     - name: Delete NTP server
       na_ontap_ntp:
         state: absent
+        server_name: "{{ server_name }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"

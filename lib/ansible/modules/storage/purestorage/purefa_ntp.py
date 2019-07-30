@@ -19,14 +19,16 @@ short_description: Configure Pure Storage FlashArray NTP settings
 description:
 - Set or erase NTP configuration for Pure Storage FlashArrays.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Create or delete NTP servers configuration
+    type: str
     default: present
     choices: [ absent, present ]
   ntp_servers:
+    type: list
     description:
     - A list of up to 4 alternate NTP servers. These may include IPv4,
       IPv6 or FQDNs. Invalid IP addresses will cause the module to fail.
@@ -79,7 +81,7 @@ def delete_ntp(module, array):
         try:
             array.set(ntpserver=[])
             changed = True
-        except:
+        except Exception:
             module.fail_json(msg='Deletion of NTP servers failed')
     module.exit_json(changed=changed)
 
@@ -92,7 +94,7 @@ def create_ntp(module, array):
     try:
         array.set(ntpserver=module.params['ntp_servers'][0:4])
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Update of NTP servers failed')
     module.exit_json(changed=changed)
 

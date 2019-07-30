@@ -64,17 +64,17 @@ RETURN = '''
 address:
     description: IP address being operated on
     returned: always
-    type: string
+    type: str
     sample: "35.186.222.233"
 name:
     description: name of the address being operated on
     returned: always
-    type: string
+    type: str
     sample: "my-address"
 region:
     description: Which region an address belongs.
     returned: always
-    type: string
+    type: str
     sample: "global"
 '''
 

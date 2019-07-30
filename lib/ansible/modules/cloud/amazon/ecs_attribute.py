@@ -88,21 +88,21 @@ attributes:
     contains:
         cluster:
             description: cluster name
-            type: string
+            type: str
         ec2_instance_id:
             description: ec2 instance id of ecs container instance
-            type: string
+            type: str
         attributes:
             description: list of attributes
             type: list of complex
             contains:
                 name:
                     description: name of the attribute
-                    type: string
+                    type: str
                 value:
                     description: value of the attribute
                     returned: if present
-                    type: string
+                    type: str
 '''
 
 try:

@@ -207,3 +207,7 @@
 # Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
 #
 - include: test_privs.yml current_privilege='INSERT,DELETE' current_append_privs=yes
+
+- import_tasks: issue-29511.yaml
+  tags:
+    - issue-29511

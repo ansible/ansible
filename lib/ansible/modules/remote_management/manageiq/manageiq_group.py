@@ -32,9 +32,11 @@ module: manageiq_group
 short_description: Management of groups in ManageIQ.
 extends_documentation_fragment: manageiq
 version_added: '2.8'
-author: Evert Mulder
+author: Evert Mulder (@evertmulder)
 description:
   - The manageiq_group module supports adding, updating and deleting groups in ManageIQ.
+requirements:
+- manageiq-client
 
 options:
   state:
@@ -104,7 +106,7 @@ EXAMPLES = '''
       url: 'https://manageiq_server'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Create a group in ManageIQ with the role EvmRole-user and tenant with tenant_id 4
   manageiq_group:
@@ -115,7 +117,7 @@ EXAMPLES = '''
       url: 'https://manageiq_server'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name:
   - Create or update a group in ManageIQ with the role EvmRole-user and tenant my_tenant.
@@ -141,7 +143,7 @@ EXAMPLES = '''
       url: 'https://manageiq_server'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete a group in ManageIQ
   manageiq_group:
@@ -170,7 +172,7 @@ group:
     description:
       description: The group description
       returned: success
-      type: string
+      type: str
     id:
       description: The group id
       returned: success
@@ -178,15 +180,15 @@ group:
     group_type:
       description: The group type, system or user
       returned: success
-      type: string
+      type: str
     role:
       description: The group role name
       returned: success
-      type: string
+      type: str
     tenant:
       description: The group tenant name
       returned: success
-      type: string
+      type: str
     managed_filters:
       description: The tag values per category
       returned: success
@@ -198,7 +200,7 @@ group:
     created_on:
       description: Group creation date
       returned: success
-      type: string
+      type: str
       example: 2018-08-12T08:37:55+00:00
     updated_on:
       description: Group update date
@@ -319,9 +321,12 @@ class ManageIQgroup(object):
         """
         try:
             url = '%s/groups/%s' % (self.api_url, group['id'])
-            self.client.post(url, action='delete')
+            result = self.client.post(url, action='delete')
         except Exception as e:
             self.module.fail_json(msg="failed to delete group %s: %s" % (group['description'], str(e)))
+
+        if result['success'] is False:
+            self.module.fail_json(msg=result['message'])
 
         return dict(
             changed=True,
@@ -435,7 +440,8 @@ class ManageIQgroup(object):
         norm_current_filters = self.manageiq_filters_to_sorted_dict(current_filters)
 
         if norm_current_filters == norm_managed_filters:
-            new_filters_resource['managed'] = current_filters['managed']
+            if 'managed' in current_filters:
+                new_filters_resource['managed'] = current_filters['managed']
         else:
             if managed_filters_merge_mode == 'merge':
                 merged_dict = self.merge_dict_values(norm_current_filters, norm_managed_filters)
@@ -507,13 +513,15 @@ class ManageIQgroup(object):
         return res
 
     @staticmethod
-    def normalize_user_managed_filters_to_sorted_dict(managed_filters):
+    def normalize_user_managed_filters_to_sorted_dict(managed_filters, module):
         if not managed_filters:
             return None
 
         res = {}
         for cat_key in managed_filters:
             cat_array = []
+            if not isinstance(managed_filters[cat_key], list):
+                module.fail_json(msg='Entry "{0}" of managed_filters must be a list!'.format(cat_key))
             for tags in managed_filters[cat_key]:
                 miq_managed_tag = "/managed/" + cat_key + "/" + tags
                 cat_array.append(miq_managed_tag)
@@ -571,7 +579,7 @@ def main():
         role=dict(required=False, type='str'),
         tenant_id=dict(required=False, type='int'),
         tenant=dict(required=False, type='str'),
-        managed_filters=dict(required=False, type='dict', elements='list'),
+        managed_filters=dict(required=False, type='dict'),
         managed_filters_merge_mode=dict(required=False, choices=['merge', 'replace'], default='replace'),
         belongsto_filters=dict(required=False, type='list', elements='str'),
         belongsto_filters_merge_mode=dict(required=False, choices=['merge', 'replace'], default='replace'),
@@ -608,14 +616,14 @@ def main():
         else:
             res_args = dict(
                 changed=False,
-                msg="group %s: does not exist in manageiq" % description)
+                msg="group '%s' does not exist in manageiq" % description)
 
     # group should exist
     if state == "present":
 
         tenant = manageiq_group.tenant(tenant_id, tenant_name)
         role = manageiq_group.role(role_id, role_name)
-        norm_managed_filters = manageiq_group.normalize_user_managed_filters_to_sorted_dict(managed_filters)
+        norm_managed_filters = manageiq_group.normalize_user_managed_filters_to_sorted_dict(managed_filters, module)
         # if we have a group, edit it
         if group:
             res_args = manageiq_group.edit_group(group, description, role, tenant,

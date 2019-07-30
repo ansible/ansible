@@ -1,0 +1,3 @@
+bugfixes:
+- "openssl_csr - the cryptography backend's idempotency checking for basic constraints was broken."
+- "openssl_csr - SAN normalization for IP addresses for the pyOpenSSL backend was broken."

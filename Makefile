@@ -3,6 +3,8 @@
 # Makefile for Ansible
 #
 # useful targets:
+#   make clean ---------------- clean up
+#   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
 #   make srpm ----------------- produce a SRPM
 #   make rpm  ----------------- produce RPMs
@@ -29,9 +31,10 @@ ASCII2MAN = rst2man.py $< $@
 else
 ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
-GENERATE_CLI = docs/bin/generate_man.py
 
 PYTHON=python
+GENERATE_CLI = hacking/build-ansible.py generate-man
+
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # fetch version from project release.py as single source-of-truth
@@ -48,7 +51,7 @@ RELEASE ?= 1
 
 # Get the branch information from git
 ifneq ($(shell which git),)
-GIT_DATE := $(shell git log -n 1 --format="%ai")
+GIT_DATE := $(shell git log -n 1 --format="%ci")
 GIT_HASH := $(shell git log -n 1 --format="%h")
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.\/]//g')
 GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
@@ -57,7 +60,7 @@ GITINFO = ""
 endif
 
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
-DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
+DATE := $(shell date -j -r $(shell git log -n 1 --format="%ct") +%Y%m%d%H%M)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
@@ -236,7 +239,14 @@ sdist_check:
 
 .PHONY: sdist
 sdist: sdist_check clean docs
-	$(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+
+# Official releases generate the changelog as the last commit before the release.
+# Snapshots shouldn't result in new checkins so the changelog is generated as
+# part of creating the tarball.
+.PHONY: snapshot
+snapshot: sdist_check clean docs changelog
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
@@ -244,7 +254,7 @@ sdist_upload: clean docs
 
 .PHONY: changelog
 changelog:
-	packaging/release/changelogs/changelog.py release -vv && packaging/release/changelogs/changelog.py generate -vv
+	PYTHONPATH=./lib packaging/release/changelogs/changelog.py release -vv && PYTHONPATH=./lib packaging/release/changelogs/changelog.py generate -vv
 
 .PHONY: rpmcommon
 rpmcommon: sdist

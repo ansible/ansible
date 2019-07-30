@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Michael J. Schultz <mjschultz@gmail.com>
+# Copyright: (c) 2014, Michael J. Schultz <mjschultz@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -114,12 +114,12 @@ RETURN = """
 msg:
   description: Human-readable diagnostic information
   returned: always
-  type: string
+  type: str
   sample: OK
 message_id:
   description: The message ID of the submitted message
   returned: when success
-  type: string
+  type: str
   sample: 2f681ef0-6d76-5c94-99b2-4ae3996ce57b
 """
 
@@ -135,7 +135,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
 def arn_topic_lookup(module, client, short_topic):
-    lookup_topic = ':{}'.format(short_topic)
+    lookup_topic = ':{0}'.format(short_topic)
 
     try:
         paginator = client.get_paginator('list_topics')
@@ -206,7 +206,7 @@ def main():
         sns_kwargs['TopicArn'] = arn_topic_lookup(module, client, topic)
 
     if not sns_kwargs['TopicArn']:
-        module.fail_json(msg='Could not find topic: {}'.format(topic))
+        module.fail_json(msg='Could not find topic: {0}'.format(topic))
 
     if sns_kwargs['MessageStructure'] == 'json':
         sns_kwargs['Message'] = json.dumps(dict_msg)

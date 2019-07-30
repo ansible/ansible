@@ -33,7 +33,7 @@ options:
             - Limit results by resource group.
     return_publish_profile:
         description:
-            - Indicate wheather to return publishing profile of the web app.
+            - Indicate whether to return publishing profile of the web app.
         default: False
         type: bool
     tags:
@@ -50,12 +50,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for web app by name
       azure_rm_webapp_facts:
-        resource_group: testrg
+        resource_group: myResourceGroup
         name: winwebapp1
 
     - name: Get facts for web apps in resource group
       azure_rm_webapp_facts:
-        resource_group: testrg
+        resource_group: myResourceGroup
 
     - name: Get facts for web apps with tags
       azure_rm_webapp_facts:
@@ -75,7 +75,7 @@ webapps:
                 - Id of the web app.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Web/sites/xx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp
         name:
             description:
                 - Name of the web app.
@@ -86,6 +86,7 @@ webapps:
                 - Resource group of the web app.
             returned: always
             type: str
+            sample: myResourceGroup
         location:
             description:
                 - Location of the web app.
@@ -96,7 +97,7 @@ webapps:
                 - Id of app service plan used by the web app.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Web/serverfarms/xxx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/serverfarms/myAppServicePlan
         app_settings:
             description:
                 - App settings of the application. Only returned when web app has app settings.
@@ -127,14 +128,14 @@ webapps:
             description: Outbound ip address of the web app.
             type: str
         ftp_publish_url:
-            description: Publishing url of the web app when depeloyment type is FTP.
+            description: Publishing url of the web app when deployment type is FTP.
             type: str
             sample: ftp://xxxx.ftp.azurewebsites.windows.net
         state:
             description: State of the web app.  eg. running.
             type: str
         publishing_username:
-            description: Publishing profle user name.
+            description: Publishing profile user name.
             returned: only when I(return_publish_profile) is True.
             type: str
         publishing_password:
@@ -148,9 +149,9 @@ webapps:
 '''
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 
@@ -167,12 +168,12 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            return_publish_profile=dict(type=bool, default=False)
+            return_publish_profile=dict(type='bool', default=False),
         )
 
         self.results = dict(
             changed=False,
-            webapps=[]
+            webapps=[],
         )
 
         self.name = None
@@ -276,7 +277,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         self.log('Get web app {0} publish credentials'.format(name))
         try:
             poller = self.web_client.web_apps.list_publishing_credentials(resource_group, name)
-            if isinstance(poller, AzureOperationPoller):
+            if isinstance(poller, LROPoller):
                 response = self.get_poller_result(poller)
         except CloudError as ex:
             request_id = ex.request_id if ex.request_id else ''

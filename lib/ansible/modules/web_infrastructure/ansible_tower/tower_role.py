@@ -33,7 +33,8 @@ options:
       description:
         - The role type to grant/revoke.
       required: True
-      choices: ["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor"]
+      choices: ["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor", "project_admin", "inventory_admin", "credential_admin",
+                "workflow_admin", "notification_admin", "job_template_admin"]
     target_team:
       description:
         - Team that the role acts on.
@@ -75,7 +76,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -113,7 +114,8 @@ def main():
     argument_spec = dict(
         user=dict(),
         team=dict(),
-        role=dict(choices=["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor"]),
+        role=dict(choices=["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor", "project_admin", "inventory_admin", "credential_admin",
+                           "workflow_admin", "notification_admin", "job_template_admin"]),
         target_team=dict(),
         inventory=dict(),
         job_template=dict(),
@@ -144,7 +146,7 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = role.revoke(**params)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update role: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

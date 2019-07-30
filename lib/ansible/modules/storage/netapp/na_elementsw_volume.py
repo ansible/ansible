@@ -22,7 +22,7 @@ short_description: NetApp Element Software Manage Volumes
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create, destroy, or update volumes on ElementSW
 
@@ -135,7 +135,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
 
 """
 
@@ -147,7 +147,7 @@ from ansible.module_utils.netapp_elementsw_module import NaElementSWModule
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except:
+except Exception:
     HAS_SF_SDK = False
 
 
@@ -340,8 +340,8 @@ class ElementOSVolume(object):
                     volume_qos = volume_detail.qos.__dict__
                     if volume_qos['min_iops'] != self.qos['minIOPS'] or volume_qos['max_iops'] != self.qos['maxIOPS'] \
                        or volume_qos['burst_iops'] != self.qos['burstIOPS']:
-                            update_volume = True
-                            changed = True
+                        update_volume = True
+                        changed = True
                 else:
                     # If check fails, do nothing
                     pass

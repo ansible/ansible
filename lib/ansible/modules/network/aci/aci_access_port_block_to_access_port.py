@@ -17,26 +17,24 @@ module: aci_access_port_block_to_access_port
 short_description: Manage port blocks of Fabric interface policy leaf profile interface selectors (infra:HPortS, infra:PortBlk)
 description:
 - Manage port blocks of Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC classes B(infra:HPortS) and B(infra:PortBlk) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/)
-author:
-- Simon Metzger (@smnmtzgr)
 version_added: '2.8'
 options:
   leaf_interface_profile:
     description:
     - The name of the Fabric access policy leaf interface profile.
+    type: str
     required: yes
     aliases: [ leaf_interface_profile_name ]
   access_port_selector:
     description:
     -  The name of the Fabric access policy leaf interface profile access port selector.
+    type: str
     required: yes
     aliases: [ name, access_port_selector_name ]
   leaf_port_blk:
     description:
     - The name of the Fabric access policy leaf interface profile access port block.
+    type: str
     required: yes
     aliases: [ leaf_port_blk_name ]
   leaf_port_blk_description:
@@ -45,28 +43,39 @@ options:
   from_port:
     description:
     - The beginning (from-range) of the port range block for the leaf access port block.
-    aliases: [ from, fromPort, from_port_range ]
+    type: str
     required: yes
+    aliases: [ from, fromPort, from_port_range ]
   to_port:
     description:
     - The end (to-range) of the port range block for the leaf access port block.
-    aliases: [ to, toPort, to_port_range ]
+    type: str
     required: yes
+    aliases: [ to, toPort, to_port_range ]
   from_card:
     description:
     - The beginning (from-range) of the card range block for the leaf access port block.
+    type: str
     aliases: [ from_card_range ]
   to_card:
     description:
     - The end (to-range) of the card range block for the leaf access port block.
+    type: str
     aliases: [ to_card_range ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:HPortS) and B(infra:PortBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Simon Metzger (@smnmtzgr)
 '''
 
 EXAMPLES = r'''
@@ -173,7 +182,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -222,17 +231,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -242,12 +251,12 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -257,8 +266,8 @@ def main():
         access_port_selector=dict(type='str', aliases=['name', 'access_port_selector_name']),  # Not required for querying all objects
         leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']),  # Not required for querying all objects
         leaf_port_blk_description=dict(type='str'),
-        from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']),  # Not required for querying all objects and deleting port blocks
-        to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']),  # Not required for querying all objects and deleting port blocks
+        from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']),
+        to_port=dict(type='str', aliases=['to', 'toPort', 'to_port_range']),
         from_card=dict(type='str', aliases=['from_card_range']),
         to_card=dict(type='str', aliases=['to_card_range']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

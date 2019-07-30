@@ -1,0 +1,3 @@
+minor_changes:
+- backports.ssl_match_hostname - Update bundled copy of backports.ssl_match_hostname from 3.4.0.2 to 3.7.0.1
+  (https://github.com/ansible/ansible/issues/51794)

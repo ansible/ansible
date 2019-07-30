@@ -1,0 +1,94 @@
+---
+
+# Setup
+- name: Create DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
+
+- name: Create a user to be given permissions and other tests
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+#######################################
+# Test default_privs with target_role #
+#######################################
+
+# Test
+- name: Grant default privileges for new table objects
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    db: "{{ db_name }}"
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: "{{ db_user2 }}"
+    target_roles: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that: result is changed
+
+- name: Check that default privileges are set
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT defaclrole, defaclobjtype, defaclacl FROM pg_default_acl a JOIN pg_roles b ON a.defaclrole=b.oid;" -t
+  register: result
+
+- assert:
+    that: "'{{ db_user2 }}=r/{{ db_user1 }}' in '{{ result.stdout_lines[0] }}'"
+
+# Test
+- name: Revoke default privileges for new table objects
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    db: "{{ db_name }}"
+    state: absent
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: "{{ db_user2 }}"
+    target_roles: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that: result is changed
+
+# Cleanup
+- name: Remove user given permissions
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: absent
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Remove user owner of objects
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: absent
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Destroy DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"

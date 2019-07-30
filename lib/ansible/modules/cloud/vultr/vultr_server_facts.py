@@ -42,7 +42,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -57,7 +57,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_server_facts:
   description: Response from Vultr API
@@ -114,7 +114,7 @@ class AnsibleVultrServerFacts(Vultr):
 
         self.returns = {
             "APPID": dict(key='application', convert_to='int', transform=self._get_application_name),
-            "FIREWALLGROUPID": dict(key='firewallgroup', convert_to='int', transform=self._get_firewallgroup_name),
+            "FIREWALLGROUPID": dict(key='firewallgroup', transform=self._get_firewallgroup_name),
             "SUBID": dict(key='id', convert_to='int'),
             "VPSPLANID": dict(key='plan', convert_to='int', transform=self._get_plan_name),
             "allowed_bandwidth_gb": dict(convert_to='int'),

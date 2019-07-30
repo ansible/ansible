@@ -127,6 +127,10 @@ options:
         type: bool
         default: 'no'
         version_added: "2.2"
+    release:
+        description:
+            - Set a release version
+        version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -190,6 +194,13 @@ EXAMPLES = '''
     password: somepass
     environment: Library
     auto_attach: true
+
+- name: Register as user (joe_user) with password (somepass) and a specific release
+  redhat_subscription:
+    state: present
+    username: joe_user
+    password: somepass
+    release: 7.4
 '''
 
 RETURN = '''
@@ -216,6 +227,9 @@ SUBMAN_CMD = None
 
 
 class RegistrationBase(object):
+
+    REDHAT_REPO = "/etc/yum.repos.d/redhat.repo"
+
     def __init__(self, module, username=None, password=None):
         self.module = module
         self.username = username
@@ -226,9 +240,8 @@ class RegistrationBase(object):
 
     def enable(self):
         # Remove any existing redhat.repo
-        redhat_repo = '/etc/yum.repos.d/redhat.repo'
-        if os.path.isfile(redhat_repo):
-            os.unlink(redhat_repo)
+        if os.path.isfile(self.REDHAT_REPO):
+            os.unlink(self.REDHAT_REPO)
 
     def register(self):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -249,9 +262,9 @@ class RegistrationBase(object):
             cfg.read([tmpfile])
 
             if enabled:
-                cfg.set('main', 'enabled', 1)
+                cfg.set('main', 'enabled', '1')
             else:
-                cfg.set('main', 'enabled', 0)
+                cfg.set('main', 'enabled', '0')
 
             fd = open(tmpfile, 'w+')
             cfg.write(fd)
@@ -283,14 +296,24 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
+
         args = [SUBMAN_CMD, 'config']
 
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--server.hostname'.
-        for k, v in kwargs.items():
+        options = []
+        for k, v in sorted(kwargs.items()):
             if re.search(r'^(server|rhsm)_', k) and v is not None:
-                args.append('--%s=%s' % (k.replace('_', '.', 1), v))
+                options.append('--%s=%s' % (k.replace('_', '.', 1), v))
+
+        # When there is nothing to configure, then it is not necessary
+        # to run config command, because it only returns current
+        # content of current configuration file
+        if len(options) == 0:
+            return
+
+        args.extend(options)
 
         self.module.run_command(args, check_rc=True)
 
@@ -313,7 +336,7 @@ class Rhsm(RegistrationBase):
     def register(self, username, password, auto_attach, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register, environment,
                  rhsm_baseurl, server_insecure, server_hostname, server_proxy_hostname,
-                 server_proxy_port, server_proxy_user, server_proxy_password):
+                 server_proxy_port, server_proxy_user, server_proxy_password, release):
         '''
             Register the current system to the provided RHSM or Sat6 server
             Raises:
@@ -337,6 +360,15 @@ class Rhsm(RegistrationBase):
         if org_id:
             args.extend(['--org', org_id])
 
+        if server_proxy_hostname and server_proxy_port:
+            args.extend(['--proxy', server_proxy_hostname + ':' + server_proxy_port])
+
+        if server_proxy_user:
+            args.extend(['--proxyuser', server_proxy_user])
+
+        if server_proxy_password:
+            args.extend(['--proxypassword', server_proxy_password])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
         else:
@@ -354,14 +386,11 @@ class Rhsm(RegistrationBase):
                 args.extend(['--consumerid', consumer_id])
             if environment:
                 args.extend(['--environment', environment])
-            if server_proxy_hostname and server_proxy_port:
-                args.extend(['--proxy', server_proxy_hostname + ':' + server_proxy_port])
-            if server_proxy_user:
-                args.extend(['--proxyuser', server_proxy_user])
-            if server_proxy_password:
-                args.extend(['--proxypassword', server_proxy_password])
 
-        rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        if release:
+            args.extend(['--release', release])
+
+        rc, stderr, stdout = self.module.run_command(args, check_rc=True, expand_user_and_vars=False)
 
     def unsubscribe(self, serials=None):
         '''
@@ -432,9 +461,19 @@ class Rhsm(RegistrationBase):
         return []
 
     def subscribe_by_pool_ids(self, pool_ids):
-        for pool_id, quantity in pool_ids.items():
-            args = [SUBMAN_CMD, 'attach', '--pool', pool_id, '--quantity', quantity]
-            rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        """
+        Try to subscribe to the list of pool IDs
+        """
+        available_pools = RhsmPools(self.module)
+
+        available_pool_ids = [p.get_pool_id() for p in available_pools]
+
+        for pool_id, quantity in sorted(pool_ids.items()):
+            if pool_id in available_pool_ids:
+                args = [SUBMAN_CMD, 'attach', '--pool', pool_id, '--quantity', quantity]
+                rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+            else:
+                self.module.fail_json(msg='Pool ID: %s not in list of available pools' % pool_id)
         return pool_ids
 
     def subscribe_pool(self, regexp):
@@ -499,7 +538,7 @@ class Rhsm(RegistrationBase):
         serials = self.unsubscribe(serials=serials_to_remove)
 
         missing_pools = {}
-        for pool_id, quantity in pool_ids.items():
+        for pool_id, quantity in sorted(pool_ids.items()):
             if existing_pools.get(pool_id, 0) != quantity:
                 missing_pools[pool_id] = quantity
 
@@ -528,7 +567,7 @@ class RhsmPool(object):
         return getattr(self, 'PoolId', getattr(self, 'PoolID'))
 
     def subscribe(self):
-        args = "subscription-manager subscribe --pool %s" % self.get_pool_id()
+        args = "subscription-manager attach --pool %s" % self.get_pool_id()
         rc, stdout, stderr = self.module.run_command(args, check_rc=True)
         if rc == 0:
             return True
@@ -657,6 +696,7 @@ def main():
             server_proxy_password=dict(default=None,
                                        required=False,
                                        no_log=True),
+            release=dict(default=None, required=False)
         ),
         required_together=[['username', 'password'],
                            ['server_proxy_hostname', 'server_proxy_port'],
@@ -692,7 +732,7 @@ def main():
         if isinstance(value, dict):
             if len(value) != 1:
                 module.fail_json(msg='Unable to parse pool_ids option.')
-            pool_id, quantity = value.items()[0]
+            pool_id, quantity = list(value.items())[0]
         else:
             pool_id, quantity = value, 1
         pool_ids[pool_id] = str(quantity)
@@ -704,6 +744,7 @@ def main():
     server_proxy_port = module.params['server_proxy_port']
     server_proxy_user = module.params['server_proxy_user']
     server_proxy_password = module.params['server_proxy_password']
+    release = module.params['release']
 
     global SUBMAN_CMD
     SUBMAN_CMD = module.get_bin_path('subscription-manager', True)
@@ -732,11 +773,13 @@ def main():
                 rhsm.register(username, password, auto_attach, activationkey, org_id,
                               consumer_type, consumer_name, consumer_id, force_register,
                               environment, rhsm_baseurl, server_insecure, server_hostname,
-                              server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password)
+                              server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password, release)
                 if pool_ids:
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
-                else:
+                elif pool != '^$':
                     subscribed_pool_ids = rhsm.subscribe(pool)
+                else:
+                    subscribed_pool_ids = []
             except Exception as e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, to_native(e)))
             else:

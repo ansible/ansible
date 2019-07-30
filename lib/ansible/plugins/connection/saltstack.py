@@ -9,7 +9,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Michael Scherer <misc@zarb.org>
+    author: Michael Scherer (@mscherer) <misc@zarb.org>
     connection: saltstack
     short_description: Allow ansible to piggyback on salt minions
     description:
@@ -86,7 +86,8 @@ class Connection(ConnectionBase):
 
         out_path = self._normalize_path(out_path, '/')
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
-        content = open(in_path).read()
+        with open(in_path) as in_fh:
+            content = in_fh.read()
         self.client.cmd(self.host, 'file.write', [out_path, content])
 
     # TODO test it

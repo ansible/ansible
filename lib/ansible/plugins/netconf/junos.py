@@ -22,29 +22,30 @@ __metaclass__ = type
 import json
 import re
 
-from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
+from ansible.plugins.netconf import ensure_connected, ensure_ncclient
 
 try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml, new_ele, sub_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    HAS_NCCLIENT = True
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
 
 
 class Netconf(NetconfBase):
-
     def get_text(self, ele, tag):
         try:
             return to_text(ele.find(tag).text, errors='surrogate_then_replace').strip()
         except AttributeError:
             pass
 
+    @ensure_ncclient
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'junos'
@@ -68,6 +69,7 @@ class Netconf(NetconfBase):
         """
         return self.rpc(name)
 
+    @ensure_ncclient
     @ensure_connected
     def load_configuration(self, format='xml', action='merge', target='candidate', config=None):
         """
@@ -101,6 +103,7 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
         """
         Guess the remote network os name
@@ -117,10 +120,13 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj._play_context.timeout
+                timeout=obj.get_option('persistent_connect_timeout'),
+                # We need to pass in the path to the ssh_config file when guessing
+                # the network_os so that a jumphost is correctly used if defined
+                ssh_config=obj._ssh_config
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
 
         guessed_os = None
         for c in m.server_capabilities:
@@ -136,8 +142,15 @@ class Netconf(NetconfBase):
         Retrieve all or part of a specified configuration.
         :param format: format in which configuration should be retrieved
         :param filter: specifies the portion of the configuration to retrieve
+               as either xml string rooted in <configuration> element
         :return: Received rpc response from remote host in string format
         """
+        if filter is not None:
+            if not isinstance(filter, string_types):
+                raise AnsibleConnectionFailure("get configuration filter should be of type string,"
+                                               " received value '%s' is of type '%s'" % (filter, type(filter)))
+            filter = to_ele(filter)
+
         return self.m.get_configuration(format=format, filter=filter).data_xml
 
     @ensure_connected
@@ -165,6 +178,7 @@ class Netconf(NetconfBase):
     # below commit() is a workaround which build's raw `commit-configuration` xml with required tags and uses
     # ncclient generic rpc() method to execute rpc on remote host.
     # Remove below method after the issue in ncclient is fixed.
+    @ensure_ncclient
     @ensure_connected
     def commit(self, confirmed=False, check=False, timeout=None, comment=None, synchronize=False, at_time=None):
         """

@@ -20,6 +20,7 @@ options:
     description:
     - Timezone to set to.
     - 'Example: Central Standard Time'
+    type: str
     required: yes
 notes:
 - The module will check if the provided timezone is supported on the machine.
@@ -28,6 +29,8 @@ notes:
 - If running on Server 2008 the hotfix
   U(https://support.microsoft.com/en-us/help/2556308/tzutil-command-line-tool-is-added-to-windows-vista-and-to-windows-server-2008)
   needs to be installed to be able to run this module.
+seealso:
+- module: win_region
 author:
 - Phil Schwartz (@schwartzmx)
 '''
@@ -48,13 +51,13 @@ EXAMPLES = r'''
 
 RETURN = r'''
 previous_timezone:
-    description: The previous timezone if it was changed, otherwise the existing timezone
+    description: The previous timezone if it was changed, otherwise the existing timezone.
     returned: success
-    type: string
+    type: str
     sample: Central Standard Time
 timezone:
-    description: The current timezone (possibly changed)
+    description: The current timezone (possibly changed).
     returned: success
-    type: string
+    type: str
     sample: Central Standard Time
 '''

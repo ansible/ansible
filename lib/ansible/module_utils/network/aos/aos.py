@@ -147,7 +147,7 @@ def content_to_dict(module, content):
         if not content_dict:
             raise Exception()
 
-    except:
+    except Exception:
         module.fail_json(msg="Unable to convert 'content' to a dict, please check if valid")
 
     # replace the string with the dict
@@ -163,7 +163,7 @@ def do_load_resource(module, collection, name):
 
     try:
         item = find_collection_item(collection, name, '')
-    except:
+    except Exception:
         module.fail_json(msg="An error occurred while running 'find_collection_item'")
 
     if item.exists:

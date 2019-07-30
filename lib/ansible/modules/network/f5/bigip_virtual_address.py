@@ -25,6 +25,7 @@ options:
       - Name of the virtual address.
       - If this parameter is not provided, then the value of C(address) will
         be used.
+    type: str
     version_added: 2.6
   address:
     description:
@@ -32,15 +33,20 @@ options:
       - If you never created a virtual address, but did create virtual servers, then
         a virtual address for each virtual server was created automatically. The name
         of this virtual address is its IP address value.
+    type: str
   netmask:
     description:
       - Netmask of the provided virtual address. This value cannot be
         modified after it is set.
-    default: 255.255.255.255
+      - When creating a new virtual address, if this parameter is not specified, the
+        default value is C(255.255.255.255) for IPv4 addresses and
+        C(ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff) for IPv6 addresses.
+    type: str
   connection_limit:
     description:
       - Specifies the number of concurrent connections that the system
         allows on this virtual address.
+    type: int
   arp_state:
     description:
       - Specifies whether the system accepts ARP requests. When (disabled),
@@ -51,6 +57,7 @@ options:
       - Deprecated. Use the C(arp) parameter instead.
       - When creating a new virtual address, if this parameter is not specified,
         the default value is C(enabled).
+    type: str
     choices:
       - enabled
       - disabled
@@ -75,6 +82,7 @@ options:
       - C(enabled) and C(disabled) are deprecated and will be removed in
         Ansible 2.11. Instead, use known Ansible booleans such as C(yes) and
         C(no)
+    type: str
   icmp_echo:
     description:
       - Specifies how the systems sends responses to (ICMP) echo requests
@@ -86,6 +94,7 @@ options:
         disable responses based on virtual server state; C(when_any_available),
         C(when_all_available, or C(always), regardless of the state of any
         virtual servers.
+    type: str
     choices:
       - enabled
       - disabled
@@ -98,12 +107,13 @@ options:
         the virtual address and enables it. If C(enabled), enable the virtual
         address if it exists. If C(disabled), create the virtual address if
         needed, and set state to C(disabled).
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
+    default: present
   availability_calculation:
     description:
       - Specifies what routes of the virtual address the system advertises.
@@ -111,6 +121,7 @@ options:
         server is available. When C(when_all_available), advertises the
         route when all virtual servers are available. When (always), always
         advertises the route regardless of the virtual servers available.
+    type: str
     choices:
       - always
       - when_all_available
@@ -147,6 +158,7 @@ options:
         when any virtual server is available.
       - When C(all), the BIG-IP system will advertise the route for the virtual address
         when all virtual servers are available.
+    type: str
     choices:
       - disabled
       - enabled
@@ -158,6 +170,7 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   traffic_group:
@@ -165,11 +178,13 @@ options:
       - The traffic group for the virtual address. When creating a new address,
         if this value is not specified, the default of C(/Common/traffic-group-1)
         will be used.
+    type: str
     version_added: 2.5
   route_domain:
     description:
       - The route domain of the C(address) that you want to use.
       - This value cannot be modified after it is set.
+    type: str
     version_added: 2.6
   spanning:
     description:
@@ -195,22 +210,24 @@ author:
 EXAMPLES = r'''
 - name: Add virtual address
   bigip_virtual_address:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     partition: Common
     address: 10.10.10.10
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Enable route advertisement on the virtual address
   bigip_virtual_address:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     address: 10.10.10.10
     use_route_advertisement: yes
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -223,12 +240,12 @@ use_route_advertisement:
 auto_delete:
   description: New setting for auto deleting virtual address.
   returned: changed
-  type: string
+  type: str
   sample: enabled
 icmp_echo:
   description: New ICMP echo setting applied to virtual address.
   returned: changed
-  type: string
+  type: str
   sample: disabled
 connection_limit:
   description: The new connection limit of the virtual address.
@@ -253,12 +270,12 @@ address:
 state:
   description: The new state of the virtual address.
   returned: changed
-  type: string
+  type: str
   sample: disabled
 spanning:
   description: Whether spanning is enabled or not
   returned: changed
-  type: string
+  type: str
   sample: disabled
 '''
 
@@ -272,25 +289,21 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import compress_address
     from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import compress_address
     from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
@@ -487,7 +500,7 @@ class ModuleParameters(Parameters):
         if self._values['address'] is None:
             return None
         if is_valid_ip(self._values['address']):
-            return self._values['address']
+            return compress_address(self._values['address'])
         else:
             raise F5ModuleError(
                 "The provided 'address' is not a valid IP address"
@@ -629,7 +642,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = ApiParameters()
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.changes = UsableChanges()
@@ -713,12 +726,19 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
+
         if self.want.traffic_group is None:
             self.want.update({'traffic_group': '/Common/traffic-group-1'})
         if self.want.arp is None:
             self.want.update({'arp': True})
         if self.want.spanning is None:
             self.want.update({'spanning': False})
+
+        if self.want.netmask is None:
+            if is_valid_ip(self.want.address, type='ipv4'):
+                self.want.update({'netmask': '255.255.255.255'})
+            else:
+                self.want.update({'netmask': 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'})
 
         if self.want.arp and self.want.spanning:
             raise F5ModuleError(
@@ -866,10 +886,7 @@ class ArgumentSpec(object):
             ),
             name=dict(),
             address=dict(),
-            netmask=dict(
-                type='str',
-                default='255.255.255.255',
-            ),
+            netmask=dict(),
             connection_limit=dict(
                 type='int'
             ),
@@ -930,19 +947,17 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive,
+        required_one_of=spec.required_one_of
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

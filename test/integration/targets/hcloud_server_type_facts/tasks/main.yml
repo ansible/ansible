@@ -1,0 +1,34 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather hcloud server type facts
+  hcloud_server_type_facts:
+- name: verify test gather hcloud server type facts
+  assert:
+    that:
+      - ansible_facts.hcloud_server_type_facts| list | count > 2
+
+- name: test gather hcloud server type facts in check mode
+  hcloud_server_type_facts:
+  check_mode: yes
+
+- name: verify test gather hcloud server type facts in check mode
+  assert:
+    that:
+      - ansible_facts.hcloud_server_type_facts| list | count > 2
+
+- name: test gather hcloud server type facts with name
+  hcloud_server_type_facts:
+    name: "{{hcloud_server_type_name}}"
+- name: verify test gather hcloud server type with name
+  assert:
+    that:
+      - ansible_facts.hcloud_server_type_facts|selectattr('name','equalto','{{ hcloud_server_type_name }}') | list | count == 1
+
+- name: test gather hcloud server type facts with correct id
+  hcloud_server_type_facts:
+    id: "{{hcloud_server_type_id}}"
+- name: verify test gather hcloud server type with correct id
+  assert:
+    that:
+      - ansible_facts.hcloud_server_type_facts|selectattr('name','equalto','{{ hcloud_server_type_name }}') | list | count == 1

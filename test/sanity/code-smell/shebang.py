@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import stat
@@ -6,10 +8,9 @@ import sys
 
 
 def main():
-    allowed = set([
+    standard_shebangs = set([
         b'#!/bin/bash -eu',
         b'#!/bin/bash -eux',
-        b'#!/bin/bash',
         b'#!/bin/sh',
         b'#!/usr/bin/env bash',
         b'#!/usr/bin/env fish',
@@ -18,17 +19,17 @@ def main():
         b'#!/usr/bin/make -f',
     ])
 
+    integration_shebangs = set([
+        b'#!/bin/sh',
+        b'#!/usr/bin/env bash',
+        b'#!/usr/bin/env python',
+    ])
+
     module_shebangs = {
         '': b'#!/usr/bin/python',
         '.py': b'#!/usr/bin/python',
         '.ps1': b'#!powershell',
     }
-
-    skip = set([
-        'test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1',
-        'test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1',
-        'test/utils/shippable/timing.py',
-    ])
 
     # see https://unicode.org/faq/utf_bom.html#bom1
     byte_order_marks = (
@@ -40,9 +41,6 @@ def main():
     )
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path in skip:
-            continue
-
         with open(path, 'rb') as path_fd:
             shebang = path_fd.readline().strip()
             mode = os.stat(path).st_mode
@@ -60,6 +58,9 @@ def main():
                 continue
 
             is_module = False
+            is_integration = False
+
+            dirname = os.path.dirname(path)
 
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
@@ -72,14 +73,16 @@ def main():
 
                 continue
             elif path.startswith('test/integration/targets/'):
-                dirname = os.path.dirname(path)
+                is_integration = True
 
-                if dirname.endswith('/library') or dirname in (
-                    # non-standard module library directories
-                    'test/integration/targets/module_precedence/lib_no_extension',
-                    'test/integration/targets/module_precedence/lib_with_extension',
+                if dirname.endswith('/library') or dirname.endswith('/plugins/modules') or dirname in (
+                        # non-standard module library directories
+                        'test/integration/targets/module_precedence/lib_no_extension',
+                        'test/integration/targets/module_precedence/lib_with_extension',
                 ):
                     is_module = True
+            elif dirname == 'plugins/modules':
+                is_module = True
 
             if is_module:
                 if executable:
@@ -97,6 +100,11 @@ def main():
                 else:
                     print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
             else:
+                if is_integration:
+                    allowed = integration_shebangs
+                else:
+                    allowed = standard_shebangs
+
                 if shebang not in allowed:
                     print('%s:%d:%d: unexpected non-module shebang: %s' % (path, 1, 1, shebang))
 

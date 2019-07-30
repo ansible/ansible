@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright(c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
+# Copyright: (c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -27,6 +27,7 @@ options:
     aliases: [ 'host' ]
     description:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
+      - Must match with <hostname> or <ip> present in key attribute.
     required: true
   key:
     description:
@@ -36,6 +37,8 @@ options:
         Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
         line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
         the value of the name parameter.
+
+        Should be of format `<hostname[,IP]> ssh-rsa <pubkey>`
   path:
     description:
       - The known_hosts file to edit
@@ -61,6 +64,13 @@ EXAMPLES = '''
     path: /etc/ssh/ssh_known_hosts
     name: foo.com.invalid
     key: "{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
+
+- name: Another way to call known_hosts
+  known_hosts:
+    hostname: host1.example.com   # or 10.9.8.77
+    key: host1.example.com,10.9.8.77 ssh-rsa ASDeararAIUHI324324  # some key gibberish
+    path: /etc/ssh/ssh_known_hosts
+    state: present
 '''
 
 # Makes sure public host keys are present or absent in the given known_hosts
@@ -75,16 +85,17 @@ EXAMPLES = '''
 #    state = absent|present (default: present)
 
 import base64
+import errno
 import hashlib
 import hmac
 import os
 import os.path
-import tempfile
-import errno
 import re
+import tempfile
 
-from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import FileLock
+from ansible.module_utils._text import to_bytes, to_native
 
 
 def enforce_state(module, params):

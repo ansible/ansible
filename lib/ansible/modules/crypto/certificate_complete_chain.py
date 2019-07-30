@@ -33,13 +33,12 @@ requirements:
     - "cryptography >= 1.5"
 options:
     input_chain:
-        required: yes
         description:
             - A concatenated set of certificates in PEM format forming a chain.
             - The module will try to complete this chain.
-    root_certificates:
+        type: str
         required: yes
-        type: list
+    root_certificates:
         description:
             - "A list of filenames or directories."
             - "A filename is assumed to point to a file containing one or more certificates
@@ -49,19 +48,20 @@ options:
                subdirectories will be scanned and tried to be parsed as concatenated
                certificates in PEM format."
             - "Symbolic links will be followed."
+        type: list
+        required: yes
     intermediate_certificates:
-        required: no
+        description:
+            - "A list of filenames or directories."
+            - "A filename is assumed to point to a file containing one or more certificates
+               in PEM format. All certificates in this file will be added to the set of
+               root certificates."
+            - "If a directory name is given, all files in the directory and its
+               subdirectories will be scanned and tried to be parsed as concatenated
+               certificates in PEM format."
+            - "Symbolic links will be followed."
         type: list
         default: []
-        description:
-            - "A list of filenames or directories."
-            - "A filename is assumed to point to a file containing one or more certificates
-               in PEM format. All certificates in this file will be added to the set of
-               root certificates."
-            - "If a directory name is given, all files in the directory and its
-               subdirectories will be scanned and tried to be parsed as concatenated
-               certificates in PEM format."
-            - "Symbolic links will be followed."
 '''
 
 
@@ -105,7 +105,7 @@ root:
     description:
         - "The root certificate in PEM format."
     returned: success
-    type: string
+    type: str
 chain:
     description:
         - "The chain added to the given input chain. Includes the root certificate."
@@ -121,10 +121,12 @@ complete_chain:
 '''
 
 import os
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_bytes
 
+CRYPTOGRAPHY_IMP_ERR = None
 try:
     import cryptography
     import cryptography.hazmat.backends
@@ -140,6 +142,7 @@ try:
     HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.5'))
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
 except ImportError as e:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     HAS_CRYPTOGRAPHY = False
 
 
@@ -230,6 +233,7 @@ def load_PEM_list(module, path, fail_on_error=True):
             module.fail_json(msg=msg)
         else:
             module.warn(msg)
+            return []
 
 
 class CertificateSet(object):
@@ -252,12 +256,13 @@ class CertificateSet(object):
         '''
         Load lists of PEM certificates from a file or a directory.
         '''
-        if os.path.isdir(path):
-            for dir, dummy, files in os.walk(path, followlinks=True):
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        if os.path.isdir(b_path):
+            for dir, dummy, files in os.walk(b_path, followlinks=True):
                 for file in files:
                     self._load_file(os.path.join(dir, file))
         else:
-            self._load_file(path)
+            self._load_file(b_path)
 
     def find_parent(self, cert):
         '''
@@ -280,15 +285,15 @@ def format_cert(cert):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            input_chain=dict(required=True, type='str'),
-            root_certificates=dict(required=True, type='list'),
-            intermediate_certificates=dict(required=False, type='list', default=[]),
+            input_chain=dict(type='str', required=True),
+            root_certificates=dict(type='list', required=True, elements='path'),
+            intermediate_certificates=dict(type='list', default=[], elements='path'),
         ),
         supports_check_mode=True,
     )
 
     if not HAS_CRYPTOGRAPHY:
-        module.fail_json(msg='cryptography >= 1.5 is required for this module.')
+        module.fail_json(msg=missing_required_lib('cryptography >= 1.5'), exception=CRYPTOGRAPHY_IMP_ERR)
 
     # Load chain
     chain = parse_PEM_list(module, module.params['input_chain'], source='input chain')

@@ -6,12 +6,12 @@
   assert:
     that:
     - disks_found.changed == false
-    - disks_found.ansible_facts.disks[0].size is defined
-    - disks_found.ansible_facts.disks[0].number is defined
-    - disks_found.ansible_facts.disks[0].operational_status is defined
-    - disks_found.ansible_facts.disks[0].read_only is defined
-    - disks_found.ansible_facts.disks[0].clustered is defined
-    - disks_found.ansible_facts.disks[0].location is defined
-    - disks_found.ansible_facts.disks[0].guid is defined
-    - disks_found.ansible_facts.disks[0].path is defined
-    - disks_found.ansible_facts.disks[0].bootable is defined
+    - disks_found.ansible_facts.ansible_disks[0].number is defined
+    - disks_found.ansible_facts.ansible_disks[0].guid is defined
+    - disks_found.ansible_facts.ansible_disks[0].location is defined
+    - disks_found.ansible_facts.ansible_disks[0].path is defined
+    - disks_found.ansible_facts.ansible_disks[0].read_only is defined
+    - disks_found.ansible_facts.ansible_disks[0].clustered is defined
+    - disks_found.ansible_facts.ansible_disks[0].bootable is defined
+    - disks_found.ansible_facts.ansible_disks[0].physical_disk.size is defined
+    - disks_found.ansible_facts.ansible_disks[0].physical_disk.operational_status is defined

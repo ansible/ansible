@@ -203,13 +203,14 @@ import smtplib
 import ssl
 import traceback
 from email import encoders
-from email.utils import parseaddr, formataddr
+from email.utils import parseaddr, formataddr, formatdate
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.header import Header
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_native
 
 
@@ -264,19 +265,25 @@ def main():
     try:
         if secure != 'never':
             try:
-                smtp = smtplib.SMTP_SSL(host=host, timeout=timeout)
-                code, smtpmessage = smtp.connect(host, port=port)
+                if PY3:
+                    smtp = smtplib.SMTP_SSL(host=host, port=port, timeout=timeout)
+                else:
+                    smtp = smtplib.SMTP_SSL(timeout=timeout)
+                code, smtpmessage = smtp.connect(host, port)
                 secure_state = True
             except ssl.SSLError as e:
                 if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                                (host, port, to_native(e)), exception=traceback.format_exc())
-            except:
+            except Exception:
                 pass
 
         if not secure_state:
-            smtp = smtplib.SMTP(timeout=timeout)
-            code, smtpmessage = smtp.connect(host, port=port)
+            if PY3:
+                smtp = smtplib.SMTP(host=host, port=port, timeout=timeout)
+            else:
+                smtp = smtplib.SMTP(timeout=timeout)
+            code, smtpmessage = smtp.connect(host, port)
 
     except smtplib.SMTPException as e:
         module.fail_json(rc=1, msg='Unable to Connect %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
@@ -284,7 +291,7 @@ def main():
     try:
         smtp.ehlo()
     except smtplib.SMTPException as e:
-            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
+        module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
 
     if int(code) > 0:
         if not secure_state and secure in ('starttls', 'try'):
@@ -319,6 +326,7 @@ def main():
 
     msg = MIMEMultipart(_charset=charset)
     msg['From'] = formataddr((sender_phrase, sender_addr))
+    msg['Date'] = formatdate(localtime=True)
     msg['Subject'] = Header(subject, charset)
     msg.preamble = "Multipart message"
 

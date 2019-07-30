@@ -29,8 +29,8 @@ version_added: "2.3"
 
 author:
     - Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>
-    - Matt Baldwin <baldwin@stackpointcloud.com>
-    - Thibaud Morel l'Horset <teebes@gmail.com>
+    - Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
+    - Thibaud Morel l'Horset (@teebes) <teebes@gmail.com>
 
 options:
   auth_token:
@@ -72,6 +72,7 @@ options:
     default: false
     version_added: "2.4"
     aliases: [lock]
+    type: bool
 
   operating_system:
     description:
@@ -114,7 +115,7 @@ options:
   ipxe_script_url:
     description:
       - URL of custom iPXE script for provisioning.
-      - More about custome iPXE for Packet devices at U(https://help.packet.net/technical/infrastructure/custom-ipxe).
+      - More about custom iPXE for Packet devices at U(https://help.packet.net/technical/infrastructure/custom-ipxe).
     version_added: "2.4"
   always_pxe:
     description:
@@ -122,6 +123,7 @@ options:
       - Normally, the PXE process happens only on the first boot. Set this arg to have your device continuously boot to iPXE.
     default: false
     version_added: "2.4"
+    type: bool
 
 
 requirements:
@@ -445,6 +447,11 @@ def create_single_device(module, packet_conn, hostname):
     locked = module.params.get('locked')
     ipxe_script_url = module.params.get('ipxe_script_url')
     always_pxe = module.params.get('always_pxe')
+    if operating_system != 'custom_ipxe':
+        for param in ('ipxe_script_url', 'always_pxe'):
+            if module.params.get(param):
+                raise Exception('%s paramater is not valid for non custom_ipxe operating_system.' % param)
+
     device = packet_conn.create_device(
         project_id=project_id,
         hostname=hostname,
@@ -607,8 +614,6 @@ def main():
         ),
         required_one_of=[('device_ids', 'hostnames',)],
         mutually_exclusive=[
-            ('always_pxe', 'operating_system'),
-            ('ipxe_script_url', 'operating_system'),
             ('hostnames', 'device_ids'),
             ('count', 'device_ids'),
             ('count_offset', 'device_ids'),

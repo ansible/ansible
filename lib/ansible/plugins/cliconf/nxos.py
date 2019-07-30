@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: nxos
+short_description: Use nxos cliconf to run command on Cisco NX-OS platform
+description:
+  - This nxos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Cicso NX-OS network devices.
+version_added: "2.4"
+"""
+
 import json
 import re
 
@@ -29,8 +40,6 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
-from ansible.plugins.connection.network_cli import Connection as NetworkCli
-from ansible.plugins.connection.httpapi import Connection as HttpApi
 
 
 class Cliconf(CliconfBase):
@@ -49,20 +58,6 @@ class Cliconf(CliconfBase):
         self._module_context[module_key] = module_context
 
         return None
-
-    def send_command(self, command, **kwargs):
-        """Executes a cli command and returns the results
-        This method will execute the CLI command on the connection and return
-        the results to the caller.  The command output will be returned as a
-        string
-        """
-        if isinstance(self._connection, NetworkCli):
-            resp = super(Cliconf, self).send_command(command, **kwargs)
-        elif isinstance(self._connection, HttpApi):
-            resp = self._connection.send_request(command, **kwargs)
-        else:
-            raise ValueError("Invalid connection type")
-        return resp
 
     def get_device_info(self):
         device_info = {}
@@ -84,9 +79,9 @@ class Cliconf(CliconfBase):
             if match_sys_ver:
                 device_info['network_os_version'] = match_sys_ver.group(1)
 
-        match_chassis_id = re.search(r'Hardware\n\s+cisco\s*(\S+\s+\S+)', reply, re.M)
+        match_chassis_id = re.search(r'Hardware\n\s+cisco(.+)$', reply, re.M)
         if match_chassis_id:
-            device_info['network_os_model'] = match_chassis_id.group(1)
+            device_info['network_os_model'] = match_chassis_id.group(1).strip()
 
         match_host_name = re.search(r'\s+Device name:\s*(\S+)', reply, re.M)
         if match_host_name:
@@ -151,7 +146,7 @@ class Cliconf(CliconfBase):
             raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show {0} '.format(lookup[source])
-        if format and format is not 'text':
+        if format and format != 'text':
             cmd += '| %s ' % format
 
         if flags:
@@ -193,10 +188,10 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def run_commands(self, commands=None, check_rc=True):
         if commands is None:
@@ -256,18 +251,11 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc() + ['get_diff', 'run_commands']
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['get_diff', 'run_commands']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
 
-        if isinstance(self._connection, NetworkCli):
-            result['network_api'] = 'cliconf'
-        elif isinstance(self._connection, HttpApi):
-            result['network_api'] = 'nxapi'
-        else:
-            raise ValueError("Invalid connection type")
         return json.dumps(result)
 
     def _get_command_with_output(self, command, output):

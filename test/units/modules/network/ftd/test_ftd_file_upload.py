@@ -1,30 +1,12 @@
-# Copyright (c) 2018 Cisco and/or its affiliates.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
 from __future__ import absolute_import
 
 import pytest
-
 from ansible.module_utils import basic
-from ansible.module_utils.network.ftd.common import HTTPMethod
-from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField
-from ansible.modules.network.ftd import ftd_file_upload
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
+
+from ansible.modules.network.ftd import ftd_file_upload
+from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField
+from ansible.module_utils.network.ftd.common import HTTPMethod
 
 
 class TestFtdFileUpload(object):
@@ -39,9 +21,9 @@ class TestFtdFileUpload(object):
         connection_class_mock = mocker.patch('ansible.modules.network.ftd.ftd_file_upload.Connection')
         return connection_class_mock.return_value
 
-    @pytest.mark.parametrize("missing_arg", ['operation', 'fileToUpload'])
+    @pytest.mark.parametrize("missing_arg", ['operation', 'file_to_upload'])
     def test_module_should_fail_without_required_args(self, missing_arg):
-        module_args = {'operation': 'uploadFile', 'fileToUpload': '/tmp/test.txt'}
+        module_args = {'operation': 'uploadFile', 'file_to_upload': '/tmp/test.txt'}
         del module_args[missing_arg]
         set_module_args(module_args)
 
@@ -52,7 +34,7 @@ class TestFtdFileUpload(object):
 
     def test_module_should_fail_when_no_operation_spec_found(self, connection_mock):
         connection_mock.get_operation_spec.return_value = None
-        set_module_args({'operation': 'nonExistingUploadOperation', 'fileToUpload': '/tmp/test.txt'})
+        set_module_args({'operation': 'nonExistingUploadOperation', 'file_to_upload': '/tmp/test.txt'})
 
         with pytest.raises(AnsibleFailJson) as ex:
             self.module.main()
@@ -67,7 +49,7 @@ class TestFtdFileUpload(object):
             OperationField.URL: '/object/network',
             OperationField.MODEL_NAME: 'NetworkObject'
         }
-        set_module_args({'operation': 'nonUploadOperation', 'fileToUpload': '/tmp/test.txt'})
+        set_module_args({'operation': 'nonUploadOperation', 'file_to_upload': '/tmp/test.txt'})
 
         with pytest.raises(AnsibleFailJson) as ex:
             self.module.main()
@@ -87,7 +69,7 @@ class TestFtdFileUpload(object):
 
         set_module_args({
             'operation': 'uploadFile',
-            'fileToUpload': '/tmp/test.txt'
+            'file_to_upload': '/tmp/test.txt'
         })
         with pytest.raises(AnsibleExitJson) as ex:
             self.module.main()

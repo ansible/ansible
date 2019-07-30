@@ -20,7 +20,7 @@ short_description: NetApp Element Software Manage Admin Users
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create, destroy, or update admin users on SolidFire
 
@@ -163,20 +163,22 @@ class NetAppElementSWAdminUser(object):
 
     def modify_admin_user(self):
         """
-        Modify a admin user. If a password is set the user will be modified as there is no way to compare a new password with an existing one
+        Modify a admin user. If a password is set the user will be modified as there is no way to
+        compare a new password with an existing one
         :return: if a user was modified or not
         """
         changed = False
         admin_user = self.get_admin_user()
-        if not admin_user.access == self.access and self.access is not None:
-            changed = True
-        if self.element_password:
-            changed = True
+        if self.access is not None and len(self.access) > 0:
+            for access in self.access:
+                if access not in admin_user.access:
+                    changed = True
         if changed:
             self.sfe.modify_cluster_admin(cluster_admin_id=admin_user.cluster_admin_id,
                                           access=self.access,
                                           password=self.element_password,
                                           attributes=self.attributes)
+
         return changed
 
     def add_admin_user(self):

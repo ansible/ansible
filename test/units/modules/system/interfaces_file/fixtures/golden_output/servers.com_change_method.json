@@ -54,6 +54,14 @@
             "route add -net 188.44.208.0/21 gw 10.44.15.117 dev aggi"
         ]
     },
+    "eth1": {
+        "address_family": "inet",
+        "down": [],
+        "method": "dhcp",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    },
     "ext1": {
         "address_family": "inet",
         "bond-master": "agge",

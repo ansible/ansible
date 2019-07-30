@@ -6,7 +6,7 @@
   azure_rm_deployment:
     resource_group: "{{ resource_group }}"
     location: "eastus"
-    template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json'
+    template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/d01a5c06f4f1bc03a049ca17bbbd6e06d62657b3/101-vm-simple-linux/azuredeploy.json'
     deployment_name: "{{ dns_label }}"
     parameters:
       adminUsername:
@@ -27,3 +27,19 @@
     ansible_ssh_pass: password123!
     groupname: azure_vms
   with_items: "{{ output.deployment.instances }}"
+
+- name: Get Deployment Facts
+  azure_rm_deployment_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dns_label }}"
+  register: output
+- debug:
+    var: output
+
+- name: Assert that values are returned
+  assert:
+    that:
+      - not output.changed
+      - output.deployments[0]['provisioning_state'] != None
+      - output.deployments[0]['output_resources'] | length > 0
+      - output.deployments[0]['outputs'] | length > 0

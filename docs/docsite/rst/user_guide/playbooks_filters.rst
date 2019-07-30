@@ -10,7 +10,7 @@ Filters in Ansible are from Jinja2, and are used for transforming data inside a 
 
 Take into account that templating happens on the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
-In addition the ones provided by Jinja2, Ansible ships with it's own and allows users to add their own custom filters.
+In addition the ones provided by Jinja2, Ansible ships with its own and allows users to add their own custom filters.
 
 .. _filters_for_formatting_data:
 
@@ -32,6 +32,17 @@ It's also possible to change the indentation of both (new in version 2.2)::
 
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}
+
+
+``to_yaml`` and ``to_nice_yaml`` filters use `PyYAML library`_ which has a default 80 symbol string length limit. That causes unexpected line break after 80th symbol (if there is a space after 80th symbol)
+To avoid such behaviour and generate long lines it is possible to use ``width`` option::
+
+    {{ some_variable | to_yaml(indent=8, width=1337) }}
+    {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
+
+While it would be nicer to use a construction like ``float("inf")`` instead of a hardcoded number, unfortunately the filter doesn't support proxying Python functions.
+Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
+
 
 Alternatively, you may be reading in some already formatted data::
 
@@ -58,9 +69,9 @@ for example::
   tasks:
     - shell: cat /some/path/to/multidoc-file.yaml
       register: result
-   - debug:
-       msg: '{{ item }}'
-    loop: '{{ result.stdout | from_yaml_all | list }}'
+    - debug:
+        msg: '{{ item }}'
+      loop: '{{ result.stdout | from_yaml_all | list }}'
 
 
 .. _forcing_variables_to_be_defined:
@@ -103,7 +114,10 @@ Omitting Parameters
 As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
-      file: dest={{ item.path }} state=touch mode={{ item.mode | default(omit) }}
+      file:
+        dest: "{{ item.path }}"
+        state: touch
+        mode: "{{ item.mode | default(omit) }}"
       loop:
         - path: /tmp/foo
         - path: /tmp/bar
@@ -113,9 +127,9 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
-.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
-      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
-      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+.. note:: If you are "chaining" additional filters after the ``default(omit)`` filter, you should instead do something like this:
+      ``"{{ foo | default(None) | some_filter or omit }}"``. In this example, the default ``None`` (Python null) value will cause the
+      later filters to fail, which will trigger the ``or omit`` portion of the logic. Using ``omit`` in this manner is very specific to
       the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
@@ -367,6 +381,10 @@ To get a random MAC address from a string prefix starting with '52:54:00'::
 
 Note that if anything is wrong with the prefix string, the filter will issue an error.
 
+As of Ansible version 2.9, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
+
+    "{{ '52:54:00' | random_mac(seed=inventory_hostname) }}"
+
 .. _random_filter:
 
 Random Number Filter
@@ -467,29 +485,52 @@ Sometimes you end up with a complex data structure in JSON format and you need t
 
 Now, let's take the following data structure::
 
-    domain_definition:
-        domain:
-            cluster:
-                - name: "cluster1"
-                - name: "cluster2"
-            server:
-                - name: "server11"
-                  cluster: "cluster1"
-                  port: "8080"
-                - name: "server12"
-                  cluster: "cluster1"
-                  port: "8090"
-                - name: "server21"
-                  cluster: "cluster2"
-                  port: "9080"
-                - name: "server22"
-                  cluster: "cluster2"
-                  port: "9090"
-            library:
-                - name: "lib1"
-                  target: "cluster1"
-                - name: "lib2"
-                  target: "cluster2"
+    {
+        "domain_definition": {
+            "domain": {
+                "cluster": [
+                    {
+                        "name": "cluster1"
+                    },
+                    {
+                        "name": "cluster2"
+                    }
+                ],
+                "server": [
+                    {
+                        "name": "server11",
+                        "cluster": "cluster1",
+                        "port": "8080"
+                    },
+                    {
+                        "name": "server12",
+                        "cluster": "cluster1",
+                        "port": "8090"
+                    },
+                    {
+                        "name": "server21",
+                        "cluster": "cluster2",
+                        "port": "9080"
+                    },
+                    {
+                        "name": "server22",
+                        "cluster": "cluster2",
+                        "port": "9090"
+                    }
+                ],
+                "library": [
+                    {
+                        "name": "lib1",
+                        "target": "cluster1"
+                    },
+                    {
+                        "name": "lib2",
+                        "target": "cluster2"
+                    }
+                ]
+            }
+        }
+    }
 
 To extract all clusters from this structure, you can use the following query::
 
@@ -564,7 +605,7 @@ address. For example, to get the IP address itself from a CIDR, you can use::
   {{ '192.0.2.1/24' | ipaddr('address') }}
 
 More information about ``ipaddr`` filter and complete usage guide can be found
-in :doc:`playbooks_filters_ipaddr`.
+in :ref:`playbooks_filters_ipaddr`.
 
 .. _network_filters:
 
@@ -766,6 +807,38 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
 
 .. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
 
+Network VLAN filters
+````````````````````
+
+.. versionadded:: 2.8
+
+Use the ``vlan_parser`` filter to manipulate an unsorted list of VLAN integers into a
+sorted string list of integers according to IOS-like VLAN list rules. This list has the following properties:
+
+* Vlans are listed in ascending order.
+* Three or more consecutive VLANs are listed with a dash.
+* The first line of the list can be first_line_len characters long.
+* Subsequent list lines can be other_line_len characters.
+
+To sort a VLAN list::
+
+    {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
+
+This example renders the folllowing sorted list::
+
+    ['100,1688,3002-3005,3999']
+
+
+Another example Jinja template::
+
+    {% set parsed_vlans = vlans | vlan_parser %}
+    switchport trunk allowed vlan {{ parsed_vlans[0] }}
+    {% for i in range (1, parsed_vlans | count) %}
+    switchport trunk allowed vlan add {{ parsed_vlans[i] }}
+
+This allows for dynamic generation of VLAN lists on a Cisco IOS tagged interface. You can store an exhaustive raw list of the exact VLANs required for an interface and then compare that to the parsed IOS output that would actually be generated for the configuration.
+
+
 .. _hash_filters:
 
 Hashing filters
@@ -809,12 +882,6 @@ Hash types available depend on the master system running ansible,
 Some hash types allow providing a rounds parameter::
 
     {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt', rounds=10000) }}
-
-When`Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed
-`password_hash` supports any crypt scheme and parameter supported by 'Passlib'::
-
-    {{ 'secretpassword' | password_hash('sha256_crypt', 'mysecretsalt', rounds=5000) }}
-    {{ 'secretpassword' | password_hash('bcrypt', ident='2b', rounds=14) }}
 
 .. _combine_filter:
 
@@ -899,7 +966,9 @@ style. For example the following::
 
     {{ "Plain style (default)" | comment }}
 
-will produce this output::
+will produce this output:
+
+.. code-block:: text
 
     #
     # Plain style (default)
@@ -918,7 +987,9 @@ above, you can customize it with::
 
   {{ "My Special Case" | comment(decoration="! ") }}
 
-producing::
+producing:
+
+.. code-block:: text
 
   !
   ! My Special Case
@@ -930,7 +1001,7 @@ It is also possible to fully customize the comment style::
 
 That will create the following output:
 
-.. code-block:: sh
+.. code-block:: text
 
     #######
     #
@@ -1035,7 +1106,7 @@ To search a string with a regex, use the "regex_search" filter::
     {{ 'ansible' | regex_search('(foobar)') }}
 
     # case insensitive search in multiline mode
-    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
+    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
 
 To search for all occurrences of regex matches, use the "regex_findall" filter::
@@ -1058,19 +1129,71 @@ To replace text in a string with regex, use the "regex_replace" filter::
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
 
+.. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
+   For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
+   end, which means it will make two replacements.
+
     # add "https://" prefix to each item in a list
+    GOOD:
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '(.+)', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '^', 'https://') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', 'https://\\1') | list }}
+
+    # append ':80' to each item in a list
+    GOOD:
+    {{ hosts | map('regex_replace', '^(.*)$', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '(.+)', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '$', ':80') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', '\\1:80') | list }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
 .. versionadded:: 2.0
 
-To escape special characters within a regex, use the "regex_escape" filter::
+To escape special characters within a standard Python regex, use the "regex_escape" filter (using the default re_type='python' option)::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
 
+.. versionadded:: 2.8
+
+To escape special characters within a POSIX basic regex, use the "regex_escape" filter with the re_type='posix_basic' option::
+
+    # convert '^f.*o(.*)$' to '\^f\.\*o(\.\*)\$'
+    {{ '^f.*o(.*)$' | regex_escape('posix_basic') }}
+
+
+Kubernetes Filters
+``````````````````
+
+Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
+including its hash::
+
+    {{ configmap_resource_definition | k8s_config_resource_name }}
+
+This can then be used to reference hashes in Pod specifications::
+
+    my_secret:
+      kind: Secret
+      name: my_secret_name
+
+    deployment_resource:
+      kind: Deployment
+      spec:
+        template:
+          spec:
+            containers:
+            - envFrom:
+                - secretRef:
+                    name: {{ my_secret | k8s_config_resource_name }}
+
+.. versionadded:: 2.8
 
 Other Useful Filters
 ````````````````````
@@ -1230,6 +1353,24 @@ Combinations always require a set size::
 
 Also see the :ref:`zip_filter`
 
+Product Filters
+```````````````
+
+The product filter returns the `cartesian product <https://docs.python.org/3/library/itertools.html#itertools.product>`_ of the input iterables.
+
+This is roughly equivalent to nested for-loops in a generator expression.
+
+For example::
+
+  - name: generate multiple hostnames
+    debug:
+      msg: "{{ ['foo', 'bar'] | product(['com']) | map('join', '.') | join(',') }}"
+
+This would result in::
+
+    { "msg": "foo.com,bar.com" }
+
+
 Debugging Filters
 `````````````````
 
@@ -1242,6 +1383,58 @@ type of a variable::
     {{ myvar | type_debug }}
 
 
+Computer Theory Assertions
+```````````````````````````
+
+The ``human_readable`` and ``human_to_bytes`` functions let you test your
+playbooks to make sure you are using the right size format in your tasks - that
+you're providing Byte format to computers and human-readable format to people.
+
+Human Readable
+``````````````
+
+Asserts whether the given string is human readable or not.
+
+For example::
+
+  - name: "Human Readable"
+    assert:
+      that:
+        - '"1.00 Bytes" == 1|human_readable'
+        - '"1.00 bits" == 1|human_readable(isbits=True)'
+        - '"10.00 KB" == 10240|human_readable'
+        - '"97.66 MB" == 102400000|human_readable'
+        - '"0.10 GB" == 102400000|human_readable(unit="G")'
+        - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+Human to Bytes
+``````````````
+
+Returns the given string in the Bytes format.
+
+For example::
+
+  - name: "Human to Bytes"
+    assert:
+      that:
+        - "{{'0'|human_to_bytes}}        == 0"
+        - "{{'0.1'|human_to_bytes}}      == 0"
+        - "{{'0.9'|human_to_bytes}}      == 1"
+        - "{{'1'|human_to_bytes}}        == 1"
+        - "{{'10.00 KB'|human_to_bytes}} == 10240"
+        - "{{   '11 MB'|human_to_bytes}} == 11534336"
+        - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
+        - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
@@ -1250,19 +1443,24 @@ to be added to core so everyone can make use of them.
 
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
+.. _PyYAML library: https://pyyaml.org/
+
+.. _PyYAML documentation: https://pyyaml.org/wiki/PyYAMLDocumentation
+
+
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

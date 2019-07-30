@@ -159,9 +159,10 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
     }
     .$wrapper_functions
 
-    # NB: do not adjust the following line - it is replaced when doing
-    # non-streamed input
-    $json_raw = ''
+    # only init and stream in $json_raw if it wasn't set by the enclosing scope
+    if (-not $(Get-Variable "json_raw" -ErrorAction SilentlyContinue)) {
+        $json_raw = ''
+    }
 } process {
     $json_raw += [String]$input
 } end {
@@ -218,7 +219,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
             $b64_output = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($output))
             Write-Output -InputObject $b64_output
         } else {
-            Write-Output -InputObject $output
+            $output
         }
     } catch {
         Write-AnsibleError -Message "internal error: failed to run exec_wrapper action $action" -ErrorRecord $_

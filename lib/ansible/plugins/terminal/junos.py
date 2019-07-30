@@ -24,24 +24,21 @@ import re
 
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w@+\-\.:\/\[\]]+[>#%] ?$"),
+        re.compile(br"({primary:node\d+})?[\r\n]?[\w@+\-\.:\/\[\]]+[>#%] ?$"),
     ]
 
     terminal_stderr_re = [
         re.compile(br"unknown command"),
-        re.compile(br"syntax error,")
+        re.compile(br"syntax error"),
+        re.compile(br"[\r\n]error:")
     ]
 
     def on_open_shell(self):

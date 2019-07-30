@@ -47,16 +47,19 @@ options:
       - if a NAT Gateway exists already in the subnet_id, then do not create a new one.
     required: false
     default: false
+    type: bool
   release_eip:
     description:
       - Deallocate the EIP from the VPC.
       - Option is only valid with the absent state.
       - You should use this with the wait option. Since you can not release an address while a delete operation is happening.
     default: 'yes'
+    type: bool
   wait:
     description:
       - Wait for operation to complete before returning.
     default: 'no'
+    type: bool
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
@@ -153,32 +156,32 @@ RETURN = '''
 create_time:
   description: The ISO 8601 date time format in UTC.
   returned: In all cases.
-  type: string
+  type: str
   sample: "2016-03-05T05:19:20.282000+00:00'"
 nat_gateway_id:
   description: id of the VPC NAT Gateway
   returned: In all cases.
-  type: string
+  type: str
   sample: "nat-0d1e3a878585988f8"
 subnet_id:
   description: id of the Subnet
   returned: In all cases.
-  type: string
+  type: str
   sample: "subnet-12345"
 state:
   description: The current state of the NAT Gateway.
   returned: In all cases.
-  type: string
+  type: str
   sample: "available"
 vpc_id:
   description: id of the VPC.
   returned: In all cases.
-  type: string
+  type: str
   sample: "vpc-12345"
 nat_gateway_addresses:
   description: List of dictionairies containing the public_ip, network_interface_id, private_ip, and allocation_id.
   returned: In all cases.
-  type: string
+  type: str
   sample: [
       {
           'public_ip': '52.52.52.52',

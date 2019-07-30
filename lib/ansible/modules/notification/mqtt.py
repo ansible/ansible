@@ -61,7 +61,7 @@ options:
         retained message immediately.
     type: bool
     default: 'no'
-  ca_certs:
+  ca_cert:
     description:
       - The path to the Certificate Authority certificate files that are to be
         treated as trusted by this client. If this is the only option given
@@ -72,21 +72,31 @@ options:
         network encryption but may not be sufficient depending on how the broker
         is configured.
     version_added: 2.3
-  certfile:
+    aliases: [ ca_certs ]
+  client_cert:
     description:
       - The path pointing to the PEM encoded client certificate. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
     version_added: 2.3
-  keyfile:
+    aliases: [ certfile ]
+  client_key:
     description:
       - The path pointing to the PEM encoded client private key. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
     version_added: 2.3
-
-
-# informational: requirements for nodes
+    aliases: [ keyfile ]
+  tls_version:
+    description:
+      - Specifies the version of the SSL/TLS protocol to be used.
+      - By default (if the python version supports it) the highest TLS version is
+        detected. If unavailable, TLS v1 is used.
+    type: str
+    choices:
+      - tlsv1.1
+      - tlsv1.2
+    version_added: 2.9
 requirements: [ mosquitto ]
 notes:
  - This module requires a connection to an MQTT broker such as Mosquitto
@@ -109,16 +119,21 @@ EXAMPLES = '''
 #
 
 import os
+import ssl
 import traceback
+import platform
+from distutils.version import LooseVersion
 
 HAS_PAHOMQTT = True
+PAHOMQTT_IMP_ERR = None
 try:
     import socket
     import paho.mqtt.publish as mqtt
 except ImportError:
+    PAHOMQTT_IMP_ERR = traceback.format_exc()
     HAS_PAHOMQTT = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -127,6 +142,10 @@ from ansible.module_utils._text import to_native
 #
 
 def main():
+    tls_map = {
+        'tlsv1.2': ssl.PROTOCOL_TLSv1_2,
+        'tlsv1.1': ssl.PROTOCOL_TLSv1_1,
+    }
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -139,15 +158,16 @@ def main():
             retain=dict(default=False, type='bool'),
             username=dict(default=None),
             password=dict(default=None, no_log=True),
-            ca_certs=dict(default=None, type='path'),
-            certfile=dict(default=None, type='path'),
-            keyfile=dict(default=None, type='path'),
+            ca_cert=dict(default=None, type='path', aliases=['ca_certs']),
+            client_cert=dict(default=None, type='path', aliases=['certfile']),
+            client_key=dict(default=None, type='path', aliases=['keyfile']),
+            tls_version=dict(default=None, choices=['tlsv1.1', 'tlsv1.2'])
         ),
         supports_check_mode=True
     )
 
     if not HAS_PAHOMQTT:
-        module.fail_json(msg="Paho MQTT is not installed")
+        module.fail_json(msg=missing_required_lib('paho-mqtt'), exception=PAHOMQTT_IMP_ERR)
 
     server = module.params.get("server", 'localhost')
     port = module.params.get("port", 1883)
@@ -158,9 +178,10 @@ def main():
     retain = module.params.get("retain")
     username = module.params.get("username", None)
     password = module.params.get("password", None)
-    ca_certs = module.params.get("ca_certs", None)
-    certfile = module.params.get("certfile", None)
-    keyfile = module.params.get("keyfile", None)
+    ca_certs = module.params.get("ca_cert", None)
+    certfile = module.params.get("client_cert", None)
+    keyfile = module.params.get("client_key", None)
+    tls_version = module.params.get("tls_version", None)
 
     if client_id is None:
         client_id = "%s_%s" % (socket.getfqdn(), os.getpid())
@@ -174,21 +195,42 @@ def main():
 
     tls = None
     if ca_certs is not None:
-        tls = {'ca_certs': ca_certs, 'certfile': certfile,
-               'keyfile': keyfile}
+        if tls_version:
+            tls_version = tls_map.get(tls_version, ssl.PROTOCOL_SSLv23)
+        else:
+            if LooseVersion(platform.python_version()) <= "3.5.2":
+                # Specifying `None` on later versions of python seems sufficient to
+                # instruct python to autonegotiate the SSL/TLS connection. On versions
+                # 3.5.2 and lower though we need to specify the version.
+                #
+                # Note that this is an alias for PROTOCOL_TLS, but PROTOCOL_TLS was
+                # not available until 3.5.3.
+                tls_version = ssl.PROTOCOL_SSLv23
+
+        tls = {
+            'ca_certs': ca_certs,
+            'certfile': certfile,
+            'keyfile': keyfile,
+            'tls_version': tls_version,
+        }
 
     try:
-        mqtt.single(topic, payload,
-                    qos=qos,
-                    retain=retain,
-                    client_id=client_id,
-                    hostname=server,
-                    port=port,
-                    auth=auth,
-                    tls=tls)
+        mqtt.single(
+            topic,
+            payload,
+            qos=qos,
+            retain=retain,
+            client_id=client_id,
+            hostname=server,
+            port=port,
+            auth=auth,
+            tls=tls
+        )
     except Exception as e:
-        module.fail_json(msg="unable to publish to MQTT broker %s" % to_native(e),
-                         exception=traceback.format_exc())
+        module.fail_json(
+            msg="unable to publish to MQTT broker %s" % to_native(e),
+            exception=traceback.format_exc()
+        )
 
     module.exit_json(changed=False, topic=topic)
 

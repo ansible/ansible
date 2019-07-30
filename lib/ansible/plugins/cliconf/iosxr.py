@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: iosxr
+short_description: Use iosxr cliconf to run command on Cisco IOS XR platform
+description:
+  - This iosxr plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Cisco IOS XR network devices.
+version_added: "2.4"
+"""
+
 import re
 import json
 
@@ -49,9 +60,12 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_image'] = match.group(1)
 
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
-        if match:
-            device_info['network_os_model'] = match.group(1)
+        model_search_strs = [r'^[Cc]isco (.+) \(revision', r'^[Cc]isco (\S+ \S+).+bytes of .*memory']
+        for item in model_search_strs:
+            match = re.search(item, data, re.M)
+            if match:
+                device_info['network_os_model'] = match.group(1)
+                break
 
         match = re.search(r'^(.+) uptime', data, re.M)
         if match:
@@ -59,11 +73,14 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def configure(self, admin=False):
+    def configure(self, admin=False, exclusive=False):
         prompt = to_text(self._connection.get_prompt(), errors='surrogate_or_strict').strip()
         if not prompt.endswith(')#'):
             if admin and 'admin-' not in prompt:
                 self.send_command('admin')
+            if exclusive:
+                self.send_command('configure exclusive')
+                return
             self.send_command('configure terminal')
 
     def abort(self, admin=False):
@@ -85,7 +102,7 @@ class Cliconf(CliconfBase):
 
         return self.send_command(cmd)
 
-    def edit_config(self, candidate=None, commit=True, admin=False, replace=None, comment=None, label=None):
+    def edit_config(self, candidate=None, commit=True, admin=False, exclusive=False, replace=None, comment=None, label=None):
         operations = self.get_device_operations()
         self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
@@ -93,7 +110,7 @@ class Cliconf(CliconfBase):
         results = []
         requests = []
 
-        self.configure(admin=admin)
+        self.configure(admin=admin, exclusive=exclusive)
 
         if replace:
             candidate = 'load {0}'.format(replace)
@@ -104,6 +121,11 @@ class Cliconf(CliconfBase):
             cmd = line['command']
             results.append(self.send_command(**line))
             requests.append(cmd)
+
+        # Before any commit happend, we can get a real configuration
+        # diff from the device and make it available by the iosxr_config module.
+        # This information can be usefull either in check mode or normal mode.
+        resp['show_commit_config_diff'] = self.get('show commit changes diff')
 
         if commit:
             self.commit(comment=comment, label=label, replace=replace)
@@ -234,10 +256,8 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff', 'configure', 'exit']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes', 'get_diff', 'configure', 'exit']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)

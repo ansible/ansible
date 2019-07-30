@@ -1,0 +1,51 @@
+---
+- debug:
+    msg: "START isoxr_lacp round trip integration tests on connection={{ ansible_connection }}"
+
+- block:
+    - include_tasks: _remove_config.yaml
+
+    - name: Apply the provided configuration (base config)
+      iosxr_lacp:
+        config:
+          system:
+            priority: 15
+            mac: 
+              address: 00c1.4c00.bd16
+        state: merged
+      register: base_config
+        
+    - name: Gather interfaces facts
+      iosxr_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - lacp
+
+    - name: Apply the provided configuration (config to be reverted)
+      iosxr_lacp:
+        config:
+          system:
+            priority: 10
+            mac: 
+              address: 00c1.4c00.bd10
+        state: merged
+      register: result
+      
+    - name: Assert that changes were applied
+      assert:
+        that: "{{ round_trip['after'] == result['after'] }}"
+
+    - name: Revert back to base config using facts round trip
+      iosxr_lacp:
+        config: "{{ ansible_facts['network_resources']['lacp'] }}"
+        state: replaced
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ base_config['after'] == revert['after'] }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

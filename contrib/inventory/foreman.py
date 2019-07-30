@@ -22,12 +22,6 @@
 # Stdlib imports
 # __future__ imports must occur at the beginning of file
 from __future__ import print_function
-try:
-    # Python 2 version
-    import ConfigParser
-except ImportError:
-    # Python 3 version
-    import configparser as ConfigParser
 import json
 import argparse
 import copy
@@ -47,6 +41,7 @@ if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
 from requests.auth import HTTPBasicAuth
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import configparser as ConfigParser
 
 
 def json_format_dict(data, pretty=False):
@@ -114,6 +109,11 @@ class ForemanInventory(object):
             self.want_hostcollections = config.getboolean('ansible', 'want_hostcollections')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
+
+        try:
+            self.want_ansible_ssh_host = config.getboolean('ansible', 'want_ansible_ssh_host')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_ansible_ssh_host = False
 
         # Do we want parameters to be interpreted if possible as JSON? (no by default)
         try:
@@ -434,6 +434,8 @@ class ForemanInventory(object):
                     'foreman': self.cache[hostname],
                     'foreman_params': self.params[hostname],
                 }
+                if self.want_ansible_ssh_host and 'ip' in self.cache[hostname]:
+                    self.inventory['_meta']['hostvars'][hostname]['ansible_ssh_host'] = self.cache[hostname]['ip']
                 if self.want_facts:
                     self.inventory['_meta']['hostvars'][hostname]['foreman_facts'] = self.facts[hostname]
 

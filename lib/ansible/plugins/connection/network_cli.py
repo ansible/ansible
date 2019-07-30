@@ -63,6 +63,7 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_ssh_pass
+      - name: ansible_ssh_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the
@@ -142,6 +143,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -149,7 +152,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -172,6 +175,22 @@ options:
       - name: ANSIBLE_PERSISTENT_BUFFER_READ_TIMEOUT
     vars:
       - name: ansible_buffer_read_timeout
+  persistent_log_messages:
+    type: boolean
+    description:
+      - This flag will enable logging the command executed and response received from
+        target device in the ansible log file. For this option to work 'log_path' ansible
+        configuration option is required to be set to a file path with write access.
+      - Be sure to fully understand the security implications of enabling this
+        option as it could create a security vulnerability by logging sensitive information in log file.
+    default: False
+    ini:
+      - section: persistent_connection
+        key: log_messages
+    env:
+      - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
+    vars:
+      - name: ansible_persistent_log_messages
 """
 
 import getpass
@@ -192,12 +211,6 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class AnsibleCmdRespRecv(Exception):
@@ -233,16 +246,16 @@ class Connection(NetworkConnectionBase):
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
-                self._sub_plugins.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
+                self.queue_message('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os)
+                self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
             else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+                self.queue_message('vvvv', 'unable to load cliconf for network_os %s' % self._network_os)
         else:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
             )
-        display.display('network_os is set to %s' % self._network_os, log_only=True)
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -285,21 +298,22 @@ class Connection(NetworkConnectionBase):
         play_context = PlayContext()
         play_context.deserialize(pc_data)
 
-        messages = ['updating play_context for connection']
+        self.queue_message('vvvv', 'updating play_context for connection')
         if self._play_context.become ^ play_context.become:
             if play_context.become is True:
                 auth_pass = play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
-                messages.append('authorizing connection')
+                self.queue_message('vvvv', 'authorizing connection')
             else:
                 self._terminal.on_unbecome()
-                messages.append('deauthorizing connection')
+                self.queue_message('vvvv', 'deauthorizing connection')
 
         self._play_context = play_context
 
-        self.reset_history()
-        self.disable_response_logging()
-        return messages
+        if hasattr(self, 'reset_history'):
+            self.reset_history()
+        if hasattr(self, 'disable_response_logging'):
+            self.disable_response_logging()
 
     def _connect(self):
         '''
@@ -313,7 +327,7 @@ class Connection(NetworkConnectionBase):
             ssh = self.paramiko_conn._connect()
 
             host = self.get_option('host')
-            display.vvvv('ssh connection done, setting terminal', host=host)
+            self.queue_message('vvvv', 'ssh connection done, setting terminal')
 
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
@@ -322,20 +336,20 @@ class Connection(NetworkConnectionBase):
             if not self._terminal:
                 raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
-            display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
+            self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
 
             self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
                          newline=self._terminal.terminal_inital_prompt_newline)
 
-            display.vvvv('firing event: on_open_shell()', host=host)
+            self.queue_message('vvvv', 'firing event: on_open_shell()')
             self._terminal.on_open_shell()
 
             if self._play_context.become and self._play_context.become_method == 'enable':
-                display.vvvv('firing event: on_become', host=host)
+                self.queue_message('vvvv', 'firing event: on_become')
                 auth_pass = self._play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
 
-            display.vvvv('ssh connection has completed successfully', host=host)
+            self.queue_message('vvvv', 'ssh connection has completed successfully')
             self._connected = True
 
         return self
@@ -346,17 +360,17 @@ class Connection(NetworkConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.debug("closing ssh connection to device", host=self._play_context.remote_addr)
+            self.queue_message('debug', "closing ssh connection to device")
             if self._ssh_shell:
-                display.debug("firing event: on_close_shell()")
+                self.queue_message('debug', "firing event: on_close_shell()")
                 self._terminal.on_close_shell()
                 self._ssh_shell.close()
                 self._ssh_shell = None
-                display.debug("cli session is now closed")
+                self.queue_message('debug', "cli session is now closed")
 
                 self.paramiko_conn.close()
                 self.paramiko_conn = None
-                display.debug("ssh connection has been closed successfully")
+                self.queue_message('debug', "ssh connection has been closed successfully")
         super(Connection, self).close()
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
@@ -370,12 +384,16 @@ class Connection(NetworkConnectionBase):
         command_prompt_matched = False
         matched_prompt_window = window_count = 0
 
+        cache_socket_timeout = self._ssh_shell.gettimeout()
         command_timeout = self.get_option('persistent_command_timeout')
         self._validate_timeout_value(command_timeout, "persistent_command_timeout")
+        if cache_socket_timeout != command_timeout:
+            self._ssh_shell.settimeout(command_timeout)
 
         buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
+        self._log_messages("command: %s" % command)
         while True:
             if command_prompt_matched:
                 try:
@@ -383,6 +401,7 @@ class Connection(NetworkConnectionBase):
                     signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
                     data = self._ssh_shell.recv(256)
                     signal.alarm(0)
+                    self._log_messages("response-%s: %s" % (window_count + 1, data))
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
                     # remaining response.
@@ -393,10 +412,12 @@ class Connection(NetworkConnectionBase):
                     signal.alarm(command_timeout)
 
                 except AnsibleCmdRespRecv:
+                    # reset socket timeout to global timeout
+                    self._ssh_shell.settimeout(cache_socket_timeout)
                     return self._command_response
             else:
                 data = self._ssh_shell.recv(256)
-
+                self._log_messages("response-%s: %s" % (window_count + 1, data))
             # when a channel stream is closed, received data will be empty
             if not data:
                 break
@@ -423,6 +444,8 @@ class Connection(NetworkConnectionBase):
                 resp = self._strip(self._last_response)
                 self._command_response = self._sanitize(resp, command)
                 if buffer_read_timeout == 0.0:
+                    # reset socket timeout to global timeout
+                    self._ssh_shell.settimeout(cache_socket_timeout)
                     return self._command_response
                 else:
                     command_prompt_matched = True
@@ -444,18 +467,19 @@ class Connection(NetworkConnectionBase):
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
-            display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
-            raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
+            self.queue_message('error', traceback.format_exc())
+            raise AnsibleConnectionFailure("timeout value %s seconds reached while trying to send command: %s"
+                                           % (self._ssh_shell.gettimeout(), command.strip()))
 
     def _handle_buffer_read_timeout(self, signum, frame):
-        display.vvvv("Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds"
-                     % self.get_option('persistent_buffer_read_timeout'), host=self._play_context.remote_addr)
+        self.queue_message('vvvv', "Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds" %
+                           self.get_option('persistent_buffer_read_timeout'))
         raise AnsibleCmdRespRecv()
 
     def _handle_command_timeout(self, signum, frame):
         msg = 'command timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and Troubleshooting Guide.'\
               % self.get_option('persistent_command_timeout')
-        display.display(msg, log_only=True)
+        self.queue_message('log', msg)
         raise AnsibleConnectionFailure(msg)
 
     def _strip(self, data):
@@ -490,6 +514,9 @@ class Connection(NetworkConnectionBase):
         for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
+                self._matched_cmd_prompt = match.group()
+                self._log_messages("matched command prompt: %s" % self._matched_cmd_prompt)
+
                 # if prompt_retry_check is enabled to check if same prompt is
                 # repeated don't send answer again.
                 if not prompt_retry_check:
@@ -497,7 +524,8 @@ class Connection(NetworkConnectionBase):
                     self._ssh_shell.sendall(b'%s' % prompt_answer)
                     if newline:
                         self._ssh_shell.sendall(b'\r')
-                self._matched_cmd_prompt = match.group()
+                        prompt_answer += b'\r'
+                    self._log_messages("matched command prompt answer: %s" % prompt_answer)
                 if check_all and prompts and not single_prompt:
                     prompts.pop(0)
                     answer.pop(0)
@@ -511,9 +539,14 @@ class Connection(NetworkConnectionBase):
         '''
         cleaned = []
         for line in resp.splitlines():
-            if (command and line.strip() == command.strip()) or self._matched_prompt.strip() in line:
+            if command and line.strip() == command.strip():
                 continue
-            cleaned.append(line)
+
+            for prompt in self._matched_prompt.strip().splitlines():
+                if prompt.strip() in line:
+                    break
+            else:
+                cleaned.append(line)
         return b'\n'.join(cleaned).strip()
 
     def _find_prompt(self, response):
@@ -533,6 +566,7 @@ class Connection(NetworkConnectionBase):
                         errored_response = response
                         self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
+                        self._log_messages("matched error regex '%s' from response '%s'" % (self._matched_pattern, errored_response))
                         break
 
         if not is_error_message:
@@ -541,6 +575,7 @@ class Connection(NetworkConnectionBase):
                 if match:
                     self._matched_pattern = regex.pattern
                     self._matched_prompt = match.group()
+                    self._log_messages("matched cli prompt '%s' with regex '%s' from response '%s'" % (self._matched_prompt, self._matched_pattern, response))
                     if not errored_response:
                         return True
 

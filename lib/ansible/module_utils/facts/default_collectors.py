@@ -68,11 +68,13 @@ from ansible.module_utils.facts.network.base import NetworkCollector
 from ansible.module_utils.facts.network.aix import AIXNetworkCollector
 from ansible.module_utils.facts.network.darwin import DarwinNetworkCollector
 from ansible.module_utils.facts.network.dragonfly import DragonFlyNetworkCollector
+from ansible.module_utils.facts.network.fc_wwn import FcWwnInitiatorFactCollector
 from ansible.module_utils.facts.network.freebsd import FreeBSDNetworkCollector
 from ansible.module_utils.facts.network.hpux import HPUXNetworkCollector
 from ansible.module_utils.facts.network.hurd import HurdNetworkCollector
 from ansible.module_utils.facts.network.linux import LinuxNetworkCollector
 from ansible.module_utils.facts.network.iscsi import IscsiInitiatorNetworkCollector
+from ansible.module_utils.facts.network.nvme import NvmeInitiatorNetworkCollector
 from ansible.module_utils.facts.network.netbsd import NetBSDNetworkCollector
 from ansible.module_utils.facts.network.openbsd import OpenBSDNetworkCollector
 from ansible.module_utils.facts.network.sunos import SunOSNetworkCollector
@@ -143,6 +145,7 @@ _hardware = [
 
 _network = [
     DnsFactCollector,
+    FcWwnInitiatorFactCollector,
     NetworkCollector,
     AIXNetworkCollector,
     DarwinNetworkCollector,
@@ -151,6 +154,7 @@ _network = [
     HPUXNetworkCollector,
     HurdNetworkCollector,
     IscsiInitiatorNetworkCollector,
+    NvmeInitiatorNetworkCollector,
     LinuxNetworkCollector,
     NetBSDNetworkCollector,
     OpenBSDNetworkCollector,

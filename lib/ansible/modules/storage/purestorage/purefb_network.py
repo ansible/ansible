@@ -23,34 +23,39 @@ description:
     - When creating a network interface a subnet must already exist with
       a network prefix that covers the IP address of the interface being
       created.
-author: Simon Dodsley (@sdodsley)
+author: Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   name:
     description:
       - Interface Name.
     required: true
+    type: str
   state:
     description:
       - Create, delete or modifies a network interface.
     required: false
     default: present
     choices: [ "present", "absent" ]
+    type: str
   address:
     description:
       - IP address of interface.
     required: false
+    type: str
   services:
     description:
       - Define which services are configured for the interfaces.
     required: false
     choices: [ "data" ]
     default: data
+    type: str
   itype:
     description:
       - Type of interface.
     required: false
     choices: [ "vip" ]
     default: vip
+    type: str
 extends_documentation_fragment:
     - purestorage.fb
 '''
@@ -102,7 +107,7 @@ def get_iface(module, blade):
     try:
         res = blade.network_interfaces.list_network_interfaces(names=iface)
         return res.items[0]
-    except:
+    except Exception:
         return None
 
 
@@ -121,7 +126,7 @@ def create_iface(module, blade):
                                                                                               )
                                                            )
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Interface creation failed. Check valid subnet exists for IP address {0}'.format(module.params['address']))
         changed = False
     module.exit_json(changed=changed)
@@ -138,7 +143,7 @@ def modify_iface(module, blade):
             blade.network_interfaces.update_network_interfaces(names=iface_new,
                                                                network_interface=NetworkInterface(address=module.params['address']))
             changed = True
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -150,7 +155,7 @@ def delete_iface(module, blade):
     try:
         blade.network_interfaces.delete_network_interfaces(names=iface)
         changed = True
-    except:
+    except Exception:
         changed = False
     module.exit_json(changed=changed)
 

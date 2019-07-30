@@ -96,6 +96,13 @@ With earlier versions of Ansible, it was necessary to configure a
 suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
 or globally by setting `ssh_args` in `ansible.cfg`.
 
+.. _ssh_serveraliveinterval:
+
+How do I get Ansible to notice a dead target in a timely manner?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+You can add ``-o ServerAliveInterval=NumberOfSeconds`` in ``ssh_args`` from ``ansible.cfg``. Without this option, SSH and therefore Ansible will wait until the TCP connection times out. Another solution is to add ``ServerAliveInterval`` into your global SSH configuration. A good value for ``ServerAliveInterval`` is up to you to decide; keep in mind that ``ServerAliveCountMax=3`` is the SSH default so any value you set will be tripled before terminating the SSH session.
+
 .. _ec2_cloud_performance:
 
 How do I speed up management inside EC2?
@@ -153,6 +160,12 @@ Please refer the documentation of the respective package for such dependencies a
 Common Platform Issues
 ++++++++++++++++++++++
 
+What customer platforms does Red Hat Support?
+---------------------------------------------
+
+
+A number of them! For a definitive list please see this `Knowledge Base article <https://access.redhat.com/articles/3168091>`_.
+
 Running in a virtualenv
 -----------------------
 
@@ -168,9 +181,9 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
 
 .. code-block:: shell
 
-    $ virtualenv ansible
+    $ virtualenv -p python3 ansible
     $ source ./ansible/bin/activate
-    $ pip3 install ansible
+    $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
 bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
@@ -222,6 +235,40 @@ is likely the problem. There are several workarounds:
 
   (bash, ksh, and zsh should also be POSIX compatible if you have any of those installed).
 
+Running on z/OS
+---------------
+
+There are a few common errors that one might run into when trying to execute Ansible on z/OS as a target.
+
+* Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
+
+  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
+
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
+
+  .. error::
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+
+  To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
+
+* Python interpret cannot be found in default location ``/usr/bin/python`` on target host.
+
+  .. error::
+      /usr/bin/python: EDC5129I No such file or directory
+
+  To fix this set the path to the python installation in your inventory like so::
+
+    zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
+
+* Start of python fails with ``The module libpython2.7.so was not found.``
+
+  .. error::
+    EE3501S The module libpython2.7.so was not found.
+
+  On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+
+    zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
+
 
 .. _use_roles:
 
@@ -239,7 +286,7 @@ Where does the configuration file live and what can I configure in it?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-See :doc:`../installation_guide/intro_configuration`.
+See :ref:`intro_configuration`.
 
 .. _who_would_ever_want_to_disable_cowsay_but_ok_here_is_how:
 
@@ -356,7 +403,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-is static and predictable.  (If you are using :doc:`../reference_appendices/tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable.  (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -401,14 +448,14 @@ For environment variables on the TARGET machines, they are available via facts i
 
    {{ ansible_env.SOME_VARIABLE }}
 
-If you need to set environment variables for TASK execution, see the Advanced Playbooks section about environments.
-There is no set way to set environment variables on your target machines, you can use template/replace/other modules to do so,
-but the exact files to edit vary depending on your OS and distribution and local configuration.
+If you need to set environment variables for TASK execution, see :ref:`playbooks_environment` in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
+There are several ways to set environment variables on your target machines. You can use the :ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>` modules to introduce environment variables into files.
+The exact files to edit vary depending on your OS and distribution and local configuration.
 
 .. _user_passwords:
 
-How do I generate crypted passwords for the user module?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How do I generate encrypted passwords for the user module?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Ansible ad-hoc command is the easiest option:
 
@@ -438,7 +485,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
     python -c "from passlib.hash import sha512_crypt; import getpass; print(sha512_crypt.using(rounds=5000).hash(getpass.getpass()))"
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
-You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`../user_guide/playbooks_vault` to encrypt sensitive data.
+You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :ref:`playbooks_vault` to encrypt sensitive data.
 
 In OpenBSD, a similar option is available in the base system called encrypt(1):
 
@@ -518,7 +565,7 @@ We also offer free web-based training classes on a regular basis. See our `webin
 Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :doc:`../reference_appendices/tower`.
+Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
 
 
 .. _docs_contributions:
@@ -534,7 +581,7 @@ Great question!  Documentation for Ansible is kept in the main project git repos
 How do I keep secret data in my playbook?
 +++++++++++++++++++++++++++++++++++++++++
 
-If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`../user_guide/playbooks_vault`.
+If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :ref:`playbooks_vault`.
 
 If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
@@ -596,6 +643,45 @@ Several reasons, in most cases it has to do with maintainability, there are tons
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
 
 
+.. _ansible_host_delegated:
+
+How do I get the original ansible_host when I delegate a task?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overwritten,
+but you can still access the original via ``hostvars``::
+
+   original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+
+This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+
+
+.. _scp_protocol_error_filename:
+
+How do I fix 'protocol error: filename does not match request' when fetching a file?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Newer releases of OpenSSH have a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_ in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
+
+    failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
+
+In these releases, SCP tries to validate that the path of the file to fetch matches the requested path.
+The validation
+fails if the remote filename requires quotes to escape spaces or non-ascii characters in its path. To avoid this error:
+
+* Use SFTP instead of SCP by setting ``scp_if_ssh`` to ``smart`` (which tries SFTP first) or to ``False``. You can do this in one of four ways:
+    * Rely on the default setting, which is ``smart`` - this works if ``scp_if_ssh`` is not explicitly set anywhere
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>` in inventory: ``ansible_scp_if_ssh: False``
+    * Set an environment variable on your control node: ``export ANSIBLE_SCP_IF_SSH=False``
+    * Pass an environment variable when you run Ansible: ``ANSIBLE_SCP_IF_SSH=smart ansible-playbook``
+    * Modify your ``ansible.cfg`` file: add ``scp_if_ssh=False`` to the ``[ssh_connection]`` section
+* If you must use SCP, set the ``-T`` arg to tell the SCP client to ignore path validation. You can do this in one of three ways:
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>`: ``ansible_scp_extra_args=-T``,
+    * Export or pass an environment variable: ``ANSIBLE_SCP_EXTRA_ARGS=-T``
+    * Modify your ``ansible.cfg`` file: add ``scp_extra_args=-T`` to the ``[ssh_connection]`` section
+
+.. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation and will not trigger this error.
+
 .. _i_dont_see_my_question:
 
 I don't see my question here
@@ -605,9 +691,9 @@ Please see the section below for a link to IRC and the Google Group, where you c
 
 .. seealso::
 
-   :doc:`../user_guide/playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`../user_guide/playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

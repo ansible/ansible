@@ -1,0 +1,16 @@
+---
+  - name: Make sure there are no existing SNMP configuration settings
+    win_regedit:
+      path: "{{ item }}"
+      state: absent
+    loop:
+      - "{{ permitted_managers_key }}"
+      - "{{ valid_communities_key }}"
+
+  - name: Create skeleton registry keys for SNMP
+    win_regedit:
+      path: "{{ item }}"
+      state: present
+    loop:
+      - "{{ permitted_managers_key }}"
+      - "{{ valid_communities_key }}"

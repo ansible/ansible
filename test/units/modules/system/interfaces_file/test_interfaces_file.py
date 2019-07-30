@@ -17,14 +17,15 @@
 
 from units.compat import unittest
 from ansible.modules.system import interfaces_file
-import os
-import json
-import io
-import inspect
 from shutil import copyfile, move
 import difflib
-import tempfile
+import inspect
+import io
+import json
+import os
+import re
 import shutil
+import tempfile
 
 
 class AnsibleFailJson(Exception):
@@ -50,8 +51,13 @@ golden_output_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'golden
 
 
 class TestInterfacesFileModule(unittest.TestCase):
-    def getTestFiles(self):
-        return next(os.walk(fixture_path))[2]
+    def getTestFiles(self, include_filter=None, exclude_filter=None):
+        flist = next(os.walk(fixture_path))[2]
+        if include_filter:
+            flist = filter(lambda x: re.match(include_filter, x), flist)
+        if exclude_filter:
+            flist = filter(lambda x: not re.match(exclude_filter, x), flist)
+        return flist
 
     def compareFileToBackup(self, path, backup):
         with open(path) as f1:
@@ -199,9 +205,9 @@ class TestInterfacesFileModule(unittest.TestCase):
         testcases = {
             "change_method": [
                 {
-                    'iface': 'eth0',
+                    'iface': 'eth1',
                     'option': 'method',
-                    'value': 'manual',
+                    'value': 'dhcp',
                     'state': 'present',
                 }
             ],
@@ -217,7 +223,15 @@ class TestInterfacesFileModule(unittest.TestCase):
                     options = options_list[0]
                     fail_json_iterations = []
                     try:
-                        _, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'], options['option'], options['value'], options['state'])
+                        changed, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'], options['option'],
+                                                                            options['value'], options['state'])
+                        # When a changed is made try running it again for proper idempotency
+                        if changed:
+                            changed_again, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'],
+                                                                                      options['option'], options['value'], options['state'])
+                            self.assertFalse(changed_again,
+                                             msg='Second request for change should return false for {0} running on {1}'.format(testname,
+                                                                                                                               testfile))
                     except AnsibleFailJson as e:
                         fail_json_iterations.append("fail_json message: %s\noptions:\n%s" %
                                                     (str(e), json.dumps(options, sort_keys=True, indent=4, separators=(',', ': '))))

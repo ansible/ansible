@@ -1,0 +1,2 @@
+bugfixes:
+  - gitlab_runner - Fix idempotency when creating runner (https://github.com/ansible/ansible/issues/57759)

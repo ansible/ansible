@@ -1,0 +1,247 @@
+# Test code for the Meraki Content Filteringmodule
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+
+  - name: Create network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      type: appliance
+      timezone: America/Chicago
+    delegate_to: localhost
+    register: create_net_appliance
+
+  - name: Test net_name and id exclusivity
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      net_id: 12345
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: net_exclusive
+    ignore_errors: yes    
+
+  - assert:
+      that:
+        - 'net_exclusive.msg == "net_name and net_id are mutually exclusive"'
+
+  - name: Set single allowed URL pattern with check mode
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - single_allowed_check.data.allowed_url_patterns | length == 1
+        - single_allowed_check is changed
+
+  - name: Set single allowed URL pattern
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed
+
+  - assert:
+      that:
+        - single_allowed.data.allowed_url_patterns | length == 1
+
+  - name: Set single allowed URL pattern for idempotency with check mode
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed_idempotent_check
+    check_mode: yes
+
+  - debug:
+      var: single_allowed_idempotent_check
+
+  - assert:
+      that:
+        - single_allowed_idempotent_check is not changed
+        - single_allowed.data.allowed_url_patterns | length == 1
+
+  - name: Set single allowed URL pattern for idempotency
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed_idempotent
+
+  - debug:
+      var: single_allowed_idempotent
+
+  - assert:
+      that:
+        - single_allowed_idempotent.changed == False
+        - single_allowed_idempotent.data is defined
+
+  - name: Set single blocked URL pattern
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      blocked_urls:
+        - "http://www.ansible.com/*"
+    register: single_blocked
+
+  - debug:
+      var: single_blocked
+
+  - assert:
+      that:
+        - single_blocked.data.blocked_url_patterns | length == 1
+
+  - name: Set two allowed URL pattern
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+        - "http://www.redhat.com"
+    register: two_allowed
+
+  - debug:
+      var: two_allowed
+
+  - assert:
+      that:
+        - two_allowed.changed == True
+        - two_allowed.data.allowed_url_patterns | length == 2
+
+  - name: Set blocked URL category
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      category_list_size: full list
+      blocked_categories:
+        - "Adult and Pornography"
+    register: blocked_category
+
+  - debug:
+      var: blocked_category
+
+  - assert:
+      that:
+        - blocked_category.changed == True
+        - blocked_category.data.blocked_url_categories | length == 1
+        - blocked_category.data.url_category_list_size == "fullList"
+
+  - name: Set blocked URL category with top sites
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      category_list_size: top sites
+      blocked_categories:
+        - "Adult and Pornography"
+    register: blocked_category
+
+  - debug:
+      var: blocked_category
+
+  - assert:
+      that:
+        - blocked_category.changed == True
+        - blocked_category.data.blocked_url_categories | length == 1
+        - blocked_category.data.url_category_list_size == "topSites"
+
+  - name: Query all content filtering information
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: query
+    delegate_to: localhost
+    register: query_all
+
+  - debug:
+      var: query_all
+
+  - name: Query all content filtering assertion
+    assert:
+      that:
+        - query_all.data.categories is defined
+        - query_all.data.policy is defined
+
+  - name: Query categories
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: query
+      subset: categories
+    delegate_to: localhost
+    register: query_categories
+
+  - debug:
+      var: query_categories
+
+  - name: Query categories assertion
+    assert:
+      that:
+        - query_categories.data is defined
+
+  - name: Query content filtering policies
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      subset: policy
+      state: query
+    delegate_to: localhost
+    register: query_policy
+
+  - debug:
+      var: query_policy
+
+  - name: Query contnet filtering policy assertion
+    assert:
+      that:
+        - query_policy.data is defined
+
+  always:
+    - name: Reset policies
+      meraki_content_filtering:
+        auth_key: '{{auth_key}}'
+        org_name: '{{test_org_name}}'
+        net_name: '{{test_net_name}}'
+        state: present
+        category_list_size: full list
+        allowed_urls:
+          -
+        blocked_urls:
+          -

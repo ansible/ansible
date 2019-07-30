@@ -11,9 +11,8 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -34,24 +33,22 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_snmp_community import ApiParameters
-        from ansible.modules.network.f5.bigip_snmp_community import ModuleParameters
-        from ansible.modules.network.f5.bigip_snmp_community import ModuleManager
-        from ansible.modules.network.f5.bigip_snmp_community import V1Manager
-        from ansible.modules.network.f5.bigip_snmp_community import V2Manager
-        from ansible.modules.network.f5.bigip_snmp_community import ArgumentSpec
+    from ansible.modules.network.f5.bigip_snmp_community import ApiParameters
+    from ansible.modules.network.f5.bigip_snmp_community import ModuleParameters
+    from ansible.modules.network.f5.bigip_snmp_community import ModuleManager
+    from ansible.modules.network.f5.bigip_snmp_community import V1Manager
+    from ansible.modules.network.f5.bigip_snmp_community import V2Manager
+    from ansible.modules.network.f5.bigip_snmp_community import ArgumentSpec
 
-        from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import F5ModuleError
 
-        # Ansible 2.8 imports
-        from units.compat import unittest
-        from units.compat.mock import Mock
-        from units.compat.mock import patch
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
 
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -157,8 +154,6 @@ class TestParameters(unittest.TestCase):
         assert p.snmp_username == 'foo'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -175,14 +170,17 @@ class TestManager(unittest.TestCase):
             ip_version=4,
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V1Manager(module=module)
 
@@ -199,6 +197,7 @@ class TestManager(unittest.TestCase):
 
     def test_create_v1_community_1(self, *args):
         set_module_args(dict(
+            name='foo',
             version='v1',
             community='foo',
             source='1.1.1.1',
@@ -208,14 +207,17 @@ class TestManager(unittest.TestCase):
             ip_version=4,
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V1Manager(module=module)
 
@@ -242,14 +244,17 @@ class TestManager(unittest.TestCase):
             snmp_privacy_password='secretsecret',
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V2Manager(module=module)
 
@@ -275,14 +280,17 @@ class TestManager(unittest.TestCase):
             snmp_privacy_password='secretsecret',
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V2Manager(module=module)
 

@@ -21,6 +21,7 @@ version_added: "2.7"
 description:
 - Create, edit, query, or delete VLANs in a Meraki environment.
 notes:
+- Meraki's API will return an error if VLANs aren't enabled on a network. VLANs are returned properly if VLANs are enabled on a network.
 - Some of the options are likely only used for developers within Meraki.
 - Meraki's API defaults to networks having VLAN support disabled and there is no way to enable VLANs support in the API. VLAN support must be enabled manually.
 options:
@@ -29,41 +30,52 @@ options:
       - Specifies whether object should be queried, created/modified, or removed.
       choices: [absent, present, query]
       default: query
+      type: str
     net_name:
       description:
       - Name of network which VLAN is in or should be in.
       aliases: [network]
+      type: str
     net_id:
       description:
       - ID of network which VLAN is in or should be in.
+      type: str
     vlan_id:
       description:
       - ID number of VLAN.
       - ID should be between 1-4096.
+      type: int
     name:
       description:
       - Name of VLAN.
       aliases: [vlan_name]
+      type: str
     subnet:
       description:
       - CIDR notation of network subnet.
+      type: str
     appliance_ip:
       description:
       - IP address of appliance.
       - Address must be within subnet specified in C(subnet) parameter.
+      type: str
     dns_nameservers:
       description:
       - Semi-colon delimited list of DNS IP addresses.
       - Specify one of the following options for preprogrammed DNS entries opendns, google_dns, upstream_dns
+      type: str
     reserved_ip_range:
       description:
       - IP address ranges which should be reserve and not distributed via DHCP.
+      type: list
     vpn_nat_subnet:
       description:
       - The translated VPN subnet if VPN and VPN subnet translation are enabled on the VLAN.
+      type: str
     fixed_ip_assignments:
       description:
       - Static IP address assignements to be distributed via DHCP by MAC address.
+      type: list
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -137,17 +149,17 @@ response:
   returned: success
   type: complex
   contains:
-    applianceIp:
+    appliance_ip:
       description: IP address of Meraki appliance in the VLAN
       returned: success
-      type: string
+      type: str
       sample: 192.0.1.1
     dnsnamservers:
       description: IP address or Meraki defined DNS servers which VLAN should use by default
       returned: success
-      type: string
+      type: str
       sample: upstream_dns
-    fixedIpAssignments:
+    fixed_ip_assignments:
       description: List of MAC addresses which have IP addresses assigned.
       returned: success
       type: complex
@@ -160,14 +172,14 @@ response:
             ip:
               description: IP address which is assigned to the MAC address.
               returned: success
-              type: string
+              type: str
               sample: 192.0.1.4
             name:
               description: Descriptive name for binding.
               returned: success
-              type: string
+              type: str
               sample: fixed_ip
-    reservedIpRanges:
+    reserved_ip_ranges:
       description: List of IP address ranges which are reserved for static assignment.
       returned: success
       type: complex
@@ -175,17 +187,17 @@ response:
         comment:
           description: Description for IP address reservation.
           returned: success
-          type: string
+          type: str
           sample: reserved_range
         end:
           description: Last IP address in reservation range.
           returned: success
-          type: string
+          type: str
           sample: 192.0.1.10
         start:
           description: First IP address in reservation range.
           returned: success
-          type: string
+          type: str
           sample: 192.0.1.5
     id:
       description: VLAN ID number.
@@ -193,25 +205,74 @@ response:
       type: int
       sample: 2
     name:
-      description: Descriptive name of VLAN
+      description: Descriptive name of VLAN.
       returned: success
-      type: string
+      type: str
       sample: TestVLAN
     networkId:
       description: ID number of Meraki network which VLAN is associated to.
       returned: success
-      type: string
+      type: str
       sample: N_12345
     subnet:
       description: CIDR notation IP subnet of VLAN.
       returned: success
-      type: string
-      sample: 192.0.1.0/24
+      type: str
+      sample: "192.0.1.0/24"
+    dhcp_handling:
+      description: Status of DHCP server on VLAN.
+      returned: success
+      type: str
+      sample: Run a DHCP server
+    dhcp_lease_time:
+      description: DHCP lease time when server is active.
+      returned: success
+      type: str
+      sample: 1 day
+    dhcp_boot_options_enabled:
+      description: Whether DHCP boot options are enabled.
+      returned: success
+      type: bool
+      sample: no
+    dhcp_boot_next_server:
+      description: DHCP boot option to direct boot clients to the server to load the boot file from.
+      returned: success
+      type: str
+      sample: 192.0.1.2
+    dhcp_boot_filename:
+      description: Filename for boot file.
+      returned: success
+      type: str
+      sample: boot.txt
+    dhcp_options:
+      description: DHCP options.
+      returned: success
+      type: complex
+      contains:
+        code:
+          description:
+            - Code for DHCP option.
+            - Integer between 2 and 254.
+          returned: success
+          type: int
+          sample: 43
+        type:
+          description:
+            - Type for DHCP option.
+            - Choices are C(text), C(ip), C(hex), C(integer).
+          returned: success
+          type: str
+          sample: text
+        value:
+          description: Value for the DHCP option.
+          returned: success
+          type: str
+          sample: 192.0.1.2
 '''
 
-import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -220,13 +281,6 @@ def fixed_ip_factory(meraki, data):
     for item in data:
         fixed_ips[item['mac']] = {'ip': item['ip'], 'name': item['name']}
     return fixed_ips
-
-
-def temp_get_nets(meraki, org_name):
-    org_id = meraki.get_org_id(org_name)
-    path = meraki.construct_path('get_all', function='network', org_id=org_id)
-    r = meraki.request(path, method='GET')
-    return r
 
 
 def get_vlans(meraki, net_id):
@@ -311,12 +365,10 @@ def main():
     org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    nets = meraki.get_nets(org_id=org_id)
-    net_id = None
-    if meraki.params['net_name']:
+    net_id = meraki.params['net_id']
+    if net_id is None:
+        nets = meraki.get_nets(org_id=org_id)
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
-    elif meraki.params['net_id']:
-        net_id = meraki.params['net_id']
 
     if meraki.params['state'] == 'query':
         if not meraki.params['vlan_id']:
@@ -331,12 +383,16 @@ def main():
                    'subnet': meraki.params['subnet'],
                    'applianceIp': meraki.params['appliance_ip'],
                    }
-        if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']) is False:
+        if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']) is False:  # Create new VLAN
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = payload
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('create', net_id=net_id)
             response = meraki.request(path, method='POST', payload=json.dumps(payload))
             meraki.result['changed'] = True
             meraki.result['data'] = response
-        else:
+        else:  # Update existing VLAN
             path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
             original = meraki.request(path, method='GET')
             if meraki.params['dns_nameservers']:
@@ -352,28 +408,34 @@ def main():
                 payload['vpnNatSubnet'] = meraki.params['vpn_nat_subnet']
             ignored = ['networkId']
             if meraki.is_update_required(original, payload, optional_ignore=ignored):
+                meraki.result['diff'] = dict()
+                diff = recursive_diff(original, payload)
+                meraki.result['diff']['before'] = diff[0]
+                meraki.result['diff']['after'] = diff[1]
+                if meraki.module.check_mode is True:
+                    original.update(payload)
+                    meraki.result['changed'] = True
+                    meraki.result['data'] = original
+                    meraki.exit_json(**meraki.result)
                 path = meraki.construct_path('update', net_id=net_id) + str(meraki.params['vlan_id'])
                 response = meraki.request(path, method='PUT', payload=json.dumps(payload))
                 meraki.result['changed'] = True
                 meraki.result['data'] = response
+            else:
+                if meraki.module.check_mode is True:
+                    meraki.result['data'] = original
+                    meraki.exit_json(**meraki.result)
+                meraki.result['data'] = original
     elif meraki.params['state'] == 'absent':
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']):
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('delete', net_id=net_id) + str(meraki.params['vlan_id'])
             response = meraki.request(path, 'DELETE')
             meraki.result['changed'] = True
             meraki.result['data'] = response
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
-
-    # execute checks for argument completeness
-
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

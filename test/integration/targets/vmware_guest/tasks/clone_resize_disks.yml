@@ -1,0 +1,75 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Noe Gonzalez <noe.a.gonzalez@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: create new VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: clone_resize_disks_original
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    folder: "{{ f0 }}"
+    hardware:
+      num_cpus: 1
+      memory_mb: 128
+    guest_id: centos7_64Guest
+    disk:
+      - size_gb: 1
+        type: thin
+        autoselect_datastore: True
+    state: poweredoff
+
+- name: convert to VM template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: clone_resize_disks_original
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    folder: "{{ f0 }}"
+    is_template: True
+
+- name: clone template and modify disks
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: clone_resize_disks_clone
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    folder: "{{ f0 }}"
+    disk:
+      - size_gb: 2
+        type: thin
+        autoselect_datastore: True
+      - size_gb: 3
+        type: thin
+        autoselect_datastore: True
+    template: clone_resize_disks_original
+    state: poweredoff
+  register: l_clone_template_modify_disks
+
+- assert:
+    that:
+      - l_clone_template_modify_disks.changed | bool
+
+- name: delete VM clone & original template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ item }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    folder: "{{ f0 }}"
+    state: absent
+  with_items:
+    - clone_resize_disks_original
+    - clone_resize_disks_clone

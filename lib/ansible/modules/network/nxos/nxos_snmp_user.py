@@ -90,6 +90,7 @@ commands:
     sample: ["snmp-server user ntc network-operator auth md5 test_password"]
 '''
 
+import re
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
@@ -134,6 +135,7 @@ def get_snmp_groups(module):
 def get_snmp_user(user, module):
     command = 'show snmp user {0}'.format(user)
     body = execute_show_command(command, module, text=True)
+    body_text = body[0]
 
     if 'No such entry' not in body[0]:
         body = execute_show_command(command, module)
@@ -177,28 +179,74 @@ def get_snmp_user(user, module):
         else:
             resource['encrypt'] = 'none'
 
-        group_table = resource_table[tablegrpkey][rowgrpkey]
-
         groups = []
-        try:
-            for group in group_table:
-                groups.append(str(group[grpkey]).strip())
-        except TypeError:
-            groups.append(str(group_table[grpkey]).strip())
+        if tablegrpkey in resource_table:
+            group_table = resource_table[tablegrpkey][rowgrpkey]
+            try:
+                for group in group_table:
+                    groups.append(str(group[grpkey]).strip())
+            except TypeError:
+                groups.append(str(group_table[grpkey]).strip())
 
-        # Now for the platform bug case, get the groups
-        if isinstance(rt, list):
-            # remove 1st element from the list as this is parsed already
-            rt.pop(0)
-            # iterate through other elements indexed by
-            # 'user' and add it to groups.
-            for each in rt:
-                groups.append(each['user'].strip())
+            # Now for the platform bug case, get the groups
+            if isinstance(rt, list):
+                # remove 1st element from the list as this is parsed already
+                rt.pop(0)
+                # iterate through other elements indexed by
+                # 'user' and add it to groups.
+                for each in rt:
+                    groups.append(each['user'].strip())
+
+        # Some 'F' platforms use 'group' key instead
+        elif 'group' in resource_table:
+            # single group is a string, multiple groups in a list
+            groups = resource_table['group']
+            if isinstance(groups, str):
+                groups = [groups]
 
         resource['group'] = groups
 
     except (KeyError, AttributeError, IndexError, TypeError):
+        if not resource and body_text and 'No such entry' not in body_text:
+            # 6K and other platforms may not return structured output;
+            # attempt to get state from text output
+            resource = get_non_structured_snmp_user(body_text)
+
+    return resource
+
+
+def get_non_structured_snmp_user(body_text):
+    # This method is a workaround for platforms that don't support structured
+    # output for 'show snmp user <foo>'. This workaround may not work on all
+    # platforms. Sample non-struct output:
+    #
+    # User                Auth  Priv(enforce) Groups              acl_filter
+    # ____                ____  _____________ ______              __________
+    # sample1             no    no            network-admin       ipv4:my_acl
+    #                                         network-operator
+    #                                         priv-11
+    #         -OR-
+    # sample2             md5   des(no)       priv-15
+    #         -OR-
+    # sample3             md5   aes-128(no)   network-admin
+    resource = {}
+    output = body_text.rsplit('__________')[-1]
+    pat = re.compile(r'^(?P<user>\S+)\s+'
+                     r'(?P<auth>\S+)\s+'
+                     r'(?P<priv>[\w\d-]+)(?P<enforce>\([\w\d-]+\))*\s+'
+                     r'(?P<group>\S+)',
+                     re.M)
+    m = re.search(pat, output)
+    if not m:
         return resource
+    resource['user'] = m.group('user')
+    resource['auth'] = m.group('auth')
+    resource['encrypt'] = 'aes-128' if 'aes' in str(m.group('priv')) else 'none'
+
+    resource['group'] = [m.group('group')]
+    more_groups = re.findall(r'^\s+([\w\d-]+)\s*$', output, re.M)
+    if more_groups:
+        resource['group'] += more_groups
 
     return resource
 

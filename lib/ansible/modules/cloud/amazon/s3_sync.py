@@ -95,6 +95,7 @@ options:
     required: false
     default: no
     version_added: "2.4"
+    type: bool
 
 requirements:
   - boto3 >= 1.4.4
@@ -435,7 +436,7 @@ def filter_list(s3, bucket, s3filelist, strategy):
                 entry['whytime'] = '{0} / {1}'.format(local_modified_epoch, remote_modified_epoch)
                 entry['whysize'] = '{0} / {1}'.format(local_size, remote_size)
 
-                if local_modified_epoch <= remote_modified_epoch or local_size == remote_size:
+                if local_modified_epoch <= remote_modified_epoch and local_size == remote_size:
                     entry['skip_flag'] = True
             else:
                 entry['why'] = "no s3_head"

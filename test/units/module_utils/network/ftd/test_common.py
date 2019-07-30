@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.module_utils.network.ftd.common import equal_objects
+from ansible.module_utils.network.ftd.common import equal_objects, delete_ref_duplicates, construct_ansible_facts
 
 
 # simple objects
@@ -67,6 +67,13 @@ def test_equal_objects_return_true_with_equal_objects():
     assert equal_objects(
         {'foo': 1, 'bar': 2},
         {'bar': 2, 'foo': 1}
+    )
+
+
+def test_equal_objects_return_true_with_equal_str_like_values():
+    assert equal_objects(
+        {'foo': b'bar'},
+        {'foo': u'bar'}
     )
 
 
@@ -239,3 +246,201 @@ def test_equal_objects_return_true_with_equal_nested_list_of_object_references()
             }
         }
     )
+
+
+def test_equal_objects_return_true_with_reference_list_containing_duplicates():
+    assert equal_objects(
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'ports': [{
+                    'name': 'oldPortName',
+                    'type': 'port',
+                    'id': '123'
+                }, {
+                    'name': 'oldPortName',
+                    'type': 'port',
+                    'id': '123'
+                }, {
+                    'name': 'oldPortName2',
+                    'type': 'port',
+                    'id': '234'
+                }]
+            }
+        },
+        {
+            'name': 'foo',
+            'config': {
+                'version': '1',
+                'ports': [{
+                    'name': 'newPortName',
+                    'type': 'port',
+                    'id': '123'
+                }, {
+                    'name': 'newPortName2',
+                    'type': 'port',
+                    'id': '234',
+                    'extraField': 'foo'
+                }]
+            }
+        }
+    )
+
+
+def test_delete_ref_duplicates_with_none():
+    assert delete_ref_duplicates(None) is None
+
+
+def test_delete_ref_duplicates_with_empty_dict():
+    assert {} == delete_ref_duplicates({})
+
+
+def test_delete_ref_duplicates_with_simple_object():
+    data = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar',
+        'values': ['a', 'b']
+    }
+    assert data == delete_ref_duplicates(data)
+
+
+def test_delete_ref_duplicates_with_object_containing_refs():
+    data = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar',
+        'refs': [
+            {'id': '123', 'type': 'baz'},
+            {'id': '234', 'type': 'baz'},
+            {'id': '234', 'type': 'foo'}
+        ]
+    }
+    assert data == delete_ref_duplicates(data)
+
+
+def test_delete_ref_duplicates_with_object_containing_duplicate_refs():
+    data = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar',
+        'refs': [
+            {'id': '123', 'type': 'baz'},
+            {'id': '123', 'type': 'baz'},
+            {'id': '234', 'type': 'baz'},
+            {'id': '234', 'type': 'baz'},
+            {'id': '234', 'type': 'foo'}
+        ]
+    }
+    assert {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar',
+        'refs': [
+            {'id': '123', 'type': 'baz'},
+            {'id': '234', 'type': 'baz'},
+            {'id': '234', 'type': 'foo'}
+        ]
+    } == delete_ref_duplicates(data)
+
+
+def test_delete_ref_duplicates_with_object_containing_duplicate_refs_in_nested_object():
+    data = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar',
+        'children': {
+            'refs': [
+                {'id': '123', 'type': 'baz'},
+                {'id': '123', 'type': 'baz'},
+                {'id': '234', 'type': 'baz'},
+                {'id': '234', 'type': 'baz'},
+                {'id': '234', 'type': 'foo'}
+            ]
+        }
+    }
+    assert {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar',
+        'children': {
+            'refs': [
+                {'id': '123', 'type': 'baz'},
+                {'id': '234', 'type': 'baz'},
+                {'id': '234', 'type': 'foo'}
+            ]
+        }
+    } == delete_ref_duplicates(data)
+
+
+def test_construct_ansible_facts_should_make_default_fact_with_name_and_type():
+    response = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar'
+    }
+
+    assert {'bar_foo': response} == construct_ansible_facts(response, {})
+
+
+def test_construct_ansible_facts_should_not_make_default_fact_with_no_name():
+    response = {
+        'id': '123',
+        'name': 'foo'
+    }
+
+    assert {} == construct_ansible_facts(response, {})
+
+
+def test_construct_ansible_facts_should_not_make_default_fact_with_no_type():
+    response = {
+        'id': '123',
+        'type': 'bar'
+    }
+
+    assert {} == construct_ansible_facts(response, {})
+
+
+def test_construct_ansible_facts_should_use_register_as_when_given():
+    response = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar'
+    }
+    params = {'register_as': 'fact_name'}
+
+    assert {'fact_name': response} == construct_ansible_facts(response, params)
+
+
+def test_construct_ansible_facts_should_extract_items():
+    response = {'items': [
+        {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }, {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }
+    ]}
+    params = {'register_as': 'fact_name'}
+
+    assert {'fact_name': response['items']} == construct_ansible_facts(response, params)
+
+
+def test_construct_ansible_facts_should_ignore_items_with_no_register_as():
+    response = {'items': [
+        {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }, {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }
+    ]}
+
+    assert {} == construct_ansible_facts(response, {})

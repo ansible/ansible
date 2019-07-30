@@ -50,7 +50,7 @@ def api_wrapper(func):
             module.fail_json(msg=e.message)
         except core.exceptions.SystemNotFoundException as e:
             module.fail_json(msg=e.message)
-        except:
+        except Exception:
             raise
     return __wrapper
 

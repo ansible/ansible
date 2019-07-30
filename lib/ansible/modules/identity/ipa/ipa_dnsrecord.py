@@ -34,11 +34,12 @@ options:
   record_type:
     description:
     - The type of DNS record name.
-    - Currently, 'A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR' and 'TXT' are supported.
+    - Currently, 'A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT', 'SRV' and 'MX' are supported.
     - "'A6', 'CNAME', 'DNAME' and 'TXT' are added in version 2.5."
+    - "'SRV' and 'MX' are added in version 2.8."
     required: false
     default: 'A'
-    choices: ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT']
+    choices: ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT', 'SRV', 'MX']
   record_value:
     description:
     - Manage DNS record name with this value.
@@ -48,6 +49,8 @@ options:
     - In the case of 'DNAME' record type, this will be the DNAME target.
     - In the case of 'PTR' record type, this will be the hostname.
     - In the case of 'TXT' record type, this will be a text.
+    - In the case of 'SRV' record type, this will be a service record.
+    - In the case of 'MX' record type, this will be a mail exchanger record.
     required: true
   record_ttl:
     description:
@@ -105,6 +108,26 @@ EXAMPLES = '''
     record_type: 'TXT'
     record_value: 'EXAMPLE.COM'
 
+# Ensure an SRV record is present
+- ipa_dnsrecord:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: example.com
+    record_name: _kerberos._udp.example.com
+    record_type: 'SRV'
+    record_value: '10 50 88 ipa.example.com'
+
+# Ensure an MX record is present
+- ipa_dnsrecord:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: example.com
+    record_name: '@'
+    record_type: 'MX'
+    record_value: '1 mailserver.example.com'
+
 # Ensure that dns record is removed
 - ipa_dnsrecord:
     name: host01
@@ -136,7 +159,10 @@ class DNSRecordIPAClient(IPAClient):
         super(DNSRecordIPAClient, self).__init__(module, host, port, protocol)
 
     def dnsrecord_find(self, zone_name, record_name):
-        return self._post_json(method='dnsrecord_find', name=zone_name, item={'idnsname': record_name, 'all': True})
+        if record_name == '@':
+            return self._post_json(method='dnsrecord_show', name=zone_name, item={'idnsname': record_name, 'all': True})
+        else:
+            return self._post_json(method='dnsrecord_find', name=zone_name, item={'idnsname': record_name, 'all': True})
 
     def dnsrecord_add(self, zone_name=None, record_name=None, details=None):
         item = dict(idnsname=record_name)
@@ -154,6 +180,10 @@ class DNSRecordIPAClient(IPAClient):
             item.update(ptr_part_hostname=details['record_value'])
         elif details['record_type'] == 'TXT':
             item.update(txtrecord=details['record_value'])
+        elif details['record_type'] == 'SRV':
+            item.update(srvrecord=details['record_value'])
+        elif details['record_type'] == 'MX':
+            item.update(mxrecord=details['record_value'])
 
         if details.get('record_ttl'):
             item.update(dnsttl=details['record_ttl'])
@@ -189,6 +219,10 @@ def get_dnsrecord_dict(details=None):
         module_dnsrecord.update(ptrrecord=details['record_value'])
     elif details['record_type'] == 'TXT' and details['record_value']:
         module_dnsrecord.update(txtrecord=details['record_value'])
+    elif details['record_type'] == 'SRV' and details['record_value']:
+        module_dnsrecord.update(srvrecord=details['record_value'])
+    elif details['record_type'] == 'MX' and details['record_value']:
+        module_dnsrecord.update(mxrecord=details['record_value'])
 
     if details.get('record_ttl'):
         module_dnsrecord.update(dnsttl=details['record_ttl'])
@@ -208,6 +242,7 @@ def ensure(module, client):
     state = module.params['state']
 
     ipa_dnsrecord = client.dnsrecord_find(zone_name, record_name)
+
     module_dnsrecord = dict(
         record_type=module.params['record_type'],
         record_value=module.params['record_value'],
@@ -242,7 +277,7 @@ def ensure(module, client):
 
 
 def main():
-    record_types = ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT']
+    record_types = ['A', 'AAAA', 'A6', 'CNAME', 'DNAME', 'PTR', 'TXT', 'SRV', 'MX']
     argument_spec = ipa_argument_spec()
     argument_spec.update(
         zone_name=dict(type='str', required=True),

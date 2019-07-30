@@ -14,7 +14,7 @@ DOCUMENTATION = """
 ---
 module: onyx_ptp_global
 version_added: "2.8"
-author: "Anas Badaha(@anasb)"
+author: "Anas Badaha (@anasb)"
 short_description: Configures PTP Global parameters
 description:
   - This module provides declarative management of PTP Global configuration

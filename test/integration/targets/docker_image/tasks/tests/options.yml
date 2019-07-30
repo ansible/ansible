@@ -1,0 +1,344 @@
+---
+- name: Registering image name
+  set_fact:
+    iname: "{{ name_prefix ~ '-options' }}"
+    iname_1: "{{ name_prefix ~ '-options-1' }}"
+
+- name: Registering image name
+  set_fact:
+    inames: "{{ inames + [iname, iname_1] }}"
+
+####################################################################
+## build.args ######################################################
+####################################################################
+
+- name: buildargs
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      args:
+        TEST1: val1
+        TEST2: val2
+        TEST3: "True"
+      pull: no
+    source: build
+  register: buildargs_1
+
+- name: buildargs (idempotency)
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      args:
+        TEST1: val1
+        TEST2: val2
+        TEST3: "True"
+      pull: no
+    source: build
+  register: buildargs_2
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - buildargs_1 is changed
+    - buildargs_2 is not changed
+  when: docker_py_version is version('1.6.0', '>=')
+
+- assert:
+    that:
+    - buildargs_1 is failed
+    - buildargs_2 is failed
+  when: docker_py_version is version('1.6.0', '<')
+
+####################################################################
+## container_limits ################################################
+####################################################################
+
+- name: container_limits (Failed due to min memory limit)
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      container_limits:
+        memory: 4000
+      pull: no
+    source: build
+  ignore_errors: yes
+  register: container_limits_1
+
+- name: container_limits
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      container_limits:
+        memory: 5000000
+        memswap: 7000000
+      pull: no
+    source: build
+  register: container_limits_2
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    # It *sometimes* happens that the first task does not fail.
+    # For now, we work around this by
+    #   a) requiring that if it fails, the message must
+    #      contain 'Minimum memory limit allowed is 4MB', and
+    #   b) requiring that either the first task, or the second
+    #      task is changed, but not both.
+    - "not container_limits_1 is failed or ('Minimum memory limit allowed is 4MB') in container_limits_1.msg"
+    - "container_limits_1 is changed or container_limits_2 is changed and not (container_limits_1 is changed and container_limits_2 is changed)"
+
+####################################################################
+## dockerfile ######################################################
+####################################################################
+
+- name: dockerfile
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockerfile: "MyDockerfile"
+      pull: no
+    source: build
+  register: dockerfile_1
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - dockerfile_1 is changed
+    - dockerfile_1['image']['Config']['WorkingDir'] == '/newdata'
+
+####################################################################
+## repository ######################################################
+####################################################################
+
+- name: Make sure image is not there
+  docker_image:
+    name: "{{ registry_address }}/test/{{ iname }}:latest"
+    state: absent
+    force_absent: yes
+
+- name: repository
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      pull: no
+    repository: "{{ registry_address }}/test/{{ iname }}"
+    source: build
+  register: repository_1
+
+- name: repository (idempotent)
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      pull: no
+    repository: "{{ registry_address }}/test/{{ iname }}"
+    source: build
+  register: repository_2
+
+- assert:
+    that:
+    - repository_1 is changed
+    - repository_2 is not changed
+
+- name: Get facts of image
+  docker_image_info:
+    name: "{{ registry_address }}/test/{{ iname }}:latest"
+  register: facts_1
+
+- name: cleanup
+  docker_image:
+    name: "{{ registry_address }}/test/{{ iname }}:latest"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - facts_1.images | length == 1
+
+####################################################################
+## force ###########################################################
+####################################################################
+
+- name: Build an image
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      pull: no
+    source: build
+
+- name: force (changed)
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockerfile: "MyDockerfile"
+      pull: no
+    source: build
+    force_source: yes
+  register: force_1
+
+- name: force (unchanged)
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockerfile: "MyDockerfile"
+      pull: no
+    source: build
+    force_source: yes
+  register: force_2
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - force_1 is changed
+    - force_2 is not changed
+
+####################################################################
+## load path #######################################################
+####################################################################
+
+- name: Archive image
+  docker_image:
+    name: "hello-world:latest"
+    archive_path: "{{ output_dir }}/image.tar"
+    source: pull
+  register: archive_image
+
+- name: remove image
+  docker_image:
+    name: "hello-world:latest"
+    state: absent
+    force_absent: yes
+
+- name: load image (changed)
+  docker_image:
+    name: "hello-world:latest"
+    load_path: "{{ output_dir }}/image.tar"
+    source: load
+  register: load_image
+
+- name: load image (idempotency)
+  docker_image:
+    name: "hello-world:latest"
+    load_path: "{{ output_dir }}/image.tar"
+    source: load
+  register: load_image_1
+
+- assert:
+    that:
+    - load_image is changed
+    - load_image_1 is not changed
+    - archive_image['image']['Id'] == load_image['image']['Id']
+
+####################################################################
+## path ############################################################
+####################################################################
+
+- name: Build image
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      pull: no
+    source: build
+  register: path_1
+
+- name: Build image (idempotency)
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      pull: no
+    source: build
+  register: path_2
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+      - path_1 is changed
+      - path_2 is not changed
+
+####################################################################
+## target ##########################################################
+####################################################################
+
+- name: Build multi-stage image
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockerfile: "StagedDockerfile"
+      target: first
+      pull: no
+    source: build
+  register: dockerfile_2
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - dockerfile_2 is changed
+    - dockerfile_2.image.Config.WorkingDir == '/first'
+
+####################################################################
+## build.etc_hosts #################################################
+####################################################################
+
+- name: Build image with custom etc_hosts
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockefile: "EtcHostsDockerfile"
+      pull: no
+      etc_hosts:
+        some-custom-host: "127.0.0.1"
+    source: build
+  register: path_1
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+      - path_1 is changed

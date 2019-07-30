@@ -19,7 +19,7 @@ short_description: NetApp Element Software Manage ldap admin users
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Enable, disable ldap, and add ldap users
 
@@ -108,7 +108,7 @@ import ansible.module_utils.netapp as netapp_utils
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except:
+except Exception:
     HAS_SF_SDK = False
 
 
@@ -116,23 +116,23 @@ class NetappElementLdap(object):
 
     def __init__(self):
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
-        self.argument_spec.update(dict(
-            state=dict(required=True, choices=['present', 'absent']),
-            authType=dict(required=False, choices=['DirectBind', 'SearchAndBind']),
-            groupSearchBaseDn=dict(required=False, type=str),
-            groupSearchType=dict(required=False, choices=['NoGroup', 'ActiveDirectory', 'MemberDN']),
-            serverURIs=dict(required=False, type=str),
-            userSearchBaseDN=dict(required=False, type=str),
-            searchBindDN=dict(required=False, type=str),
-            searchBindPassword=dict(required=False, type=str, no_log=True),
-            userSearchFilter=dict(required=False, type=str),
-            userDNTemplate=dict(required=False, type=str),
-            groupSearchCustomFilter=dict(required=False, type=str)
-        ))
+        self.argument_spec.update(
+            state=dict(type='str', required=True, choices=['absent', 'present']),
+            authType=dict(type='str', choices=['DirectBind', 'SearchAndBind']),
+            groupSearchBaseDn=dict(type='str'),
+            groupSearchType=dict(type='str', choices=['NoGroup', 'ActiveDirectory', 'MemberDN']),
+            serverURIs=dict(type='str'),
+            userSearchBaseDN=dict(type='str'),
+            searchBindDN=dict(type='str'),
+            searchBindPassword=dict(type='str', no_log=True),
+            userSearchFilter=dict(type='str'),
+            userDNTemplate=dict(type='str'),
+            groupSearchCustomFilter=dict(type='str'),
+        )
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True
+            supports_check_mode=True,
         )
 
         param = self.module.params

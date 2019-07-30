@@ -1,0 +1,403 @@
+- debug: msg="START ios cli/ios_bgp.yaml on connection={{ ansible_connection }}"
+
+- name: Clear existing BGP config
+  ios_bgp:
+    operation: delete
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure BGP with AS 64496 and a router-id
+    ios_bgp: &config
+      operation: merge
+      config:
+        bgp_as: 64496
+        router_id: 192.0.2.2
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64496' in result.commands"
+        - "'bgp router-id 192.0.2.2' in result.commands"
+
+  - name: Configure BGP with AS 64496 and a router-id (idempotent)
+    ios_bgp: *config
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure BGP neighbors
+    ios_bgp: &nbr
+      operation: merge
+      config:
+        bgp_as: 64496
+        neighbors:
+          - neighbor: 192.0.2.10
+            remote_as: 64496
+            password: ansible
+            description: IBGP_NBR_1
+            ebgp_multihop: 100
+            timers:
+              keepalive: 300
+              holdtime: 360
+              min_neighbor_holdtime: 360
+
+          - neighbor: 192.0.2.15
+            remote_as: 64496
+            description: IBGP_NBR_2
+            ebgp_multihop: 150
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64496' in result.commands"
+        - "'neighbor 192.0.2.10 remote-as 64496' in result.commands"
+        - "'neighbor 192.0.2.10 description IBGP_NBR_1' in result.commands"
+        - "'neighbor 192.0.2.10 ebgp-multihop 100' in result.commands"
+        - "'neighbor 192.0.2.10 timers 300 360 360' in result.commands"
+        - "'neighbor 192.0.2.15 remote-as 64496' in result.commands"
+        - "'neighbor 192.0.2.15 description IBGP_NBR_2' in result.commands"
+        - "'neighbor 192.0.2.15 ebgp-multihop 150' in result.commands"
+
+  - name: Configure BGP neighbors (idempotent)
+    ios_bgp: *nbr
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure BGP neighbors with operation replace
+    ios_bgp: &nbr_rplc
+      operation: replace
+      config:
+        bgp_as: 64496
+        neighbors:
+          - neighbor: 192.0.2.15
+            remote_as: 64496
+            description: IBGP_NBR_2
+            ebgp_multihop: 150
+
+          - neighbor: 203.0.113.10
+            remote_as: 64511
+            description: EBGP_NBR_1
+            local_as: 64497
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'neighbor 203.0.113.10 remote-as 64511' in result.commands"
+        - "'neighbor 203.0.113.10 description EBGP_NBR_1' in result.commands"
+        - "'neighbor 203.0.113.10 local-as 64497' in result.commands"
+        - "'no neighbor 192.0.2.10' in result.commands"
+
+  - name: Configure BGP neighbors with operation replace (idempotent)
+    ios_bgp: *nbr_rplc
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure root-level networks for BGP
+    ios_bgp: &net
+      operation: merge
+      config:
+        bgp_as: 64496
+        networks:
+          - prefix: 203.0.113.0
+            masklen: 27
+            route_map: RMAP_1
+
+          - prefix: 203.0.113.32
+            masklen: 27
+            route_map: RMAP_2
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == True'
+        - "'router bgp 64496' in result.commands"
+        - "'network 203.0.113.0 mask 255.255.255.224 route-map RMAP_1' in result.commands"
+        - "'network 203.0.113.32 mask 255.255.255.224 route-map RMAP_2' in result.commands"
+
+  - name: Configure root-level networks for BGP (idempotent)
+    ios_bgp: *net
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure root-level networks for BGP with operation replace
+    ios_bgp: &net_rplc
+      operation: replace
+      config:
+        bgp_as: 64496
+        networks:
+          - prefix: 203.0.113.0
+            masklen: 27
+            route_map: RMAP_1
+
+          - prefix: 198.51.100.16
+            masklen: 28
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == True'
+        - "'router bgp 64496' in result.commands"
+        - "'network 198.51.100.16 mask 255.255.255.240' in result.commands"
+        - "'no network 203.0.113.32 mask 255.255.255.224 route-map RMAP_2' in result.commands"
+
+  - name: Configure root-level networks for BGP with operation replace (idempotent)
+    ios_bgp: *net_rplc
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure BGP neighbors under address family mode
+    ios_bgp: &af_nbr
+      operation: merge
+      config:
+        bgp_as: 64496
+        address_family:
+          - afi: ipv4
+            safi: unicast
+            neighbors:
+              - neighbor: 203.0.113.10
+                activate: yes
+                maximum_prefix: 250
+                advertisement_interval: 120
+
+              - neighbor: 192.0.2.15
+                activate: yes
+                route_reflector_client: True
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64496' in result.commands"
+        - "'address-family ipv4' in result.commands"
+        - "'neighbor 203.0.113.10 activate' in result.commands"
+        - "'neighbor 203.0.113.10 maximum-prefix 250' in result.commands"
+        - "'neighbor 203.0.113.10 advertisement-interval 120' in result.commands"
+        - "'neighbor 192.0.2.15 activate' in result.commands"
+        - "'neighbor 192.0.2.15 route-reflector-client' in result.commands"
+
+  - name: Configure BGP neighbors under address family mode (idempotent)
+    ios_bgp: *af_nbr
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure networks under address family
+    ios_bgp: &af_net
+      operation: merge
+      config:
+        bgp_as: 64496
+        address_family:
+          - afi: ipv4
+            safi: multicast
+            networks:
+              - prefix: 198.51.100.48
+                masklen: 28
+                route_map: RMAP_1
+
+              - prefix: 192.0.2.64
+                masklen: 27
+
+              - prefix: 203.0.113.160
+                masklen: 27
+                route_map: RMAP_2
+
+          - afi: ipv4
+            safi: unicast
+            networks:
+              - prefix: 198.51.100.64
+                masklen: 28
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64496' in result.commands"
+        - "'address-family ipv4 multicast' in result.commands"
+        - "'network 198.51.100.48 mask 255.255.255.240 route-map RMAP_1' in result.commands"
+        - "'network 192.0.2.64 mask 255.255.255.224' in result.commands"
+        - "'network 203.0.113.160 mask 255.255.255.224 route-map RMAP_2' in result.commands"
+        - "'exit-address-family' in result.commands"
+        - "'address-family ipv4' in result.commands"
+        - "'network 198.51.100.64 mask 255.255.255.240' in result.commands"
+        - "'exit-address-family' in result.commands"
+
+  - name: Configure networks under address family (idempotent)
+    ios_bgp: *af_net
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure networks under address family with operation replace
+    ios_bgp: &af_net_rplc
+      operation: replace
+      config:
+        bgp_as: 64496
+        address_family:
+          - afi: ipv4
+            safi: multicast
+            networks:
+              - prefix: 198.51.100.80
+                masklen: 28
+
+              - prefix: 192.0.2.64
+                masklen: 27
+
+              - prefix: 203.0.113.192
+                masklen: 27
+
+          - afi: ipv4
+            safi: unicast
+            networks:
+              - prefix: 198.51.100.64
+                masklen: 28
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - '"router bgp 64496" in result.commands'
+        - '"address-family ipv4 multicast" in result.commands'
+        - '"network 198.51.100.80 mask 255.255.255.240" in result.commands'
+        - '"network 203.0.113.192 mask 255.255.255.224" in result.commands'
+        - '"no network 198.51.100.48 mask 255.255.255.240 route-map RMAP_1" in result.commands'
+        - '"no network 203.0.113.160 mask 255.255.255.224 route-map RMAP_2" in result.commands'
+        - '"exit-address-family" in result.commands'
+
+  - name: Configure networks under address family with operation replace (idempotent)
+    ios_bgp: *af_net_rplc
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Configure redistribute information under address family mode
+    ios_bgp: &af_rdr
+      operation: merge
+      config:
+        bgp_as: 64496
+        address_family:
+          - afi: ipv4
+            safi: multicast
+            redistribute:
+              - protocol: ospf
+                id: 112
+                metric: 64
+
+              - protocol: eigrp
+                id: 233
+                metric: 256
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64496' in result.commands"
+        - "'address-family ipv4 multicast' in result.commands"
+        - "'redistribute ospf 112 metric 64' in result.commands"
+        - "'redistribute eigrp 233 metric 256' in result.commands"
+        - "'exit-address-family' in result.commands"
+
+  - name: Configure redistribute information under address family mode (idempotent)
+    ios_bgp: *af_rdr
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+  - name: Get the IOS version
+    ios_facts:
+      gather_subset: all
+
+  - name: Configure redistribute information under address family mode with operation replace
+    ios_bgp: &af_rdr_rplc
+      operation: replace
+      config:
+        bgp_as: 64496
+        address_family:
+          - afi: ipv4
+            safi: multicast
+            redistribute:
+              - protocol: ospf
+                id: 112
+                metric: 64
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'router bgp 64496' in result.commands"
+        - "'address-family ipv4 multicast' in result.commands"
+        - "'no redistribute eigrp 233' in result.commands"
+        - "'exit-address-family' in result.commands"
+
+  - name: Configure redistribute information under address family mode with operation replace (idempotent)
+    ios_bgp: *af_rdr_rplc
+    register: result
+    when: ansible_net_version != "15.6(2)T"
+
+  - assert:
+      that:
+        - 'result.changed == false'
+    when: ansible_net_version != "15.6(2)T"
+
+  - name: Override all the exisiting BGP config
+    ios_bgp:
+      operation: override
+      config:
+        bgp_as: 64497
+        router_id: 192.0.2.10
+        log_neighbor_changes: True
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'no router bgp 64496' in result.commands"
+        - "'router bgp 64497' in result.commands"
+        - "'bgp router-id 192.0.2.10' in result.commands"
+        - "'bgp log-neighbor-changes' in result.commands"
+
+  always:
+  - name: Teardown
+    ios_bgp: &rm
+      operation: delete
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == true'
+        - "'no router bgp 64497' in result.commands"
+
+  - name: Teardown again (idempotent)
+    ios_bgp: *rm
+    register: result
+
+  - assert:
+      that:
+        - 'result.changed == false'
+
+- debug: msg="END ios cli/ios_bgp.yaml on connection={{ ansible_connection }}"

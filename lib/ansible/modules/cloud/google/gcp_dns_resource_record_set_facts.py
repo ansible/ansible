@@ -18,83 +18,82 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_dns_resource_record_set_facts
 description:
-  - Gather facts for GCP ResourceRecordSet
+- Gather facts for GCP ResourceRecordSet
 short_description: Gather facts for GCP ResourceRecordSet
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    managed_zone:
-        description:
-            - Identifies the managed zone addressed by this request.
-            - Can be the managed zone name or id.
-            - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_dns_managed_zone
-              task and then set this managed_zone field to "{{ name-of-resource }}" Alternatively,
-              you can set this managed_zone to a dictionary with the name key where the value
-              is the name of your ManagedZone.'
-        required: true
+  managed_zone:
+    description:
+    - Identifies the managed zone addressed by this request.
+    - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
+      }}"'
+    required: true
+    type: dict
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a resource record set facts
+- name: " a resource record set facts"
   gcp_dns_resource_record_set_facts:
-      managed_zone: "{{ managed_zone }}"
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    managed_zone: "{{ managed_zone }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-    description: List of items
-    returned: always
-    type: complex
-    contains:
-        name:
-            description:
-                - For example, U(www.example.com.)
-            returned: success
-            type: str
-        type:
-            description:
-                - One of valid DNS resource types.
-            returned: success
-            type: str
-        ttl:
-            description:
-                - Number of seconds that this ResourceRecordSet can be cached by resolvers.
-            returned: success
-            type: int
-        target:
-            description:
-                - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) .
-            returned: success
-            type: list
-        managed_zone:
-            description:
-                - Identifies the managed zone addressed by this request.
-                - Can be the managed zone name or id.
-            returned: success
-            type: dict
+resources:
+  description: List of resources
+  returned: always
+  type: complex
+  contains:
+    name:
+      description:
+      - For example, U(www.example.com).
+      returned: success
+      type: str
+    type:
+      description:
+      - One of valid DNS resource types.
+      returned: success
+      type: str
+    ttl:
+      description:
+      - Number of seconds that this ResourceRecordSet can be cached by resolvers.
+      returned: success
+      type: int
+    target:
+      description:
+      - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) .
+      returned: success
+      type: list
+    managed_zone:
+      description:
+      - Identifies the managed zone addressed by this request.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
@@ -109,13 +108,9 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            managed_zone=dict(required=True, type='dict')
-        )
-    )
+    module = GcpModule(argument_spec=dict(managed_zone=dict(required=True, type='dict')))
 
-    if 'scopes' not in module.params:
+    if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
 
     items = fetch_list(module, collection(module))
@@ -123,18 +118,13 @@ def main():
         items = items.get('rrsets')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')
-    }
-    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/rrsets".format(**res)
+    res = {'project': module.params['project'], 'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')}
+    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res)
 
 
 def fetch_list(module, link):

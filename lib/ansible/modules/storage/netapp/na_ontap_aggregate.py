@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,12 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 
 module: na_ontap_aggregate
-
 short_description: NetApp ONTAP manage aggregates.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
 - Create, delete, or manage aggregates on ONTAP.
@@ -80,7 +79,7 @@ options:
   raid_type:
     description:
     - Specifies the type of RAID groups to use in the new aggregate.
-    - The default value is raid4 on most platforms.
+    choices: ['raid4', 'raid_dp', 'raid_tec']
     version_added: '2.7'
 
   unmount_volumes:
@@ -90,15 +89,60 @@ options:
     - before the offline operation is executed.
     - By default, the system will reject any attempt to offline an aggregate that hosts one or more online volumes.
 
+  disks:
+    type: list
+    description:
+    - Specific list of disks to use for the new aggregate.
+    - To create a "mirrored" aggregate with a specific list of disks, both 'disks' and 'mirror_disks' options must be supplied.
+      Additionally, the same number of disks must be supplied in both lists.
+    version_added: '2.8'
+
+  is_mirrored:
+    type: bool
+    description:
+    - Specifies that the new aggregate be mirrored (have two plexes).
+    - If set to true, then the indicated disks will be split across the two plexes. By default, the new aggregate will not be mirrored.
+    - This option cannot be used when a specific list of disks is supplied with either the 'disks' or 'mirror_disks' options.
+    version_added: '2.8'
+
+  mirror_disks:
+    type: list
+    description:
+    - List of mirror disks to use. It must contain the same number of disks specified in 'disks'.
+    version_added: '2.8'
+
+  spare_pool:
+    description:
+    - Specifies the spare pool from which to select spare disks to use in creation of a new aggregate.
+    choices: ['Pool0', 'Pool1']
+    version_added: '2.8'
+
+  wait_for_online:
+    description:
+    - Set this parameter to 'true' for synchronous execution during create (wait until aggregate status is online)
+    - Set this parameter to 'false' for asynchronous execution
+    - For asynchronous, execution exits as soon as the request is sent, without checking aggregate status
+    type: bool
+    default: false
+    version_added: '2.8'
+
+  time_out:
+    description:
+      - time to wait for aggregate creation in seconds
+      - default is set to 100 seconds
+    default: 100
+    version_added: "2.8"
 '''
 
 EXAMPLES = """
-- name: Create Aggregates
+- name: Create Aggregates and wait 5 minutes until aggregate is online
   na_ontap_aggregate:
     state: present
     service_state: online
     name: ansibleAggr
     disk_count: 1
+    wait_for_online: True
+    time_out: 300
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
@@ -118,8 +162,8 @@ EXAMPLES = """
   na_ontap_aggregate:
     state: present
     service_state: online
-    name: ansibleAggr
-    rename: ansibleAggr2
+    from_name: ansibleAggr
+    name: ansibleAggr2
     disk_count: 1
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
@@ -139,6 +183,7 @@ EXAMPLES = """
 RETURN = """
 
 """
+import time
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -155,32 +200,43 @@ class NetAppOntapAggregate(object):
     def __init__(self):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            state=dict(required=False, choices=[
-                       'present', 'absent'], default='present'),
-            service_state=dict(required=False, choices=['online', 'offline']),
             name=dict(required=True, type='str'),
-            from_name=dict(required=False, type='str'),
+            disks=dict(required=False, type='list'),
             disk_count=dict(required=False, type='int', default=None),
-            disk_type=dict(required=False, choices=['ATA', 'BSAS', 'FCAL', 'FSAS', 'LUN', 'MSATA', 'SAS', 'SSD',
-                                                    'VMDISK']),
-            raid_type=dict(required=False, type='str'),
             disk_size=dict(required=False, type='int'),
+            disk_type=dict(required=False, choices=['ATA', 'BSAS', 'FCAL', 'FSAS', 'LUN', 'MSATA', 'SAS', 'SSD', 'VMDISK']),
+            from_name=dict(required=False, type='str'),
+            mirror_disks=dict(required=False, type='list'),
             nodes=dict(required=False, type='list'),
+            is_mirrored=dict(required=False, type='bool'),
             raid_size=dict(required=False, type='int'),
+            raid_type=dict(required=False, choices=['raid4', 'raid_dp', 'raid_tec']),
+            service_state=dict(required=False, choices=['online', 'offline']),
+            spare_pool=dict(required=False, choices=['Pool0', 'Pool1']),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
             unmount_volumes=dict(required=False, type='bool'),
+            wait_for_online=dict(required=False, type='bool', default=False),
+            time_out=dict(required=False, type='int', default=100)
         ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
             required_if=[
-                ('service_state', 'offline', ['unmount_volumes'])
+                ('service_state', 'offline', ['unmount_volumes']),
+            ],
+            mutually_exclusive=[
+                ('is_mirrored', 'disks'),
+                ('is_mirrored', 'mirror_disks'),
+                ('is_mirrored', 'spare_pool'),
+                ('spare_pool', 'disks')
             ],
             supports_check_mode=True
         )
 
         self.na_helper = NetAppModule()
         self.parameters = self.na_helper.set_parameters(self.module.params)
-
+        if self.parameters.get('mirror_disks') is not None and self.parameters.get('disks') is None:
+            self.module.fail_json(mgs="mirror_disks require disks options to be set")
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
@@ -199,12 +255,13 @@ class NetAppOntapAggregate(object):
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         aggr_get_iter.add_child_elem(query)
+        result = None
         try:
             result = self.server.invoke_successfully(aggr_get_iter, enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
             # Error 13040 denotes an aggregate not being found.
             if to_native(error.code) == "13040":
-                return None
+                pass
             else:
                 self.module.fail_json(msg=to_native(error), exception=traceback.format_exc())
         return result
@@ -279,15 +336,41 @@ class NetAppOntapAggregate(object):
             options['raid-type'] = self.parameters['raid_type']
         if self.parameters.get('disk_size'):
             options['disk-size'] = str(self.parameters['disk_size'])
+        if self.parameters.get('is_mirrored'):
+            options['is-mirrored'] = str(self.parameters['is_mirrored'])
+        if self.parameters.get('spare_pool'):
+            options['spare-pool'] = self.parameters['spare_pool']
+        if self.parameters.get('raid_type'):
+            options['raid-type'] = self.parameters['raid_type']
         aggr_create = netapp_utils.zapi.NaElement.create_node_with_children('aggr-create', **options)
         if self.parameters.get('nodes'):
             nodes_obj = netapp_utils.zapi.NaElement('nodes')
             aggr_create.add_child_elem(nodes_obj)
             for node in self.parameters['nodes']:
                 nodes_obj.add_new_child('node-name', node)
+        if self.parameters.get('disks'):
+            disks_obj = netapp_utils.zapi.NaElement('disk-info')
+            for disk in self.parameters.get('disks'):
+                disks_obj.add_new_child('name', disk)
+            aggr_create.add_child_elem(disks_obj)
+        if self.parameters.get('mirror_disks'):
+            mirror_disks_obj = netapp_utils.zapi.NaElement('disk-info')
+            for disk in self.parameters.get('mirror_disks'):
+                mirror_disks_obj.add_new_child('name', disk)
+            aggr_create.add_child_elem(mirror_disks_obj)
 
         try:
             self.server.invoke_successfully(aggr_create, enable_tunneling=False)
+            if self.parameters.get('wait_for_online'):
+                # round off time_out
+                retries = (self.parameters['time_out'] + 5) / 10
+                current = self.get_aggr()
+                status = None if current is None else current['service_state']
+                while status != 'online' and retries > 0:
+                    time.sleep(10)
+                    retries = retries - 1
+                    current = self.get_aggr()
+                    status = None if current is None else current['service_state']
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg="Error provisioning aggregate %s: %s"
                                       % (self.parameters['name'], to_native(error)),

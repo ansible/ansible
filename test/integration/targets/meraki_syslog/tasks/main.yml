@@ -1,0 +1,197 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  # - name: Test an API key is provided
+  #   fail:
+  #     msg: Please define an API key
+  #   when: auth_key is not defined
+    
+  # - name: Use an invalid domain
+  #   meraki_switchport:
+  #     auth_key: '{{ auth_key }}'
+  #     host: marrrraki.com
+  #     state: query
+  #     serial: Q2HP-2C6E-GTLD
+  #     org_name: IntTestOrg
+  #   delegate_to: localhost
+  #   register: invaliddomain
+  #   ignore_errors: yes
+    
+  # - name: Disable HTTP
+  #   meraki_switchport:
+  #     auth_key: '{{ auth_key }}'
+  #     use_https: false
+  #     state: query
+  #     serial: Q2HP-2C6E-
+  #     output_level: debug
+  #   delegate_to: localhost
+  #   register: http
+  #   ignore_errors: yes
+
+  # - name: Connection assertions
+  #   assert:
+  #     that:
+  #       - '"Failed to connect to" in invaliddomain.msg'
+  #       - '"http" in http.url'
+
+  - set_fact:
+      syslog_test_net_name: 'syslog_{{test_net_name}}'
+
+  - name: Create network with type appliance and no timezone
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      type: appliance
+    delegate_to: localhost
+    register: new_net
+
+  - set_fact:
+      net_id: '{{new_net.data.id}}'
+
+  - name: Query syslog settings
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: query
+    delegate_to: localhost
+    register: query_all
+
+  - debug:
+      msg: '{{query_all}}'
+
+  - name: Set syslog server
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      servers:
+        - host: 192.0.1.2
+          port: 514
+          roles:
+            - Appliance event log
+    delegate_to: localhost
+    register: create_server
+
+  - debug:
+      msg: '{{create_server.data}}'
+
+  - assert:
+      that:
+        - create_server['data'][0]['host'] == "192.0.1.2"
+
+  - name: Set syslog server with idempotency
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      servers:
+        - host: 192.0.1.2
+          port: 514
+          roles:
+            - Appliance event log
+    delegate_to: localhost
+    register: create_server_idempotency
+
+  - debug:
+      msg: '{{create_server_idempotency}}'
+
+  - assert:
+      that:
+        - create_server_idempotency.changed == False
+        - create_server_idempotency.data is defined
+
+  - name: Set multiple syslog servers
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      state: present
+      servers:
+        - host: 192.0.1.3
+          port: 514
+          roles:
+            - Appliance event log
+        - host: 192.0.1.4
+          port: 514
+          roles:
+            - Appliance Event log
+            - Flows
+        - host: 192.0.1.5
+          port: 514
+          roles:
+            - Flows
+    delegate_to: localhost
+    register: create_multiple_servers
+
+  - debug:
+      msg: '{{create_multiple_servers}}'
+
+  - assert:
+      that:
+        - create_multiple_servers['data'][0]['host'] == "192.0.1.3"
+        - create_multiple_servers['data'][1]['host'] == "192.0.1.4"
+        - create_multiple_servers['data'][2]['host'] == "192.0.1.5"
+        - create_multiple_servers['data'] | length == 3
+
+  - name: Create syslog server with bad name
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'      
+      state: present
+      servers:
+        - host: 192.0.1.6
+          port: 514
+          roles:
+            - Invalid role
+    delegate_to: localhost
+    register: invalid_role
+    ignore_errors: yes
+
+  # - debug:
+  #     msg: '{{invalid_role.body.errors.0}}'
+
+  - assert:
+      that:
+        - '"Please select at least one valid role" in invalid_role.body.errors.0'
+
+  - name: Add role to existing syslog server  # Adding doesn't work, just creation
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      servers:
+        - host: 192.0.1.2
+          port: 514
+          roles:
+            - flows
+    delegate_to: localhost
+    register: add_role
+
+  - debug:
+      msg: '{{add_role.data.0.roles}}'
+
+  - assert:
+      that:
+        - add_role.data.0.roles.0 == 'Flows'
+        # - add_role.data.0.roles | length == 2
+
+  always:
+    - name: Delete syslog test network
+      meraki_network:
+        auth_key: '{{ auth_key }}'
+        state: absent
+        org_name: '{{test_org_name}}'
+        net_name: '{{test_net_name}}'
+      delegate_to: localhost
+      register: delete_all
+      ignore_errors: yes

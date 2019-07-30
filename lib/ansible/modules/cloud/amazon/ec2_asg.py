@@ -88,6 +88,7 @@ options:
         Once that's done the ASG size is reduced back to the expected size.
     version_added: "1.8"
     default: 'no'
+    type: bool
   replace_batch_size:
     description:
       - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
@@ -104,11 +105,13 @@ options:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_config.
     version_added: "1.8"
     default: 'yes'
+    type: bool
   lt_check:
     description:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_template or launch_template version.
     version_added: "2.8"
     default: 'yes'
+    type: bool
   vpc_zone_identifier:
     description:
       - List of VPC subnets to use
@@ -120,7 +123,7 @@ options:
     description:
       - Length of time in seconds after a new EC2 instance comes into service that Auto Scaling starts checking its health.
     required: false
-    default: 500 seconds
+    default: 300 seconds
     version_added: "1.7"
   health_check_type:
     description:
@@ -146,6 +149,7 @@ options:
         instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
     default: 'yes'
+    type: bool
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
@@ -581,7 +585,7 @@ def update_asg(connection, **params):
     connection.update_auto_scaling_group(**params)
 
 
-@AWSRetry.backoff(**backoff_params)
+@AWSRetry.backoff(catch_extra_error_codes=['ScalingActivityInProgress'], **backoff_params)
 def delete_asg(connection, asg_name, force_delete):
     connection.delete_auto_scaling_group(AutoScalingGroupName=asg_name, ForceDelete=force_delete)
 
@@ -625,10 +629,13 @@ def get_properties(autoscaling_group):
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_config_name': i['LaunchConfigurationName']}
-            else:
+            elif i.get('LaunchTemplate'):
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_template': i['LaunchTemplate']}
+            else:
+                instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
+                                                   'lifecycle_state': i['LifecycleState']}
             if i['HealthStatus'] == 'Healthy' and i['LifecycleState'] == 'InService':
                 properties['viable_instances'] += 1
             if i['HealthStatus'] == 'Healthy':
@@ -1152,7 +1159,7 @@ def create_autoscaling_group(connection):
         else:
             try:
                 ag['LaunchConfigurationName'] = as_group['LaunchConfigurationName']
-            except:
+            except Exception:
                 launch_template = as_group['LaunchTemplate']
                 # Prefer LaunchTemplateId over Name as it's more specific.  Only one can be used for update_asg.
                 ag['LaunchTemplate'] = {"LaunchTemplateId": launch_template['LaunchTemplateId'], "Version": launch_template['Version']}
@@ -1484,6 +1491,8 @@ def terminate_batch(connection, replace_instances, initial_instances, leftovers=
     if num_new_inst_needed == 0:
         decrement_capacity = True
         if as_group['MinSize'] != min_size:
+            if min_size is None:
+                min_size = as_group['MinSize']
             updated_params = dict(AutoScalingGroupName=as_group['AutoScalingGroupName'], MinSize=min_size)
             update_asg(connection, **updated_params)
             module.debug("Updating minimum size back to original of %s" % min_size)

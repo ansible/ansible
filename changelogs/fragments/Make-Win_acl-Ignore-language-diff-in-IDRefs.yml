@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_acl - Change special id ref recognitionto avoid language diff (https://github.com/ansible/ansible/issues/56757)"

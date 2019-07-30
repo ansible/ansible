@@ -26,3 +26,6 @@
 
 # firewalld port operation test cases
 - import_tasks: port_test_cases.yml
+
+# firewalld source operation test cases
+- import_tasks: source_test_cases.yml

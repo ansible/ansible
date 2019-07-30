@@ -1,22 +1,30 @@
 """Test runner for all Ansible tests."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import errno
 import os
-import resource
 import sys
+
+# This import should occur as early as possible.
+# It must occur before subprocess has been imported anywhere in the current process.
+from lib.init import (
+    CURRENT_RLIMIT_NOFILE,
+)
 
 from lib.util import (
     ApplicationError,
     display,
     raw_command,
     get_docker_completion,
+    get_remote_completion,
     generate_pip_command,
     read_lines_without_comments,
+    MAXFD,
 )
 
 from lib.delegation import (
+    check_delegation_args,
     delegate,
 )
 
@@ -43,6 +51,12 @@ from lib.config import (
     ShellConfig,
 )
 
+from lib.env import (
+    EnvConfig,
+    command_env,
+    configure_timeout,
+)
+
 from lib.sanity import (
     command_sanity,
     sanity_init,
@@ -66,40 +80,46 @@ from lib.cloud import (
     initialize_cloud_plugins,
 )
 
+from lib.data import (
+    data_context,
+)
+
+from lib.util_common import (
+    CommonConfig,
+)
+
 import lib.cover
 
 
 def main():
     """Main program function."""
     try:
-        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
-        os.chdir(git_root)
+        os.chdir(data_context().content.root)
         initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
-        config = args.config(args)
+        config = args.config(args)  # type: CommonConfig
         display.verbosity = config.verbosity
         display.truncate = config.truncate
         display.redact = config.redact
         display.color = config.color
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
+        check_delegation_args(config)
+        configure_timeout(config)
 
-        # to achieve a consistent nofile ulimit, set to 16k here, this can affect performance in subprocess.Popen when
-        # being called with close_fds=True on Python (8x the time on some environments)
-        nofile_limit = 16 * 1024
-        current_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
-        new_limit = (nofile_limit, nofile_limit)
-        if current_limit > new_limit:
-            display.info('RLIMIT_NOFILE: %s -> %s' % (current_limit, new_limit), verbosity=2)
-            resource.setrlimit(resource.RLIMIT_NOFILE, (nofile_limit, nofile_limit))
-        else:
-            display.info('RLIMIT_NOFILE: %s' % (current_limit, ), verbosity=2)
+        display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
+        display.info('MAXFD: %d' % MAXFD, verbosity=2)
 
         try:
             args.func(config)
+            delegate_args = None
         except Delegate as ex:
-            delegate(config, ex.exclude, ex.require, ex.integration_targets)
+            # save delegation args for use once we exit the exception handler
+            delegate_args = (ex.exclude, ex.require, ex.integration_targets)
+
+        if delegate_args:
+            delegate(config, *delegate_args)
 
         display.review_warnings()
     except ApplicationWarning as ex:
@@ -162,6 +182,7 @@ def parse_args():
                         action='store_true',
                         help='run ansible commands in debug mode')
 
+    # noinspection PyTypeChecker
     common.add_argument('--truncate',
                         dest='truncate',
                         metavar='COLUMNS',
@@ -173,6 +194,10 @@ def parse_args():
                         dest='redact',
                         action='store_true',
                         help='redact sensitive values in output')
+
+    common.add_argument('--check-python',
+                        choices=SUPPORTED_PYTHON_VERSIONS,
+                        help=argparse.SUPPRESS)
 
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
@@ -203,6 +228,10 @@ def parse_args():
     test.add_argument('--coverage-label',
                       default='',
                       help='label to include in coverage output file names')
+
+    test.add_argument('--coverage-check',
+                      action='store_true',
+                      help='only verify code coverage can be enabled')
 
     test.add_argument('--metadata',
                       help=argparse.SUPPRESS)
@@ -287,6 +316,14 @@ def parse_args():
                              action='store_true',
                              help='list matching targets instead of running tests')
 
+    integration.add_argument('--no-temp-workdir',
+                             action='store_true',
+                             help='do not run tests from a temporary directory (use only for verifying broken tests)')
+
+    integration.add_argument('--no-temp-unicode',
+                             action='store_true',
+                             help='avoid unicode characters in temporary directory (use only for verifying broken tests)')
+
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
@@ -357,6 +394,11 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
+    # noinspection PyTypeChecker
+    units.add_argument('--num-workers',
+                       type=int,
+                       help='number of workers to use (default: auto)')
+
     units.add_argument('--requirements-mode',
                        choices=('only', 'skip'),
                        help=argparse.SUPPRESS)
@@ -406,8 +448,17 @@ def parse_args():
                                   parents=[common],
                                   help='open an interactive shell')
 
+    shell.add_argument('--python',
+                       metavar='VERSION',
+                       choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
+                       help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+
     shell.set_defaults(func=command_shell,
                        config=ShellConfig)
+
+    shell.add_argument('--raw',
+                       action='store_true',
+                       help='direct to shell with no setup')
 
     add_environments(shell, tox_version=True)
     add_extra_docker_options(shell)
@@ -479,6 +530,27 @@ def parse_args():
 
     add_extra_coverage_options(coverage_xml)
 
+    env = subparsers.add_parser('env',
+                                parents=[common],
+                                help='show information about the test environment')
+
+    env.set_defaults(func=command_env,
+                     config=EnvConfig)
+
+    env.add_argument('--show',
+                     action='store_true',
+                     help='show environment on stdout')
+
+    env.add_argument('--dump',
+                     action='store_true',
+                     help='dump environment to disk')
+
+    # noinspection PyTypeChecker
+    env.add_argument('--timeout',
+                     type=int,
+                     metavar='MINUTES',
+                     help='timeout for future ansible-test commands (0 clears)')
+
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)
 
@@ -543,30 +615,41 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         action='store_true',
                         help='install command requirements')
 
+    parser.add_argument('--python-interpreter',
+                        metavar='PATH',
+                        default=None,
+                        help='path to the docker or remote python interpreter')
+
     environments = parser.add_mutually_exclusive_group()
 
     environments.add_argument('--local',
                               action='store_true',
                               help='run from the local environment')
 
-    if tox_version:
-        environments.add_argument('--tox',
-                                  metavar='VERSION',
-                                  nargs='?',
-                                  default=None,
-                                  const='.'.join(str(i) for i in sys.version_info[:2]),
-                                  choices=SUPPORTED_PYTHON_VERSIONS,
-                                  help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+    if data_context().content.is_ansible:
+        if tox_version:
+            environments.add_argument('--tox',
+                                      metavar='VERSION',
+                                      nargs='?',
+                                      default=None,
+                                      const='.'.join(str(i) for i in sys.version_info[:2]),
+                                      choices=SUPPORTED_PYTHON_VERSIONS,
+                                      help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+        else:
+            environments.add_argument('--tox',
+                                      action='store_true',
+                                      help='run from a tox virtualenv')
+
+        tox = parser.add_argument_group(title='tox arguments')
+
+        tox.add_argument('--tox-sitepackages',
+                         action='store_true',
+                         help='allow access to globally installed packages')
     else:
-        environments.add_argument('--tox',
-                                  action='store_true',
-                                  help='run from a tox virtualenv')
-
-    tox = parser.add_argument_group(title='tox arguments')
-
-    tox.add_argument('--tox-sitepackages',
-                     action='store_true',
-                     help='allow access to globally installed packages')
+        environments.set_defaults(
+            tox=None,
+            tox_sitepackages=False,
+        )
 
     if tox_only:
         environments.set_defaults(
@@ -576,6 +659,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             remote_provider=None,
             remote_aws_region=None,
             remote_terminate=None,
+            python_interpreter=None,
         )
 
         return
@@ -673,9 +757,14 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
-    docker.add_argument('--docker-keep-git',
-                        action='store_true',
-                        help='transfer git related files into the docker container')
+    if data_context().content.is_ansible:
+        docker.add_argument('--docker-keep-git',
+                            action='store_true',
+                            help='transfer git related files into the docker container')
+    else:
+        docker.set_defaults(
+            docker_keep_git=False,
+        )
 
     docker.add_argument('--docker-seccomp',
                         metavar='SC',
@@ -690,6 +779,7 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
+    # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
 
@@ -711,7 +801,7 @@ def complete_remote(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    images = read_lines_without_comments('test/runner/completion/remote.txt', remove_blank_lines=True)
+    images = sorted(get_remote_completion().keys())
 
     return [i for i in images if i.startswith(prefix)]
 
@@ -724,7 +814,7 @@ def complete_remote_shell(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    images = read_lines_without_comments('test/runner/completion/remote.txt', remove_blank_lines=True)
+    images = sorted(get_remote_completion().keys())
 
     # 2008 doesn't support SSH so we do not add to the list of valid images
     images.extend(["windows/%s" % i for i in read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True) if i != '2008'])
@@ -781,13 +871,12 @@ def complete_network_testcase(prefix, parsed_args, **_):
         return []
 
     test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
-    connections = os.listdir(test_dir)
+    connection_dirs = data_context().content.get_dirs(test_dir)
 
-    for conn in connections:
-        if os.path.isdir(os.path.join(test_dir, conn)):
-            for testcase in os.listdir(os.path.join(test_dir, conn)):
-                if testcase.startswith(prefix):
-                    testcases.append(testcase.split('.')[0])
+    for connection_dir in connection_dirs:
+        for testcase in [os.path.basename(path) for path in data_context().content.get_files(connection_dir)]:
+            if testcase.startswith(prefix):
+                testcases.append(testcase.split('.')[0])
 
     return testcases
 

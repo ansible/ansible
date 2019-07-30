@@ -13,29 +13,21 @@ $result = @{
     changed = $false
 }
 
-$acl = Get-Acl -Path $path
+$acl = Get-Acl -LiteralPath $path
 
 $result.inherited = $acl.AreAccessRulesProtected -eq $false
 
 $user_details = @{}
 $acl.Access | ForEach-Object {
-    # Backslashes are the bane of my existance, convert to / to we can export to JSON
-    $user = $_.IdentityReference -replace '\\','/'
+    $user = $_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value
     if ($user_details.ContainsKey($user)) {
         $details = $user_details.$user
     } else {
         $details = @{
             isinherited = $false
-            isnotinherited = $false
         }
     }
-
-    if ($_.IsInherited) {
-        $details.isinherited = $true
-    } else {
-        $details.isnotinherited = $true
-    }
-
+    $details.isinherited = $_.IsInherited
     $user_details.$user = $details
 }
 

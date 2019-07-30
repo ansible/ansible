@@ -29,7 +29,7 @@ short_description: Manages global DLDP configuration on HUAWEI CloudEngine switc
 description:
     - Manages global DLDP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 notes:
     - The relevant configurations will be deleted if DLDP is disabled using enable=disable.
     - When using auth_mode=none, it will restore the default DLDP authentication mode. By default,
@@ -157,7 +157,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -321,7 +321,7 @@ class Dldp(object):
 
         # get global DLDP info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/dldp/dldpSys")
+        topo = root.find("dldp/dldpSys")
         if not topo:
             self.module.fail_json(
                 msg="Error: Get current DLDP configration failed.")
