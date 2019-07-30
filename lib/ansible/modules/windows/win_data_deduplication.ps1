@@ -49,7 +49,7 @@ function Set-DataDeduplication($volume) {
 				Fail-Json $result $_.Exception.Message
 			}
 		}
-		$result.msg += " Deduplication on volume: "+$drive.Name+" set to $enabled"
+		$result.msg += " Deduplication on volume: "+$volume.DriveLetter+" set to $enabled"
 		$result.changed = $true
 	}
 
