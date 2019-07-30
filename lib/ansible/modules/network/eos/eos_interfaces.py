@@ -51,13 +51,12 @@ options:
         - Interface description
         type: str
       duplex:
-        default: auto
         description:
         - Interface link status. Applicable for Ethernet interfaces only.
         - Values other than C(auto) must also set I(speed).
         - Ignored when I(speed) is set above C(1000).
         type: str
-      enable:
+      enabled:
         default: true
         description:
         - Administrative state of the interface.
@@ -113,7 +112,7 @@ EXAMPLES = """
   eos_interfaces:
     config:
       - name: Ethernet1
-        enable: True
+        enabled: True
       - name: Ethernet2
         description: 'Configured by Ansible'
         enable: False
@@ -155,10 +154,10 @@ EXAMPLES = """
   eos_interfaces:
     config:
       - name: Ethernet1
-        enable: True
+        enabled: True
       - name: Ethernet2
         description: 'Configured by Ansible'
-        enable: False
+        enabled: False
     state: replaced
 
 # After state:
@@ -196,10 +195,10 @@ EXAMPLES = """
   eos_interfaces:
     config:
       - name: Ethernet1
-        enable: True
+        enabled: True
       - name: Ethernet2
         description: 'Configured by Ansible'
-        enable: False
+        enabled: False
     state: overridden
 
 # After state:
