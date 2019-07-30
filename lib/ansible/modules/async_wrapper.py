@@ -26,6 +26,7 @@ from ansible.module_utils._json_streams_rfc7464 import (
     RS_DELIMITER,
     read_json_documents,
 )
+from ansible.module_utils._stdout_utils import write_bytes_to_stdout
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
@@ -42,7 +43,7 @@ def notice(msg):
 
 def end(res=None, exit_msg=0):
     if res is not None:
-        sys.stdout.buffer.write(
+        write_bytes_to_stdout(
             b''.join((
                 RS_DELIMITER,
                 to_bytes(json.dumps(res)),
