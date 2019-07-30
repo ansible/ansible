@@ -33,6 +33,7 @@ options:
     - Whether the specified port should be added or removed.
     choices: ['present', 'absent']
     default: present
+    type: str
 
   vserver:
     description:
@@ -57,6 +58,7 @@ options:
     - type of the resource to add a port to or remove a port from.
     choices: ['broadcast_domain', 'portset']
     required: true
+    type: str
 
   ipspace:
     description:
@@ -68,6 +70,7 @@ options:
     description:
     - Protocols accepted for portset.
     choices: ['fcp', 'iscsi', 'mixed']
+    type: str
 
 '''
 
