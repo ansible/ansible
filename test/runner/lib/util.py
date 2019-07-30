@@ -787,6 +787,22 @@ def is_subdir(candidate_path, path):  # type: (str, str) -> bool
     return candidate_path.startswith(path)
 
 
+def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
+    """Returns a list of directories extracted from the given list of paths."""
+    dir_names = set()
+
+    for path in paths:
+        while True:
+            path = os.path.dirname(path)
+
+            if not path or path == os.path.sep:
+                break
+
+            dir_names.add(path + os.path.sep)
+
+    return sorted(dir_names)
+
+
 def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
     """
     Import plugins from the given directory relative to the given root.
