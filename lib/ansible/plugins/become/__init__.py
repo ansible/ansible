@@ -53,6 +53,10 @@ class BecomeBase(AnsiblePlugin):
 
             return getattr(playcontext, option, None)
 
+    def set_options(self, *args, **kwargs):
+        super(BecomeBase, self).set_options(*args, **kwargs)
+        self.prompt = ''
+
     def expect_prompt(self):
         """This function assists connection plugins in determining if they need to wait for
         a prompt. Both a prompt and a password are required.

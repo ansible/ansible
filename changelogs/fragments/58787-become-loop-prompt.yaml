@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix privilage escalation prompt timeout when working in a loop with different users (https://github.com/ansible/ansible/issues/58787)
