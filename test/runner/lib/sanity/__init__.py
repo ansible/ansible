@@ -258,15 +258,24 @@ class SanityIgnoreParser:
         self.file_not_found_errors = []  # type: t.List[t.Tuple[int, str]]
 
         lines = read_lines_without_comments(self.path, optional=True)
-        paths = set(data_context().content.all_files())
+        targets = SanityTargets.get_targets()
+        paths = set(target.path for target in targets)
         tests_by_name = {}  # type: t.Dict[str, SanityTest]
         versioned_test_names = set()  # type: t.Set[str]
         unversioned_test_names = {}  # type: t.Dict[str, str]
         directories = paths_to_dirs(list(paths))
+        paths_by_test = {}  # type: t.Dict[str, t.Set[str]]
 
         display.info('Read %d sanity test ignore line(s) for %s from: %s' % (len(lines), ansible_label, self.relative_path), verbosity=1)
 
         for test in sanity_get_tests():
+            test_targets = list(targets)
+
+            if test.include_directories:
+                test_targets += tuple(TestTarget(path, None, None, '') for path in paths_to_dirs([target.path for target in test_targets]))
+
+            paths_by_test[test.name] = set(target.path for target in test.filter_targets(test_targets))
+
             if isinstance(test, SanityMultipleVersion):
                 versioned_test_names.add(test.name)
                 tests_by_name.update(dict(('%s-%s' % (test.name, python_version), test) for python_version in test.supported_python_versions))
@@ -336,6 +345,10 @@ class SanityIgnoreParser:
 
             if path.endswith(os.path.sep) and not test.include_directories:
                 self.parse_errors.append((line_no, 1, "Sanity test '%s' does not support directory paths" % test_name))
+                continue
+
+            if path not in paths_by_test[test.name] and not test.no_targets:
+                self.parse_errors.append((line_no, 1, "Sanity test '%s' does not test path '%s'" % (test_name, path)))
                 continue
 
             if commands and error_codes:
@@ -538,9 +551,19 @@ class SanityTargets:
     @staticmethod
     def create(include, exclude, require):  # type: (t.List[str], t.List[str], t.List[str]) -> SanityTargets
         """Create a SanityTargets instance from the given include, exclude and require lists."""
-        _targets = tuple(sorted(walk_sanity_targets()))
+        _targets = SanityTargets.get_targets()
         _include = walk_internal_targets(_targets, include, exclude, require)
         return SanityTargets(_targets, _include)
+
+    @staticmethod
+    def get_targets():  # type: () -> t.Tuple[TestTarget, ...]
+        """Return a tuple of sanity test targets. Uses a cached version when available."""
+        try:
+            return SanityTargets.get_targets.targets
+        except AttributeError:
+            SanityTargets.get_targets.targets = tuple(sorted(walk_sanity_targets()))
+
+        return SanityTargets.get_targets.targets
 
 
 class SanityTest(ABC):
