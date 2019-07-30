@@ -2835,10 +2835,9 @@ class BgpAf(object):
             module.fail_json(msg='Error: Create bgp import route failed.')
 
         cmds = []
+        cmd = "import-route %s %s" % (import_protocol, import_process_id)
         if import_process_id == "0":
             cmd = "import-route %s" % import_protocol
-        else:
-            cmd = "import-route %s %s" % (import_protocol, import_process_id)
         cmds.append(cmd)
 
         return cmds
