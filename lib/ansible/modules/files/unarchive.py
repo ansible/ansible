@@ -97,7 +97,7 @@ todo:
     - Re-implement tar support using native tarfile module.
     - Re-implement zip support using native zipfile module.
 notes:
-    - Requires C(gtar)/C(unzip) command on target host.
+    - Requires C(zipinfo) and C(gtar)/C(unzip) command on target host.
     - Can handle I(.zip) files using C(unzip) as well as I(.tar), I(.tar.gz), I(.tar.bz2) and I(.tar.xz) files using C(gtar).
     - Does not handle I(.gz) files, I(.bz2) files or I(.xz) files that do not contain a I(.tar) archive.
     - Uses gtar's C(--diff) arg to calculate if changed or not. If this C(arg) is not
