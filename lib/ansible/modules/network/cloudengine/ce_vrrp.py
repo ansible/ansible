@@ -587,9 +587,9 @@ class Vrrp(object):
             if not self.advertise_interval.isdigit():
                 self.module.fail_json(
                     msg='Error: The value of advertise_interval is an integer.')
-            if int(self.advertise_interval) < 1 or int(self.advertise_interval) > 255000:
+            if int(self.advertise_interval) < 1000 or int(self.advertise_interval) > 255000:
                 self.module.fail_json(
-                    msg='Error: The value of advertise_interval ranges from 1 to 255000. The default value is 1000.')
+                    msg='Error: The value of advertise_interval ranges from 1000 to 255000 milliseconds. The default value is 1000 milliseconds.')
 
         # preempt_timer_delay check
         if self.preempt_timer_delay:
@@ -911,76 +911,57 @@ class Vrrp(object):
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
                     msg='Error: set vrrp group atrribute info failed.')
-
             if self.interface and self.vrid:
+                self.updates_cmd.append("interface %s" % self.interface)
                 if self.vrrp_type == "admin":
                     if self.admin_ignore_if_down == "true":
-                        self.updates_cmd.append(
-                            "interface %s" % self.interface)
                         self.updates_cmd.append(
                             "vrrp vrid %s admin ignore-if-down" % self.vrid)
                     else:
                         self.updates_cmd.append(
-                            "interface %s" % self.interface)
-                        self.updates_cmd.append(
                             "vrrp vrid %s admin" % self.vrid)
 
                 if self.priority:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "vrrp vrid %s priority %s" % (self.vrid, self.priority))
 
                 if self.fast_resume == "enable":
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "vrrp vrid %s fast-resume" % self.vrid)
                 if self.fast_resume == "disable":
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s fast-resume" % self.vrid)
 
                 if self.advertise_interval:
-                    self.updates_cmd.append("interface %s" % self.interface)
-                    self.updates_cmd.append("vrrp vrid %s timer advertise %s" % (
-                        self.vrid, self.advertise_interval))
+                    advertise_interval = int(self.advertise_interval) / 1000
+                    self.updates_cmd.append("vrrp vrid %s timer advertise %s<seconds>" % (
+                        self.vrid, int(advertise_interval)))
 
                 if self.preempt_timer_delay:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append("vrrp vrid %s preempt timer delay %s" % (self.vrid,
                                                                                      self.preempt_timer_delay))
 
                 if self.holding_multiplier:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "vrrp vrid %s holding-multiplier %s" % (self.vrid, self.holding_multiplier))
 
                 if self.admin_vrid and self.admin_interface:
                     if self.admin_flowdown == "true":
-                        self.updates_cmd.append(
-                            "interface %s" % self.interface)
                         self.updates_cmd.append("vrrp vrid %s track admin-vrrp interface %s vrid %s unflowdown" %
                                                 (self.vrid, self.admin_interface, self.admin_vrid))
                     else:
-                        self.updates_cmd.append(
-                            "interface %s" % self.interface)
                         self.updates_cmd.append("vrrp vrid %s track admin-vrrp interface %s vrid %s" %
                                                 (self.vrid, self.admin_interface, self.admin_vrid))
 
                 if self.auth_mode and self.auth_key:
                     if self.auth_mode == "simple":
                         if self.is_plain == "true":
-                            self.updates_cmd.append(
-                                "interface %s" % self.interface)
                             self.updates_cmd.append("vrrp vrid %s authentication-mode simple plain %s" %
                                                     (self.vrid, self.auth_key))
                         else:
-                            self.updates_cmd.append(
-                                "interface %s" % self.interface)
                             self.updates_cmd.append("vrrp vrid %s authentication-mode simple cipher %s" %
                                                     (self.vrid, self.auth_key))
                     if self.auth_mode == "md5":
-                        self.updates_cmd.append(
-                            "interface %s" % self.interface)
                         self.updates_cmd.append(
                             "vrrp vrid %s authentication-mode md5 %s" % (self.vrid, self.auth_key))
                 self.changed = True
@@ -1040,42 +1021,36 @@ class Vrrp(object):
                 self.module.fail_json(
                     msg='Error: set vrrp global atrribute info failed.')
             if self.interface and self.vrid:
+                self.updates_cmd.append("interface %s" % self.interface)
                 if self.vrrp_type == "admin":
                     self.updates_cmd.append(
                         "undo vrrp vrid %s admin" % self.vrid)
 
                 if self.priority:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s priority" % self.vrid)
 
                 if self.fast_resume:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s fast-resume" % self.vrid)
 
                 if self.advertise_interval:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s timer advertise" % self.vrid)
 
                 if self.preempt_timer_delay:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s preempt timer delay" % self.vrid)
 
                 if self.holding_multiplier:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s holding-multiplier" % self.vrid)
 
                 if self.admin_vrid and self.admin_interface:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s track admin-vrrp" % self.vrid)
 
                 if self.auth_mode:
-                    self.updates_cmd.append("interface %s" % self.interface)
                     self.updates_cmd.append(
                         "undo vrrp vrid %s authentication-mode" % self.vrid)
                 self.changed = True
