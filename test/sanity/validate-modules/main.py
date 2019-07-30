@@ -1257,7 +1257,7 @@ class ModuleValidator(Validator):
 
             try:
                 doc_default = None
-                doc_options_arg = docs.get('options', {}).get(arg, {})
+                doc_options_arg = (docs.get('options', {}) or {}).get(arg, {})
                 if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
