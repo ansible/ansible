@@ -84,22 +84,22 @@ hcloud_network:
         id:
             description: ID of the Network
             type: int
-            returned: Always
+            returned: always
             sample: 12345
         name:
             description: Name of the Network
             type: string
-            returned: Always
+            returned: always
             sample: my-volume
         ip_range:
             description: IP range of the Network
             type: str
-            returned: Always
+            returned: always
             sample: 10.0.0.0/8
         labels:
             description: User-defined labels (key-value pairs)
             type: dict
-            returned: Always
+            returned: always
             sample:
                 key: value
                 mylabel: 123
@@ -164,6 +164,12 @@ class AnsibleHcloudNetwork(Hcloud):
         if labels is not None and labels != self.hcloud_network.labels:
             if not self.module.check_mode:
                 self.hcloud_network.update(labels=labels)
+            self._mark_as_changed()
+
+        ip_range = self.module.params.get("ip_range")
+        if ip_range is not None and ip_range != self.hcloud_network.ip_range:
+            if not self.module.check_mode:
+                self.hcloud_network.change_ip_range(ip_range=ip_range).wait_until_finished()
             self._mark_as_changed()
 
         self._get_network()
