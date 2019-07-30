@@ -1,0 +1,2 @@
+minor_changes:
+  - Ansible should fail with error when non-existing limit file is provided in command line.
