@@ -19,10 +19,15 @@ from lib.sanity import (
     SanitySkipped,
 )
 
+from lib.target import (
+    TestTarget,
+)
+
 from lib.util import (
     SubprocessError,
     read_lines_without_comments,
     ANSIBLE_ROOT,
+    find_executable,
 )
 
 from lib.util_common import (
@@ -41,6 +46,10 @@ class ShellcheckTest(SanityVersionNeutral):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'AT1000'
 
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.sh']
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -52,10 +61,9 @@ class ShellcheckTest(SanityVersionNeutral):
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh')
-        paths = settings.filter_skipped_paths(paths)
+        paths = [target.path for target in targets.include]
 
-        if not paths:
+        if not find_executable('shellcheck', required='warning'):
             return SanitySkipped(self.name)
 
         cmd = [

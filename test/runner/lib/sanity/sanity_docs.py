@@ -31,9 +31,9 @@ class SanityDocsTest(SanityVersionNeutral):
         return False
 
     @property
-    def can_skip(self):  # type: () -> bool
-        """True if the test supports skip entries."""
-        return False
+    def no_targets(self):  # type: () -> bool
+        """True if the test does not use test targets. Mutually exclusive with all_targets."""
+        return True
 
     # noinspection PyUnusedLocal
     def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument

@@ -1,5 +1,5 @@
 {
-    "always": true,
+    "all_targets": true,
     "output": "path-message",
     "extensions": [
         ".py"
