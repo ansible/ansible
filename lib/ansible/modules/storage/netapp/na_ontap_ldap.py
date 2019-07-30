@@ -6,12 +6,6 @@ GNU General Public License v3.0+
 '''
 
 from __future__ import absolute_import, division, print_function
-import traceback
-import ansible.module_utils.netapp as netapp_utils
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.netapp_module import NetAppModule
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -46,7 +40,7 @@ options:
     required: true
     type: str
 
-  client_config:
+  name:
     description:
     - The name of LDAP client configuration
     required: true
@@ -64,7 +58,7 @@ EXAMPLES = '''
     - name: Enable LDAP on SVM
       na_ontap_ldap:
         state:         present
-        client_config: 'example_ldap'
+        name:          'example_ldap'
         vserver:       'vserver1'
         hostname:      "{{ netapp_hostname }}"
         username:      "{{ netapp_username }}"
@@ -74,6 +68,12 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
+
+import traceback
+import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -86,7 +86,7 @@ class NetAppOntapLDAP(object):
     def __init__(self):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            client_config=dict(required=True, type='str'),
+            name=dict(required=True, type='str'),
             skip_config_validation=dict(required=False, default=None, choices=['true', 'false']),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str')
@@ -118,7 +118,7 @@ class NetAppOntapLDAP(object):
         config_info = netapp_utils.zapi.NaElement('ldap-config-get-iter')
 
         if client_config_name is None:
-            client_config_name = self.parameters['client_config']
+            client_config_name = self.parameters['name']
 
         query_details = netapp_utils.zapi.NaElement.create_node_with_children('ldap-config', **{'client-config': client_config_name})
 
@@ -146,7 +146,7 @@ class NetAppOntapLDAP(object):
         Create LDAP configuration
         '''
         options = {
-            'client-config': self.parameters['client_config'],
+            'client-config': self.parameters['name'],
             'client-enabled': 'true'
         }
 
@@ -160,7 +160,7 @@ class NetAppOntapLDAP(object):
         try:
             self.server.invoke_successfully(ldap_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as errcatch:
-            self.module.fail_json(msg='Error creating LDAP configuration %s: %s' % (self.parameters['client_config'], to_native(errcatch)),
+            self.module.fail_json(msg='Error creating LDAP configuration %s: %s' % (self.parameters['name'], to_native(errcatch)),
                                   exception=traceback.format_exc())
 
     def delete_ldap(self):
@@ -181,7 +181,7 @@ class NetAppOntapLDAP(object):
         :param modify: list of modify attributes
         '''
         ldap_modify = netapp_utils.zapi.NaElement('ldap-config-modify')
-        ldap_modify.add_new_child('client-config', self.parameters['client_config'])
+        ldap_modify.add_new_child('client-config', self.parameters['name'])
 
         for attribute in modify:
             if attribute == 'skip_config_validation':
@@ -191,7 +191,7 @@ class NetAppOntapLDAP(object):
         try:
             self.server.invoke_successfully(ldap_modify, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as errcatch:
-            self.module.fail_json(msg='Error modifying LDAP %s: %s' % (self.parameters['client_config'], to_native(errcatch)),
+            self.module.fail_json(msg='Error modifying LDAP %s: %s' % (self.parameters['name'], to_native(errcatch)),
                                   exception=traceback.format_exc())
 
     def apply(self):
