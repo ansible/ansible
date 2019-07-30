@@ -126,7 +126,7 @@ function Start-DataDedupJob($volume) {
 
 		$result.changed = $true
 	} else {
-		$result.msg += " A DedupJob is already queued for that drive."
+		$result.msg += " A DedupJob is already queued for that volume."
 	}
 
 }
@@ -134,15 +134,15 @@ function Start-DataDedupJob($volume) {
 function DataDeduplication($volume) {
 
 	if ($null -ne $enabled) {
-		Set-DataDeduplication -drive $volume
+		Set-DataDeduplication -volume $volume
 	}
 
 	if ($null -ne $settings -and $enabled) {
-		Set-DataDedupJobSettings -drive $volume
+		Set-DataDedupJobSettings -volume $volume
 	}
 
 	if ($null -ne $dedup_job -and $enabled) {
-		Start-DataDedupJob -drive $volume
+		Start-DataDedupJob -volume $volume
 	}
 
 }
@@ -159,7 +159,7 @@ if (!$feature.Installed) {
 $volume = Get-Volume -DriveLetter $drive_letter
 if ($volume) {
   $result.msg += "Start setting FileDeduplication"
-  DataDeduplication -drive $volume
+  DataDeduplication -volume $volume
 }
 
 Exit-Json -obj $result
