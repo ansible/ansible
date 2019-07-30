@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_format - Idem not working if file exist but same fs (https://github.com/ansible/ansible/issues/58302)"
