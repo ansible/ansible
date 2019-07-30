@@ -7690,8 +7690,8 @@ test/units/modules/packaging/os/test_rhn_register.py future-import-boilerplate
 test/units/modules/packaging/os/test_rhn_register.py metaclass-boilerplate
 test/units/modules/packaging/os/test_yum.py future-import-boilerplate
 test/units/modules/packaging/os/test_yum.py metaclass-boilerplate
-test/units/modules/remote_management/dellemc/ome/test_ome_device_info.py future-import-boilerplate
-test/units/modules/remote_management/dellemc/ome/test_ome_device_info.py metaclass-boilerplate
+test/units/modules/remote_management/ome/test_ome_device_info.py future-import-boilerplate
+test/units/modules/remote_management/ome/test_ome_device_info.py metaclass-boilerplate
 test/units/modules/remote_management/lxca/test_lxca_cmms.py future-import-boilerplate
 test/units/modules/remote_management/lxca/test_lxca_cmms.py metaclass-boilerplate
 test/units/modules/remote_management/lxca/test_lxca_nodes.py future-import-boilerplate
