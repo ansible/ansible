@@ -31,6 +31,7 @@ options:
     - Whether the specified object store config should exist or not.
     choices: ['present', 'absent']
     default: 'present'
+    type: str
 
   name:
     required: true
