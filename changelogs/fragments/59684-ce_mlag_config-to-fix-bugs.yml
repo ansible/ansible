@@ -1,0 +1,2 @@
+bugfixes:
+- ce_mlag_config - update to fix some bugs - Configuration does not absent as expect. (https://github.com/ansible/ansible/pull/59336)
