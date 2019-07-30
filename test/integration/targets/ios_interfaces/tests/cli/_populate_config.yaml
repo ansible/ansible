@@ -7,8 +7,8 @@
       interface GigabitEthernet 0/1
       description this is interface1
       mtu 65
-      speed 100
+      speed 10
       interface GigabitEthernet 0/2
       description this is interface2
-      duplex full
+      duplex auto
       speed 100

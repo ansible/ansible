@@ -6,6 +6,20 @@
 
 - include_tasks: _populate_config.yaml
 
+- set_fact:
+    expected_output:
+      - duplex: auto
+        name: GigabitEthernet0/0
+        speed: auto
+      - duplex: auto
+        name: GigabitEthernet0/1
+        speed: auto
+      - description: Configured and Overridden by Ansible-Network
+        duplex: full
+        mtu: 2000
+        enabled: false
+        name: GigabitEthernet0/2
+
 - block:
     - name: Override device configuration of all interfaces with provided configuration
       ios_interfaces: &overridden
@@ -18,20 +32,13 @@
         state: overridden
       register: result
 
+    - debug:
+        msg: "{{ expected_output | symmetric_difference(result['after']) }}"
+
     - name: Assert that configuration is reflected correctly on host
       assert:
         that:
-          - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
-
-    - name: Assert that before dicts are correctly generated
-      assert:
-        that:
-          - "{{ populate == result['before'] }}"
-
-    - name: Assert that after dict is correctly generated
-      assert:
-        that:
-          - "{{ overridden['after'] == result['after'] }}"
+          - "{{ expected_output | symmetric_difference(result['after']) | length == 0 }}"
 
     - name: Override device configuration of all VLANs with provided configuration (IDEMPOTENT)
       ios_interfaces: *overridden
@@ -41,11 +48,6 @@
       assert:
        that:
          - "result['changed'] == false"
-
-    - name: Assert that before dict is correctly generated
-      assert:
-        that:
-          - "{{ overridden['after'] == result['before'] }}"
 
   always:
     - include_tasks: _remove_config.yaml

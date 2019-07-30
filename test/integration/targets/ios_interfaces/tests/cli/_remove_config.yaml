@@ -10,5 +10,6 @@
       no speed
       interface GigabitEthernet 0/2
       no description
+      no mtu
       no duplex
       no speed

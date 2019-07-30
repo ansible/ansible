@@ -50,50 +50,50 @@ author: Sumit Jaiswal (@justjais)
 notes:
 - Tested against Cisco IOSv Version 15.2 on VIRL
 options:
-config:
-  description: A dictionary of interface options
-  type: list
-  elements: dict
-  suboptions:
-    name:
+  config:
+    description: A dictionary of interface options
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description:
+        - Full name of interface, e.g. GigabitEthernet0/2, loopback999.
+        type: str
+        required: True
       description:
-      - Full name of interface, e.g. GigabitEthernet0/2, loopback999.
-      type: str
-      required: True
+        description:
+        - Interface description.
+        type: str
+      enabled:
+        description:
+        - Administrative state of the interface.
+        - Set the value to C(true) to administratively enable the interface or C(false) to disable it.
+        type: bool
+      speed:
+        description:
+        - Interface link speed. Applicable for Ethernet interfaces only.
+        type: str
+      mtu:
+        description:
+        - MTU for a specific interface. Must be a number between 64 and 9600.
+          Applicable for Ethernet interfaces only.
+        type: str
+      duplex:
+        description:
+        - Interface link status. Applicable for Ethernet interfaces only, either in half duplex,
+          full duplex or in automatic state which negotiates the duplex automatically.
+        type: str
+        choices: ['full', 'half', 'auto']
+  state:
+    choices:
+    - merged
+    - replaced
+    - overridden
+    - deleted
+    default: merged
     description:
-      description:
-      - Interface description.
-      type: str
-    enabled:
-      description:
-      - Administrative state of the interface.
-      - Set the value to C(true) to administratively enable the interface or C(false) to disable it.
-      type: bool
-    speed:
-      description:
-      - Interface link speed. Applicable for Ethernet interfaces only.
-      type: str
-    mtu:
-      description:
-      - MTU for a specific interface. Must be a number between 64 and 9600.
-        Applicable for Ethernet interfaces only.
-      type: str
-    duplex:
-      description:
-      - Interface link status. Applicable for Ethernet interfaces only, either in half duplex,
-        full duplex or in automatic state which negotiates the duplex automatically.
-      type: str
-      choices: ['full', 'half', 'auto']
-state:
-  choices:
-  - merged
-  - replaced
-  - overridden
-  - deleted
-  default: merged
-  description:
-  - The state the configuration should be left in
-  type: str
+    - The state the configuration should be left in
+    type: str
 """
 
 EXAMPLES = """
