@@ -16,6 +16,12 @@ groupings:
   - aws
   aws_caller_info:
   - aws
+  aws_codebuild:
+  - aws
+  aws_codecommit:
+  - aws
+  aws_codepipeline:
+  - aws
   aws_config_aggregation_authorization:
   - aws
   aws_config_aggregator:
@@ -56,9 +62,13 @@ groupings:
   - aws
   aws_s3_cors:
   - aws
+  aws_secret:
+  - aws
   aws_ses_identity:
   - aws
   aws_ses_identity_policy:
+  - aws
+  aws_ses_rule_set:
   - aws
   aws_sgw_info:
   - aws
@@ -75,6 +85,8 @@ groupings:
   cloudformation:
   - aws
   cloudformation_facts:
+  - aws
+  cloudformation_stack_set:
   - aws
   cloudfront_distribution:
   - aws
@@ -103,6 +115,10 @@ groupings:
   cpm_user:
   - cpm
   data_pipeline:
+  - aws
+  dms_endpoint:
+  - aws
+  dms_replication_subnet_group:
   - aws
   dynamodb_table:
   - aws
@@ -174,6 +190,10 @@ groupings:
   - aws
   ec2_tag:
   - aws
+  ec2_transit_gateway:
+  - aws
+  ec2_transit_gateway_info:
+  - aws
   ec2_vol:
   - aws
   ec2_vol_info:
@@ -240,6 +260,8 @@ groupings:
   - aws
   ecs_taskdefinition:
   - aws
+  ecs_taskdefinition_facts:
+  - aws
   ecs_taskdefinition_info:
   - aws
   efs:
@@ -274,6 +296,8 @@ groupings:
   - aws
   elb_target_group_info:
   - aws
+  elb_target_info:
+  - aws
   execute_lambda:
   - aws
   iam:
@@ -285,6 +309,8 @@ groupings:
   iam_managed_policy:
   - aws
   iam_mfa_device_info:
+  - aws
+  iam_password_policy:
   - aws
   iam_policy:
   - aws
@@ -324,6 +350,8 @@ groupings:
   - aws
   redshift:
   - aws
+  redshift_cross_region_snapshots:
+  - aws
   redshift_info:
   - aws
   redshift_subnet_group:
@@ -337,6 +365,8 @@ groupings:
   route53_zone:
   - aws
   s3_bucket:
+  - aws
+  s3_bucket_notification:
   - aws
   s3_lifecycle:
   - aws
