@@ -546,7 +546,7 @@ class VariableManager:
             if item is not None:
                 vars_copy[item_var] = item
 
-            templar.set_available_variables = vars_copy
+            templar.available_variables = vars_copy
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
             if delegated_host_name != task.delegate_to:
                 cache_items = True
