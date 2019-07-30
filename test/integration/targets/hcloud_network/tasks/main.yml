@@ -40,6 +40,18 @@
     name: "{{hcloud_network_name}}"
     ip_range: "10.0.0.0/8"
   register: network
+- name: verify test create Network idempotence result
+  assert:
+    that:
+      - network is not changed
+      - network.hcloud_network.name == "{{hcloud_network_name}}"
+      - network.hcloud_network.ip_range == "10.0.0.0/8"
+
+- name: test create Network idempotence
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    ip_range: "10.0.0.0/8"
+  register: network
 - name: verify test create network
   assert:
     that:
