@@ -16,7 +16,7 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, \
     fail_json, AnsibleFailJson, AnsibleExitJson
 from ansible.module_utils import basic
-from ansible.modules.remote_management.dellemc import ome_device_info
+from ansible.modules.remote_management.ome import ome_device_info
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 default_args = {'hostname': '192.168.0.1', 'username': 'username', 'password': 'password'}
@@ -34,7 +34,7 @@ class TestOmeDeviceInfo(object):
 
     @pytest.fixture
     def connection_mock(self, mocker):
-        connection_class_mock = mocker.patch('ansible.modules.remote_management.dellemc.ome_device_info.RestOME')
+        connection_class_mock = mocker.patch('ansible.modules.remote_management.ome.ome_device_info.RestOME')
         return connection_class_mock.return_value
 
     @pytest.fixture
@@ -44,18 +44,18 @@ class TestOmeDeviceInfo(object):
 
     @pytest.fixture
     def validate_inputs_mock(self, mocker):
-        response_class_mock = mocker.patch('ansible.modules.remote_management.dellemc.ome_device_info._validate_inputs')
+        response_class_mock = mocker.patch('ansible.modules.remote_management.ome.ome_device_info._validate_inputs')
         response_class_mock.return_value = None
 
     @pytest.fixture
     def get_device_identifier_map_mock(self, mocker):
-        response_class_mock = mocker.patch('ansible.modules.remote_management.dellemc.ome_device_info._get_device_identifier_map')
+        response_class_mock = mocker.patch('ansible.modules.remote_management.ome.ome_device_info._get_device_identifier_map')
         response_class_mock.return_value = resource_detailed_inventory
         return response_class_mock.return_value
 
     @pytest.fixture
     def get_resource_parameters_mock(self, mocker):
-        response_class_mock = mocker.patch('ansible.modules.remote_management.dellemc.ome_device_info._get_resource_parameters')
+        response_class_mock = mocker.patch('ansible.modules.remote_management.ome.ome_device_info._get_resource_parameters')
         return response_class_mock
 
     def test_main_basic_inventory_success_case(self, module_mock, validate_inputs_mock, connection_mock, get_resource_parameters_mock, response_mock):
@@ -103,7 +103,7 @@ class TestOmeDeviceInfo(object):
     def test_validate_inputs(self, fact_subset, mutually_exclusive_call, mocker):
         module_params = {"fact_subset": fact_subset}
         check_mutually_inclusive_arguments_mock = mocker.patch(
-            'ansible.modules.remote_management.dellemc.ome_device_info._check_mutually_inclusive_arguments')
+            'ansible.modules.remote_management.ome.ome_device_info._check_mutually_inclusive_arguments')
         check_mutually_inclusive_arguments_mock.return_value = None
         self.module._validate_inputs(module_params)
         if mutually_exclusive_call:
@@ -143,7 +143,7 @@ class TestOmeDeviceInfo(object):
 
     @pytest.mark.parametrize("module_params", params)
     def test_get_device_identifier_map(self, module_params, connection_mock, mocker):
-        get_device_id_from_service_tags_mock = mocker.patch('ansible.modules.remote_management.dellemc.ome_device_info._get_device_id_from_service_tags')
+        get_device_id_from_service_tags_mock = mocker.patch('ansible.modules.remote_management.ome.ome_device_info._get_device_id_from_service_tags')
         get_device_id_from_service_tags_mock.return_value = None
         res = self.module._get_device_identifier_map(module_params, connection_mock)
         assert isinstance(res, dict)
