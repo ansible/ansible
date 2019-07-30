@@ -2415,12 +2415,12 @@ class BgpAf(object):
             if af_type == "ipv6uni":
                 family = "ipv6-family"
             if vrf_rid_auto_sel == "true":
-                cmd = "%s vpn-instance %s" %s (family, vrf_name)
+                cmd = "%s vpn-instance %s" % (family, vrf_name)
                 cmds.append(cmd)
                 cmd = "router-id auto-select"
                 cmds.append(cmd)
             else:
-                cmd = "%s vpn-instance %s" %s (family, vrf_name)
+                cmd = "%s vpn-instance %s" % (family, vrf_name)
                 cmds.append(cmd)
                 cmd = "undo router-id auto-select"
                 cmds.append(cmd)
