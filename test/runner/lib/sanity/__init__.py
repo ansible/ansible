@@ -25,6 +25,7 @@ from lib.util import (
     get_available_python_versions,
     find_python,
     is_subdir,
+    paths_to_dirs,
 )
 
 from lib.util_common import (
@@ -164,9 +165,12 @@ def command_sanity(args):
                 if test.all_targets:
                     usable_targets = targets.targets
                 elif test.no_targets:
-                    usable_targets = []
+                    usable_targets = tuple()
                 else:
                     usable_targets = targets.include
+
+                if test.include_directories:
+                    usable_targets += tuple(TestTarget(path, None, None, '') for path in paths_to_dirs([target.path for target in usable_targets]))
 
                 usable_targets = sorted(test.filter_targets(list(usable_targets)))
                 usable_targets = settings.filter_skipped_targets(usable_targets)
@@ -258,6 +262,7 @@ class SanityIgnoreParser:
         tests_by_name = {}  # type: t.Dict[str, SanityTest]
         versioned_test_names = set()  # type: t.Set[str]
         unversioned_test_names = {}  # type: t.Dict[str, str]
+        directories = paths_to_dirs(list(paths))
 
         display.info('Read %d sanity test ignore line(s) for %s from: %s' % (len(lines), ansible_label, self.relative_path), verbosity=1)
 
@@ -282,9 +287,14 @@ class SanityIgnoreParser:
                 self.parse_errors.append((line_no, 1, "Line cannot start with a space"))
                 continue
 
-            if path not in paths:
-                self.file_not_found_errors.append((line_no, path))
-                continue
+            if path.endswith(os.path.sep):
+                if path not in directories:
+                    self.file_not_found_errors.append((line_no, path))
+                    continue
+            else:
+                if path not in paths:
+                    self.file_not_found_errors.append((line_no, path))
+                    continue
 
             if not codes:
                 self.parse_errors.append((line_no, len(path), "Error code required after path"))
@@ -322,6 +332,10 @@ class SanityIgnoreParser:
                 else:
                     self.parse_errors.append((line_no, len(path) + 2, "Sanity test '%s' does not exist" % test_name))
 
+                continue
+
+            if path.endswith(os.path.sep) and not test.include_directories:
+                self.parse_errors.append((line_no, 1, "Sanity test '%s' does not support directory paths" % test_name))
                 continue
 
             if commands and error_codes:
@@ -565,6 +579,11 @@ class SanityTest(ABC):
         return False
 
     @property
+    def include_directories(self):  # type: () -> bool
+        """True if the test targets should include directories."""
+        return False
+
+    @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return tuple(python_version for python_version in SUPPORTED_PYTHON_VERSIONS if python_version.startswith('3.'))
@@ -605,6 +624,7 @@ class SanityCodeSmellTest(SanityTest):
 
             self.__all_targets = self.config.get('all_targets')  # type: bool
             self.__no_targets = self.config.get('no_targets')  # type: bool
+            self.__include_directories = self.config.get('include_directories')  # type: bool
         else:
             self.output = None
             self.extensions = []
@@ -615,6 +635,7 @@ class SanityCodeSmellTest(SanityTest):
 
             self.__all_targets = False
             self.__no_targets = True
+            self.__include_directories = False
 
         if self.no_targets:
             mutually_exclusive = (
@@ -624,6 +645,7 @@ class SanityCodeSmellTest(SanityTest):
                 'text',
                 'ignore_self',
                 'all_targets',
+                'include_directories',
             )
 
             problems = sorted(name for name in mutually_exclusive if getattr(self, name))
@@ -640,6 +662,11 @@ class SanityCodeSmellTest(SanityTest):
     def no_targets(self):  # type: () -> bool
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return self.__no_targets
+
+    @property
+    def include_directories(self):  # type: () -> bool
+        """True if the test targets should include directories."""
+        return self.__include_directories
 
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""

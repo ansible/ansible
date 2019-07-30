@@ -7,8 +7,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
 import struct
+import sys
 
 from ansible.module_utils.basic import to_bytes
 
@@ -57,7 +57,7 @@ ILLEGAL_END_CHARS = [
 
 def check_path(path, is_dir=False):
     type_name = 'directory' if is_dir else 'file'
-    file_name = os.path.basename(path)
+    file_name = os.path.basename(path.rstrip(os.path.sep))
     name = os.path.splitext(file_name)[0]
 
     if name.upper() in ILLEGAL_NAMES:
@@ -74,23 +74,8 @@ def check_path(path, is_dir=False):
 
 
 def main():
-    pattern = re.compile("^test/integration/targets/.*/backup")
-
-    for root, dirs, files in os.walk('.'):
-        if root == '.':
-            root = ''
-        elif root.startswith('./'):
-            root = root[2:]
-
-        # ignore test/integration/targets/*/backup
-        if pattern.match(root):
-            continue
-
-        for dir_name in dirs:
-            check_path(os.path.join(root, dir_name), is_dir=True)
-
-        for file_name in files:
-            check_path(os.path.join(root, file_name), is_dir=False)
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
+        check_path(path, is_dir=path.endswith(os.path.sep))
 
 
 if __name__ == '__main__':
