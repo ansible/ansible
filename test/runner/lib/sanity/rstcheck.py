@@ -4,12 +4,17 @@ __metaclass__ = type
 
 import os
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
@@ -31,6 +36,10 @@ from lib.config import (
 
 class RstcheckTest(SanitySingleVersion):
     """Sanity test using rstcheck."""
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] in ('.rst',)]
+
     def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
@@ -43,11 +52,7 @@ class RstcheckTest(SanitySingleVersion):
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name)
+        paths = [target.path for target in targets.include]
 
         cmd = [
             find_python(python_version),
