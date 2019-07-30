@@ -26,6 +26,16 @@
     - data_dedup_feat_reg.success
     - data_dedup_feat_reg.reboot_required
 
+- name: Get partition access path
+  win_shell: (Get-Partition -DriveLetter T).AccessPaths[1]
+  register: shell_partition_result
+
+- name: Format T with NTFS
+  win_format:
+    drive_letter: T
+    file_system: ntfs
+    path: "{{ shell_partition_result.stdout | trim }}"
+
 - name: Run tests
   block:
     - include: tests.yml
