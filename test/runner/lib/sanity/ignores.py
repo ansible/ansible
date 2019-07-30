@@ -2,6 +2,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from lib.sanity import (
     SanityFailure,
     SanityIgnoreParser,
@@ -56,7 +58,7 @@ class IgnoresTest(SanityVersionNeutral):
         # file not found errors
 
         messages.extend(SanityMessage(
-            message="File '%s' does not exist" % path,
+            message="%s '%s' does not exist" % ("Directory" if path.endswith(os.path.sep) else "File", path),
             path=sanity_ignore.relative_path,
             line=line,
             column=1,
