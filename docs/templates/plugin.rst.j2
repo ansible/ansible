@@ -120,6 +120,7 @@ Parameters
                     <b>@{ key }@</b>
                     <div style="font-size: small">
                         <span style="color: purple">@{ value.type | documented_type }@</span>
+                        {% if value.get('elements') %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
                         {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
                     </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
