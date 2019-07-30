@@ -200,8 +200,9 @@ def _ansiballz_main():
         runpy.run_module(mod_name=%(module_fqn)r, init_globals=dict(_module_fqn=%(module_fqn)r, _modlib_path=modlib_path),
                          run_name='__main__', alter_sys=True)
 
+        from ansible.module_utils._stdout_utils import write_bytes_to_stdout
         # Ansible modules must exit themselves
-        sys.stdout.buffer.write(
+        write_bytes_to_stdout(
             b''.join((
                 RS_DELIMITER,
                 b'{"msg": "New-style module did not '
@@ -297,8 +298,9 @@ def _ansiballz_main():
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
             runpy.run_module(mod_name=%(module_fqn)r, init_globals=None, run_name='__main__', alter_sys=True)
 
+            from ansible.module_utils._stdout_utils import write_bytes_to_stdout
             # Ansible modules must exit themselves
-            sys.stdout.buffer.write(
+            write_bytes_to_stdout(
                 b''.join((
                     RS_DELIMITER,
                     b'{"msg": "New-style module did not '

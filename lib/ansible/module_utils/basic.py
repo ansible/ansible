@@ -8,13 +8,14 @@ import json
 import sys
 
 from ._json_streams_rfc7464 import LF_DELIMITER, RS_DELIMITER
+from ._stdout_utils import write_bytes_to_stdout
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY_MIN = (3, 7)
 
 if sys.version_info < _PY_MIN:
-    sys.stdout.buffer.write(
+    write_bytes_to_stdout(
         b''.join((
             RS_DELIMITER,
             json.dumps(dict(
@@ -385,7 +386,7 @@ def _load_params():
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
         # This helper is used too early for fail_json to work.
-        sys.stdout.buffer.write(
+        write_bytes_to_stdout(
             b''.join((
                 RS_DELIMITER,
                 b'{"msg": "Error: Module unable to decode stdin/parameters as '
@@ -404,7 +405,7 @@ def _load_params():
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        sys.stdout.buffer.write(
+        write_bytes_to_stdout(
             b''.join((
                 RS_DELIMITER,
                 b'{"msg": "Error: Module unable to locate '
@@ -1503,7 +1504,7 @@ class AnsibleModule(object):
             kwargs['deprecations'] = deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
-        sys.stdout.buffer.write(
+        write_bytes_to_stdout(
             b'\n%s%s%s'
             % (
                 RS_DELIMITER,
