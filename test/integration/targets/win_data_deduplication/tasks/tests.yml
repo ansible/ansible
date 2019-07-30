@@ -28,7 +28,7 @@
 - name: Check that it was successful without a change
   assert:
     that:
-      - win_data_deduplication_enable is not changed
+      - win_data_deduplication_enable_again is not changed
 
 - name: Enable Data Deduplication on the T drive with start job
   win_data_deduplication:
