@@ -1,0 +1,4 @@
+---
+faketime_pkg:
+cron_pkg: cronie
+cron_service: crond

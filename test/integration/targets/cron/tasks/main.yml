@@ -1,0 +1,77 @@
+- include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - 'cron.{{ ansible_distribution | lower }}.yml'
+        - 'cron.{{ ansible_distribution_file_variety | lower }}.yml'
+        - cron.defaults.yml
+      paths:
+        - '../defaults/'
+
+- vars:
+    remote_dir: '{{ echo_output_dir.stdout }}'
+  block:
+    # output_dir is hardcoded/created in test/runner/lib/executor.py and
+    # contains '~': expand remote path
+    - command: 'echo {{ output_dir }}'
+      register: echo_output_dir
+
+    - name: install cron package
+      package:
+        name: '{{ cron_pkg }}'
+      register: cron_package_installed
+      until: cron_package_installed is success
+
+    - when: faketime_pkg|default(false, true)
+      block:
+        - name: create directory for cron drop-in file
+          file:
+            path: '/etc/systemd/system/{{ cron_service }}.service.d'
+            state: directory
+            owner: root
+            group: root
+            mode: 0755
+
+        - name: install cron and faketime packages
+          package:
+            name: '{{ faketime_pkg }}'
+          register: faketime_package_installed
+          until: faketime_package_installed is success
+
+        - name: 'Cron unit: fetch path'
+          command: 'systemctl show -p FragmentPath {{ cron_service }}.service'
+          changed_when: false
+          register: cron_unit_path
+
+        - name: 'Cron unit: fetch ExecStart property'
+          command: "grep ExecStart {{ cron_unit_path.stdout.split('=', 1)[1] }}"
+          changed_when: false
+          register: cron_exec_start
+
+        - name: Use faketime with cron service
+          copy:
+            content: |-
+              [Service]
+              ExecStart=
+              ExecStart=/usr/bin/faketime -f '+0y x10' {{ cron_exec_start.stdout.split('=', 1)[1] }}
+              Environment=RANDOM_DELAY=0
+            dest: '/etc/systemd/system/{{ cron_service }}.service.d/faketime.conf'
+            owner: root
+            group: root
+            mode: 0644
+
+    - name: enable cron service
+      service:
+        daemon-reload: "{{ (ansible_service_mgr == 'systemd')|ternary(true, omit) }}"
+        name: '{{ cron_service }}'
+        state: restarted
+
+    - name: add cron task
+      cron:
+        name: test cron task
+        job: 'date > {{ remote_dir }}/cron_canary1'
+
+    - name: wait for canary creation
+      wait_for:
+        path: '{{ output_dir }}/cron_canary1'
+        timeout: '{{ 20 if faketime_pkg else 70 }}'
