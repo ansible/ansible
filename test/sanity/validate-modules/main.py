@@ -1154,12 +1154,12 @@ class ModuleValidator(Validator):
         if context is None:
             context = []
 
-        if not context:
-            try:
+        try:
+            if not context:
                 add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
-            except Exception:
-                # Cannot merge fragments
-                return
+        except Exception:
+            # Cannot merge fragments
+            return
 
         # Use this to access type checkers later
         module = NoArgsAnsibleModule({})
