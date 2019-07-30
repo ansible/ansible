@@ -111,6 +111,7 @@
     terms_agreed: "{{ terms_agreed }}"
     account_email: "{{ account_email }}"
     data: "{{ challenge_data }}"
+  when: challenge_data is changed
 - name: ({{ certgen_title }}) Deleting HTTP challenges
   uri:
     url: "http://{{ acme_host }}:5000/http/{{ item.key }}/{{ item.value['http-01'].resource[('.well-known/acme-challenge/'|length):] }}"
