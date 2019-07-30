@@ -6889,6 +6889,7 @@ lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
+lib/ansible/plugins/cache/base.py ansible-doc  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/hipchat.py pylint:blacklisted-name
 lib/ansible/plugins/connection/lxc.py pylint:blacklisted-name
 lib/ansible/plugins/doc_fragments/a10.py future-import-boilerplate

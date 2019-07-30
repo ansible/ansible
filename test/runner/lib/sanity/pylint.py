@@ -16,6 +16,10 @@ from lib.sanity import (
     SanitySuccess,
 )
 
+from lib.target import (
+    TestTarget,
+)
+
 from lib.util import (
     SubprocessError,
     display,
@@ -49,6 +53,10 @@ class PylintTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
+
     def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
@@ -62,8 +70,7 @@ class PylintTest(SanitySingleVersion):
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/'))
-        paths = settings.filter_skipped_paths(paths)
+        paths = [target.path for target in targets.include]
 
         module_paths = [os.path.relpath(p, data_context().content.module_path).split(os.path.sep) for p in
                         paths if is_subdir(p, data_context().content.module_path)]

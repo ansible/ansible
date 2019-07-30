@@ -12,7 +12,10 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
@@ -46,6 +49,10 @@ class ValidateModulesTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if target.module]
+
     def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
@@ -64,11 +71,7 @@ class ValidateModulesTest(SanitySingleVersion):
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if i.module)
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name)
+        paths = [target.path for target in targets.include]
 
         cmd = [
             find_python(python_version),

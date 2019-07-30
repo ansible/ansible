@@ -4,12 +4,17 @@ __metaclass__ = type
 
 import os
 
+import lib.types as t
+
 from lib.sanity import (
     SanityMultipleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
@@ -51,6 +56,11 @@ from lib.data import (
 
 class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and
+                (is_subdir(target.path, data_context().content.module_path) or is_subdir(target.path, data_context().content.module_utils_path))]
+
     def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
@@ -60,17 +70,7 @@ class ImportTest(SanityMultipleVersion):
         """
         settings = self.load_processor(args, python_version)
 
-        paths = sorted(
-            i.path
-            for i in targets.include
-            if os.path.splitext(i.path)[1] == '.py' and
-            (is_subdir(i.path, data_context().content.module_path) or is_subdir(i.path, data_context().content.module_utils_path))
-        )
-
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name, python_version=python_version)
+        paths = [target.path for target in targets.include]
 
         env = ansible_environment(args, color=False)
 

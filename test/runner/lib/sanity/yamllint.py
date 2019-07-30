@@ -12,7 +12,10 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
@@ -43,6 +46,21 @@ class YamllintTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        yaml_targets = [target for target in targets if os.path.splitext(target.path)[1] in ('.yml', '.yaml')]
+
+        for plugin_type, plugin_path in sorted(data_context().content.plugin_paths.items()):
+            if plugin_type == 'module_utils':
+                continue
+
+            yaml_targets.extend([target for target in targets if
+                                 os.path.splitext(target.path)[1] == '.py' and
+                                 os.path.basename(target.path) != '__init__.py' and
+                                 is_subdir(target.path, plugin_path)])
+
+        return yaml_targets
+
     def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
@@ -52,21 +70,7 @@ class YamllintTest(SanitySingleVersion):
         """
         settings = self.load_processor(args)
 
-        paths = [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')]
-
-        for plugin_type, plugin_path in sorted(data_context().content.plugin_paths.items()):
-            if plugin_type == 'module_utils':
-                continue
-
-            paths.extend([target.path for target in targets.include if
-                          os.path.splitext(target.path)[1] == '.py' and
-                          os.path.basename(target.path) != '__init__.py' and
-                          is_subdir(target.path, plugin_path)])
-
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name)
+        paths = [target.path for target in targets.include]
 
         python = find_python(python_version)
 
