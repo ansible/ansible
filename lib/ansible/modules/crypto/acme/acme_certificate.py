@@ -934,12 +934,12 @@ class ACMEClient(object):
                 def _append_all_chains(chain):
                     self.all_chains.append(dict(
                         chain=("\n".join(chain)).encode('utf8'),
-                        full_chain=(pem_cert + "\n".join(chain)).encode('utf8'),
+                        full_chain=(cert['cert'] + "\n".join(chain)).encode('utf8'),
                     ))
 
-                _append_all_chains(cert)
+                _append_all_chains(cert.get('chain', []))
                 for alt_chain in alternate_chains:
-                    _append_all_chains(alt_chain)
+                    _append_all_chains(alt_chain.get('chain', []))
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
