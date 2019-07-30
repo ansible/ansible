@@ -414,8 +414,8 @@
   assert:
     that:
     - append_acl is changed
-    - append_acl_actual.stdout_lines|length == 4
-    - append_acl_actual.stdout_lines[0] == 'Full|Deny|BUILTIN\\Remote Desktop Users'
+    - append_acl_actual.stdout_lines|length == 5
+    - append_acl_actual.stdout_lines[0] == 'Full|Deny|BUILTIN\Remote Desktop Users'
     - append_acl_actual.stdout_lines[1] == 'Read|Allow|BUILTIN\\Guests'
     - append_acl_actual.stdout_lines[2] == 'Change|Allow|BUILTIN\\Users'
     - append_acl_actual.stdout_lines[3] == 'Full|Allow|BUILTIN\\Administrators'
