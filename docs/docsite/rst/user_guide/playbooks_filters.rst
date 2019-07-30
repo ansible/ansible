@@ -1260,7 +1260,7 @@ To get the real path of a link (new in version 1.8)::
 
 To get the relative path of a link, from a start point (new in version 1.7)::
 
-    {{ path | relpath('/etc') }}
+    {{ path | realpath('/etc') }}
 
 To get the root and extension of a path or filename (new in version 2.0)::
 
