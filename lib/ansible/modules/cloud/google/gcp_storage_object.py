@@ -130,6 +130,10 @@ import os
 import mimetypes
 import hashlib
 import base64
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
 
 ################################################################################
 # Main
@@ -164,47 +168,43 @@ def main():
         module.fail_json(msg="File does not exist on disk")
 
     # Check if we'll be overwriting files.
-    if not module.params['overwrite']:
-        remote_object['changed'] = False
-        if module.params['action'] == 'download' and local_file_exists:
-            # If files differ, throw an error
-            if get_md5_local(local_file_path(module)) != remote_object['md5Hash']:
-                module.fail_json(msg="Local file is different than remote file")
-            # If files are the same, module is done running.
-            else:
-                module.exit_json(**remote_object)
-
-        elif module.params['action'] == 'upload' and remote_object:
-            # If files differ, throw an error
-            if get_md5_local(local_file_path(module)) != remote_object['md5Hash']:
-                module.fail_json(msg="Local file is different than remote file")
-            # If files are the same, module is done running.
-            else:
-                module.exit_json(**remote_object)
-
-    # Upload/download the files
-    auth = GcpSession(module, 'storage')
     if module.params['action'] == 'download':
-        results = download_file(module)
-    else:
-        results = upload_file(module)
+        if local_file_exists:
+            # If files differ, throw an error
+            if get_md5_local(local_file_path(module)) != remote_object['md5Hash']:
+                if not module.params['overwrite']:
+                    module.fail_json(msg="Local file is different than remote file")
+            # If files are the same, module is done running.
+            else:
+                module.exit_json(changed=False, **remote_object)
+        module.exit_json(changed=True, **download_file(module))
 
-    module.exit_json(**results)
+    if module.params['action'] == 'upload':
+        if remote_object:
+            # If files differ, throw an error
+            if get_md5_local(local_file_path(module)) != remote_object['md5Hash']:
+                if not module.params['overwrite']:
+                    module.fail_json(msg="Local file is different than remote file")
+            # If files are the same, module is done running.
+            else:
+                module.exit_json(changed=False, **remote_object)
+
+        module.exit_json(changed=True, **upload_file(module))
 
 
 def download_file(module):
     auth = GcpSession(module, 'storage')
-    data = auth.get(media_link(module))
-    with open(module.params['dest'], 'w') as f:
-        f.write(data.text.encode('utf8'))
+    data = auth.get(media_link(module), stream=True)
+    with open(module.params['dest'], 'wb') as f:
+        for chunk in data.iter_content(chunk_size=128):
+            f.write(chunk)
     return fetch_resource(module, self_link(module))
 
 
 def upload_file(module):
     auth = GcpSession(module, 'storage')
-    with open(module.params['src'], 'r') as f:
+    with open(module.params['src'], 'rb') as f:
         results = return_if_object(module, auth.post_contents(upload_link(module), f, object_headers(module)))
-    results['changed'] = True
     return results
 
 
@@ -227,10 +227,8 @@ def fetch_resource(module, link, allow_not_found=True):
 
 
 def self_link(module):
-    if module.params['action'] == 'download':
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{src}".format(**module.params)
-    else:
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{dest}".format(**module.params)
+    return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{object}".format(bucket=module.params['bucket'],
+                                                                                object=quote(remote_object_path(module), safe=''))
 
 
 def local_file_path(module):
@@ -240,11 +238,15 @@ def local_file_path(module):
         return module.params['src']
 
 
-def media_link(module):
+def remote_object_path(module):
     if module.params['action'] == 'download':
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{src}?alt=media".format(**module.params)
+        return module.params['src']
     else:
-        return "https://www.googleapis.com/storage/v1/b/{bucket}/o/{dest}?alt=media".format(**module.params)
+        return module.params['dest']
+
+
+def media_link(module):
+    return self_link(module) + "?alt=media"
 
 
 def upload_link(module):

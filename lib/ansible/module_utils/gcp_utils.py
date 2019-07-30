@@ -102,7 +102,7 @@ class GcpSession(object):
             headers = self._headers()
 
         try:
-            return self.session().post(url, data=file_contents, headers=headers)
+            return self.session().post(url, data=file_contents, headers=headers, **kwargs)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
@@ -239,8 +239,11 @@ class GcpModule(AnsibleModule):
     def raise_for_status(self, response):
         try:
             response.raise_for_status()
-        except getattr(requests.exceptions, 'RequestException') as inst:
-            self.fail_json(msg="GCP returned error: %s" % response.json())
+        except getattr(requests.exceptions, 'RequestException'):
+            try:
+                self.fail_json(msg="GCP returned error: %s" % response.json())
+            except ValueError:
+                self.fail_json(msg="GCP returned error: %s" % response.text)
 
     def _merge_dictionaries(self, a, b):
         new = a.copy()
