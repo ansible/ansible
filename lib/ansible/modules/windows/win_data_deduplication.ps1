@@ -156,7 +156,7 @@ if (!$feature.Installed) {
   Exit-Json -obj $result
 }
 
-$volume = Get-PSVolume -DriveLetter $drive_letter
+$volume = Get-Volume -DriveLetter $drive_letter
 if ($volume) {
   $result.msg += "Start setting FileDeduplication"
   DataDeduplication -drive $volume
