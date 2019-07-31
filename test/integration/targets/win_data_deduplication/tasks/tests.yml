@@ -1,8 +1,8 @@
 ---
 
-- name: Enable Data Deduplication on the C drive
+- name: Enable Data Deduplication on the T drive
   win_data_deduplication:
-    drive_letter: "C"
+    drive_letter: "T"
     state: enabled
     settings:
       - NoCompress: true
@@ -15,9 +15,9 @@
     that:
       - win_data_deduplication_enable is changed
 
-- name: Enable Data Deduplication on the C drive
+- name: Enable Data Deduplication on the T drive
   win_data_deduplication:
-    drive_letter: "C"
+    drive_letter: "T"
     state: enabled
     settings:
       - NoCompress: true
@@ -30,9 +30,9 @@
     that:
       - win_data_deduplication_enable_again is not changed
 
-- name: Enable Data Deduplication on the C drive with start job
+- name: Enable Data Deduplication on the T drive with start job
   win_data_deduplication:
-    drive_letter: "C"
+    drive_letter: "T"
     state: enabled
     settings:
       - NoCompress: true
