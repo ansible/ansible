@@ -53,6 +53,43 @@ options:
     peer_ips:
         description:
         - Semi-colon delimited IP addresses which can perform SNMP queries.
+    net_name:
+        description:
+        - Name of network.
+        type: str
+        version_added: '2.9'
+    net_id:
+        description:
+        - ID of network.
+        type: str
+        version_added: '2.9'
+    access:
+        description:
+        - Type of SNMP access.
+        choices: [community, none, users]
+        type: str
+        version_added: '2.9'
+    community_string:
+        description:
+        - SNMP community string.
+        - Only relevant if C(access) is set to C(community).
+        type: str
+        version_added: '2.9'
+    users:
+        description:
+        - Information about users with access to SNMP.
+        - Only relevant if C(access) is set to C(users).
+        type: list
+        version_added: '2.9'
+        suboptions:
+            username:
+                description: Username of user with access.
+                type: str
+                version_added: '2.9'
+            passphrase:
+                description: Passphrase for user SNMP access.
+                type: str
+                version_added: '2.9'
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -94,6 +131,28 @@ EXAMPLES = r'''
     v3_priv_pass: ansiblepass
     peer_ips: 192.0.1.1;192.0.1.2
   delegate_to: localhost
+
+- name: Set network access type to community string
+  meraki_snmp:
+    auth_key: abc1235
+    org_name: YourOrg
+    net_name: YourNet
+    state: present
+    access: community
+    community_string: abc123
+  delegate_to: localhost
+
+- name: Set network access type to username
+  meraki_snmp:
+    auth_key: abc1235
+    org_name: YourOrg
+    net_name: YourNet
+    state: present
+    access: users
+    users:
+      - username: ansibleuser
+        passphrase: ansiblepass
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -104,56 +163,76 @@ data:
     contains:
         hostname:
             description: Hostname of SNMP server.
-            returned: success
+            returned: success and no network specified.
             type: str
             sample: n1.meraki.com
         peerIps:
             description: Semi-colon delimited list of IPs which can poll SNMP information.
-            returned: success
+            returned: success and no network specified.
             type: str
             sample: 192.0.1.1
         port:
             description: Port number of SNMP.
-            returned: success
+            returned: success and no network specified.
             type: str
             sample: 16100
         v2c_enabled:
             description: Shows enabled state of SNMPv2c
-            returned: success
+            returned: success and no network specified.
             type: bool
             sample: true
         v3_enabled:
             description: Shows enabled state of SNMPv3
-            returned: success
+            returned: success and no network specified.
             type: bool
             sample: true
         v3_auth_mode:
             description: The SNMP version 3 authentication mode either MD5 or SHA.
-            returned: success
+            returned: success and no network specified.
             type: str
             sample: SHA
         v3_priv_mode:
             description: The SNMP version 3 privacy mode DES or AES128.
-            returned: success
+            returned: success and no network specified.
             type: str
             sample: AES128
         v2_community_string:
             description: Automatically generated community string for SNMPv2c.
-            returned: When SNMPv2c is enabled.
+            returned: When SNMPv2c is enabled and no network specified.
             type: str
             sample: o/8zd-JaSb
         v3_user:
             description: Automatically generated username for SNMPv3.
-            returned: When SNMPv3c is enabled.
+            returned: When SNMPv3c is enabled and no network specified.
             type: str
             sample: o/8zd-JaSb
+        access:
+            description: Type of SNMP access.
+            type: str
+            returned: success, when network specified
+        community_string:
+            description: SNMP community string. Only relevant if C(access) is set to C(community).
+            type: str
+            returned: success, when network specified
+        users:
+            description: Information about users with access to SNMP. Only relevant if C(access) is set to C(users).
+            type: complex
+            contains:
+                username:
+                    description: Username of user with access.
+                    type: str
+                    returned: success, when network specified
+                passphrase:
+                    description: Passphrase for user SNMP access.
+                    type: str
+                    returned: success, when network specified
 '''
 
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common.dict_transformations import recursive_diff
+from ansible.module_utils.common.dict_transformations import recursive_diff, snake_dict_to_camel_dict
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -175,7 +254,7 @@ def set_snmp(meraki, org_id):
     if meraki.params['v2c_enabled'] is not None:
         payload = {'v2cEnabled': meraki.params['v2c_enabled'],
                    }
-    if meraki.params['v3_enabled'] is not None:
+    if meraki.params['v3_enabled'] is True:
         if len(meraki.params['v3_auth_pass']) < 8 or len(meraki.params['v3_priv_pass']) < 8:
             meraki.fail_json(msg='v3_auth_pass and v3_priv_pass must both be at least 8 characters long.')
         if (meraki.params['v3_auth_mode'] is None or
@@ -188,18 +267,12 @@ def set_snmp(meraki, org_id):
                    'v3AuthPass': meraki.params['v3_auth_pass'],
                    'v3PrivMode': meraki.params['v3_priv_mode'].upper(),
                    'v3PrivPass': meraki.params['v3_priv_pass'],
-                   'peerIps': meraki.params['peer_ips'],
                    }
-    full_compare = {'v2cEnabled': meraki.params['v2c_enabled'],
-                    'v3Enabled': meraki.params['v3_enabled'],
-                    'v3AuthMode': meraki.params['v3_auth_mode'],
-                    'v3PrivMode': meraki.params['v3_priv_mode'],
-                    'peerIps': meraki.params['peer_ips'],
-                    }
-    if meraki.params['v3_enabled'] is None:
-        full_compare['v3Enabled'] = False
-    if meraki.params['v2c_enabled'] is None:
-        full_compare['v2cEnabled'] = False
+        if meraki.params['peer_ips'] is not None:
+            payload['peerIps'] = meraki.params['peer_ips']
+    elif meraki.params['v3_enabled'] is False:
+        payload = {'v3Enabled': False}
+    full_compare = snake_dict_to_camel_dict(payload)
     path = meraki.construct_path('create', org_id=org_id)
     snmp = get_snmp(meraki, org_id)
     ignored_parameters = ['v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString', 'v3User']
@@ -208,6 +281,7 @@ def set_snmp(meraki, org_id):
             diff = recursive_diff(snmp, full_compare)
             snmp.update(payload)
             meraki.result['data'] = snmp
+            meraki.result['changed'] = True
             meraki.result['diff'] = {'before': diff[0],
                                      'after': diff[1]}
             meraki.exit_json(**meraki.result)
@@ -228,6 +302,10 @@ def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
+    user_arg_spec = dict(username=dict(type='str'),
+                         passphrase=dict(type='str', no_log=True),
+                         )
+
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['present', 'query'], default='present'),
                          v2c_enabled=dict(type='bool'),
@@ -237,6 +315,11 @@ def main():
                          v3_priv_mode=dict(type='str', choices=['DES', 'AES128']),
                          v3_priv_pass=dict(type='str', no_log=True),
                          peer_ips=dict(type='str'),
+                         access=dict(type='str', choices=['none', 'community', 'users']),
+                         community_string=dict(type='str', no_log=True),
+                         users=dict(type='list', default=None, element='str', options=user_arg_spec),
+                         net_name=dict(type='str'),
+                         net_id=dict(type='str'),
                          )
 
     # seed the result dict in the object
@@ -257,25 +340,17 @@ def main():
     meraki = MerakiModule(module, function='snmp')
     meraki.params['follow_redirects'] = 'all'
 
-    query_urls = {'snmp': '/organizations/{org_id}/snmp',
-                  }
+    query_urls = {'snmp': '/organizations/{org_id}/snmp'}
+    query_net_urls = {'snmp': '/networks/{net_id}/snmpSettings'}
+    update_urls = {'snmp': '/organizations/{org_id}/snmp'}
+    update_net_urls = {'snmp': '/networks/{net_id}/snmpSettings'}
 
-    update_urls = {'snmp': '/organizations/{org_id}/snmp',
-                   }
-
-    meraki.url_catalog['get_all'] = query_urls
+    meraki.url_catalog['get_all'].update(query_urls)
+    meraki.url_catalog['query_net_all'] = query_net_urls
     meraki.url_catalog['create'] = update_urls
+    meraki.url_catalog['create_net'] = update_net_urls
 
     payload = None
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-
-    # execute checks for argument completeness
-
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
 
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id is required')
@@ -283,10 +358,44 @@ def main():
     org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
+    net_id = meraki.params['net_id']
+    if net_id is None and meraki.params['net_name']:
+        nets = meraki.get_nets(org_id=org_id)
+        net_id = meraki.get_net_id(org_id, meraki.params['net_name'], data=nets)
+
+    if meraki.params['state'] == 'present':
+        if net_id is not None:
+            payload = {'access': meraki.params['access']}
+            if meraki.params['community_string'] is not None:
+                payload['communityString'] = meraki.params['community_string']
+            elif meraki.params['users'] is not None:
+                payload['users'] = meraki.params['users']
+
     if meraki.params['state'] == 'query':
-        meraki.result['data'] = get_snmp(meraki, org_id)
+        if net_id is None:
+            meraki.result['data'] = get_snmp(meraki, org_id)
+        else:
+            path = meraki.construct_path('query_net_all', net_id=net_id)
+            response = meraki.request(path, method='GET')
+            if meraki.status == 200:
+                meraki.result['data'] = response
     elif meraki.params['state'] == 'present':
-        meraki.result['data'] = set_snmp(meraki, org_id)
+        if net_id is None:
+            meraki.result['data'] = set_snmp(meraki, org_id)
+        else:
+            path = meraki.construct_path('query_net_all', net_id=net_id)
+            original = meraki.request(path, method='GET')
+            if meraki.is_update_required(original, payload):
+                path = meraki.construct_path('create_net', net_id=net_id)
+                response = meraki.request(path, method='PUT', payload=json.dumps(payload))
+                if meraki.status == 200:
+                    if response['access'] == 'none':
+                        meraki.result['data'] = {}
+                    else:
+                        meraki.result['data'] = response
+                    meraki.result['changed'] = True
+            else:
+                meraki.result['data'] = original
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
