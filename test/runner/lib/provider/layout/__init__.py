@@ -80,6 +80,7 @@ class ContentLayout(Layout):
                  util_path=None,  # type: t.Optional[str]
                  unit_path=None,  # type: t.Optional[str]
                  unit_module_path=None,  # type: t.Optional[str]
+                 unit_module_utils_path=None,  # type: t.Optional[str]
                  integration_path=None,  # type: t.Optional[str]
                  ):  # type: (...) -> None
         super(ContentLayout, self).__init__(root, paths)
@@ -91,6 +92,7 @@ class ContentLayout(Layout):
         self.util_path = util_path
         self.unit_path = unit_path
         self.unit_module_path = unit_module_path
+        self.unit_module_utils_path = unit_module_utils_path
         self.integration_path = integration_path
         self.is_ansible = root == ANSIBLE_ROOT
 
