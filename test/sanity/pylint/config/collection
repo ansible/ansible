@@ -34,6 +34,7 @@ disable=
     function-redefined,
     global-statement,
     global-variable-undefined,
+    import-error,
     import-self,
     inconsistent-return-statements,
     invalid-envvar-default,
