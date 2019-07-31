@@ -9,16 +9,34 @@ for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
 
-import re
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 from copy import deepcopy
+import re
+from ansible.module_utils.network.common import utils
+from ansible.module_utils.network.iosxr.utils.utils import get_interface_type, normalize_interface
+from ansible.module_utils.network.iosxr.argspec.interfaces.interfaces import InterfacesArgs
 
-from ansible.module_utils.iosxr.facts.base import FactsBase
-from ansible.module_utils.iosxr.utils.utils import get_interface_type, normalize_interface
 
-
-class InterfacesFacts(FactsBase):
+class InterfacesFacts(object):
     """ The iosxr interfaces fact class
     """
+
+    def __init__(self, module, subspec='config', options='options'):
+        self._module = module
+        self.argument_spec = InterfacesArgs.argument_spec
+        spec = deepcopy(self.argument_spec)
+        if subspec:
+            if options:
+                facts_argument_spec = spec[subspec][options]
+            else:
+                facts_argument_spec = spec[subspec]
+        else:
+            facts_argument_spec = spec
+
+        self.generated_spec = utils.generate_dict(facts_argument_spec)
 
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for interfaces
@@ -71,11 +89,11 @@ class InterfacesFacts(FactsBase):
             return {}
         # populate the facts from the configuration
         config['name'] = normalize_interface(intf)
-        config['description'] = self.parse_conf_arg(conf, 'description')
-        config['speed'] = self.parse_conf_arg(conf, 'speed')
-        config['mtu'] = self.parse_conf_arg(conf, 'mtu')
-        config['duplex'] = self.parse_conf_arg(conf, 'duplex')
-        enabled = self.parse_conf_cmd_arg(conf, 'shutdown', False)
+        config['description'] = utils.parse_conf_arg(conf, 'description')
+        config['speed'] = utils.parse_conf_arg(conf, 'speed')
+        config['mtu'] = utils.parse_conf_arg(conf, 'mtu')
+        config['duplex'] = utils.parse_conf_arg(conf, 'duplex')
+        enabled = utils.parse_conf_cmd_arg(conf, 'shutdown', False)
         config['enabled'] = enabled if enabled is not None else True
 
-        return self.generate_final_config(config)
+        return utils.remove_empties(config)

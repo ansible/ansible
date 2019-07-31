@@ -113,8 +113,6 @@ def pad_commands(commands, interface):
     commands.insert(0, 'interface {0}'.format(interface))
 
 
-
-
 def normalize_interface(name):
     """Return the normalized interface name
     """
