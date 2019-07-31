@@ -171,7 +171,7 @@ class EntityVnicPorfileModule(BaseModule):
 
     def _get_qos_id(self):
         qoss_service = self._get_dcs_service().service(self._get_dcs_id()).qoss_service()
-        return get_id_by_name(qoss_service, self.param('qos'))
+        return get_id_by_name(qoss_service, self.param('qos')) if self.param('qos') else None
 
     def _get_network_filter_id(self):
         nf_service = self._connection.system_service().network_filters_service()
@@ -227,13 +227,14 @@ class EntityVnicPorfileModule(BaseModule):
                 return sorted(current) == sorted(passed)
             return True
 
+        pass_through = getattr(entity.pass_through.mode, 'name', None)
         return (
             check_custom_properties() and
+            self._get_network_filter_id() == getattr(entity.network_filter, 'id', None) and
+            self._get_qos_id() == getattr(entity.qos, 'id', None) and
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
-            equal(self.param('pass_through'), getattr(entity.pass_through.mode, 'name', None)) and
+            equal(self.param('pass_through'), pass_through.lower() if pass_through else None) and
             equal(self.param('description'), entity.description) and
-            equal(self.param('network_filter'), getattr(entity.network_filter, 'name', '')) and
-            equal(self.param('qos'), getattr(entity.qos, 'name', '')) and
             equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
         )
 
