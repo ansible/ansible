@@ -138,7 +138,7 @@ policydefinitions:
                         "then": {
                             "details": {
                                 "existenceCondition": {
-                                    "field": "Microsoft.Security/complianceResults/resourc
+                                    "field": "Microsoft.Security/complianceResults/resource",
                                     "in": [
                                         "NotApplicable",
                                         "OffByPolicy",
