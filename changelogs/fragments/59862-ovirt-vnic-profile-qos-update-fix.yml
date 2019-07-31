@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vnic_profile - fix for updating vnic profile (https://github.com/ansible/ansible/pull/56518)
