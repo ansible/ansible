@@ -76,6 +76,11 @@ options:
     default: no
     type: bool
     version_added: "2.8"
+  wait_sleep:
+    description:
+    - Number of seconds to sleep between checks.
+    default: 5
+    version_added: "2.9"
   wait_timeout:
     description:
     - How long in seconds to wait for the resource to end up in the desired state. Ignored if C(wait) is not set.
