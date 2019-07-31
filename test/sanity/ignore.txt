@@ -3458,9 +3458,9 @@ lib/ansible/modules/network/ios/ios_config.py validate-modules:E338
 lib/ansible/modules/network/ios/ios_facts.py future-import-boilerplate
 lib/ansible/modules/network/ios/ios_facts.py metaclass-boilerplate
 lib/ansible/modules/network/ios/ios_facts.py validate-modules:E337
-lib/ansible/modules/network/ios/ios_interface.py validate-modules:E324
-lib/ansible/modules/network/ios/ios_interface.py validate-modules:E337
-lib/ansible/modules/network/ios/ios_interface.py validate-modules:E338
+lib/ansible/modules/network/ios/_ios_interface.py validate-modules:E324
+lib/ansible/modules/network/ios/_ios_interface.py validate-modules:E337
+lib/ansible/modules/network/ios/_ios_interface.py validate-modules:E338
 lib/ansible/modules/network/ios/ios_l2_interface.py validate-modules:E324
 lib/ansible/modules/network/ios/ios_l2_interface.py validate-modules:E337
 lib/ansible/modules/network/ios/ios_l2_interface.py validate-modules:E338
