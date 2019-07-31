@@ -79,7 +79,7 @@ Now ping all your nodes:
    $ ansible all -m ping
 
 Ansible will attempt to remote connect to the machines using your current
-user name, just like SSH would.  To override the remote user name, just use the '-u' parameter. (Note that if you have specified a user in the inventory file this will unintuitively take precedence over the '-u' parameter. To take precedence over the inventory, use '-e "ansible_ssh_user=<USER>")
+user name, just like SSH would.  To override the remote user name, just use the '-u' parameter. (Note that if you have specified a user in the inventory file this will unintuitively take precedence over the '-u' parameter. To take precedence over the inventory, use '-e "ansible_ssh_user=<USER>"')
 
 If you would like to access sudo mode, there are also flags to do that:
 
