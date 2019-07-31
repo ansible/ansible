@@ -18,25 +18,25 @@ _DEVICE_CONFIGS = {}
 
 def get_connection(module):
     if hasattr(module, '_eric_eccli_connection'):
-	return module._eric_eccli_connection
+        return module._eric_eccli_connection
 
     capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'cliconf':
-	module._eric_eccli_connection = Connection(module._socket_path)
+        module._eric_eccli_connection = Connection(module._socket_path)
     else:
-	module.fail_json(msg='Invalid connection type %s' % network_api)
+        module.fail_json(msg='Invalid connection type %s' % network_api)
 
     return module._eric_eccli_connection
 
 
 def get_capabilities(module):
     if hasattr(module, '_eric_eccli_capabilities'):
-	return module._eric_eccli_capabilities
+        return module._eric_eccli_capabilities
     try:
-	capabilities = Connection(module._socket_path).get_capabilities()
+        capabilities = Connection(module._socket_path).get_capabilities()
     except ConnectionError as exc:
-	module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._eric_eccli_capabilities = json.loads(capabilities)
     return module._eric_eccli_capabilities
 
@@ -44,6 +44,6 @@ def get_capabilities(module):
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
     try:
-	return connection.run_commands(commands=commands, check_rc=check_rc)
+        return connection.run_commands(commands=commands, check_rc=check_rc)
     except ConnectionError as exc:
-	module.fail_json(msg=to_text(exc))
+        module.fail_json(msg=to_text(exc))

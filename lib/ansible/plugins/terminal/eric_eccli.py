@@ -35,25 +35,25 @@ display = Display()
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-	re.compile(br"[\r\n]?\[.*\][a-zA-Z0-9_.-]*[>\#] ?$"),
-	re.compile(br"[\r\n]?[a-zA-Z0-9_.-]*(?:\([^\)]+\))(?:[>#]) ?$"),
-	re.compile(br"bash\-\d\.\d(?:[$#]) ?"),
-	re.compile(br"[a-zA-Z0-9_.-]*\@[a-zA-Z0-9_.-]*\[\]\:\/flash\>")
+        re.compile(br"[\r\n]?\[.*\][a-zA-Z0-9_.-]*[>\#] ?$"),
+        re.compile(br"[\r\n]?[a-zA-Z0-9_.-]*(?:\([^\)]+\))(?:[>#]) ?$"),
+        re.compile(br"bash\-\d\.\d(?:[$#]) ?"),
+        re.compile(br"[a-zA-Z0-9_.-]*\@[a-zA-Z0-9_.-]*\[\]\:\/flash\>")
     ]
 
     terminal_stderr_re = [
-	re.compile(br"[\r\n]+syntax error: .*"),
-	re.compile(br"Aborted: .*"),
-	re.compile(br"[\r\n]+Error: .*"),
-	re.compile(br"[\r\n]+% Error:.*"),
-	re.compile(br"[\r\n]+% Invalid input.*"),
-	re.compile(br"[\r\n]+% Incomplete command:.*")
+        re.compile(br"[\r\n]+syntax error: .*"),
+        re.compile(br"Aborted: .*"),
+        re.compile(br"[\r\n]+Error: .*"),
+        re.compile(br"[\r\n]+% Error:.*"),
+        re.compile(br"[\r\n]+% Invalid input.*"),
+        re.compile(br"[\r\n]+% Incomplete command:.*")
     ]
 
     def on_open_shell(self):
 
-	try:
-	    for cmd in (b'screen-length 0', b'screen-width 512'):
-		self._exec_cli_command(cmd)
-	except AnsibleConnectionFailure:
-	    raise AnsibleConnectionFailure('unable to set terminal parameters')
+        try:
+            for cmd in (b'screen-length 0', b'screen-width 512'):
+                self._exec_cli_command(cmd)
+        except AnsibleConnectionFailure:
+            raise AnsibleConnectionFailure('unable to set terminal parameters')

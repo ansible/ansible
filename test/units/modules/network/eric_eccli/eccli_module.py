@@ -33,15 +33,15 @@ def load_fixture(name):
     path = os.path.join(fixture_path, name)
 
     if path in fixture_data:
-	return fixture_data[path]
+        return fixture_data[path]
 
     with open(path) as f:
-	data = f.read()
+        data = f.read()
 
     try:
-	data = json.loads(data)
+        data = json.loads(data)
     except Exception:
-	pass
+        pass
 
     fixture_data[path] = data
     return data
@@ -51,38 +51,38 @@ class TestEccliModule(ModuleTestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
 
-	self.load_fixtures(commands)
+        self.load_fixtures(commands)
 
-	if failed:
-	    result = self.failed()
-	    self.assertTrue(result['failed'], result)
-	else:
-	    result = self.changed(changed)
-	    self.assertEqual(result['changed'], changed, result)
+        if failed:
+            result = self.failed()
+            self.assertTrue(result['failed'], result)
+        else:
+            result = self.changed(changed)
+            self.assertEqual(result['changed'], changed, result)
 
-	if commands is not None:
-	    if sort:
-		self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
-	    else:
-		self.assertEqual(commands, result['commands'], result['commands'])
+        if commands is not None:
+            if sort:
+                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
+            else:
+                self.assertEqual(commands, result['commands'], result['commands'])
 
-	return result
+        return result
 
     def failed(self):
-	with self.assertRaises(AnsibleFailJson) as exc:
-	    self.module.main()
+        with self.assertRaises(AnsibleFailJson) as exc:
+            self.module.main()
 
-	result = exc.exception.args[0]
-	self.assertTrue(result['failed'], result)
-	return result
+        result = exc.exception.args[0]
+        self.assertTrue(result['failed'], result)
+        return result
 
     def changed(self, changed=False):
-	with self.assertRaises(AnsibleExitJson) as exc:
-	    self.module.main()
+        with self.assertRaises(AnsibleExitJson) as exc:
+            self.module.main()
 
-	result = exc.exception.args[0]
-	self.assertEqual(result['changed'], changed, result)
-	return result
+        result = exc.exception.args[0]
+        self.assertEqual(result['changed'], changed, result)
+        return result
 
     def load_fixtures(self, commands=None):
-	pass
+        pass

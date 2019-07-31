@@ -49,50 +49,50 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 class Cliconf(CliconfBase):
 
     def get_config(self, source='running', flags=None, format=None):
-	return
+        return
 
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
-	return
+        return
 
     def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
-	if not command:
-	    raise ValueError('must provide value of command to execute')
-	if output:
-	    raise ValueError("'output' value %s is not supported for get" % output)
+        if not command:
+            raise ValueError('must provide value of command to execute')
+        if output:
+            raise ValueError("'output' value %s is not supported for get" % output)
 
-	return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_device_info(self):
-	device_info = {}
-	device_info['network_os'] = 'eric_eccli'
-	return device_info
+        device_info = {}
+        device_info['network_os'] = 'eric_eccli'
+        return device_info
 
     def get_capabilities(self):
-	result = dict()
-	result['rpc'] = self.get_base_rpc() + ['run_commands']
-	result['network_api'] = 'cliconf'
-	result['device_info'] = self.get_device_info()
-	return json.dumps(result)
+        result = dict()
+        result['rpc'] = self.get_base_rpc() + ['run_commands']
+        result['network_api'] = 'cliconf'
+        result['device_info'] = self.get_device_info()
+        return json.dumps(result)
 
     def run_commands(self, commands=None, check_rc=True):
-	if commands is None:
-	    raise ValueError("'commands' value is required")
+        if commands is None:
+            raise ValueError("'commands' value is required")
 
-	responses = list()
-	for cmd in to_list(commands):
-	    if not isinstance(cmd, Mapping):
-		cmd = {'command': cmd}
+        responses = list()
+        for cmd in to_list(commands):
+            if not isinstance(cmd, Mapping):
+                cmd = {'command': cmd}
 
-	    output = cmd.pop('output', None)
-	    if output:
-		raise ValueError("'output' value %s is not supported for run_commands" % output)
-	    try:
-		out = self.send_command(**cmd)
-	    except AnsibleConnectionFailure as e:
-		if check_rc:
-		    raise
-		out = getattr(e, 'err', e)
+            output = cmd.pop('output', None)
+            if output:
+                raise ValueError("'output' value %s is not supported for run_commands" % output)
+            try:
+                out = self.send_command(**cmd)
+            except AnsibleConnectionFailure as e:
+                if check_rc:
+                    raise
+                out = getattr(e, 'err', e)
 
-	    responses.append(out)
+            responses.append(out)
 
-	return responses
+        return responses
