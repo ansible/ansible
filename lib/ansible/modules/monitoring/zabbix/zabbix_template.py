@@ -353,7 +353,7 @@ class Template(object):
 
         # Filter empty attributes from template object to allow accurate comparison
         for template in template_json['zabbix_export']['templates']:
-            for key in template.keys():
+            for key in list(template.keys()):
                 if not template[key] or (key == 'description' and desc_not_supported):
                     template.pop(key)
 
