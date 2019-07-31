@@ -177,7 +177,7 @@ options:
                 type: int
             hb_lost_threshold:
                 description:
-                    - Number of lost heartbeats to signal a failure (1 _ 60). Increase to reduce false positives.
+                    - Number of lost heartbeats to signal a failure (1 - 60). Increase to reduce false positives.
                 type: int
             hbdev:
                 description:
