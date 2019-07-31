@@ -21,8 +21,7 @@ description:
     an implementation for working with ICX configuration sections in
     a deterministic way.
 notes:
-  - Abbreviated commands are NOT idempotent, see
-    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
+  - Tested against ICX 10.1
 options:
   lines:
     description:
