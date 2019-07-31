@@ -202,7 +202,7 @@ class EntityVnicPorfileModule(BaseModule):
         return otypes.VnicProfile(
             name=self.param('name'),
             network=otypes.Network(id=self._get_network_id()),
-            description=self.param('description') if self.param('description') else None,
+            description=self.param('description') if self.param('description') is not None else None,
             pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self.param('pass_through'))) if self.param('pass_through') else None,
             migratable=self.param('migratable') if self.param('migratable') is not None else None,
             custom_properties=[
