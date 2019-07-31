@@ -6,17 +6,23 @@ import collections
 import os
 import re
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
     SanityMessage,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
     SubprocessError,
     display,
+    is_subdir,
 )
 
 from lib.util_common import (
@@ -42,54 +48,57 @@ from lib.coverage_util import (
 
 class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
-    def test(self, args, targets):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
-        settings = self.load_processor(args)
-
-        targets_include = [target for target in targets.include if os.path.splitext(target.path)[1] == '.py']
-        targets_include = settings.filter_skipped_targets(targets_include)
-
-        paths = [target.path for target in targets_include]
-
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
         # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([
             # not supported by ansible-doc
             'action',
             'doc_fragments',
             'filter',
+            'module_utils',
             'netconf',
             'terminal',
             'test',
         ])
 
-        modules = sorted(set(m for i in targets_include for m in i.modules))
+        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in plugin_type_blacklist]
 
-        plugins = [os.path.splitext(i.path)[0].split('/')[-2:] + [i.path] for i in targets_include if
-                   os.path.basename(i.path) != '__init__.py' and
-                   re.search(r'^lib/ansible/plugins/[^/]+/', i.path)
-                   and i.path != 'lib/ansible/plugins/cache/base.py']
+        return [target for target in targets
+                if os.path.splitext(target.path)[1] == '.py'
+                and os.path.basename(target.path) != '__init__.py'
+                and any(is_subdir(target.path, path) for path in plugin_paths)
+                ]
+
+    def test(self, args, targets, python_version):
+        """
+        :type args: SanityConfig
+        :type targets: SanityTargets
+        :type python_version: str
+        :rtype: TestResult
+        """
+        settings = self.load_processor(args)
+
+        paths = [target.path for target in targets.include]
 
         doc_targets = collections.defaultdict(list)
         target_paths = collections.defaultdict(dict)
 
-        for module in modules:
-            doc_targets['module'].append(data_context().content.prefix + module)
+        remap_types = dict(
+            modules='module',
+        )
 
-        for plugin_type, plugin_name, plugin_path in plugins:
-            if plugin_type in plugin_type_blacklist:
-                continue
+        for plugin_type, plugin_path in data_context().content.plugin_paths.items():
+            plugin_type = remap_types.get(plugin_type, plugin_type)
 
-            doc_targets[plugin_type].append(data_context().content.prefix + plugin_name)
-            target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_path
+            for plugin_file_path in [target.name for target in targets.include if is_subdir(target.path, plugin_path)]:
+                plugin_name = os.path.splitext(os.path.basename(plugin_file_path))[0]
 
-        if not doc_targets:
-            return SanitySkipped(self.name)
+                if plugin_name.startswith('_'):
+                    plugin_name = plugin_name[1:]
 
-        target_paths['module'] = dict((data_context().content.prefix + t.module, t.path) for t in targets.targets if t.module)
+                doc_targets[plugin_type].append(data_context().content.prefix + plugin_name)
+                target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_file_path
 
         env = ansible_environment(args, color=False)
         error_messages = []
@@ -99,7 +108,7 @@ class AnsibleDocTest(SanitySingleVersion):
 
             try:
                 with coverage_context(args):
-                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True)
+                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
 
                 status = 0
             except SubprocessError as ex:

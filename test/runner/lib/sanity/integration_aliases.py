@@ -10,7 +10,7 @@ import os
 import lib.types as t
 
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
@@ -38,7 +38,7 @@ from lib.util import (
 )
 
 
-class IntegrationAliasesTest(SanitySingleVersion):
+class IntegrationAliasesTest(SanityVersionNeutral):
     """Sanity test to evaluate integration test aliases."""
     SHIPPABLE_YML = 'shippable.yml'
 
@@ -94,9 +94,9 @@ class IntegrationAliasesTest(SanitySingleVersion):
         return False
 
     @property
-    def can_skip(self):  # type: () -> bool
-        """True if the test supports skip entries."""
-        return False
+    def no_targets(self):  # type: () -> bool
+        """True if the test does not use test targets. Mutually exclusive with all_targets."""
+        return True
 
     @property
     def shippable_yml_lines(self):

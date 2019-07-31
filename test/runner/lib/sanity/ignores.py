@@ -2,10 +2,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from lib.sanity import (
     SanityFailure,
     SanityIgnoreParser,
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanitySuccess,
     SanityMessage,
 )
@@ -20,7 +22,7 @@ from lib.config import (
 )
 
 
-class IgnoresTest(SanitySingleVersion):
+class IgnoresTest(SanityVersionNeutral):
     """Sanity test for sanity test ignore entries."""
     @property
     def can_ignore(self):  # type: () -> bool
@@ -28,9 +30,9 @@ class IgnoresTest(SanitySingleVersion):
         return False
 
     @property
-    def can_skip(self):  # type: () -> bool
-        """True if the test supports skip entries."""
-        return False
+    def no_targets(self):  # type: () -> bool
+        """True if the test does not use test targets. Mutually exclusive with all_targets."""
+        return True
 
     # noinspection PyUnusedLocal
     def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument
@@ -56,7 +58,7 @@ class IgnoresTest(SanitySingleVersion):
         # file not found errors
 
         messages.extend(SanityMessage(
-            message="File '%s' does not exist" % path,
+            message="%s '%s' does not exist" % ("Directory" if path.endswith(os.path.sep) else "File", path),
             path=sanity_ignore.relative_path,
             line=line,
             column=1,

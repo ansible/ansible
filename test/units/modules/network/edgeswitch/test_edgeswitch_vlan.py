@@ -18,8 +18,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.edgeswitch import edgeswitch_vlan
 from ansible.modules.network.edgeswitch.edgeswitch_vlan import parse_vlan_brief, parse_interfaces_switchport

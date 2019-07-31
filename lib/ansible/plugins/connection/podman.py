@@ -59,6 +59,7 @@ class Connection(ConnectionBase):
 
     # String used to identify this Connection class from other classes
     transport = 'podman'
+    has_pipelining = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -121,7 +122,7 @@ class Connection(ConnectionBase):
         if self.user:
             cmd_args_list += ["--user", self.user]
 
-        rc, stdout, stderr = self._podman("exec", cmd_args_list)
+        rc, stdout, stderr = self._podman("exec", cmd_args_list, in_data)
 
         display.vvvvv("STDOUT %r STDERR %r" % (stderr, stderr))
         return rc, stdout, stderr

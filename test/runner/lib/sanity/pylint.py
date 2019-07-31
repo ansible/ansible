@@ -14,7 +14,10 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
@@ -23,6 +26,7 @@ from lib.util import (
     ConfigParser,
     ANSIBLE_ROOT,
     is_subdir,
+    find_python,
 )
 
 from lib.util_common import (
@@ -42,12 +46,6 @@ from lib.data import (
 )
 
 
-UNSUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-    '2.7',
-)
-
-
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
     @property
@@ -55,24 +53,24 @@ class PylintTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
-    def test(self, args, targets):
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
+
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
-        if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
-            display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
-            return SanitySkipped(self.name)
-
         plugin_dir = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/plugins')
         plugin_names = sorted(p[0] for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/'))
-        paths = settings.filter_skipped_paths(paths)
+        paths = [target.path for target in targets.include]
 
         module_paths = [os.path.relpath(p, data_context().content.module_path).split(os.path.sep) for p in
                         paths if is_subdir(p, data_context().content.module_path)]
@@ -137,6 +135,8 @@ class PylintTest(SanitySingleVersion):
         messages = []
         context_times = []
 
+        python = find_python(python_version)
+
         test_start = datetime.datetime.utcnow()
 
         for context, context_paths in sorted(contexts):
@@ -144,7 +144,7 @@ class PylintTest(SanitySingleVersion):
                 continue
 
             context_start = datetime.datetime.utcnow()
-            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names)
+            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python)
             context_end = datetime.datetime.utcnow()
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -176,7 +176,14 @@ class PylintTest(SanitySingleVersion):
         return SanitySuccess(self.name)
 
     @staticmethod
-    def pylint(args, context, paths, plugin_dir, plugin_names):  # type: (SanityConfig, str, t.List[str], str, t.List[str]) -> t.List[t.Dict[str, str]]
+    def pylint(
+            args,  # type: SanityConfig
+            context,  # type: str
+            paths,  # type: t.List[str]
+            plugin_dir,  # type: str
+            plugin_names,  # type: t.List[str]
+            python,  # type: str
+    ):  # type: (...) -> t.List[t.Dict[str, str]]
         """Run pylint using the config specified by the context on the specified paths."""
         rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
 
@@ -198,7 +205,7 @@ class PylintTest(SanitySingleVersion):
         load_plugins = set(plugin_names) - disable_plugins
 
         cmd = [
-            args.python_executable,
+            python,
             '-m', 'pylint',
             '--jobs', '0',
             '--reports', 'n',

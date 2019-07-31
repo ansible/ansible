@@ -9,11 +9,15 @@ import re
 import lib.types as t
 
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
@@ -35,12 +39,16 @@ from lib.data import (
 )
 
 
-class PslintTest(SanitySingleVersion):
+class PslintTest(SanityVersionNeutral):
     """Sanity test using PSScriptAnalyzer."""
     @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'AnsibleTest'
+
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] in ('.ps1', '.psm1', '.psd1')]
 
     def test(self, args, targets):
         """
@@ -50,11 +58,7 @@ class PslintTest(SanitySingleVersion):
         """
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.ps1', '.psm1', '.psd1'))
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name)
+        paths = [target.path for target in targets.include]
 
         if not find_executable('pwsh', required='warning'):
             return SanitySkipped(self.name)

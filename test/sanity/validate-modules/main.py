@@ -1144,15 +1144,19 @@ class ModuleValidator(Validator):
 
         self._validate_argument_spec(docs, spec, kwargs)
 
-    def _validate_argument_spec(self, docs, spec, kwargs):
+    def _validate_argument_spec(self, docs, spec, kwargs, context=None):
         if not self.analyze_arg_spec:
             return
 
         if docs is None:
             docs = {}
 
+        if context is None:
+            context = []
+
         try:
-            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+            if not context:
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
         except Exception:
             # Cannot merge fragments
             return
@@ -1165,10 +1169,14 @@ class ModuleValidator(Validator):
         deprecated_args_from_argspec = set()
         for arg, data in spec.items():
             if not isinstance(data, dict):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " must be a dictionary/hash when used"
                 self.reporter.error(
                     path=self.object_path,
                     code=331,
-                    msg="Argument '%s' in argument_spec must be a dictionary/hash when used" % arg,
+                    msg=msg,
                 )
                 continue
             if not data.get('removed_in_version', None):
@@ -1191,11 +1199,15 @@ class ModuleValidator(Validator):
                         provider_args.update(provider_data.get('aliases', []))
 
             if data.get('required') and data.get('default', object) != object:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is marked as required but specifies a default. Arguments with a" \
+                       " default should not be marked as required"
                 self.reporter.error(
                     path=self.object_path,
                     code=317,
-                    msg=("Argument '%s' in argument_spec is marked as required "
-                         "but specifies a default. Arguments with a default should not be marked as required" % arg)
+                    msg=msg
                 )
 
             if arg in provider_args:
@@ -1209,18 +1221,35 @@ class ModuleValidator(Validator):
             else:
                 _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
 
-            # TODO: needs to recursively traverse suboptions
+            _elements = data.get('elements')
+            if _elements:
+                if not callable(_elements):
+                    module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_elements)
+                if _type != 'list':
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " defines elements as %s but it is valid only when value of parameter type is list" % _elements
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=339,
+                        msg=msg
+                    )
+
             arg_default = None
             if 'default' in data and not is_empty(data['default']):
                 try:
                     with CaptureStd():
                         arg_default = _type_checker(data['default'])
                 except (Exception, SystemExit):
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " defines default as (%r) but this is incompatible with parameter type %r" % (data['default'], _type)
                     self.reporter.error(
                         path=self.object_path,
                         code=329,
-                        msg=("Argument '%s' in argument_spec defines default as (%r) "
-                             "but this is incompatible with parameter type %r" % (arg, data['default'], _type))
+                        msg=msg
                     )
                     continue
             elif data.get('default') is None and _type == 'bool' and 'options' not in data:
@@ -1228,64 +1257,80 @@ class ModuleValidator(Validator):
 
             try:
                 doc_default = None
-                doc_options_arg = docs.get('options', {}).get(arg, {})
+                doc_options_arg = (docs.get('options', {}) or {}).get(arg, {})
                 if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
                 elif doc_options_arg.get('default') is None and _type == 'bool' and 'suboptions' not in doc_options_arg:
                     doc_default = False
             except (Exception, SystemExit):
+                msg = "Argument '%s' in documentation" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines default as (%r) but this is incompatible with parameter type %r" % (doc_options_arg.get('default'), _type)
                 self.reporter.error(
                     path=self.object_path,
                     code=327,
-                    msg=("Argument '%s' in documentation defines default as (%r) "
-                         "but this is incompatible with parameter type %r" % (arg, doc_options_arg.get('default'), _type))
+                    msg=msg
                 )
                 continue
 
             if arg_default != doc_default:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines default as (%r) but documentation defines default as (%r)" % (arg_default, doc_default)
                 self.reporter.error(
                     path=self.object_path,
                     code=324,
-                    msg=("Argument '%s' in argument_spec defines default as (%r) "
-                         "but documentation defines default as (%r)" % (arg, arg_default, doc_default))
+                    msg=msg
                 )
 
-            # TODO: needs to recursively traverse suboptions
             doc_type = docs.get('options', {}).get(arg, {}).get('type')
             if 'type' in data and data['type'] is not None:
                 if doc_type is None:
                     if not arg.startswith('_'):  # hidden parameter, for example _raw_params
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " defines type as %r but documentation doesn't define type" % (data['type'])
                         self.reporter.error(
                             path=self.object_path,
                             code=337,
-                            msg="Argument '%s' in argument_spec defines type as %r "
-                                "but documentation doesn't define type" % (arg, data['type'])
+                            msg=msg
                         )
                 elif data['type'] != doc_type:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " defines type as %r but documentation defines type as %r" % (data['type'], doc_type)
                     self.reporter.error(
                         path=self.object_path,
                         code=325,
-                        msg="Argument '%s' in argument_spec defines type as %r "
-                            "but documentation defines type as %r" % (arg, data['type'], doc_type)
+                        msg=msg
                     )
             else:
                 if doc_type is None:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " uses default type ('str') but documentation doesn't define type"
                     self.reporter.error(
                         path=self.object_path,
                         code=338,
-                        msg="Argument '%s' in argument_spec uses default type ('str') "
-                            "but documentation doesn't define type" % (arg)
+                        msg=msg
                     )
                 elif doc_type != 'str':
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += "implies type as 'str' but documentation defines as %r" % doc_type
                     self.reporter.error(
                         path=self.object_path,
                         code=335,
-                        msg="Argument '%s' in argument_spec implies type as 'str' "
-                            "but documentation defines as %r" % (arg, doc_type)
+                        msg=msg
                     )
 
-            # TODO: needs to recursively traverse suboptions
             doc_choices = []
             try:
                 for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
@@ -1293,11 +1338,14 @@ class ModuleValidator(Validator):
                         with CaptureStd():
                             doc_choices.append(_type_checker(choice))
                     except (Exception, SystemExit):
+                        msg = "Argument '%s' in documentation" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
                         self.reporter.error(
                             path=self.object_path,
                             code=328,
-                            msg=("Argument '%s' in documentation defines choices as (%r) "
-                                 "but this is incompatible with argument type %r" % (arg, choice, _type))
+                            msg=msg
                         )
                         raise StopIteration()
             except StopIteration:
@@ -1310,30 +1358,55 @@ class ModuleValidator(Validator):
                         with CaptureStd():
                             arg_choices.append(_type_checker(choice))
                     except (Exception, SystemExit):
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
                         self.reporter.error(
                             path=self.object_path,
                             code=330,
-                            msg=("Argument '%s' in argument_spec defines choices as (%r) "
-                                 "but this is incompatible with argument type %r" % (arg, choice, _type))
+                            msg=msg
                         )
                         raise StopIteration()
             except StopIteration:
                 continue
 
             if not compare_unordered_lists(arg_choices, doc_choices):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines choices as (%r) but documentation defines choices as (%r)" % (arg_choices, doc_choices)
                 self.reporter.error(
                     path=self.object_path,
                     code=326,
-                    msg=("Argument '%s' in argument_spec defines choices as (%r) "
-                         "but documentation defines choices as (%r)" % (arg, arg_choices, doc_choices))
+                    msg=msg
                 )
+
+            spec_suboptions = data.get('options')
+            doc_suboptions = docs.get('options', {}).get(arg, {}).get('suboptions', {})
+            if spec_suboptions:
+                if not doc_suboptions:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has sub-options but documentation does not define it"
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=340,
+                        msg=msg
+                    )
+                self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs, context=context + [arg])
 
         for arg in args_from_argspec:
             if not str(arg).isidentifier():
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is not a valid python identifier"
                 self.reporter.error(
                     path=self.object_path,
                     code=336,
-                    msg="Argument '%s' is not a valid python identifier" % arg
+                    msg=msg
                 )
 
         if docs:
@@ -1358,22 +1431,28 @@ class ModuleValidator(Validator):
                     # Provider args are being removed from network module top level
                     # So they are likely not documented on purpose
                     continue
+                msg = "Argument '%s'" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is listed in the argument_spec, but not documented in the module documentation"
                 self.reporter.error(
                     path=self.object_path,
                     code=322,
-                    msg="Argument '%s' is listed in the argument_spec, "
-                        "but not documented in the module documentation" % arg
+                    msg=msg
                 )
             for arg in docs_missing_from_args:
                 # args_from_docs contains argument not in the argument_spec
                 if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
+                msg = "Argument '%s'" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is listed in DOCUMENTATION.options, but not accepted by the module argument_spec"
                 self.reporter.error(
                     path=self.object_path,
                     code=323,
-                    msg="Argument '%s' is listed in DOCUMENTATION.options, "
-                        "but not accepted by the module argument_spec" % arg
+                    msg=msg
                 )
 
     def _check_for_new_args(self, doc, metadata):

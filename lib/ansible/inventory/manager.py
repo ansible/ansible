@@ -69,11 +69,14 @@ def order_patterns(patterns):
     pattern_intersection = []
     pattern_exclude = []
     for p in patterns:
+        if not p:
+            continue
+
         if p[0] == "!":
             pattern_exclude.append(p)
         elif p[0] == "&":
             pattern_intersection.append(p)
-        elif p:
+        else:
             pattern_regular.append(p)
 
     # if no regular pattern was given, hence only exclude and/or intersection

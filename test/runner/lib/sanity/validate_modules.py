@@ -12,13 +12,17 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
     SubprocessError,
     display,
     ANSIBLE_ROOT,
+    find_python,
 )
 
 from lib.util_common import (
@@ -37,11 +41,6 @@ from lib.data import (
     data_context,
 )
 
-UNSUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-    '2.7',
-)
-
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
@@ -50,16 +49,17 @@ class ValidateModulesTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
-    def test(self, args, targets):
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if target.module]
+
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
-        if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
-            display.warning('Skipping validate-modules on unsupported Python version %s.' % args.python_version)
-            return SanitySkipped(self.name)
-
         if data_context().content.is_ansible:
             ignore_codes = ()
         else:
@@ -71,14 +71,10 @@ class ValidateModulesTest(SanitySingleVersion):
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if i.module)
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name)
+        paths = [target.path for target in targets.include]
 
         cmd = [
-            args.python_executable,
+            find_python(python_version),
             os.path.join(ANSIBLE_ROOT, 'test/sanity/validate-modules/validate-modules'),
             '--format', 'json',
             '--arg-spec',

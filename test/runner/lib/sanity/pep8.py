@@ -13,11 +13,17 @@ from lib.sanity import (
     SanitySuccess,
 )
 
+from lib.target import (
+    TestTarget,
+)
+
 from lib.util import (
     SubprocessError,
     read_lines_without_comments,
     parse_to_list_of_dict,
     ANSIBLE_ROOT,
+    find_python,
+    is_subdir,
 )
 
 from lib.util_common import (
@@ -36,10 +42,15 @@ class Pep8Test(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
-    def test(self, args, targets):
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
+
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
         current_ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/pep8/current-ignore.txt')
@@ -47,11 +58,10 @@ class Pep8Test(SanitySingleVersion):
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/'))
-        paths = settings.filter_skipped_paths(paths)
+        paths = [target.path for target in targets.include]
 
         cmd = [
-            args.python_executable,
+            find_python(python_version),
             '-m', 'pycodestyle',
             '--max-line-length', '160',
             '--config', '/dev/null',

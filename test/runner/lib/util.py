@@ -246,10 +246,11 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
-def find_python(version, path=None):
+def find_python(version, path=None, required=True):
     """
     :type version: str
     :type path: str | None
+    :type required: bool
     :rtype: str
     """
     version_info = tuple(int(n) for n in version.split('.'))
@@ -257,9 +258,14 @@ def find_python(version, path=None):
     if not path and version_info == sys.version_info[:len(version_info)]:
         python_bin = sys.executable
     else:
-        python_bin = find_executable('python%s' % version, path=path)
+        python_bin = find_executable('python%s' % version, path=path, required=required)
 
     return python_bin
+
+
+def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Tuple[str, ...]
+    """Return a tuple indicating which of the requested Python versions are available."""
+    return tuple(python_version for python_version in versions if find_python(python_version, required=False))
 
 
 def generate_pip_command(python):
@@ -779,6 +785,22 @@ def is_subdir(candidate_path, path):  # type: (str, str) -> bool
         candidate_path += os.sep
 
     return candidate_path.startswith(path)
+
+
+def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
+    """Returns a list of directories extracted from the given list of paths."""
+    dir_names = set()
+
+    for path in paths:
+        while True:
+            path = os.path.dirname(path)
+
+            if not path or path == os.path.sep:
+                break
+
+            dir_names.add(path + os.path.sep)
+
+    return sorted(dir_names)
 
 
 def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None

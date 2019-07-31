@@ -4,20 +4,25 @@ __metaclass__ = type
 
 import os
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
     SubprocessError,
     parse_to_list_of_dict,
-    display,
     read_lines_without_comments,
     ANSIBLE_ROOT,
+    find_python,
 )
 
 from lib.util_common import (
@@ -28,36 +33,29 @@ from lib.config import (
     SanityConfig,
 )
 
-UNSUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-)
-
 
 class RstcheckTest(SanitySingleVersion):
     """Sanity test using rstcheck."""
-    def test(self, args, targets):
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] in ('.rst',)]
+
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
-        if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
-            display.warning('Skipping rstcheck on unsupported Python version %s.' % args.python_version)
-            return SanitySkipped(self.name)
-
         ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/rstcheck/ignore-substitutions.txt')
         ignore_substitutions = sorted(set(read_lines_without_comments(ignore_file, remove_blank_lines=True)))
 
         settings = self.load_processor(args)
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))
-        paths = settings.filter_skipped_paths(paths)
-
-        if not paths:
-            return SanitySkipped(self.name)
+        paths = [target.path for target in targets.include]
 
         cmd = [
-            args.python_executable,
+            find_python(python_version),
             '-m', 'rstcheck',
             '--report', 'warning',
             '--ignore-substitutions', ','.join(ignore_substitutions),

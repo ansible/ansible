@@ -1,0 +1,5 @@
+bugfixes:
+  - redhat_subscription - made code compatible with Python3 (https://github.com/ansible/ansible/pull/58665)
+minor_changes:
+  - redhat_subscription - do not call ``subscribtion-manager`` command, when it is not necessary (https://github.com/ansible/ansible/pull/58665)
+  - redhat_subscription - made code more testable (https://github.com/ansible/ansible/pull/58665)
