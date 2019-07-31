@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_eventhub
 version_added: "2.9"
-short_description: Manage Azure Event hub.
+short_description: Manage Azure Event hub
 description:
     - Create, update and delete an Azure Event hub.
 
@@ -23,34 +23,39 @@ options:
     resource_group:
         description:
             - Name of a resource group where the Event hub exists or will be created.
+        type: str
         required: true
     name:
         description:
             - Name of the Event hub.
+        type: str
         required: true
     state:
         description:
-            - Assert the state of the Event hub. Use C(present) to create or update an event hub and C(absent) to delete it.
+            - State of the Event hub. Use C(present) to create or update an event hub and C(absent) to delete it.
+        type: str
         default: present
         choices:
             - absent
             - present
     namespace:
         description:
-            - The Namespace name
+            - The namespace name.
+        type: str
         required: true
     message_retention_in_days:
         description:
-            - Number of days to retain the events for this Event Hub, value should be 1 to 7 days
+            - Number of days to retain the events for this Event Hub, value should be C(1) to C(7) days.
         type: int
     partition_count:
         description:
-            - Number of partitions created for the Event Hub, allowed values are from 1 to 32 partitions.
-            - Is not changeable after the creation
+            - Number of partitions created for the Event Hub, allowed values are from C(1) to C(32) partitions.
+            - Is not changeable after the creation.
         type: int
     status:
         description:
             - Enumerates the possible values for the status of the Event Hub.
+        type: str
         choices:
             - active
             - disabled
@@ -58,11 +63,12 @@ options:
             - receive_disabled
     capture_description:
         description:
-            - Properties of capture description
+            - Properties of capture description.
+        type: dict
         suboptions:
             enabled:
                 description:
-                    - A value that indicates whether capture description is enabled.
+                    - A value that indicates whether capture description is C(enabled).
                 required: true
                 type: bool
             encoding:
@@ -74,45 +80,50 @@ options:
                     - avro_deflate
             interval_in_seconds:
                 description:
-                    - The time window allows you to set the frequency with which the capture to Azure Blobs will happen
-                    - Value should between 60 to 900 seconds
+                    - The time window allows you to set the frequency with which the capture to Azure Blobs will happen.
+                    - Value should between C(60) to C(900) seconds.
                 type: int
             size_limit_in_bytes:
                 description:
-                    - The size window defines the amount of data built up in your Event Hub before an capture operation
-                    - Value should be between 10485760 to 524288000 bytes
+                    - The size window defines the amount of data built up in your Event Hub before an capture operation.
+                    - Value should be between 10485760) to C(524288000) bytes.
                 type: int
             destination:
                 description:
-                    - Properties of Destination where capture will be stored. (Storage Account, Blob Names)
+                    - Properties of estination where capture will be stored. (Storage Account, Blob Names).
+                type: dict
                 suboptions:
                     provider:
                         description:
-                            - Provider for capture destination
+                            - Provider for capture destination.
+                        type: str
                         choices:
                             - EventHubArchive.AzureBlockBlob
                         required: true
                     storage_account_resource_id:
                         description:
-                            - Resource id of the storage account to be used to create the blobs
+                            - Resource ID of the storage account to be used to create the blobs.
+                        type: str
                         required: true
                     blob_container:
                         description:
-                            - Blob container Name
+                            - Blob container name.
+                        type: str
                         required: true
                     archive_name_format:
                         description:
-                            - Blob naming convention for archive
+                            - Blob naming convention for archive.
+                        type: str
             skip_empty_archives:
                 description:
-                    - A value that indicates whether to Skip Empty Archives
+                    - A value that indicates whether to Skip Empty Archives.
                 type: bool
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 

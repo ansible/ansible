@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_eventhub_facts
 version_added: "2.9"
-short_description: Get Azure event hub facts.
+short_description: Get Azure event hub facts
 description:
     - Get facts for an a specific event hub or all event hubs.
 
@@ -23,14 +23,17 @@ options:
     resource_group:
         description:
             - The resource group to search for the desired eventhub namespace.
+        type: str
         required: true
     namespace:
         description:
-            - Name of the eventhub namespace
+            - Name of the eventhub namespace.
+        type: str
         required: true
     name:
         description:
             - Name of the event hub.
+        type: str
     show_sas_policies:
         description:
             - Whether to show the SAS policies.
@@ -46,7 +49,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -65,7 +68,8 @@ EXAMPLES = '''
 
 RETURN = '''
 eventhubs:
-    description: List of eventhub dicts.
+    description:
+        - List of eventhub dicts.
     returned: always
     type: list
 '''
