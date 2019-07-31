@@ -258,15 +258,24 @@ class SanityIgnoreParser:
         self.file_not_found_errors = []  # type: t.List[t.Tuple[int, str]]
 
         lines = read_lines_without_comments(self.path, optional=True)
-        paths = set(data_context().content.all_files())
+        targets = SanityTargets.get_targets()
+        paths = set(target.path for target in targets)
         tests_by_name = {}  # type: t.Dict[str, SanityTest]
         versioned_test_names = set()  # type: t.Set[str]
         unversioned_test_names = {}  # type: t.Dict[str, str]
         directories = paths_to_dirs(list(paths))
+        paths_by_test = {}  # type: t.Dict[str, t.Set[str]]
 
         display.info('Read %d sanity test ignore line(s) for %s from: %s' % (len(lines), ansible_label, self.relative_path), verbosity=1)
 
         for test in sanity_get_tests():
+            test_targets = list(targets)
+
+            if test.include_directories:
+                test_targets += tuple(TestTarget(path, None, None, '') for path in paths_to_dirs([target.path for target in test_targets]))
+
+            paths_by_test[test.name] = set(target.path for target in test.filter_targets(test_targets))
+
             if isinstance(test, SanityMultipleVersion):
                 versioned_test_names.add(test.name)
                 tests_by_name.update(dict(('%s-%s' % (test.name, python_version), test) for python_version in test.supported_python_versions))
@@ -336,6 +345,10 @@ class SanityIgnoreParser:
 
             if path.endswith(os.path.sep) and not test.include_directories:
                 self.parse_errors.append((line_no, 1, "Sanity test '%s' does not support directory paths" % test_name))
+                continue
+
+            if path not in paths_by_test[test.name] and not test.no_targets:
+                self.parse_errors.append((line_no, 1, "Sanity test '%s' does not test path '%s'" % (test_name, path)))
                 continue
 
             if commands and error_codes:
@@ -417,16 +430,19 @@ class SanityIgnoreProcessor:
     """Processor for sanity test ignores for a single run of one sanity test."""
     def __init__(self,
                  args,  # type: SanityConfig
-                 name,  # type: str
-                 code,  # type: t.Optional[str]
+                 test,  # type: SanityTest
                  python_version,  # type: t.Optional[str]
                  ):  # type: (...) -> None
+        name = test.name
+        code = test.error_code
+
         if python_version:
             full_name = '%s-%s' % (name, python_version)
         else:
             full_name = name
 
         self.args = args
+        self.test = test
         self.code = code
         self.parser = SanityIgnoreParser.load(args)
         self.ignore_entries = self.parser.ignores.get(full_name, {})
@@ -472,6 +488,13 @@ class SanityIgnoreProcessor:
         # unused errors
 
         unused = []  # type: t.List[t.Tuple[int, str, str]]
+
+        if self.test.no_targets or self.test.all_targets:
+            # tests which do not accept a target list, or which use all targets, always return all possible errors, so all ignores can be checked
+            paths = [target.path for target in SanityTargets.get_targets()]
+
+            if self.test.include_directories:
+                paths.extend(paths_to_dirs(paths))
 
         for path in paths:
             path_entry = self.ignore_entries.get(path)
@@ -538,9 +561,19 @@ class SanityTargets:
     @staticmethod
     def create(include, exclude, require):  # type: (t.List[str], t.List[str], t.List[str]) -> SanityTargets
         """Create a SanityTargets instance from the given include, exclude and require lists."""
-        _targets = tuple(sorted(walk_sanity_targets()))
+        _targets = SanityTargets.get_targets()
         _include = walk_internal_targets(_targets, include, exclude, require)
         return SanityTargets(_targets, _include)
+
+    @staticmethod
+    def get_targets():  # type: () -> t.Tuple[TestTarget, ...]
+        """Return a tuple of sanity test targets. Uses a cached version when available."""
+        try:
+            return SanityTargets.get_targets.targets
+        except AttributeError:
+            SanityTargets.get_targets.targets = tuple(sorted(walk_sanity_targets()))
+
+        return SanityTargets.get_targets.targets
 
 
 class SanityTest(ABC):
@@ -766,7 +799,7 @@ class SanityCodeSmellTest(SanityTest):
 
     def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
+        return SanityIgnoreProcessor(args, self, None)
 
 
 class SanityFunc(SanityTest):
@@ -791,7 +824,7 @@ class SanityVersionNeutral(SanityFunc):
 
     def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
+        return SanityIgnoreProcessor(args, self, None)
 
     @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
@@ -812,7 +845,7 @@ class SanitySingleVersion(SanityFunc):
 
     def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
+        return SanityIgnoreProcessor(args, self, None)
 
 
 class SanityMultipleVersion(SanityFunc):
@@ -828,7 +861,7 @@ class SanityMultipleVersion(SanityFunc):
 
     def load_processor(self, args, python_version):  # type: (SanityConfig, str) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, python_version)
+        return SanityIgnoreProcessor(args, self, python_version)
 
     @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
