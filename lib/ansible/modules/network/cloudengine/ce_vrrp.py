@@ -590,7 +590,9 @@ class Vrrp(object):
             if int(self.advertise_interval) < 1000 or int(self.advertise_interval) > 255000:
                 self.module.fail_json(
                     msg='Error: The value of advertise_interval ranges from 1000 to 255000 milliseconds. The default value is 1000 milliseconds.')
-
+            if int(self.advertise_interval) % 1000 != 0:
+                self.module.fail_json(
+                    msg='Error: The advertisement interval value of VRRP must be a multiple of 1000 milliseconds.')
         # preempt_timer_delay check
         if self.preempt_timer_delay:
             if not self.preempt_timer_delay.isdigit():
