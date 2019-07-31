@@ -217,6 +217,7 @@ CACHE_PLUGIN_TIMEOUT:
   yaml: {key: facts.cache.timeout}
 COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
+  description: Colon separated paths in which Ansible will search for collections content.
   default: ~/.ansible/collections:/usr/share/ansible/collections
   type: pathspec
   env:
