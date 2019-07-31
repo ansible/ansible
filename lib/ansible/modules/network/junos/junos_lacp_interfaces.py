@@ -59,6 +59,7 @@ options:
             set to C(fast) the packets are received every second and if the value is
             C(slow) the packets are received every 30 seconds. This value is applicable
             for aggregate interface only.
+        type: str
         choices: ['fast', 'slow']
       sync_reset:
         description:
