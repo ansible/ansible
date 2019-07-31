@@ -15,27 +15,30 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubsaspolicy
 version_added: "2.9"
-short_description: Manage Azure Eventhub Namespace SAS policy.
+short_description: Manage Azure Eventhub Namespace SAS policy
 description:
     - Create, update and delete an Azure Eventhub Namespace SAS policy.
 
 options:
     resource_group:
         description:
-            - name of resource group.
+            - Name of resource group.
+        type: str
         required: true
     name:
         description:
-            - name of the sas policy.
+            - Name of the sas policy.
+        type: str
         required: true
     namespace:
         description:
             - Name of the eventhub namespace.
+        type: str
         required: true
     state:
         description:
-            - "Assert the state of the sas policy. Use 'present' to create or update and
-              'absent' to delete."
+            - State of the sas policy. Use C(present) to create or update and C(absent) to delete.
+        type: str
         default: present
         choices:
             - absent
@@ -43,6 +46,7 @@ options:
     eventhub:
         description:
             - Type of the eventhub.
+        type: str
     regenerate_primary_key:
         description:
             - Regenerate the SAS policy primary key.
@@ -56,6 +60,7 @@ options:
     rights:
         description:
             - Claim rights of the SAS policy.
+        type: str
         required: True
         choices:
             - manage
@@ -67,7 +72,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -82,44 +87,54 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Current state of the SAS policy.
+    description:
+        - Current state of the SAS policy.
     returned: Successed
     type: str
 keys:
-    description: Key dict of the SAS policy.
+    description:
+        - Key dict of the SAS policy.
     returned: Successed
     type: dict
     contains:
         key_name:
-            description: Name of the SAS policy.
+            description:
+                - Name of the SAS policy.
             returned: Successed
             type: str
         primary_connection_string:
-            description: Primary connection string.
+            description:
+                - Primary connection string.
             returned: Successed
             type: str
         primary_key:
-            description: Primary key.
+            description:
+                - Primary key.
             returned: Successed
             type: str
         secondary_key:
-            description: Secondary key.
+            description:
+                Secondary key.
             returned: Successed
             type: str
         secondary_connection_string:
-            description: Secondary connection string.
+            description:
+                - Secondary connection string.
             returned: Successed
             type: str
 name:
-    description: Name of the SAS policy.
+    description:
+        - Name of the SAS policy.
     returned: Successed
     type: str
 rights:
-    description: Priviledge of the SAS policy.
+    description:
+        - Priviledge of the SAS policy.
     returned: Successed
     type: str
 type:
-    description: Type of the SAS policy.
+    description:
+        - Type of the SAS policy.
     returned: Successed
     type: str
 '''  # NOQA

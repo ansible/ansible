@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubconsumergroup
 version_added: "2.9"
-short_description: Create, update and delete consumergroup for event hub.
+short_description: Create, update and delete consumergroup for event hub
 description:
     - Create, update and delete consumergroup for event hub.
 
@@ -23,22 +23,27 @@ options:
     resource_group:
         description:
             - The resource group to search for the desired eventhub.
+        type: str
         required: true
     namespace:
         description:
-            - Name of the eventhub namespace
+            - Name of the eventhub namespace.
+        type: str
         required: true
     eventhub:
         description:
             - Name of the event hub.
+        type: str
         required: true
     consumer_group:
         description:
             - Name of the consumer group.
+        type: str
         required: true
     state:
         description:
-            - Assert the state of the eventhub consumer group. Use C(present) to create or update an eventhub consumer group and C(absent) to delete it.
+            - State of the eventhub consumer group. Use C(present) to create or update an eventhub consumer group and C(absent) to delete it.
+        type: str
         default: present
         choices:
             - absent
@@ -46,14 +51,15 @@ options:
     user_metadata:
         description:
             - A placeholder to store user-defined string data with maximum length 1024.
-            - "It can be used to store descriptive data,
-              such as list of teams and their contact information also user-defined configuration settings can be stored."
+            - It can be used to store descriptive data.
+            - Such as list of teams and their contact information also user-defined configuration settings can be stored.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -84,7 +90,7 @@ RETURN = '''
 id:
     description:
         - Resource ID of the consumer group.
-    returned: state is present
+    returned: when I(state=present)
     type: str
     sample:
         - "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
