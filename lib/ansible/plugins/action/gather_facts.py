@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os, q
+import os
 import time
 
 from ansible import constants as C
@@ -49,13 +49,10 @@ class ActionModule(ActionBase):
         network_os = ''
         if 'network_os' in self._task.args and self._task.args['network_os']:
             network_os = self._task.args['network_os']
-            q(network_os)
         elif self._play_context.network_os:
             network_os = self._play_context.network_os
-            q(network_os)
         elif 'network_os' in task_vars.get('ansible_facts', {}) and task_vars['ansible_facts']['network_os']:
             network_os = task_vars['ansible_facts']['network_os']
-            q(network_os)
 
         return network_os
 
@@ -68,7 +65,6 @@ class ActionModule(ActionBase):
 
         modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
-        q(modules)
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._get_network_os(task_vars)
@@ -85,9 +81,7 @@ class ActionModule(ActionBase):
             for fact_module in modules:
                 # just one module, no need for fancy async
                 mod_args = self._get_module_args(fact_module, task_vars)
-                q(mod_args)
                 res = self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False)
-                q(res)
                 if res.get('failed', False):
                     failed[fact_module] = res
                 elif res.get('skipped', False):
