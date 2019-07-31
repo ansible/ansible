@@ -10,7 +10,9 @@ __metaclass__ = type
 
 CHOICES = [
     'all',
+    '!all',
     'interfaces',
+    '!interfaces',
 ]
 
 

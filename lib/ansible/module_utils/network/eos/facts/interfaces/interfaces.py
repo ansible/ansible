@@ -39,9 +39,8 @@ class InterfacesFacts(object):
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for interfaces
 
-        :param module: the module instance
         :param connection: the device connection
-        :param data: previously collected conf
+        :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
         """
@@ -58,8 +57,12 @@ class InterfacesFacts(object):
                     objs.append(obj)
         facts = {}
         if objs:
-            facts['interfaces'] = objs
+            facts['interfaces'] = []
+            params = utils.validate_config(self.argument_spec, {'config': objs})
+            for cfg in params['config']:
+                facts['interfaces'].append(utils.remove_empties(cfg))
         ansible_facts['ansible_network_resources'].update(facts)
+
         return ansible_facts
 
     def render_config(self, spec, conf):

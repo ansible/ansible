@@ -41,7 +41,7 @@ class InterfacesArgs(object):
                 'name': {'required': False, 'type': 'str'},
                 'description': {'required': False, 'type': 'str'},
                 'enabled': {'default': True, 'required': False, 'type': 'bool'},
-                'mtu': {'required': False, 'type': 'str'},
+                'mtu': {'required': False, 'type': 'int'},
                 'speed': {'required': False, 'type': 'str'},
                 'duplex': {'required': False, 'type': 'str'}
             },

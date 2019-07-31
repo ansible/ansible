@@ -14,12 +14,11 @@ __metaclass__ = type
 
 from ansible.module_utils.network.common.utils import to_list
 
-from ansible.module_utils.network.eos.argspec.interfaces.interfaces import InterfacesArgs
-from ansible.module_utils.network.eos.config.base import ConfigBase
+from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
-class Interfaces(ConfigBase, InterfacesArgs):
+class Interfaces(ConfigBase):
     """
     The eos_interfaces class
     """

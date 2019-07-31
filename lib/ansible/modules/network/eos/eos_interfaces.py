@@ -67,7 +67,7 @@ options:
         description:
         - MTU for a specific interface. Must be an even number between 576 and 9216.
           Applicable for Ethernet interfaces only.
-        type: str
+        type: int
       name:
         description:
         - Full name of the interface, e.g. GigabitEthernet1.
@@ -266,11 +266,12 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['interface Ethernet2', 'shutdown', 'speed 10full']
 """
 
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.eos.argspec.interfaces.interfaces import InterfacesArgs
 from ansible.module_utils.network.eos.config.interfaces.interfaces import Interfaces
 
 
@@ -280,7 +281,7 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=Interfaces.argument_spec,
+    module = AnsibleModule(argument_spec=InterfacesArgs.argument_spec,
                            supports_check_mode=True)
 
     result = Interfaces(module).execute_module()
