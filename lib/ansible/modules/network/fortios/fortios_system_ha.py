@@ -173,7 +173,7 @@ options:
                 type: int
             hb_interval:
                 description:
-                    - Time between sending heartbeat packets (1 _ 20 (100*ms)). Increase to reduce false positives.
+                    - Time between sending heartbeat packets (1 - 20 (100*ms)). Increase to reduce false positives.
                 type: int
             hb_lost_threshold:
                 description:
