@@ -88,10 +88,12 @@ options:
             login_passwd:
                 description:
                     - Login password of managed FortiSwitch.
+                type: str
             login_passwd_override:
                 description:
                     - Enable/disable overriding the admin administrator password for a managed FortiSwitch with the FortiGate admin administrator account
                        password.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -99,6 +101,8 @@ options:
                 description:
                     - FortiSwitch Profile name.
                 required: true
+                type: str
+
 '''
 
 EXAMPLES = '''
