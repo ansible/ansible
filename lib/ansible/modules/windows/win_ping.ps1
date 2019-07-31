@@ -17,5 +17,6 @@ if ($data -eq "crash") {
     throw "boom"
 }
 
-$module.Result.ping = $data
+$result_data = $data
+$module.Result.ping = $result_data
 $module.ExitJson()
