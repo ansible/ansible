@@ -1,4 +1,17 @@
 ---
+- name: Install FS-Data-Deduplication
+  win_feature:
+    name: FS-Data-Deduplication
+    include_sub_features: true
+    state: present
+  register: data_dedup_feat_reg
+
+- name: Reboot windows after the feature has been installed
+  win_reboot:
+  when:
+    - data_dedup_feat_reg.success
+    - data_dedup_feat_reg.reboot_required
+
 - name: Run tests
   block:
     - include: tests.yml
