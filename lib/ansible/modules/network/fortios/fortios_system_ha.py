@@ -117,7 +117,7 @@ options:
                     - disable
             group_id:
                 description:
-                    - Cluster group ID  (0 _ 255). Must be the same for all members.
+                    - Cluster group ID  (0 - 255). Must be the same for all members.
                 type: int
             group_name:
                 description:
