@@ -78,13 +78,26 @@
     that:
       - result.changed
 
+- name: deletes a single db record that doesnt exist
+  aws_dynamodb_item:
+    table: "{{ dynamo_db_table }}"
+    state: absent
+    primary_key: {"bank": {"S": "santander"}, "quantity": {"N": "3000"}}
+    <<: *aws_connection_info
+  ignore_errors: yes
+  register: result
+- name: assert status
+  assert:
+    that:
+      - result is not changed
+
 - name: deletes a single db record that doesnt match conditional expression (doesnt exist)
   aws_dynamodb_item:
     table: "{{ dynamo_db_table }}"
     state: absent
     primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "2000"}}
-    condition_expression: quantity =:quantity
-    expression_attribute_values: {":quantity": {"N": "2000"}}
+    condition_expression: person =:person
+    expression_attribute_values: {":person": {"S": "ochoa"}}
     <<: *aws_connection_info
   ignore_errors: yes
   register: result

@@ -197,8 +197,17 @@ def delete(connection, module, response, **params):
 
     try:
         if not module.check_mode:
-            response = connection.delete_item(**params)
-        changed = True
+            # checks whether the item exist or not
+            response_get = get_item(connection, **params)
+            # if item was found
+            if 'Item' in response_get:
+                response = connection.delete_item(**params)
+                changed = True
+            else:
+                response = response_get
+                changed = False
+        else:
+            changed = True
         return response, changed
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
