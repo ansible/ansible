@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage L3 interfaces on Juniper JUNOS network devices
 description:
   - This module provides declarative management of L3 interfaces
     on Juniper JUNOS network devices.
+deprecated:
+  removed_in: "2.13"
+  why: Updated modules released with more functionality
+  alternative: Use M(junos_l3_interfaces) instead.
 options:
   name:
     description:
