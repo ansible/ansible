@@ -232,7 +232,7 @@
     command: "{{ ansible_python_interpreter | quote }} -c \"import grp; print(grp.getgrnam('group1_local_test').gr_gid)\""
     register: create_local_group_gid_actual
 
-  - name: assert create group with a gid
+  - name: assert create local group with a gid
     assert:
         that:
         - create_local_group_gid is changed
@@ -246,13 +246,13 @@
       state: present
     register: create_local_group_gid_again
 
-  - name: assert create group with a gid (idempotent)
+  - name: assert create local group with a gid (idempotent)
     assert:
         that:
         - not create_local_group_gid_again is changed
         - create_local_group_gid_again.gid | int == 1337 | int
   always:
-    - name: Cleanup
+    - name: Cleanup create local group with a gid 
       group:
         name: group1_local_test
         state: absent
