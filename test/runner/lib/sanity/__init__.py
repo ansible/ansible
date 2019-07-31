@@ -430,16 +430,19 @@ class SanityIgnoreProcessor:
     """Processor for sanity test ignores for a single run of one sanity test."""
     def __init__(self,
                  args,  # type: SanityConfig
-                 name,  # type: str
-                 code,  # type: t.Optional[str]
+                 test,  # type: SanityTest
                  python_version,  # type: t.Optional[str]
                  ):  # type: (...) -> None
+        name = test.name
+        code = test.error_code
+
         if python_version:
             full_name = '%s-%s' % (name, python_version)
         else:
             full_name = name
 
         self.args = args
+        self.test = test
         self.code = code
         self.parser = SanityIgnoreParser.load(args)
         self.ignore_entries = self.parser.ignores.get(full_name, {})
@@ -485,6 +488,13 @@ class SanityIgnoreProcessor:
         # unused errors
 
         unused = []  # type: t.List[t.Tuple[int, str, str]]
+
+        if self.test.no_targets or self.test.all_targets:
+            # tests which do not accept a target list, or which use all targets, always return all possible errors, so all ignores can be checked
+            paths = [target.path for target in SanityTargets.get_targets()]
+
+            if self.test.include_directories:
+                paths.extend(paths_to_dirs(paths))
 
         for path in paths:
             path_entry = self.ignore_entries.get(path)
@@ -789,7 +799,7 @@ class SanityCodeSmellTest(SanityTest):
 
     def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
+        return SanityIgnoreProcessor(args, self, None)
 
 
 class SanityFunc(SanityTest):
@@ -814,7 +824,7 @@ class SanityVersionNeutral(SanityFunc):
 
     def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
+        return SanityIgnoreProcessor(args, self, None)
 
     @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
@@ -835,7 +845,7 @@ class SanitySingleVersion(SanityFunc):
 
     def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
+        return SanityIgnoreProcessor(args, self, None)
 
 
 class SanityMultipleVersion(SanityFunc):
@@ -851,7 +861,7 @@ class SanityMultipleVersion(SanityFunc):
 
     def load_processor(self, args, python_version):  # type: (SanityConfig, str) -> SanityIgnoreProcessor
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self.name, self.error_code, python_version)
+        return SanityIgnoreProcessor(args, self, python_version)
 
     @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
