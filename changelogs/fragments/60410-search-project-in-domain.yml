@@ -1,0 +1,2 @@
+bugfixes:
+  - os_user - when domain is provided, default_project will be taken from this domain.
