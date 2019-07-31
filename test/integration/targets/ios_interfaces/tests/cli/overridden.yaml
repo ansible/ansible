@@ -33,7 +33,7 @@
         that:
           - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
-    - name: Override device configuration of all VLANs with provided configuration (IDEMPOTENT)
+    - name: Override device configuration of all interfaces with provided configuration (IDEMPOTENT)
       ios_interfaces: *overridden
       register: result
 

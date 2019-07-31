@@ -34,7 +34,7 @@
         that:
           - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
-    - name: Replaces device configuration of listed VLANs with provided configuration (IDEMPOTENT)
+    - name: Replaces device configuration of listed interfaces with provided configuration (IDEMPOTENT)
       ios_interfaces: *replaced
       register: result
 
