@@ -249,7 +249,7 @@ def main():
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
         "switch_controller_system": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "parallel_process": {"required": False, "type": "int"},
                 "parallel_process_override": {"required": False, "type": "str",
