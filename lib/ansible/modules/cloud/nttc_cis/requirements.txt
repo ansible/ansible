@@ -1,0 +1,4 @@
+ansible==2.7.6
+pytest==4.1.0
+requests==2.21.0
+pyOpenSSL==19.0.0
