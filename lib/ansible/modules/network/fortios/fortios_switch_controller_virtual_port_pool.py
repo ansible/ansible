@@ -88,10 +88,12 @@ options:
             description:
                 description:
                     - Virtual switch pool description.
+                type: str
             name:
                 description:
                     - Virtual switch pool name.
                 required: true
+                type: str
 '''
 
 EXAMPLES = '''
