@@ -1,11 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2019, RusoSova 
+# Copyright: (c) 2019, RusoSova
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -31,14 +34,14 @@ options:
      - The letters in the list are of equal cost. If CDROM is already mapped to one of the letter provided no change will happen to this device.
      - If less drive letters than CDROMs are avaliable, the module will only change the number of CDROMs equal to drive letters.
      - Accepted characters C-Z
-   example: O,S,U,R
+     - Example O,S,U,R
    required: false
    type: str
  change_single:
    description:
      - Specify the drive letter of a single CDROM to change or dismount.
      - Usefull when multiple CDROMs are present on the system but you need to change or dismount only one of them
-     - Note, it's not advisable to use change_single in conjunction with both dismount_virtual and drive_letter simultaneously. In most cases it will result in failed status.
+     - Note, it's not advisable to use change_single in conjunction with both dismount_virtual and drive_letter simultaneously.
    required: false
    type: str
  dismount_virtual:
@@ -57,8 +60,9 @@ options:
    default: false
    type: bool
 
-author:
- - RusoSova
+version_added: 2.9
+
+author: RusoSova
 '''
 
 EXAMPLES = r'''
@@ -89,7 +93,7 @@ EXAMPLES = r'''
 - name: Dismount all Windows virtual CDROMs
   win_cdrom_letter:
    dismount_only: yes
-  register: result 
+  register: result
 '''
 
 RETURN = r'''
@@ -102,7 +106,7 @@ dismounted:
   description: List of the Windows virtual CDROMs that were dismounted
   returned: When dismount_virtual = yes or dismount_only = yes
   type: str
-  sample:"G:,V:"
+  sample: "G:,V:"
 number_of_cdroms:
   description: Total number of CDROMs thats are susceptible to the change
   returned: When dismount_only = no
@@ -126,4 +130,5 @@ remap[n]:
     - "remap[0]": "O: --> Z:"
     - "remap[1]": "P: --> X:"
     - "remap[2]": "E: --> T:"
+
 '''

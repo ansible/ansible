@@ -1,6 +1,6 @@
 #!powershell
 
-# Copyright: (c) 2019, RusoSova 
+# Copyright: (c) 2019, RusoSova
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
@@ -49,10 +49,10 @@ if ($single -and $single.trim() -notmatch "^[C-Zc-z]{1}$") {
 function Get-CDROMList {
     param(
         [Parameter(Position=0)][string]$failedMessge,
-        [Parameter(Position=1)][int]$skipError=$False
-      )
+        [Parameter(Position=1)][bool]$skipError=$False
+    )
     try {
-       [array]$cdroms=(get-wmiobject -class Win32_CDROMDrive).drive
+       [array]$cdroms=(Get-CimInstance -ClassName Win32_CDROMDrive).drive
     } catch {
         $module.FailJson("There was an error retrieving the list of CDROMs $($_.Exception.Message)")
     }
@@ -65,12 +65,56 @@ function Get-CDROMList {
 #Function to get the list of Virtual CDROMS Letters
 function Get-VirtualCDROMList {
     try {
-        $vcdroms=(get-wmiobject -class Win32_CDROMDrive -filter "Caption = 'Microsoft Virtual DVD-ROM'").drive
+        $vcdroms=(Get-CimInstance -ClassName Win32_CDROMDrive -filter "Caption = 'Microsoft Virtual DVD-ROM'").drive
     } catch {
         $module.FailJson("There was an error retrieving the list of virtual CDROMs $letter - $($_.Exception.Message)")
     }
     return $vcdroms;
 }
+
+#Function to check if all the drives in drieve_letter are already CDROMs
+function AllCDs {
+    param(
+        [Parameter(Position=0)][array]$driveletters
+    )
+    $counter=0
+    foreach ($drive in $driveletters) { 
+        $drive =$drive +":"
+        if (Get-CimInstance -ClassName Win32_CDROMDrive -filter "Drive = `"$drive`"") { $counter++ }
+    }
+    if ($driveletters.count -eq $counter) {
+        return $True;
+    } else {
+        return $False;
+    }
+}
+
+#Function dismount virtual CDROMs
+function Dismount-VirtualCDROM {
+    param(
+        [Parameter(Position=0)][string]$letter
+    )
+    try {
+        (new-object -COM Shell.Application).NameSpace(17).ParseName($letter).InvokeVerb('Eject')
+        start-sleep -Seconds 1 #need to pause after dismount, otherwise it might not register properly
+    } catch {
+        $module.FailJson("There was an error dismounting virtual CDROM $letter - $($_.Exception.Message)")
+    }
+}
+
+#Function to change CDROM Letter
+function Set-CDROMLetter {
+    param(
+        [Parameter(Position=0)]$from,
+        [Parameter(Position=1)]$to
+    )
+    try {
+        Set-CimInstance -InputObject $from -Property @{DriveLetter=$to} | out-null
+    } catch {
+        $module.FailJson("There was an error changing letter of the CDROM $letterToChange - $($_.Exception.Message)")
+    }
+}
+
 
 #Collect the initial state of the CDROM drives and pass it to the module Result
 $initialListOfCDROMs=Get-CDROMList -failedMessge "There are no CDROMs on this system"
@@ -80,21 +124,19 @@ $module.Result.before_change=$initialListOfCDROMs
 if ($dismount_virtual -or $dismount_only) {
     $virtualCDROMs=Get-VirtualCDROMList
     if ($virtualCDROMs) {
-        if ($single) {  #Check if single parameter was provided
+        #Logic for when Single drive was provided
+        if ($single) {  
             if ($virtualCDROMs.contains($single)) {
                 $virtualCDROMs=$single
-            } else {
+            } elseif ($dismount_only) { #Fail if single is not Virtual CDROM and we dismount only
                 $module.FailJson("$single is not a Windows virtual CDROM")
+            } else {
+                $virtualCDROMs=$null  #Do nothing if the single drive is not a virtual CDROM
             }
         }
         foreach ($letter in $virtualCDROMs ) {
-            try {
-                if (-not $module.CheckMode) {
-                    (new-object -COM Shell.Application).NameSpace(17).ParseName($letter).InvokeVerb('Eject')
-                    start-sleep -Seconds 1 #need to pause after dismount, otherwise it might not register properly
-                }
-            } catch {
-                $module.FailJson("There was an error dismounting virtual CDROM $letter - $($_.Exception.Message)")
+            if (-not $module.CheckMode) {
+                Dismount-VirtualCDROM -letter $letter
             }
         }
         $module.Result.changed = $true
@@ -120,10 +162,10 @@ if (-not $dismount_only) {
     } else {
         $presentCDROMs=Get-CDROMList -failedMessge "There are no CDROMs left on this system after dismounting Windows virtual CDROMs"
     }
+
     [array]$checkmodeChange=$presentCDROMs
-   
     [array]$drvLetterArr=$drive_letter.split(",")
-    
+
     #Check if change_single drive letter exists and then create an array with just a single drive letter, otherwise create an array with all the CDROMs
     if ($single) {
         if ($presentCDROMs.contains($single)) {
@@ -132,42 +174,37 @@ if (-not $dismount_only) {
             $module.FailJson("$single is not a CDROM")
         }
     } else {
-        [array]$listToChange=$presentCDROMs 
+        [array]$listToChange=$presentCDROMs
     }
-   
+
+    $allCDroms=AllCDs -driveletters $drvLetterArr
     $currentVolumes=get-volume | Select-Object -ExpandProperty DriveLetter #Collect all the letters in use
     $listToChange=$listToChange | Where-Object { $drvLetterArr -notcontains $_.replace(":",'') } #Sanitize the list of affected CDROMs by removing any letter provided in drive_letter that are already CDROMs
     $drvLetterArr=$drvLetterArr | Where-Object { $currentVolumes -notContains $_ }  #Sanitize $drvLetterArr and remove any letters that are already assigned to the volumes
-    
-    if ($drvLetterArr.count -gt 0 -or ($drvLetterArr.count -eq 0 -and $listToChange.count -eq 0)) {
-        if ($drvLetterArr.count -lt $listToChange.count ) { 
+    if ($drvLetterArr.count -gt 0 -or ($drvLetterArr.count -eq 0 -and $listToChange.count -eq 0) -or $allCDroms) {
+        if ($drvLetterArr.count -lt $listToChange.count ) {
             $objectsToCount=$drvLetterArr.count #If less drive letter than cdroms were provided, change the counter to the number drive letters
         } else {
             $objectsToCount=$listToChange.count #Default counter=number of CDROMS
         }
         #Loop through the list and change the mapped letters
         for ($x=0; $x -le $objectsToCount-1; $x++) {
-            $cdRomToChange=$null ; $letterToChange=$listToChange[$x] ; $letterToBe=$drvLetterArr[$x]
-            $cdRomToChange=get-wmiObject win32_volume -filter "DriveLetter = `"$letterToChange`""
+            $cdRomToChange=$null ; $letterToChange=$listToChange[$x] ; $letterToBe=$drvLetterArr[$x]+":"
+            $cdRomToChange=Get-CimInstance -ClassName Win32_Volume -filter "DriveLetter = `"$letterToChange`"" 
             if ($cdRomToChange) {
-                $cdRomToChange.DriveLetter=$letterToBe+":"
-                try {
-                    if (-not $module.CheckMode) {
-                        $cdRomToChange.Put() | out-null
-                    } else {
-                        $checkmodeChange=$checkmodeChange.replace($letterToChange,$letterToBe +":") #Update Check mode variable with the change
-                    }
-                } catch {
-                    $module.FailJson("There was an error changing letter of the CDROM $letterToChange - $($_.Exception.Message)")
-                } 
-                    $changeCount="remap[$x]"
-                    $module.Result.$changeCount=("$letterToChange --> $letterToBe"+":")
+                if (-not $module.CheckMode) {
+                    Set-CDROMLetter -from  $cdRomToChange -to $letterToBe
+                } else {
+                    $checkmodeChange=$checkmodeChange.replace($letterToChange,$letterToBe) #Update Check mode variable with the change
+                }
+                $changeCount="remap[$x]"
+                $module.Result.$changeCount=("$letterToChange --> $letterToBe")
             } else {
                 $module.FailJson("There was an error finding CDROM $letterToChange")
             }
         }
         $module.Result.changed = $true
-        $module.Result.number_of_cdroms=$presentCDROMs.count 
+        $module.Result.number_of_cdroms=$presentCDROMs.count
         $module.Result.number_of_changes=$x
     } else {
         $module.FailJson("All the provided letter(s) [$drive_letter] are already in use")
