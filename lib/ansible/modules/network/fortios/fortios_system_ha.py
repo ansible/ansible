@@ -80,7 +80,7 @@ options:
         suboptions:
             arps:
                 description:
-                    - Number of gratuitous ARPs (1 _ 60). Lower to reduce traffic. Higher to reduce failover time.
+                    - Number of gratuitous ARPs (1 -60). Lower to reduce traffic. Higher to reduce failover time.
                 type: int
             arps_interval:
                 description:
