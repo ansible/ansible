@@ -93,7 +93,7 @@ policydefinitions:
             }
         mode:
             description:
-                - The policy definition mode. Possible values are NotSpecified, Indexed, and All.
+                - The policy definition mode. Possible values are C(NotSpecified), C(Indexed), and C(All).
             returned: always
             type: str
             sample: "Indexed"
