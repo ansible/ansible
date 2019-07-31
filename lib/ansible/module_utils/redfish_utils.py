@@ -284,12 +284,13 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         data = response['data']
-        for log_svcs_entry in data[u'Members']:
+        for log_svcs_entry in data.get('Members', []):
             response = self.get_request(self.root_uri + log_svcs_entry[u'@odata.id'])
             if response['ret'] is False:
                 return response
             _data = response['data']
-            log_svcs_uri_list.append(_data['Entries'][u'@odata.id'])
+            if 'Entries' in _data:
+                log_svcs_uri_list.append(_data['Entries'][u'@odata.id'])
 
         # For each entry in LogServices, get log name and all log entries
         for log_svcs_uri in log_svcs_uri_list:
@@ -299,15 +300,16 @@ class RedfishUtils(object):
             if response['ret'] is False:
                 return response
             data = response['data']
-            logs['Description'] = data['Description']
+            logs['Description'] = data.get('Description',
+                                           'Collection of log entries')
             # Get all log entries for each type of log found
-            for logEntry in data[u'Members']:
+            for logEntry in data.get('Members', []):
                 # I only extract some fields - Are these entry names standard?
                 list_of_log_entries.append(dict(
-                    Name=logEntry[u'Name'],
-                    Created=logEntry[u'Created'],
-                    Message=logEntry[u'Message'],
-                    Severity=logEntry[u'Severity']))
+                    Name=logEntry.get('Name'),
+                    Created=logEntry.get('Created'),
+                    Message=logEntry.get('Message'),
+                    Severity=logEntry.get('Severity')))
             log_name = log_svcs_uri.split('/')[-1]
             logs[log_name] = list_of_log_entries
             list_of_logs.append(logs)
