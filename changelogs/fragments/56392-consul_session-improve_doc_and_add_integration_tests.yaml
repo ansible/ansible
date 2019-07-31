@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "consul_session - ``state`` parameter: use ``required_if``, document ``id`` parameter, update ``name`` parameter documentation"
