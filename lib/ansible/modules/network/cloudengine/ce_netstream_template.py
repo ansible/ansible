@@ -324,6 +324,9 @@ class NetstreamTemplate(object):
                 tmp_value = re.findall(r'collect interface (.*)', self.netstream_cfg)
                 if tmp_value:
                     self.end_state["collect_interface"] = tmp_value
+        if self.end_state == self.existing:
+            self.changed =False
+            self.updates_cmd = list()
 
     def present_netstream(self):
         """ Present netstream configuration """
