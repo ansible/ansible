@@ -31,6 +31,7 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
+    type: list
     aliases: ['commands']
   parents:
     description:
@@ -38,6 +39,7 @@ options:
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
+    type: list
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -114,6 +116,15 @@ options:
         folder in the playbook root directory or role root directory, if
         playbook is part of an ansible role. If the directory does not exist,
         it is created.
+    type: bool
+    default: 'no'
+    version_added: "2.2"
+  defaults:
+    description:
+      - This argument specifies whether or not to collect all defaults
+        when getting the remote device running config.  When enabled,
+        the module will get the current config by issuing the command
+        C(show running-config all).
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -275,7 +286,7 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/icx_config.2016-07-16@22:28:34
 """
 
@@ -353,7 +364,7 @@ def main():
 
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
-        multiline_delimiter=dict(default='$'),
+        multiline_delimiter=dict(default='@'),
 
         running_config=dict(aliases=['config']),
         intended_config=dict(),
