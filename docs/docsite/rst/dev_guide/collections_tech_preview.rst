@@ -69,9 +69,11 @@ Use ``ansible-doc`` to view documentation for plugins inside a collection:
 
 .. code-block:: bash
 
-    ansible-doc -t lookup mycol.myname.lookup1
+    ansible-doc -t lookup my_namespace.my_collection.lookup1
 
-The ``ansible-doc`` command requires the fully qualified collection name (FQCN) to display specific plugin documentation.
+The ``ansible-doc`` command requires the fully qualified collection name (FQCN) to display specific plugin documentation. In this example, ``my_namespace`` is the namespace and ``my_collection`` is the collection name within that namespace.
+
+.. note:: The Ansible collection namespace is defined in the ``galaxy.yml`` file and is not equivalent to the GitHub repository name.
 
 
 plugins directory
@@ -82,11 +84,11 @@ Add a 'per plugin type' specific subdirectory here, including ``module_utils`` w
 module_utils
 ^^^^^^^^^^^^
 
-When working with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
+When coding with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting Python import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
 
 The following example snippet shows a module using both default Ansible ``module_utils`` and
-those provided by a collection. In this example the collection is
-``ansible_example``, the namespace is ``community``, and the ``module_util`` in
+those provided by a collection. In this example the namespace is
+``ansible_example``, the collection is ``community``, and the ``module_util`` in
 question is called ``qradar`` such that the FQCN is ``ansible_example.community.plugins.module_utils.qradar``:
 
 .. code-block:: python
@@ -205,7 +207,7 @@ a tarball of the built collection in the current directory which can be uploaded
     my_collection/
     ├── galaxy.yml
     ├── ...
-    ├── my_namespace_name-collection_name-1.0.0.tar.gz
+    ├── my_namespace-my_collection-1.0.0.tar.gz
     └── ...
 
 
@@ -357,7 +359,7 @@ You can also setup a ``requirements.yml`` file to install multiple collections i
    - my_namespace.my_collection
 
    # With the collection name, version, and source options
-   - name: my_namespace.my_collection
+   - name: my_namespace.my_other_collection
      version: 'version range identifiers (default: ``*``)'
      source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
 
