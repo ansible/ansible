@@ -65,7 +65,7 @@ EXAMPLES = """
     gather_subset: all
 
 - name: Gather only the config and default facts
-  ios_facts:
+ios_facts:
     gather_subset:
       - config
 
