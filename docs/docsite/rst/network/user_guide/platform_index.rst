@@ -16,6 +16,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_dellos10
    platform_enos
    platform_eos
+   platform_eric_eccli
    platform_exos
    platform_ios
    platform_ironware
@@ -53,6 +54,8 @@ Settings by Platform
 | Dell OS9          | ``dellos9``             | ✓           |         |         | ✓        |
 +-------------------+-------------------------+-------------+---------+---------+----------+
 | Dell OS10         | ``dellos10``            | ✓           |         |         | ✓        |
++-------------------+-------------------------+-------------+---------+---------+----------+
+| Ericsson ECCLI    | ``eric_eccli``          | ✓           |         |         | ✓        |
 +-------------------+-------------------------+-------------+---------+---------+----------+
 | Extreme EXOS      | ``exos``                | ✓           |         | ✓       |          |
 +-------------------+-------------------------+-------------+---------+---------+----------+
