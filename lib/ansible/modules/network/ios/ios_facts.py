@@ -212,7 +212,7 @@ class Default(FactsBase):
         match = re.search(r'board ID (\S+)', data)
         if match:
             return match.group(1)
-          
+
     def parse_uptime(self, data):
         match = re.search(r'uptime is (\S+)', data)
         if match:
