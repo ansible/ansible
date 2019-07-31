@@ -197,13 +197,13 @@ options:
     choices:
     - merged
     - replaced
-    - overridden
     - deleted
     default: merged
 """
 EXAMPLES = """
 # Using deleted
 # This action will delete all telemetry configuration on the device
+
 - name: Delete Telemetry Configuration
   nxos_telemetry:
     state: deleted
@@ -212,7 +212,6 @@ EXAMPLES = """
 # Using merged
 # This action will merge telemetry configuration defined in the playbook with
 # telemetry configuration that is already on the device.
-    pass
 
 - name: Merge Telemetry Configuration
   nxos_telemetry:
