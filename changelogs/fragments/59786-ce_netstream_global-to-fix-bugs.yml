@@ -1,0 +1,2 @@
+bugfixes:
+- ce_netstream_global - The 'get_config', which is from 'ansible.module_utils.network.cloudengine.ce', try to return the result from cache,however the configure has changed. (https://github.com/ansible/ansible/pull/59689)
