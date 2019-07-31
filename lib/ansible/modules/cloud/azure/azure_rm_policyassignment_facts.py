@@ -33,7 +33,8 @@ options:
             - This parameter is required when I(name) provided.
             - For example, use C(/subscriptions/{subscription-id}/) for a subscription.
             - C(/subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}) for a resource group.
-            - C(/subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name}) for a resource.
+            - C(/subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name})
+              for a resource.
             - C(/providers/Microsoft.Management/managementGroups/{managementGroup}) for a management group.
         type: str
     resource_group_name:
@@ -138,7 +139,7 @@ policyassignments:
                     ],
                     "defaultValue": "AuditIfNotExists",
                     "metadata": {
-                        "description": "Enable or disable the execution of the pol
+                        "description": "Enable or disable the execution of the pol",
                         "displayName": "Effect"
                     },
                     "type": "String"

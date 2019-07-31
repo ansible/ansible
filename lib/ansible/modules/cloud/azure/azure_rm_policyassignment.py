@@ -31,7 +31,8 @@ options:
             - The scope of the policy assignment to create.
             - For example, use C(/subscriptions/{subscription-id}/) for subscription.
             - C(/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}) for resource group.
-            - C(/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name}) for resource.
+            - C(/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name})
+              for resource.
             - C(/providers/Microsoft.Management/managementGroups/{managementGroup}) for a management group.
         type: str
     state:
