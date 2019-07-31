@@ -18,13 +18,13 @@
 
 - set_fact:
     get_netbios_script: |
-      $adapter = Get-CimInstance -ClassName Win32_NetworkAdapter -Filter "NetConnectionID='{{ test_adapter }}'"
+      $adapter = Get-CimInstance -ClassName Win32_NetworkAdapter -Filter "NetConnectionID='{{ network_adapter_name }}'"
       $config = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter "Index=$($adapter.DeviceID)"
       $config.TcpipNetbiosOptions
 
 - name: disable netbios single adapter (check mode)
   win_netbios:
-    adapter_names: '{{ test_adapter }}'
+    adapter_names: '{{ network_adapter_name }}'
     state: disabled
   register: set_single_check
   check_mode: yes
@@ -42,7 +42,7 @@
 
 - name: disable netbios single adapter
   win_netbios:
-    adapter_names: '{{ test_adapter }}'
+    adapter_names: '{{ network_adapter_name }}'
     state: disabled
   register: set_single
 
