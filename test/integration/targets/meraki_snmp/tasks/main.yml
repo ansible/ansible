@@ -3,207 +3,304 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-- name: Test an API key is provided
-  fail:
-    msg: Please define an API key
-  when: auth_key is not defined
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
 
-- name: Query all SNMP settings
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: query
-  delegate_to: localhost
-  register: snmp_query
+  - name: Create SNMP network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      type: appliance
+    delegate_to: localhost
+    register: new_net
 
-- debug:
-    msg: '{{snmp_query}}'
+  - set_fact:
+      net_id: new_net.data.id
 
-- name: Enable SNMPv2c with check mode
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v2c_enabled: true
-  delegate_to: localhost
-  register: snmp_v2_enable_check
-  check_mode: yes
+  - name: Query all SNMP settings
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: query
+    delegate_to: localhost
+    register: snmp_query
 
-- assert:
-    that:
-      - snmp_v2_enable_check is not changed
+  - debug:
+      msg: '{{snmp_query}}'
 
-- name: Enable SNMPv2c
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v2c_enabled: true
-  delegate_to: localhost
-  register: snmp_v2_enable
+  - name: Enable SNMPv2c
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v2c_enabled: true
+    delegate_to: localhost
+    register: snmp_v2_enable
 
-- debug:
-    msg: '{{snmp_v2_enable}}'
+  - debug:
+      msg: '{{snmp_v2_enable}}'
 
-- assert:
-    that:
-      - snmp_v2_enable.data.v2_community_string is defined
-      - snmp_v2_enable.data.v2c_enabled == true
+  - assert:
+      that:
+        - snmp_v2_enable.data.v2_community_string is defined
+        - snmp_v2_enable.data.v2c_enabled == true
 
-- name: Disable SNMPv2c
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v2c_enabled: False
-  delegate_to: localhost
-  register: snmp_v2_disable
+  - name: Disable SNMPv2c
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v2c_enabled: False
+    delegate_to: localhost
+    register: snmp_v2_disable
 
-- assert:
-    that:
-      - snmp_v2_disable.data.v2_community_string is not defined
-      - snmp_v2_disable.data.v2c_enabled == False
+  - assert:
+      that:
+        - snmp_v2_disable.data.v2_community_string is not defined
+        - snmp_v2_disable.data.v2c_enabled == False
 
-- name: Enable SNMPv2c with org_id
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_id: '{{test_org_id}}'
-    state: present
-    v2c_enabled: true
-  delegate_to: localhost
-  register: snmp_v2_enable_id
+  - name: Enable SNMPv2c with org_id
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_id: '{{test_org_id}}'
+      state: present
+      v2c_enabled: true
+    delegate_to: localhost
+    register: snmp_v2_enable_id
 
-- debug:
-    msg: '{{snmp_v2_enable_id}}'
+  - debug:
+      msg: '{{snmp_v2_enable_id}}'
 
-- assert:
-    that:
-      - snmp_v2_enable_id.data.v2_community_string is defined
-      - snmp_v2_enable_id.data.v2c_enabled == true
+  - assert:
+      that:
+        - snmp_v2_enable_id.data.v2_community_string is defined
+        - snmp_v2_enable_id.data.v2c_enabled == true
 
-- name: Disable SNMPv2c with org_id
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_id: '{{test_org_id}}'
-    state: present
-    v2c_enabled: False
-  delegate_to: localhost
-  register: snmp_v2_disable_id
+  - name: Disable SNMPv2c with org_id
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_id: '{{test_org_id}}'
+      state: present
+      v2c_enabled: False
+    delegate_to: localhost
+    register: snmp_v2_disable_id
 
-- assert:
-    that:
-      - snmp_v2_disable_id.data.v2_community_string is not defined
-      - snmp_v2_disable_id.data.v2c_enabled == False
+  - assert:
+      that:
+        - snmp_v2_disable_id.data.v2_community_string is not defined
+        - snmp_v2_disable_id.data.v2c_enabled == False
 
-- name: Enable SNMPv3
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v3_enabled: true
-    v3_auth_mode: SHA
-    v3_auth_pass: ansiblepass
-    v3_priv_mode: AES128
-    v3_priv_pass: ansiblepass
-  delegate_to: localhost
-  register: snmp_v3_enable
+  - name: Enable SNMPv3 with check mode
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v3_enabled: true
+      v3_auth_mode: SHA
+      v3_auth_pass: ansiblepass
+      v3_priv_mode: AES128
+      v3_priv_pass: ansiblepass
+    delegate_to: localhost
+    check_mode: yes
+    register: snmp_v3_enable_check
 
-- assert:
-    that:
-      - snmp_v3_enable.data.v3_enabled == True
-      - snmp_v3_enable.changed == True
+  - assert:
+      that:
+        - snmp_v3_enable_check.data.v3_enabled == True
+        - snmp_v3_enable_check.changed == True
 
-- name: Check for idempotency
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v3_enabled: true
-    v3_auth_mode: SHA
-    v3_auth_pass: ansiblepass
-    v3_priv_mode: AES128
-    v3_priv_pass: ansiblepass
-  delegate_to: localhost
-  register: snmp_idempotent
+  - name: Enable SNMPv3
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v3_enabled: true
+      v3_auth_mode: SHA
+      v3_auth_pass: ansiblepass
+      v3_priv_mode: AES128
+      v3_priv_pass: ansiblepass
+    delegate_to: localhost
+    register: snmp_v3_enable
 
-- debug:
-    msg: '{{snmp_idempotent}}'
+  - assert:
+      that:
+        - snmp_v3_enable.data.v3_enabled == True
+        - snmp_v3_enable.changed == True
 
-- assert:
-    that:
-      - snmp_idempotent.changed == False
-      - snmp_idempotent.data is defined
+  - name: Check for idempotency
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v3_enabled: true
+      v3_auth_mode: SHA
+      v3_auth_pass: ansiblepass
+      v3_priv_mode: AES128
+      v3_priv_pass: ansiblepass
+    delegate_to: localhost
+    register: snmp_idempotent
 
-- name: Check for idempotency with check mode
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v3_enabled: true
-    v3_auth_mode: SHA
-    v3_auth_pass: ansiblepass
-    v3_priv_mode: AES128
-    v3_priv_pass: ansiblepass
-  delegate_to: localhost
-  register: snmp_idempotent_check
+  - debug:
+      msg: '{{snmp_idempotent}}'
 
-- assert:
-    that:
-      - snmp_idempotent_check is not changed
+  - assert:
+      that:
+        - snmp_idempotent.changed == False
+        - snmp_idempotent.data is defined
 
-- name: Add peer IPs
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v3_enabled: true
-    v3_auth_mode: SHA
-    v3_auth_pass: ansiblepass
-    v3_priv_mode: AES128
-    v3_priv_pass: ansiblepass
-    peer_ips: 1.1.1.1;2.2.2.2
-  delegate_to: localhost
-  register: peers
+  - name: Add peer IPs
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v3_enabled: true
+      v3_auth_mode: SHA
+      v3_auth_pass: ansiblepass
+      v3_priv_mode: AES128
+      v3_priv_pass: ansiblepass
+      peer_ips: 1.1.1.1;2.2.2.2
+    delegate_to: localhost
+    register: peers
 
-- debug:
-    msg: '{{peers}}'
+  - debug:
+      msg: '{{peers}}'
 
-- assert:
-    that:
-      - peers.data.peer_ips is defined
+  - assert:
+      that:
+        - peers.data.peer_ips is defined
 
-- name: Add invalid peer IPs
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    peer_ips: 1.1.1.1 2.2.2.2
-  delegate_to: localhost
-  register: invalid_peers
-  ignore_errors: yes
+  - name: Add invalid peer IPs
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      peer_ips: 1.1.1.1 2.2.2.2
+    delegate_to: localhost
+    register: invalid_peers
+    ignore_errors: yes
 
-- assert:
-    that:
-      '"Peer IP addresses are semi-colon delimited." in invalid_peers.msg'
+  - assert:
+      that:
+        '"Peer IP addresses are semi-colon delimited." in invalid_peers.msg'
 
-- name: Set short password
-  meraki_snmp:
-    auth_key: '{{auth_key}}'
-    org_name: '{{test_org_name}}'
-    state: present
-    v3_enabled: true
-    v3_auth_mode: SHA
-    v3_auth_pass: ansible
-    v3_priv_mode: AES128
-    v3_priv_pass: ansible
-    peer_ips: 1.1.1.1;2.2.2.2
-  delegate_to: localhost
-  register: short_password
-  ignore_errors: yes
+  - name: Set short password
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v3_enabled: true
+      v3_auth_mode: SHA
+      v3_auth_pass: ansible
+      v3_priv_mode: AES128
+      v3_priv_pass: ansible
+      peer_ips: 1.1.1.1;2.2.2.2
+    delegate_to: localhost
+    register: short_password
+    ignore_errors: yes
 
-- debug:
-    msg: '{{short_password}}'
+  - debug:
+      msg: '{{short_password}}'
 
-- assert:
-    that:
-      - '"at least 8" in short_password.msg'
+  - assert:
+      that:
+        - '"at least 8" in short_password.msg'
+
+  - name: Set network access type to community string
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      access: community
+      community_string: abc123
+    delegate_to: localhost
+    register: set_net_community
+
+  - debug:
+      var: set_net_community
+
+  - assert:
+      that:
+        - set_net_community is changed
+        - set_net_community.data is defined
+
+  - name: Set network access type to username
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      access: users
+      users:
+        - username: ansibleuser
+          passphrase: ansiblepass
+    delegate_to: localhost
+    register: set_net_user
+
+  - debug:
+      var: set_net_user
+
+  - assert:
+      that:
+        - set_net_user is changed
+        - set_net_user.data is defined
+
+  - name: Set network access type to none
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      access: none
+    delegate_to: localhost
+    register: set_net_none
+
+  - debug:
+      var: set_net_none
+
+  - assert:
+      that:
+        - set_net_none is changed
+        - set_net_none.data is defined
+
+  - name: Query network SNMP settings
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: query
+    delegate_to: localhost
+    register: get_net
+
+  - debug:
+      var: get_net
+
+  - assert:
+      that:
+        - get_net.data is defined
+
+  always:
+  - name: Disable SNMPv3
+    meraki_snmp:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: present
+      v3_enabled: no
+      v3_auth_mode: SHA
+      v3_auth_pass: ansiblepass
+      v3_priv_mode: AES128
+      v3_priv_pass: ansiblepass
+    delegate_to: localhost
+
+  - name: Delete SNMP network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: absent
+    delegate_to: localhost
