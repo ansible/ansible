@@ -1,0 +1,2 @@
+minor_changes:
+  - lookup_url - added ability to specify request headers
