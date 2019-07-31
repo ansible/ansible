@@ -17,6 +17,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_enos
    platform_eos
    platform_exos
+   platform_icx
    platform_ios
    platform_ironware
    platform_junos
@@ -79,6 +80,8 @@ Settings by Platform
 | Nokia SR OS       | ``sros``                | ✓           |         |         | ✓        |
 +-------------------+-------------------------+-------------+---------+---------+----------+
 | Pluribus Netvisor | ``netvisor``            | ✓           |         |         |          |
++-------------------+-------------------------+-------------+---------+---------+----------+
+| Ruckus ICX*       | ``icx``                 | ✓           |         |         |          |
 +-------------------+-------------------------+-------------+---------+---------+----------+
 | VyOS*             | ``vyos``                | ✓           |         |         | ✓        |
 +-------------------+-------------------------+-------------+---------+---------+----------+
