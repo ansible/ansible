@@ -1,0 +1,48 @@
+---
+
+- name: Ensure we have loopback 0 for testing
+  qnos_config:
+    src: config.j2
+  connection: network_cli
+
+# Some AWS hostnames can be longer than those allowed by the system we are testing
+# Truncate the hostname
+# http://jinja.pocoo.org/docs/2.9/templates/#truncate
+- set_fact:
+    shorter_hostname: '{{ inventory_hostname_short| truncate(10, True, "") }}'
+
+- name: "Discover Quantata Switch version"
+  qnos_command:
+    commands: ['show version']
+  connection: network_cli
+  register: result
+
+- set_fact: switch_type=""
+
+- set_fact: switch_type="DataCenter"
+  when: "'Data Center' in result.stdout[0]"
+
+- block:
+    - name: Set test interface 1 to 0/1 as we are on Quanta Switch QNOS
+      set_fact: test_interface=0/1
+    - name: Set test interface 2 to 0/2 as we are on Quanta Switch QNOS 
+      set_fact: test_interface2=0/2
+  when: "'QUANTA' in result.stdout[0]"
+
+- block:
+    - name: Set test interface 2 to 0/1 as we are on Quanta Switch QNOS
+      set_fact: test_interface2=0/2
+    - name: Disable autonegotiation on 0/2
+      qnos_config:
+        lines:
+          - no negotiate 
+        parents: int {{ test_interface2 }}
+
+    - name: Set test interface 3 to 0/3 as we are on Quanta Switch QNOS
+      set_fact: test_interface3=0/3
+    - name: Disable autonegotiation on 0/3
+      qnos_config:
+        lines:
+          - no negotiate 
+        parents: int {{ test_interface3 }}
+  when: "'QUANTA' in result.stdout[0]"
