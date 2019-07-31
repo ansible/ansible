@@ -18,7 +18,7 @@ $dedup_job = Get-AnsibleParam -obj $params -name 'dedup_job' -type 'list' -defau
 # In theory it works on Windows 2012, but this was only developed to work
 # from 2012R2 and higher.
 if ([System.Environment]::OSVersion.Version -lt [Version]"6.3.9600.0") {
-    Fail-Json -message "win_domain requires Windows Server 2012R2 or higher"
+    Fail-Json -message "win_data_deduplication requires Windows Server 2012R2 or higher."
 }
 
 $result = @{
