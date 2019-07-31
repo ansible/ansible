@@ -1,0 +1,2 @@
+bugfixes:
+  - pbrun - add default user for become plugin (https://github.com/ansible/ansible/pull/59754)
