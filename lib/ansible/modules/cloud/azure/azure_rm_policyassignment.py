@@ -17,25 +17,28 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_policyassignment
 version_added: "2.9"
-short_description: Manage Azure policy assignment instance.
+short_description: Manage Azure policy assignment instance
 description:
     - Create, update and delete instance of Azure policy assignment.
 
 options:
     name:
         description:
-            - Name of the policy assignment
+            - Name of the policy assignment.
+        type: str
     scope:
         description:
             - The scope of the policy assignment to create.
-            - For example, use /subscriptions/{subscription-id}/ for subscription,
-            - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for resource group,
-            - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for resource.
-            - /providers/Microsoft.Management/managementGroups/{managementGroup} for a management group
+            - For example, use C(/subscriptions/{subscription-id}/) for subscription.
+            - C(/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}) for resource group.
+            - C(/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name}) for resource.
+            - C(/providers/Microsoft.Management/managementGroups/{managementGroup}) for a management group.
+        type: str
     state:
         description:
-            - Assert the state of the policy assignment.
-            - Use 'present' to create or update a policy assignment and 'absent' to delete it.
+            - State of the policy assignment.
+            - Use C(present) to create or update a policy assignment and C(absent) to delete it.
+        type: str
         default: present
         choices:
             - absent
@@ -45,9 +48,11 @@ options:
             - The ID or name of the policy definition or policy set definition being assigned.
             - It can also be a dict contains C(name), C(types) and optional C(subscription_id).
             - The types of the I(policy_definition) could be policyDefinitions or policySetDefinitions.
+        type: raw
     display_name:
         description:
             - The display name of the policy assignment.
+        type: str
     not_scopes:
         description:
             - The policy's excluded scopes.
@@ -57,9 +62,11 @@ options:
             - Required if a parameter is used in policy rule.
             - JSON formatted string or a path to a file or url with parameter definitions.
             - See U(https://docs.microsoft.com/en-us/azure/templates/Microsoft.Authorization/2018-05-01/policyAssignments) for more details.
+        type: str
     description:
         description:
             - This message will be part of response in case of policy violation.
+        type: str
     metadata:
         description:
             - The policy assignment metadata.
@@ -67,19 +74,21 @@ options:
         type: dict
     sku:
         description:
-            - The policy sku.
+            - The policy SKU.
+        type: str
         choices:
             - a0
             - a1
     location:
         description:
             - The location of the policy assignment.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -99,7 +108,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Id of current policy assignment.
+    description:
+        - ID of current policy assignment.
     returned: always
     type: str
     sample:

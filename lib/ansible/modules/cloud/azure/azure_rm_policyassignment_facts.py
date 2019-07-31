@@ -19,49 +19,56 @@ module: azure_rm_policyassignment_facts
 version_added: "2.9"
 short_description: Gather Info of Policy Assignment
 description:
-    - Gather information of a specific policy assignment or all policy assignments
+    - Gather information of a specific policy assignment or all policy assignments.
 
 options:
     name:
         description:
-            - Name of the policy assignment
-            - This parameter is mutually exclusive with C(policy_assignment_id).
+            - Name of the policy assignment.
+            - This parameter is mutually exclusive with I(policy_assignment_id).
+        type: str
     scope:
         description:
             - The scope of the policy assignment.
             - This parameter is required when I(name) provided.
-            - For example, use /subscriptions/{subscription-id}/ for a subscription,
-            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name} for a resource group,
-            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource
-            - /providers/Microsoft.Management/managementGroups/{managementGroup} for a management group
+            - For example, use C(/subscriptions/{subscription-id}/) for a subscription.
+            - C(/subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}) for a resource group.
+            - C(/subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name}) for a resource.
+            - C(/providers/Microsoft.Management/managementGroups/{managementGroup}) for a management group.
+        type: str
     resource_group_name:
         description:
             - The name of the resource group containing the resource.
-            - This parameter is required when C(resource_name) provided.
+            - This parameter is required when I(resource_name) provided.
+        type: str
     resource_provider_namespace:
         description:
             - The namespace of the resource provider.
-            - This parameter is required when C(resource_name) provided.
+            - This parameter is required when I(resource_name) provided.
+        type: str
     parent_resource_path:
         description:
-            - The parent resource path. Use empty string if there is none.
+            - The parent resource path. Use empty string if there is C(none).
+        type: str
     resource_type:
         description:
             - The resource type name.
-            - This parameter is required when C(resource_name) provided.
+            - This parameter is required when I(resource_name) provided.
+        type: str
     resource_name:
         description:
             - The name of the resource.
+        type: str
     filter:
         description:
             - The filter to apply on the operation.
             - Valid values for I(filter) are atScope() or policyDefinitionId eq {value}.
-
+        type: str
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -81,42 +88,49 @@ EXAMPLES = '''
 
 RETURN = '''
 policyassignments:
-    description: List of policy assignments.
+    description:
+        - List of policy assignments.
     returned: always
-    type: list
+    type: complex
     contains:
         description:
             description:
                 - The policy assignment description.
+            returned: always
             type: str
             sample: "This policy assignment was automatically created by Azure Security Center"
         display_name:
             description:
                 - The display name of the policy assignment.
+            returned: always
             type: str
             sample: "ASC Default (subscription: f64d4ee8-be94-457d-ba26-3fa6b6506cef)"
         id:
             description:
                 - The ID of the policy assignment.
+            returned: always
             type: str
             sample:  "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn"
         metadata:
             description:
                 - The policy assignment metadata.
+            returned: always
             type: dict
-            sample: '{
+            sample: {
                 "assignedBy": "Security Center"
-            }'
+            }
         name:
             description:
                 - The name of the policy assignment.
+            returned: always
             type: str
             sample: "SecurityCenterBuiltIn"
         parameters:
             description:
                 - Required if a parameter is used in policy rule.
+            returned: always
             type: dict
-            sample: '{
+            sample: {
                 "effect": {
                     "allowedValues": [
                         "AuditIfNotExists",
@@ -129,28 +143,32 @@ policyassignments:
                     },
                     "type": "String"
                 }
-            }'
+            }
         policy_definition_id:
             description:
                 - The ID of the policy definition or policy set definition being assigned.
+            returned: always
             type: str
             sample: "/providers/Microsoft.Authorization/policySetDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         scope:
             description:
                 - The scope for the policy assignment.
+            returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         sku:
             description:
-                - The policy sku
+                - The policy SKU.
+            returned: always
             type: dict
-            sample: ' {
+            sample: {
                 "name": "A1",
                 "tier": "Standard"
-            }'
+            }
         type:
             description:
-                - Resource type
+                - Resource type.
+            returned: always
             sample: "Microsoft.Authorization/policyAssignments"
             type: str
 '''
