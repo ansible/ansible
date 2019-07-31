@@ -872,6 +872,14 @@
   tags:
     - user_test_local_mode
 
+- name: Create local account that already exists to check for warning
+  user:
+    name: root
+    local: yes
+  register: local_existing
+  tags:
+    - user_test_local_mode
+
 - name: Create local_ansibulluser
   user:
     name: local_ansibulluser
@@ -952,10 +960,12 @@
   tags:
     - user_test_local_mode
 
-- name: Ensure warnings were displayed
+- name: Ensure warnings were displayed properly
   assert:
     that:
       - local_user_test_1['warnings'] | length > 0
-      - "'user was not found in /etc/passwd. The local user account may already exist if the local account
-        database exists somewhere other than /etc/passwd.' in local_user_test_1['warnings'][0]"
+      - local_user_test_1['warnings'] | first is search('The local user account may already exist')
+      - local_existing['warnings'] is not defined
   when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
