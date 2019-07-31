@@ -84,7 +84,7 @@ options:
                 type: int
             arps_interval:
                 description:
-                    - Time between gratuitous ARPs  (1 _ 20 sec). Lower to reduce failover time. Higher to reduce traffic.
+                    - Time between gratuitous ARPs  (1 - 20 sec). Lower to reduce failover time. Higher to reduce traffic.
                 type: int
             authentication:
                 description:
