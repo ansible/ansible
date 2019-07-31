@@ -248,7 +248,8 @@ def get_entity(vnic_services, entitynics_module):
 
 
 def check_params(module):
-    if (module.params.get('port_mirroring') or module.params.get('network_filter') or module.params.get('qos')) and module.params.get('pass_through') == 'enabled':
+    if (module.params.get('port_mirroring') or module.params.get('network_filter') or module.params.get('qos'))\
+            and module.params.get('pass_through') == 'enabled':
         module.fail_json(msg="Cannot edit VM network interface profile. 'Port Mirroring,'Qos' and 'Network Filter' are not supported on passthrough profiles.")
 
 
