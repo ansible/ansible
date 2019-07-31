@@ -377,7 +377,7 @@ class AzureRMModuleBase(object):
         :param tags: dictionary of string:string pairs
         :return: None
         '''
-        if (not self.facts_module) and (no self.info_module):
+        if (not self.facts_module) and (not self.info_module):
             if not isinstance(tags, dict):
                 self.fail("Tags must be a dictionary of string:string values.")
             for key, value in tags.items():
