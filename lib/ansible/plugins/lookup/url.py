@@ -40,7 +40,7 @@ options:
     description: HTTP request headers
     type: dictionary
     default: {}
-    version_added: "2.9"
+    version_added: "2.8"
 """
 
 EXAMPLES = """
