@@ -1,2 +1,2 @@
 bugfixes:
-  - file - Fix changed status and return diff information in file module when state=touch and check mode is set https://github.com/ansible/ansible/issues/50452
+  - file - Fix changed status and return diff information in file module when state=touch and check mode is set (https://github.com/ansible/ansible/issues/50452)

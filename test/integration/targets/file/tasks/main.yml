@@ -107,7 +107,6 @@
 
 - name: verify touch updates only mtime when atime is preserved
   file: path={{output_dir}}/foo.txt state=touch access_time=preserve
-
   register: touch_file_exist_atime_preserve
 
 - name: verify that file was marked as changed. Only mtime was updated
@@ -122,7 +121,6 @@
 
 - name: verify touch updated only atime when mtime is preserved
   file: path={{output_dir}}/foo.txt state=touch modification_time=preserve
-
   register: touch_file_exist_mtime_preserve
 
 - name: verify that file was marked as changed. Only atime was updated
