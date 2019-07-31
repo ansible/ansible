@@ -78,7 +78,7 @@ function AllCDs {
         [Parameter(Position=0)][array]$driveletters
     )
     $counter=0
-    foreach ($drive in $driveletters) { 
+    foreach ($drive in $driveletters) {
         $drive =$drive +":"
         if (Get-CimInstance -ClassName Win32_CDROMDrive -filter "Drive = `"$drive`"") { $counter++ }
     }
@@ -125,7 +125,7 @@ if ($dismount_virtual -or $dismount_only) {
     $virtualCDROMs=Get-VirtualCDROMList
     if ($virtualCDROMs) {
         #Logic for when Single drive was provided
-        if ($single) {  
+        if ($single) {
             if ($virtualCDROMs.contains($single)) {
                 $virtualCDROMs=$single
             } elseif ($dismount_only) { #Fail if single is not Virtual CDROM and we dismount only
@@ -190,7 +190,7 @@ if (-not $dismount_only) {
         #Loop through the list and change the mapped letters
         for ($x=0; $x -le $objectsToCount-1; $x++) {
             $cdRomToChange=$null ; $letterToChange=$listToChange[$x] ; $letterToBe=$drvLetterArr[$x]+":"
-            $cdRomToChange=Get-CimInstance -ClassName Win32_Volume -filter "DriveLetter = `"$letterToChange`"" 
+            $cdRomToChange=Get-CimInstance -ClassName Win32_Volume -filter "DriveLetter = `"$letterToChange`""
             if ($cdRomToChange) {
                 if (-not $module.CheckMode) {
                     Set-CDROMLetter -from  $cdRomToChange -to $letterToBe
