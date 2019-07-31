@@ -170,7 +170,7 @@ options:
     - This field is required when creating a virtual machine, not required when creating from the template.
     - >
          Valid values are referenced here:
-         U(http://pubs.vmware.com/vsphere-6-5/topic/com.vmware.wssdk.apiref.doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
+         U(https://code.vmware.com/apis/358/vsphere#/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
     version_added: '2.3'
   disk:
     description:
