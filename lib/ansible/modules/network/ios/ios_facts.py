@@ -134,6 +134,10 @@ ansible_net_image:
   description: The image file the device is running
   returned: always
   type: str
+ansible_net_uptime:
+  description: The uptime of the device (master)
+  returned: always
+  type: str
 ansible_net_stacked_models:
   description: The model names of each device in the stack
   returned: when multiple devices are configured in a stack
