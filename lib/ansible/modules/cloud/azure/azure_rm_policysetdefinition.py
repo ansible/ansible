@@ -24,30 +24,36 @@ description:
 options:
     name:
         description:
-            - Name of the policy set definition
+            - Name of the policy set definition.
+        type: str
         required: true
     management_group:
         description:
             - The ID of the management group.
+        type: str
     policy_type:
         description:
             - The type of policy set definition.
             - Possible values are C(NotSpecified), C(BuiltIn), and C(Custom).
             - Currently, user through Ansible module can only create policy set definition with custom type.
+        type: str
         choices:
             - custom
     display_name:
         description:
             - The display name of the policy set definition.
+        type: str
     description:
         description:
             - The policy set definition description.
+        type: str
     parameters:
         description:
             - Required if a parameter is used in policy rule.
             - JSON formatted string or a dict containing parameter definitions.
-            - The parameters element of policy set definition is compatible with the policy definition
+            - The parameters element of policy set definition is compatible with the policy definition.
             - You can refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure) for more details.
+        type: str
     metadata:
         description:
             - The policy set definition metadata.
@@ -60,12 +66,14 @@ options:
             - An array of policy definition references.
             - Policy definitions in JSON format or a list containing policy rules.
             - The ID of the policy definition or policy set definition define the policy definition reference.
-            - Required when creating the policy set definitions
+            - Required when creating the policy set definitions.
             - You can refer U(https://docs.microsoft.com/en-us/azure/templates/Microsoft.Authorization/2018-05-01/policySetDefinitions) for more details.
+        type: str
     state:
         description:
-            - Assert the state of the policy definition. Use C(present) to create or update a database and C(absent) to delete it.
+            - State of the policy definition. Use C(present) to create or update a database and C(absent) to delete it.
         default: present
+        type: str
         choices:
             - absent
             - present
@@ -74,7 +82,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -102,7 +110,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/policySetDefinitions/mytestpolicyset"
