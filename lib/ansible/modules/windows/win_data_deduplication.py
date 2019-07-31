@@ -23,12 +23,13 @@ options:
     - Windows drive letter on which to enable data deduplication.
     required: yes
     type: str
-  enabled:
+  state:
     description:
     - Wether to enable or disable data deduplication on the selected volume.
     required: yes
-    default: true
-    type: bool
+    default: enabled
+    type: str
+		choices: [ 'enabled', 'disabled' ]
   settings:
     description:
     - List of settings to pass to the Set-DedupVolume powershell command.
