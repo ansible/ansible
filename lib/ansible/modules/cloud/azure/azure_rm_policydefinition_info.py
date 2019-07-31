@@ -19,27 +19,29 @@ module: azure_rm_policydefinition_info
 version_added: "2.9"
 short_description: Gather Information of Azure Policy Definition
 description:
-    - Gather information of a specific Azure policy definition or all Azure policy definitions
+    - Gather information of a specific Azure policy definition or all Azure policy definitions.
 
 options:
     name:
         description:
-            - Name of the policy definition
+            - Name of the policy definition.
+        type: str
     management_group:
         description:
             - The ID of the management group.
-            - This parameter is mutually exclusive with C(built_in).
+            - This parameter is mutually exclusive with I(built_in).
+        type: str
     built_in:
         description:
             - To gather all built-in policy definitions when I(built_in=true).
-            - This parameter is mutually exclusive with C(management_group).
+            - This parameter is mutually exclusive with I(management_group).
         type: bool
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -58,47 +60,55 @@ EXAMPLES = '''
 
 RETURN = '''
 policydefinitions:
-    description: List of policy definitions.
+    description:
+        - List of policy definitions.
     returned: always
-    type: list
+    type: complex
     contains:
         description:
             description:
                 - The policy definition description.
+            returned: always
             type: str
             sample: "This policy audits Linux virtual machines that do not have the specified applications installed."
         display_name:
             description:
                 - The display name of the policy definition.
+            returned: always
             type: str
             sample: "Audit Linux VMs that do not have the specified applications installed"
         id:
             description:
                 - The ID of the policy definition.
+            returned: always
             type: str
             sample: "/providers/Microsoft.Authorization/policyDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         metadata:
             description:
                 - The policy definition metadata.
+            returned: always
             type: dict
-            sample: '{
+            sample: {
                 "category": "Guest Configuration"
-            }'
+            }
         mode:
             description:
                 - The policy definition mode. Possible values are NotSpecified, Indexed, and All.
+            returned: always
             type: str
             sample: "Indexed"
         name:
             description:
                 - The name of the policy definition.
+            returned: always
             type: str
             sample: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         parameters:
             description:
                 - Required if a parameter is used in policy rule.
+            returned: always
             type: dict
-            sample: '{
+            sample: {
                 "effect": {
                     "allowedValues": [
                         "AuditIfNotExists",
@@ -106,17 +116,18 @@ policydefinitions:
                     ],
                     "defaultValue": "AuditIfNotExists",
                     "metadata": {
-                        "description": "Enable or disable the execution of the pol
+                        "description": "Enable or disable the execution of the pol,
                         "displayName": "Effect"
                     },
                     "type": "String"
                 }
-            }'
+            }
         policy_rule:
             description:
                 - The policy rule.
+            returned: always
             type: dict
-            sample: '{
+            sample: {
                     "if": {
                             "field": "type",
                             "in": [
@@ -138,16 +149,18 @@ policydefinitions:
                                 "type": "Microsoft.Security/complianceResults"
                             }
                         }
-                    }'
+                    }
         policy_type:
             description:
                 - The type of policy definition.
-                - Possible values are NotSpecified, BuiltIn, and Custom.
+                - Possible values are C(NotSpecified), C(BuiltIn), and C(Custom).
+            returned: always
             type: str
             sample: "BuiltIn"
         type:
             description:
-                - Resource type
+                - Resource type.
+            returned: always
             sample: "Microsoft.Authorization/policyDefinitions"
             type: str
 '''

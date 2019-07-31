@@ -253,7 +253,7 @@ class AzureRMModuleBase(object):
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None, supports_tags=True, facts_module=False, skip_exec=False):
+                 required_if=None, supports_tags=True, info_module=False, facts_module=False, skip_exec=False):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(AZURE_COMMON_ARGS)
@@ -315,6 +315,7 @@ class AzureRMModuleBase(object):
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
         self.facts_module = facts_module
+        self.info_module = info_module
         # self.debug = self.module.params.get('debug')
 
         # delegate auth to AzureRMAuth class (shared with all plugin types)
@@ -376,7 +377,7 @@ class AzureRMModuleBase(object):
         :param tags: dictionary of string:string pairs
         :return: None
         '''
-        if not self.facts_module:
+        if (not self.facts_module) and (no self.info_module):
             if not isinstance(tags, dict):
                 self.fail("Tags must be a dictionary of string:string values.")
             for key, value in tags.items():
