@@ -124,7 +124,7 @@ orders:
     - "If I(retrieve_orders) is C(url_list), this will be a list of URLs."
     - "If I(retrieve_orders) is C(object_list), this will be a list of objects."
   type: list
-  returned: if account exists and I(retrieve_orders) is not C(ignore)
+  returned: if account exists, I(retrieve_orders) is not C(ignore), and server supports order listing
   contains:
     status:
       description: The order's status.
