@@ -220,67 +220,6 @@ class TestNxosTelemetryModule(TestNxosModule):
             'use-vrf blue',
         ])
 
-    def test_tms_global_deleted_n9k(self):
-        # Assumes feature telemetry is enabled
-        # TMS global config is present.
-        # Make absent with all playbook keys provided
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        self.get_platform_shortname.return_value = 'N9K'
-        set_module_args(dict(
-            state='deleted',
-            config=dict(
-                certificate={'key': '/bootflash/server.key', 'hostname': 'localhost'},
-                compression='gzip',
-                source_interface='loopback55',
-                vrf='management',
-            )
-        ), ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'no certificate /bootflash/server.key localhost',
-            'destination-profile',
-            'no use-compression gzip',
-            'no source-interface loopback55',
-            'no use-vrf management'
-        ])
-
-    def test_tms_global_deleted_certificate_n9k(self):
-        # Assumes feature telemetry is enabled
-        # TMS global config is present.
-        # Make absent with only certificate key provided
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        self.get_platform_shortname.return_value = 'N9K'
-        set_module_args(dict(
-            state='deleted',
-            config=dict(
-                certificate={'key': '/bootflash/server.key', 'hostname': 'localhost'},
-            )
-        ), ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'no certificate /bootflash/server.key localhost',
-        ])
-
-    def test_tms_global_deleted_vrf_int_n9k(self):
-        # Assumes feature telemetry is enabled
-        # TMS global config is present.
-        # Make absent with only vrf and int keys provided
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        self.get_platform_shortname.return_value = 'N9K'
-        set_module_args(dict(
-            state='deleted',
-            config=dict(
-                source_interface='loopback55',
-                vrf='management',
-            )
-        ), ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'destination-profile',
-            'no source-interface loopback55',
-            'no use-vrf management'
-        ])
-
     # ------------------------------
     # Telemetry DestGroup Test Cases
     # ------------------------------
@@ -484,54 +423,6 @@ class TestNxosTelemetryModule(TestNxosModule):
             'destination-group 55',
             'ip address 192.168.0.2 port 50001 protocol grpc encoding gpb',
             'destination-group 56'
-        ])
-
-    def test_tms_destgroup_deleted_n9k(self):
-        # Delete destination groups
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        self.get_platform_shortname.return_value = 'N9K'
-        args = build_args([
-            {'id': '2',
-             'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
-             },
-            {'id': '10',
-             'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
-             }
-        ], 'destination_groups', state='deleted')
-        set_module_args(args, ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'no destination-group 2',
-            'no destination-group 10'
-        ])
-
-    def test_tms_destgroup_deleted_idempotent_n9k(self):
-        # Delete destination groups
-        self.execute_show_command.return_value = None
-        self.get_platform_shortname.return_value = 'N9K'
-        args = build_args([
-            {'id': '2',
-             'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
-             },
-            {'id': '10',
-             'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
-             }
-        ], 'destination_groups', state='deleted')
-        set_module_args(args, ignore_provider_arg)
-        self.execute_module(changed=False)
-
-    def test_tms_destgroup_deleted2_n9k(self):
-        # Delete destination groups only provide id in playbook
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_args([
-            {'id': '2'},
-            {'id': '10'},
-        ], 'destination_groups', state='deleted')
-        set_module_args(args, ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'no destination-group 2',
-            'no destination-group 10'
         ])
 
     # --------------------------------
@@ -767,37 +658,6 @@ class TestNxosTelemetryModule(TestNxosModule):
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
-    def test_tms_sensorgroup_deleted_n9k(self):
-        # TMS sensorgroup config is present.
-        # Make absent with all playbook keys provided
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        self.get_platform_shortname.return_value = 'N9K'
-        args = build_args([
-            {'id': '2',
-             'data_source': 'DME',
-             'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'qc', 'filter_condition': 'fc'},
-             },
-        ], 'sensor_groups', state='deleted')
-        set_module_args(args, ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'no sensor-group 2'
-        ])
-
-    def test_tms_sensorgroup_deleted2_n9k(self):
-        # TMS sensorgroup config is present.
-        # Make absent with only identifier playbook keys provided
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        self.get_platform_shortname.return_value = 'N9K'
-        args = build_args([
-            {'id': '2'}
-        ], 'sensor_groups', state='deleted')
-        set_module_args(args, ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'no sensor-group 2'
-        ])
-
     def test_tms_sensorgroup_present_path_environment_n9k(self):
         # TMS sensorgroup config is not present.
         # Path name 'environment' test
@@ -971,51 +831,6 @@ class TestNxosTelemetryModule(TestNxosModule):
             'snsr-grp 10 sample-interval 1000'
         ])
 
-    def test_tms_subscription_deleted_n9k(self):
-        # Assumes feature telemetry is enabled
-        # TMS sensorgroup config is not present.
-        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        self.get_platform_shortname.return_value = 'N9K'
-        args = build_args([
-            {'id': 3,
-             },
-            {'id': 7,
-             'destination_group': 10,
-             'sensor_group': {'id': 2, 'sample_interval': 1000},
-             },
-            {'id': 5,
-             'destination_group': 2,
-             'sensor_group': {'id': 2, 'sample_interval': 1000},
-             },
-        ], 'subscriptions', state='deleted')
-        set_module_args(args, ignore_provider_arg)
-        self.execute_module(changed=True, commands=[
-            'telemetry',
-            'no subscription 3',
-            'no subscription 7',
-            'no subscription 5'
-        ])
-
-    def test_tms_subscription_deleted_idempotent_n9k(self):
-        # Assumes feature telemetry is enabled
-        # TMS sensorgroup config is not present.
-        self.execute_show_command.return_value = None
-        self.get_platform_shortname.return_value = 'N9K'
-        args = build_args([
-            {'id': 3,
-             },
-            {'id': 7,
-             'destination_group': 10,
-             'sensor_group': {'id': 2, 'sample_interval': 1000},
-             },
-            {'id': 5,
-             'destination_group': 2,
-             'sensor_group': {'id': 2, 'sample_interval': 1000},
-             },
-        ], 'subscriptions', state='deleted')
-        set_module_args(args, ignore_provider_arg)
-        self.execute_module(changed=False)
-
     def test_telemetry_full_n9k(self):
         # Assumes feature telemetry is disabled
         # TMS global config is not present.
@@ -1091,6 +906,47 @@ class TestNxosTelemetryModule(TestNxosModule):
             'dst-grp 3',
             'snsr-grp 4 sample-interval 2000'
         ])
+
+    def test_telemetry_deleted_input_validation_n9k(self):
+        # State is 'deleted' and 'config' key present.
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args(dict(
+            state='deleted',
+            config=dict(
+                certificate={'key': '/bootflash/server.key', 'hostname': 'localhost'},
+                compression='gzip',
+                source_interface='loopback55',
+                vrf='management',
+            )
+        ), ignore_provider_arg)
+        with pytest.raises(AnsibleFailJson) as errinfo:
+            self.execute_module()
+        testdata = errinfo.value.args[0]
+        assert 'Remove config key from playbook when state is <deleted>' in str(testdata['msg'])
+        assert testdata['failed']
+
+    def test_telemetry_deleted_n9k(self):
+        # Assumes feature telemetry is enabled
+        # TMS global config is present.
+        # Make absent with all playbook keys provided
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args(dict(
+            state='deleted',
+        ), ignore_provider_arg)
+        self.execute_module(changed=True, commands=['no telemetry'])
+
+    def test_telemetry_deleted_idempotent_n9k(self):
+        # Assumes feature telemetry is enabled
+        # TMS global config is present.
+        # Make absent with all playbook keys provided
+        self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args(dict(
+            state='deleted',
+        ), ignore_provider_arg)
+        self.execute_module(changed=False)
 
 
 def build_args(data, type, state=None, check_mode=None):

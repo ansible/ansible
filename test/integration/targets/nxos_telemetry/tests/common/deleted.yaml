@@ -16,7 +16,7 @@
 - name: Setup - Configure Telemetry
   nxos_telemetry:
     state: 'merged'
-    config: &config_setup
+    config:
       certificate:
         key: /bootflash/server.key
         hostname: localhost
@@ -56,7 +56,6 @@
   - name: Telemetry - deleted
     nxos_telemetry: &deleted
       state: 'deleted'
-      config: *config_setup
       provider: "{{ connection }}"
     register: result
 

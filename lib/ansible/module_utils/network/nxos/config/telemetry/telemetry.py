@@ -67,12 +67,25 @@ class Telemetry(ConfigBase):
         result = {'changed': False}
         commands = list()
         warnings = list()
-        module_params = self._module.params['config']
 
+        # Compare want and have states first.  If equal then return.
+        state = self._module.params['state']
+        if 'overridden' in state:
+            self._module.fail_json(msg='State <overridden> is invalid for this module.')
+        if 'replaced' in state:
+            self._module.fail_json(msg='State: <replaced> not yet supported')
+
+        # When state is 'deleted', the module_params should not contain data
+        # under the 'config' key
+        if 'deleted' in state and self._module.params.get('config'):
+            self._module.fail_json(msg='Remove config key from playbook when state is <deleted>')
+
+        if self._module.params['config'] is None:
+            self._module.params['config'] = {}
         # Normalize interface name.
-        int = module_params.get('source_interface')
+        int = self._module.params.get('source_interface')
         if int:
-            module_params['source_interface'] = normalize_interface(int)
+            self._module.params['source_interface'] = normalize_interface(int)
 
         existing_telemetry_facts = self.get_telemetry_facts()
         commands.extend(self.set_config(existing_telemetry_facts))
@@ -117,10 +130,12 @@ class Telemetry(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        # Compare want and have states first.  If equal then return.
         state = self._module.params['state']
-        if 'overridden' in state or 'replaced' in state:
-            self._module.fail_json(msg='State: <{0}> not yet supported'.format(state))
+
+        # The deleted case is very simple since we purge all telemetry config
+        # and does not require any processing using NxosCmdRef objects.
+        if state == 'deleted':
+            return self._state_deleted(want, have)
 
         # Save off module params
         ALL_MP = self._module.params['config']
@@ -216,8 +231,6 @@ class Telemetry(ConfigBase):
             if want == have:
                 return []
             commands = self._state_overridden(cmd_ref, want, have)
-        elif state == 'deleted':
-            commands = self._state_deleted(cmd_ref)
         elif state == 'merged':
             if want == have:
                 return []
@@ -226,16 +239,6 @@ class Telemetry(ConfigBase):
             if want == have:
                 return []
             commands = self._state_replaced(cmd_ref)
-        return commands
-
-    @staticmethod
-    def _state_overridden(cmd_ref, want, have):
-        """ The command generator when state is overridden
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = []
         return commands
 
     @staticmethod
@@ -272,27 +275,13 @@ class Telemetry(ConfigBase):
         return remove_duplicate_context(commands)
 
     @staticmethod
-    def _state_deleted(cmd_ref):
+    def _state_deleted(want, have):
         """ The command generator when state is deleted
         :rtype: A list
         :returns: the commands necessary to remove the current configuration
                   of the provided objects
         """
-        commands = cmd_ref['TMS_GLOBAL']['ref'][0].get_proposed()
-
-        # Order matters when removing non global telemetry configuration.
-        # Remove subscriptions first
-
-        if cmd_ref['TMS_SUBSCRIPTION'].get('ref'):
-            for cr in cmd_ref['TMS_SUBSCRIPTION']['ref']:
-                commands.extend(cr.get_proposed())
-
-        if cmd_ref['TMS_DESTGROUP'].get('ref'):
-            for cr in cmd_ref['TMS_DESTGROUP']['ref']:
-                commands.extend(cr.get_proposed())
-
-        if cmd_ref['TMS_SENSORGROUP'].get('ref'):
-            for cr in cmd_ref['TMS_SENSORGROUP']['ref']:
-                commands.extend(cr.get_proposed())
-
-        return remove_duplicate_context(commands)
+        commands = []
+        if want != have:
+            commands = ['no telemetry']
+        return commands

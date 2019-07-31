@@ -85,6 +85,6 @@ class TelemetryArgs(object):  # pylint: disable=R0903
                     'type': 'list'}},
             'type': 'dict'},
         'state': {
-            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+            'choices': ['merged', 'replaced', 'deleted'],
             'default': 'merged',
             'type': 'str'}}  # pylint: disable=C0301

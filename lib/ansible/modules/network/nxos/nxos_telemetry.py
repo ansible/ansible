@@ -203,23 +203,16 @@ options:
 """
 EXAMPLES = """
 # Using deleted
-
+# This action will delete all telemetry configuration on the device
 - name: Delete Telemetry Configuration
   nxos_telemetry:
-    config:
-      source_interface: Ethernet1/1
-      vrf: management
-      destination_groups:
-        - id: 2
-        - id: 55
-      sensor_groups:
-        - id: 1
-      subscriptions:
-        - id: 1
     state: deleted
 
 
 # Using merged
+# This action will merge telemetry configuration defined in the playbook with
+# telemetry configuration that is already on the device.
+    pass
 
 - name: Merge Telemetry Configuration
   nxos_telemetry:
@@ -270,6 +263,8 @@ EXAMPLES = """
 
 
 # Using replaced
+# This action will replace telemetry configuration on the device with the
+# telmetry configuration defined in the playbook.
 
 - name: Override Telemetry Configuration
   nxos_telemetry:
