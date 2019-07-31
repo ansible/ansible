@@ -62,8 +62,8 @@ options:
 
 version_added: 2.9
 
-author: 
-- RusoSova
+author:
+ - RusoSova
 '''
 
 EXAMPLES = r'''
