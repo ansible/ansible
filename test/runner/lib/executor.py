@@ -60,6 +60,7 @@ from lib.util import (
     cmd_quote,
     ANSIBLE_ROOT,
     get_available_python_versions,
+    is_subdir,
 )
 
 from lib.util_common import (
@@ -132,6 +133,10 @@ from lib.coverage_util import (
 
 from lib.data import (
     data_context,
+)
+
+REMOTE_ONLY_PYTHON_VERSIONS = (
+    '2.6',
 )
 
 SUPPORTED_PYTHON_VERSIONS = (
@@ -1324,7 +1329,15 @@ def command_units(args):
     require = args.require + changes
     include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)
 
-    if not include:
+    paths = [target.path for target in include]
+    remote_paths = [path for path in paths
+                    if is_subdir(path, data_context().content.unit_module_path)
+                    or is_subdir(path, data_context().content.unit_module_utils_path)]
+
+    if not paths:
+        raise AllTargetsSkipped()
+
+    if args.python and args.python in REMOTE_ONLY_PYTHON_VERSIONS and not remote_paths:
         raise AllTargetsSkipped()
 
     if args.delegate:
@@ -1379,7 +1392,15 @@ def command_units(args):
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        cmd += [target.path for target in include]
+        if version in REMOTE_ONLY_PYTHON_VERSIONS:
+            test_paths = remote_paths
+        else:
+            test_paths = paths
+
+        if not test_paths:
+            continue
+
+        cmd.extend(test_paths)
 
         version_commands.append((version, cmd, env))
 
