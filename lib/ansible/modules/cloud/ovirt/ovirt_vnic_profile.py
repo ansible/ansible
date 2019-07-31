@@ -224,7 +224,7 @@ class EntityVnicPorfileModule(BaseModule):
             equal(self.param('pass_through'), getattr(entity.pass_through.mode, 'name', None)) and
             equal(self.param('description'), entity.description) and
             equal(self.param('network_filter'), getattr(entity.network_filter, 'name', None)) and
-            equal(self.param('qos'), entity.qos.name) and
+            equal(self.param('qos'), getattr(entity.qos, 'name', None)) and
             equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
         )
 
