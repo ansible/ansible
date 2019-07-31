@@ -1,0 +1,2 @@
+minor_changes:
+  - Add support for NIS in an NFS directory service and support for specifying an OU for an SMD directory service (https://github.com/ansible/ansible/pull/59608)
