@@ -247,6 +247,11 @@ def get_entity(vnic_services, entitynics_module):
             return vnic
 
 
+def check_params(module):
+    if (module.params.get('port_mirroring') or module.params.get('network_filter') or module.params.get('qos')) and module.params.get('pass_through') is not None:
+        module.fail_json(msg="Cannot edit VM network interface profile. 'Port Mirroring,'Qos' and 'Network Filter' are not supported on passthrough profiles.")
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -267,6 +272,7 @@ def main():
 
     )
     check_sdk(module)
+    check_params(module)
     try:
         auth = module.params.pop('auth')
         connection = create_connection(auth)
