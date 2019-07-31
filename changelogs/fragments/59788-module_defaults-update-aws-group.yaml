@@ -1,0 +1,4 @@
+bugfixes:
+  - module_defaults - Added aws_codebuild, aws_codecommit, aws_codepipeline, aws_secret, aws_ses_rule_set, cloudformation_stack_set,
+    dms_endpoint, dms_replication_subnet_group, ec2_transit_gateway, ec2_transit_gateway_info, ecs_taskdefinition_facts,
+    elb_target_info, iam_password_policy, redshift_cross_region_snapshots, s3_bucket_notification to the aws module_defaults group.
