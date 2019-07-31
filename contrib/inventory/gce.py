@@ -25,6 +25,7 @@ based on the data obtained from the libcloud Node object:
  - gce_status
  - gce_zone
  - gce_tags
+ - gce_labels
  - gce_metadata
  - gce_network
  - gce_subnetwork
@@ -36,6 +37,10 @@ When run in --list mode, instances are grouped by the following categories:
    An entry is created for each tag.  For example, if you have two instances
    with a common tag called 'foo', they will both be grouped together under
    the 'tag_foo' name.
+ - instance labels:
+   An entry is created for each label plus value.  For example, if you have two instances
+   with a common label called 'foo' and value 'bar', they will both be grouped together under
+   the 'label_foo_value_bar' name.
  - network name:
    the name of the network is appended to 'network_' (e.g. the 'default'
    network will result in a group named 'network_default')
@@ -376,6 +381,7 @@ class GceInventory(object):
             'gce_status': inst.extra['status'],
             'gce_zone': inst.extra['zone'].name,
             'gce_tags': inst.extra['tags'],
+            'gce_labels': inst.extra['labels'],
             'gce_metadata': md,
             'gce_network': net,
             'gce_subnetwork': subnet,
@@ -468,6 +474,15 @@ class GceInventory(object):
                     groups[tag].append(name)
                 else:
                     groups[tag] = [name]
+
+            labels = node.extra['labels']
+            if labels is not None:
+                for k, v in labels.items():
+                    label = 'label_%s_value_%s' % (k, v)
+                    if label in groups:
+                        groups[label].append(name)
+                    else:
+                        groups[label] = [name]
 
             net = node.extra['networkInterfaces'][0]['network'].split('/')[-1]
             net = 'network_%s' % net
