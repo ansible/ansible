@@ -75,7 +75,6 @@ options:
     system_ha:
         description:
             - Configure HA.
-        default: null
         type: dict
         suboptions:
             arps:
@@ -132,7 +131,7 @@ options:
                     - disable
             ha_eth_type:
                 description:
-                    - HA heartbeat packet Ethertype (4_digit hex).
+                    - HA heartbeat packet Ethertype (4-digit hex).
                 type: str
             ha_mgmt_interfaces:
                 description:
@@ -185,7 +184,7 @@ options:
                 type: str
             hc_eth_type:
                 description:
-                    - Transparent mode HA heartbeat packet Ethertype (4_digit hex).
+                    - Transparent mode HA heartbeat packet Ethertype (4-digit hex).
                 type: str
             hello_holddown:
                 description:
@@ -253,7 +252,7 @@ options:
                 type: str
             multicast_ttl:
                 description:
-                    - HA multicast TTL on master (5 _ 3600 sec).
+                    - HA multicast TTL on master (5 - 3600 sec).
                 type: int
             nntp_proxy_threshold:
                 description:
@@ -276,7 +275,7 @@ options:
                 type: str
             pingserver_failover_threshold:
                 description:
-                    - Remote IP monitoring failover threshold (0 _ 50).
+                    - Remote IP monitoring failover threshold (0 - 50).
                 type: int
             pingserver_flip_timeout:
                 description:
@@ -299,11 +298,11 @@ options:
                 type: str
             priority:
                 description:
-                    - Increase the priority to select the primary unit (0 _ 255).
+                    - Increase the priority to select the primary unit (0 - 255).
                 type: int
             route_hold:
                 description:
-                    - Time to wait between routing table updates to the cluster (0 _ 3600 sec).
+                    - Time to wait between routing table updates to the cluster (0 - 3600 sec).
                 type: int
             route_ttl:
                 description:
@@ -311,7 +310,7 @@ options:
                 type: int
             route_wait:
                 description:
-                    - Time to wait before sending new routes to the cluster (0 _ 3600 sec).
+                    - Time to wait before sending new routes to the cluster (0 . 3600 sec).
                 type: int
             schedule:
                 description:
@@ -344,11 +343,11 @@ options:
                             - disable
                     override_wait_time:
                         description:
-                            - Delay negotiating if override is enabled (0 _ 3600 sec). Reduces how often the cluster negotiates.
+                            - Delay negotiating if override is enabled (0 - 3600 sec). Reduces how often the cluster negotiates.
                         type: int
                     pingserver_failover_threshold:
                         description:
-                            - Remote IP monitoring failover threshold (0 _ 50).
+                            - Remote IP monitoring failover threshold (0 - 50).
                         type: int
                     pingserver_monitor_interface:
                         description:
@@ -363,7 +362,7 @@ options:
                             - disable
                     priority:
                         description:
-                            - Increase the priority to select the primary unit (0 _ 255).
+                            - Increase the priority to select the primary unit (0 - 255).
                         type: int
                     vcluster_id:
                         description:
