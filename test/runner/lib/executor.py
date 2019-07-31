@@ -1368,6 +1368,8 @@ def command_units(args):
             '-n', str(args.num_workers) if args.num_workers else 'auto',
             '--color',
             'yes' if args.color else 'no',
+            '-p', 'no:cacheprovider',
+            '-c', os.path.join(ANSIBLE_ROOT, 'test/runner/pytest.ini'),
             '--junit-xml',
             'test/results/junit/python%s-units.xml' % version,
         ]
