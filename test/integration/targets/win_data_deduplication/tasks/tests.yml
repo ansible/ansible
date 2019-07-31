@@ -1,9 +1,9 @@
 ---
 
-- name: Enable Data Deduplication on the T drive
+- name: Enable Data Deduplication on the C drive
   win_data_deduplication:
-    drive_letter: "T"
-    enabled: true
+    drive_letter: "C"
+    state: enabled
     settings:
       - NoCompress: true
       - MinimumFileAgeDays: 2
@@ -15,10 +15,10 @@
     that:
       - win_data_deduplication_enable is changed
 
-- name: Enable Data Deduplication on the T drive
+- name: Enable Data Deduplication on the C drive
   win_data_deduplication:
-    drive_letter: "T"
-    enabled: true
+    drive_letter: "C"
+    state: enabled
     settings:
       - NoCompress: true
       - MinimumFileAgeDays: 2
@@ -30,10 +30,10 @@
     that:
       - win_data_deduplication_enable_again is not changed
 
-- name: Enable Data Deduplication on the T drive with start job
+- name: Enable Data Deduplication on the C drive with start job
   win_data_deduplication:
-    drive_letter: "T"
-    enabled: true
+    drive_letter: "C"
+    state: enabled
     settings:
       - NoCompress: true
       - MinimumFileAgeDays: 2
