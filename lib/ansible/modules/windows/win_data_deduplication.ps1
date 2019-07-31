@@ -77,7 +77,7 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 	}
 }
 
-function Set-DataDedupJobSettings ($volume) {
+function Set-DataDedupJobSettings ($volume, $settings) {
 
 	try {
 		$dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
@@ -122,7 +122,7 @@ function Set-DataDedupJobSettings ($volume) {
 
 }
 
-function Start-DataDedupJob($volume) {
+function Start-DataDedupJob($volume, $dedup_job) {
 
 	$dedup_job_queue = Get-DedupJob -Volume "$($volume.DriveLetter):" -ErrorAction SilentlyContinue
 
