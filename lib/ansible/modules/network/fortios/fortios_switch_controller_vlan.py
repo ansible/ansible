@@ -88,44 +88,56 @@ options:
             auth:
                 description:
                     - Authentication.
+                type: str
                 choices:
                     - radius
                     - usergroup
             color:
                 description:
                     - Color of icon on the GUI.
+                type: int
             comments:
                 description:
                     - Comment.
+                type: str
             name:
                 description:
                     - Switch VLAN name.
                 required: true
+                type: str
             portal_message_override_group:
                 description:
                     - Specify captive portal replacement message override group.
+                type: str
             portal_message_overrides:
                 description:
                     - Individual message overrides.
+                type: dict
                 suboptions:
                     auth_disclaimer_page:
                         description:
-                            - Override auth_disclaimer_page message with message from portal_message_overrides group.
+                            - Override auth-disclaimer-page message with message from portal-message-overrides group.
+                        type: str
                     auth_login_failed_page:
                         description:
-                            - Override auth_login_failed_page message with message from portal_message_overrides group.
+                            - Override auth-login-failed-page message with message from portal-message-overrides group.
+                        type: str
                     auth_login_page:
                         description:
-                            - Override auth_login_page message with message from portal_message_overrides group.
+                            - Override auth-login-page message with message from portal-message-overrides group.
+                        type: str
                     auth_reject_page:
                         description:
-                            - Override auth_reject_page message with message from portal_message_overrides group.
+                            - Override auth-reject-page message with message from portal-message-overrides group.
+                        type: str
             radius_server:
                 description:
                     - Authentication radius server. Source user.radius.name.
+                type: str
             security:
                 description:
                     - Security.
+                type: str
                 choices:
                     - open
                     - captive-portal
@@ -133,20 +145,25 @@ options:
             selected_usergroups:
                 description:
                     - Selected user group.
+                type: list
                 suboptions:
                     name:
                         description:
                             - User group name. Source user.group.name.
                         required: true
+                        type: str
             usergroup:
                 description:
                     - Authentication usergroup. Source user.group.name.
+                type: str
             vdom:
                 description:
                     - Virtual domain,
+                type: str
             vlanid:
                 description:
                     - VLAN ID.
+                type: int
 '''
 
 EXAMPLES = '''
