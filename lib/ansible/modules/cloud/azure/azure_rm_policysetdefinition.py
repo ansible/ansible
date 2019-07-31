@@ -53,7 +53,7 @@ options:
             - JSON formatted string or a dict containing parameter definitions.
             - The parameters element of policy set definition is compatible with the policy definition.
             - You can refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure) for more details.
-        type: str
+        type: raw
     metadata:
         description:
             - The policy set definition metadata.
@@ -68,7 +68,7 @@ options:
             - The ID of the policy definition or policy set definition define the policy definition reference.
             - Required when creating the policy set definitions.
             - You can refer U(https://docs.microsoft.com/en-us/azure/templates/Microsoft.Authorization/2018-05-01/policySetDefinitions) for more details.
-        type: str
+        type: raw
     state:
         description:
             - State of the policy definition. Use C(present) to create or update a database and C(absent) to delete it.
