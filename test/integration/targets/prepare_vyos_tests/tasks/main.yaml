@@ -1,0 +1,9 @@
+---
+- name: Ensure required interfaces are present in running-config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      set interfaces ethernet eth1
+      set interfaces ethernet eth2
+      set interfaces loopback lo

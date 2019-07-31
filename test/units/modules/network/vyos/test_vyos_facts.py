@@ -33,10 +33,13 @@ class TestVyosFactsModule(TestVyosModule):
 
     def setUp(self):
         super(TestVyosFactsModule, self).setUp()
-        self.mock_run_commands = patch('ansible.modules.network.vyos.vyos_facts.run_commands')
+        self.mock_run_commands = patch('ansible.module_utils.network.vyos.facts.legacy.base.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_get_capabilities = patch('ansible.modules.network.vyos.vyos_facts.get_capabilities')
+        self.mock_get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
+        self.get_resource_connection = self.mock_get_resource_connection.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.network.vyos.facts.legacy.base.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
         self.get_capabilities.return_value = {
             'device_info': {
@@ -52,6 +55,7 @@ class TestVyosFactsModule(TestVyosModule):
         super(TestVyosFactsModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_get_capabilities.stop()
+        self.mock_get_resource_connection.stop()
 
     def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):
@@ -74,7 +78,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset='default'))
         result = self.execute_module()
         facts = result.get('ansible_facts')
-        self.assertEqual(len(facts), 8)
+        self.assertEqual(len(facts), 10)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
@@ -82,7 +86,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset='!all'))
         result = self.execute_module()
         facts = result.get('ansible_facts')
-        self.assertEqual(len(facts), 8)
+        self.assertEqual(len(facts), 10)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
@@ -90,7 +94,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset=['!neighbors', '!config']))
         result = self.execute_module()
         facts = result.get('ansible_facts')
-        self.assertEqual(len(facts), 8)
+        self.assertEqual(len(facts), 10)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
