@@ -355,9 +355,26 @@
         that:
           - "combined.key2 == 'is_defined'"
 
+- debug: var=ansible_os_family
+- debug: var=ansible_distribution
+- debug: var=ansible_distribution_major_version
+- debug: var=ansible_distribution_version
+
+- set_fact:
+    sample_bcrypt_output: '$2b$12$123456789012345678912unE0GeDfx0eAsIsscM2jcQtjpIY2LVuy'
+    cafe_bcrypt_output: '$2b$12$123456789012345678912uDZsaKh/j7qZkKps5QEOGP4UfpxNa56S'
+    kryivka_bcrypt_output: '$2b$12$123456789012345678912utpRGnLLKUmQLWXHzHrg8U2Lwths9TNu'
+  when: ansible_distribution in ('OpenBSD', 'RedHat', 'FreeBSD', 'CentOS', 'Fedora', 'openSUSE Leap', 'Ubuntu')
+
+- set_fact:
+    sample_bcrypt_output: '$2a$12$123456789012345678912unE0GeDfx0eAsIsscM2jcQtjpIY2LVuy'
+    cafe_bcrypt_output: '$2a$12$123456789012345678912uDZsaKh/j7qZkKps5QEOGP4UfpxNa56S'
+    kryivka_bcrypt_output: '$2a$12$123456789012345678912utpRGnLLKUmQLWXHzHrg8U2Lwths9TNu'
+  when: ansible_distribution in ('MacOSX')
+
 - name: Test OpenBSD bcrypt algorithm (#54071)
   assert:
     that:
-      - "'{{ 'sample' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912unE0GeDfx0eAsIsscM2jcQtjpIY2LVuy'"
-      - "'{{ 'café' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912uDZsaKh/j7qZkKps5QEOGP4UfpxNa56S'"
-      - "'{{ 'Криївка' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912utpRGnLLKUmQLWXHzHrg8U2Lwths9TNu'"
+      - "'{{ 'sample' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '{{ sample_bcrypt_output }}'"
+      - "'{{ 'café' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '{{ cafe_bcrypt_output }}'"
+      - "'{{ 'Криївка' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '{{ kryivka_bcrypt_output }}'"

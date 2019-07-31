@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eux -o pipefail
 
 source virtualenv.sh
 
@@ -13,7 +13,12 @@ source virtualenv.sh
 # Supposingly it's this one:
 # https://github.com/pypa/pip/issues/6264#issuecomment-480100770
 # Whenever that is fixed, it's okay to drop ``--no-build-isolation``
-pip install --no-build-isolation bcrypt
+if pip --help | grep build-isolation > /dev/null 2>&1; then
+    pip install --no-build-isolation bcrypt
+else
+    # Some operating systems does not have --no-build-isolation flag in pip
+    pip install bcrypt
+fi
 
 pip install jmespath netaddr passlib
 
