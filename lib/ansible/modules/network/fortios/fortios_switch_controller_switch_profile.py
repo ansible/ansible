@@ -273,7 +273,7 @@ def main():
         "state": {"required": True, "type": "str",
                   "choices": ["present", "absent"]},
         "switch_controller_switch_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "login_passwd": {"required": False, "type": "str"},
                 "login_passwd_override": {"required": False, "type": "str",
