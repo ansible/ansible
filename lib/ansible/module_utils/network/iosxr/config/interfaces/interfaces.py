@@ -255,17 +255,6 @@ class Interfaces(ConfigBase, InterfacesArgs):
             elif diff.get('enabled') is False:
                 add_command_to_interface(interface, 'shutdown', commands)
 
-        # if want.get('enabled') and want.get('enabled') != have.get('enabled'):
-        #     Interfaces._add_command_to_interface(interface, 'no shutdown', commands)
-        # elif not want.get('enabled') and want.get('enabled') != have.get('enabled'):
-        #     Interfaces._add_command_to_interface(interface, 'shutdown', commands)
-        # for item in Interfaces.params:
-        #     cmd = 'no ' + item
-        #     candidate = want.get(item)
-        #     if candidate and (candidate != have.get(item) or cmd in clear_cmds):
-        #         cmd = item + ' ' + str(candidate)
-        #         Interfaces._add_command_to_interface(interface, cmd, commands)
-
         return commands
 
     @staticmethod
