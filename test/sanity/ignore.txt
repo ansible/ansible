@@ -6889,6 +6889,31 @@ lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
+lib/ansible/plugins/action/__init__.py action-plugin-docs # action plugin base class, not an actual action plugin
+lib/ansible/plugins/action/aireos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/aruba.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/asa.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/bigip.py action-plugin-docs # undocumented action plugin to fix, existed before sanity test was added
+lib/ansible/plugins/action/bigiq.py action-plugin-docs # undocumented action plugin to fix, existed before sanity test was added
+lib/ansible/plugins/action/ce.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/ce_template.py action-plugin-docs # undocumented action plugin to fix, existed before sanity test was added
+lib/ansible/plugins/action/cnos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/dellos10.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/dellos6.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/dellos9.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/enos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/eos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/ios.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/iosxr.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/ironware.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/junos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/net_base.py action-plugin-docs # base class for other net_* action plugins which have a matching module
+lib/ansible/plugins/action/netconf.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/network.py action-plugin-docs # base class for network action plugins
+lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
+lib/ansible/plugins/action/nxos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/sros.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/vyos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/cache/base.py ansible-doc  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/hipchat.py pylint:blacklisted-name
 lib/ansible/plugins/connection/lxc.py pylint:blacklisted-name
