@@ -265,7 +265,7 @@ def main():
         "state": {"required": True, "type": "str",
                   "choices": ["present", "absent"]},
         "switch_controller_virtual_port_pool": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "description": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"}
