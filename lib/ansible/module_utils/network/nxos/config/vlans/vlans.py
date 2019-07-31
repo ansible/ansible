@@ -139,7 +139,7 @@ class Vlans(ConfigBase):
         for k in wkeys:
             if k in self.exclude_params and k in dkeys:
                 del diff[k]
-        replaced_commands = self.del_all(diff)
+        replaced_commands = self.del_attribs(diff)
 
         if merged_commands:
             cmds = set(replaced_commands).intersection(set(merged_commands))
@@ -168,7 +168,7 @@ class Vlans(ConfigBase):
                     for k in wkeys:
                         if k in self.exclude_params and k in hkeys:
                             del h[k]
-            commands.extend(self.del_all(h))
+            commands.extend(self.del_attribs(h))
         for w in want:
             commands.extend(self.set_commands(w, have))
         return commands
@@ -193,7 +193,7 @@ class Vlans(ConfigBase):
         if want:
             for w in want:
                 obj_in_have = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
-                commands.extend(self.del_all(obj_in_have))
+                commands.append('no vlan ' + str(obj_in_have['vlan_id']))
         else:
             if not have:
                 return commands
@@ -201,7 +201,7 @@ class Vlans(ConfigBase):
                 commands.append('no vlan ' + str(h['vlan_id']))
         return commands
 
-    def del_all(self, obj):
+    def del_attribs(self, obj):
         commands = []
         if not obj or len(obj.keys()) == 1:
             return commands

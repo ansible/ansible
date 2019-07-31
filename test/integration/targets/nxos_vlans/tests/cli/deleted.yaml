@@ -28,6 +28,7 @@
         - "result.changed == true"
         - "'no vlan 5' in result.commands"
         - "'no vlan 6' in result.commands"
+        - "result.commands|length == 2"
 
   - name: Idempotence - deleted
     nxos_vlans: *deleted
@@ -36,6 +37,7 @@
   - assert:
       that:
         - "result.changed == false"
+        - "result.commands|length == 0"
 
   always:
   - name: teardown

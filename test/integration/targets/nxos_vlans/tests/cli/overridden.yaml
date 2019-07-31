@@ -44,6 +44,7 @@
         - "'vlan 9' in result.commands"
         - "'name test-vlan9' in result.commands"
         - "'shutdown' in result.commands"
+        - "result.commands|length == 6"
 
   - name: Gather vlans post facts
     nxos_facts: *facts
@@ -59,6 +60,7 @@
   - assert:
       that:
         - "result.changed == false"
+        - "result.commands|length == 0"
 
   always:
   - name: teardown
