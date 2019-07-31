@@ -27,7 +27,7 @@ $result = @{
 }
 
 function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
-	
+
 	$current_state = 'disabled'
 
 	try {
@@ -70,7 +70,7 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
     if ($null -ne $settings) {
       Set-DataDedupJobSettings -volume $volume -settings $settings
     }
-    
+
     if ($null -ne $dedup_job) {
 			Start-DataDedupJob -volume $volume -dedup_job $dedup_job
     }
