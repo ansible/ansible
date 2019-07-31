@@ -61,7 +61,8 @@ options:
     aliases: [allow_password_change]
   pw_max_age:
     description:
-      - Maximum age for a password in days.
+      - Maximum age for a password in days. When this option is 0 then passwords
+        do not expire automatically.
     default: 0
     aliases: [password_max_age]
   pw_reuse_prevent:
@@ -127,18 +128,21 @@ class IAMConnection(object):
         pw_reuse_prevent = module.params.get('pw_reuse_prevent')
         pw_expire = module.params.get('pw_expire')
 
+        update_parameters = dict(
+            MinimumPasswordLength=min_pw_length,
+            RequireSymbols=require_symbols,
+            RequireNumbers=require_numbers,
+            RequireUppercaseCharacters=require_uppercase,
+            RequireLowercaseCharacters=require_lowercase,
+            AllowUsersToChangePassword=allow_pw_change,
+            PasswordReusePrevention=pw_reuse_prevent,
+            HardExpiry=pw_expire
+        )
+        if pw_max_age:
+            update_parameters.update(MaxPasswordAge=pw_max_age)
+
         try:
-            results = policy.update(
-                MinimumPasswordLength=min_pw_length,
-                RequireSymbols=require_symbols,
-                RequireNumbers=require_numbers,
-                RequireUppercaseCharacters=require_uppercase,
-                RequireLowercaseCharacters=require_lowercase,
-                AllowUsersToChangePassword=allow_pw_change,
-                MaxPasswordAge=pw_max_age,
-                PasswordReusePrevention=pw_reuse_prevent,
-                HardExpiry=pw_expire
-            )
+            results = policy.update(**update_parameters)
             policy.reload()
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Couldn't update IAM Password Policy")
