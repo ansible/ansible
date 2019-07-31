@@ -55,6 +55,7 @@ class CollectionLayout(LayoutProvider):
                              ),
                              util_path='test/util',
                              unit_path='test/unit',
-                             unit_module_path='test/units/plugins/modules',
+                             unit_module_path='test/unit/plugins/modules',
+                             unit_module_utils_path='test/unit/plugins/module_utils',
                              integration_path='test/integration',
                              )

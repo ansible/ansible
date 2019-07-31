@@ -41,5 +41,6 @@ class AnsibleLayout(LayoutProvider):
                              util_path='test/utils',
                              unit_path='test/units',
                              unit_module_path='test/units/modules',
+                             unit_module_utils_path='test/units/module_utils',
                              integration_path='test/integration',
                              )
