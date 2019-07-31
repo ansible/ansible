@@ -325,7 +325,7 @@ class NetstreamTemplate(object):
                 if tmp_value:
                     self.end_state["collect_interface"] = tmp_value
         if self.end_state == self.existing:
-            self.changed =False
+            self.changed = False
             self.updates_cmd = list()
 
     def present_netstream(self):
