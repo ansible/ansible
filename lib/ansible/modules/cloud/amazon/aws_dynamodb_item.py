@@ -38,6 +38,7 @@ options:
             if it exists, or if it has an expected attribute value.
         required: true
         choices: ["present", "absent"]
+        type: str
     primary_key:
         description:
             - The primary key of the DynamoDB table. Each element consists of
@@ -198,7 +199,7 @@ def delete(connection, module, response, **params):
     try:
         if not module.check_mode:
             # checks whether the item exist or not
-            response_get = get_item(connection, **params)
+            response_get = connection.get_item(**params)
             # if item was found
             if 'Item' in response_get:
                 response = connection.delete_item(**params)
