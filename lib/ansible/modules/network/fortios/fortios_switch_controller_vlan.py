@@ -339,7 +339,7 @@ def main():
         "state": {"required": True, "type": "str",
                   "choices": ["present", "absent"]},
         "switch_controller_vlan": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "auth": {"required": False, "type": "str",
                          "choices": ["radius", "usergroup"]},
