@@ -189,7 +189,7 @@ options:
                 type: str
             hello_holddown:
                 description:
-                    - Time to wait before changing from hello to work state (5 _ 300 sec).
+                    - Time to wait before changing from hello to work state (5 - 300 sec).
                 type: int
             http_proxy_threshold:
                 description:
