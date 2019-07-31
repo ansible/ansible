@@ -267,12 +267,12 @@ class VcenterEnvironment(CloudEnvironment):
             # Most of the test cases use ansible_vars, but we plan to refactor these
             # to use env_vars, output both for now
             env_vars = dict(
-                (key.upper(), value) for key, value in parser.items('DEFAULT'))
+                (key.upper(), value) for key, value in parser.items('DEFAULT', raw=True))
 
             ansible_vars = dict(
                 resource_prefix=self.resource_prefix,
             )
-            ansible_vars.update(dict(parser.items('DEFAULT')))
+            ansible_vars.update(dict(parser.items('DEFAULT', raw=True)))
 
         else:
             env_vars = dict(
