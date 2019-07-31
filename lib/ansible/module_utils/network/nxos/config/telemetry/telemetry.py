@@ -68,7 +68,6 @@ class Telemetry(ConfigBase):
         commands = list()
         warnings = list()
 
-        # Compare want and have states first.  If equal then return.
         state = self._module.params['state']
         if 'overridden' in state:
             self._module.fail_json(msg='State <overridden> is invalid for this module.')
