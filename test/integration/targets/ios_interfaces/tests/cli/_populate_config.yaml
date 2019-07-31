@@ -1,5 +1,5 @@
 ---
-- name: Setup
+- name: Populate Config
   cli_config:
     config: "{{ lines }}"
   vars:

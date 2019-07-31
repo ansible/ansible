@@ -19,13 +19,6 @@
         state: replaced
       register: result
 
-    - debug:
-        msg:
-        - "{{ replaced['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-        - "{{ replaced['before'] | symmetric_difference(result['before']) | length == 0 }}"
-        - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
-
-
     - name: Assert that correct set of commands were generated
       assert:
         that:

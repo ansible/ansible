@@ -37,7 +37,7 @@ class InterfacesArgs(object):
     argument_spec = {'config': {'elements': 'dict',
                                 'options': {'name': {'type': 'str', 'required': True},
                                             'description': {'type': 'str'},
-                                            'enabled': {'type': bool},
+                                            'enabled': {'default': True, 'type': 'bool'},
                                             'speed': {'type': 'str'},
                                             'mtu': {'type': 'str'},
                                             'duplex': {'type': 'str', 'choices': ['full', 'half', 'auto']}},

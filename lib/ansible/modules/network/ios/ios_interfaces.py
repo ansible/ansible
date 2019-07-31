@@ -68,6 +68,7 @@ options:
         - Administrative state of the interface.
         - Set the value to C(true) to administratively enable the interface or C(false) to disable it.
         type: bool
+        default: True
       speed:
         description:
         - Interface link speed. Applicable for Ethernet interfaces only.

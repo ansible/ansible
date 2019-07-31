@@ -93,6 +93,6 @@ class InterfacesFacts(object):
         config['mtu'] = utils.parse_conf_arg(conf, 'mtu')
         config['duplex'] = utils.parse_conf_arg(conf, 'duplex')
         enabled = utils.parse_conf_cmd_arg(conf, 'shutdown', False)
-        config['enabled'] = enabled if enabled is not None else config['enabled']
+        config['enabled'] = enabled if enabled is not None else True
 
         return utils.remove_empties(config)

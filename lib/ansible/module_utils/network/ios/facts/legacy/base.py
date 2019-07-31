@@ -100,10 +100,8 @@ class Hardware(FactsBase):
         'show memory statistics'
     ]
 
-    def __init__(self):
-        self.warnings = list()
-
     def populate(self):
+        warnings = list()
         super(Hardware, self).populate()
         data = self.responses[0]
         if data:
@@ -113,7 +111,7 @@ class Hardware(FactsBase):
         data = self.responses[1]
         if data:
             if 'Invalid input detected' in data:
-                self.warnings.append('Unable to gather memory statistics')
+                warnings.append('Unable to gather memory statistics')
             else:
                 processor_line = [l for l in data.splitlines()
                                   if 'Processor' in l].pop()

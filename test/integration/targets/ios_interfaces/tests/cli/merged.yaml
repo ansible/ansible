@@ -9,25 +9,18 @@
       ios_interfaces: &merged
         config:
           - name: GigabitEthernet0/1
-            description: 'Configured and Merged by Ansible Network'
+            description: 'Configured and Merged by Ansible-Network'
             mtu: 110
             enabled: True
             duplex: half
           - name: GigabitEthernet0/2
-            description: 'Configured and Merged by Ansible Network'
+            description: 'Configured and Merged by Ansible-Network'
             mtu: 2800
             enabled: False
             speed: 100
             duplex: full
         state: merged
       register: result
-
-    - debug:
-        msg:
-        - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-        - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
-        - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
-
 
     - name: Assert that correct set of commands were generated
       assert:

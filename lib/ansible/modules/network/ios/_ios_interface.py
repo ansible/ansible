@@ -24,7 +24,7 @@ description:
     on Cisco IOS network devices.
 deprecated:
   removed_in: '2.13'
-  alternative: ios_vlans
+  alternative: ios_interfaces
   why: Newer and updated modules released with more functionality in Ansible 2.9
 notes:
   - Tested against IOS 15.6

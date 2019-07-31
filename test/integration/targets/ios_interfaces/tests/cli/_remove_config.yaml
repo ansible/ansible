@@ -10,13 +10,15 @@
       interface loopback999
       no description
       no shutdown
-      interface GigabitEthernet0/1
+      interface GigabitEthernet 0/1
       no description
       no mtu
       no duplex
       no speed
-      interface GigabitEthernet0/2
+      no shutdown
+      interface GigabitEthernet 0/2
       no description
       no mtu
       no duplex
       no speed
+      no shutdown

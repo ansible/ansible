@@ -14,9 +14,9 @@
 
     - debug:
         msg:
-        - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
-        - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
-        - "{{ deleted['after'] | symmetric_difference(result['after']) | length == 0 }}"
+        - "{{ deleted['commands'] | symmetric_difference(result['commands']) }}"
+        - "{{ deleted['before'] | symmetric_difference(result['before']) }}"
+        - "{{ deleted['after'] | symmetric_difference(result['after']) }}"
 
 
     - name: Assert that correct set of commands were generated
