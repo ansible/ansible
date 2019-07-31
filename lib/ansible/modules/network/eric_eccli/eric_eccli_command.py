@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: eric_eccli_command
 version_added: "2.9"
-author: Ericsson IPOS OAM team (@cheng)
+author: Ericsson IPOS OAM team (@itercheng)
 short_description: Run commands on remote devices running ERICSSON ECCLI
 description:
   - Sends arbitrary commands to an ERICSSON eccli node and returns the results
@@ -107,29 +107,6 @@ tasks:
       wait_for:
 	- result[0] contains IPOS
 	- result[1] contains management
-
-  - name: run commands that require answering a prompt
-    eric_eccli_command:
-      commands:
-	- command: 'config'
-	- command: 'system hostname ub4-1-changed'
-	- command: 'commit'
-	  prompt: 'Uncommitted changes found, commit them? [yes/no/CANCEL]'
-	  answer: 'no'
-	- command: 'end'
-
-  - name: Set the prompt and error information regular expressions
-    eric_eccli_command:
-      commands:
-	- command: 'evr_2d01_vfrwd-evr1#dd'
-	  prompt: 'error input: element does not exist'
-	- additional_regex.txt:
-	- command: '[\r\n]+ error input: .*'
-
-	- command: 'evr_2d01_vfrwd-evr1#aaa'
-	  prompt: 'aaa#'
-	- additional_regex.txt:
-	- command: 'a{3}?#'
 """
 
 RETURN = """
