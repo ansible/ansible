@@ -111,7 +111,7 @@ policysetdefinitions:
                     ],
                     "defaultValue": "AuditIfNotExists",
                     "metadata": {
-                        "description": "Enable or disable the execution of the pol,
+                        "description": "Enable or disable the execution of the pol",
                         "displayName": "Effect"
                     },
                     "type": "String"
