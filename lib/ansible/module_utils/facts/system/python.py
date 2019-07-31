@@ -54,15 +54,19 @@ class PythonFactCollector(BaseFactCollector):
             python_facts['python'].update(
                 {'site_package_path': site_package_path}
             )
-        except Exception:
-            pass
+        except AttributeError:
+            python_facts['python'].update(
+                {'site_package_path': 'N/A'}
+            )
         try:
             user_package_path = site.getusersitepackages()
             python_facts['python'].update(
                 {'user_package_path': user_package_path}
             )
-        except Exception:
-            pass
+        except AttributeError:
+            python_facts['python'].update(
+                {'user_package_path': 'N/A'}
+            )
         try:
             python_facts['python']['type'] = sys.subversion[0]
         except AttributeError:
