@@ -17,9 +17,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+import os
+import sys
 
 from units.compat import unittest
-from ansible.module_utils.hwc_utils import are_different_dicts
+from ansible.module_utils.hwc_utils import DictComparison
 
 
 class HwcDictComparisonTestCase(unittest.TestCase):
@@ -28,8 +30,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             'foo': 'bar',
             'test': 'original'
         }
-
-        self.assertFalse(are_different_dicts(value1, value1))
+        d = DictComparison(value1)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_simple_different(self):
         value1 = {
@@ -43,10 +46,12 @@ class HwcDictComparisonTestCase(unittest.TestCase):
         value3 = {
             'test': 'original'
         }
-
-        self.assertTrue(are_different_dicts(value1, value2))
-        self.assertTrue(are_different_dicts(value1, value3))
-        self.assertTrue(are_different_dicts(value2, value3))
+        dict1 = DictComparison(value1)
+        dict2 = DictComparison(value2)
+        dict3 = DictComparison(value3)
+        self.assertFalse(dict1 == dict2)
+        self.assertFalse(dict1 == dict3)
+        self.assertFalse(dict2 == dict3)
 
     def test_nested_dictionaries_no_difference(self):
         value1 = {
@@ -58,8 +63,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             },
             'test': 'original'
         }
-
-        self.assertFalse(are_different_dicts(value1, value1))
+        d = DictComparison(value1)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_nested_dictionaries_with_difference(self):
         value1 = {
@@ -89,9 +95,12 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             }
         }
 
-        self.assertTrue(are_different_dicts(value1, value2))
-        self.assertTrue(are_different_dicts(value1, value3))
-        self.assertTrue(are_different_dicts(value2, value3))
+        dict1 = DictComparison(value1)
+        dict2 = DictComparison(value2)
+        dict3 = DictComparison(value3)
+        self.assertFalse(dict1 == dict2)
+        self.assertFalse(dict1 == dict3)
+        self.assertFalse(dict2 == dict3)
 
     def test_arrays_strings_no_difference(self):
         value1 = {
@@ -100,8 +109,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
                 'bar'
             ]
         }
-
-        self.assertFalse(are_different_dicts(value1, value1))
+        d = DictComparison(value1)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_arrays_strings_with_difference(self):
         value1 = {
@@ -123,9 +133,12 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             ]
         }
 
-        self.assertTrue(are_different_dicts(value1, value2))
-        self.assertTrue(are_different_dicts(value1, value3))
-        self.assertTrue(are_different_dicts(value2, value3))
+        dict1 = DictComparison(value1)
+        dict2 = DictComparison(value2)
+        dict3 = DictComparison(value3)
+        self.assertFalse(dict1 == dict2)
+        self.assertFalse(dict1 == dict3)
+        self.assertFalse(dict2 == dict3)
 
     def test_arrays_dicts_with_no_difference(self):
         value1 = {
@@ -139,8 +152,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
                 }
             ]
         }
-
-        self.assertFalse(are_different_dicts(value1, value1))
+        d = DictComparison(value1)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_arrays_dicts_with_difference(self):
         value1 = {
@@ -170,7 +184,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
                 }
             ]
         }
-
-        self.assertTrue(are_different_dicts(value1, value2))
-        self.assertTrue(are_different_dicts(value1, value3))
-        self.assertTrue(are_different_dicts(value2, value3))
+        dict1 = DictComparison(value1)
+        dict2 = DictComparison(value2)
+        dict3 = DictComparison(value3)
+        self.assertFalse(dict1 == dict2)
+        self.assertFalse(dict1 == dict3)
+        self.assertFalse(dict2 == dict3)
