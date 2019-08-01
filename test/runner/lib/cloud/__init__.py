@@ -1,5 +1,6 @@
 """Plugin system for cloud providers and environments for use in integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import abc
 import atexit
@@ -12,6 +13,8 @@ import random
 import re
 import tempfile
 
+import lib.types as t
+
 from lib.util import (
     ApplicationError,
     display,
@@ -19,6 +22,8 @@ from lib.util import (
     import_plugins,
     load_plugins,
     ABC,
+    to_bytes,
+    make_dirs,
 )
 
 from lib.target import (
@@ -27,6 +32,10 @@ from lib.target import (
 
 from lib.config import (
     IntegrationConfig,
+)
+
+from lib.data import (
+    data_context,
 )
 
 PROVIDERS = {}
@@ -54,7 +63,7 @@ def get_cloud_platforms(args, targets=None):
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])
     else:
-        cloud_platforms = set(get_cloud_platform(t) for t in targets)
+        cloud_platforms = set(get_cloud_platform(target) for target in targets)
 
     cloud_platforms.discard(None)
 
@@ -144,7 +153,7 @@ def cloud_init(args, targets):
         results[provider.platform] = dict(
             platform=provider.platform,
             setup_seconds=int(end_time - start_time),
-            targets=[t.name for t in targets],
+            targets=[target.name for target in targets],
         )
 
     if not args.explain and results:
@@ -153,6 +162,8 @@ def cloud_init(args, targets):
         data = dict(
             clouds=results,
         )
+
+        make_dirs(os.path.dirname(results_path))
 
         with open(results_path, 'w') as results_fd:
             results_fd.write(json.dumps(data, sort_keys=True, indent=4))
@@ -174,6 +185,17 @@ class CloudBase(ABC):
         self.args = args
         self.platform = self.__module__.split('.')[2]
 
+        def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            """Add the config file to the payload file list."""
+            if self._get_cloud_config(self._CONFIG_PATH, ''):
+                pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
+
+                if pair not in files:
+                    display.info('Including %s config: %s -> %s' % (self.platform, pair[0], pair[1]), verbosity=3)
+                    files.append(pair)
+
+        data_context().register_payload_callback(config_callback)
+
     @property
     def setup_executed(self):
         """
@@ -193,7 +215,7 @@ class CloudBase(ABC):
         """
         :rtype: str
         """
-        return os.path.join(os.getcwd(), self._get_cloud_config(self._CONFIG_PATH))
+        return os.path.join(data_context().content.root, self._get_cloud_config(self._CONFIG_PATH))
 
     @config_path.setter
     def config_path(self, value):
@@ -333,7 +355,7 @@ class CloudProvider(CloudBase):
 
             display.info('>>> Config: %s\n%s' % (filename, content.strip()), verbosity=3)
 
-            config_fd.write(content.encode('utf-8'))
+            config_fd.write(to_bytes(content))
             config_fd.flush()
 
     def _read_config_template(self):
@@ -387,24 +409,21 @@ class CloudEnvironment(CloudBase):
 
     def setup(self):
         """Setup which should be done once per environment instead of once per test target."""
-        pass
 
     @abc.abstractmethod
     def get_environment_config(self):
         """
         :rtype: CloudEnvironmentConfig
         """
-        pass
 
     def on_failure(self, target, tries):
         """
         :type target: IntegrationTarget
         :type tries: int
         """
-        pass
 
 
-class CloudEnvironmentConfig(object):
+class CloudEnvironmentConfig:
     """Configuration for the environment."""
     def __init__(self, env_vars=None, ansible_vars=None, module_defaults=None, callback_plugins=None):
         """

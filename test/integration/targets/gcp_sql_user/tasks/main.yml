@@ -67,7 +67,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'test-user' in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'test-user' in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a user that already exists
   gcp_sql_user:
@@ -101,7 +101,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that user was deleted
   gcp_sql_user_facts:
       instance: "{{ instance }}"
@@ -114,7 +113,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'test-user' not in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'test-user' not in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a user that does not exist
   gcp_sql_user:
@@ -131,7 +130,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

@@ -1,5 +1,5 @@
-Sanity Tests » no-unwanted-files
-================================
+no-unwanted-files
+=================
 
 Specific file types are allowed in certain directories:
 

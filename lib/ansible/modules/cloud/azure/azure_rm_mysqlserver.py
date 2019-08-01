@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlserver
 version_added: "2.5"
-short_description: Manage MySQL Server instance.
+short_description: Manage MySQL Server instance
 description:
     - Create, update and delete instance of MySQL Server.
 
@@ -36,14 +36,16 @@ options:
         suboptions:
             name:
                 description:
-                    - The name of the sku, typically, a letter + Number code, e.g. P3.
+                    - The name of the sku, typically, tier + family + cores, for example C(B_Gen4_1), C(GP_Gen5_8).
             tier:
                 description:
-                    - The tier of the particular SKU, e.g. Basic.
-                choices: ['basic', 'standard']
+                    - The tier of the particular SKU, for example C(Basic).
+                choices:
+                    - basic
+                    - standard
             capacity:
                 description:
-                    - "The scale up/out capacity, representing server's compute units."
+                    - The scale up/out capacity, representing server's compute units.
             size:
                 description:
                     - The size code, to be interpreted by resource as appropriate.
@@ -53,10 +55,13 @@ options:
     storage_mb:
         description:
             - The maximum storage allowed for a server.
+        type: int
     version:
         description:
             - Server version.
-        choices: ['5.6', '5.7']
+        choices:
+            - 5.6
+            - 5.7
     enforce_ssl:
         description:
             - Enable SSL enforcement.
@@ -64,13 +69,13 @@ options:
         default: False
     admin_username:
         description:
-            - "The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation)."
+            - The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation).
     admin_password:
         description:
             - The password of the administrator login.
     create_mode:
         description:
-            - Create mode of SQL Server
+            - Create mode of SQL Server.
         default: Default
     state:
         description:
@@ -85,7 +90,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -108,19 +113,19 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
 version:
     description:
-        - 'Server version. Possible values include: C(5.6), C(5.7)'
+        - Server version. Possible values include C(5.6), C(5.7).
     returned: always
     type: str
     sample: 5.6
 state:
     description:
-        - 'A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)'
+        - A state of a server that is visible to user. Possible values include C(Ready), C(Dropping), C(Disabled).
     returned: always
     type: str
     sample: Ready

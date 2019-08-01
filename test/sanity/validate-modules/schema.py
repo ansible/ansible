@@ -3,6 +3,8 @@
 # Copyright: (c) 2015, Matt Martz <matt@sivel.net>
 # Copyright: (c) 2015, Rackspace US, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import re
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Invalid, Required, Schema, Self
@@ -82,6 +84,8 @@ suboption_schema = Schema(
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        # in case of type='list' elements define type of individual item in list
+        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
         # Recursive suboptions
         'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
     },
@@ -103,6 +107,8 @@ option_schema = Schema(
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        # in case of type='list' elements define type of individual item in list
+        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
     },
     extra=PREVENT_EXTRA
 )
@@ -151,7 +157,7 @@ deprecation_schema = Schema(
         # Deprecation cycle changed at 2.4 (though not retroactively)
         # 2.3 -> removed_in: "2.5" + n for docs stub
         # 2.4 -> removed_in: "2.8" + n for docs stub
-        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12"),
+        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12", "2.13"),
         Required('why'): Any(*string_types),
         Required('alternative'): Any(*string_types),
         'removed': Any(True),

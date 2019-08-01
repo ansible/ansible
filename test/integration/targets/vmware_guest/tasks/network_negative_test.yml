@@ -314,7 +314,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: new_vm_no_nw_type
+    name: test_vm1
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     disk:

@@ -46,7 +46,7 @@ yumdnf_argument_spec = dict(
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
-        lock_timeout=dict(type='int', default=0),
+        lock_timeout=dict(type='int', default=30),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
     mutually_exclusive=[['name', 'list']],
@@ -126,15 +126,26 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         # default isn't a bad idea
         self.lockfile = '/var/run/yum.pid'
 
+    @abstractmethod
+    def is_lockfile_pid_valid(self):
+        return
+
+    def _is_lockfile_present(self):
+        return (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)) and self.is_lockfile_pid_valid()
+
     def wait_for_lock(self):
         '''Poll until the lock is removed if timeout is a positive number'''
-        if (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)):
-            if self.lock_timeout > 0:
-                for iteration in range(0, self.lock_timeout):
-                    time.sleep(1)
-                    if not os.path.isfile(self.lockfile) and not glob.glob(self.lockfile):
-                        return
-            self.module.fail_json(msg='{0} lockfile is held by another process'.format(self.pkg_mgr_name))
+
+        if not self._is_lockfile_present():
+            return
+
+        if self.lock_timeout > 0:
+            for iteration in range(0, self.lock_timeout):
+                time.sleep(1)
+                if not self._is_lockfile_present():
+                    return
+
+        self.module.fail_json(msg='{0} lockfile is held by another process'.format(self.pkg_mgr_name))
 
     def listify_comma_sep_strings_in_list(self, some_list):
         """

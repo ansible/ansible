@@ -88,6 +88,10 @@ else:
     from jinja2.utils import concat as j2_concat
 
 
+JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
+JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
+
+
 def generate_ansible_template_vars(path, dest_path=None):
     b_path = to_bytes(path)
     try:
@@ -157,6 +161,39 @@ def _escape_backslashes(data, jinja_env):
         data = ''.join(new_data)
 
     return data
+
+
+def is_template(data, jinja_env):
+    """This function attempts to quickly detect whether a value is a jinja2
+    template. To do so, we look for the first 2 matching jinja2 tokens for
+    start and end delimiters.
+    """
+    found = None
+    start = True
+    comment = False
+    d2 = jinja_env.preprocess(data)
+
+    # This wraps a lot of code, but this is due to lex returing a generator
+    # so we may get an exception at any part of the loop
+    try:
+        for token in jinja_env.lex(d2):
+            if token[1] in JINJA2_BEGIN_TOKENS:
+                if start and token[1] == 'comment_begin':
+                    # Comments can wrap other token types
+                    comment = True
+                start = False
+                # Example: variable_end -> variable
+                found = token[1].split('_')[0]
+            elif token[1] in JINJA2_END_TOKENS:
+                if token[1].split('_')[0] == found:
+                    return True
+                elif comment:
+                    continue
+                return False
+    except TemplateSyntaxError:
+        return False
+
+    return False
 
 
 def _count_newlines_from_end(in_str):
@@ -405,7 +442,7 @@ class Templar:
         self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
                                          ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
-    def _get_filters(self, builtin_filters):
+    def _get_filters(self):
         '''
         Returns filter plugins, after loading and caching them if need be
         '''
@@ -498,7 +535,7 @@ class Templar:
             if isinstance(variable, string_types):
                 result = variable
 
-                if self._contains_vars(variable):
+                if self.is_possibly_template(variable):
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
@@ -543,7 +580,7 @@ class Templar:
                                 # if this looks like a dictionary or list, convert it to such using the safe_eval method
                                 if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                                         result.startswith("[") or result in ("True", "False"):
-                                    eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                                    eval_results = safe_eval(result, include_exceptions=True)
                                     if eval_results[1] is None:
                                         result = eval_results[0]
                                         if unsafe:
@@ -594,15 +631,9 @@ class Templar:
                 return variable
 
     def is_template(self, data):
-        ''' lets us know if data has a template'''
+        '''lets us know if data has a template'''
         if isinstance(data, string_types):
-            try:
-                new = self.do_template(data, fail_on_undefined=True)
-            except (AnsibleUndefinedVariable, UndefinedError):
-                return True
-            except Exception:
-                return False
-            return (new != data)
+            return is_template(data, self.environment)
         elif isinstance(data, (list, tuple)):
             for v in data:
                 if self.is_template(v):
@@ -613,23 +644,23 @@ class Templar:
                     return True
         return False
 
-    def templatable(self, data):
-        '''
-        returns True if the data can be templated w/o errors
-        '''
-        templatable = True
-        try:
-            self.template(data)
-        except Exception:
-            templatable = False
-        return templatable
+    templatable = is_template
 
-    def _contains_vars(self, data):
+    def is_possibly_template(self, data):
+        '''Determines if a string looks like a template, by seeing if it
+        contains a jinja2 start delimiter. Does not guarantee that the string
+        is actually a template.
+
+        This is different than ``is_template`` which is more strict.
+        This method may return ``True`` on a string that is not templatable.
+
+        Useful when guarding passing a string for templating, but when
+        you want to allow the templating engine to make the final
+        assessment which may result in ``TemplateSyntaxError``.
         '''
-        returns True if the data contains a variable pattern
-        '''
+        env = self.environment
         if isinstance(data, string_types):
-            for marker in (self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string):
+            for marker in (env.block_start_string, env.variable_start_string, env.comment_start_string):
                 if marker in data:
                     return True
         return False
@@ -706,7 +737,7 @@ class Templar:
                         display.display(msg, log_only=True)
                     else:
                         raise AnsibleError(to_native(msg))
-                ran = None
+                ran = [] if wantlist else None
 
             if ran and not allow_unsafe:
                 if wantlist:
@@ -763,7 +794,7 @@ class Templar:
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
             # Adds Ansible custom filters and tests
-            myenv.filters.update(self._get_filters(myenv.filters))
+            myenv.filters.update(self._get_filters())
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:

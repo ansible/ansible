@@ -1,6 +1,6 @@
 """Show information about the test environment."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import datetime
 import json
@@ -304,7 +304,8 @@ def get_git_details(args):
     return git_details
 
 
-def get_merged_commit(args, commit):
+# noinspection PyUnusedLocal
+def get_merged_commit(args, commit):  # pylint: disable=unused-argument
     """
     :type args: CommonConfig
     :type commit: str
@@ -313,7 +314,7 @@ def get_merged_commit(args, commit):
     if not commit:
         return None
 
-    git = Git(args)
+    git = Git()
 
     try:
         show_commit = git.run_git(['show', '--no-patch', '--no-abbrev', commit])

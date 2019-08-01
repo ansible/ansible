@@ -38,15 +38,18 @@ options:
       - Mutually exclusive with C(folder) parameter.
       required: False
       aliases: [ datacenter ]
+      type: str
     datastore_cluster_name:
       description:
       - The name of the datastore cluster.
       required: True
+      type: str
     state:
       description:
       - If the datastore cluster should be present or absent.
       choices: [ present, absent ]
       default: present
+      type: str
     folder:
       description:
       - Destination folder, absolute path to place datastore cluster in.
@@ -63,6 +66,7 @@ options:
       - '   folder: /folder1/datacenter1/datastore/folder2'
       required: False
       version_added: '2.9'
+      type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

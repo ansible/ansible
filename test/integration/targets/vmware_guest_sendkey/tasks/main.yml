@@ -1,0 +1,45 @@
+# Test code for the vmware_guest_sendkey module
+# Copyright: (c) 2017, Diane Wang (Tomorrow9) <dianew@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+      setup_datastore: true
+      setup_virtualmachines: true
+
+  - name: send keys to virtual machine
+    vmware_guest_sendkey:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      keys_send:
+        - DOWNARROW
+        - DOWNARROW
+        - ENTER
+    register: send_key
+  - debug: var=send_key
+  - name: assert the keys were sent to VM
+    assert:
+      that:
+        - "send_key.changed == true"
+
+  - name: send string to virtual machine
+    vmware_guest_sendkey:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      string_send: "test-user"
+    register: send_string
+  - debug: var=send_string
+  - name: assert the string was sent to VM
+    assert:
+      that:
+        - "send_string.changed == true"

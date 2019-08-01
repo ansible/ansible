@@ -4,7 +4,7 @@
       - name: set the two regions for the source DB and the replica
         set_fact:
           region_src: "{{ aws_region }}"
-          region_dest: "us-east-2"
+          region_dest: "{{ aws_region }}"
 
       - name: set up aws connection info
         set_fact:
@@ -51,7 +51,7 @@
         rds_instance:
           id: "{{ instance_id }}-replica"
           state: present
-          source_db_instance_identifier: "{{ source_db.db_instance_arn }}"
+          source_db_instance_identifier: "{{ instance_id }}"
           engine: mysql
           username: "{{ username }}"
           password: "{{ password }}"
@@ -66,7 +66,7 @@
         rds_instance:
           id: "{{ instance_id }}-replica"
           state: present
-          source_db_instance_identifier: "{{ source_db.db_instance_arn }}"
+          source_db_instance_identifier: "{{ instance_id }}"
           engine: mysql
           username: "{{ username }}"
           password: "{{ password }}"
@@ -85,7 +85,7 @@
           id: "{{ instance_id }}-replica"
           state: present
           read_replica: True
-          source_db_instance_identifier: "{{ source_db.db_instance_arn }}"
+          source_db_instance_identifier: "{{ instance_id }}"
           engine: mysql
           username: "{{ username }}"
           password: "{{ password }}"
@@ -130,6 +130,7 @@
           skip_final_snapshot: True
           region: "{{ region_src }}"
           <<: *aws_connection_info
+        ignore_errors: yes
 
       - name: Remove the DB replica
         rds_instance:
@@ -138,3 +139,4 @@
           skip_final_snapshot: True
           region: "{{ region_dest }}"
           <<: *aws_connection_info
+        ignore_errors: yes

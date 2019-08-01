@@ -1,0 +1,2 @@
+minor_changes:
+- postgresql_ext - add version parameter to support creation / update extensions of specific versions (https://github.com/ansible/ansible/pull/58381)

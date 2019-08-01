@@ -1,0 +1,45 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - &add_mk_conn
+      name: Create new VM with max_connections as 4
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        name: test_vm1
+        guest_id: centos64Guest
+        datacenter: "{{ dc1 }}"
+        hardware:
+          num_cpus: 4
+          memory_mb: 512
+          max_connections: 4
+        disk:
+          - size: 1gb
+            type: thin
+            autoselect_datastore: True
+        state: present
+        folder: "{{ f0 }}"
+      register: mk_conn_result_0001
+
+    - debug: var=mk_conn_result_0001
+
+    - name: Assert that changes were made
+      assert:
+        that:
+          - mk_conn_result_0001 is changed
+    
+    - <<: *add_mk_conn
+      name: Again create new VMs again with max_connections as 4
+      register: mk_conn_result_0002
+    
+    - debug: var=mk_conn_result_0002
+
+    - name: Assert that changes were not made
+      assert:
+        that:
+          - not (mk_conn_result_0002 is changed)

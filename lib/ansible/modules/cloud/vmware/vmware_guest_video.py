@@ -32,11 +32,19 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is a required parameter, if parameter C(uuid) is not supplied.
+     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is a required parameter, if parameter C(name) is not supplied.
+     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -52,11 +60,13 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      default: ha-datacenter
      description:
      - The datacenter name to which virtual machine belongs to.
      - This parameter is case sensitive.
+     type: str
    gather_video_facts:
      description:
      - If set to True, return settings of the video card, other attributes are ignored.
@@ -71,11 +81,13 @@ options:
    display_number:
      description:
      - The number of display. Valid value from 1 to 10. The maximum display number is 4 on vCenter 6.0, 6.5 web UI.
+     type: int
    video_memory_mb:
      description:
      - 'Valid total MB of video memory range of virtual machine is from 1.172 MB to 256 MB on ESXi 6.7U1,
         from 1.172 MB to 128 MB on ESXi 6.7 and previous versions.'
      - For specific guest OS, supported minimum and maximum video memory are different, please be careful on setting this.
+     type: float
    enable_3D:
      description:
      - Enable 3D for guest operating systems on which VMware supports 3D.
@@ -86,9 +98,11 @@ options:
      - 'If set to C(software), uses normal CPU processing for 3D calculations.'
      - 'If set to C(hardware), requires graphics hardware (GPU) for faster 3D calculations.'
      choices: [ automatic, software, hardware ]
+     type: str
    memory_3D_mb:
      description:
      - The value of 3D Memory must be power of 2 and valid value is from 32 MB to 2048 MB.
+     type: int
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -101,6 +115,24 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
     name: test-vm
+    gather_video_facts: false
+    use_auto_detect: false
+    display_number: 2
+    video_memory_mb: 8.0
+    enable_3D: true
+    renderer_3D: automatic
+    memory_3D_mb: 512
+  delegate_to: localhost
+  register: video_facts
+
+- name: Change video card settings of virtual machine using MoID
+  vmware_guest_video:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    moid: vm-42
     gather_video_facts: false
     use_auto_detect: false
     display_number: 2
@@ -294,6 +326,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
         gather_video_facts=dict(type='bool', default=False),
@@ -304,12 +337,19 @@ def main():
         renderer_3D=dict(type='str', choices=['automatic', 'software', 'hardware']),
         memory_3D_mb=dict(type='int'),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ]
+    )
+
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
     if not vm:
-        module.fail_json(msg='Unable to find the specified virtual machine : %s' % (module.params.get('uuid') or module.params.get('name')))
+        vm_id = module.params.get('uuid') or module.params.get('name') or module.params.get('moid')
+        module.fail_json(msg='Unable to find the specified virtual machine : %s' % vm_id)
 
     vm_facts = pyv.gather_facts(vm)
     vm_power_state = vm_facts['hw_power_status'].lower()

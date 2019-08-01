@@ -40,7 +40,9 @@ except ImportError:
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import env_fallback, missing_required_lib
+from ansible.module_utils.urls import generic_urlparse
 
 
 class TaskError(Exception):
@@ -486,11 +488,20 @@ def vmware_argument_spec():
         validate_certs=dict(type='bool',
                             required=False,
                             default=True,
-                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])),
+                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])
+                            ),
+        proxy_host=dict(type='str',
+                        required=False,
+                        default=None,
+                        fallback=(env_fallback, ['VMWARE_PROXY_HOST'])),
+        proxy_port=dict(type='int',
+                        required=False,
+                        default=None,
+                        fallback=(env_fallback, ['VMWARE_PROXY_PORT'])),
     )
 
 
-def connect_to_api(module, disconnect_atexit=True):
+def connect_to_api(module, disconnect_atexit=True, return_si=False):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
@@ -523,18 +534,30 @@ def connect_to_api(module, disconnect_atexit=True):
         ssl_context.load_default_certs()
 
     service_instance = None
+    proxy_host = module.params.get('proxy_host')
+    proxy_port = module.params.get('proxy_port')
+
+    connect_args = dict(
+        host=hostname,
+        port=port,
+    )
+    if ssl_context:
+        connect_args.update(sslContext=ssl_context)
+
+    msg_suffix = ''
     try:
-        connect_args = dict(
-            host=hostname,
-            user=username,
-            pwd=password,
-            port=port,
-        )
-        if ssl_context:
-            connect_args.update(sslContext=ssl_context)
-        service_instance = connect.SmartConnect(**connect_args)
+        if proxy_host:
+            msg_suffix = " [proxy: %s:%d]" % (proxy_host, proxy_port)
+            connect_args.update(httpProxyHost=proxy_host, httpProxyPort=proxy_port)
+            smart_stub = connect.SmartStubAdapter(**connect_args)
+            session_stub = connect.VimSessionOrientedStub(smart_stub, connect.VimSessionOrientedStub.makeUserLoginMethod(username, password))
+            service_instance = vim.ServiceInstance('ServiceInstance', session_stub)
+        else:
+            connect_args.update(user=username, pwd=password)
+            service_instance = connect.SmartConnect(**connect_args)
     except vim.fault.InvalidLogin as invalid_login:
-        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
+        msg = "Unable to log on to vCenter or ESXi API at %s:%s " % (hostname, port)
+        module.fail_json(msg="%s as %s: %s" % (msg, username, invalid_login.msg) + msg_suffix)
     except vim.fault.NoPermission as no_permission:
         module.fail_json(msg="User %s does not have required permission"
                              " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, no_permission.msg))
@@ -542,19 +565,23 @@ def connect_to_api(module, disconnect_atexit=True):
         module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, generic_req_exc))
     except vmodl.fault.InvalidRequest as invalid_request:
         # Request is malformed
-        module.fail_json(msg="Failed to get a response from server %s:%s as "
-                             "request is malformed: %s" % (hostname, port, invalid_request.msg))
+        msg = "Failed to get a response from server %s:%s " % (hostname, port)
+        module.fail_json(msg="%s as request is malformed: %s" % (msg, invalid_request.msg) + msg_suffix)
     except Exception as generic_exc:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, generic_exc))
+        msg = "Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port) + msg_suffix
+        module.fail_json(msg="%s : %s" % (msg, generic_exc))
 
     if service_instance is None:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port))
+        msg = "Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port)
+        module.fail_json(msg=msg + msg_suffix)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
     # Also removal significantly speeds up the return of the module
     if disconnect_atexit:
         atexit.register(connect.Disconnect, service_instance)
+    if return_si:
+        return service_instance, service_instance.RetrieveContent()
     return service_instance.RetrieveContent()
 
 
@@ -804,9 +831,8 @@ class PyVmomi(object):
 
         self.module = module
         self.params = module.params
-        self.si = None
         self.current_vm_obj = None
-        self.content = connect_to_api(self.module)
+        self.si, self.content = connect_to_api(self.module, return_si=True)
         self.custom_field_mgr = []
         if self.content.customFieldsManager:  # not an ESXi
             self.custom_field_mgr = self.content.customFieldsManager.field
@@ -831,7 +857,7 @@ class PyVmomi(object):
 
     def get_managed_objects_properties(self, vim_type, properties=None):
         """
-        Function to look up a Managed Object Reference in vCenter / ESXi Environment
+        Look up a Managed Object Reference in vCenter / ESXi Environment
         :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
         :param properties: List of properties related to vim object e.g. Name
         :return: local content object
@@ -879,7 +905,7 @@ class PyVmomi(object):
     # Virtual Machine related functions
     def get_vm(self):
         """
-        Function to find unique virtual machine either by UUID or Name.
+        Find unique virtual machine either by UUID, MoID or Name.
         Returns: virtual machine object if found, else None.
 
         """
@@ -958,6 +984,8 @@ class PyVmomi(object):
             elif vms:
                 # Unique virtual machine found.
                 vm_obj = vms[0]
+        elif self.params['moid']:
+            vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
         if vm_obj:
             self.current_vm_obj = vm_obj
@@ -966,7 +994,7 @@ class PyVmomi(object):
 
     def gather_facts(self, vm):
         """
-        Function to gather facts of virtual machine.
+        Gather facts of virtual machine.
         Args:
             vm: Name of virtual machine.
 
@@ -978,7 +1006,7 @@ class PyVmomi(object):
     @staticmethod
     def get_vm_path(content, vm_name):
         """
-        Function to find the path of virtual machine.
+        Find the path of virtual machine.
         Args:
             content: VMware content object
             vm_name: virtual machine managed object
@@ -1087,7 +1115,7 @@ class PyVmomi(object):
 
     def get_all_host_objs(self, cluster_name=None, esxi_host_name=None):
         """
-        Function to get all host system managed object
+        Get all host system managed object
 
         Args:
             cluster_name: Name of Cluster
@@ -1162,7 +1190,7 @@ class PyVmomi(object):
 
     def get_all_port_groups_by_host(self, host_system):
         """
-        Function to get all Port Group by host
+        Get all Port Group by host
         Args:
             host_system: Name of Host System
 
@@ -1173,10 +1201,48 @@ class PyVmomi(object):
             pgs_list.append(pg)
         return pgs_list
 
+    def find_network_by_name(self, network_name=None):
+        """
+        Get network specified by name
+        Args:
+            network_name: Name of network
+
+        Returns: List of network managed objects
+        """
+        networks = []
+
+        if not network_name:
+            return networks
+
+        objects = self.get_managed_objects_properties(vim_type=vim.Network, properties=['name'])
+
+        for temp_vm_object in objects:
+            if len(temp_vm_object.propSet) != 1:
+                continue
+            for temp_vm_object_property in temp_vm_object.propSet:
+                if temp_vm_object_property.val == network_name:
+                    networks.append(temp_vm_object.obj)
+                    break
+        return networks
+
+    def network_exists_by_name(self, network_name=None):
+        """
+        Check if network with a specified name exists or not
+        Args:
+            network_name: Name of network
+
+        Returns: True if network exists else False
+        """
+        ret = False
+        if not network_name:
+            return ret
+        ret = True if self.find_network_by_name(network_name=network_name) else False
+        return ret
+
     # Datacenter
     def find_datacenter_by_name(self, datacenter_name):
         """
-        Function to get datacenter managed object by name
+        Get datacenter managed object by name
 
         Args:
             datacenter_name: Name of datacenter
@@ -1188,7 +1254,7 @@ class PyVmomi(object):
 
     def find_datastore_by_name(self, datastore_name):
         """
-        Function to get datastore managed object by name
+        Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
 
@@ -1200,7 +1266,7 @@ class PyVmomi(object):
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):
         """
-        Function to get datastore cluster managed object by name
+        Get datastore cluster managed object by name
         Args:
             datastore_cluster_name: Name of datastore cluster
 
@@ -1212,6 +1278,52 @@ class PyVmomi(object):
             if dsc.name == datastore_cluster_name:
                 return dsc
         return None
+
+    # Resource pool
+    def find_resource_pool_by_name(self, resource_pool_name, folder=None):
+        """
+        Get resource pool managed object by name
+        Args:
+            resource_pool_name: Name of resource pool
+
+        Returns: Resource pool managed object if found else None
+
+        """
+        if not folder:
+            folder = self.content.rootFolder
+
+        resource_pools = get_all_objs(self.content, [vim.ResourcePool], folder=folder)
+        for rp in resource_pools:
+            if rp.name == resource_pool_name:
+                return rp
+        return None
+
+    def find_resource_pool_by_cluster(self, resource_pool_name='Resources', cluster=None):
+        """
+        Get resource pool managed object by cluster object
+        Args:
+            resource_pool_name: Name of resource pool
+            cluster: Managed object of cluster
+
+        Returns: Resource pool managed object if found else None
+
+        """
+        desired_rp = None
+        if not cluster:
+            return desired_rp
+
+        if resource_pool_name != 'Resources':
+            # Resource pool name is different than default 'Resources'
+            resource_pools = cluster.resourcePool.resourcePool
+            if resource_pools:
+                for rp in resource_pools:
+                    if rp.name == resource_pool_name:
+                        desired_rp = rp
+                        break
+        else:
+            desired_rp = cluster.resourcePool
+
+        return desired_rp
 
     # VMDK stuff
     def vmdk_disk_path_split(self, vmdk_path):

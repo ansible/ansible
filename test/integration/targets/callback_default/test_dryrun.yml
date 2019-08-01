@@ -1,0 +1,93 @@
+---
+- name: A common play
+  hosts: testhost
+  gather_facts: no
+  tasks:
+  - debug: 
+      msg: 'ansible_check_mode: {{ansible_check_mode}}'
+
+  - name: Command
+    command: ls -l
+
+  - name: "Command with check_mode: false"
+    command: ls -l
+    check_mode: false
+
+  - name: "Command with check_mode: true"
+    command: ls -l
+    check_mode: true
+
+
+- name: "Play with check_mode: true (runs always in check_mode)"
+  hosts: testhost
+  gather_facts: no
+  check_mode: true
+  tasks:
+  - debug: 
+      msg: 'ansible_check_mode: {{ansible_check_mode}}'
+
+  - name: Command
+    command: ls -l
+ 
+  - name: "Command with check_mode: false"
+    command: ls -l
+    check_mode: false
+
+  - name: "Command with check_mode: true"
+    command: ls -l
+    check_mode: true
+
+
+- name: "Play with check_mode: false (runs always in wet mode)"
+  hosts: testhost
+  gather_facts: no
+  check_mode: false
+  tasks:
+  - debug: 
+      msg: 'ansible_check_mode: {{ansible_check_mode}}'
+
+  - name: Command
+    command: ls -l
+
+  - name: "Command with check_mode: false"
+    command: ls -l
+    check_mode: false
+
+  - name: "Command with check_mode: true"
+    command: ls -l
+    check_mode: true
+
+
+- name: "Play with a block with check_mode: true"
+  hosts: testhost
+  gather_facts: no
+  tasks:
+  - block:
+    - name: Command
+      command: ls -l
+
+    - name: "Command with check_mode: false"
+      command: ls -l
+      check_mode: false
+
+    - name: "Command with check_mode: true"
+      command: ls -l
+      check_mode: true
+    check_mode: true
+
+- name: "Play with a block with check_mode: false"
+  hosts: testhost
+  gather_facts: no
+  tasks:
+  - block:
+    - name: Command
+      command: ls -l
+
+    - name: "Command with check_mode: false"
+      command: ls -l
+      check_mode: false
+
+    - name: "Command with check_mode: true"
+      command: ls -l
+      check_mode: true
+    check_mode: false

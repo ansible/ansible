@@ -443,6 +443,7 @@ import os
 import re
 import sys
 import tempfile
+import traceback
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 
@@ -450,9 +451,15 @@ try:
     import yaml
     HAS_YAML = True
     HAS_YAML_EXC = None
-except ImportError as exc:
+except ImportError as dummy:
     HAS_YAML = False
-    HAS_YAML_EXC = str(exc)
+    HAS_YAML_EXC = traceback.format_exc()
+
+try:
+    from docker.errors import DockerException
+except ImportError:
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
+    pass
 
 try:
     from compose import __version__ as compose_version
@@ -463,13 +470,16 @@ try:
     HAS_COMPOSE = True
     HAS_COMPOSE_EXC = None
     MINIMUM_COMPOSE_VERSION = '1.7.0'
-
-except ImportError as exc:
+except ImportError as dummy:
     HAS_COMPOSE = False
-    HAS_COMPOSE_EXC = str(exc)
+    HAS_COMPOSE_EXC = traceback.format_exc()
     DEFAULT_TIMEOUT = 10
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    RequestException,
+)
 
 
 AUTH_PARAM_MAPPING = {
@@ -1090,8 +1100,13 @@ def main():
     if client.module._name == 'docker_service':
         client.module.deprecate("The 'docker_service' module has been renamed to 'docker_compose'.", version='2.12')
 
-    result = ContainerManager(client).exec_module()
-    client.module.exit_json(**result)
+    try:
+        result = ContainerManager(client).exec_module()
+        client.module.exit_json(**result)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

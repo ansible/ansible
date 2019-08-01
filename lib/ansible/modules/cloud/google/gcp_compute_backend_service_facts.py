@@ -76,7 +76,7 @@ resources:
       type: int
     backends:
       description:
-      - The list of backends that serve this BackendService.
+      - The set of backends that serve this BackendService.
       returned: success
       type: complex
       contains:
@@ -123,8 +123,8 @@ resources:
           description:
           - The max number of simultaneous connections for the group. Can be used
             with either CONNECTION or UTILIZATION balancing modes.
-          - For CONNECTION mode, either maxConnections or maxConnectionsPerInstance
-            must be set.
+          - For CONNECTION mode, either maxConnections or one of maxConnectionsPerInstance
+            or maxConnectionsPerEndpoint, as appropriate for group type, must be set.
           returned: success
           type: int
         maxConnectionsPerInstance:
@@ -136,12 +136,21 @@ resources:
             must be set.
           returned: success
           type: int
+        maxConnectionsPerEndpoint:
+          description:
+          - The max number of simultaneous connections that a single backend network
+            endpoint can handle. This is used to calculate the capacity of the group.
+            Can be used in either CONNECTION or UTILIZATION balancing modes.
+          - For CONNECTION mode, either maxConnections or maxConnectionsPerEndpoint
+            must be set.
+          returned: success
+          type: int
         maxRate:
           description:
           - The max requests per second (RPS) of the group.
           - Can be used with either RATE or UTILIZATION balancing modes, but required
-            if RATE mode. For RATE mode, either maxRate or maxRatePerInstance must
-            be set.
+            if RATE mode. For RATE mode, either maxRate or one of maxRatePerInstance
+            or maxRatePerEndpoint, as appropriate for group type, must be set.
           returned: success
           type: int
         maxRatePerInstance:
@@ -150,6 +159,14 @@ resources:
             This is used to calculate the capacity of the group. Can be used in either
             balancing mode. For RATE mode, either maxRate or maxRatePerInstance must
             be set.
+          returned: success
+          type: str
+        maxRatePerEndpoint:
+          description:
+          - The max requests per second (RPS) that a single backend network endpoint
+            can handle. This is used to calculate the capacity of the group. Can be
+            used in either balancing mode. For RATE mode, either maxRate or maxRatePerEndpoint
+            must be set.
           returned: success
           type: str
         maxUtilization:
@@ -250,9 +267,11 @@ resources:
       type: bool
     healthChecks:
       description:
-      - The list of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
+      - The set of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
         checking this BackendService. Currently at most one health check can be specified,
         and a health check is required.
+      - For internal load balancing, a URL to a HealthCheck resource must be specified
+        instead.
       returned: success
       type: list
     id:
@@ -290,8 +309,8 @@ resources:
       description:
       - Indicates whether the backend service will be used with internal or external
         load balancing. A backend service created for one type of load balancing cannot
-        be used with the other. Must be `EXTERNAL` for a global backend service. Defaults
-        to `EXTERNAL`.
+        be used with the other. Must be `EXTERNAL` or `INTERNAL_SELF_MANAGED` for
+        a global backend service. Defaults to `EXTERNAL`.
       returned: success
       type: str
     name:

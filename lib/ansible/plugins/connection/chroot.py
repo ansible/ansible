@@ -96,6 +96,8 @@ class Connection(ConnectionBase):
         if not (is_executable(chrootsh) or (os.path.lexists(chrootsh) and os.path.islink(chrootsh))):
             raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
+    def _connect(self):
+        ''' connect to the chroot '''
         if os.path.isabs(self.get_option('chroot_exe')):
             self.chroot_cmd = self.get_option('chroot_exe')
         else:
@@ -104,8 +106,6 @@ class Connection(ConnectionBase):
         if not self.chroot_cmd:
             raise AnsibleError("chroot command (%s) not found in PATH" % to_native(self.get_option('chroot_exe')))
 
-    def _connect(self):
-        ''' connect to the chroot; nothing to do here '''
         super(Connection, self)._connect()
         if not self._connected:
             display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)

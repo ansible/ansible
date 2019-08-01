@@ -1,5 +1,4 @@
 import collections
-import os
 import sys
 
 from units.compat import mock

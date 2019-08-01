@@ -1,0 +1,2 @@
+bugfixes:
+  - "npm - Validate that all passed options have proper types."

@@ -1,5 +1,6 @@
 ---
 - block:
+  # This is commented out because a device cannot be unclaimed via API
   # - name: Claim a device into an organization
   #   meraki_device:
   #     auth_key: '{{auth_key}}'

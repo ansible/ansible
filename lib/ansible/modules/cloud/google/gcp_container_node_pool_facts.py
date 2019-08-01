@@ -44,6 +44,7 @@ options:
     description:
     - The location where the node pool is deployed.
     required: true
+    type: str
     aliases:
     - region
     - zone
@@ -57,6 +58,7 @@ options:
       to a gcp_container_cluster task and then set this cluster field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
 extends_documentation_fragment: gcp
 '''
 
@@ -175,6 +177,55 @@ resources:
             for more information about preemptible VM instances.'
           returned: success
           type: bool
+        accelerators:
+          description:
+          - A list of hardware accelerators to be attached to each node.
+          returned: success
+          type: complex
+          contains:
+            acceleratorCount:
+              description:
+              - The number of the accelerator cards exposed to an instance.
+              returned: success
+              type: int
+            acceleratorType:
+              description:
+              - The accelerator type resource name.
+              returned: success
+              type: str
+        diskType:
+          description:
+          - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')
+            If unspecified, the default disk type is 'pd-standard' .
+          returned: success
+          type: str
+        minCpuPlatform:
+          description:
+          - Minimum CPU platform to be used by this instance. The instance may be
+            scheduled on the specified or newer CPU platform .
+          returned: success
+          type: str
+        taints:
+          description:
+          - List of kubernetes taints to be applied to each node.
+          returned: success
+          type: complex
+          contains:
+            key:
+              description:
+              - Key for taint.
+              returned: success
+              type: str
+            value:
+              description:
+              - Value for taint.
+              returned: success
+              type: str
+            effect:
+              description:
+              - Effect for taint.
+              returned: success
+              type: str
     initialNodeCount:
       description:
       - The initial node count for the pool. You must ensure that your Compute Engine
@@ -182,6 +233,16 @@ resources:
         available firewall and routes quota.
       returned: success
       type: int
+    status:
+      description:
+      - Status of nodes in this pool instance.
+      returned: success
+      type: str
+    statusMessage:
+      description:
+      - Additional information about the current status of this node pool instance.
+      returned: success
+      type: str
     version:
       description:
       - The version of the Kubernetes of this node.
@@ -249,6 +310,34 @@ resources:
                 of the upgrade.
               returned: success
               type: str
+    maxPodsConstraint:
+      description:
+      - The constraint on the maximum number of pods that can be run simultaneously
+        on a node in the node pool.
+      returned: success
+      type: complex
+      contains:
+        maxPodsPerNode:
+          description:
+          - Constraint enforced on the max num of pods per node.
+          returned: success
+          type: int
+    conditions:
+      description:
+      - Which conditions caused the current node pool state.
+      returned: success
+      type: complex
+      contains:
+        code:
+          description:
+          - Machine-friendly representation of the condition.
+          returned: success
+          type: str
+    podIpv4CidrSize:
+      description:
+      - The pod CIDR block size per node in this node pool.
+      returned: success
+      type: int
     cluster:
       description:
       - The cluster this node pool belongs to.
@@ -289,7 +378,7 @@ def main():
 
 def collection(module):
     res = {'project': module.params['project'], 'location': module.params['location'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools".format(**res)
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters/{cluster}/nodePools".format(**res)
 
 
 def fetch_list(module, link):

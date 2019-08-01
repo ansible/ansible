@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: vmware_datastore_facts
 short_description: Gather facts about datastores available in given vCenter
 description:
-    - This module can be used to gather facts about datastores in VMWare infrastructure.
+    - This module can be used to gather facts about datastores in VMware infrastructure.
     - All values and VMware object names are case sensitive.
 version_added: 2.5
 author:
@@ -35,18 +35,21 @@ options:
      - Name of the datastore to match.
      - If set, facts of specific datastores are returned.
      required: False
+     type: str
    datacenter:
      description:
      - Datacenter to search for datastores.
      - This parameter is required, if C(cluster) is not supplied.
      required: False
      aliases: ['datacenter_name']
+     type: str
    cluster:
      description:
      - Cluster to search for datastores.
      - If set, facts of datastores belonging this clusters will be returned.
      - This parameter is required, if C(datacenter) is not supplied.
      required: False
+     type: str
    gather_nfs_mount_info:
     description:
     - Gather mount information of NFS datastores.

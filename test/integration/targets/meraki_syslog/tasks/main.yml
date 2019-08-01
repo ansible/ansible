@@ -45,15 +45,19 @@
       auth_key: '{{ auth_key }}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: '{{syslog_test_net_name}}'
+      net_name: '{{test_net_name}}'
       type: appliance
     delegate_to: localhost
+    register: new_net
+
+  - set_fact:
+      net_id: '{{new_net.data.id}}'
 
   - name: Query syslog settings
     meraki_syslog:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
-      net_name: '{{syslog_test_net_name}}'
+      net_name: '{{test_net_name}}'
       state: query
     delegate_to: localhost
     register: query_all
@@ -65,7 +69,7 @@
     meraki_syslog:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
-      net_name: '{{syslog_test_net_name}}'
+      net_name: '{{test_net_name}}'
       state: present
       servers:
         - host: 192.0.1.2
@@ -86,7 +90,7 @@
     meraki_syslog:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
-      net_name: '{{syslog_test_net_name}}'
+      net_name: '{{test_net_name}}'
       state: present
       servers:
         - host: 192.0.1.2
@@ -104,11 +108,11 @@
         - create_server_idempotency.changed == False
         - create_server_idempotency.data is defined
 
-  - name: Set multiple syslog servers  # Broken
+  - name: Set multiple syslog servers
     meraki_syslog:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
-      net_name: '{{syslog_test_net_name}}'
+      net_id: '{{net_id}}'
       state: present
       servers:
         - host: 192.0.1.3
@@ -141,7 +145,7 @@
     meraki_syslog:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
-      net_name: '{{syslog_test_net_name}}'      
+      net_name: '{{test_net_name}}'      
       state: present
       servers:
         - host: 192.0.1.6
@@ -163,7 +167,7 @@
     meraki_syslog:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
-      net_name: '{{syslog_test_net_name}}'
+      net_name: '{{test_net_name}}'
       state: present
       servers:
         - host: 192.0.1.2
@@ -187,7 +191,7 @@
         auth_key: '{{ auth_key }}'
         state: absent
         org_name: '{{test_org_name}}'
-        net_name: '{{syslog_test_net_name}}'
+        net_name: '{{test_net_name}}'
       delegate_to: localhost
       register: delete_all
       ignore_errors: yes

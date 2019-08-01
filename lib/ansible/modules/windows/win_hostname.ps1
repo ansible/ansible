@@ -11,7 +11,8 @@ $params = Parse-Args $args -supports_check_mode $true
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$current_computer_name = $env:ComputerName
+$current_computer_name = (Get-CimInstance -Class Win32_ComputerSystem).DNSHostname
+
 $result = @{
    changed = $false
    old_name = $current_computer_name

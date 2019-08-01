@@ -1,0 +1,2 @@
+bugfixes:
+  - fact_cache - Define the first_order_merge method for the legacy FactCache.update(key, value).

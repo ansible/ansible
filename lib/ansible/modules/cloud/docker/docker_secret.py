@@ -152,14 +152,20 @@ secret_id:
 
 import base64
 import hashlib
+import traceback
 
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    compare_generic,
+    RequestException,
+)
 from ansible.module_utils._text import to_native, to_bytes
 
 
@@ -281,13 +287,18 @@ def main():
         min_docker_api_version='1.25',
     )
 
-    results = dict(
-        changed=False,
-        secret_id=''
-    )
+    try:
+        results = dict(
+            changed=False,
+            secret_id=''
+        )
 
-    SecretManager(client, results)()
-    client.module.exit_json(**results)
+        SecretManager(client, results)()
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

@@ -95,7 +95,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that ssl_policy was deleted
   gcp_compute_ssl_policy_facts:
       filters:
@@ -128,4 +127,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

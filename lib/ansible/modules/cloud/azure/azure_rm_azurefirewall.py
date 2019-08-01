@@ -19,7 +19,7 @@ module: azure_rm_azurefirewall
 version_added: '2.9'
 short_description: Manage Azure Firewall instance.
 description:
-  - 'Create, update and delete instance of Azure Firewall.'
+  - Create, update and delete instance of Azure Firewall.
 options:
   resource_group:
     description:
@@ -600,6 +600,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 modifiers = {}
                 self.create_compare_modifiers(self.module_arg_spec, '', modifiers)
                 self.results['modifiers'] = modifiers
+                self.results['compare'] = []
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
 

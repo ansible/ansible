@@ -602,7 +602,7 @@ class AdvanceAcl(object):
 
             if self.acl_type:
                 conf_str += "<aclType></aclType>"
-            if self.acl_num:
+            if self.acl_num or self.acl_name.isdigit():
                 conf_str += "<aclNumber></aclNumber>"
             if self.acl_step:
                 conf_str += "<aclStep></aclStep>"
@@ -624,7 +624,7 @@ class AdvanceAcl(object):
 
                 # parse acl
                 acl_info = root.findall(
-                    "data/acl/aclGroups/aclGroup")
+                    "acl/aclGroups/aclGroup")
                 if acl_info:
                     for tmp in acl_info:
                         tmp_dict = dict()
@@ -635,22 +635,42 @@ class AdvanceAcl(object):
                         self.cur_acl_cfg["acl_info"].append(tmp_dict)
 
                 if self.cur_acl_cfg["acl_info"]:
+                    find_list = list()
                     for tmp in self.cur_acl_cfg["acl_info"]:
-                        find_flag = True
+                        cur_cfg_dict = dict()
+                        exist_cfg_dict = dict()
 
-                        if self.acl_name and tmp.get("aclNumOrName") != self.acl_name:
-                            find_flag = False
-                        if self.acl_type and tmp.get("aclType") != self.acl_type:
-                            find_flag = False
-                        if self.acl_num and tmp.get("aclNumber") != self.acl_num:
-                            find_flag = False
-                        if self.acl_step and tmp.get("aclStep") != self.acl_step:
-                            find_flag = False
-                        if self.acl_description and tmp.get("aclDescription") != self.acl_description:
-                            find_flag = False
+                        if self.acl_name:
+                            if self.acl_name.isdigit() and tmp.get("aclNumber"):
+                                cur_cfg_dict["aclNumber"] = self.acl_name
+                                exist_cfg_dict["aclNumber"] = tmp.get("aclNumber")
+                            else:
+                                cur_cfg_dict["aclNumOrName"] = self.acl_name
+                                exist_cfg_dict["aclNumOrName"] = tmp.get("aclNumOrName")
+                        if self.acl_type:
+                            cur_cfg_dict["aclType"] = self.acl_type
+                            exist_cfg_dict["aclType"] = tmp.get("aclType")
+                        if self.acl_num:
+                            cur_cfg_dict["aclNumber"] = self.acl_num
+                            exist_cfg_dict["aclNumber"] = tmp.get("aclNumber")
+                        if self.acl_step:
+                            cur_cfg_dict["aclStep"] = self.acl_step
+                            exist_cfg_dict["aclStep"] = tmp.get("aclStep")
+                        if self.acl_description:
+                            cur_cfg_dict["aclDescription"] = self.acl_description
+                            exist_cfg_dict["aclDescription"] = tmp.get("aclDescription")
 
-                        if find_flag:
+                        if cur_cfg_dict == exist_cfg_dict:
+                            find_bool = True
+                        else:
+                            find_bool = False
+                        find_list.append(find_bool)
+                    for mem in find_list:
+                        if mem:
+                            find_flag = True
                             break
+                        else:
+                            find_flag = False
                 else:
                     find_flag = False
 
@@ -1001,7 +1021,7 @@ class AdvanceAcl(object):
 
                     # parse advance rule
                     adv_rule_info = root.findall(
-                        "data/acl/aclGroups/aclGroup/aclRuleAdv4s/aclRuleAdv4")
+                        "acl/aclGroups/aclGroup/aclRuleAdv4s/aclRuleAdv4")
                     if adv_rule_info:
                         for tmp in adv_rule_info:
                             tmp_dict = dict()

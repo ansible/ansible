@@ -8,7 +8,7 @@
     validate_certs: no
     folder: '{{ item.folder }}'
     name: '{{ item.name }}'
-    state: poweredon
+    state: poweredoff
     guest_id: debian8_64Guest
     disk:
     - size_gb: 1
@@ -20,7 +20,7 @@
       scsi: paravirtual
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] Fedora-Workstation-Live-x86_64-29-1.2.iso"
+      iso_path: "[{{ ds1 }}] fedora.iso"
     networks:
     - name: VM Network
   with_items: '{{ virtual_machines }}'
@@ -36,7 +36,7 @@
     folder: '{{ item.folder }}'
     cluster: '{{ item.cluster }}'
     name: '{{ item.name }}'
-    state: poweredon
+    state: poweredoff
     guest_id: debian8_64Guest
     disk:
     - size_gb: 1
@@ -48,7 +48,7 @@
       scsi: paravirtual
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] Fedora-Workstation-Live-x86_64-29-1.2.iso"
+      iso_path: "[{{ ds1 }}] fedora.iso"
     networks:
     - name: VM Network
   with_items: '{{ virtual_machines_in_cluster }}'

@@ -10,7 +10,17 @@
       setup_attach_host: true
 
   # TODO: akasurde: VCSIM does not suport network manager system
-  # FIXME: Implement check-mode support
+  - name: Ensure the vswitch is not already here
+    vmware_vswitch:
+      validate_certs: no
+      hostname: '{{ item.host }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
+      switch: '{{ item.switch }}'
+      state: absent
+    with_items:
+      - {host: "{{ esxi1 }}", switch: "vmswitch_0001"}
+      - {host: "{{ esxi2 }}", switch: "vmswitch_0002"}
 
   - name: Add a nic to a switch
     vmware_vswitch:
@@ -19,9 +29,10 @@
       password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
-      nics: vnic_1
+      nics: vmnic1
       state: present
     register: add_nic_run
+  - debug: var=add_nic_run
   - assert:
       that:
       - add_nic_run.changed == true
@@ -33,29 +44,13 @@
       password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
-      nics: vnic_1
+      nics: vmnic1
       state: present
     register: add_nic_again_run
   - assert:
       that:
       - add_nic_again_run.changed == false
 
-  - name: Remove a switch (check-mode)
-    vmware_vswitch:
-      hostname: '{{ esxi1 }}'
-      username: '{{ esxi_user }}'
-      password: '{{ esxi_password }}'
-      validate_certs: no
-      switch: vmswitch_0001
-      state: absent
-    check_mode: yes
-    register: remove_nic_check
-  # FIXME: Implement check-mode support
-  - assert:
-      that:
-      - remove_nic_check.changed == true
-
-  # FIXME: Removing a switch fails
   - name: Remove a switch
     vmware_vswitch:
       hostname: '{{ esxi1 }}'
@@ -67,24 +62,8 @@
     register: remove_nic_run
   - assert:
       that:
-      - remove_nic_run.changed == true
+      - remove_nic_run is changed
 
-  - name: Remove a switch again (check-mode)
-    vmware_vswitch:
-      hostname: '{{ esxi1 }}'
-      username: '{{ esxi_user }}'
-      password: '{{ esxi_password }}'
-      validate_certs: no
-      switch: vmswitch_0001
-      state: absent
-    check_mode: yes
-    register: remove_nic_again_check
-  # FIXME: Implement check-mode support
-  - assert:
-      that:
-      - remove_nic_again_check_mode.changed == false
-
-  # FIXME: Removing a switch fails
   - name: Remove a switch again
     vmware_vswitch:
       hostname: '{{ esxi1 }}'
@@ -96,19 +75,19 @@
     register: remove_nic_again_run
   - assert:
       that:
-      - remove_nic_again_run.changed == false
+      - not (remove_nic_again_run is changed)
 
   - name: Add vswitch to a specific host system
     vmware_vswitch:
       validate_certs: False
-      hostname: '{{ esxi1 }}'
-      username: '{{ esxi_user }}'
-      password: '{{ esxi_password }}'
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
       switch: vmswitch_0002
-      nics: vnic_1
-      esxi_hostname: guest1
+      nics: vmnic1
+      esxi_hostname: '{{ esxi2 }}'
     register: add_vswitch_with_host_system
   - debug: var=add_vswitch_with_host_system
   - assert:
       that:
-      - add_vswitch_with_host_system.changed == true
+      - add_vswitch_with_host_system is changed

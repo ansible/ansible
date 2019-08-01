@@ -22,10 +22,8 @@ version_added: "2.4"
 short_description: Managed Azure Virtual Machine extension
 
 description:
-    - Create, update and delete Azure Virtual Machine Extension
-
-notes:
-    - This module was called C(azure_rm_virtualmachine_extension) before Ansible 2.8. The usage did not change.
+    - Create, update and delete Azure Virtual Machine Extension.
+    - Note that this module was called M(azure_rm_virtualmachine_extension) before Ansible 2.8. The usage did not change.
 
 options:
     resource_group:
@@ -34,19 +32,18 @@ options:
         required: true
     name:
         description:
-            - Name of the vm extension
+            - Name of the vm extension.
         required: true
     state:
         description:
-            - Assert the state of the vm extension. Use C(present) to create or update a vm extension and
-              C(absent) to delete a vm extension.
+            - State of the vm extension. Use C(present) to create or update a vm extension and C(absent) to delete a vm extension.
         default: present
         choices:
             - absent
             - present
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
     virtual_machine_name:
         description:
             - The name of the virtual machine where the extension should be create or updated.
@@ -74,8 +71,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Sertac Ozercan (@sozercan)"
-    - "Julien Stroheker (@julienstroheker)"
+    - Sertac Ozercan (@sozercan)
+    - Julien Stroheker (@julienstroheker)
 '''
 
 EXAMPLES = '''
@@ -102,13 +99,18 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the vm extension
+    description:
+        - Current state of the vm extension.
     returned: always
     type: dict
+    sample: { "state":"Deleted" }
+
 changed:
-    description: Whether or not the resource has changed
+    description:
+        - Whether or not the resource has changed.
     returned: always
     type: bool
+    sample: true
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

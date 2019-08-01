@@ -1,7 +1,7 @@
 ---
 - set_fact: snmp_type="inform"
 - set_fact: snmp_version="v3"
-- set_fact: snmp_auth="noauth"
+- set_fact: snmp_auth="priv"
 
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }} sanity test"
 - debug: msg="Using provider={{ connection.transport }}"

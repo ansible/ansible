@@ -194,8 +194,17 @@ EXAMPLES = '''
               path: /disk/fedora.qcow2
           disk:
             bus: virtio
+      node_affinity:
+        soft:
+          - weight: 1
+            term:
+              match_expressions:
+                - key: security
+                  operator: In
+                  values:
+                    - S2
 
-- name: Create virtual machine with datavolume
+- name: Create virtual machine with datavolume and specify node affinity
   kubevirt_vm:
     name: myvm
     namespace: default
@@ -209,6 +218,14 @@ EXAMPLES = '''
           accessModes:
             - ReadWriteOnce
           storage: 5Gi
+    node_affinity:
+      hard:
+        - term:
+            match_expressions:
+              - key: security
+                operator: In
+                values:
+                  - S1
 
 - name: Remove virtual machine 'myvm'
   kubevirt_vm:
@@ -380,7 +397,7 @@ class KubeVirtVM(KubeVirtRawModule):
         template['metadata']['labels']['vm.cnv.io/name'] = self.params.get('name')
         dummy, definition = self.construct_vm_definition(kind, definition, template, defaults)
 
-        return dict(self.merge_dicts(definition, processedtemplate))
+        return self.merge_dicts(definition, processedtemplate)
 
     def execute_module(self):
         # Parse parameters specific to this module:

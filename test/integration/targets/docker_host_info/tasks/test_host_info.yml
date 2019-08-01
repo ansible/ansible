@@ -199,7 +199,8 @@
   - assert:
       that:
         - output is failed
-        - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.2.0') in output.msg"
+        - "('version is ' ~ docker_py_version ~ ' ') in output.msg"
+        - "'Minimum version required is 2.2.0 ' in output.msg"
     when: docker_py_version is version('2.2.0', '<')
 
   - name: Get info on Docker host and get disk usage with verbose output
@@ -223,7 +224,8 @@
   - assert:
       that:
         - output is failed
-        - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.2.0') in output.msg"
+        - "('version is ' ~ docker_py_version ~ ' ') in output.msg"
+        - "'Minimum version required is 2.2.0 ' in output.msg"
     when: docker_py_version is version('2.2.0', '<')
 
   - name: Get info on Docker host, disk usage and get all lists together

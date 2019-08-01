@@ -542,6 +542,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -1654,15 +1655,26 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
             if self.extended_key_usage:
                 return NO_EXTENSION
 
+    def _normalize_san(self, san):
+        # Apparently OpenSSL returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+        # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
+        if san.startswith('IP Address:'):
+            san = 'IP:' + san[len('IP Address:'):]
+        if san.startswith('IP:'):
+            ip = compat_ipaddress.ip_address(san[3:])
+            san = 'IP:{0}'.format(ip.compressed)
+        return san
+
     def _validate_subject_alt_name(self):
         found = False
         for extension_idx in range(0, self.cert.get_extension_count()):
             extension = self.cert.get_extension(extension_idx)
             if extension.get_short_name() == b'subjectAltName':
                 found = True
-                l_altnames = [altname.replace(b'IP Address', b'IP') for altname in
-                              to_bytes(extension, errors='surrogate_or_strict').split(b', ')]
-                if not compare_sets(self.subject_alt_name, l_altnames, self.subject_alt_name_strict):
+                l_altnames = [self._normalize_san(altname.strip()) for altname in
+                              to_text(extension, errors='surrogate_or_strict').split(', ')]
+                sans = [self._normalize_san(to_text(san, errors='surrogate_or_strict')) for san in self.subject_alt_name]
+                if not compare_sets(sans, l_altnames, self.subject_alt_name_strict):
                     return self.subject_alt_name, l_altnames
         if not found:
             # This is only bad if the user specified a non-empty list
@@ -1859,7 +1871,8 @@ def main():
 
             if backend == 'pyopenssl':
                 if not PYOPENSSL_FOUND:
-                    module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                    module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                     exception=PYOPENSSL_IMP_ERR)
                 if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
                     try:
                         getattr(crypto.X509Req, 'get_extensions')
@@ -1876,7 +1889,8 @@ def main():
                     certificate = AssertOnlyCertificate(module)
             elif backend == 'cryptography':
                 if not CRYPTOGRAPHY_FOUND:
-                    module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                    module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                     exception=CRYPTOGRAPHY_IMP_ERR)
                 if module.params['selfsigned_version'] == 2 or module.params['ownca_version'] == 2:
                     module.fail_json(msg='The cryptography backend does not support v2 certificates, '
                                          'use select_crypto_backend=pyopenssl for v2 certificates')

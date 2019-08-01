@@ -28,7 +28,7 @@ Why Use DSC?
 DSC and Ansible modules have a common goal which is to define and ensure the state of a
 resource. Because of
 this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
-and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends 
+and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends
 on the scenario.
 
 Reasons for using an Ansible module over a DSC resource:
@@ -105,7 +105,9 @@ fail if the option name is incorrect, a mandatory option is not set, or the
 value is not a valid choice. When running Ansible with a verbosity level of 3
 or more (``-vvv``), the return value will contain the possible invocation
 options based on the ``resource_name`` specified. Here is an example of the
-invocation output for the above ``Registry`` task::
+invocation output for the above ``Registry`` task:
+
+.. code-block:: ansible-output
 
     changed: [2016] => {
         "changed": true,
@@ -323,7 +325,7 @@ modules can be installed to manage other resources that are not usually availabl
 
 Finding Custom DSC Resources
 ----------------------------
-You can use the 
+You can use the
 `PSGallery <https://www.powershellgallery.com/>`_ to find custom resources, along with documentation on how to install them  on a Windows host.
 
 The ``Find-DscResource`` cmdlet can also be used to find custom resources. For example:
@@ -364,10 +366,7 @@ The first two methods above only work when the host has access to the internet.
 When a host does not have internet access, the module must first be installed
 using the methods above on another host with internet access and then copied
 across. To save a module to a local filepath, the following PowerShell cmdlet
-can be run:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+can be run::
 
     Save-Module -Name xWebAdministration -Path C:\temp
 
@@ -494,11 +493,9 @@ Setup IIS Website
 
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

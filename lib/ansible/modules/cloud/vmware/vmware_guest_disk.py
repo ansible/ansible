@@ -36,11 +36,19 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is a required parameter, if parameter C(uuid) is not supplied.
+     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is a required parameter, if parameter C(name) is not supplied.
+     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -56,13 +64,15 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
      required: True
+     type: str
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -74,7 +84,7 @@ options:
      - 'Valid attributes are:'
      - ' - C(size[_tb,_gb,_mb,_kb]) (integer): Disk storage size in specified unit.'
      - '   If C(size) specified then unit must be specified. There is no space allowed in between size number and unit.'
-     - '   Only first occurance in disk element will be considered, even if there are multiple size* parameters available.'
+     - '   Only first occurrence in disk element will be considered, even if there are multiple size* parameters available.'
      - ' - C(type) (string): Valid values are:'
      - '     - C(thin) thin disk'
      - '     - C(eagerzeroedthick) eagerzeroedthick disk'
@@ -96,6 +106,7 @@ options:
      - '   If C(state) is set to C(present) and disk exists with different size, disk size is increased.'
      - '   Reducing disk size is not allowed.'
      default: []
+     type: list
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -141,6 +152,21 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
     name: VM_225
+    disk:
+      - state: absent
+        scsi_controller: 1
+        unit_number: 1
+  delegate_to: localhost
+  register: disk_facts
+
+- name: Remove disks from virtual machine using moid
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    moid: vm-42
     disk:
       - state: absent
         scsi_controller: 1
@@ -578,7 +604,7 @@ class PyVmomiHelper(PyVmomi):
                 rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
                 rec_action = rec.recommendations[0].action[0]
                 return rec_action.destination.name
-            except Exception as e:
+            except Exception:
                 # There is some error so we fall back to general workflow
                 pass
         datastore = None
@@ -633,13 +659,18 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
         disk=dict(type='list', default=[]),
         use_instance_uuid=dict(type='bool', default=False),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ]
+    )
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path
@@ -653,8 +684,9 @@ def main():
     if not vm:
         # We unable to find the virtual machine user specified
         # Bail out
+        vm_id = (module.params.get('name') or module.params.get('uuid') or module.params.get('moid'))
         module.fail_json(msg="Unable to manage disks for non-existing"
-                             " virtual machine '%s'." % (module.params.get('uuid') or module.params.get('name')))
+                             " virtual machine '%s'." % vm_id)
 
     # VM exists
     try:

@@ -33,7 +33,7 @@ ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is 
 endif
 
 PYTHON=python
-GENERATE_CLI = $(PYTHON) docs/bin/generate_man.py
+GENERATE_CLI = hacking/build-ansible.py generate-man
 
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
@@ -51,7 +51,7 @@ RELEASE ?= 1
 
 # Get the branch information from git
 ifneq ($(shell which git),)
-GIT_DATE := $(shell git log -n 1 --format="%ai")
+GIT_DATE := $(shell git log -n 1 --format="%ci")
 GIT_HASH := $(shell git log -n 1 --format="%h")
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.\/]//g')
 GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
@@ -60,7 +60,7 @@ GITINFO = ""
 endif
 
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
-DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
+DATE := $(shell date -j -r $(shell git log -n 1 --format="%ct") +%Y%m%d%H%M)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)

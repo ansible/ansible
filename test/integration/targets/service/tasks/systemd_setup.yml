@@ -1,5 +1,5 @@
 - name: install the systemd unit file
-  copy: src=ansible.systemd dest=/etc/systemd/system/ansible_test.service
+  copy: src=ansible.systemd dest=/etc/systemd/system/ansible_test.service mode=0644
   register: install_systemd_result
 
 - name: install a broken systemd unit file

@@ -13,7 +13,8 @@ from types import ModuleType
 
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.utils.singleton import Singleton
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -30,11 +31,11 @@ _SYNTHETIC_PACKAGES = {
 }
 
 # TODO: tighten this up to subset Python identifier requirements (and however we want to restrict ns/collection names)
-_collection_qualified_re = re.compile(to_text(r'^(\w+)\.(\w+)\.(\w+)'))
+_collection_qualified_re = re.compile(to_text(r'^(\w+)\.(\w+)\.(\w+)$'))
 
 
 # FIXME: exception handling/error logging
-class AnsibleCollectionLoader(object):
+class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def __init__(self):
         self._n_configured_paths = C.config.get_config_value('COLLECTIONS_PATHS')
 
@@ -66,7 +67,7 @@ class AnsibleCollectionLoader(object):
             sys.modules[pkg_name] = newmod
 
     @property
-    def _n_collection_paths(self):
+    def n_collection_paths(self):
         return self._n_playbook_paths + self._n_configured_paths
 
     def set_playbook_paths(self, b_playbook_paths):
@@ -110,6 +111,11 @@ class AnsibleCollectionLoader(object):
         sub_collection = fullname.count('.') > 1
 
         synpkg_def = _SYNTHETIC_PACKAGES.get(fullname)
+        synpkg_remainder = ''
+
+        if not synpkg_def:
+            synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
+            synpkg_remainder = '.' + fullname.rpartition('.')[2]
 
         # FIXME: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
         if synpkg_def:
@@ -121,7 +127,7 @@ class AnsibleCollectionLoader(object):
 
                 if not map_package:
                     raise KeyError('invalid synthetic map package definition (no target "map" defined)')
-                mod = import_module(map_package)
+                mod = import_module(map_package + synpkg_remainder)
 
                 sys.modules[fullname] = mod
 
@@ -140,12 +146,12 @@ class AnsibleCollectionLoader(object):
                 return newmod
 
         if not parent_pkg:  # top-level package, look for NS subpackages on all collection paths
-            package_paths = [self._extend_path_with_ns(p, fullname) for p in self._n_collection_paths]
+            package_paths = [self._extend_path_with_ns(p, fullname) for p in self.n_collection_paths]
         else:  # subpackage; search in all subpaths (we'll limit later inside a collection)
             package_paths = [self._extend_path_with_ns(p, fullname) for p in parent_pkg.__path__]
 
         for candidate_child_path in package_paths:
-            source = None
+            code_object = None
             is_package = True
             location = None
             # check for implicit sub-package first
@@ -162,6 +168,8 @@ class AnsibleCollectionLoader(object):
 
                     with open(source_path, 'rb') as fd:
                         source = fd.read()
+
+                    code_object = compile(source=source, filename=source_path, mode='exec', flags=0, dont_inherit=True)
                     location = source_path
                     is_package = source_path.endswith('__init__.py')
                     break
@@ -170,7 +178,6 @@ class AnsibleCollectionLoader(object):
                     continue
 
             newmod = ModuleType(fullname)
-            newmod.__package__ = fullname
             newmod.__file__ = location
             newmod.__loader__ = self
 
@@ -180,17 +187,21 @@ class AnsibleCollectionLoader(object):
                 else:
                     newmod.__path__ = package_paths
 
-            if source:
-                # FIXME: decide cases where we don't actually want to exec the code?
-                exec(source, newmod.__dict__)
+                newmod.__package__ = fullname
+            else:
+                newmod.__package__ = parent_pkg_name
 
             sys.modules[fullname] = newmod
+
+            if code_object:
+                # FIXME: decide cases where we don't actually want to exec the code?
+                exec(code_object, newmod.__dict__)
 
             return newmod
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
 
-        return None
+        raise ImportError('module {0} not found'.format(fullname))
 
     @staticmethod
     def _extend_path_with_ns(path, ns):
@@ -299,6 +310,4 @@ def is_collection_ref(candidate_name):
 
 
 def set_collection_playbook_paths(b_playbook_paths):
-    # set for any/all AnsibleCollectionLoader instance(s) on meta_path
-    for loader in (l for l in sys.meta_path if isinstance(l, AnsibleCollectionLoader)):
-        loader.set_playbook_paths(b_playbook_paths)
+    AnsibleCollectionLoader().set_playbook_paths(b_playbook_paths)

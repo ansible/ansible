@@ -97,7 +97,7 @@ todo:
     - Re-implement tar support using native tarfile module.
     - Re-implement zip support using native zipfile module.
 notes:
-    - Requires C(gtar)/C(unzip) command on target host.
+    - Requires C(zipinfo) and C(gtar)/C(unzip) command on target host.
     - Can handle I(.zip) files using C(unzip) as well as I(.tar), I(.tar.gz), I(.tar.bz2) and I(.tar.xz) files using C(gtar).
     - Does not handle I(.gz) files, I(.bz2) files or I(.xz) files that do not contain a I(.tar) archive.
     - Uses gtar's C(--diff) arg to calculate if changed or not. If this C(arg) is not
@@ -195,9 +195,9 @@ class UnarchiveError(Exception):
 
 class ZipArchive(object):
 
-    def __init__(self, src, dest, file_args, module):
+    def __init__(self, src, b_dest, file_args, module):
         self.src = src
-        self.dest = dest
+        self.b_dest = b_dest
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
@@ -435,9 +435,9 @@ class ZipArchive(object):
             # DEBUG
 #            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
 
-            dest = os.path.join(self.dest, path)
+            b_dest = os.path.join(self.b_dest, to_bytes(path, errors='surrogate_or_strict'))
             try:
-                st = os.lstat(dest)
+                st = os.lstat(b_dest)
             except Exception:
                 change = True
                 self.includes.append(path)
@@ -504,7 +504,7 @@ class ZipArchive(object):
 
             # Compare file checksums
             if stat.S_ISREG(st.st_mode):
-                crc = crc32(dest)
+                crc = crc32(b_dest)
                 if crc != self._crc32(path):
                     change = True
                     err += 'File %s differs in CRC32 checksum (0x%08x vs 0x%08x)\n' % (path, self._crc32(path), crc)
@@ -602,7 +602,7 @@ class ZipArchive(object):
         # cmd.extend(map(shell_escape, self.includes))
         if self.excludes:
             cmd.extend(['-x'] + self.excludes)
-        cmd.extend(['-d', self.dest])
+        cmd.extend(['-d', self.b_dest])
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
@@ -618,9 +618,9 @@ class ZipArchive(object):
 
 class TgzArchive(object):
 
-    def __init__(self, src, dest, file_args, module):
+    def __init__(self, src, b_dest, file_args, module):
         self.src = src
-        self.dest = dest
+        self.b_dest = b_dest
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
@@ -655,7 +655,7 @@ class TgzArchive(object):
         if self._files_in_archive and not force_refresh:
             return self._files_in_archive
 
-        cmd = [self.cmd_path, '--list', '-C', self.dest]
+        cmd = [self.cmd_path, '--list', '-C', self.b_dest]
         if self.zipflag:
             cmd.append(self.zipflag)
         if self.opts:
@@ -663,7 +663,8 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
-        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
@@ -691,7 +692,7 @@ class TgzArchive(object):
         return self._files_in_archive
 
     def is_unarchived(self):
-        cmd = [self.cmd_path, '--diff', '-C', self.dest]
+        cmd = [self.cmd_path, '--diff', '-C', self.b_dest]
         if self.zipflag:
             cmd.append(self.zipflag)
         if self.opts:
@@ -705,7 +706,7 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
-        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
         # Check whether the differences are in something that we're
         # setting anyway
@@ -742,7 +743,7 @@ class TgzArchive(object):
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
 
     def unarchive(self):
-        cmd = [self.cmd_path, '--extract', '-C', self.dest]
+        cmd = [self.cmd_path, '--extract', '-C', self.b_dest]
         if self.zipflag:
             cmd.append(self.zipflag)
         if self.opts:
@@ -756,7 +757,7 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
-        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
@@ -778,23 +779,23 @@ class TgzArchive(object):
 
 # Class to handle tar files that aren't compressed
 class TarArchive(TgzArchive):
-    def __init__(self, src, dest, file_args, module):
-        super(TarArchive, self).__init__(src, dest, file_args, module)
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarArchive, self).__init__(src, b_dest, file_args, module)
         # argument to tar
         self.zipflag = ''
 
 
 # Class to handle bzip2 compressed tar files
 class TarBzipArchive(TgzArchive):
-    def __init__(self, src, dest, file_args, module):
-        super(TarBzipArchive, self).__init__(src, dest, file_args, module)
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarBzipArchive, self).__init__(src, b_dest, file_args, module)
         self.zipflag = '-j'
 
 
 # Class to handle xz compressed tar files
 class TarXzArchive(TgzArchive):
-    def __init__(self, src, dest, file_args, module):
-        super(TarXzArchive, self).__init__(src, dest, file_args, module)
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarXzArchive, self).__init__(src, b_dest, file_args, module)
         self.zipflag = '-J'
 
 
@@ -833,6 +834,7 @@ def main():
 
     src = module.params['src']
     dest = module.params['dest']
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
 
@@ -856,10 +858,10 @@ def main():
         module.fail_json(msg="Source '%s' not readable, %s" % (src, to_native(e)))
 
     # is dest OK to receive tar file?
-    if not os.path.isdir(dest):
+    if not os.path.isdir(b_dest):
         module.fail_json(msg="Destination '%s' is not a directory" % dest)
 
-    handler = pick_handler(src, dest, file_args, module)
+    handler = pick_handler(src, b_dest, file_args, module)
 
     res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
@@ -892,7 +894,7 @@ def main():
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
         for filename in handler.files_in_archive:
-            file_args['path'] = os.path.join(dest, filename)
+            file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)

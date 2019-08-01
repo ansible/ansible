@@ -6,8 +6,8 @@
 
 - name: Registering service name
   set_fact:
-    service_names: "{{ service_names }} + [service_name]"
-    volume_names: "{{ volume_names }} + [volume_name_1, volume_name_2]"
+    service_names: "{{ service_names + [service_name] }}"
+    volume_names: "{{ volume_names + [volume_name_1, volume_name_2] }}"
 
 - docker_volume:
     name: "{{ volume_name }}"
@@ -507,6 +507,53 @@
     that:
     - mounts_tmpfs_size_1 is failed
     - "'Minimum version required' in mounts_tmpfs_size_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
+
+####################################################################
+## mounts.source ###################################################
+####################################################################
+
+- name: mounts.source (empty for tmpfs)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: ""
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+  register: mounts_tmpfs_source_1
+  ignore_errors: yes
+
+- name: mounts.source (empty for tmpfs idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - source: ""
+        target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+  register: mounts_tmpfs_source_2
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - mounts_tmpfs_source_1 is changed
+      - mounts_tmpfs_source_2 is not changed
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - mounts_tmpfs_source_1 is failed
+    - "'Minimum version required' in mounts_tmpfs_source_1.msg"
   when: docker_py_version is version('2.6.0', '<')
 
 ####################################################################

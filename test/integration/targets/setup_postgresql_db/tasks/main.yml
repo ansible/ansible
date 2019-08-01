@@ -29,7 +29,9 @@
   ignore_errors: True
 
 - name: remove old db (RedHat or Suse)
-  command: rm -rf "{{ pg_dir }}"
+  file:
+    path: "{{ pg_dir }}"
+    state: absent
   ignore_errors: True
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
@@ -37,18 +39,21 @@
   file:
     path: "{{ pg_dir }}"
     state: absent
+  ignore_errors: True
   when: ansible_os_family == "FreeBSD"
 
-# Theoretically, pg_dropcluster should work but it doesn't so rm files
-- name: remove old db config (debian)
-  command: rm -rf /etc/postgresql
+# Theoretically, pg_dropcluster should work but it doesn't so remove files
+- name: remove old db config and files (debian)
+  file:
+    path: '{{ loop_item }}'
+    state: absent
   ignore_errors: True
   when: ansible_os_family == "Debian"
-
-- name: remove old db files (debian)
-  command: rm -rf /var/lib/postgresql
-  ignore_errors: True
-  when: ansible_os_family == "Debian"
+  loop:
+  - /etc/postgresql
+  - /var/lib/postgresql
+  loop_control:
+    loop_var: loop_item
 
 - name: install dependencies for postgresql test
   package: name={{ postgresql_package_item }} state=present
@@ -145,3 +150,43 @@
 
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted
+
+########################
+# Setup dummy extension:
+- name: copy control file for dummy ext
+  copy:
+    src: dummy.control
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/dummy.control"
+    mode: 0444
+  when: ansible_os_family == 'Debian'
+
+- name: copy version files for dummy ext
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+  with_items:
+  - dummy--1.0.sql
+  - dummy--2.0.sql
+  - dummy--3.0.sql
+  when: ansible_os_family == 'Debian'
+
+- name: add update paths
+  file:
+    path: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+    state: touch
+  with_items:
+  - dummy--1.0--2.0.sql
+  - dummy--2.0--3.0.sql
+  when: ansible_os_family == 'Debian'
+
+- name: Get PostgreSQL version
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: "echo 'SHOW SERVER_VERSION' | psql --tuples-only --no-align --dbname postgres"
+  register: postgres_version_resp
+
+- name: Print PostgreSQL server version
+  debug:
+    msg: "{{ postgres_version_resp.stdout }}"

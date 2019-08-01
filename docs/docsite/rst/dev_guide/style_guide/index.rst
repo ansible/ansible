@@ -141,6 +141,17 @@ Adding internal links
 
 The second example adds custom text for the link.
 
+Adding links to modules and plugins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Module links use the module name followed by ``_module`` for the anchor.
+* Plugin links use the plugin name followed by the plugin type. For example, :ref:`enable become plugin <enable_become>`).
+
+.. code-block:: rst
+
+   :ref:`this module <this_module>``
+   :ref:`that connection plugin <that_connection>`
+
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
 

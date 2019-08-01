@@ -23,7 +23,7 @@ version_added: "1.8"
 author: "Alexander Bulimov (@abulimov)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
     state:
         description:
@@ -121,16 +121,20 @@ EXAMPLES = '''
     login_password: pAsSwOrD
 '''
 
+
+import atexit
 import datetime
 import time
+import traceback
 
 try:
     from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, period, name, desc):
@@ -288,7 +292,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     host_names = module.params['host_names']
     host_groups = module.params['host_groups']
@@ -314,6 +318,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     # zabbix_api can call sys.exit() so we need to catch SystemExit here
     except (Exception, SystemExit) as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)

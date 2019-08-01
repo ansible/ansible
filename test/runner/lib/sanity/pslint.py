@@ -1,86 +1,76 @@
 """Sanity test using PSScriptAnalyzer."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-import collections
 import json
 import os
 import re
 
+import lib.types as t
+
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
 )
 
+from lib.target import (
+    TestTarget,
+)
+
 from lib.util import (
     SubprocessError,
-    run_command,
     find_executable,
-    read_lines_without_comments,
+)
+
+from lib.util_common import (
+    run_command,
+    ANSIBLE_ROOT,
 )
 
 from lib.config import (
     SanityConfig,
 )
 
-from lib.test import (
-    calculate_confidence,
-    calculate_best_confidence,
+from lib.data import (
+    data_context,
 )
 
-PSLINT_SKIP_PATH = 'test/sanity/pslint/skip.txt'
-PSLINT_IGNORE_PATH = 'test/sanity/pslint/ignore.txt'
 
-
-class PslintTest(SanitySingleVersion):
+class PslintTest(SanityVersionNeutral):
     """Sanity test using PSScriptAnalyzer."""
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'AnsibleTest'
+
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        return [target for target in targets if os.path.splitext(target.path)[1] in ('.ps1', '.psm1', '.psd1')]
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        skip_paths = read_lines_without_comments(PSLINT_SKIP_PATH)
+        settings = self.load_processor(args)
 
-        invalid_ignores = []
-
-        ignore_entries = read_lines_without_comments(PSLINT_IGNORE_PATH)
-        ignore = collections.defaultdict(dict)
-        line = 0
-
-        for ignore_entry in ignore_entries:
-            line += 1
-
-            if not ignore_entry:
-                continue
-
-            if ' ' not in ignore_entry:
-                invalid_ignores.append((line, 'Invalid syntax'))
-                continue
-
-            path, code = ignore_entry.split(' ', 1)
-
-            if not os.path.exists(path):
-                invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
-                continue
-
-            ignore[path][code] = line
-
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.ps1', '.psm1', '.psd1') and i.path not in skip_paths)
-
-        if not paths:
-            return SanitySkipped(self.name)
+        paths = [target.path for target in targets.include]
 
         if not find_executable('pwsh', required='warning'):
             return SanitySkipped(self.name)
 
-        # Make sure requirements are installed before running sanity checks
-        cmds = [
-            ['test/runner/requirements/sanity.ps1'],
-            ['test/sanity/pslint/pslint.ps1'] + paths
-        ]
+        cmds = []
+
+        if args.requirements:
+            cmds.append([os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/sanity.ps1')])
+
+        cmds.append([os.path.join(ANSIBLE_ROOT, 'test/sanity/pslint/pslint.ps1')] + paths)
+
+        stdout = ''
 
         for cmd in cmds:
             try:
@@ -104,7 +94,7 @@ class PslintTest(SanitySingleVersion):
             'ParseError',
         ]
 
-        cwd = os.getcwd() + '/'
+        cwd = data_context().content.root + '/'
 
         # replace unicode smart quotes and ellipsis with ascii versions
         stdout = re.sub(u'[\u2018\u2019]', "'", stdout)
@@ -122,63 +112,7 @@ class PslintTest(SanitySingleVersion):
             level=severity[m['Severity']],
         ) for m in messages]
 
-        line = 0
-
-        filtered = []
-
-        for error in errors:
-            if error.code in ignore[error.path]:
-                ignore[error.path][error.code] = None  # error ignored, clear line number of ignore entry to track usage
-            else:
-                filtered.append(error)  # error not ignored
-
-        errors = filtered
-
-        for invalid_ignore in invalid_ignores:
-            errors.append(SanityMessage(
-                code='A201',
-                message=invalid_ignore[1],
-                path=PSLINT_IGNORE_PATH,
-                line=invalid_ignore[0],
-                column=1,
-                confidence=calculate_confidence(PSLINT_IGNORE_PATH, line, args.metadata) if args.metadata.changes else None,
-            ))
-
-        for path in skip_paths:
-            line += 1
-
-            if not path:
-                continue
-
-            if not os.path.exists(path):
-                # Keep files out of the list which no longer exist in the repo.
-                errors.append(SanityMessage(
-                    code='A101',
-                    message='Remove "%s" since it does not exist' % path,
-                    path=PSLINT_SKIP_PATH,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((PSLINT_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
-
-        for path in paths:
-            if path not in ignore:
-                continue
-
-            for code in ignore[path]:
-                line = ignore[path][code]
-
-                if not line:
-                    continue
-
-                errors.append(SanityMessage(
-                    code='A102',
-                    message='Remove since "%s" passes "%s" test' % (path, code),
-                    path=PSLINT_IGNORE_PATH,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((PSLINT_IGNORE_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
+        errors = settings.process_errors(errors, paths)
 
         if errors:
             return SanityFailure(self.name, messages=errors)

@@ -22,18 +22,16 @@ __metaclass__ = type
 import sys
 import copy
 
-from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.junos.junos import junos_provider_spec
-from ansible.plugins.loader import connection_loader, module_loader
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.utils.display import Display
 
 display = Display()
 
-CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
+CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_ping', 'junos_command']
 
 
 class ActionModule(ActionNetworkModule):
@@ -42,10 +40,6 @@ class ActionModule(ActionNetworkModule):
         del tmp  # tmp no longer has any effect
 
         self._config_module = True if self._task.action == 'junos_config' else False
-        module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
-        if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
-            return super(ActionModule, self).run(task_vars=task_vars)
-
         socket_path = None
 
         if self._play_context.connection == 'local':
@@ -94,7 +88,7 @@ class ActionModule(ActionNetworkModule):
                     del self._task.args['provider']
 
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
-                    (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):
+                    (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES[0:2]):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (self._play_context.connection, self._task.action)}
