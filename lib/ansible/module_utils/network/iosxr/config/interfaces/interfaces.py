@@ -17,7 +17,7 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.iosxr.facts.facts import Facts
 from ansible.module_utils.network.iosxr.utils.utils import get_interface_type, dict_diff
-from ansible.module_utils.network.iosxr.utils.utils import remove_command_from_interface, add_command_to_interface
+from ansible.module_utils.network.iosxr.utils.utils import remove_command_from_config_list, add_command_to_config_list
 from ansible.module_utils.network.iosxr.utils.utils import filter_dict_having_none_value, remove_duplicate_interface
 
 
@@ -130,10 +130,9 @@ class Interfaces(ConfigBase):
             else:
                 continue
             have_dict = filter_dict_having_none_value(interface, each)
-            kwargs = {'want': {}, 'have': have_dict}
-            commands.extend(Interfaces._clear_config(**kwargs))
-            kwargs = {'want': interface, 'have': each, 'commands': commands}
-            commands.extend(Interfaces._set_config(**kwargs))
+            want = dict()
+            commands.extend(Interfaces._clear_config(want, have_dict))
+            commands.extend(Interfaces._set_config(interface, each))
         # Remove the duplicate interface call
         commands = remove_duplicate_interface(commands)
 
@@ -158,14 +157,12 @@ class Interfaces(ConfigBase):
                 # We didn't find a matching desired state, which means we can
                 # pretend we recieved an empty desired state.
                 interface = dict(name=each['name'])
-                kwargs = {'want': interface, 'have': each}
-                commands.extend(Interfaces._clear_config(**kwargs))
+                commands.extend(Interfaces._clear_config(interface, each))
                 continue
             have_dict = filter_dict_having_none_value(interface, each)
-            kwargs = {'want': {}, 'have': have_dict}
-            commands.extend(Interfaces._clear_config(**kwargs))
-            kwargs = {'want': interface, 'have': each, 'commands': commands}
-            commands.extend(Interfaces._set_config(**kwargs))
+            want = dict()
+            commands.extend(Interfaces._clear_config(want, have_dict))
+            commands.extend(Interfaces._set_config(interface, each))
         # Remove the duplicate interface call
         commands = remove_duplicate_interface(commands)
 
@@ -188,8 +185,7 @@ class Interfaces(ConfigBase):
                     break
             else:
                 continue
-            kwargs = {'want': interface, 'have': each}
-            commands.extend(Interfaces._set_config(**kwargs))
+            commands.extend(Interfaces._set_config(interface, each))
 
         return commands
 
@@ -212,21 +208,18 @@ class Interfaces(ConfigBase):
                 else:
                     continue
                 interface = dict(name=interface['name'])
-                kwargs = {'want': interface, 'have': each}
-                commands.extend(Interfaces._clear_config(**kwargs))
+                commands.extend(Interfaces._clear_config(interface, each))
         else:
             for each in have:
-                kwargs = {'want': {}, 'have': each}
-                commands.extend(Interfaces._clear_config(**kwargs))
+                want = dict()
+                commands.extend(Interfaces._clear_config(want, each))
 
         return commands
 
     @staticmethod
-    def _set_config(**kwargs):
+    def _set_config(want, have):
         # Set the interface config based on the want and have config
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
         interface = 'interface ' + want['name']
 
         # Get the diff b/w want and have
@@ -239,20 +232,19 @@ class Interfaces(ConfigBase):
             for item in Interfaces.params:
                 if diff.get(item):
                     cmd = item + ' ' + str(want.get(item))
-                    add_command_to_interface(interface, cmd, commands)
+                    add_command_to_config_list(interface, cmd, commands)
             if diff.get('enabled'):
-                add_command_to_interface(interface, 'no shutdown', commands)
+                add_command_to_config_list(interface, 'no shutdown', commands)
             elif diff.get('enabled') is False:
-                add_command_to_interface(interface, 'shutdown', commands)
+                add_command_to_config_list(interface, 'shutdown', commands)
 
         return commands
 
     @staticmethod
-    def _clear_config(**kwargs):
+    def _clear_config(want, have):
         # Delete the interface config based on the want and have config
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
+
         if want.get('name'):
             interface_type = get_interface_type(want['name'])
             interface = 'interface ' + want['name']
@@ -261,17 +253,17 @@ class Interfaces(ConfigBase):
             interface = 'interface ' + have['name']
 
         if have.get('description') and want.get('description') != have.get('description'):
-            remove_command_from_interface(interface, 'description', commands)
+            remove_command_from_config_list(interface, 'description', commands)
         if not have.get('enabled') and want.get('enabled') != have.get('enabled'):
             # if enable is False set enable as True which is the default behavior
-            remove_command_from_interface(interface, 'shutdown', commands)
+            remove_command_from_config_list(interface, 'shutdown', commands)
 
         if interface_type.lower() == 'gigabitethernet':
             if have.get('speed') and have.get('speed') != 'auto' and want.get('speed') != have.get('speed'):
-                remove_command_from_interface(interface, 'speed', commands)
+                remove_command_from_config_list(interface, 'speed', commands)
             if have.get('duplex') and have.get('duplex') != 'auto' and want.get('duplex') != have.get('duplex'):
-                remove_command_from_interface(interface, 'duplex', commands)
+                remove_command_from_config_list(interface, 'duplex', commands)
             if have.get('mtu') and want.get('mtu') != have.get('mtu'):
-                remove_command_from_interface(interface, 'mtu', commands)
+                remove_command_from_config_list(interface, 'mtu', commands)
 
         return commands

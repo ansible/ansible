@@ -23,7 +23,7 @@
 #############################################
 
 """
-The module file for ios_interfaces
+The module file for iosxr_interfaces
 """
 
 from __future__ import absolute_import, division, print_function
@@ -70,7 +70,8 @@ DOCUMENTATION = """
           choices: [10, 100, 1000]
         mtu:
           description:
-          - Sets the MTU value for the interface. Range is between 64 and 65535. Applicable for Ethernet interfaces only.
+          - Sets the MTU value for the interface. Applicable for Ethernet interfaces only.
+          - Refer to vendor documentation for valid values.
           type: int
         duplex:
           description:
@@ -123,7 +124,7 @@ EXAMPLES = """
         description: 'Configured by Ansible Network'
         enabled: False
         duplex: full
-    operation: merged
+    state: merged
 
 # After state:
 # ------------
@@ -181,7 +182,7 @@ EXAMPLES = """
         description: 'Configured by Ansible Network'
         enabled: False
         duplex: auto
-    operation: replaced
+    state: replaced
 
 # After state:
 # ------------
@@ -243,7 +244,7 @@ EXAMPLES = """
         description: 'Configured by Ansible Network'
         enabled: False
         speed: 1000
-    operation: overridden
+    state: overridden
 
 # After state:
 # ------------
@@ -300,7 +301,7 @@ EXAMPLES = """
     config:
       - name: GigabitEthernet0/0/0/2
       - name: GigabitEthernet0/0/0/3
-    operation: deleted
+    state: deleted
 
 # After state:
 # ------------

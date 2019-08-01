@@ -11,7 +11,7 @@ __metaclass__ = type
 from ansible.module_utils.six import iteritems
 
 
-def remove_command_from_interface(interface, cmd, commands):
+def remove_command_from_config_list(interface, cmd, commands):
     # To delete the passed config
     if interface not in commands:
         commands.insert(0, interface)
@@ -19,7 +19,7 @@ def remove_command_from_interface(interface, cmd, commands):
     return commands
 
 
-def add_command_to_interface(interface, cmd, commands):
+def add_command_to_config_list(interface, cmd, commands):
     # To set the passed config
     if interface not in commands:
         commands.insert(0, interface)
@@ -52,20 +52,12 @@ def remove_duplicate_interface(commands):
     set_cmd = []
     for each in commands:
         if 'interface' in each:
-            interface = each
-            if interface not in set_cmd:
+            if each not in set_cmd:
                 set_cmd.append(each)
         else:
             set_cmd.append(each)
 
     return set_cmd
-
-
-def search_obj_in_list(name, lst, key='name'):
-    for item in lst:
-        if item[key] == name:
-            return item
-    return None
 
 
 def flatten_dict(x):

@@ -27,7 +27,7 @@ class FactsArgs(object):  # pylint: disable=R0903
         'lldp_global',
         '!lldp_global',
         'lldp_interfaces',
-        '!lldp_interfaces'
+        '!lldp_interfaces',
         'interfaces',
         '!interfaces'
     ]
