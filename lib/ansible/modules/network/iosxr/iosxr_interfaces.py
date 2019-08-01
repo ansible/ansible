@@ -30,8 +30,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                   'status': ['preview'],
-                   'supported_by': 'network'}
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
   module: iosxr_interfaces
@@ -63,23 +63,15 @@ DOCUMENTATION = """
           - Administrative state of the interface.
           - Set the value to C(True) to administratively enable the interface or C(False) to disable it.
           type: bool
-        active:
-          default: active
-          description:
-          - Whether the interface is C(active) or C(preconfigured). Preconfiguration allows you to configure modular
-            services cards before they are inserted into the router. When the cards are inserted, they are instantly
-            configured. Active cards are the ones already inserted.
-          type: str
-          choices: ['active', 'preconfigure']
         speed:
           description:
           - Configure the speed for an interface. Default is auto-negotiation when not configured.
-          type: str
-          choices: ['10', '100', '1000']
+          type: int
+          choices: [10, 100, 1000]
         mtu:
           description:
           - Sets the MTU value for the interface. Range is between 64 and 65535. Applicable for Ethernet interfaces only.
-          type: str
+          type: int
         duplex:
           description:
           - Configures the interface duplex mode. Default is auto-negotiation when not configured.

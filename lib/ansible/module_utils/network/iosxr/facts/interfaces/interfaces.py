@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -90,8 +90,10 @@ class InterfacesFacts(object):
         # populate the facts from the configuration
         config['name'] = normalize_interface(intf)
         config['description'] = utils.parse_conf_arg(conf, 'description')
-        config['speed'] = utils.parse_conf_arg(conf, 'speed')
-        config['mtu'] = utils.parse_conf_arg(conf, 'mtu')
+        if utils.parse_conf_arg(conf, 'speed'):
+            config['speed'] = int(utils.parse_conf_arg(conf, 'speed'))
+        if utils.parse_conf_arg(conf, 'mtu'):
+            config['mtu'] = int(utils.parse_conf_arg(conf, 'mtu'))
         config['duplex'] = utils.parse_conf_arg(conf, 'duplex')
         enabled = utils.parse_conf_cmd_arg(conf, 'shutdown', False)
         config['enabled'] = enabled if enabled is not None else True

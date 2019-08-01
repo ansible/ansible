@@ -3,16 +3,18 @@ merged:
   before:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999
     - description: this is interface0
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/0
-      speed: '10'
+      speed: 10
     - description: this is interface1
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/1
-      speed: '10'
+      speed: 10
 
   commands:
     - "interface GigabitEthernet0/0/0/0"
@@ -29,33 +31,37 @@ merged:
   after:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999
     - description: Configured and Merged by Ansible-Network
       duplex: half
       enabled: true
-      mtu: '110'
+      mtu: 110
       name: GigabitEthernet0/0/0/0
-      speed: '10'
+      speed: 10
     - description: Configured and Merged by Ansible-Network
       duplex: full
       enabled: false
-      mtu: '2800'
+      mtu: 2800
       name: GigabitEthernet0/0/0/1
-      speed: '100'
+      speed: 100
 
 replaced:
   before:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999
     - description: this is interface0
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/0
-      speed: '10'
+      speed: 10
     - description: this is interface1
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/1
-      speed: '10'
+      speed: 10
 
   commands:
     - "interface GigabitEthernet0/0/0/0"
@@ -70,29 +76,33 @@ replaced:
   after:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999
     - description: Configured and Replaced by Ansible-Network
       enabled: true
-      mtu: '110'
+      mtu: 110
       name: GigabitEthernet0/0/0/0
     - description: Configured and Replaced by Ansible-Network
       enabled: true
       name: GigabitEthernet0/0/0/1
-      speed: '100'
+      speed: 100
 
 overridden:
   before:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999
     - description: this is interface0
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/0
-      speed: '10'
+      speed: 10
     - description: this is interface1
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/1
-      speed: '10'
+      speed: 10
 
   commands:
     - "interface GigabitEthernet0/0/0/0"
@@ -109,27 +119,31 @@ overridden:
   after:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999
     - description: Configured and Overridden by Ansible-Network
       duplex: full
       enabled: false
-      mtu: '2000'
+      mtu: 2000
       name: GigabitEthernet0/0/0/1
-      speed: '100'
+      speed: 100
 
 deleted:
   before:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999
     - description: this is interface0
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/0
-      speed: '10'
+      speed: 10
     - description: this is interface1
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/0/0/1
-      speed: '10'
+      speed: 10
 
   commands:
     - "interface GigabitEthernet0/0/0/0"
@@ -144,3 +158,5 @@ deleted:
   after:
     - enabled: true
       name: loopback888
+    - enabled: true
+      name: loopback999

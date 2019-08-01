@@ -7,15 +7,18 @@
       interface loopback888
       no description
       no shutdown
-      interface GigabitEthernet 0/0/0/0
+      interface loopback999
       no description
-      no mtu
-      no duplex
-      no speed
       no shutdown
-      interface GigabitEthernet 0/0/0/1
-      no description
-      no mtu
-      no duplex
-      no speed
-      no shutdown
+
+- name: Remove interfaces from config before actual testing
+  iosxr_config:
+    lines:
+      - "no interface {{ item }}"
+  loop:
+    - GigabitEthernet 0/0/0/0
+    - GigabitEthernet 0/0/0/1
+    - preconfigure GigabitEthernet 0/0/0/1
+    - preconfigure GigabitEthernet 0/0/0/2
+    - preconfigure GigabitEthernet 0/0/0/3
+  ignore_errors: yes
