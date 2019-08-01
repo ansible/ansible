@@ -86,4 +86,3 @@ class TestApconosModule(ModuleTestCase):
 
     def load_fixtures(self, commands=None):
         pass
-
