@@ -27,6 +27,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
 from ansible.module_utils.network.fortimanager.common import FMGR_RC
 from ansible.module_utils.network.fortimanager.common import FMGBaseException
 from ansible.module_utils.network.fortimanager.common import FMGRCommon
