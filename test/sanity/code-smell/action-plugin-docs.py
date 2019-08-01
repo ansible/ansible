@@ -22,7 +22,6 @@ def main():
         # The following action plugins provide base classes for network platform specific modules to support `connection: local`.
         # Once we fully deprecate the use of connection local, the base classes will go away.
         'aireos',
-        'apconos',
         'aruba',
         'asa',
         'ce',
