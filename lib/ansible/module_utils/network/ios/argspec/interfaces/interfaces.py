@@ -39,7 +39,7 @@ class InterfacesArgs(object):
                                             'description': {'type': 'str'},
                                             'enabled': {'default': True, 'type': 'bool'},
                                             'speed': {'type': 'str'},
-                                            'mtu': {'type': 'str'},
+                                            'mtu': {'type': 'int'},
                                             'duplex': {'type': 'str', 'choices': ['full', 'half', 'auto']}},
                                 'type': 'list'},
                      'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],

@@ -90,7 +90,8 @@ class InterfacesFacts(object):
         config['name'] = normalize_interface(intf)
         config['description'] = utils.parse_conf_arg(conf, 'description')
         config['speed'] = utils.parse_conf_arg(conf, 'speed')
-        config['mtu'] = utils.parse_conf_arg(conf, 'mtu')
+        if utils.parse_conf_arg(conf, 'mtu'):
+            config['mtu'] = int(utils.parse_conf_arg(conf, 'mtu'))
         config['duplex'] = utils.parse_conf_arg(conf, 'duplex')
         enabled = utils.parse_conf_cmd_arg(conf, 'shutdown', False)
         config['enabled'] = enabled if enabled is not None else True

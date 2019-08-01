@@ -24,7 +24,9 @@ DOCUMENTATION = """
 ---
 module: ios_facts
 version_added: "2.2"
-author: Sumit Jaiswal (@justjais)
+author:
+  - "Peter Sprygada (@privateip)"
+  - "Sumit Jaiswal (@justjais)"
 short_description: Collect facts from remote devices running Cisco IOS
 description:
   - Collects a base set of device facts from a remote device that

@@ -75,9 +75,9 @@ options:
         type: str
       mtu:
         description:
-        - MTU for a specific interface. Must be a number between 64 and 9600.
-          Applicable for Ethernet interfaces only.
-        type: str
+        - MTU for a specific interface. Applicable for Ethernet interfaces only.
+        - Refer to vendor documentation for valid values.
+        type: int
       duplex:
         description:
         - Interface link status. Applicable for Ethernet interfaces only, either in half duplex,
@@ -132,7 +132,7 @@ EXAMPLES = """
         enabled: False
         speed: 100
         duplex: full
-    operation: merged
+    state: merged
 
 # After state:
 # ------------
@@ -187,7 +187,7 @@ EXAMPLES = """
         duplex: auto
         mtu: 2500
         speed: 1000
-    operation: replaced
+    state: replaced
 
 # After state:
 # -------------
@@ -245,7 +245,7 @@ EXAMPLES = """
         enabled: False
         duplex: full
         mtu: 2000
-    operation: overridden
+    state: overridden
 
 # After state:
 # -------------
@@ -296,7 +296,7 @@ EXAMPLES = """
     config:
       - name: GigabitEthernet0/2
       - name: GigabitEthernet0/3
-    operation: deleted
+    state: deleted
 
 # After state:
 # -------------

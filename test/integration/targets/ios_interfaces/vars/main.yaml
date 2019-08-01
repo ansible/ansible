@@ -42,13 +42,13 @@ merged:
     - description: Configured and Merged by Ansible-Network
       duplex: half
       enabled: true
-      mtu: '110'
+      mtu: 110
       name: GigabitEthernet0/1
       speed: auto
     - description: Configured and Merged by Ansible-Network
       duplex: full
       enabled: false
-      mtu: '2800'
+      mtu: 2800
       name: GigabitEthernet0/2
       speed: '100'
 
@@ -65,13 +65,13 @@ replaced:
     - description: this is interface1
       duplex: auto
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/1
       speed: '10'
     - description: this is interface2
       duplex: auto
       enabled: false
-      mtu: '110'
+      mtu: 110
       name: GigabitEthernet0/2
       speed: '100'
 
@@ -98,7 +98,7 @@ replaced:
     - description: Configured and Replaced by Ansible-Network
       duplex: auto
       enabled: true
-      mtu: '110'
+      mtu: 110
       name: GigabitEthernet0/1
       speed: auto
     - description: Configured and Replaced by Ansible-Network
@@ -120,13 +120,13 @@ overridden:
     - description: this is interface1
       duplex: auto
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/1
       speed: '10'
     - description: this is interface2
       duplex: auto
       enabled: false
-      mtu: '110'
+      mtu: 110
       name: GigabitEthernet0/2
       speed: '100'
 
@@ -157,7 +157,7 @@ overridden:
     - description: Configured and Overridden by Ansible-Network
       duplex: full
       enabled: false
-      mtu: '2000'
+      mtu: 2000
       name: GigabitEthernet0/2
       speed: auto
 
@@ -174,13 +174,13 @@ deleted:
     - description: this is interface1
       duplex: auto
       enabled: true
-      mtu: '65'
+      mtu: 65
       name: GigabitEthernet0/1
       speed: '10'
     - description: this is interface2
       duplex: auto
       enabled: false
-      mtu: '110'
+      mtu: 110
       name: GigabitEthernet0/2
       speed: '100'
 
