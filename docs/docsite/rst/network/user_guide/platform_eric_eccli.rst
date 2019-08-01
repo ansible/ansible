@@ -4,7 +4,7 @@
 ERIC_ECCLI Platform Options
 ***************************************
 
-ERIC_ECCLI supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on ERIC_ECCLI in Ansible.
+Extreme ERIC_ECCLI Ansible modules only supports CLI connections today. This page offers details on how to use ``network_cli`` on ERIC_ECCLI in Ansible.
 
 .. contents:: Topics
 
@@ -25,14 +25,14 @@ Connections Available
 | |                         | |                                             |
 | |                         | |                                             |
 +---------------------------+-----------------------------------------------+
-| | **Enable Mode**         | | supported - use ``ansible_become: yes``     |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      |
-| |                         | | and ``ansible_become_password:``            |
+| | **Enable Mode**         | | not supported by ERIC_ECCLI                 |
+| | (Privilege Escalation)  | |                                             |
+| |                         | |                                             |
 +---------------------------+-----------------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                |
 +---------------------------+-----------------------------------------------+
 
-For legacy playbooks, ERIC_ECCLI still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
+ERIC_ECCLI does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli.
 
 Using CLI in Ansible
 ====================
@@ -46,9 +46,6 @@ Example CLI ``group_vars/eric_eccli.yml``
    ansible_network_os: eric_eccli
    ansible_user: myuser
    ansible_password: !vault...
-   ansible_become: yes
-   ansible_become_method: enable
-   ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
