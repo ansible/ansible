@@ -22,8 +22,7 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 notes:
-  - Tested against ICX 10.1.
-  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
+  - Tested against ICX 10.1
 options:
   gather_subset:
     description:
@@ -34,7 +33,6 @@ options:
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
-    type: list
     default: '!config'
 """
 
@@ -64,23 +62,23 @@ ansible_net_gather_subset:
 ansible_net_model:
   description: The model name returned from the device
   returned: always
-  type: str
+  type: string
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
-  type: str
+  type: string
 ansible_net_image:
   description: The image file the device is running
   returned: always
-  type: str
+  type: string
 ansible_net_stacked_models:
   description: The model names of each device in the stack
   returned: when multiple devices are configured in a stack
@@ -112,7 +110,7 @@ ansible_net_memtotal_mb:
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
-  type: str
+  type: string
 
 # interfaces
 ansible_net_all_ipv4_addresses:
@@ -248,7 +246,7 @@ class Hardware(FactsBase):
                 facts[fs]['spacetotal'] = match.group(1)
             match = re.match(r'\W+Code Flash Free Space = (\S+)', line)
             if match:
-                facts[fs]['spacefree'] = int(int(match.group(1)) / 1024)
+                facts[fs]['spacefree'] = int(match.group(1)) / 1024
                 facts[fs]['spacefree'] = str(facts[fs]['spacefree']) + "Kb"
         return {"flash": facts}
 
@@ -481,6 +479,7 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+global warnings
 warnings = list()
 
 
