@@ -870,7 +870,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                                                 to_native(b_cert, errors='surrogate_or_strict')
                                             )
                                         )
-                                    except ValueError:
+                                    except Exception:
                                         continue
                                 else:
                                     os.write(tmp_fd, b_cert)
