@@ -82,9 +82,9 @@ class Telemetry(ConfigBase):
         if self._module.params['config'] is None:
             self._module.params['config'] = {}
         # Normalize interface name.
-        int = self._module.params.get('source_interface')
+        int = self._module.params['config'].get('source_interface')
         if int:
-            self._module.params['source_interface'] = normalize_interface(int)
+            self._module.params['config']['source_interface'] = normalize_interface(int)
 
         existing_telemetry_facts = self.get_telemetry_facts()
         commands.extend(self.set_config(existing_telemetry_facts))

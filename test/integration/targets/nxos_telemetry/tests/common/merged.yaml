@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_telemetry merged sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: source_interface="Loopback55"
   when: imagetag and (major_version is version_compare('9.1', 'ge'))
