@@ -27,6 +27,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_netvisor
    platform_nos
    platform_nxos
+   platform_qnos
    platform_routeros
    platform_slxos
    platform_voss
