@@ -6,25 +6,25 @@
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA={
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: sysupgrade
-
-author:
-    - Johnathan C. Maudlin
-
 short_description: upgrade system to the next release or a new snapshot
-
+version_added: 2.9
+author: Johnathan C Maudlin
 description:
     - Use the sysupgrade(8) utility to upgrade a system to the next
       release or the latest snapshot for OpenBSD 6.6 or later.
-
 options:
     upgrade:
         description:
@@ -32,7 +32,6 @@ options:
         type: bool
         default: false
         required: true
-
     force:
         description:
             - Force an already applied upgrade.  This option has no
@@ -40,7 +39,6 @@ options:
         type: bool
         default: false
         required: false
-
     keep:
         description:
             - Keep the files in /home/_sysupgrade
@@ -49,7 +47,7 @@ options:
         required: false
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 - name: Upgrade to latest release or snapshot
   when:
     - ansible_distribution == 'OpenBSD'
@@ -64,6 +62,33 @@ EXAMPLES='''
     - 'result is succeeded'
     - result.changed == true
   reboot:
+'''
+
+RETURN = '''
+changed:
+    description: A change on the host was reported
+    returned: always
+    type: bool
+command:
+    description: The command and arguments that were used
+    returned: always
+    type: str
+msg:
+    description: The message returned by the command
+    returned: always
+    type: str
+rc:
+    description: The command return code (0 means success)
+    returned: always
+    type: int
+stderr:
+    description: sysupgrade standard error
+    returned: always
+    type: str
+stdout:
+    description: sysupgrade standard output
+    returned: always
+    type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -114,12 +139,10 @@ def main():
                 'type': 'bool',
                 'required': True,
             },
-
             'force': {
                 'type': 'bool',
                 'default': False,
             },
-
             'keep': {
                 'type': 'bool',
                 'default': False,
