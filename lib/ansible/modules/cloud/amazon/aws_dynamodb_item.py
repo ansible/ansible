@@ -32,7 +32,8 @@ options:
             if it already exist. You can also perform a
             conditional update on an existing item (insert a new attribute
             name-value pair if it doesn't exist, or replace an existing
-            name-value pair if it has certain expected attribute values).
+            name-value pair if it has certain expected attribute values)
+            Without a conditional expresion this operation is not idempotent!
           - If absent, deletes a single item in a table by primary key.
             You can perform a conditional delete operation that deletes the item
             if it exists, or if it has an expected attribute value.
