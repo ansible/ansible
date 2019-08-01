@@ -63,7 +63,7 @@ options:
 version_added: 2.9
 
 author:
- - RusoSova
+ - RusoSova (@RusoSova)
 '''
 
 EXAMPLES = r'''
