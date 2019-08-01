@@ -238,13 +238,17 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     # value because we're optimizing the common case
     if nonstring == 'simplerepr':
         try:
-            value = str(obj)
-        except UnicodeError:
+            value = obj.__unicode__()
+        except (AttributeError, UnicodeError):
+            # AttributeError for Python3, UnicodeError defensively against poorly written classes
             try:
-                value = repr(obj)
+                value = str(obj)
             except UnicodeError:
-                # Giving up
-                return u''
+                try:
+                    value = repr(obj)
+                except UnicodeError:
+                    # Giving up
+                    return u''
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'empty':

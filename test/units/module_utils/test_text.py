@@ -18,6 +18,15 @@ from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_text, to_bytes, to_native
 
 
+class BadStrClass:
+
+    def __str__(self):
+        return to_native(u"caf\xe9", encoding="ascii", errors="replace")
+
+    def __unicode__(self):
+        return u"caf\xe9"
+
+
 # Format: byte representation, text representation, encoding of byte representation
 VALID_STRINGS = (
     (b'abcde', u'abcde', 'ascii'),
@@ -35,6 +44,11 @@ VALID_STRINGS = (
 def test_to_text(in_string, encoding, expected):
     """test happy path of decoding to text"""
     assert to_text(in_string, encoding) == expected
+
+
+def test_to_text_unicode_method():
+    # Verifies __unicode__() is called before __str__() which would result in 'caf?'
+    assert to_text(BadStrClass(), 'utf-8') == u"caf\xe9"
 
 
 @pytest.mark.parametrize('in_string, encoding, expected',
