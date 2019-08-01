@@ -72,13 +72,13 @@ Command line facts
 Python Interpreter Discovery
 ============================
 
-In Ansible 2.7 and earlier, Ansible defaulted to ``usr/bin/python`` as the
+In Ansible 2.7 and earlier, Ansible defaulted to :command:`/usr/bin/python` as the
 setting for ``ansible_python_interpreter``. If you ran Ansible against a system
 that installed Python with a different name or a different path, your playbooks
 would fail with ``/usr/bin/python: bad interpreter: No such file or directory``
 unless you either set ``ansible_python_interpreter`` to the correct value for
 that system or added a Python interpreter and any necessary dependencies at
-``usr/bin/python``.
+:command:`usr/bin/python`.
 
 Starting in Ansible 2.8, Ansible searches for the correct path and executable
 name for Python on each target system, first in a lookup table of default
@@ -127,10 +127,13 @@ Ansible 2.8:
 | |                         | | fallback-list warning.                      |
 +---------------------------+-----------------------------------------------+
 
-Starting with Ansible 2.12, Ansible will use the discovered Python interpreter
-by default, whether or not ``/usr/bin/python`` is also present. Until then,
-the default ``auto_legacy`` setting provides compatibility with
-previous versions of Ansible that always defaulted to ``/usr/bin/python``.
+
+In Ansible 2.12, Ansible will switch the default from :literal:`auto_legacy` to :literal:`auto`.
+The difference in behaviour is that :literal:`auto_legacy` uses :command:`/usr/bin/python` if
+present and falls back to the discovered Python when it is not present.  :literal:`auto` will always
+use the discovered Python, regardless of whether :command:`/usr/bin/python` exists.  The
+:literal:`auto_legacy` setting provides compatibility with previous versions of Ansible that always
+defaulted to :command:`/usr/bin/python`.
 
 If you installed Python and dependencies (``boto``, etc.) to
 ``/usr/bin/python`` as a workaround on distros with a different default Python
