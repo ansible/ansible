@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2018 Apcon.
+# Copyright (C) 2019 APCON.
 #
 # GNU General Public License v3.0+
 #
@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: apconos_command
-version_added: "2.9.0"
+version_added: "2.9"
 author: "David Lee (@davidlee-ap)"
 short_description: Run arbitrary commands on APCON devices
 description:
@@ -34,7 +34,7 @@ description:
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 notes:
-  - tested against apcon iis+ii
+  - Tested against apcon iis+ii
 options:
   commands:
     description:
@@ -81,13 +81,14 @@ options:
 """
 
 EXAMPLES = """
-- name: basic configuration
+- name: Basic Configuration
   apconos_command:
     commands:
     - show version
+    - enable ssh
   register: result
 
-- name: get output from single command
+- name: Get output from single command
   apconos_command:
     commands: ['show version']
   register: result
@@ -99,18 +100,26 @@ RETURN = """
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.utils import transform_commands, to_lines
 from ansible.module_utils.network.apconos.apconos import run_commands, check_args
 from ansible.module_utils.network.apconos.apconos import apconos_argument_spec
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
+def parse_commands(module, warnings):
+    #commands = transform_commands(module)
+    commands = module.params['commands']
 
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        yield item
+    if module.check_mode:
+        for item in list(commands):
+            if not item.startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check mode, not '
+                    'executing %s' % item
+                )
+                commands.remove(item)
 
+    return commands
 
 def main():
     spec = dict(
@@ -126,11 +135,13 @@ def main():
     spec.update(apconos_argument_spec)
 
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
-    result = {'changed': False}
+    warnings = list()
+    result = {'changed': False, 'warnings': warnings}
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
 
+    commands = parse_commands(module, warnings)
     commands = module.params['commands']
     retries = module.params['retries']
     interval = module.params['interval']
@@ -159,11 +170,18 @@ def main():
 
     for item in responses:
         if len(item) == 0:
-            result.update({
-                'changed': True,
-                'stdout': responses,
-                'stdout_lines': list(to_lines(responses))
-            })
+            if module.check_mode:
+                result.update({
+                    'changed': False,
+                    'stdout': responses,
+                    'stdout_lines': list(to_lines(responses))
+                })
+            else:
+                result.update({
+                    'changed': True,
+                    'stdout': responses,
+                    'stdout_lines': list(to_lines(responses))
+                })
         elif 'ERROR' in item:
             result.update({
                 'failed': True,
