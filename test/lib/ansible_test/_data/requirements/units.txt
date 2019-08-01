@@ -24,9 +24,6 @@ netapp-lib
 solidfire-sdk-python
 azure-mgmt ; python_version >= '2.7'
 azure-mgmt-netapp ; python_version >= '2.7'
-azure-common >= 1.1.12 ; python_version >= '2.7'
-azure-mgmt-nspkg >= 3.0.0 ; python_version >= '2.7'
-azure-nspkg >= 3.0.0 ; python_version >= '2.7'
 
 # requirements for F5 specific modules
 f5-sdk ; python_version >= '2.7'
