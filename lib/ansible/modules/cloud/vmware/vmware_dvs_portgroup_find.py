@@ -17,9 +17,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_dvs_portgroup_find
-short_description: Find portgroup(s) in a vmware environment
+short_description: Find portgroup(s) in a VMware environment
 description:
-- Find portgroup(s) based on different criteria such as dvswitch, vlan id or a string in the name.
+- Find portgroup(s) based on different criteria such as distributed vSwitch, VLAN id or a string in the name.
 version_added: 2.9
 author:
 - David Martinez (@dx0xm)
@@ -31,12 +31,12 @@ requirements:
 options:
   dvswitch:
     description:
-    - Name of a dvswitch to look for.
+    - Name of a distributed vSwitch to look for.
     type: str
   vlanid:
     description:
-    - vlan id can be any number between 1 and 4094.
-    - This search criteria will looks into vlan ranges to find possible matches.
+    - VLAN id can be any number between 1 and 4094.
+    - This search criteria will looks into VLAN ranges to find possible matches.
     required: false
     type: int
   name:
@@ -56,16 +56,21 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Get all portgroups in dvswitch vDS
   vmware_dvs_portgroup_find:
-    hostname: 172.16.143.150
-    username: admin
-    password: password
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     dvswitch: 'vDS'
+    validate_certs: no
+  delegate_to: localhost
+
 - name: Confirm if vlan 15 is present
   vmware_dvs_portgroup_find:
-    hostname: 172.16.143.150
-    username: admin
-    password: password
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     vlanid: '15'
+    validate_certs: no
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -194,7 +199,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['show_uplink', 'True', 'vlanid']]
+        required_if=[
+            ['show_uplink', 'True', 'vlanid']
+        ]
     )
 
     dvs_pg_mgr = DVSPortgroupFindManager(module)
