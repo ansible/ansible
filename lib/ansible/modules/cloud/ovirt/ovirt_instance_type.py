@@ -489,30 +489,26 @@ class InstanceTypeModule(BaseModule):
         cpu_mode = getattr(entity.cpu, 'mode')
         it_display = entity.display
         return (
-            not self.param('kernel_params_persist') and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
+            equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
             equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
             equal(self.param('cpu_mode'), str(cpu_mode) if cpu_mode else None) and
-            equal(self.param('type'), str(entity.type)) and
             equal(self.param('name'), str(entity.name)) and
-            equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
             equal(self.param('smartcard_enabled'), getattr(it_display, 'smartcard_enabled', False)) and
             equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), getattr(entity.console, 'enabled', None)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
-            equal(self.param('virtio_scsi'), getattr(entity, 'smartcard_enabled', False)) and
+            equal(self.param('virtio_scsi'), getattr(entity.virtio_scsi, 'enabled', None)) and
             equal(self.param('high_availability'), entity.high_availability.enabled) and
             equal(self.param('high_availability_priority'), entity.high_availability.priority) and
             equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os.boot, 'devices', [])]) and
             equal(self.param('description'), entity.description) and
             equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None) and
-            equal(self.param('rng_bytes'), entity.rng_device.rate.bytes if entity.rng_device else None) and
-            equal(self.param('rng_period'), entity.rng_device.rate.period if entity.rng_device else None) and
             equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None)
         )
 

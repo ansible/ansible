@@ -801,6 +801,13 @@ class BaseModule(object):
         if not search by `name`.
         """
         entity = None
+        headers = {'All-content': 'true'}
+        if list_params is None:
+            list_params = {'headers': headers}
+        elif list_params['headers'] is None:
+            list_params['headers'] = headers
+        else:
+            list_params['headers'].update(headers)
 
         if 'id' in self._module.params and self._module.params['id'] is not None:
             entity = get_entity(self._service.service(self._module.params['id']), get_params=list_params)
