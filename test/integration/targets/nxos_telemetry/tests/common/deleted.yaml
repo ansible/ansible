@@ -4,10 +4,13 @@
 - set_fact: source_interface="Loopback55"
   when: imagetag and (major_version is version_compare('9.1', 'ge'))
 
+- set_fact: before_keys_length=6
+- set_fact: before_keys_length=7
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
 - name: Setup
   nxos_feature: &setup_teardown
     feature: telemetry
-    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
@@ -40,7 +43,6 @@
         - { id: 44, destination_group: 10, sensor_group: {id: 8, sample_interval: 2000}}
         - { id: 44, destination_group: 2, sensor_group: {id: 2, sample_interval: 2000}}
         - { id: 55, destination_group: 10, sensor_group: {id: 55, sample_interval: 2000}}
-    provider: "{{ connection }}"
 
 - block:
   - name: Gather Telemetry Facts Before Changes
@@ -54,8 +56,14 @@
   - name: Telemetry - deleted
     nxos_telemetry: &deleted
       state: 'deleted'
-      provider: "{{ connection }}"
     register: result
+
+  # result.before|dict2items|length checks the number of dictionary keys.
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no telemetry' in result.commands"
+        - "result.before|dict2items|length == {{ before_keys_length }}"
 
   - assert:
       that:
@@ -75,6 +83,7 @@
   - assert:
       that:
         - "result.changed == false"
+        - "result.commands|length == 0"
 
   always:
   - name: Teardown
