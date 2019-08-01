@@ -430,7 +430,6 @@ files:
   $modules/remote_management/hpilo/:
     ignored: dagwieers
     maintainers: haad
-  $modules/remote_management/idrac/: rajeevarakkal
   $modules/remote_management/imc/:
     labels: [ cisco ]
     maintainers: $team_imc
@@ -440,12 +439,12 @@ files:
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/lxca/: navalkp prabhosa
   $modules/remote_management/manageiq/: $team_manageiq
-  $modules/remote_management/ome/: rajeevarakkal
   $modules/remote_management/redfish/: $team_redfish
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/ucs/: &ucs
     labels: [ cisco, remote_management, ucs ]
     maintainers: $team_ucs
+  $modules/remote_management/dellemc/: rajeevarakkal
   $modules/source_control/git.py: $team_ansible
   $modules/source_control/github_key.py:
     ignored: erydo
