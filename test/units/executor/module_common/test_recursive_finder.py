@@ -36,6 +36,8 @@ from ansible.plugins.loader import init_plugin_loader
 
 MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/__init__.py',
+                                      'ansible/module_utils/_json_streams_rfc7464.py',
+                                      'ansible/module_utils/_stdout_utils.py',
                                       'ansible/module_utils/_text.py',
                                       'ansible/module_utils/basic.py',
                                       'ansible/module_utils/six/__init__.py',
@@ -93,16 +95,20 @@ class TestRecursiveFinder(object):
     def test_module_utils_with_syntax_error(self, finder_containers):
         name = 'fake_module'
         data = b'#!/usr/bin/python\ndef something(:\n   pass\n'
-        with pytest.raises(ansible.errors.AnsibleError) as exec_info:
+        with pytest.raises(
+                ansible.errors.AnsibleError,
+                match='Unable to import fake_module due to invalid syntax',
+        ):
             recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, *finder_containers)
-        assert 'Unable to import fake_module due to invalid syntax' in str(exec_info.value)
 
     def test_module_utils_with_identation_error(self, finder_containers):
         name = 'fake_module'
         data = b'#!/usr/bin/python\n    def something():\n    pass\n'
-        with pytest.raises(ansible.errors.AnsibleError) as exec_info:
+        with pytest.raises(
+                ansible.errors.AnsibleError,
+                match='Unable to import fake_module due to unexpected indent',
+        ):
             recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, *finder_containers)
-        assert 'Unable to import fake_module due to unexpected indent' in str(exec_info.value)
 
     #
     # Test importing six with many permutations because it is not a normal module

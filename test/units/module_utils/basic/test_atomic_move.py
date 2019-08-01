@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import os
 import errno
-import json
+from io import BytesIO
 from itertools import product
 
 import pytest
 
 from ansible.module_utils import basic
+from ansible.module_utils._json_streams_rfc7464 import read_json_documents
 
 
 @pytest.fixture
@@ -160,7 +161,7 @@ def test_existing_file_stat_perms_failure(atomic_am, atomic_mocks, mocker):
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
+def test_rename_failure(atomic_am, atomic_mocks, mocker, capfdbinary):
     """Test os.rename fails with EIO, causing it to bail out"""
     atomic_mocks['path_exists'].side_effect = [False, False]
     atomic_mocks['rename'].side_effect = OSError(errno.EIO, 'failing with EIO')
@@ -168,8 +169,8 @@ def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
     with pytest.raises(SystemExit):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
-    out, err = capfd.readouterr()
-    results = json.loads(out)
+    b_out, _b_err = capfdbinary.readouterr()
+    results = next(read_json_documents(BytesIO(b_out)))
 
     assert 'Could not replace file' in results['msg']
     assert 'failing with EIO' in results['msg']
@@ -177,7 +178,7 @@ def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, capfd):
+def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, capfdbinary):
     """Test os.rename fails with EPERM working but failure in mkstemp"""
     atomic_mocks['path_exists'].return_value = False
     atomic_mocks['close'].return_value = None
@@ -189,8 +190,8 @@ def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, 
     with pytest.raises(SystemExit):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
-    out, err = capfd.readouterr()
-    results = json.loads(out)
+    b_out, _b_err = capfdbinary.readouterr()
+    results = next(read_json_documents(BytesIO(b_out)))
 
     assert 'is not writable by the current user' in results['msg']
     assert results['failed']

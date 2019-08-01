@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
-import json
 import os
+from io import BytesIO
 
 import pytest
 
@@ -18,6 +18,7 @@ from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 from ansible.module_utils.six import integer_types, string_types
 from ansible.module_utils.six.moves import builtins
+from ansible.module_utils._json_streams_rfc7464 import read_json_documents
 
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
@@ -279,14 +280,15 @@ def test_validator_string_type(mocker, stdin):
 
 @pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in INVALID_SPECS],
                          indirect=['stdin'])
-def test_validator_fail(stdin, capfd, argspec, expected):
+def test_validator_fail(stdin, capfdbinary, argspec, expected):
     with pytest.raises(SystemExit):
         basic.AnsibleModule(argument_spec=argspec)
 
-    out, err = capfd.readouterr()
-    assert not err
-    assert expected in json.loads(out)['msg']
-    assert json.loads(out)['failed']
+    b_out, b_err = capfdbinary.readouterr()
+    results = next(read_json_documents(BytesIO(b_out)))
+    assert not b_err
+    assert expected in results['msg']
+    assert results['failed']
 
 
 class TestComplexArgSpecs:
@@ -320,44 +322,44 @@ class TestComplexArgSpecs:
         assert am.params['baz'] == 'test data'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'bad', 'bam': 'bad2', 'bing': 'a', 'bang': 'b', 'bong': 'c'}], indirect=['stdin'])
-    def test_fail_mutually_exclusive(self, capfd, stdin, complex_argspec):
+    def test_fail_mutually_exclusive(self, capfdbinary, stdin, complex_argspec):
         """Fail because of mutually exclusive parameters"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**complex_argspec)
 
-        out, err = capfd.readouterr()
-        results = json.loads(out)
+        b_out, _b_err = capfdbinary.readouterr()
+        results = next(read_json_documents(BytesIO(b_out)))
 
         assert results['failed']
         assert results['msg'] == "parameters are mutually exclusive: bar|bam, bing|bang|bong"
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'bad2'}], indirect=['stdin'])
-    def test_fail_required_together(self, capfd, stdin, complex_argspec):
+    def test_fail_required_together(self, capfdbinary, stdin, complex_argspec):
         """Fail because only one of a required_together pair of parameters was specified"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**complex_argspec)
 
-        out, err = capfd.readouterr()
-        results = json.loads(out)
+        b_out, _b_err = capfdbinary.readouterr()
+        results = next(read_json_documents(BytesIO(b_out)))
 
         assert results['failed']
         assert results['msg'] == "parameters are required together: bam, baz"
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'hi'}], indirect=['stdin'])
-    def test_fail_required_together_and_default(self, capfd, stdin, complex_argspec):
+    def test_fail_required_together_and_default(self, capfdbinary, stdin, complex_argspec):
         """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
         complex_argspec['argument_spec']['baz'] = {'default': 42}
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**complex_argspec)
 
-        out, err = capfd.readouterr()
-        results = json.loads(out)
+        b_out, _b_err = capfdbinary.readouterr()
+        results = next(read_json_documents(BytesIO(b_out)))
 
         assert results['failed']
         assert results['msg'] == "parameters are required together: bam, baz"
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello'}], indirect=['stdin'])
-    def test_fail_required_together_and_fallback(self, capfd, mocker, stdin, complex_argspec):
+    def test_fail_required_together_and_fallback(self, capfdbinary, mocker, stdin, complex_argspec):
         """Fail because one of a required_together pair of parameters has a fallback and the other was not specified"""
         environ = os.environ.copy()
         environ['BAZ'] = 'test data'
@@ -366,20 +368,20 @@ class TestComplexArgSpecs:
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**complex_argspec)
 
-        out, err = capfd.readouterr()
-        results = json.loads(out)
+        b_out, _b_err = capfdbinary.readouterr()
+        results = next(read_json_documents(BytesIO(b_out)))
 
         assert results['failed']
         assert results['msg'] == "parameters are required together: bam, baz"
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zardoz2': ['one', 'four', 'five']}], indirect=['stdin'])
-    def test_fail_list_with_choices(self, capfd, mocker, stdin, complex_argspec):
+    def test_fail_list_with_choices(self, capfdbinary, mocker, stdin, complex_argspec):
         """Fail because one of the items is not in the choice"""
         with pytest.raises(SystemExit):
             basic.AnsibleModule(**complex_argspec)
 
-        out, err = capfd.readouterr()
-        results = json.loads(out)
+        b_out, _b_err = capfdbinary.readouterr()
+        results = next(read_json_documents(BytesIO(b_out)))
 
         assert results['failed']
         assert results['msg'] == "value of zardoz2 must be one or more of: one, two, three. Got no match for: four, five"
@@ -559,25 +561,25 @@ class TestComplexOptions:
         assert am.params['foobar'] == expected
 
     @pytest.mark.parametrize('stdin, expected', FAILING_PARAMS_DICT, indirect=['stdin'])
-    def test_fail_validate_options_dict(self, capfd, stdin, options_argspec_dict, expected):
+    def test_fail_validate_options_dict(self, capfdbinary, stdin, options_argspec_dict, expected):
         """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**options_argspec_dict)
 
-        out, err = capfd.readouterr()
-        results = json.loads(out)
+        b_out, _b_err = capfdbinary.readouterr()
+        results = next(read_json_documents(BytesIO(b_out)))
 
         assert results['failed']
         assert expected in results['msg']
 
     @pytest.mark.parametrize('stdin, expected', FAILING_PARAMS_LIST, indirect=['stdin'])
-    def test_fail_validate_options_list(self, capfd, stdin, options_argspec_list, expected):
+    def test_fail_validate_options_list(self, capfdbinary, stdin, options_argspec_list, expected):
         """Fail because one of a required_together pair of parameters has a default and the other was not specified"""
         with pytest.raises(SystemExit):
             am = basic.AnsibleModule(**options_argspec_list)
 
-        out, err = capfd.readouterr()
-        results = json.loads(out)
+        b_out, _b_err = capfdbinary.readouterr()
+        results = next(read_json_documents(BytesIO(b_out)))
 
         assert results['failed']
         assert expected in results['msg']

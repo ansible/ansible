@@ -5,26 +5,30 @@
 
 from __future__ import annotations
 
-import json
+from io import BytesIO
 
 import pytest
 
 from ansible.module_utils.common import warnings
+from ansible.module_utils._json_streams_rfc7464 import read_json_documents
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_warn(am, capfd):
+def test_warn(am, capfdbinary):
 
     am.warn('warning1')
 
     with pytest.raises(SystemExit):
         am.exit_json(warnings=['warning2'])
-    out, err = capfd.readouterr()
-    assert json.loads(out)['warnings'] == ['warning1', 'warning2']
+
+    b_out, _b_err = capfdbinary.readouterr()
+    return_val = next(read_json_documents(BytesIO(b_out)))
+
+    assert return_val['warnings'] == ['warning1', 'warning2']
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate(am, capfd, monkeypatch):
+def test_deprecate(am, capfdbinary, monkeypatch):
     monkeypatch.setattr(warnings, '_global_deprecations', [])
 
     am.deprecate('deprecation1')
@@ -39,8 +43,9 @@ def test_deprecate(am, capfd, monkeypatch):
     with pytest.raises(SystemExit):
         am.exit_json(deprecations=['deprecation9', ('deprecation10', '2.4')])
 
-    out, err = capfd.readouterr()
-    output = json.loads(out)
+    b_out, _b_err = capfdbinary.readouterr()
+    output = next(read_json_documents(BytesIO(b_out)))
+
     assert ('warnings' not in output or output['warnings'] == [])
     assert output['deprecations'] == [
         {u'msg': u'deprecation1', u'version': None, u'collection_name': None},
@@ -57,12 +62,13 @@ def test_deprecate(am, capfd, monkeypatch):
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate_without_list(am, capfd):
+def test_deprecate_without_list(am, capfdbinary):
     with pytest.raises(SystemExit):
         am.exit_json(deprecations='Simple deprecation warning')
 
-    out, err = capfd.readouterr()
-    output = json.loads(out)
+    b_out, _b_err = capfdbinary.readouterr()
+    output = next(read_json_documents(BytesIO(b_out)))
+
     assert ('warnings' not in output or output['warnings'] == [])
     assert output['deprecations'] == [
         {u'msg': u'Simple deprecation warning', u'version': None, u'collection_name': None},
