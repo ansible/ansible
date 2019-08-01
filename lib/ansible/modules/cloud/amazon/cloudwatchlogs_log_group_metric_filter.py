@@ -24,21 +24,31 @@ extends_documentation_fragment:
 author:
     Markus Bergholz (@markuman)
 options:
+    state:
+        description:
+            - Whether the rule is present, absent or get
+        choices: ["present", "absent"]
+        default: present
+        required: false
     log_group_name:
         description:
             - The name of the log group where the metric filter is applied on.
-        filter_name:
+        required: true
+    filter_name:
+        description:
             - A name for the metric filter you create.
-        filter_patten:
+        required: true
+    filter_patten:
+        description:
             - A filter pattern for extracting metric data out of ingested log events.
-        metric_transformation:
+    metric_transformation:
+        description:
             - A collection of information that defines how metric data gets emitted.
-            suboptions:
-                metricName:
-                metricNamespace:
-                matricValue:
-                defaultValue:
-
+        suboptions:
+            metricName:
+            metricNamespace:
+            matricValue:
+            defaultValue:
 '''
 
 EXAMPLES = '''
