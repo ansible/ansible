@@ -102,7 +102,7 @@ options:
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in Ansible 2.6.
+        will be removed in Ansible 2.9.
     type: bool
     default: 'no'
   backup:
