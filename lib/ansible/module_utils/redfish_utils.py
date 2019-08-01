@@ -628,48 +628,91 @@ class RedfishUtils(object):
 
         return result
 
+    def _map_reset_type(self, reset_type, allowable_values):
+        equiv_types = {
+            'On': 'ForceOn',
+            'ForceOn': 'On',
+            'ForceOff': 'GracefulShutdown',
+            'GracefulShutdown': 'ForceOff',
+            'GracefulRestart': 'ForceRestart',
+            'ForceRestart': 'GracefulRestart'
+        }
+
+        if reset_type in allowable_values:
+            return reset_type
+        if reset_type not in equiv_types:
+            return reset_type
+        mapped_type = equiv_types[reset_type]
+        if mapped_type in allowable_values:
+            return mapped_type
+        return reset_type
+
     def manage_system_power(self, command):
         key = "Actions"
+        reset_type_values = ['On', 'ForceOff', 'GracefulShutdown',
+                             'GracefulRestart', 'ForceRestart', 'Nmi',
+                             'ForceOn', 'PushPowerButton', 'PowerCycle']
 
-        # Search for 'key' entry and extract URI from it
+        # command should be PowerOn, PowerForceOff, etc.
+        if not command.startswith('Power'):
+            return {'ret': False, 'msg': 'Invalid Command (%s)' % command}
+        reset_type = command[5:]
+
+        # map Reboot to a ResetType that does a reboot
+        if reset_type == 'Reboot':
+            reset_type = 'GracefulRestart'
+
+        if reset_type not in reset_type_values:
+            return {'ret': False, 'msg': 'Invalid Command (%s)' % command}
+
+        # read the system resource and get the current power state
         response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         data = response['data']
-        power_state = data["PowerState"]
+        power_state = data.get('PowerState')
 
-        if power_state == "On" and command == 'PowerOn':
+        # if power is already in target state, nothing to do
+        if power_state == "On" and reset_type in ['On', 'ForceOn']:
+            return {'ret': True, 'changed': False}
+        if power_state == "Off" and reset_type in ['GracefulShutdown', 'ForceOff']:
             return {'ret': True, 'changed': False}
 
-        if power_state == "Off" and command in ['PowerGracefulShutdown', 'PowerForceOff']:
-            return {'ret': True, 'changed': False}
+        # get the #ComputerSystem.Reset Action and target URI
+        if key not in data or '#ComputerSystem.Reset' not in data[key]:
+            return {'ret': False, 'msg': 'Action #ComputerSystem.Reset not found'}
+        reset_action = data[key]['#ComputerSystem.Reset']
+        if 'target' not in reset_action:
+            return {'ret': False,
+                    'msg': 'target URI missing from Action #ComputerSystem.Reset'}
+        action_uri = reset_action['target']
 
-        reset_action = data[key]["#ComputerSystem.Reset"]
-        action_uri = reset_action["target"]
-        allowable_vals = reset_action.get("ResetType@Redfish.AllowableValues", [])
-        restart_cmd = "GracefulRestart"
-        if "ForceRestart" in allowable_vals and "GracefulRestart" not in allowable_vals:
-            restart_cmd = "ForceRestart"
+        # get AllowableValues from ActionInfo
+        allowable_values = None
+        if '@Redfish.ActionInfo' in reset_action:
+            action_info_uri = reset_action.get('@Redfish.ActionInfo')
+            response = self.get_request(self.root_uri + action_info_uri)
+            if response['ret'] is True:
+                data = response['data']
+                if 'Parameters' in data:
+                    params = data['Parameters']
+                    for param in params:
+                        if param.get('Name') == 'ResetType':
+                            allowable_values = param.get('AllowableValues')
+                            break
 
-        # Define payload accordingly
-        if command == "PowerOn":
-            payload = {'ResetType': 'On'}
-        elif command == "PowerForceOff":
-            payload = {'ResetType': 'ForceOff'}
-        elif command == "PowerForceRestart":
-            payload = {'ResetType': "ForceRestart"}
-        elif command == "PowerGracefulRestart":
-            payload = {'ResetType': 'GracefulRestart'}
-        elif command == "PowerGracefulShutdown":
-            payload = {'ResetType': 'GracefulShutdown'}
-        elif command == "PowerReboot":
-            if power_state == "On":
-                payload = {'ResetType': restart_cmd}
-            else:
-                payload = {'ResetType': "On"}
-        else:
-            return {'ret': False, 'msg': 'Invalid Command'}
+        # fallback to @Redfish.AllowableValues annotation
+        if allowable_values is None:
+            allowable_values = reset_action.get('ResetType@Redfish.AllowableValues', [])
 
+        # map ResetType to an allowable value if needed
+        if reset_type not in allowable_values:
+            reset_type = self._map_reset_type(reset_type, allowable_values)
+
+        # define payload
+        payload = {'ResetType': reset_type}
+
+        # POST to Action URI
         response = self.post_request(self.root_uri + action_uri, payload)
         if response['ret'] is False:
             return response
