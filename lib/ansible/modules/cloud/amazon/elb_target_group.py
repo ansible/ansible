@@ -26,6 +26,10 @@ options:
     description:
       - The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.
         The range is 0-3600 seconds.
+  slow_start_duration:
+    description:
+      - The amount time during which Elastic Load Balancing linearly increases the number of requests that it can send to a target.
+        The range is 0-900 seconds.
   health_check_protocol:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
@@ -252,6 +256,11 @@ deregistration_delay_timeout_seconds:
     returned: when state present
     type: int
     sample: 300
+slow_start_duration_seconds:
+    description: The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.
+    returned: when state present
+    type: int
+    sample: 300
 health_check_interval_seconds:
     description: The approximate amount of time, in seconds, between health checks of an individual target.
     returned: when state present
@@ -428,6 +437,7 @@ def create_or_update_target_group(connection, module):
     tags = module.params.get("tags")
     purge_tags = module.params.get("purge_tags")
     deregistration_delay_timeout = module.params.get("deregistration_delay_timeout")
+    slow_start_duration = module.params.get("slow_start_duration")
     stickiness_enabled = module.params.get("stickiness_enabled")
     stickiness_lb_cookie_duration = module.params.get("stickiness_lb_cookie_duration")
     stickiness_type = module.params.get("stickiness_type")
@@ -708,6 +718,9 @@ def create_or_update_target_group(connection, module):
     if deregistration_delay_timeout is not None:
         if str(deregistration_delay_timeout) != current_tg_attributes['deregistration_delay_timeout_seconds']:
             update_attributes.append({'Key': 'deregistration_delay.timeout_seconds', 'Value': str(deregistration_delay_timeout)})
+    if slow_start_duration is not None:
+        if str(slow_start_duration) != current_tg_attributes['slow_start_duration_seconds']:
+            update_attributes.append({'Key': 'slow_start.duration_seconds', 'Value': str(slow_start_duration)})
     if stickiness_enabled is not None:
         if stickiness_enabled and current_tg_attributes['stickiness_enabled'] != "true":
             update_attributes.append({'Key': 'stickiness.enabled', 'Value': 'true'})
@@ -783,6 +796,7 @@ def main():
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
+            slow_start_duration=dict(type='int'),
             health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
             health_check_port=dict(),
             health_check_path=dict(),
