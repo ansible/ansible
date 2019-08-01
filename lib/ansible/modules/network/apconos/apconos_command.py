@@ -106,8 +106,9 @@ from ansible.module_utils.network.apconos.apconos import apconos_argument_spec
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
+
 def parse_commands(module, warnings):
-    #commands = transform_commands(module)
+
     commands = module.params['commands']
 
     if module.check_mode:
@@ -120,6 +121,7 @@ def parse_commands(module, warnings):
                 commands.remove(item)
 
     return commands
+
 
 def main():
     spec = dict(

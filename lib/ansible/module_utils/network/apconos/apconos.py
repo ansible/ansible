@@ -31,6 +31,8 @@
 # Contains utility methods
 # APCON Networking
 
+from __future__ import (absolute_import, division, print_function)
+
 import time
 import socket
 import re
