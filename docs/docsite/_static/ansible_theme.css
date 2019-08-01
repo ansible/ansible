@@ -1,0 +1,556 @@
+/* Ansible-specific CSS */
+
+.ansibleNav {
+   background: #000;
+   padding: 0px 20px;
+   width: auto;
+   border-bottom: 1px solid #444;
+   font-size: 14px;
+}
+
+
+.ansibleNav ul {
+    list-style: none;
+    padding-left: 0px;
+    margin-top: 0px;
+}
+
+
+
+.ansibleNav ul li{
+    padding: 7px 0px;
+    border-bottom: 1px solid #444;
+}
+
+
+.ansibleNav ul li:last-child{
+    border: none;
+}
+
+
+.ansibleNav ul li a {
+    color: #fff;
+   text-decoration: none;
+   text-transform: uppercase;
+   padding: 6px 0px;
+}
+
+.ansibleNav ul li a:hover {
+    color: #5bbdbf ;
+    background: transparent;
+}
+
+
+@media screen and (min-width: 768px) {
+
+    .DocSite-globalNav{
+        display: block
+    }
+
+
+    #sideBanner{
+        display: block;
+    }
+
+
+    .DocSite-sideNav{
+        display: none;
+    }
+
+
+    .ansibleNav{
+        height: 45px;
+        width: 100%;
+        font-size: 13px;
+        padding: 0px 60px 0px 0px;
+    }
+
+
+    .ansibleNav ul {
+        float: right;
+        display: flex;
+        flex-wrap: nowrap;
+        margin-top: 13px;
+    }
+
+
+
+    .ansibleNav ul li{
+        padding: 0px;
+        border-bottom: none;
+    }
+
+
+    .ansibleNav ul li a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+        padding: 8px 13px;
+    }
+
+}
+
+
+DocSiteProduct-header {
+    flex: 1;
+    -webkit-flex: 1;
+    padding: 20px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    align-items: center;
+    -webkit-align-items: center;
+    justify-content: flex-start;
+    -webkit-justify-content: flex-start;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-decoration: none;
+    font-weight: 400;
+    font-family: 'Open Sans', sans-serif;
+}
+
+
+.DocSiteProduct-header:active,
+.DocSiteProduct-header:focus {
+    color: #fff;
+}
+
+
+.DocSiteProduct-header:visited {
+    color: #fff;
+}
+
+
+.DocSiteProduct-header--core {
+    font-size: 25px;
+    background-color: #5bbdbf;
+    border: 2px solid #5bbdbf;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    color: #fff;
+}
+
+
+.DocSiteProduct-headerAlign {
+    width: 100%;
+}
+
+
+.DocSiteProduct-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: -9px;
+}
+
+
+.DocSiteProduct-logoText {
+    margin-top: 6px;
+    font-size: 36px;
+}
+
+.DocSiteProduct-CurrentVersion {
+    font-size: 16px;
+}
+
+
+.DocSite-nav {
+    flex: initial;
+    -webkit-flex: initial;
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    justify-content: flex-start;
+    -webkit-justify-content: flex-start;
+    padding: 15px;
+    background-color: #000;
+    text-decoration: none;
+    font-family: 'Open Sans', sans-serif;
+}
+
+
+.DocSiteNav-logo {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+}
+
+
+.DocSiteNav-title {
+    color: #fff;
+    font-size: 20px;
+}
+
+
+.DocSiteProduct-CheckVersionPara {
+    padding-bottom: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+
+.wy-side-nav-search {
+    z-index: 200;
+    background-color: #5bbdbf;
+    text-align: center;
+    padding: 4px;
+    display: block;
+    margin-bottom: 0.809em;
+}
+
+
+/*! TEST */
+
+.DocSiteProduct-header {
+    flex: 1;
+    -webkit-flex: 1;
+    padding: 20px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    align-items: center;
+    -webkit-align-items: center;
+    justify-content: flex-start;
+    -webkit-justify-content: flex-start;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-decoration: none;
+    font-weight: 400;
+    font-family: 'Open Sans', sans-serif;
+}
+
+
+.DocSiteProduct-header:active,
+.DocSiteProduct-header:focus {
+    color: #fff;
+}
+
+
+.DocSiteProduct-header:visited {
+    color: #fff;
+}
+
+
+.DocSiteProduct-header--core {
+    font-size: 25px;
+    background-color: #5bbdbf;
+    border: 2px solid #5bbdbf;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    color: #fff;
+    padding-left: 2px;
+    margin-left: 2px;
+
+}
+
+
+.DocSiteProduct-headerAlign {
+    width: 100%;
+}
+
+
+.DocSiteProduct-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: -9px;
+}
+
+
+.DocSiteProduct-logoText {
+    margin-top: 6px;
+    font-size: 25px;
+    text-align: left;
+}
+
+
+.DocSite-nav {
+    flex: initial;
+    -webkit-flex: initial;
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    justify-content: flex-start;
+    -webkit-justify-content: flex-start;
+    padding: 15px;
+    background-color: #000;
+    text-decoration: none;
+    font-family: 'Open Sans', sans-serif;
+}
+
+
+.DocSiteNav-logo {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+    margin-top: -6px;
+    position: fixed;
+}
+
+
+.DocSiteNav-title {
+    color: #fff;
+    font-size: 20px;
+    position: fixed;
+    margin-left: 40px;
+    margin-top: -4px;
+
+}
+
+
+.DocSiteProduct-CheckVersionPara {
+
+
+    margin-left: 2px;
+    padding-bottom: 4px;
+    margin-right: 2px;
+    margin-bottom: 10px;
+
+}
+
+
+.wy-menu-vertical a {
+    padding: 0;
+}
+
+
+.wy-menu-vertical a.reference.internal {
+    padding: 0.4045em 1.618em;
+}
+
+
+.DocSiteBanner {
+    display: flex;
+    display: -webkit-flex;
+    justify-content: center;
+    -webkit-justify-content: center;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+
+.DocSiteBanner-imgWrapper {
+    max-width: 100%;
+}
+
+
+th, td {
+    min-width: 100px;
+}
+
+
+table {
+       overflow-x: auto;
+       display: block;
+       max-width: 100%;
+}
+
+.documentation-table td.elbow-placeholder {
+    border-left: 1px solid #000;
+    border-top: 0px;
+    width: 30px;
+    min-width: 30px;
+}
+
+.documentation-table th, .documentation-table td {
+    padding: 4px;
+    border-left: 1px solid #000;
+    border-top: 1px solid #000;
+}
+
+.documentation-table {
+    border-right: 1px solid #000;
+    border-bottom: 1px solid #000;
+}
+
+
+@media print {
+    * { background: transparent !important; color: black !important; text-shadow: none !important; filter:none !important; -ms-filter: none !important; }
+
+    #nav,
+    a, a:visited { text-decoration: underline; }
+
+    a[href]:after { content: " (" attr(href) ")"; }
+
+    abbr[title]:after { content: " (" attr(title) ")"; }
+
+    .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after { content: ""; }
+  /* Don't show links for images, or javascript/internal links */
+    pre, blockquote { border: 0px solid #999; page-break-inside: avoid; }
+
+    thead { display: table-header-group; }
+ /* h5bp.com/t */
+    tr, img { page-break-inside: avoid; }
+
+    img { max-width: 100% !important; }
+
+    @page { margin: 0.5cm; }
+
+    p, h2, h3 { orphans: 3; widows: 3; }
+
+    h2, h3 { page-break-after: avoid; }
+
+    .DocSiteBanner,
+    #google_image_div {
+        display: none !important;
+    }
+
+}
+
+
+
+#sideBanner{
+    display: none;
+}
+
+
+.DocSite-globalNav {
+   display: none;
+}
+
+
+
+.DocSite-sideNav {
+   display: block;
+    margin-bottom: 40px;
+}
+
+
+.ansibleNav {
+   background: #000;
+   padding: 0px 20px;
+   width: auto;
+   border-bottom: 1px solid #444;
+   font-size: 14px;
+}
+
+
+.ansibleNav ul {
+    list-style: none;
+    padding-left: 0px;
+    margin-top: 0px;
+}
+
+
+
+.ansibleNav ul li{
+    padding: 7px 0px;
+    border-bottom: 1px solid #444;
+}
+
+
+.ansibleNav ul li:last-child{
+    border: none;
+}
+
+
+.ansibleNav ul li a {
+    color: #fff;
+   text-decoration: none;
+   text-transform: uppercase;
+   padding: 6px 0px;
+}
+
+.ansibleNav ul li a:hover {
+    color: #5bbdbf ;
+    background: transparent;
+}
+
+
+@media screen and (min-width: 768px) {
+
+    .DocSite-globalNav{
+        display: block;
+        position: fixed;
+    }
+
+
+    #sideBanner{
+        display: block;
+    }
+
+
+    .DocSite-sideNav{
+        display: none;
+    }
+
+
+    .ansibleNav{
+        height: 45px;
+        width: 100%;
+        font-size: 13px;
+        padding: 0px 60px 0px 0px;
+    }
+
+
+    .ansibleNav ul {
+        float: right;
+        display: flex;
+        flex-wrap: nowrap;
+        margin-top: 13px;
+    }
+
+
+
+    .ansibleNav ul li{
+        padding: 0px;
+        border-bottom: none;
+    }
+
+
+    .ansibleNav ul li a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+        padding: 8px 13px;
+    }
+
+}
+@media screen and (min-width: 768px) {
+
+    .DocSite-globalNav{
+        display: block
+    }
+
+    #sideBanner{
+        display: block;
+    }
+
+    .DocSite-sideNav{
+        display: none;
+    }
+
+    .ansibleNav{
+        height: 45px;
+        width: 100%;
+        font-size: 13px;
+        padding: 0px 60px 0px 0px;
+    }
+
+    .ansibleNav ul {
+        float: right;
+        display: flex;
+        flex-wrap: nowrap;
+        margin-top: 13px;
+    }
+
+
+    .ansibleNav ul li{
+        padding: 0px;
+        border-bottom: none;
+    }
+
+    .ansibleNav ul li a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+        padding: 8px 13px;
+    }
+}
