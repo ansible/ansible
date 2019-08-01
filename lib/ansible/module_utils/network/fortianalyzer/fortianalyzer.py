@@ -77,7 +77,7 @@ class FortiAnalyzerHandler(object):
         :param method: The preferred API Request method (GET, ADD, POST, etc....)
         :type method: basestring
 
-        :return: Dictionary containing results of the API Request via Connection Plugin
+        :return: Dictionary containing results of the API Request via Connection Plugin.
         :rtype: dict
         """
         try:
