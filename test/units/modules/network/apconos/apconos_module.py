@@ -81,9 +81,9 @@ class TestApconosModule(ModuleTestCase):
             self.module.main()
 
         result = exc.exception.args[0]
-                
         self.assertEqual(result['changed'], changed, result)
         return result
 
     def load_fixtures(self, commands=None):
         pass
+
