@@ -29,7 +29,7 @@ options:
     required: yes
     default: enabled
     type: str
-		choices: [ 'enabled', 'disabled' ]
+    choices: [ enabled, disabled ]
   settings:
     description:
     - List of settings to pass to the Set-DedupVolume powershell command.
