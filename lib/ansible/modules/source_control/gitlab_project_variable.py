@@ -125,14 +125,10 @@ except Exception:
 
 class GitlabProjectVariables(object):
 
-    def __init__(self, module):
-        self.repo = gitlab.Gitlab(module.params['api_url'],
-                                  private_token=module.params['api_token'])
+    def __init__(self, module, gitlab_instance):
+        self.repo = gitlab_instance
         self.project = self.get_project(module.params['project'])
         self._module = module
-
-    def auth(self):
-        self.repo.auth()
 
     def get_project(self, project_name):
         return self.repo.projects.get(project_name)
@@ -229,21 +225,25 @@ def main():
         supports_check_mode=True
     )
 
+    api_url = module.params['api_url']
+    gitlab_token = module.params['api_token']
+    purge = module.params['purge']
+    var_list = module.params['vars']
+    state = module.params['state']
+
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     try:
-        this_gitlab = GitlabProjectVariables(module=module)
-        this_gitlab.auth()
+        gitlab_instance = gitlab.Gitlab(url=api_url, private_token=gitlab_token)
+        gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s. \
             Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
-    purge = module.params['purge']
-    var_list = module.params['vars']
-    state = module.params['state']
+    this_gitlab = GitlabProjectVariables(module=module, gitlab_instance=gitlab_instance)
 
     change, return_value = native_python_main(this_gitlab, purge, var_list, state)
 
