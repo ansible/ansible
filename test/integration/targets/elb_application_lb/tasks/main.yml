@@ -1,0 +1,44 @@
+- set_fact:
+    virtualenv: "{{ remote_tmp_dir }}/virtualenv"
+    virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
+
+- set_fact:
+    virtualenv_interpreter: "{{ virtualenv }}/bin/python"
+
+- pip:
+    name: virtualenv
+
+- pip:
+    name:
+      - 'botocore<1.10.30'
+      - boto3
+      - boto
+      - coverage
+      - cryptography
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: multiple_actions_fail.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+
+- pip:
+    name:
+      - 'botocore>=1.10.30'
+      - boto3
+      - boto
+      - coverage
+      - cryptography
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: full_test.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
