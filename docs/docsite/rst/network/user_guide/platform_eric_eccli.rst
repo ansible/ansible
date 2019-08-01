@@ -32,7 +32,7 @@ Connections Available
 | **Returned Data Format**  | ``stdout[0].``                                |
 +---------------------------+-----------------------------------------------+
 
-ERIC_ECCLI does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli.
+ERIC_ECCLI does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
 Using CLI in Ansible
 ====================
