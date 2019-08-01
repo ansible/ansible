@@ -74,6 +74,7 @@ options:
             encoding:
                 description:
                     - Enumerates the possible values for the encoding format of capture description.
+                type: str
                 required: true
                 choices:
                     - avro
