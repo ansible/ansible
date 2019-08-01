@@ -170,7 +170,6 @@ class EntityVnicPorfileModule(BaseModule):
         networks_service = self._get_dcs_service().service(self._get_dcs_id()).networks_service()
         return get_id_by_name(networks_service, self.param('network'))
 
-
     def _get_qos_id(self):
         if self.param('qos'):
             qoss_service = self._get_dcs_service().service(self._get_dcs_id()).qoss_service()
