@@ -119,7 +119,7 @@ class GalaxyCLI(CLI):
                                      help='The collection(s) name or path/url to a tar.gz collection artifact. This '
                                           'is mutually exclusive with --requirements-file.')
         cinstall_parser.add_argument('-p', '--collections-path', dest='collections_path', required=True,
-                                     help='The path to the directory containing your collections. This does not add '
+                                     help='The path to the directory containing your collections. '
                                           'Use one of the configured paths or '
                                           'the directory containing the playbook that references the collection.'
                                           'Note: this does not add the path to the configured paths.')
