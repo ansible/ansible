@@ -1368,8 +1368,8 @@ files:
     support: network
     maintainers: $team_networking
   $plugins/terminal/eric_eccli.py:
-    support: network
-    maintainers: $team_networking itercheng
+    support: community
+    maintainers: itercheng
   $plugins/terminal/exos.py:
     maintainers: rdvencioneck
   $plugins/terminal/ios.py:
