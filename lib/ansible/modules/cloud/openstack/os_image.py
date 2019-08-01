@@ -168,7 +168,6 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
     )
 
-    required_one_of = [['filename', 'volume']],
     mutually_exclusive = [['filename', 'volume']],
 
     module_kwargs = openstack_module_kwargs()
