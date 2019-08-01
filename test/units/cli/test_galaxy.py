@@ -494,7 +494,7 @@ def test_collection_default(collection_skeleton):
     assert metadata['authors'] == ['your name <example@domain.com>']
     assert metadata['readme'] == 'README.md'
     assert metadata['version'] == '1.0.0'
-    assert metadata['description'] == 'your description'
+    assert metadata['description'] == 'your collection description'
     assert metadata['license'] == ['GPL-2.0-or-later']
     assert metadata['tags'] == []
     assert metadata['dependencies'] == {}
@@ -637,7 +637,7 @@ def test_collection_build(collection_artifact):
         assert coll_info['authors'] == ['your name <example@domain.com>']
         assert coll_info['readme'] == 'README.md'
         assert coll_info['tags'] == []
-        assert coll_info['description'] == 'your description'
+        assert coll_info['description'] == 'your collection description'
         assert coll_info['license'] == ['GPL-2.0-or-later']
         assert coll_info['license_file'] is None
         assert coll_info['dependencies'] == {}
