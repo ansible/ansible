@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
+from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
 from ansible.module_utils.urls import open_url
@@ -499,15 +500,31 @@ def parse_collections_requirements_file(requirements_file):
             req_name = collection_req.get('name', None)
             if req_name is None:
                 raise AnsibleError("Collections requirement entry should contain the key name.")
+            validate_collection_name(req_name)
 
             req_version = collection_req.get('version', '*')
             req_source = collection_req.get('source', None)
 
             collection_info.append((req_name, req_version, req_source))
         else:
+            validate_collection_name(collection_req)
             collection_info.append((collection_req, '*', None))
 
     return collection_info
+
+
+def validate_collection_name(name):
+    """
+    Validates the collection name as an input from the user or a requirements file fit the requirements.
+
+    :param name: The input name with optional range specifier split by ':'.
+    :return: The input value, required for argparse validation.
+    """
+    collection, dummy, dummy = name.partition(':')
+    if is_collection_ref('ansible_collections.{0}'.format(collection)):
+        return name
+
+    raise AnsibleError("Invalid collection name '%s', name must be in the format <namespace>.<collection>." % name)
 
 
 @contextmanager

@@ -586,10 +586,26 @@ def test_invalid_skeleton_path():
     "ns.hyphen-collection",
     "ns.collection.weird",
 ])
-def test_invalid_collection_name(name):
-    expected = "Invalid collection name, must be in the format <namespace>.<collection>"
+def test_invalid_collection_name_init(name):
+    expected = "Invalid collection name '%s', name must be in the format <namespace>.<collection>" % name
 
     gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', name])
+    with pytest.raises(AnsibleError, match=expected):
+        gc.run()
+
+
+@pytest.mark.parametrize("name", [
+    "",
+    "invalid",
+    "invalid:1.0.0",
+    "hypen-ns.collection",
+    "ns.hyphen-collection",
+    "ns.collection.weird",
+])
+def test_invalid_collection_name_install(name):
+    expected = "Invalid collection name '%s', name must be in the format <namespace>.<collection>" % name
+
+    gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', name, '-p', 'test'])
     with pytest.raises(AnsibleError, match=expected):
         gc.run()
 
