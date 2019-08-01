@@ -1,2 +1,0 @@
-bugfixes:
-  - aws_s3 module: Improve ETag calculation, allow overwrite=always to work on FIPS-140-2
