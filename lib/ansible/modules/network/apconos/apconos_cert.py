@@ -32,6 +32,12 @@ description:
 notes:
   - tested against apcon iis+ii
 options:
+  command:
+    description:
+      - currently it is not being used in apconos_cert module.
+  provider:
+    description:
+      - please use connection:network_cli.
   ipaddress:
     description:
       - specify a remote ip address at which tftp server resides.
@@ -73,9 +79,9 @@ options:
 
 EXAMPLES = """
 - name: Install SSL Certificate
-    apconos_cert:
-      ipaddress: 10.0.0.100
-      filename:  remoteSSLCert.pem
+  apconos_cert:
+    ipaddress: 10.0.0.100
+    filename:  remoteSSLCert.pem
 """
 
 RETURN = """
