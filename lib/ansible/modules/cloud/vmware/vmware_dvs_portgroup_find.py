@@ -39,14 +39,15 @@ options:
     - This search criteria will looks into vlan ranges to find possible matches.
     required: false
     type: int
-  namestr:
+  name:
     description:
     - string to check inside the name of the portgroup.
+    - Basic containment check using python C(in) operation.
     type: str
   show_uplink:
     description:
     - Show or hide uplink portgroups.
-    - Only relevant when C(vlanid) is supplied
+    - Only relevant when C(vlanid) is supplied.
     type: bool
     default: False
 extends_documentation_fragment: vmware.documentation
@@ -98,7 +99,7 @@ class DVSPortgroupFindManager(PyVmomi):
         self.dvs_name = self.params['dvswitch']
         self.vlan = self.params['vlanid']
         self.cmp_vlans = True if self.vlan else False
-        self.pgs = self.find_portgroups_by_name(self.content, self.module.params['namestr'])
+        self.pgs = self.find_portgroups_by_name(self.content, self.module.params['name'])
 
         if self.dvs_name:
             self.pgs = self.find_portgroups_by_dvs(self.pgs, self.dvs_name)
@@ -187,7 +188,7 @@ def main():
     argument_spec.update(
         dvswitch=dict(type='str', required=False),
         vlanid=dict(type='int', required=False),
-        namestr=dict(type='str', required=False),
+        name=dict(type='str', required=False),
         show_uplink=dict(type='bool', default=False),
     )
     module = AnsibleModule(
