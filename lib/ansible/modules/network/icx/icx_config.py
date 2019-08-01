@@ -115,7 +115,6 @@ options:
         it is created.
     type: bool
     default: 'no'
-    version_added: "2.2"
   defaults:
     description:
       - This argument specifies whether or not to collect all defaults
@@ -124,7 +123,6 @@ options:
         C(show running-config all).
     type: bool
     default: 'no'
-    version_added: "2.2"
   running_config:
     description:
       - The module, by default, will connect to the remote device and
@@ -136,7 +134,6 @@ options:
         config for comparison.
     type: str
     aliases: ['config']
-    version_added: "2.4"
   save:
     description:
       - The C(save) argument instructs the module to save the running-
@@ -146,7 +143,6 @@ options:
         in Ansible 2.8, use C(save_when) instead.
     type: bool
     default: 'no'
-    version_added: "2.2"
   save_when:
     description:
       - When changes are made to the device running-configuration, the
@@ -164,7 +160,6 @@ options:
     type: str
     default: never
     choices: ['always', 'never', 'modified', 'changed']
-    version_added: "2.4"
   diff_against:
     description:
       - When using the C(ansible-playbook --diff) command line argument
@@ -179,7 +174,6 @@ options:
         to any changes made to the device configuration.
     type: str
     choices: ['running', 'startup', 'intended']
-    version_added: "2.4"
   diff_ignore_lines:
     description:
       - Use this argument to specify one or more lines that should be
@@ -187,7 +181,6 @@ options:
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
     type: list
-    version_added: "2.4"
   intended_config:
     description:
       - The C(intended_config) provides the master configuration that
@@ -198,7 +191,6 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     type: str
-    version_added: "2.4"
 """
 
 EXAMPLES = """
@@ -374,14 +366,11 @@ def main():
         diff_against=dict(choices=['startup', 'intended', 'running']),
         diff_ignore_lines=dict(type='list'),
 
-        # save is deprecated as of ans2.4, use save_when instead
         save=dict(default=False, type='bool'),
 
         # force argument deprecated in ans2.2
         force=dict(default=False, type='bool', removed_in_version='2.6')
     )
-
-    # argument_spec.update(icx_argument_spec)
 
     mutually_exclusive = [('lines', 'src'),
                           ('parents', 'src'),
