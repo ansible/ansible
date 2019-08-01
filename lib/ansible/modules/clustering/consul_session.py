@@ -20,64 +20,77 @@ description:
    to implement distributed locks. In depth documentation for working with
    sessions can be found at http://www.consul.io/docs/internals/sessions.html
 requirements:
-  - python >= 2.6
   - python-consul
   - requests
 version_added: "2.0"
 author:
 - Steve Gargan (@sgargan)
 options:
+    id:
+        description:
+          - ID of the session, required when I(state) is either C(info) or
+            C(remove).
+        type: str
     state:
         description:
           - Whether the session should be present i.e. created if it doesn't
-            exist, or absent, removed if present. If created, the ID for the
-            session is returned in the output. If absent, the name or ID is
+            exist, or absent, removed if present. If created, the I(id) for the
+            session is returned in the output. If C(absent), I(id) is
             required to remove the session. Info for a single session, all the
             sessions for a node or all available sessions can be retrieved by
-            specifying info, node or list for the state; for node or info, the
-            node name or session id is required as parameter.
+            specifying C(info), C(node) or C(list) for the I(state); for C(node)
+            or C(info), the node I(name) or session I(id) is required as parameter.
         choices: [ absent, info, list, node, present ]
+        type: str
         default: present
     name:
         description:
-          - The name that should be associated with the session. This is opaque
-            to Consul and not required.
+          - The name that should be associated with the session. Required when
+            I(state=node) is used.
+        type: str
     delay:
         description:
           - The optional lock delay that can be attached to the session when it
             is created. Locks for invalidated sessions ar blocked from being
             acquired until this delay has expired. Durations are in seconds.
+        type: int
         default: 15
     node:
         description:
           - The name of the node that with which the session will be associated.
             by default this is the name of the agent.
+        type: str
     datacenter:
         description:
           - The name of the datacenter in which the session exists or should be
             created.
+        type: str
     checks:
         description:
-          - A list of checks that will be used to verify the session health. If
+          - Checks that will be used to verify the session health. If
             all the checks fail, the session will be invalidated and any locks
             associated with the session will be release and can be acquired once
             the associated lock delay has expired.
+        type: list
     host:
         description:
           - The host of the consul agent defaults to localhost.
+        type: str
         default: localhost
     port:
         description:
           - The port on which the consul agent is running.
+        type: int
         default: 8500
     scheme:
         description:
           - The protocol scheme on which the consul agent is running.
+        type: str
         default: http
         version_added: "2.1"
     validate_certs:
         description:
-          - Whether to verify the tls certificate of the consul agent.
+          - Whether to verify the TLS certificate of the consul agent.
         type: bool
         default: True
         version_added: "2.1"
@@ -86,6 +99,7 @@ options:
           - The optional behavior that can be attached to the session when it
             is created. This controls the behavior when a session is invalidated.
         choices: [ delete, release ]
+        type: str
         default: release
         version_added: "2.2"
 """
@@ -148,24 +162,18 @@ def lookup_sessions(module):
         if state == 'list':
             sessions_list = consul_client.session.list(dc=datacenter)
             # Ditch the index, this can be grabbed from the results
-            if sessions_list and sessions_list[1]:
+            if sessions_list and len(sessions_list) >= 2:
                 sessions_list = sessions_list[1]
             module.exit_json(changed=True,
                              sessions=sessions_list)
         elif state == 'node':
             node = module.params.get('node')
-            if not node:
-                module.fail_json(
-                    msg="node name is required to retrieve sessions for node")
             sessions = consul_client.session.node(node, dc=datacenter)
             module.exit_json(changed=True,
                              node=node,
                              sessions=sessions)
         elif state == 'info':
             session_id = module.params.get('id')
-            if not session_id:
-                module.fail_json(
-                    msg="session_id is required to retrieve indvidual session info")
 
             session_by_id = consul_client.session.info(session_id, dc=datacenter)
             module.exit_json(changed=True,
@@ -209,9 +217,6 @@ def update_session(module):
 
 def remove_session(module):
     session_id = module.params.get('id')
-    if not session_id:
-        module.fail_json(msg="""A session id must be supplied in order to
-        remove a session.""")
 
     consul_client = get_consul_api(module)
 
@@ -227,7 +232,9 @@ def remove_session(module):
 
 def get_consul_api(module):
     return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'))
+                         port=module.params.get('port'),
+                         scheme=module.params.get('scheme'),
+                         verify=module.params.get('validate_certs'))
 
 
 def test_dependencies(module):
@@ -252,7 +259,15 @@ def main():
         datacenter=dict(type='str'),
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_if=[
+            ('state', 'node', ['name']),
+            ('state', 'info', ['id']),
+            ('state', 'remove', ['id']),
+        ],
+        supports_check_mode=False
+    )
 
     test_dependencies(module)
 

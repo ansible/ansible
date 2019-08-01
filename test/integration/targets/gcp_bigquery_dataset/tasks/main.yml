@@ -49,7 +49,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['resources'] | length >= 1
+      - results['resources'] | map(attribute='datasetReference') | map(attribute='datasetId') | select("match", ".*my_example_dataset.*") | list | length == 1
 # ----------------------------------------------------------------------------
 - name: create a dataset that already exists
   gcp_bigquery_dataset:
@@ -81,7 +81,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that dataset was deleted
   gcp_bigquery_dataset_facts:
       project: "{{ gcp_project }}"
@@ -93,7 +92,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['resources'] | length == 0
+      - results['resources'] | map(attribute='datasetReference') | map(attribute='datasetId') | select("match", ".*my_example_dataset.*") | list | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a dataset that does not exist
   gcp_bigquery_dataset:
@@ -109,4 +108,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

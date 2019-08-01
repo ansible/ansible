@@ -270,6 +270,10 @@ class EvpnBgpRr(object):
 
         flags.append(exp)
         config = get_config(self.module, flags)
+        cmd = 'display current-configuration ' + exp
+        config = config.strip() if config else ""
+        if cmd == config:
+            return ''
 
         return config
 
@@ -354,6 +358,8 @@ class EvpnBgpRr(object):
                                   'bgp_evpn_enable'],
                               reflect_client=self.cur_config['reflect_client'],
                               policy_vpn_target=self.cur_config['policy_vpn_target'])
+        if self.end_state == self.existing:
+            self.changed = False
 
     def show_result(self):
         """Show result"""

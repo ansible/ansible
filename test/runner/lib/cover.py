@@ -1,6 +1,6 @@
 """Code coverage utilities."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import re
@@ -13,8 +13,11 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    run_command,
     common_environment,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -25,6 +28,10 @@ from lib.config import (
 from lib.executor import (
     Delegate,
     install_command_requirements,
+)
+
+from lib.data import (
+    data_context,
 )
 
 COVERAGE_DIR = 'test/results/coverage'
@@ -44,7 +51,7 @@ def command_coverage_combine(args):
     coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
 
     ansible_path = os.path.abspath('lib/ansible/') + '/'
-    root_path = os.getcwd() + '/'
+    root_path = data_context().content.root + '/'
 
     counter = 0
     groups = {}
@@ -77,6 +84,13 @@ def command_coverage_combine(args):
                 continue
 
             groups['=stub-%02d' % (stub_index + 1)] = dict((source, set()) for source in stub_group)
+
+    if data_context().content.collection:
+        collection_search_re = re.compile(r'/%s/' % data_context().content.collection.directory)
+        collection_sub_re = re.compile(r'^.*?/%s/' % data_context().content.collection.directory)
+    else:
+        collection_search_re = None
+        collection_sub_re = None
 
     for coverage_file in coverage_files:
         counter += 1
@@ -111,6 +125,10 @@ def command_coverage_combine(args):
             if '/ansible_modlib.zip/ansible/' in filename:
                 # Rewrite the module_utils path from the remote host to match the controller. Ansible 2.6 and earlier.
                 new_name = re.sub('^.*/ansible_modlib.zip/ansible/', ansible_path, filename)
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
+            elif collection_search_re and collection_search_re.search(filename):
+                new_name = os.path.abspath(collection_sub_re.sub('', filename))
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
             elif re.search(r'/ansible_[^/]+_payload\.zip/ansible/', filename):
@@ -170,6 +188,10 @@ def command_coverage_combine(args):
 
         for filename in arc_data:
             if not os.path.isfile(filename):
+                if collection_search_re and collection_search_re.search(filename) and os.path.basename(filename) == '__init__.py':
+                    # the collection loader uses implicit namespace packages, so __init__.py does not need to exist on disk
+                    continue
+
                 invalid_path_count += 1
                 invalid_path_chars += len(filename)
 

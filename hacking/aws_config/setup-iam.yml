@@ -25,13 +25,13 @@
       when: iam_group is not defined
 
     - name: Get aws account ID
-      aws_caller_facts:
+      aws_caller_info:
         profile: "{{ profile|default(omit) }}"
-      register: aws_caller_facts
+      register: aws_caller_info
 
     - name: Set aws_account_fact
       set_fact:
-        aws_account: "{{ aws_caller_facts.account }}"
+        aws_account: "{{ aws_caller_info.account }}"
 
 
     - name: Ensure Managed IAM policies exist
@@ -52,3 +52,4 @@
         state: present
         managed_policy: "{{ iam_managed_policies | json_query('results[].policy.policy_name') }}"
         profile: "{{ profile|default(omit) }}"
+        purge_policy: yes

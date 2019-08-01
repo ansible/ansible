@@ -1,0 +1,2 @@
+bugfixes:
+    - avoid choosing an unreadable ansible.cfg just because it exists.

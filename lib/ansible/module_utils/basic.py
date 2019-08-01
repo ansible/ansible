@@ -694,7 +694,7 @@ class AnsibleModule(object):
         self._set_cwd()
 
         # Do this at the end so that logging parameters have been set up
-        # This is to warn third party module authors that the functionatlity is going away.
+        # This is to warn third party module authors that the functionality is going away.
         # We exclude uri and zfs as they have their own deprecation warnings for users and we'll
         # make sure to update their code to stop using check_invalid_arguments when 2.9 rolls around
         if module_set_check_invalid_arguments and self._name not in ('uri', 'zfs'):
@@ -1114,7 +1114,7 @@ class AnsibleModule(object):
                         if underlying_stat.st_mode != new_underlying_stat.st_mode:
                             os.chmod(b_path, stat.S_IMODE(underlying_stat.st_mode))
             except OSError as e:
-                if os.path.islink(b_path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
+                if os.path.islink(b_path) and e.errno in (errno.EPERM, errno.EROFS):  # Can't set mode on symbolic links
                     pass
                 elif e.errno in (errno.ENOENT, errno.ELOOP):  # Can't set mode on broken symbolic links
                     pass
@@ -1413,14 +1413,17 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" %
                            to_native(e), exception=traceback.format_exc())
 
-    def _handle_aliases(self, spec=None, param=None):
+    def _handle_aliases(self, spec=None, param=None, option_prefix=''):
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
 
         # this uses exceptions as it happens before we can safely call fail_json
-        alias_results, self._legal_inputs = handle_aliases(spec, param)
+        alias_warnings = []
+        alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
+        for option, alias in alias_warnings:
+            self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1665,7 +1668,7 @@ class AnsibleModule(object):
     def _check_type_bits(self, value):
         return check_type_bits(value)
 
-    def _handle_options(self, argument_spec=None, params=None):
+    def _handle_options(self, argument_spec=None, params=None, prefix=''):
         ''' deal with options to create sub spec '''
         if argument_spec is None:
             argument_spec = self.argument_spec
@@ -1692,12 +1695,17 @@ class AnsibleModule(object):
                 else:
                     elements = params[k]
 
-                for param in elements:
+                for idx, param in enumerate(elements):
                     if not isinstance(param, dict):
                         self.fail_json(msg="value of %s must be of type dict or list of dict" % k)
 
+                    new_prefix = prefix + k
+                    if wanted == 'list':
+                        new_prefix += '[%d]' % idx
+                    new_prefix += '.'
+
                     self._set_fallbacks(spec, param)
-                    options_aliases = self._handle_aliases(spec, param)
+                    options_aliases = self._handle_aliases(spec, param, option_prefix=new_prefix)
 
                     self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
@@ -1723,7 +1731,7 @@ class AnsibleModule(object):
                     self._set_defaults(pre=False, spec=spec, param=param)
 
                     # handle multi level options (sub argspec)
-                    self._handle_options(spec, param)
+                    self._handle_options(spec, param, new_prefix)
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
@@ -2452,13 +2460,16 @@ class AnsibleModule(object):
 
             # stringify args for unsafe/direct shell usage
             if isinstance(args, list):
-                args = " ".join([shlex_quote(x) for x in args])
+                args = b" ".join([to_bytes(shlex_quote(x), errors='surrogate_or_strict') for x in args])
+            else:
+                args = to_bytes(args, errors='surrogate_or_strict')
 
             # not set explicitly, check if set by controller
             if executable:
-                args = [executable, '-c', args]
+                executable = to_bytes(executable, errors='surrogate_or_strict')
+                args = [executable, b'-c', args]
             elif self._shell not in (None, '/bin/sh'):
-                args = [self._shell, '-c', args]
+                args = [to_bytes(self._shell, errors='surrogate_or_strict'), b'-c', args]
             else:
                 shell = True
         else:
@@ -2474,9 +2485,9 @@ class AnsibleModule(object):
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
-                args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
+                args = [to_bytes(os.path.expanduser(os.path.expandvars(x)), errors='surrogate_or_strict') for x in args if x is not None]
             else:
-                args = [x for x in args if x is not None]
+                args = [to_bytes(x, errors='surrogate_or_strict') for x in args if x is not None]
 
         prompt_re = None
         if prompt_regex:
@@ -2508,9 +2519,9 @@ class AnsibleModule(object):
             old_env_vals['PATH'] = os.environ['PATH']
             os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
-        # If using test-module and explode, the remote lib path will resemble ...
+        # If using test-module.py and explode, the remote lib path will resemble:
         #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
-        # If using ansible or ansible-playbook with a remote system ...
+        # If using ansible or ansible-playbook with a remote system:
         #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
 
         # Clean out python paths set by ansiballz
@@ -2543,7 +2554,7 @@ class AnsibleModule(object):
 
         # make sure we're in the right working directory
         if cwd and os.path.isdir(cwd):
-            cwd = os.path.abspath(os.path.expanduser(cwd))
+            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
             kwargs['cwd'] = cwd
             try:
                 os.chdir(cwd)

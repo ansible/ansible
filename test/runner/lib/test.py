@@ -1,13 +1,17 @@
 """Classes for storing and processing test results."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import datetime
 import json
 import os
 
+import lib.types as t
+
 from lib.util import (
     display,
+    make_dirs,
+    to_bytes,
 )
 
 from lib.config import (
@@ -55,7 +59,7 @@ def calculate_confidence(path, line, metadata):
     return 50
 
 
-class TestResult(object):
+class TestResult:
     """Base class for test results."""
     def __init__(self, command, test, python_version=None):
         """
@@ -96,23 +100,19 @@ class TestResult(object):
 
     def write_console(self):
         """Write results to console."""
-        pass
 
     def write_lint(self):
         """Write lint results to stdout."""
-        pass
 
     def write_bot(self, args):
         """
         :type args: TestConfig
         """
-        pass
 
     def write_junit(self, args):
         """
         :type args: TestConfig
         """
-        pass
 
     def create_path(self, directory, extension):
         """
@@ -156,7 +156,7 @@ class TestResult(object):
             return
 
         with open(path, 'wb') as xml:
-            xml.write(report.encode('utf-8', 'strict'))
+            xml.write(to_bytes(report))
 
 
 class TestTimeout(TestResult):
@@ -249,7 +249,7 @@ class TestFailure(TestResult):
         super(TestFailure, self).__init__(command, test, python_version)
 
         if messages:
-            messages = sorted(messages, key=lambda m: m.sort_key)
+            messages = sorted(messages)
         else:
             messages = []
 
@@ -336,6 +336,8 @@ class TestFailure(TestResult):
         if args.explain:
             return
 
+        make_dirs(os.path.dirname(path))
+
         with open(path, 'w') as bot_fd:
             json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
             bot_fd.write('\n')
@@ -419,7 +421,7 @@ class TestFailure(TestResult):
         return message
 
 
-class TestMessage(object):
+class TestMessage:
     """Single test message for one file."""
     def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
         """
@@ -431,13 +433,70 @@ class TestMessage(object):
         :type code: str | None
         :type confidence: int | None
         """
-        self.path = path
-        self.line = line
-        self.column = column
-        self.level = level
-        self.code = code
-        self.message = message
+        self.__path = path
+        self.__line = line
+        self.__column = column
+        self.__level = level
+        self.__code = code
+        self.__message = message
+
         self.confidence = confidence
+
+    @property
+    def path(self):  # type: () -> str
+        """Return the path."""
+        return self.__path
+
+    @property
+    def line(self):  # type: () -> int
+        """Return the line number, or 0 if none is available."""
+        return self.__line
+
+    @property
+    def column(self):  # type: () -> int
+        """Return the column number, or 0 if none is available."""
+        return self.__column
+
+    @property
+    def level(self):  # type: () -> str
+        """Return the level."""
+        return self.__level
+
+    @property
+    def code(self):  # type: () -> t.Optional[str]
+        """Return the code, if any."""
+        return self.__code
+
+    @property
+    def message(self):  # type: () -> str
+        """Return the message."""
+        return self.__message
+
+    @property
+    def tuple(self):  # type: () -> t.Tuple[str, int, int, str, t.Optional[str], str]
+        """Return a tuple with all the immutable values of this test message."""
+        return self.__path, self.__line, self.__column, self.__level, self.__code, self.__message
+
+    def __lt__(self, other):
+        return self.tuple < other.tuple
+
+    def __le__(self, other):
+        return self.tuple <= other.tuple
+
+    def __eq__(self, other):
+        return self.tuple == other.tuple
+
+    def __ne__(self, other):
+        return self.tuple != other.tuple
+
+    def __gt__(self, other):
+        return self.tuple > other.tuple
+
+    def __ge__(self, other):
+        return self.tuple >= other.tuple
+
+    def __hash__(self):
+        return hash(self.tuple)
 
     def __str__(self):
         return self.format()
@@ -447,19 +506,12 @@ class TestMessage(object):
         :type show_confidence: bool
         :rtype: str
         """
-        if self.code:
-            msg = '%s %s' % (self.code, self.message)
+        if self.__code:
+            msg = '%s %s' % (self.__code, self.__message)
         else:
-            msg = self.message
+            msg = self.__message
 
         if show_confidence and self.confidence is not None:
             msg += ' (%d%%)' % self.confidence
 
-        return '%s:%s:%s: %s' % (self.path, self.line, self.column, msg)
-
-    @property
-    def sort_key(self):
-        """
-        :rtype: str
-        """
-        return '%s:%6d:%6d:%s:%s' % (self.path, self.line, self.column, self.code or '', self.message)
+        return '%s:%s:%s: %s' % (self.__path, self.__line, self.__column, msg)

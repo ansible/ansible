@@ -8,16 +8,21 @@
     - name: Create a namespace
       k8s:
         name: crd
-        kind: namespace
+        kind: Namespace
 
     - name: install custom resource definitions
       k8s:
         definition: "{{ lookup('file', role_path + '/files/setup-crd.yml') }}"
 
+    - name: pause 5 seconds to avoid race condition
+      pause:
+        seconds: 5
+
     - name: create custom resource definition
       k8s:
         definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
         namespace: crd
+        apply: "{{ create_crd_with_apply | default(omit) }}"
       register: create_crd
 
     - name: patch custom resource definition

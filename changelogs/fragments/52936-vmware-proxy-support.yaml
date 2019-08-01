@@ -1,0 +1,2 @@
+minor_changes:
+- vmware - The VMware modules can now access a server behind a HTTP proxy (https://github.com/ansible/ansible/pull/52936)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """Test to verify action plugins have an associated module to provide documentation."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import sys
@@ -22,7 +24,6 @@ def main():
         # The following action plugins provide base classes for network platform specific modules to support `connection: local`.
         # Once we fully deprecate the use of connection local, the base classes will go away.
         'aireos',
-        'apconos',
         'aruba',
         'asa',
         'ce',
@@ -58,8 +59,6 @@ def main():
 
             module_names.add(name)
 
-    unused_skip = set(skip)
-
     for path in paths:
         if not path.startswith('lib/ansible/plugins/action/'):
             continue
@@ -67,14 +66,7 @@ def main():
         name = os.path.splitext(os.path.basename(path))[0]
 
         if name not in module_names:
-            if name in skip:
-                unused_skip.remove(name)
-                continue
-
             print('%s: action plugin has no matching module to provide documentation' % path)
-
-    for filename in sorted(unused_skip):
-        print("%s: remove '%s' from skip list since it does not exist" % ('test/sanity/code-smell/action-plugin-docs.py', filename))
 
 
 if __name__ == '__main__':

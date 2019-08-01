@@ -107,6 +107,7 @@ options:
 requirements:
     - "python >= 2.7"
     - "openstacksdk >= 0.13.0"
+    - "keystoneauth1 >= 3.4.0"
 '''
 
 EXAMPLES = '''
@@ -225,7 +226,17 @@ openstack_quotas:
 
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+
+KEYSTONEAUTH1_IMP_ERR = None
+try:
+    from keystoneauth1 import exceptions as ksa_exceptions
+    HAS_KEYSTONEAUTH1 = True
+except ImportError:
+    KEYSTONEAUTH1_IMP_ERR = traceback.format_exc()
+    HAS_KEYSTONEAUTH1 = False
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
@@ -249,12 +260,12 @@ def _get_quotas(sdk, module, cloud, project):
     quota = {}
     try:
         quota['volume'] = _get_volume_quotas(cloud, project)
-    except sdk.exceptions.NotFoundException:
+    except ksa_exceptions.EndpointNotFound:
         module.warn("No public endpoint for volumev2 service was found. Ignoring volume quotas.")
 
     try:
         quota['network'] = _get_network_quotas(cloud, project)
-    except sdk.exceptions.NotFoundException:
+    except ksa_exceptions.EndpointNotFound:
         module.warn("No public endpoint for network service was found. Ignoring network quotas.")
 
     quota['compute'] = _get_compute_quotas(cloud, project)
@@ -363,6 +374,9 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True
                            )
+
+    if not HAS_KEYSTONEAUTH1:
+        module.fail_json(msg=missing_required_lib("keystoneauth1"), exception=KEYSTONEAUTH1_IMP_ERR)
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:

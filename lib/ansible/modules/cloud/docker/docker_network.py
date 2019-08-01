@@ -276,6 +276,7 @@ network:
 '''
 
 import re
+import traceback
 
 from distutils.version import LooseVersion
 
@@ -285,10 +286,12 @@ from ansible.module_utils.docker.common import (
     docker_version,
     DifferenceTracker,
     clean_dict_booleans_for_docker_api,
+    RequestException,
 )
 
 try:
     from docker import utils
+    from docker.errors import DockerException
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:
@@ -301,7 +304,7 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
         self.client = client
 
-        self.network_name = None
+        self.name = None
         self.connected = None
         self.driver = None
         self.driver_options = None
@@ -398,7 +401,7 @@ class DockerNetworkManager(object):
             self.results['diff'] = self.diff_result
 
     def get_existing_network(self):
-        return self.client.get_network(name=self.parameters.network_name)
+        return self.client.get_network(name=self.parameters.name)
 
     def has_different_config(self, net):
         '''
@@ -542,18 +545,18 @@ class DockerNetworkManager(object):
                 params['labels'] = self.parameters.labels
 
             if not self.check_mode:
-                resp = self.client.create_network(self.parameters.network_name, **params)
+                resp = self.client.create_network(self.parameters.name, **params)
                 self.client.report_warnings(resp, ['Warning'])
                 self.existing_network = self.client.get_network(id=resp['Id'])
-            self.results['actions'].append("Created network %s with driver %s" % (self.parameters.network_name, self.parameters.driver))
+            self.results['actions'].append("Created network %s with driver %s" % (self.parameters.name, self.parameters.driver))
             self.results['changed'] = True
 
     def remove_network(self):
         if self.existing_network:
             self.disconnect_all_containers()
             if not self.check_mode:
-                self.client.remove_network(self.parameters.network_name)
-            self.results['actions'].append("Removed network %s" % (self.parameters.network_name,))
+                self.client.remove_network(self.parameters.name)
+            self.results['actions'].append("Removed network %s" % (self.parameters.name,))
             self.results['changed'] = True
 
     def is_container_connected(self, container_name):
@@ -563,7 +566,7 @@ class DockerNetworkManager(object):
         for name in self.parameters.connected:
             if not self.is_container_connected(name):
                 if not self.check_mode:
-                    self.client.connect_container_to_network(name, self.parameters.network_name)
+                    self.client.connect_container_to_network(name, self.parameters.name)
                 self.results['actions'].append("Connected container %s" % (name,))
                 self.results['changed'] = True
                 self.diff_tracker.add('connected.{0}'.format(name),
@@ -582,7 +585,7 @@ class DockerNetworkManager(object):
                 self.disconnect_container(name)
 
     def disconnect_all_containers(self):
-        containers = self.client.get_network(name=self.parameters.network_name)['Containers']
+        containers = self.client.get_network(name=self.parameters.name)['Containers']
         if not containers:
             return
         for cont in containers.values():
@@ -590,7 +593,7 @@ class DockerNetworkManager(object):
 
     def disconnect_container(self, container_name):
         if not self.check_mode:
-            self.client.disconnect_container_from_network(container_name, self.parameters.network_name)
+            self.client.disconnect_container_from_network(container_name, self.parameters.name)
         self.results['actions'].append("Disconnected container %s" % (container_name,))
         self.results['changed'] = True
         self.diff_tracker.add('connected.{0}'.format(container_name),
@@ -631,7 +634,7 @@ class DockerNetworkManager(object):
 
 def main():
     argument_spec = dict(
-        network_name=dict(type='str', required=True, aliases=['name']),
+        name=dict(type='str', required=True, aliases=['network_name']),
         connected=dict(type='list', default=[], elements='str', aliases=['containers']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='bridge'),
@@ -681,8 +684,13 @@ def main():
         option_minimal_versions=option_minimal_versions,
     )
 
-    cm = DockerNetworkManager(client)
-    client.module.exit_json(**cm.results)
+    try:
+        cm = DockerNetworkManager(client)
+        client.module.exit_json(**cm.results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

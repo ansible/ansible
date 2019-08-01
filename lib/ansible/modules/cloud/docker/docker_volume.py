@@ -125,8 +125,10 @@ volume:
     sample: {}
 '''
 
+import traceback
+
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -135,6 +137,7 @@ from ansible.module_utils.docker.common import (
     DockerBaseClass,
     AnsibleDockerClient,
     DifferenceTracker,
+    RequestException,
 )
 from ansible.module_utils.six import iteritems, text_type
 
@@ -323,8 +326,13 @@ def main():
         option_minimal_versions=option_minimal_versions,
     )
 
-    cm = DockerVolumeManager(client)
-    client.module.exit_json(**cm.results)
+    try:
+        cm = DockerVolumeManager(client)
+        client.module.exit_json(**cm.results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

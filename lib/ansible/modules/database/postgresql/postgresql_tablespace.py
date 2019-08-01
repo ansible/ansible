@@ -78,25 +78,17 @@ options:
     type: str
     aliases:
     - login_db
+
 notes:
 - I(state=absent) and I(state=present) (the second one if the tablespace doesn't exist) do not
   support check mode because the corresponding PostgreSQL DROP and CREATE TABLESPACE commands
   can not be run inside the transaction block.
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+
 author:
 - Flavien Chantelot (@Dorn-)
 - Antoine Levy-Lambert (@antoinell)
 - Andrew Klychkov (@Andersson007)
+
 extends_documentation_fragment: postgres
 '''
 
@@ -180,12 +172,36 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils.database import pg_quote_identifier
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 
 
 class PgTablespace(object):
+
+    """Class for working with PostgreSQL tablespaces.
+
+    Args:
+        module (AnsibleModule) -- object of AnsibleModule class
+        cursor (cursor) -- cursor object of psycopg2 library
+        name (str) -- name of the tablespace
+
+    Attrs:
+        module (AnsibleModule) -- object of AnsibleModule class
+        cursor (cursor) -- cursor object of psycopg2 library
+        name (str) -- name of the tablespace
+        exists (bool) -- flag the tablespace exists in the DB or not
+        owner (str) -- tablespace owner
+        location (str) -- path to the tablespace directory in the file system
+        executed_queries (list) -- list of executed queries
+        new_name (str) -- new name for the tablespace
+        opt_not_supported (bool) -- flag indicates a tablespace option is supported or not
+    """
+
     def __init__(self, module, cursor, name):
         self.module = module
         self.cursor = cursor
@@ -201,15 +217,16 @@ class PgTablespace(object):
         self.get_info()
 
     def get_info(self):
+        """Get tablespace information."""
         # Check that spcoptions exists:
-        opt = self.__exec_sql("SELECT 1 FROM information_schema.columns "
-                              "WHERE table_name = 'pg_tablespace' "
-                              "AND column_name = 'spcoptions'", add_to_executed=False)
+        opt = exec_sql(self, "SELECT 1 FROM information_schema.columns "
+                             "WHERE table_name = 'pg_tablespace' "
+                             "AND column_name = 'spcoptions'", add_to_executed=False)
 
         # For 9.1 version and earlier:
-        location = self.__exec_sql("SELECT 1 FROM information_schema.columns "
-                                   "WHERE table_name = 'pg_tablespace' "
-                                   "AND column_name = 'spclocation'", add_to_executed=False)
+        location = exec_sql(self, "SELECT 1 FROM information_schema.columns "
+                                  "WHERE table_name = 'pg_tablespace' "
+                                  "AND column_name = 'spclocation'", add_to_executed=False)
         if location:
             location = 'spclocation'
         else:
@@ -229,7 +246,7 @@ class PgTablespace(object):
                      "ON t.spcowner = r.oid "
                      "WHERE t.spcname = '%s'" % (location, self.name))
 
-        res = self.__exec_sql(query, add_to_executed=False)
+        res = exec_sql(self, query, add_to_executed=False)
 
         if not res:
             self.exists = False
@@ -250,25 +267,58 @@ class PgTablespace(object):
                 self.location = res[0][2]
 
     def create(self, location):
+        """Create tablespace.
+
+        Return True if success, otherwise, return False.
+
+        args:
+            location (str) -- tablespace directory path in the FS
+        """
         query = ("CREATE TABLESPACE %s LOCATION '%s'" % (pg_quote_identifier(self.name, 'database'), location))
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def drop(self):
-        return self.__exec_sql("DROP TABLESPACE %s" % pg_quote_identifier(self.name, 'database'), ddl=True)
+        """Drop tablespace.
+
+        Return True if success, otherwise, return False.
+        """
+        return exec_sql(self, "DROP TABLESPACE %s" % pg_quote_identifier(self.name, 'database'), ddl=True)
 
     def set_owner(self, new_owner):
+        """Set tablespace owner.
+
+        Return True if success, otherwise, return False.
+
+        args:
+            new_owner (str) -- name of a new owner for the tablespace"
+        """
         if new_owner == self.owner:
             return False
 
         query = "ALTER TABLESPACE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'database'), new_owner)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def rename(self, newname):
+        """Rename tablespace.
+
+        Return True if success, otherwise, return False.
+
+        args:
+            newname (str) -- new name for the tablespace"
+        """
         query = "ALTER TABLESPACE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'database'), newname)
         self.new_name = newname
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def set_settings(self, new_settings):
+        """Set tablespace settings (options).
+
+        If some setting has been changed, set changed = True.
+        After all settings list is handling, return changed.
+
+        args:
+            new_settings (list) -- list of new settings
+        """
         # settings must be a dict {'key': 'value'}
         if self.opt_not_supported:
             return False
@@ -288,27 +338,26 @@ class PgTablespace(object):
         return changed
 
     def __reset_setting(self, setting):
+        """Reset tablespace setting.
+
+        Return True if success, otherwise, return False.
+
+        args:
+            setting (str) -- string in format "setting_name = 'setting_value'"
+        """
         query = "ALTER TABLESPACE %s RESET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def __set_setting(self, setting):
+        """Set tablespace setting.
+
+        Return True if success, otherwise, return False.
+
+        args:
+            setting (str) -- string in format "setting_name = 'setting_value'"
+        """
         query = "ALTER TABLESPACE %s SET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
-        return self.__exec_sql(query, ddl=True)
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
+        return exec_sql(self, query, ddl=True)
 
 
 # ===========================================
@@ -346,7 +395,8 @@ def main():
         module.fail_json(msg="state=absent is mutually exclusive location, "
                              "owner, rename_to, and set")
 
-    db_connection = connect_to_db(module, autocommit=True)
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Change autocommit to False if check_mode:

@@ -215,7 +215,8 @@ def map_config_to_obj(module, warnings):
         if "Interface does not exist" in command_result[0]:
             warnings.append("Could not gather switchport information for {0}: {1}".format(item, command_result[0]))
             continue
-        elif command_result[0] != "":
+
+        if command_result[0]:
             switchport_cfg = command_result[0].split(':')[1].strip()
 
             if switchport_cfg == 'Enabled':
@@ -226,17 +227,16 @@ def map_config_to_obj(module, warnings):
             obj = {
                 'name': item.lower(),
                 'state': state,
+                'access_vlan': parse_config_argument(configobj, item, 'switchport access vlan'),
+                'native_vlan': parse_config_argument(configobj, item, 'switchport trunk native vlan'),
+                'trunk_allowed_vlans': parse_config_argument(configobj, item, 'switchport trunk allowed vlan'),
             }
+            if obj['access_vlan']:
+                obj['mode'] = 'access'
+            else:
+                obj['mode'] = 'trunk'
 
-        obj['access_vlan'] = parse_config_argument(configobj, item, 'switchport access vlan')
-        obj['native_vlan'] = parse_config_argument(configobj, item, 'switchport trunk native vlan')
-        obj['trunk_allowed_vlans'] = parse_config_argument(configobj, item, 'switchport trunk allowed vlan')
-        if obj['access_vlan']:
-            obj['mode'] = 'access'
-        else:
-            obj['mode'] = 'trunk'
-
-        instances.append(obj)
+            instances.append(obj)
 
     return instances
 

@@ -1,3 +1,2 @@
 repo_command:
   RedHat7: yum-config-manager --enable rhui-REGION-rhel-server-extras
-  # RedHat8: dnf config-manager --enablerepo rhui-REGION-rhel-server-extras

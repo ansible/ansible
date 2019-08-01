@@ -4,7 +4,7 @@
     cname: "{{ cname_prefix ~ '-iid' }}"
 - name: Registering container name
   set_fact:
-    cnames: "{{ cnames }} + [cname]"
+    cnames: "{{ cnames + [cname] }}"
 
 - name: Pull images
   docker_image:

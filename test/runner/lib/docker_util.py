@@ -1,21 +1,21 @@
 """Functions for accessing docker via the docker cli."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
 import time
 
-from lib.executor import (
-    SubprocessError,
-)
-
 from lib.util import (
     ApplicationError,
-    run_command,
     common_environment,
     display,
     find_executable,
+    SubprocessError,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -91,7 +91,7 @@ def docker_pull(args, image):
         display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
         return
 
-    for _ in range(1, 10):
+    for _iteration in range(1, 10):
         try:
             docker_command(args, ['pull', image])
             return
@@ -142,7 +142,7 @@ def docker_run(args, image, options, cmd=None):
     if not cmd:
         cmd = []
 
-    for _ in range(1, 3):
+    for _iteration in range(1, 3):
         try:
             return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
         except SubprocessError as ex:
@@ -159,7 +159,13 @@ def docker_images(args, image):
     :param image: str
     :rtype: list[dict[str, any]]
     """
-    stdout, _dummy = docker_command(args, ['images', image, '--format', '{{json .}}'], capture=True, always=True)
+    try:
+        stdout, _dummy = docker_command(args, ['images', image, '--format', '{{json .}}'], capture=True, always=True)
+    except SubprocessError as ex:
+        if 'no such image' in ex.stderr:
+            stdout = ''  # podman does not handle this gracefully, exits 125
+        else:
+            raise ex
     results = [json.loads(line) for line in stdout.splitlines()]
     return results
 
@@ -169,7 +175,13 @@ def docker_rm(args, container_id):
     :type args: EnvironmentConfig
     :type container_id: str
     """
-    docker_command(args, ['rm', '-f', container_id], capture=True)
+    try:
+        docker_command(args, ['rm', '-f', container_id], capture=True)
+    except SubprocessError as ex:
+        if 'no such container' in ex.stderr:
+            pass  # podman does not handle this gracefully, exits 1
+        else:
+            raise ex
 
 
 def docker_inspect(args, container_id):
@@ -182,9 +194,11 @@ def docker_inspect(args, container_id):
         return []
 
     try:
-        stdout, _ = docker_command(args, ['inspect', container_id], capture=True)
+        stdout = docker_command(args, ['inspect', container_id], capture=True)[0]
         return json.loads(stdout)
     except SubprocessError as ex:
+        if 'no such image' in ex.stderr:
+            return []  # podman does not handle this gracefully, exits 125
         try:
             return json.loads(ex.stdout)
         except Exception:
@@ -210,7 +224,7 @@ def docker_network_inspect(args, network):
         return []
 
     try:
-        stdout, _ = docker_command(args, ['network', 'inspect', network], capture=True)
+        stdout = docker_command(args, ['network', 'inspect', network], capture=True)[0]
         return json.loads(stdout)
     except SubprocessError as ex:
         try:
@@ -226,8 +240,8 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     :type cmd: list[str]
     :type options: list[str] | None
     :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
+    :type stdin: BinaryIO | None
+    :type stdout: BinaryIO | None
     :rtype: str | None, str | None
     """
     if not options:

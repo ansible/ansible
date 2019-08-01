@@ -992,6 +992,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
 
+            # in some cases a traceback will arrive on stdout instead of stderr, such as when using ssh with -tt
+            if 'exception' not in data and data['module_stdout'].startswith(u'Traceback'):
+                data['exception'] = data['module_stdout']
+
             # The default
             data['msg'] = "MODULE FAILURE"
 
@@ -1035,9 +1039,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        if (sudoable and self._connection.transport != 'network_cli' and self._connection.become and
-                (C.BECOME_ALLOW_SAME_USER or
-                 self.get_become_option('become_user') != self._get_remote_user())):
+        ruser = self._get_remote_user()
+        buser = self.get_become_option('become_user')
+        if (sudoable and self._connection.become and  # if sudoable and have become
+                self._connection.transport != 'network_cli' and  # if not using network_cli
+                (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 
@@ -1054,13 +1060,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Change directory to basedir of task for command execution when connection is local
         if self._connection.transport == 'local':
-            cwd = os.getcwd()
-            os.chdir(to_bytes(self._loader.get_basedir()))
-        try:
-            rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        finally:
-            if self._connection.transport == 'local':
-                os.chdir(cwd)
+            self._connection.cwd = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
+
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
@@ -1104,7 +1106,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
-            if peek_result.get('state') == 'absent':
+            if peek_result.get('state') in (None, 'absent'):
                 diff['before'] = u''
             elif peek_result.get('appears_binary'):
                 diff['dst_binary'] = 1

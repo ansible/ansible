@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: vmware_guest_custom_attributes
-short_description: Manage custom attributes from VMWare for the given virtual machine
+short_description: Manage custom attributes from VMware for the given virtual machine
 description:
     - This module can be used to add, remove and update custom attributes for the given virtual machine.
 version_added: 2.7
@@ -36,7 +36,9 @@ options:
    name:
      description:
      - Name of the virtual machine to work with.
+     - This is required parameter, if C(uuid) or C(moid) is not supplied.
      required: True
+     type: str
    state:
      description:
      - The action to take.
@@ -44,13 +46,21 @@ options:
      - If set to C(absent), then custom attribute is removed.
      default: 'present'
      choices: ['present', 'absent']
+     type: str
    uuid:
      description:
      - UUID of the virtual machine to manage if known. This is VMware's unique identifier.
-     - This is required parameter, if C(name) is not supplied.
+     - This is required parameter, if C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -58,15 +68,18 @@ options:
      description:
      - Absolute path to find an existing guest.
      - This is required parameter, if C(name) is supplied and multiple virtual machines with same name are found.
+     type: str
    datacenter:
      description:
      - Datacenter name where the virtual machine is located in.
      required: True
+     type: str
    attributes:
      description:
      - A list of name and value of custom attributes that needs to be manage.
      - Value of custom attribute is not required and will be ignored, if C(state) is set to C(absent).
      default: []
+     type: list
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -111,6 +124,17 @@ EXAMPLES = '''
   delegate_to: localhost
   register: attributes
 
+- name: Remove virtual machine Attribute using Virtual Machine MoID
+  vmware_guest_custom_attributes:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    moid: vm-42
+    state: absent
+    attributes:
+      - name: MyAttribute
+  delegate_to: localhost
+  register: attributes
 '''
 
 RETURN = """
@@ -185,6 +209,7 @@ def main():
         name=dict(required=True, type='str'),
         folder=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         state=dict(type='str', default='present',
                    choices=['absent', 'present']),
@@ -201,7 +226,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_one_of=[['name', 'uuid']],
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ],
     )
 
     if module.params.get('folder'):
@@ -224,8 +251,9 @@ def main():
         module.exit_json(**results)
     else:
         # virtual machine does not exists
+        vm_id = (module.params.get('name') or module.params.get('uuid') or module.params.get('moid'))
         module.fail_json(msg="Unable to manage custom attributes for non-existing"
-                             " virtual machine %s" % (module.params.get('name') or module.params.get('uuid')))
+                             " virtual machine %s" % vm_id)
 
 
 if __name__ == '__main__':

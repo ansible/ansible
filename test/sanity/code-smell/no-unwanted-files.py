@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 """Prevent unwanted files from being added to the source tree."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import sys
 
@@ -15,21 +18,11 @@ def main():
         '.py',
     )
 
-    skip = (
-        # allowed special cases
-        'lib/ansible/config/base.yml',
-        'lib/ansible/config/module_defaults.yml',
-    )
-
     skip_directories = (
-        'lib/ansible.egg-info/',
         'lib/ansible/galaxy/data/',
     )
 
     for path in paths:
-        if path in skip:
-            continue
-
         if any(path.startswith(skip_directory) for skip_directory in skip_directories):
             continue
 

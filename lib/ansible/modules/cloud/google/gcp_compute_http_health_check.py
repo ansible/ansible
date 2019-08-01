@@ -48,11 +48,13 @@ options:
     - present
     - absent
     default: present
+    type: str
   check_interval_sec:
     description:
     - How often (in seconds) to send a health check. The default value is 5 seconds.
     required: false
     default: '5'
+    type: int
     aliases:
     - check_interval_seconds
   description:
@@ -60,17 +62,20 @@ options:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   healthy_threshold:
     description:
     - A so-far unhealthy instance will be marked healthy after this many consecutive
       successes. The default value is 2.
     required: false
+    type: int
   host:
     description:
     - The value of the host header in the HTTP health check request. If left empty
       (default value), the public IP on behalf of which this health check is performed
       will be used.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -80,22 +85,26 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   port:
     description:
     - The TCP port number for the HTTP health check request.
     - The default value is 80.
     required: false
+    type: int
   request_path:
     description:
     - The request path of the HTTP health check request.
     - The default value is /.
     required: false
+    type: str
   timeout_sec:
     description:
     - How long (in seconds) to wait before claiming failure.
     - The default value is 5 seconds. It is invalid for timeoutSec to have greater
       value than checkIntervalSec.
     required: false
+    type: int
     aliases:
     - timeout_seconds
   unhealthy_threshold:
@@ -103,6 +112,7 @@ options:
     - A so-far healthy instance will be marked unhealthy after this many consecutive
       failures. The default value is 2.
     required: false
+    type: int
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/httpHealthChecks)'

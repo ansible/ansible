@@ -50,6 +50,7 @@ options:
     - URL of the region where the regional address resides.
     - This field is not applicable to global addresses.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -62,7 +63,6 @@ EXAMPLES = '''
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
-    state: facts
 '''
 
 RETURN = '''

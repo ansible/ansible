@@ -19,6 +19,7 @@ module: vcenter_folder
 short_description: Manage folders on given datacenter
 description:
 - This module can be used to create, delete, move and rename folder on then given datacenter.
+- This module is only supported for vCenter.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -34,12 +35,14 @@ options:
     - Name of the datacenter.
     required: True
     aliases: ['datacenter_name']
+    type: str
   folder_name:
     description:
     - Name of folder to be managed.
     - This is case sensitive parameter.
     - Folder name should be under 80 characters. This is a VMware restriction.
     required: True
+    type: str
   parent_folder:
     description:
     - Name of the parent folder under which new folder needs to be created.
@@ -47,6 +50,7 @@ options:
     - Please specify unique folder name as there is no way to detect duplicate names.
     - "If user wants to create a folder under '/DC0/vm/vm_folder', this value will be 'vm_folder'."
     required: False
+    type: str
   folder_type:
     description:
     - This is type of folder.
@@ -57,6 +61,7 @@ options:
     - This parameter is required, if C(state) is set to C(present) and parent_folder is absent.
     - This option is ignored, if C(parent_folder) is set.
     default: vm
+    type: str
     required: False
     choices: [ datastore, host, network, vm ]
   state:
@@ -67,6 +72,7 @@ options:
     - If set to C(absent), then folder is unregistered and destroyed.
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -330,6 +336,9 @@ def main():
         module.fail_json(msg="Failed to manage folder as folder_name can only contain 80 characters.")
 
     vcenter_folder_mgr = VmwareFolderManager(module)
+    if not vcenter_folder_mgr.is_vcenter():
+        module.fail_json(msg="Module vcenter_folder is meant for vCenter, hostname %s "
+                             "is not vCenter server." % module.params.get('hostname'))
     vcenter_folder_mgr.ensure()
 
 

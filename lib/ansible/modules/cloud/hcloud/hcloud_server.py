@@ -126,7 +126,7 @@ EXAMPLES = """
   hcloud_server:
     name: my-server
     server_type: cx21
-    keep_disk: yes
+    upgrade_disk: yes
     state: present
 
 - name: Ensure the server is absent (remove if needed)

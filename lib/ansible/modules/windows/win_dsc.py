@@ -54,8 +54,9 @@ options:
       provided but a comma separated string also work. Use a list where
       possible as no escaping is required and it works with more complex types
       list C(CimInstance[]).
-    - If the type of the DSC resource option is a C(DateTime), use a string in
-      the form of an ISO 8901 string.
+    - If the type of the DSC resource option is a C(DateTime), you should use
+      a string in the form of an ISO 8901 string to ensure the exact date is
+      used.
     - Since Ansible 2.8, Ansible will now validate the input fields against the
       DSC resource definition automatically. Older versions will silently
       ignore invalid fields.

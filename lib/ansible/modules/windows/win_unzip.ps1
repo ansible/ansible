@@ -142,7 +142,7 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
     }
 
     If ($recurse) {
-        Get-ChildItem $dest -recurse | Where {$pcx_extensions -contains $_.extension} | % {
+        Get-ChildItem $dest -recurse | Where-Object {$pcx_extensions -contains $_.extension} | ForEach-Object {
             Try {
                 Expand-Archive $_.FullName -OutputPath $dest -Force -WhatIf:$check_mode
             } Catch {

@@ -35,11 +35,13 @@ options:
     - Name of the cluster.
     - Acceptance level of all ESXi host system in the given cluster will be managed.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - Acceptance level of this ESXi host system will be managed.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
   state:
     description:
     - Set or list acceptance level of the given ESXi host.
@@ -48,6 +50,7 @@ options:
     choices: [ list, present ]
     required: False
     default: 'list'
+    type: str
   acceptance_level:
     description:
     - Name of acceptance level.
@@ -57,6 +60,7 @@ options:
     - If set to C(community), then accept all VIBs, even those that are not signed.
     choices: [ community, partner, vmware_accepted, vmware_certified ]
     required: False
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

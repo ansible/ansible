@@ -1,61 +1,81 @@
 """Sanity test using yamllint."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
+
+import lib.types as t
 
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
-    SanitySkipped,
+)
+
+from lib.target import (
+    TestTarget,
 )
 
 from lib.util import (
     SubprocessError,
-    run_command,
     display,
+    ANSIBLE_ROOT,
+    is_subdir,
+    find_python,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
     SanityConfig,
 )
 
+from lib.data import (
+    data_context,
+)
+
 
 class YamllintTest(SanitySingleVersion):
     """Sanity test using yamllint."""
-    def test(self, args, targets):
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'ansible-test'
+
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        yaml_targets = [target for target in targets if os.path.splitext(target.path)[1] in ('.yml', '.yaml')]
+
+        for plugin_type, plugin_path in sorted(data_context().content.plugin_paths.items()):
+            if plugin_type == 'module_utils':
+                continue
+
+            yaml_targets.extend([target for target in targets if
+                                 os.path.splitext(target.path)[1] == '.py' and
+                                 os.path.basename(target.path) != '__init__.py' and
+                                 is_subdir(target.path, plugin_path)])
+
+        return yaml_targets
+
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
-        paths = [
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')],
+        settings = self.load_processor(args)
 
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-             os.path.basename(i.path) != '__init__.py' and
-             i.path.startswith('lib/ansible/plugins/')],
+        paths = [target.path for target in targets.include]
 
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-             os.path.basename(i.path) != '__init__.py' and
-             i.path.startswith('lib/ansible/modules/')],
+        python = find_python(python_version)
 
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
-             os.path.basename(i.path) != '__init__.py' and
-             i.path.startswith('lib/ansible/plugins/doc_fragments/')],
-        ]
-
-        paths = [sorted(p) for p in paths if p]
-
-        if not paths:
-            return SanitySkipped(self.name)
-
-        results = []
-
-        for test_paths in paths:
-            results += self.test_paths(args, test_paths)
+        results = self.test_paths(args, paths, python)
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results)
@@ -63,15 +83,16 @@ class YamllintTest(SanitySingleVersion):
         return SanitySuccess(self.name)
 
     @staticmethod
-    def test_paths(args, paths):
+    def test_paths(args, paths, python):
         """
         :type args: SanityConfig
         :type paths: list[str]
+        :type python: str
         :rtype: list[SanityMessage]
         """
         cmd = [
-            args.python_executable,
-            'test/sanity/yamllint/yamllinter.py',
+            python,
+            os.path.join(ANSIBLE_ROOT, 'test/sanity/yamllint/yamllinter.py'),
         ]
 
         data = '\n'.join(paths)

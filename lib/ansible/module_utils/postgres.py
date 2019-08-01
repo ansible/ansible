@@ -66,52 +66,24 @@ def ensure_required_libs(module):
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
 
 
-def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=True):
-    """Return psycopg2 connection object.
+def connect_to_db(module, conn_params, autocommit=False, fail_on_conn=True):
+    """Connect to a PostgreSQL database.
 
-    Keyword arguments:
-    module -- object of ansible.module_utils.basic.AnsibleModule class
-    autocommit -- commit automatically (default False)
-    fail_on_conn -- fail if connection failed or just warn and return None (default True)
-    warn_db_default -- warn that the default DB is used (default True)
+    Return psycopg2 connection object.
+
+    Args:
+        module (AnsibleModule) -- object of ansible.module_utils.basic.AnsibleModule class
+        conn_params (dict) -- dictionary with connection parameters
+
+    Kwargs:
+        autocommit (bool) -- commit automatically (default False)
+        fail_on_conn (bool) -- fail if connection failed or just warn and return None (default True)
     """
     ensure_required_libs(module)
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-
-    # Might be different in the modules:
-    if module.params.get('db'):
-        params_map['db'] = 'database'
-    elif module.params.get('database'):
-        params_map['database'] = 'database'
-    elif module.params.get('login_db'):
-        params_map['login_db'] = 'database'
-    else:
-        if warn_db_default:
-            module.warn('Database name has not been passed, '
-                        'used default database to connect to.')
-
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != '' and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
     db_connection = None
     try:
-        db_connection = psycopg2.connect(**kw)
+        db_connection = psycopg2.connect(**conn_params)
         if autocommit:
             if LooseVersion(psycopg2.__version__) >= LooseVersion('2.4.2'):
                 db_connection.set_session(autocommit=True)
@@ -147,3 +119,81 @@ def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=T
             db_connection = None
 
     return db_connection
+
+
+def exec_sql(obj, query, ddl=False, add_to_executed=True):
+    """Execute SQL.
+
+    Auxiliary function for PostgreSQL user classes.
+
+    Returns a query result if possible or True/False if ddl=True arg was passed.
+    It necessary for statements that don't return any result (like DDL queries).
+
+    Arguments:
+        obj (obj) -- must be an object of a user class.
+            The object must have module (AnsibleModule class object) and
+            cursor (psycopg cursor object) attributes
+        query (str) -- SQL query to execute
+        ddl (bool) -- must return True or False instead of rows (typical for DDL queries)
+            (default False)
+        add_to_executed (bool) -- append the query to obj.executed_queries attribute
+    """
+    try:
+        obj.cursor.execute(query)
+
+        if add_to_executed:
+            obj.executed_queries.append(query)
+
+        if not ddl:
+            res = obj.cursor.fetchall()
+            return res
+        return True
+    except Exception as e:
+        obj.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
+    return False
+
+
+def get_conn_params(module, params_dict, warn_db_default=True):
+    """Get connection parameters from the passed dictionary.
+
+    Return a dictionary with parameters to connect to PostgreSQL server.
+
+    Args:
+        module (AnsibleModule) -- object of ansible.module_utils.basic.AnsibleModule class
+        params_dict (dict) -- dictionary with variables
+
+    Kwargs:
+        warn_db_default (bool) -- warn that the default DB is used (default True)
+    """
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the return dictionary
+    params_map = {
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "ssl_mode": "sslmode",
+        "ca_cert": "sslrootcert"
+    }
+
+    # Might be different in the modules:
+    if params_dict.get('db'):
+        params_map['db'] = 'database'
+    elif params_dict.get('database'):
+        params_map['database'] = 'database'
+    elif params_dict.get('login_db'):
+        params_map['login_db'] = 'database'
+    else:
+        if warn_db_default:
+            module.warn('Database name has not been passed, '
+                        'used default database to connect to.')
+
+    kw = dict((params_map[k], v) for (k, v) in iteritems(params_dict)
+              if k in params_map and v != '' and v is not None)
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
+    if is_localhost and params_dict["login_unix_socket"] != "":
+        kw["host"] = params_dict["login_unix_socket"]
+
+    return kw

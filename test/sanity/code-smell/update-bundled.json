@@ -1,5 +1,5 @@
 {
- "ignore_changes": true,
+ "all_targets": true,
  "extensions": [
     ".py"
  ],

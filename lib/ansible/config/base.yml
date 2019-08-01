@@ -217,6 +217,7 @@ CACHE_PLUGIN_TIMEOUT:
   yaml: {key: facts.cache.timeout}
 COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
+  description: Colon separated paths in which Ansible will search for collections content.
   default: ~/.ansible/collections:/usr/share/ansible/collections
   type: pathspec
   env:
@@ -1310,9 +1311,9 @@ GALAXY_IGNORE_CERTS:
   - {key: ignore_certs, section: galaxy}
   type: boolean
 GALAXY_ROLE_SKELETON:
-  name: Galaxy skeleton direcotry
+  name: Galaxy role or collection skeleton directory
   default:
-  description: Role skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``, same as ``--role-skeleton``.
+  description: Role or collection skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``, same as ``--role-skeleton``.
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
   ini:
   - {key: role_skeleton, section: galaxy}
@@ -1320,7 +1321,7 @@ GALAXY_ROLE_SKELETON:
 GALAXY_ROLE_SKELETON_IGNORE:
   name: Galaxy skeleton ignore
   default: ["^.git$", "^.*/.git_keep$"]
-  description: patterns of files to ignore inside a galaxy role skeleton directory
+  description: patterns of files to ignore inside a Galaxy role or collection skeleton directory
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE}]
   ini:
   - {key: role_skeleton_ignore, section: galaxy}

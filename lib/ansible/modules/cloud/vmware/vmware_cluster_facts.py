@@ -18,13 +18,13 @@ DOCUMENTATION = '''
 module: vmware_cluster_facts
 short_description: Gather facts about clusters available in given vCenter
 description:
-    - This module can be used to gather facts about clusters in VMWare infrastructure.
+    - This module can be used to gather facts about clusters in VMware infrastructure.
     - All values and VMware object names are case sensitive.
 version_added: '2.6'
 author:
     - Abhijeet Kasurde (@Akasurde)
 notes:
-    - Tested on vSphere 6.5
+    - Tested on vSphere 6.5, 6.7
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -34,12 +34,20 @@ options:
      - Datacenter to search for cluster/s.
      - This parameter is required, if C(cluster_name) is not supplied.
      required: False
+     type: str
    cluster_name:
      description:
      - Name of the cluster.
      - If set, facts of this cluster will be returned.
      - This parameter is required, if C(datacenter) is not supplied.
      required: False
+     type: str
+   show_tag:
+    description:
+    - Tags related to cluster are shown if set to C(True).
+    default: False
+    type: bool
+    version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -60,6 +68,16 @@ EXAMPLES = '''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: DC0_C0
+  delegate_to: localhost
+  register: cluster_facts
+
+- name: Gather facts from datacenter about specific cluster with tags
+  vmware_cluster_facts:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    cluster_name: DC0_C0
+    show_tag: True
   delegate_to: localhost
   register: cluster_facts
 '''
@@ -87,7 +105,16 @@ clusters:
             "ha_vm_min_up_time": null,
             "ha_vm_monitoring": null,
             "ha_vm_tools_monitoring": null,
-            "vsan_auto_claim_storage": false
+            "vsan_auto_claim_storage": false,
+            "tags": [
+                {
+                    "category_id": "urn:vmomi:InventoryServiceCategory:9fbf83de-7903-442e-8004-70fd3940297c:GLOBAL",
+                    "category_name": "sample_cluster_cat_0001",
+                    "description": "",
+                    "id": "urn:vmomi:InventoryServiceTag:93d680db-b3a6-4834-85ad-3e9516e8fee8:GLOBAL",
+                    "name": "sample_cluster_tag_0001"
+                }
+            ],
         },
     }
 """
@@ -97,6 +124,11 @@ try:
 except ImportError:
     pass
 
+from ansible.module_utils.vmware_rest_client import VmwareRestClient
+try:
+    from com.vmware.vapi.std_client import DynamicID
+except ImportError:
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_datacenter_by_name, find_cluster_by_name
@@ -122,7 +154,7 @@ class VmwreClusterFactsManager(PyVmomi):
 
     def get_all_cluster_objs(self, parent):
         """
-        Function to get all cluster managed objects from given parent object
+        Get all cluster managed objects from given parent object
         Args:
             parent: Managed objected of datacenter or host folder
 
@@ -142,9 +174,36 @@ class VmwreClusterFactsManager(PyVmomi):
                 cluster_objs.append(child)
         return cluster_objs
 
+    def get_tags_for_object(self, dobj):
+        """
+        Return tags associated with an object
+        Args:
+            dobj: Dynamic object
+        Returns: List of tags associated with the given object
+        """
+        vmware_client = VmwareRestClient(self.module)
+
+        cluster_dynamic_obj = DynamicID(type='ClusterComputeResource', id=dobj._moId)
+        self.tag_service = vmware_client.api_client.tagging.Tag
+        self.tag_association_svc = vmware_client.api_client.tagging.TagAssociation
+        self.category_service = vmware_client.api_client.tagging.Category
+
+        tag_ids = self.tag_association_svc.list_attached_tags(cluster_dynamic_obj)
+        tags = []
+        for tag_id in tag_ids:
+            tag_obj = self.tag_service.get(tag_id)
+            tags.append({
+                'id': tag_obj.id,
+                'category_name': self.category_service.get(tag_obj.category_id).name,
+                'name': tag_obj.name,
+                'description': tag_obj.description,
+                'category_id': tag_obj.category_id,
+            })
+        return tags
+
     def gather_cluster_facts(self):
         """
-        Function to gather facts about cluster
+        Gather facts about cluster
 
         """
         results = dict(changed=False, clusters=dict())
@@ -181,6 +240,10 @@ class VmwreClusterFactsManager(PyVmomi):
                 enabled_vsan = vsan_config.enabled,
                 vsan_auto_claim_storage = vsan_config.defaultConfig.autoClaimStorage,
 
+            tag_info = []
+            if self.params.get('show_tag'):
+                tag_info = self.get_tags_for_object(cluster)
+
             results['clusters'][cluster.name] = dict(
                 enable_ha=das_config.enabled,
                 ha_failover_level=ha_failover_level,
@@ -199,6 +262,7 @@ class VmwreClusterFactsManager(PyVmomi):
                 drs_vmotion_rate=drs_config.vmotionRate,
                 enabled_vsan=enabled_vsan,
                 vsan_auto_claim_storage=vsan_auto_claim_storage,
+                tags=tag_info,
             )
 
         self.module.exit_json(**results)
@@ -208,7 +272,8 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         datacenter=dict(type='str'),
-        cluster_name=dict(type='str')
+        cluster_name=dict(type='str'),
+        show_tag=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

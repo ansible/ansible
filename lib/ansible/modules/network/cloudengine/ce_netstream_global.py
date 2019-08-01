@@ -213,7 +213,8 @@ changed:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import load_config
+from ansible.module_utils.network.cloudengine.ce import get_connection, rm_config_prefix
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -245,6 +246,38 @@ def get_interface_type(interface):
         return None
 
     return iftype.lower()
+
+
+def get_config(module, flags):
+
+    """Retrieves the current config from the device or cache
+    """
+    flags = [] if flags is None else flags
+    if isinstance(flags, str):
+        flags = [flags]
+    elif not isinstance(flags, list):
+        flags = []
+
+    cmd = 'display current-configuration '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+    conn = get_connection(module)
+    rc, out, err = conn.exec_command(cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+    cfg = str(out).strip()
+    # remove default configuration prefix '~'
+    for flag in flags:
+        if "include-default" in flag:
+            cfg = rm_config_prefix(cfg)
+            break
+    if cfg.startswith('display'):
+        lines = cfg.split('\n')
+        if len(lines) > 1:
+            return '\n'.join(lines[1:])
+        else:
+            return ''
+    return cfg
 
 
 class NetStreamGlobal(object):
@@ -342,8 +375,8 @@ class NetStreamGlobal(object):
         self.existing["sampler"].append(sampler_tmp)
         if self.interface != "all":
             flags = list()
-            exp = " | ignore-case  section include ^interface %s$" \
-                  " | include netstream sampler random-packets" % self.interface
+            exp = r" | ignore-case  section include ^#\s+interface %s" \
+                  r" | include netstream sampler random-packets" % self.interface
             flags.append(exp)
             config = get_config(self.module, flags)
             if not config:
@@ -376,8 +409,8 @@ class NetStreamGlobal(object):
         statistic_tmp1["statistics_record"] = list()
         statistic_tmp1["interface"] = self.interface
         flags = list()
-        exp = " | ignore-case  section include ^interface %s$" \
-              " | include netstream record"\
+        exp = r" | ignore-case  section include ^#\s+interface %s" \
+              r" | include netstream record"\
               % (self.interface)
         flags.append(exp)
         config = get_config(self.module, flags)
@@ -414,8 +447,8 @@ class NetStreamGlobal(object):
         statistic_tmp1 = dict()
         statistic_tmp1["statistics_direction"] = list()
         flags = list()
-        exp = " | ignore-case  section include ^interface %s$" \
-              " | include netstream inbound|outbound"\
+        exp = r" | ignore-case  section include ^#\s+interface %s" \
+              r" | include netstream inbound|outbound"\
               % self.interface
         flags.append(exp)
         config = get_config(self.module, flags)
@@ -501,8 +534,8 @@ class NetStreamGlobal(object):
         self.end_state["sampler"].append(sampler_tmp)
         if self.interface != "all":
             flags = list()
-            exp = " | ignore-case  section include ^interface %s$" \
-                  " | include netstream sampler random-packets" % self.interface
+            exp = r" | ignore-case  section include ^#\s+interface %s" \
+                  r" | include netstream sampler random-packets" % self.interface
             flags.append(exp)
             config = get_config(self.module, flags)
             if not config:
@@ -535,8 +568,8 @@ class NetStreamGlobal(object):
         statistic_tmp1["statistics_record"] = list()
         statistic_tmp1["interface"] = self.interface
         flags = list()
-        exp = " | ignore-case  section include ^interface %s$" \
-              " | include netstream record"\
+        exp = r" | ignore-case  section include ^#\s+interface %s" \
+              r" | include netstream record"\
               % (self.interface)
         flags.append(exp)
         config = get_config(self.module, flags)
@@ -573,8 +606,8 @@ class NetStreamGlobal(object):
         statistic_tmp1 = dict()
         statistic_tmp1["statistics_direction"] = list()
         flags = list()
-        exp = " | ignore-case  section include ^interface %s$" \
-              " | include netstream inbound|outbound"\
+        exp = r" | ignore-case  section include ^#\s+interface %s" \
+              r" | include netstream inbound|outbound"\
               % self.interface
         flags.append(exp)
         config = get_config(self.module, flags)

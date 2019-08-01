@@ -1,4 +1,4 @@
 {
-    "always": true,
+    "include_directories": true,
     "output": "path-message"
 }

@@ -1,5 +1,6 @@
 """AWS plugin for integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 
@@ -98,6 +99,9 @@ class AwsCloudEnvironment(CloudEnvironment):
         )
 
         ansible_vars.update(dict(parser.items('default')))
+
+        if 'aws_cleanup' not in ansible_vars:
+            ansible_vars['aws_cleanup'] = not self.managed
 
         env_vars = {'ANSIBLE_DEBUG_BOTOCORE_LOGS': 'True'}
 

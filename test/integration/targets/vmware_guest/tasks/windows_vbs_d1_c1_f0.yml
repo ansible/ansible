@@ -4,10 +4,10 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    folder: "{{ f0 }}"
     name: vbs-Test
-    datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusters['json'][0] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
     resource_pool: Resources
     guest_id: windows9_64Guest
     hardware:
@@ -20,7 +20,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: '{{ ds2 }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -39,10 +39,10 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    folder: "{{ f0 }}"
     name: vbs-Test2
-    datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusters['json'][0] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
     resource_pool: Resources
     guest_id: windows9Server64Guest
     hardware:
@@ -54,7 +54,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: '{{ ds2 }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -73,13 +73,13 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    folder: "{{ f0 }}"
     name: vbs-Test2
-    datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
+    datacenter: "{{ f0 }}"
     disk:
     - size_mb: 256
       type: thin
-      datastore: LocalDS_0
+      datastore: '{{ ds2 }}'
     hardware:
       virt_based_security: True
     state: present
@@ -90,5 +90,4 @@
 - name: assert the VM was changed
   assert:
     that:
-      - "vbs_vm.failed == false"
-      - "vbs_vm.changed == true"
+      - vbs_vm is changed

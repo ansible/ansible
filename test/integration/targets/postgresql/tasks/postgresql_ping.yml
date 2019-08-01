@@ -17,7 +17,7 @@
       - result.server_version != {}
       - result.server_version.major != false
       - result.server_version.minor != false
-      - result.changed == false
+      - result is not changed
 
 - name: postgresql_ping - check ping of non-existing database doesn't return anything
   become_user: "{{ pg_user }}"
@@ -32,4 +32,4 @@
     that:
       - result.is_available == false
       - result.server_version == {}
-      - result.changed == false
+      - result is not changed

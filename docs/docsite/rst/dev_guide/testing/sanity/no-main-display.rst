@@ -1,5 +1,5 @@
-Sanity Tests » no-main-display
-==============================
+no-main-display
+===============
 
 As of Ansible 2.8, ``Display`` should no longer be imported from ``__main__``.
 

@@ -28,42 +28,42 @@
   package: name=openssl state=present
 
 - name: postgresql SSL - create certs 1
-  become_user: "{{ pg_user }}"
+  become_user: root
   become: yes
   shell: 'openssl req -new -nodes -text -out ~{{ pg_user }}/root.csr \
          -keyout ~{{ pg_user }}/root.key -subj "/CN=localhost.local"'
 
-- name: postgresql SSL - set right permissions to root.key
-  become_user: "{{ pg_user }}"
-  become: yes
-  file:
-    path: '~{{ pg_user }}/root.key'
-    mode: 0770
-
-- name: postgresql SSL - create certs 3
-  become_user: "{{ pg_user }}"
+- name: postgresql SSL - create certs 2
+  become_user: root
   become: yes
   shell: 'openssl x509 -req -in ~{{ pg_user }}/root.csr -text -days 3650 \
          -extensions v3_ca -signkey ~{{ pg_user }}/root.key -out ~{{ pg_user }}/root.crt'
 
-- name: postgresql SSL - create certs 4
-  become_user: "{{ pg_user }}"
+- name: postgresql SSL - create certs 3
+  become_user: root
   become: yes
   shell: 'openssl req -new -nodes -text -out ~{{ pg_user }}/server.csr \
          -keyout ~{{ pg_user }}/server.key -subj "/CN=localhost.local"'
 
-- name: postgresql SSL - set right permissions to server.key
-  become_user: "{{ pg_user }}"
-  become: yes
-  file:
-    path: '~{{ pg_user }}/server.key'
-    mode: 0770
-
-- name: postgresql SSL - create certs 5
-  become_user: "{{ pg_user }}"
+- name: postgresql SSL - create certs 4
+  become_user: root
   become: yes
   shell: 'openssl x509 -req -in ~{{ pg_user }}/server.csr -text -days 365 \
          -CA ~{{ pg_user }}/root.crt -CAkey ~{{ pg_user }}/root.key -CAcreateserial -out server.crt'
+
+- name: postgresql SSL - set right permissions to files
+  become_user: root
+  become: yes
+  file:
+    path: '{{ item }}'
+    mode: 0600
+    owner: '{{ pg_user }}'
+    group: '{{ pg_user }}'
+  with_items:
+  - '~{{ pg_user }}/root.key'
+  - '~{{ pg_user }}/server.key'
+  - '~{{ pg_user }}/root.crt'
+  - '~{{ pg_user }}/server.csr'
 
 - name: postgresql SSL - enable SSL
   become_user: "{{ pg_user }}"

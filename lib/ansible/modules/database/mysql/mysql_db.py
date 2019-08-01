@@ -22,10 +22,12 @@ version_added: "0.6"
 options:
   name:
     description:
-      - name of the database to add or remove
-      - name=all May only be provided if I(state) is C(dump) or C(import).
-      - if name=all Works like --all-databases option for mysqldump (Added in 2.0)
+      - name of the database to add or remove.
+      - I(name=all) May only be provided if I(state) is C(dump) or C(import).
+      - List of databases is provided with I(state=dump), I(state=present) and I(state=absent).
+      - if name=all Works like --all-databases option for mysqldump (Added in 2.0).
     required: true
+    type: list
     aliases: [ db ]
   state:
     description:
@@ -76,28 +78,76 @@ EXAMPLES = r'''
     name: bobdata
     state: present
 
+- name: Create new databases with names 'foo' and 'bar'
+  mysql_db:
+    name:
+      - foo
+      - bar
+    state: present
+
 # Copy database dump file to remote host and restore it to database 'my_db'
 - name: Copy database dump file
   copy:
     src: dump.sql.bz2
     dest: /tmp
+
 - name: Restore database
   mysql_db:
     name: my_db
     state: import
     target: /tmp/dump.sql.bz2
 
+- name: Dump multiple databases
+  mysql_db:
+    state: dump
+    name: db_1,db_2
+    target: /tmp/dump.sql
+
+- name: Dump multiple databases
+  mysql_db:
+    state: dump
+    name:
+      - db_1
+      - db_2
+    target: /tmp/dump.sql
+
 - name: Dump all databases to hostname.sql
   mysql_db:
     state: dump
     name: all
-    target: /tmp/{{ inventory_hostname }}.sql
+    target: /tmp/dump.sql
 
 - name: Import file.sql similar to mysql -u <username> -p <password> < hostname.sql
   mysql_db:
     state: import
     name: all
-    target: /tmp/{{ inventory_hostname }}.sql
+    target: /tmp/dump.sql
+
+- name: Delete database with name 'bobdata'
+  mysql_db:
+    name: bobdata
+    state: absent
+
+- name: Make sure there is neither a database with name 'foo', nor one with name 'bar'
+  mysql_db:
+    name:
+      - foo
+      - bar
+    state: absent
+'''
+
+RETURN = r'''
+db:
+  description: Database names in string format delimited by white space.
+  returned: always
+  type: str
+  sample: "foo bar"
+db_list:
+  description: List of database names.
+  returned: always
+  type: list
+  sample: ["foo", "bar"]
+  version_added: '2.9'
 '''
 
 import os
@@ -117,13 +167,18 @@ from ansible.module_utils._text import to_native
 
 
 def db_exists(cursor, db):
-    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_", r"\_"),))
-    return bool(res)
+    res = 0
+    for each_db in db:
+        res += cursor.execute("SHOW DATABASES LIKE %s", (each_db.replace("_", r"\_"),))
+    return res == len(db)
 
 
 def db_delete(cursor, db):
-    query = "DROP DATABASE %s" % mysql_quote_identifier(db, 'database')
-    cursor.execute(query)
+    if not db:
+        return False
+    for each_db in db:
+        query = "DROP DATABASE %s" % mysql_quote_identifier(each_db, 'database')
+        cursor.execute(query)
     return True
 
 
@@ -150,7 +205,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     if all_databases:
         cmd += " --all-databases"
     else:
-        cmd += " %s" % shlex_quote(db_name)
+        cmd += " --databases {0} --skip-lock-tables".format(' '.join(db_name))
     if single_transaction:
         cmd += " --single-transaction=true"
     if quick:
@@ -201,7 +256,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--port=%i" % port)
     if not all_databases:
         cmd.append("-D")
-        cmd.append(shlex_quote(db_name))
+        cmd.append(shlex_quote(''.join(db_name)))
 
     comp_prog_path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -210,7 +265,6 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         comp_prog_path = module.get_bin_path('bzip2', required=True)
     elif os.path.splitext(target)[-1] == '.xz':
         comp_prog_path = module.get_bin_path('xz', required=True)
-
     if comp_prog_path:
         p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -230,15 +284,20 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
 
 
 def db_create(cursor, db, encoding, collation):
+    if not db:
+        return False
     query_params = dict(enc=encoding, collate=collation)
-    query = ['CREATE DATABASE %s' % mysql_quote_identifier(db, 'database')]
-    if encoding:
-        query.append("CHARACTER SET %(enc)s")
-    if collation:
-        query.append("COLLATE %(collate)s")
-    query = ' '.join(query)
-    cursor.execute(query, query_params)
-    return True
+    res = 0
+    for each_db in db:
+        query = ['CREATE DATABASE %s' % mysql_quote_identifier(each_db, 'database')]
+        if encoding:
+            query.append("CHARACTER SET %(enc)s")
+        if collation:
+            query.append("COLLATE %(collate)s")
+        query = ' '.join(query)
+        res += cursor.execute(query, query_params)
+    return res > 0
+
 
 # ===========================================
 # Module execution.
@@ -253,7 +312,7 @@ def main():
             login_host=dict(type='str', default='localhost'),
             login_port=dict(type='int', default=3306),
             login_unix_socket=dict(type='str'),
-            name=dict(type='str', required=True, aliases=['db']),
+            name=dict(type='list', required=True, aliases=['db']),
             encoding=dict(type='str', default=''),
             collation=dict(type='str', default=''),
             target=dict(type='path'),
@@ -274,6 +333,10 @@ def main():
         module.fail_json(msg=mysql_driver_fail_msg)
 
     db = module.params["name"]
+    if not db:
+        module.exit_json(changed=False, db=db, db_list=[])
+    db = [each_db.strip() for each_db in db]
+
     encoding = module.params["encoding"]
     collation = module.params["collation"]
     state = module.params["state"]
@@ -297,16 +360,18 @@ def main():
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
 
+    if len(db) > 1 and state == 'import':
+        module.fail_json(msg="Multiple databases are not supported with state=import")
+    db_name = ' '.join(db)
+
+    all_databases = False
     if state in ['dump', 'import']:
         if target is None:
             module.fail_json(msg="with state=%s target is required" % state)
-        if db == 'all':
-            db = 'mysql'
+        if db == ['all']:
             all_databases = True
-        else:
-            all_databases = False
     else:
-        if db == 'all':
+        if db == ['all']:
             module.fail_json(msg="name is not allowed to equal 'all' unless state equals import, or dump.")
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
@@ -321,88 +386,65 @@ def main():
     changed = False
     if not os.path.exists(config_file):
         config_file = None
-    if db_exists(cursor, db):
-        if state == "absent":
-            if module.check_mode:
-                module.exit_json(changed=True, db=db)
+
+    existence_list = []
+    non_existence_list = []
+
+    if not all_databases:
+        for each_database in db:
+            if db_exists(cursor, [each_database]):
+                existence_list.append(each_database)
             else:
-                try:
-                    changed = db_delete(cursor, db)
-                except Exception as e:
-                    module.fail_json(msg="error deleting database: %s" % to_native(e))
-                module.exit_json(changed=changed, db=db)
+                non_existence_list.append(each_database)
 
-        elif state == "dump":
-            if module.check_mode:
-                module.exit_json(changed=True, db=db)
-            else:
-                rc, stdout, stderr = db_dump(module, login_host, login_user,
-                                             login_password, db, target, all_databases,
-                                             login_port, config_file, socket, ssl_cert, ssl_key,
-                                             ssl_ca, single_transaction, quick, ignore_tables)
-                if rc != 0:
-                    module.fail_json(msg="%s" % stderr)
-                else:
-                    module.exit_json(changed=True, db=db, msg=stdout)
-
-        elif state == "import":
-            if module.check_mode:
-                module.exit_json(changed=True, db=db)
-            else:
-                rc, stdout, stderr = db_import(module, login_host, login_user,
-                                               login_password, db, target,
-                                               all_databases,
-                                               login_port, config_file,
-                                               socket, ssl_cert, ssl_key, ssl_ca)
-                if rc != 0:
-                    module.fail_json(msg="%s" % stderr)
-                else:
-                    module.exit_json(changed=True, db=db, msg=stdout)
-
-        elif state == "present":
-            if module.check_mode:
-                module.exit_json(changed=False, db=db)
-            module.exit_json(changed=False, db=db)
-
-    else:
-        if state == "present":
-            if module.check_mode:
-                changed = True
-            else:
-                try:
-                    changed = db_create(cursor, db, encoding, collation)
-                except Exception as e:
-                    module.fail_json(msg="error creating database: %s" % to_native(e),
-                                     exception=traceback.format_exc())
-            module.exit_json(changed=changed, db=db)
-
-        elif state == "import":
-            if module.check_mode:
-                module.exit_json(changed=True, db=db)
-            else:
-                try:
-                    changed = db_create(cursor, db, encoding, collation)
-                    if changed:
-                        rc, stdout, stderr = db_import(module, login_host, login_user,
-                                                       login_password, db, target, all_databases,
-                                                       login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
-                        if rc != 0:
-                            module.fail_json(msg="%s" % stderr)
-                        else:
-                            module.exit_json(changed=True, db=db, msg=stdout)
-                except Exception as e:
-                    module.fail_json(msg="error creating database: %s" % to_native(e),
-                                     exception=traceback.format_exc())
-
-        elif state == "absent":
-            if module.check_mode:
-                module.exit_json(changed=False, db=db)
-            module.exit_json(changed=False, db=db)
-
-        elif state == "dump":
-            if module.check_mode:
-                module.exit_json(changed=False, db=db)
-            module.fail_json(msg="Cannot dump database %s - not found" % (db))
+    if state == "absent":
+        if module.check_mode:
+            module.exit_json(changed=bool(existence_list), db=db_name, db_list=db)
+        try:
+            changed = db_delete(cursor, existence_list)
+        except Exception as e:
+            module.fail_json(msg="error deleting database: %s" % to_native(e))
+        module.exit_json(changed=changed, db=db_name, db_list=db)
+    elif state == "present":
+        if module.check_mode:
+            module.exit_json(changed=bool(non_existence_list), db=db_name, db_list=db)
+        changed = False
+        if non_existence_list:
+            try:
+                changed = db_create(cursor, non_existence_list, encoding, collation)
+            except Exception as e:
+                module.fail_json(msg="error creating database: %s" % to_native(e),
+                                 exception=traceback.format_exc())
+        module.exit_json(changed=changed, db=db_name, db_list=db)
+    elif state == "dump":
+        if non_existence_list and not all_databases:
+            module.fail_json(msg="Cannot dump database(s) %r - not found" % (', '.join(non_existence_list)))
+        if module.check_mode:
+            module.exit_json(changed=True, db=db_name, db_list=db)
+        rc, stdout, stderr = db_dump(module, login_host, login_user,
+                                     login_password, db, target, all_databases,
+                                     login_port, config_file, socket, ssl_cert, ssl_key,
+                                     ssl_ca, single_transaction, quick, ignore_tables)
+        if rc != 0:
+            module.fail_json(msg="%s" % stderr)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
+    elif state == "import":
+        if module.check_mode:
+            module.exit_json(changed=True, db=db_name, db_list=db)
+        if non_existence_list and not all_databases:
+            try:
+                db_create(cursor, non_existence_list, encoding, collation)
+            except Exception as e:
+                module.fail_json(msg="error creating database: %s" % to_native(e),
+                                 exception=traceback.format_exc())
+        rc, stdout, stderr = db_import(module, login_host, login_user,
+                                       login_password, db, target,
+                                       all_databases,
+                                       login_port, config_file,
+                                       socket, ssl_cert, ssl_key, ssl_ca)
+        if rc != 0:
+            module.fail_json(msg="%s" % stderr)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
 
 
 if __name__ == '__main__':

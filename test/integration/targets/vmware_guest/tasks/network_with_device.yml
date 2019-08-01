@@ -15,7 +15,7 @@
     datacenter: "{{ dc1 }}"
     state: poweredon
     folder: "{{ f0 }}"
-    name: network_with_device
+    name: test_vm1
     disk:
       - size: 10mb
         autoselect_datastore: yes
@@ -34,7 +34,7 @@
     that:
       - "vm_result.changed"
 
-- name: Deploy VM {{ vm1 | basename }} again
+- name: Deploy VM again
   vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -43,7 +43,7 @@
     datacenter: "{{ dc1 }}"
     state: poweredon
     folder: "{{ f0 }}"
-    name: network_with_device
+    name: test_vm1
     disk:
       - size: 10mb
         autoselect_datastore: yes

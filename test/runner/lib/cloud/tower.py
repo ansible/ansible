@@ -1,5 +1,6 @@
 """Tower plugin for integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import time
@@ -8,9 +9,12 @@ from lib.util import (
     display,
     ApplicationError,
     is_shippable,
-    run_command,
     SubprocessError,
     ConfigParser,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.cloud import (
@@ -104,6 +108,7 @@ class TowerCloudProvider(CloudProvider):
 
         aci = get_tower_aci(self.args, self.version)
         aci.start()
+        aci.wait()
 
         connection = aci.get()
 
@@ -181,7 +186,7 @@ class TowerCloudEnvironment(CloudEnvironment):
         )
 
 
-class TowerConfig(object):
+class TowerConfig:
     """Tower settings."""
     def __init__(self, values):
         self.version = values.get('version')

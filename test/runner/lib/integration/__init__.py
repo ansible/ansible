@@ -1,12 +1,11 @@
 """Ansible integration test infrastructure."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import contextlib
 import json
 import os
 import shutil
-import stat
 import tempfile
 
 from lib.target import (
@@ -24,12 +23,21 @@ from lib.util import (
     ApplicationError,
     display,
     make_dirs,
-    named_temporary_file,
     COVERAGE_CONFIG_PATH,
     COVERAGE_OUTPUT_PATH,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
+    ANSIBLE_ROOT,
+    to_bytes,
+)
+
+from lib.util_common import (
+    named_temporary_file,
+)
+
+from lib.coverage_util import (
+    generate_collection_coverage_config,
 )
 
 from lib.cache import (
@@ -38,6 +46,10 @@ from lib.cache import (
 
 from lib.cloud import (
     CloudEnvironmentConfig,
+)
+
+from lib.data import (
+    data_context,
 )
 
 
@@ -54,7 +66,14 @@ def setup_common_temp_dir(args, path):
 
     coverage_config_path = os.path.join(path, COVERAGE_CONFIG_PATH)
 
-    shutil.copy(COVERAGE_CONFIG_PATH, coverage_config_path)
+    if data_context().content.collection:
+        coverage_config = generate_collection_coverage_config(args)
+
+        with open(coverage_config_path, 'w') as coverage_config_fd:
+            coverage_config_fd.write(coverage_config)
+    else:
+        shutil.copy(os.path.join(ANSIBLE_ROOT, COVERAGE_CONFIG_PATH), coverage_config_path)
+
     os.chmod(coverage_config_path, MODE_FILE)
 
     coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_PATH)
@@ -142,9 +161,6 @@ def integration_test_environment(args, target, inventory_path):
         display.warning('Disabling unicode in the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
         suffix = '-ansible'
 
-    if isinstance('', bytes):
-        suffix = suffix.encode('utf-8')
-
     if args.explain:
         temp_dir = os.path.join(root_temp_dir, '%stemp%s' % (prefix, suffix))
     else:
@@ -172,9 +188,9 @@ def integration_test_environment(args, target, inventory_path):
         ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
 
         file_copies = [
-            ('test/integration/%s.cfg' % args.command, ansible_config),
-            ('test/integration/integration_config.yml', os.path.join(integration_dir, vars_file)),
-            (inventory_path, os.path.join(integration_dir, inventory_name)),
+            (os.path.join(ANSIBLE_ROOT, 'test/integration/%s.cfg' % args.command), ansible_config),
+            (os.path.join(ANSIBLE_ROOT, 'test/integration/integration_config.yml'), os.path.join(integration_dir, vars_file)),
+            (os.path.join(ANSIBLE_ROOT, inventory_path), os.path.join(integration_dir, inventory_name)),
         ]
 
         file_copies += [(path, os.path.join(temp_dir, path)) for path in files_needed]
@@ -204,7 +220,7 @@ def integration_test_environment(args, target, inventory_path):
             display.info('Copying %s/ to %s/' % (dir_src, dir_dst), verbosity=2)
 
             if not args.explain:
-                shutil.copytree(dir_src, dir_dst, symlinks=True)
+                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)
 
         for file_src, file_dst in file_copies:
             display.info('Copying %s to %s' % (file_src, file_dst), verbosity=2)
@@ -252,7 +268,7 @@ def integration_test_config_file(args, env_config, integration_dir):
         yield path
 
 
-class IntegrationEnvironment(object):
+class IntegrationEnvironment:
     """Details about the integration environment."""
     def __init__(self, integration_dir, inventory_path, ansible_config, vars_file):
         self.integration_dir = integration_dir

@@ -1,0 +1,17 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      set interfaces ethernet "{{ intf }}" description 'Configured by Ansible'
+      set interfaces ethernet "{{ intf }}" speed 'auto'
+      set interfaces ethernet "{{ intf }}" duplex 'auto'
+      set interfaces ethernet "{{ intf }}" mtu '1500'
+      set interfaces ethernet "{{ intf }}" vif 200
+      set interfaces ethernet "{{ intf }}" vif 200 description 'VIF - 200'
+  loop:
+    - eth1
+    - eth2
+  loop_control:
+    loop_var: intf

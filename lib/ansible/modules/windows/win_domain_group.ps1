@@ -28,6 +28,7 @@ $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 $result = @{
     changed = $false
+    created = $false
 }
 
 if ($diff_mode) {
@@ -203,7 +204,7 @@ if ($state -eq "absent") {
                     if ($existing_value -cne $attribute_value) {
                         $replace_attributes.$attribute_name = $attribute_value
                         $diff_text += "-$attribute_name = $existing_value`n+$attribute_name = $attribute_value`n"
-                    }                
+                    }
                 } else {
                     $add_attributes.$attribute_name = $attribute_value
                     $diff_text += "+$attribute_name = $attribute_value`n"
@@ -289,6 +290,7 @@ if ($state -eq "absent") {
             Fail-Json $result "failed to create group $($name): $($_.Exception.Message)"
         }
         $result.changed = $true
+        $result.created = $true
     }
 
     # set the protection value

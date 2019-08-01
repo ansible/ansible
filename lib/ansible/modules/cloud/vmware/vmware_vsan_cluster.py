@@ -30,6 +30,7 @@ options:
         description:
             - Desired cluster UUID
         required: False
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
