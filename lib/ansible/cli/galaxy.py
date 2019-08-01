@@ -121,7 +121,8 @@ class GalaxyCLI(CLI):
         cinstall_parser.add_argument('-p', '--collections-path', dest='collections_path', required=True,
                                      help='The path to the directory containing your collections. This does not add '
                                           'Use one of the configured paths or '
-                                          'the directory containing the playbook that references the collection.')
+                                          'the directory containing the playbook that references the collection.'
+                                          'Note: this does not add the path to the configured paths.')
         cinstall_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                      help='Ignore errors during installation and continue with the next specified '
                                           'collection. This will not ignore dependency conflict errors.')
