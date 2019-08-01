@@ -9,7 +9,8 @@
 - assert:
     that:
       - filter_package == 'ansible.plugins.filter'
-      - filter_name == 'ansible.plugins.filter.test_filter'
+      # filter names are prefixed with a unique hash value to prevent shadowing of other plugins
+      - filter_name | regex_search('^ansible\.plugins\.filter\.[0-9]+_test_filter$')
       - lookup_package == 'ansible.plugins.lookup'
       - lookup_name == 'ansible.plugins.lookup.lookup_name'
       - test_package_ok
