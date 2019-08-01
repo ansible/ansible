@@ -35,10 +35,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-NETWORK_OS = "ios"
-RESOURCE = "interfaces"
-COPYRIGHT = "Copyright 2019 Red Hat"
-
 
 DOCUMENTATION = """
 ---
@@ -291,11 +287,56 @@ EXAMPLES = """
 #  duplex full
 #  speed 1000
 
-- name: "Delete attributes of given interfaces (Note: This won't delete the interface itself)"
+- name: "Delete module attributes of given interfaces (Note: This won't delete the interface itself)"
   ios_interfaces:
     config:
       - name: GigabitEthernet0/2
       - name: GigabitEthernet0/3
+    state: deleted
+
+# After state:
+# -------------
+#
+# vios#show running-config | section ^interface
+# interface GigabitEthernet0/1
+#  no ip address
+#  duplex auto
+#  speed auto
+# interface GigabitEthernet0/2
+#  no ip address
+#  duplex auto
+#  speed auto
+# interface GigabitEthernet0/3
+#  no ip address
+#  duplex auto
+#  speed auto
+
+# Using Deleted without any config passed
+#"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
+
+# Before state:
+# -------------
+#
+# vios#show running-config | section ^interface
+# interface GigabitEthernet0/1
+#  no ip address
+#  duplex auto
+#  speed auto
+# interface GigabitEthernet0/2
+#  description Configured and Overridden by Ansible Network
+#  no ip address
+#  duplex auto
+#  speed 1000
+# interface GigabitEthernet0/3
+#  description Configured and Replaced by Ansible Network
+#  mtu 2500
+#  no ip address
+#  shutdown
+#  duplex full
+#  speed 1000
+
+- name: "Delete module attributes of all interfaces (Note: This won't delete the interface itself)"
+  ios_interfaces:
     state: deleted
 
 # After state:

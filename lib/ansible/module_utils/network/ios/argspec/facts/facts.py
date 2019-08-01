@@ -20,12 +20,12 @@ class FactsArgs(object):
 
     choices = [
         'all',
+        '!all',
         'interfaces',
+        '!interfaces'
     ]
 
     argument_spec = {
         'gather_subset': dict(default=['!config'], type='list'),
-        'gather_network_resources': dict(default=['all'],
-                                         choices=choices,
-                                         type='list'),
+        'gather_network_resources': dict(choices=choices, type='list'),
     }
