@@ -312,6 +312,7 @@ files:
   $modules/network/edgeswitch/: f-bor
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: trishnaguha
+  $modules/network/eric_eccli/: itercheng
   $modules/network/exos/: rdvencioneck
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
@@ -765,6 +766,10 @@ files:
   $module_utils/network/eos:
     support: network
     maintainers: $team_networking
+  $module_utils/network/eric_eccli:
+    support: network
+    maintainers: $team_networking
+                 itercheng
   $module_utils/network/exos:
     maintainers: rdvencioneck
   $module_utils/network/f5:
@@ -1056,6 +1061,10 @@ files:
   $plugins/cliconf/eos.py:
     support: network
     maintainers: $team_networking
+  $plugins/cliconf/eric_eccli.py:
+    support: network
+    maintainers: $team_networking
+                 itercheng
   $plugins/cliconf/exos.py:
     maintainers: rdvencioneck
   $plugins/cliconf/ios.py:
@@ -1361,6 +1370,9 @@ files:
   $plugins/terminal/eos.py:
     support: network
     maintainers: $team_networking
+  $plugins/terminal/eric_eccli.py:
+    support: community
+    maintainers: itercheng
   $plugins/terminal/exos.py:
     maintainers: rdvencioneck
   $plugins/terminal/ios.py:
