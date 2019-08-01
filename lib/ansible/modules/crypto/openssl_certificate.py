@@ -299,7 +299,6 @@ options:
         type: str
         aliases: [ notAfter ]
 
-
     valid_in:
         description:
             - The certificate must still be valid at this relative time offset from now.
@@ -683,6 +682,7 @@ except ImportError:
     CRYPTOGRAPHY_FOUND = False
 else:
     CRYPTOGRAPHY_FOUND = True
+
 
 class CertificateError(crypto_utils.OpenSSLObjectError):
     pass
