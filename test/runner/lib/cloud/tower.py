@@ -104,6 +104,7 @@ class TowerCloudProvider(CloudProvider):
 
         aci = get_tower_aci(self.args, self.version)
         aci.start()
+        aci.wait()
 
         connection = aci.get()
 
