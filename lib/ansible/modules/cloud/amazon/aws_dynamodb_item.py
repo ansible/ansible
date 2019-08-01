@@ -207,27 +207,11 @@ def delete(connection, module, response, **params):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Failed to get item {0} from table {1}".format(
                 params.get('TableName'), params.get('Key')))
-     try:
-         if not module.check_mode:
-             response = connection.delete_item(**params)
-         return response, changed
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        # your exception handling
-
     try:
         if not module.check_mode:
-            # checks whether the item exist or not
-            response_get = connection.get_item(**params)
-            # if item was found
-            if 'Item' in response_get:
-                response = connection.delete_item(**params)
-                changed = True
-            else:
-                response = response_get
-                changed = False
-        else:
-            changed = True
+            response = connection.delete_item(**params)
         return response, changed
+
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
             module.fail_json_aws(e, msg="Table {0} doesnt exist".format(
