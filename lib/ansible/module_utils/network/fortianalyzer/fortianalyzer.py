@@ -68,7 +68,7 @@ class FortiAnalyzerHandler(object):
 
     def process_request(self, url, datagram, method):
         """
-        Formats and Runs the API Request via Connection Plugin. Streamlined for use FROM Modules.
+        Formats and Runs the API Request via Connection Plugin. Streamlined for use from Modules.
 
         :param url: Connection URL to access
         :type url: string
