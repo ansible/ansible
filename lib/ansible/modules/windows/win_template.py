@@ -15,6 +15,12 @@ module: win_template
 version_added: "1.9.2"
 options:
   backup:
+    description:
+    - Determine whether a backup should be created.
+    - When set to C(yes), create a backup file including the timestamp information
+      so you can get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: no
     version_added: '2.8'
   newline_sequence:
     default: '\r\n'
