@@ -21,13 +21,13 @@ from __future__ import absolute_import, division, print_function
 import copy
 import math
 import time
-import yaml
 
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 from ansible.module_utils.six import string_types
 
 try:
+    import yaml
     from openshift import watch
     from openshift.dynamic.client import ResourceInstance
     from openshift.helper.exceptions import KubernetesException
