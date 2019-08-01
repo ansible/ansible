@@ -39,7 +39,7 @@ options:
       - Action to take.
       - servicegroup options were added in 2.0.
       - delete_downtime options were added in 2.2.
-      - acknowledge and service_check options were added in 2.8.
+      - acknowledge and service_check options were added in 2.9.
     required: true
     choices: [ "downtime", "delete_downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
                "silence_nagios", "unsilence_nagios", "command", "servicegroup_service_downtime",
