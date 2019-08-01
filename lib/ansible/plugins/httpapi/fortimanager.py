@@ -58,8 +58,11 @@ class HttpApi(HttpApiBase):
         self._last_url = None
         self._last_response_raw = None
         self._locked_adom_list = list()
+        self._locked_adoms_by_user = list()
         self._uses_workspace = False
         self._uses_adoms = False
+        self._adom_list = list()
+        self._logged_in_user = None
 
     def set_become(self, become_context):
         """
@@ -86,6 +89,7 @@ class HttpApi(HttpApiBase):
 
         :return: Dictionary of status, if it logged in or not.
         """
+        self._logged_in_user = username
         self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, "sys/login/user",
                                                                        passwd=password, user=username,))
 
@@ -99,9 +103,6 @@ class HttpApi(HttpApiBase):
 
     def inspect_fmgr(self):
         # CHECK FOR WORKSPACE MODE TO SEE IF WE HAVE TO ENABLE ADOM LOCKS
-
-        self.check_mode()
-        # CHECK FOR SYSTEM STATUS -- SHOULD RETURN 0
         status = self.get_system_status()
         if status[0] == -11:
             # THE CONNECTION GOT LOST SOMEHOW, REMOVE THE SID AND REPORT BAD LOGIN
@@ -110,6 +111,11 @@ class HttpApi(HttpApiBase):
                                        " Exiting")
         elif status[0] == 0:
             try:
+                self.check_mode()
+                if self._uses_adoms:
+                    self.get_adom_list()
+                if self._uses_workspace:
+                    self.get_locked_adom_list()
                 self._connected_fmgr = status[1]
                 self._host = self._connected_fmgr["Hostname"]
             except BaseException:
@@ -121,7 +127,9 @@ class HttpApi(HttpApiBase):
         This function will logout of the FortiManager.
         """
         if self.sid is not None:
+            # IF WE WERE USING WORKSPACES, THEN CLEAN UP OUR LOCKS IF THEY STILL EXIST
             if self.uses_workspace:
+                self.get_lock_info()
                 self.run_unlock()
             ret_code, response = self.send_request(FMGRMethods.EXEC,
                                                    self._tools.format_request(FMGRMethods.EXEC, "sys/logout"))
@@ -281,26 +289,32 @@ class HttpApi(HttpApiBase):
         Checks FortiManager for the use of Workspace mode
         """
         url = "/cli/global/system/global"
-        code, resp_obj = self.send_request(FMGRMethods.GET, self._tools.format_request(FMGRMethods.GET, url,
-                                                                                       fields=["workspace-mode",
-                                                                                               "adom-status"]))
+        code, resp_obj = self.send_request(FMGRMethods.GET,
+                                           self._tools.format_request(FMGRMethods.GET,
+                                                                      url,
+                                                                      fields=["workspace-mode", "adom-status"]))
         try:
-            if resp_obj["workspace-mode"] != 0:
+            if resp_obj["workspace-mode"] == "workflow":
                 self.uses_workspace = True
+            elif resp_obj["workspace-mode"] == "disabled":
+                self.uses_workspace = False
         except KeyError:
-            self.uses_workspace = False
+            raise FMGBaseException(msg="Couldn't determine workspace-mode in the plugin")
         try:
-            if resp_obj["adom-status"] == 1:
+            if resp_obj["adom-status"] in [1, "enable"]:
                 self.uses_adoms = True
+            else:
+                self.uses_adoms = False
         except KeyError:
-            self.uses_adoms = False
+            raise FMGBaseException(msg="Couldn't determine adom-status in the plugin")
 
     def run_unlock(self):
         """
         Checks for ADOM status, if locked, it will unlock
         """
-        for adom_locked in self._locked_adom_list:
-            self.unlock_adom(adom_locked)
+        for adom_locked in self._locked_adoms_by_user:
+            adom = adom_locked["adom"]
+            self.unlock_adom(adom)
 
     def lock_adom(self, adom=None, *args, **kwargs):
         """
@@ -349,6 +363,82 @@ class HttpApi(HttpApiBase):
         else:
             url = "/dvmdb/adom/root/workspace/commit"
         return self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, url))
+
+    def get_lock_info(self, adom=None):
+        """
+        Gets ADOM lock info so it can be displayed with the error messages. Or if determined to be locked by ansible
+        for some reason, then unlock it.
+        """
+        if not adom or adom == "root":
+            url = "/dvmdb/adom/root/workspace/lockinfo"
+        else:
+            if adom.lower() == "global":
+                url = "/dvmdb/global/workspace/lockinfo/"
+            else:
+                url = "/dvmdb/adom/{adom}/workspace/lockinfo/".format(adom=adom)
+        datagram = {}
+        data = self._tools.format_request(FMGRMethods.GET, url, **datagram)
+        resp_obj = self.send_request(FMGRMethods.GET, data)
+        code = resp_obj[0]
+        if code != 0:
+            self._module.fail_json(msg=("An error occurred trying to get the ADOM Lock Info. Error: " + str(resp_obj)))
+        elif code == 0:
+            try:
+                if resp_obj[1]["status"]["message"] == "OK":
+                    self._lock_info = None
+            except:
+                self._lock_info = resp_obj[1]
+        return resp_obj
+
+    def get_adom_list(self):
+        """
+        Gets the list of ADOMs for the FortiManager
+        """
+        if self.uses_adoms:
+            url = "/dvmdb/adom"
+            datagram = {}
+            data = self._tools.format_request(FMGRMethods.GET, url, **datagram)
+            resp_obj = self.send_request(FMGRMethods.GET, data)
+            code = resp_obj[0]
+            if code != 0:
+                self._module.fail_json(msg=("An error occurred trying to get the ADOM Info. Error: " + str(resp_obj)))
+            elif code == 0:
+                num_of_adoms = len(resp_obj[1])
+                append_list = ['root',]
+                for adom in resp_obj[1]:
+                    if adom["tab_status"] != "":
+                        append_list.append(str(adom["name"]))
+                self._adom_list = append_list
+            return resp_obj
+
+    def get_locked_adom_list(self):
+        """
+        Gets the list of locked adoms
+        """
+        try:
+            locked_list = list()
+            locked_by_user_list = list()
+            for adom in self._adom_list:
+                adom_lock_info = self.get_lock_info(adom=adom)
+                try:
+                    if adom_lock_info[1]["status"]["message"] == "OK":
+                        continue
+                except:
+                    pass
+                try:
+                    if adom_lock_info[1][0]["lock_user"]:
+                        locked_list.append(str(adom))
+                    if adom_lock_info[1][0]["lock_user"] == self._logged_in_user:
+                        locked_by_user_list.append({"adom": str(adom), "user": str(adom_lock_info[1][0]["lock_user"])})
+                except BaseException as err:
+                    raise FMGBaseException(err)
+            self._locked_adom_list = locked_list
+            self._locked_adoms_by_user = locked_by_user_list
+
+        except BaseException as err:
+            raise FMGBaseException(msg=("An error occurred while trying to get the locked adom list. Error: "
+                                        + str(err)))
+
 
     ################################
     # END DATABASE LOCK CONTEXT CODE

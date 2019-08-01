@@ -86,6 +86,20 @@ options:
     description:
       - (datasource) Policy package object to run the script against
     required: false
+
+  retry_interval:
+    description:
+      - Only applies when FortiManager is in Workspace Mode.
+      - Number of seconds to wait between querying FMGR for the task completion status.
+    required: false
+    default: 5
+
+  retry_count:
+    description:
+      - Only applies when FortiManager is in Workspace Mode.
+      - Number of times to query FortiManager to check if the script has finished or not, before unlocking the ADOM.
+    required: false
+    default: 150
 '''
 
 EXAMPLES = '''
@@ -211,6 +225,8 @@ def main():
         script_content=dict(required=False, type="str"),
         script_scope=dict(required=False, type="str"),
         script_package=dict(required=False, type="str"),
+        retry_interval=dict(required=False, type="int", default=5),
+        retry_count=dict(required=False, type="int", default=150),
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
@@ -225,6 +241,8 @@ def main():
         "adom": module.params["adom"],
         "vdom": module.params["vdom"],
         "mode": module.params["mode"],
+        "retry_interval": module.params["retry_interval"],
+        "retry_count": module.params["retry_count"],
     }
     module.paramgram = paramgram
     fmgr = None
