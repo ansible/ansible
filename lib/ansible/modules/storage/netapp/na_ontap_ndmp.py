@@ -33,6 +33,7 @@ options:
     description:
     - Name of the vserver.
     required: true
+    type: str
 
   abort_on_disk_error:
     description:
@@ -52,6 +53,7 @@ options:
   data_port_range:
     description:
     - Data port range.
+    type: str
 
   debug_enable:
     description:
@@ -61,6 +63,7 @@ options:
   debug_filter:
     description:
     - Debug filter.
+    type: str
 
   dump_detailed_stats:
     description:
@@ -70,6 +73,7 @@ options:
   dump_logical_find:
     description:
     - Enable logical find for dump.
+    type: str
 
   enable:
     description:
@@ -119,6 +123,7 @@ options:
   secondary_debug_filter:
     description:
     - Secondary debug filter.
+    type: str
 
   tcpnodelay:
     description:
