@@ -913,11 +913,8 @@ class GalaxyCLI(CLI):
             'FAILED': C.COLOR_ERROR,
         }
 
-        if len(context.CLIARGS['args']) < 2:
-            raise AnsibleError("Expected a github_username and github_repository. Use --help.")
-
-        github_user = to_text(context.CLIARGS['args'][0], errors='surrogate_or_strict')
-        github_repo = to_text(context.CLIARGS['args'][1], errors='surrogate_or_strict')
+        github_user = to_text(context.CLIARGS['github_user'], errors='surrogate_or_strict')
+        github_repo = to_text(context.CLIARGS['github_repo'], errors='surrogate_or_strict')
 
         if context.CLIARGS['check_status']:
             task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)
