@@ -46,7 +46,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    version_added: "2.2"
     type: str
   before:
     description:
@@ -95,7 +94,6 @@ options:
         configuration action.
     type: str
     default: "@"
-    version_added: "2.3"
   force:
     description:
       - The force argument instructs the module to not consider the
