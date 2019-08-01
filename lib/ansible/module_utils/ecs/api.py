@@ -42,6 +42,7 @@ import traceback
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import Request
 
 YAML_IMP_ERR = None
@@ -149,45 +150,34 @@ class RestOperation(object):
             # modify the URL to add path parameters
             url = url + "?" + urlencode(query_parameters)
 
-        # Try up to 3 times, if receiving a 429 'too many requests' error code
-        for i in range(1, 3):
+        try:
             if body_parameters:
                 body_parameters_json = json.dumps(body_parameters)
-                req = self.session.request.open(method=self.method, url=url, data=body_parameters_json)
+                response = self.session.request.open(method=self.method, url=url, data=body_parameters_json)
             else:
-                req = self.session.request.open(method=self.method, url=url)
-
-            # Deal with rate limits. Default wait is 10 seconds unless
-            # overriden by the Retry-After header.
-            if req.getcode() != 429:
-                break
-            else:
-                try:
-                    retry_after = int(dict(req.headers).get("Retry-After")) + 1
-                except ValueError:
-                    retry_after = 10
-                time.sleep(retry_after)
+                response = self.session.request.open(method=self.method, url=url)
+            request_error = False
+        except HTTPError as e:
+            # An HTTPError has the same methods available as a valid response from request.open
+            response = e
+            request_error = True
 
         # Return the result if JSON and success ({} for empty responses)
         # Raise an exception if there was a failure.
         try:
-            result = json.loads(req.read())
+            result_code = response.getcode()
+            result = json.loads(response.read())
         except ValueError:
             result = {}
 
-        if req.getcode() >= 400:
-            request_error = True
-        else:
-            request_error = False
-
         if result or result == {}:
-            if not request_error:
+            if result_code and result_code < 400:
                 return result
             else:
                 raise RestOperationException(result)
 
         # Raise a generic RestOperationException if this fails
-        raise RestOperationException({"status": req.getcode(), "errors": [{"message": "REST Operation Failed"}]})
+        raise RestOperationException({"status": result_code, "errors": [{"message": "REST Operation Failed"}]})
 
 
 class Resource(object):
@@ -284,18 +274,22 @@ class ECSSession(object):
         self.verify = True
 
         if entrust_api_specification_path.startswith("http"):
-            http_response = Request().open(method="GET", url=entrust_api_specification_path)
-            http_response_contents = http_response.read()
-            if ".json" in entrust_api_specification_path:
-                self._spec = json.load(http_response_contents)
-            elif ".yml" in entrust_api_specification_path or ".yaml" in entrust_api_specification_path:
-                self._spec = yaml.load(http_response_contents, Loader=yaml.SafeLoader)
+            try:
+                http_response = Request().open(method="GET", url=entrust_api_specification_path)
+                http_response_contents = http_response.read()
+                if entrust_api_specification_path.endswith(".json"):
+                    self._spec = json.load(http_response_contents)
+                elif entrust_api_specification_path.endswith(".yml") or entrust_api_specification_path.endswith(".yaml"):
+                    self._spec = yaml.safe_load(http_response_contents)
+            except HTTPError as e:
+                raise SessionConfigurationException(to_native("Error downloading specification from address '{0}', received error code '{1}'".format(
+                    entrust_api_specification_path, e.getcode())))
         else:
             with open(entrust_api_specification_path) as f:
                 if ".json" in entrust_api_specification_path:
                     self._spec = json.load(f)
                 elif ".yml" in entrust_api_specification_path or ".yaml" in entrust_api_specification_path:
-                    self._spec = yaml.load(f, Loader=yaml.SafeLoader)
+                    self._spec = yaml.safe_load(f)
 
     def get_config(self, item):
         return self._config.get(item, None)
@@ -308,7 +302,7 @@ class ECSSession(object):
         if not entrust_api_specification_path or (not entrust_api_specification_path.startswith("http") and not os.path.isfile(entrust_api_specification_path)):
             raise SessionConfigurationException(
                 to_native(
-                    "Parameter provided for entrust_api_specification_path of value {0} was not a valid file path or HTTPS address.".format(
+                    "Parameter provided for entrust_api_specification_path of value '{0}' was not a valid file path or HTTPS address.".format(
                         entrust_api_specification_path
                     )
                 )
@@ -318,7 +312,7 @@ class ECSSession(object):
             file_path = kwargs.get(required_file)
             if not file_path or not os.path.isfile(file_path):
                 raise SessionConfigurationException(
-                    to_native("Parameter provided for {0} of value {1} was not a valid file path.".format(required_file, file_path))
+                    to_native("Parameter provided for {0} of value '{1}' was not a valid file path.".format(required_file, file_path))
                 )
 
         for required_var in ["entrust_api_user", "entrust_api_key"]:

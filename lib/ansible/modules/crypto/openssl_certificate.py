@@ -19,7 +19,7 @@ version_added: "2.4"
 short_description: Generate and/or check OpenSSL certificates
 description:
     - This module allows one to (re)generate OpenSSL certificates.
-    - It implements a notion of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly))
+    - It implements a notion of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly), C(entrust))
       for your certificate.
     - The C(assertonly) provider is intended for use cases where one is only interested in
       checking properties of a supplied certificate.
@@ -58,6 +58,7 @@ options:
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
             - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
+            - The C(entrust) provider was added for Ansible 2.9 and requires credentials for the Entrust Certificate Services (ECS) API
         type: str
         required: true
         choices: [ acme, assertonly, entrust, ownca, selfsigned ]
@@ -387,6 +388,7 @@ options:
         description:
             - The email of the requester of the certificate (for tracking purposes).
             - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust)
         type: str
         version_added: "2.9"
 
@@ -394,6 +396,7 @@ options:
         description:
             - The name of the requester of the certificate (for tracking purposes).
             - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust)
         type: str
         version_added: "2.9"
 
@@ -401,34 +404,39 @@ options:
         description:
             - The phone number of the requester of the certificate (for tracking purposes).
             - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust)
         type: str
         version_added: "2.9"
 
     entrust_api_user:
         description:
-            - The username for authentication to the Entrust ECS API.
+            - The username for authentication to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust)
         type: str
         version_added: "2.9"
 
     entrust_api_key:
         description:
-            - The key (password) for authentication to the Entrust ECS API.
+            - The key (password) for authentication to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust)
         type: str
         version_added: "2.9"
 
     entrust_api_client_cert_path:
         description:
-            - The path of the client certificate used to authenticate to the Entrust ECS API.
+            - The path of the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust)
         type: path
         version_added: "2.9"
 
     entrust_api_client_cert_key_path:
         description:
-            - The path of the key for the client certificate used to authenticate to the Entrust ECS API
+            - The path of the key for the client certificate used to authenticate to the Entrust Certificate Services (ECS) API
             - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust)
         type: path
         version_added: "2.9"
 
@@ -443,25 +451,15 @@ options:
             - The minimum certificate lifetime is 90 days, and maximum is three years.
             - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using relative time this module is NOT idempotent.
             - If this value is not specified, the certificate will stop being valid 365 days from now.
             - This is only used by the C(entrust) provider.
         type: str
         default: +365d
         version_added: "2.9"
 
-    entrust_eku:
-        description:
-            - The extended key usage requested for the certificate.
-            - This is only used by the C(entrust) provider.
-        choices: ['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']
-        type: str
-        default: SERVER_AND_CLIENT_AUTH
-        version_added: "2.9"
-
     entrust_api_specification_path:
         description:
-            - Path to the specification file defining the Entrust ECS api.
+            - Path to the specification file defining the Entrust Certificate Services (ECS) API.
             - Can be used to keep a local copy of the specification to avoid downloading it every time the module is used.
             - This is only used by the C(entrust) provider.
         type: path
@@ -516,7 +514,7 @@ EXAMPLES = r'''
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
     force: yes
 
-- name: Generate an Entrust certificate via the Entrust ECS API
+- name: Generate an Entrust certificate via the Entrust Certificate Services (ECS) API
   openssl_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr_path: /etc/ssl/csr/ansible.com.csr
@@ -644,8 +642,6 @@ backup_file:
 
 from random import randint
 import abc
-import base64
-import calendar
 import datetime
 import time
 import os
@@ -656,6 +652,7 @@ from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils.ecs.api import ECSClient, RestOperationException, SessionConfigurationException
 from ansible.module_utils.urls import fetch_url
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
@@ -686,18 +683,6 @@ except ImportError:
     CRYPTOGRAPHY_FOUND = False
 else:
     CRYPTOGRAPHY_FOUND = True
-
-ECS_IMP_ERR = None
-try:
-    from ansible.module_utils.ecs.api import ECSClient
-    from ansible.module_utils.ecs.api import RestOperationException
-    from ansible.module_utils.ecs.api import SessionConfigurationException
-except ImportError:
-    ECS_IMP_ERR = traceback.format_exc()
-    ECS_MODULE_FOUND = False
-else:
-    ECS_MODULE_FOUND = True
-
 
 class CertificateError(crypto_utils.OpenSSLObjectError):
     pass
@@ -1870,13 +1855,12 @@ class EntrustCertificate(Certificate):
                 'requesterEmail': module.params['entrust_requester_email'],
                 'requesterPhone': module.params['entrust_requester_phone']
             }
-            body['eku'] = module.params['entrust_eku']
 
             try:
                 result = self.ecs_client.NewCertRequest(Body=body)
                 self.trackingId = result.get('trackingId')
             except RestOperationException as e:
-                module.fail_json(msg='Failed to request new certificate from Entrust (ECS) {0}'.format(to_native(e.message)))
+                module.fail_json(msg='Failed to request new certificate from Entrust Certificate Services (ECS): {0}'.format(to_native(e.message)))
 
             if self.backup:
                 self.backup_file = module.backup_local(self.path)
@@ -1892,7 +1876,7 @@ class EntrustCertificate(Certificate):
         try:
             cert_details = self._get_cert_details()
         except RestOperationException as e:
-            module.fail_json(msg='Failed to get status of existing certificate from Entrust ECS API. Error of {0}.'.format(to_native(e.message)))
+            module.fail_json(msg='Failed to get status of existing certificate from Entrust Certificate Services (ECS): {0}.'.format(to_native(e.message)))
 
         # Always issue a new certificate if the certificate is suspended or revoked
         status = cert_details.get('status', False)
@@ -1926,7 +1910,10 @@ class EntrustCertificate(Certificate):
             # use the serial number to identify the tracking Id
             if self.trackingId is None and serial_number is not None:
                 cert_results = self.ecs_client.GetCertificates(serialNumber=serial_number).get('certificates', {})
-                # If we get one result,
+
+                # Finding 0 or more than 1 result is a very unlikely use case, it simply means we cannot perform additional checks
+                # on the 'state' as returned by Entrust Certificate Services (ECS). The general certificate validity is
+                # still checked as it is in the rest of the module.
                 if len(cert_results) == 1:
                     self.trackingId = cert_results[0].get('trackingId')
 
@@ -2089,7 +2076,6 @@ def main():
             entrust_api_client_cert_key_path=dict(type='path'),
             entrust_api_specification_path=dict(type='path', default='https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml'),
             entrust_not_after=dict(type='str', default='+365d'),
-            entrust_eku=dict(type='str', default="SERVER_AND_CLIENT_AUTH", choices=['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH'])
         ),
         supports_check_mode=True,
         add_file_common_args=True,
@@ -2157,8 +2143,6 @@ def main():
                 elif provider == 'ownca':
                     certificate = OwnCACertificate(module)
                 elif provider == 'entrust':
-                    if not ECS_MODULE_FOUND:
-                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs.api', exception=ECS_IMP_ERR)
                     certificate = EntrustCertificate(module, 'pyopenssl')
                 else:
                     certificate = AssertOnlyCertificate(module)
@@ -2176,8 +2160,6 @@ def main():
                 elif provider == 'ownca':
                     certificate = OwnCACertificateCryptography(module)
                 elif provider == 'entrust':
-                    if not ECS_MODULE_FOUND:
-                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs.api', exception=ECS_IMP_ERR)
                     certificate = EntrustCertificate(module, 'cryptography')
                 else:
                     certificate = AssertOnlyCertificateCryptography(module)
