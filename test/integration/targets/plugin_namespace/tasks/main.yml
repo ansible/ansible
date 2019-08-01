@@ -1,0 +1,16 @@
+- set_fact:
+    filter_package: "{{ 1 | filter_package }}"
+    filter_name: "{{ 1 | filter_name }}"
+    lookup_package: "{{ lookup('lookup_package') }}"
+    lookup_name: "{{ lookup('lookup_name') }}"
+    test_package_ok: "{{ 1 is test_package_ok }}"
+    test_name_ok: "{{ 1 is test_name_ok }}"
+
+- assert:
+    that:
+      - filter_package == 'ansible.plugins.filter'
+      - filter_name == 'ansible.plugins.filter.test_filter'
+      - lookup_package == 'ansible.plugins.lookup'
+      - lookup_name == 'ansible.plugins.lookup.lookup_name'
+      - test_package_ok
+      - test_name_ok
