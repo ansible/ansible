@@ -171,10 +171,10 @@ class TaskQueueManager:
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-        loaded_callbacks = set()
+        loaded_callbacks = []
 
         # first, load callbacks in the core distribution and configured callback paths
-        for callback_plugin in callback_loader.all(class_only=True):
+        for callback_plugin in callback_loader.all(class_only=True)  # + (c for c in C.DEFAULT_CALLBACK_WHITELIST if is_collection_ref(c)):
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
             (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
@@ -196,24 +196,6 @@ class TaskQueueManager:
             loaded_callbacks.add(callback_name)  # mark as loaded so we skip in second pass
             callback_obj.set_options()
             self._callback_plugins.append(callback_obj)
-
-        # eg, ad-hoc doesn't allow non-default callbacks
-        if self._run_additional_callbacks:
-            # Second pass over everything in the whitelist we haven't already loaded, try to explicitly load. This will catch
-            # collection-hosted callbacks, as well as formerly-core callbacks that have been redirected to collections.
-            for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if c not in loaded_callbacks):
-                # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
-                callback_obj, plugin_load_context = callback_loader.get_with_context(callback_plugin_name)
-                if callback_obj:
-                    loaded_as_name = callback_obj._redirected_names[-1]
-                    if loaded_as_name in loaded_callbacks:
-                        display.warning("Skipping callback '%s', already loaded as '%s'." % (callback_plugin_name, loaded_as_name))
-                        continue
-                    loaded_callbacks.add(loaded_as_name)
-                    callback_obj.set_options()
-                    self._callback_plugins.append(callback_obj)
-                else:
-                    display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
 
         self._callbacks_loaded = True
 
