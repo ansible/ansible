@@ -218,6 +218,7 @@ EXAMPLES = '''
 import types
 import time
 import os.path
+import stat
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -284,7 +285,7 @@ def main():
             comment=dict(default='Scheduling downtime'),
             host=dict(required=False, default=None),
             servicegroup=dict(required=False, default=None),
-            minutes=dict(default=30),
+            minutes=dict(default=30, type='int'),
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
             command=dict(required=False, default=None),
@@ -423,7 +424,13 @@ class Nagios(object):
         """
         Write the given command to the Nagios command file
         """
-
+        
+        if not os.path.exists(self.cmdfile):	
+            self.module.fail_json(msg='nagios command file does not exist',	
+                                  cmdfile=self.cmdfile)	
+        if not stat.S_ISFIFO(os.stat(self.cmdfile).st_mode):	
+            self.module.fail_json(msg='nagios command file is not a fifo file',	
+                                  cmdfile=self.cmdfile)
         try:
             fp = open(self.cmdfile, 'w')
             fp.write(cmd)
