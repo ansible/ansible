@@ -424,12 +424,12 @@ class Nagios(object):
         """
         Write the given command to the Nagios command file
         """
-        
-        if not os.path.exists(self.cmdfile):	
-            self.module.fail_json(msg='nagios command file does not exist',	
-                                  cmdfile=self.cmdfile)	
-        if not stat.S_ISFIFO(os.stat(self.cmdfile).st_mode):	
-            self.module.fail_json(msg='nagios command file is not a fifo file',	
+
+        if not os.path.exists(self.cmdfile):
+            self.module.fail_json(msg='nagios command file does not exist',
+                                  cmdfile=self.cmdfile)
+        if not stat.S_ISFIFO(os.stat(self.cmdfile).st_mode):
+            self.module.fail_json(msg='nagios command file is not a fifo file',
                                   cmdfile=self.cmdfile)
         try:
             fp = open(self.cmdfile, 'w')
