@@ -43,7 +43,7 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 		$current_state = $null
 	}
 
-	if (($null -ne $current_state) -and ($state -ne $current_state)) {
+	if ( $state -ne $current_state ) {
 		if($state -eq 'enabled') {
 			try {
 				# Enable-DedupVolume -Volume <String>
