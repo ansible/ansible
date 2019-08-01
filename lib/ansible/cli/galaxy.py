@@ -55,7 +55,7 @@ class GalaxyCLI(CLI):
         ''' create an options parser for bin/ansible '''
 
         super(GalaxyCLI, self).init_parser(
-            desc="Perform various Role related operations.",
+            desc="Perform various Role and Collection related operations.",
         )
 
         # common
@@ -413,7 +413,7 @@ class GalaxyCLI(CLI):
         obj_name = context.CLIARGS['{0}_name'.format(galaxy_type)]
 
         inject_data = dict(
-            description='your description',
+            description='your {0} description'.format(galaxy_type),
             ansible_plugin_list_dir=get_versioned_doclink('plugins/plugins.html'),
         )
         if galaxy_type == 'role':
@@ -525,7 +525,7 @@ class GalaxyCLI(CLI):
                 if not os.path.exists(b_dir_path):
                     os.makedirs(b_dir_path)
 
-        display.display("- %s was created successfully" % obj_name)
+        display.display("- %s %s was created successfully" % (galaxy_type.title(), obj_name))
 
     def execute_info(self):
         """
