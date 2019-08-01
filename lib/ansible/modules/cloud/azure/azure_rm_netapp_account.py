@@ -46,6 +46,7 @@ options:
             - absent
             - present
         type: str
+
 '''
 EXAMPLES = '''
 
