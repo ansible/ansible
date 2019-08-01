@@ -67,6 +67,7 @@ options:
         description:
             - "Enables passthrough to an SR-IOV-enabled host NIC."
             - "When enabled C(qos) and  C(network_filter) are automatically set to None and C(port_mirroring) to False."
+            - "When enabled and C(qos) or C(network_filter) or C(port_mirroring) specified module will raise exeption."
         choices: ['disabled', 'enabled']
     migratable:
         description:
@@ -169,9 +170,12 @@ class EntityVnicPorfileModule(BaseModule):
         networks_service = self._get_dcs_service().service(self._get_dcs_id()).networks_service()
         return get_id_by_name(networks_service, self.param('network'))
 
+
     def _get_qos_id(self):
-        qoss_service = self._get_dcs_service().service(self._get_dcs_id()).qoss_service()
-        return get_id_by_name(qoss_service, self.param('qos')) if self.param('qos') else None
+        if self.param('qos'):
+            qoss_service = self._get_dcs_service().service(self._get_dcs_id()).qoss_service()
+            return get_id_by_name(qoss_service, self.param('qos')) if self.param('qos') else None
+        return None
 
     def _get_network_filter_id(self):
         nf_service = self._connection.system_service().network_filters_service()
