@@ -133,6 +133,16 @@ The following functionality will be removed in Ansible 2.13. Please update updat
   :ref:`openssl_csr_info <openssl_csr_info_module>`, :ref:`openssl_privatekey_info <openssl_privatekey_info_module>`
   and :ref:`assert <assert_module>` modules.
 
+For the following modules, the PyOpenSSL-based backend ``pyopenssl`` has been deprecated and will be
+removed in Ansible 2.13:
+
+* :ref:`openssl_certificate <openssl_certificate_module>`
+* :ref:`openssl_certificate_info <openssl_certificate_info_module>`
+* :ref:`openssl_csr <openssl_csr_module>`
+* :ref:`openssl_csr_info <openssl_csr_info_module>`
+* :ref:`openssl_privatekey <openssl_privatekey_module>`
+* :ref:`openssl_privatekey_info <openssl_privatekey_info_module>`
+
 
 Renamed modules
 ^^^^^^^^^^^^^^^
