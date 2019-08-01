@@ -1,0 +1,72 @@
+---
+- name: delete a disk
+  hwc_evs_disk:
+    filters:
+      - "name"
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+#----------------------------------------------------------
+- name: create a disk
+  hwc_evs_disk:
+    filters:
+      - "name"
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+# ----------------------------------------------------------------------------
+- name: create a disk that already exists
+  hwc_evs_disk:
+    filters:
+      - "name"
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a disk
+  hwc_evs_disk:
+    filters:
+      - "name"
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      result is changed
+# ----------------------------------------------------------------------------
+- name: delete a disk that does not exist
+  hwc_evs_disk:
+    filters:
+      - "name"
+    availability_zone: "cn-north-1a"
+    name: "ansible_evs_disk_test"
+    volume_type: "SATA"
+    size: 10
+    state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
