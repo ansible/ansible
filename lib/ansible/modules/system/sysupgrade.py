@@ -19,12 +19,13 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: sysupgrade
-short_description: upgrade system to the next release or a new snapshot
-version_added: 2.9
-author: Johnathan C Maudlin
+short_description: Upgrade OpenBSD to the next release or snapshot
+version_added: "2.9"
+
 description:
     - Use the sysupgrade(8) utility to upgrade a system to the next
       release or the latest snapshot for OpenBSD 6.6 or later.
+
 options:
     upgrade:
         description:
@@ -45,6 +46,9 @@ options:
         type: bool
         default: false
         required: false
+
+author:
+    - Johnathan C Maudlin (@jcmdln)
 '''
 
 EXAMPLES = '''
