@@ -1,0 +1,2 @@
+minor_changes:
+  - nagios - added 'acknowledge' and 'schedule_forced_svc_check' action
