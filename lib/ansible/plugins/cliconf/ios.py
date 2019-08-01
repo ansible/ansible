@@ -211,7 +211,8 @@ class Cliconf(CliconfBase):
         for item in model_search_strs:
             match = re.search(item, data, re.M)
             if match:
-                device_info['network_os_model'] = match.group(1)
+                version = match.group(1).split(' ')
+                device_info['network_os_model'] = version[0]
                 break
 
         match = re.search(r'^(.+) uptime', data, re.M)
