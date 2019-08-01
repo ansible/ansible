@@ -196,6 +196,24 @@ def update(connection, module, response, **params):
 
 def delete(connection, module, response, **params):
 
+    changed = True
+    if not params.get('ConditionExpression'):
+        get_item_param_keys = ['TableName', 'Key', 'ExpressionAttributeNames']
+        get_item_params = dict((k, v) for k, v in params.items() if k in get_item_param_keys)
+        try:
+            response = connection.get_item(**get_item_params)
+            if not response.get('Item'):
+                changed = False
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to get item {0} from table {1}".format(
+                params.get('TableName'), params.get('Key')))
+     try:
+         if not module.check_mode:
+             response = connection.delete_item(**params)
+         return response, changed
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        # your exception handling
+
     try:
         if not module.check_mode:
             # checks whether the item exist or not
