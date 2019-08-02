@@ -6051,8 +6051,8 @@ lib/ansible/modules/remote_management/cpm/cpm_serial_port_config.py validate-mod
 lib/ansible/modules/remote_management/cpm/cpm_serial_port_info.py validate-modules:E337
 lib/ansible/modules/remote_management/cpm/cpm_user.py validate-modules:E337
 lib/ansible/modules/remote_management/cpm/cpm_user.py validate-modules:E338
-lib/ansible/modules/remote_management/dellemc/idrac/idrac_server_config_profile.py validate-modules:E337
-lib/ansible/modules/remote_management/dellemc/idrac/idrac_server_config_profile.py validate-modules:E338
+lib/ansible/modules/remote_management/dellemc/idrac_server_config_profile.py validate-modules:E337
+lib/ansible/modules/remote_management/dellemc/idrac_server_config_profile.py validate-modules:E338
 lib/ansible/modules/remote_management/foreman/_foreman.py validate-modules:E337
 lib/ansible/modules/remote_management/foreman/_katello.py validate-modules:E337
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py validate-modules:E326
@@ -7716,8 +7716,8 @@ test/units/modules/packaging/os/test_rhn_register.py future-import-boilerplate
 test/units/modules/packaging/os/test_rhn_register.py metaclass-boilerplate
 test/units/modules/packaging/os/test_yum.py future-import-boilerplate
 test/units/modules/packaging/os/test_yum.py metaclass-boilerplate
-test/units/modules/remote_management/dellemc/ome/test_ome_device_info.py future-import-boilerplate
-test/units/modules/remote_management/dellemc/ome/test_ome_device_info.py metaclass-boilerplate
+test/units/modules/remote_management/dellemc/test_ome_device_info.py future-import-boilerplate
+test/units/modules/remote_management/dellemc/test_ome_device_info.py metaclass-boilerplate
 test/units/modules/remote_management/lxca/test_lxca_cmms.py future-import-boilerplate
 test/units/modules/remote_management/lxca/test_lxca_cmms.py metaclass-boilerplate
 test/units/modules/remote_management/lxca/test_lxca_nodes.py future-import-boilerplate
