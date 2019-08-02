@@ -1417,11 +1417,11 @@ files:
 
 ##############################
 # other lib
-lib/ansible/cli/scripts/ansible_connection_cli_stub.py:
-  keywords:
-    - persistent connection
-  labels: networking
-lib/ansible/executor/powershell: *windows_core
+  lib/ansible/cli/scripts/ansible_connection_cli_stub.py:
+    keywords:
+      - persistent connection
+    labels: networking
+  lib/ansible/executor/powershell: *windows_core
   lib/ansible/template:
     keywords:
       - jinja
