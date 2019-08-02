@@ -418,7 +418,7 @@ class TestStrategyBase(unittest.TestCase):
         # self.assertEqual(strategy_base._pending_results, 1)
 
         # queue_items.append(('bad'))
-        # self.assertRaises(strategy_base._process_pending_results, iterator=mock_iterator)
+        # self.assertRaises(AnsibleError, strategy_base._process_pending_results, iterator=mock_iterator)
         strategy_base.cleanup()
 
     def test_strategy_base_load_included_file(self):
