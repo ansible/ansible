@@ -1508,9 +1508,9 @@ class TaskParameters(DockerBaseClass):
                        network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
                         ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
                         break
-                except NotFound as dummy:
+                except NotFound as nfe:
                     self.client.fail(
-                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], e),
+                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], nfe),
                         exception=traceback.format_exc()
                     )
         return ip
