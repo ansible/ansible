@@ -1,0 +1,2 @@
+bugfixes:
+- cowsay - Fix issue with an empty cow_whitelist (https://github.com/ansible/ansible/issues/45631)
