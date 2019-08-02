@@ -50,7 +50,8 @@ options:
   state:
     description:
       - Desired state of the project.
-      - Specifying I(present) is the same as running I(docker-compose up).
+      - Specifying I(present) is the same as running I(docker-compose up) / I(docker-compose stop) (with C(stopped)) / I(docker-compose restart)
+        (with C(restarted)).
       - Specifying I(absent) is the same as running I(docker-compose down).
     type: str
     default: present
@@ -59,7 +60,8 @@ options:
       - present
   services:
     description:
-      - When C(state) is I(present) run I(docker-compose up) on a subset of services.
+      - When C(state) is I(present) run I(docker-compose up) / I(docker-compose stop) (with C(stopped)) / I(docker-compose restart) (with C(restarted)) on a
+        subset of services.
     type: list
   scale:
     description:
@@ -94,8 +96,8 @@ options:
       - smart
   build:
     description:
-      - Use with state I(present) to always build images prior to starting the application.
-      - Same as running docker-compose build with the pull option.
+      - Use with C(state) I(present) to always build images prior to starting the application.
+      - Same as running I(docker-compose build) with the pull option.
       - Images will only be rebuilt if Docker detects a change in the Dockerfile or build directory contents.
       - Use the C(nocache) option to ignore the image cache when performing the build.
       - If an existing image is replaced, services using the image will be recreated unless C(recreate) is I(never).
@@ -103,38 +105,38 @@ options:
     default: no
   pull:
     description:
-      - Use with state I(present) to always pull images prior to starting the application.
-      - Same as running docker-compose pull.
+      - Use with C(state) I(present) to always pull images prior to starting the application.
+      - Same as running I(docker-compose pull).
       - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
     type: bool
     default: no
     version_added: "2.2"
   nocache:
     description:
-      - Use with the build option to ignore the cache during the image build process.
+      - Use with the C(build) option to ignore the cache during the image build process.
     type: bool
     default: no
     version_added: "2.2"
   remove_images:
     description:
-      - Use with state I(absent) to remove the all images or only local images.
+      - Use with C(state) I(absent) to remove the all images or only local images.
     type: str
     choices:
         - 'all'
         - 'local'
   remove_volumes:
     description:
-      - Use with state I(absent) to remove data volumes.
+      - Use with C(state) I(absent) to remove data volumes.
     type: bool
     default: no
   stopped:
     description:
-      - Use with state I(present) to leave the containers in an exited or non-running state.
+      - Use with C(state) I(present) to stop containers.
     type: bool
     default: no
   restarted:
     description:
-      - Use with state I(present) to restart all containers.
+      - Use with C(state) I(present) to restart containers.
     type: bool
     default: no
   remove_orphans:
@@ -160,25 +162,28 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Examples use the django example at U(https://docs.docker.com/compose/django/). Follow it to create the flask
-# directory
+# Examples use the django example at https://docs.docker.com/compose/django. Follow it to create the
+# flask directory
 
 - name: Run using a project directory
   hosts: localhost
   gather_facts: no
   tasks:
-    - docker_compose:
+    - name: Tear down existing services
+      docker_compose:
         project_src: flask
         state: absent
 
-    - docker_compose:
+    - name: Create and start services
+      docker_compose:
         project_src: flask
       register: output
 
     - debug:
         var: output
 
-    - docker_compose:
+    - name: Run `docker-compose up` again
+      docker_compose:
         project_src: flask
         build: no
       register: output
@@ -189,10 +194,11 @@ EXAMPLES = '''
     - assert:
         that: "not output.changed "
 
-    - docker_compose:
+    - name: Stop all services
+      docker_compose:
         project_src: flask
         build: no
-        stopped: true
+        stopped: yes
       register: output
 
     - debug:
@@ -203,10 +209,11 @@ EXAMPLES = '''
           - "not web.flask_web_1.state.running"
           - "not db.flask_db_1.state.running"
 
-    - docker_compose:
+    - name: Restart services
+      docker_compose:
         project_src: flask
         build: no
-        restarted: true
+        restarted: yes
       register: output
 
     - debug:
@@ -385,7 +392,7 @@ services:
 
 actions:
   description: Provides the actions to be taken on each service as determined by compose.
-  returned: when in check mode or I(debug) true
+  returned: when in check mode or C(debug) is I(yes)
   type: complex
   contains:
       service_name:
