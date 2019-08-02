@@ -283,7 +283,7 @@ EXAMPLES = r'''
 
 - name: Add metadata to pool
   bigip_pool:
-    state: absent
+    state: present
     name: my-pool
     partition: Common
     metadata:
