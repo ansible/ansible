@@ -347,7 +347,7 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
             kwargs.update(kwargs['mounts'])
             del kwargs['mounts']
         if 'pubkey' in kwargs:
-            if float(proxmox.version.get()['version']) >= 4.2:
+            if int(proxmox.version.get()['version'].split('.', 1)[0])
                 kwargs['ssh-public-keys'] = kwargs['pubkey']
             del kwargs['pubkey']
     else:
