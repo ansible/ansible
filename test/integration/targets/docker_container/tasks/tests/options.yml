@@ -2804,6 +2804,18 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     force_kill: yes
   register: published_ports_4
 
+- name: published_ports (ports with IP addresses)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - '127.0.0.1:9002:9002/tcp'
+    - '[::1]:9003:9003/tcp'
+    force_kill: yes
+  register: published_ports_5
+
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
@@ -2817,6 +2829,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - published_ports_2 is not changed
     - published_ports_3 is not changed
     - published_ports_4 is changed
+    - published_ports_5 is changed
 
 ####################################################################
 ## pull ############################################################
