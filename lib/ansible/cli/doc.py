@@ -26,7 +26,7 @@ from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
-from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.utils.collection_loader import set_collection_playbook_paths, is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 display = Display()
@@ -329,9 +329,17 @@ class DocCLI(CLI):
             return plugin_list
 
         bkey = ptype.upper()
-        for plugin in os.listdir(path):
-            display.vvvv("Found %s" % plugin)
-            full_path = '/'.join([path, plugin])
+        for plugin_name in os.listdir(path):
+            display.vvvv("Found %s" % plugin_name)
+            full_path = '/'.join([path, plugin_name])
+
+            if is_collection_ref:
+                full = plugin_name.split('.')
+                collection = full[:1]
+                plugin = full[2:]
+            else:
+                collection = ''
+                plugin = plugin_name
 
             if plugin.startswith('.'):
                 continue
@@ -343,16 +351,19 @@ class DocCLI(CLI):
                 continue
             elif plugin in C.IGNORE_FILES:
                 continue
-            elif plugin .startswith('_'):
+            elif plugin.startswith('_'):
                 if os.path.islink(full_path):  # avoids aliases
                     continue
 
-            plugin = os.path.splitext(plugin)[0]  # removes the extension
-            plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
+            # remove extension, also remove underscore from deprecated plugins
+            plugin = os.path.splitext(plugin)[0]
+            plugin = plugin.lstrip('_')
 
+            # ignore blacklisted (special/internal plugins)
             if plugin not in BLACKLIST.get(bkey, ()):
-                plugin_list.add(plugin)
-                display.vvvv("Added %s" % plugin)
+                final = collection + plugin
+                plugin_list.add(final)
+                display.vvvv("Added %s" % final)
 
         return plugin_list
 

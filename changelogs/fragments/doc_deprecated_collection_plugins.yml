@@ -1,0 +1,2 @@
+bugfixes:
+    - allow ansible doc to process collection plugins as it would any others, for deprecation, aliases, etc.
