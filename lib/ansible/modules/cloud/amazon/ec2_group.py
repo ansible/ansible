@@ -729,17 +729,21 @@ def validate_ip(module, cidr_ip):
             ip = to_subnet(split_addr[0], split_addr[1])
             if ip != cidr_ip:
                 module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
-                            "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
+                            "check the network mask and make sure that only network bits are set: {1}.".format(
+                                cidr_ip, ip))
         except ValueError:
-            # IPv6 works a little differently. We don't want to modify the cidr_ip, just make sure it's valid.
-            if not isinstance(ip_network(to_text(cidr_ip)), IPv6Network):
-                module.fail_json("One of your IPv6 CIDR addresses ({0}) is not a valid IPv6 network.".format(cidr_ip))
-            ip6 = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
-            if ip6 != cidr_ip:
-                module.warn("One of your IPv6 CIDR addresses ({0}) has host bits set. If you did not intend to specify"
-                            "a device address or range of devices, check the network mask and make sure that only "
-                            "network bits are set: {1}. Proceeding with address {0}.".format(cidr_ip, ip6))
-            ip = cidr_ip
+            # to_subnet throws a ValueError on IPv6 networks, so we should be working with v6 if we get here
+            try:
+                isinstance(ip_network(to_text(cidr_ip)), IPv6Network)
+                ip = cidr_ip
+            except ValueError:
+                # If a host bit is set on something other than a /128, IPv6Network will throw a ValueError
+                # The ipv6_cidr in this case probably looks like "2001:DB8:A0B:12F0::1/64" and we just want the network bits
+                ip6 = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
+                if ip6 != cidr_ip:
+                    module.warn("One of your IPv6 CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                                "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip6))
+                return ip6
         return ip
     return cidr_ip
 
