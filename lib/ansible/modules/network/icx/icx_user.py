@@ -37,11 +37,11 @@ options:
         with the C(aggregate) argument.
         Please note that this option is not same as C(provider username).
     required: true
-    type: list
+    type: str
   configured_password:
     description:
       - The password to be configured on the ICX device.
-    type: bool
+    type: str
   update_password:
     description:
       - This  argument will instruct the module when to change the password. When
