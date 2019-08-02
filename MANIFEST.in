@@ -4,7 +4,6 @@ include SYMLINK_CACHE.json
 include requirements.txt
 include .coveragerc
 include shippable.yml
-include tox.ini
 include bin/ansible-test
 include examples/hosts
 include examples/ansible.cfg

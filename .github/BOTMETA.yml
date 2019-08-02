@@ -1560,8 +1560,6 @@ files:
     notified: mattclay
   shippable.yml:
     notified: mattclay
-  tox.ini:
-    notified: mattclay
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
