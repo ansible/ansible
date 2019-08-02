@@ -1,0 +1,21 @@
+# Everything with the prefix bad_source originates here and should be removed from inventory after the source fails
+
+[bad_source_group0]
+good_source_host0
+bad_source_host0 bad_source_hostvar0=value
+
+[bad_source_group1:children]
+good_source_group1
+
+[good_source_group1:vars]
+bad_source_groupvar0=value
+
+[good_source_group1:children]
+bad_source_group0
+
+[bad_source_group1:vars]
+bad_source_groupvar1=value
+
+# This fails for ini because vars can't be assigned to a group before it is defined
+[undefinedgroup:vars]
+bad_source_groupvar2=True

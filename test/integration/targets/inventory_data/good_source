@@ -1,0 +1,13 @@
+# Everything in this file should remain in inventory
+
+[good_source_group0]
+good_source_host0 good_source_hostvar0=value
+
+[good_source_group0:vars]
+good_source_groupvar0=value
+
+[good_source_group1:children]
+good_source_group0
+
+[good_source_group1:vars]
+good_source_groupvar1=value

@@ -1,8 +1,0 @@
-[testgroupinbadsource]
-testhostinbadsource
-
-[testhostinbadsource:vars]
-testvar=testvalue
-
-[badgroup:vars]
-exists=False
