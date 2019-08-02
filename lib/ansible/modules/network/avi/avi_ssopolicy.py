@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_ssopolicy
-author: Chaitanya Deshpande (@chaitanyaavi) <chaitanya.deshpande@avinetworks.com>
+author: Rohan Suryawanshi (@Rohan-sss1) <rohan.suryawanshi@avinetworks.com>
 
 short_description: Module for setup of SSOPolicy Avi RESTful Object
 description:
@@ -33,11 +33,13 @@ options:
         description:
             - Default method for object update is HTTP PUT.
             - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
         default: put
         choices: ["put", "patch"]
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
         choices: ["add", "replace", "delete"]
     authentication_policy:
         description:
@@ -47,7 +49,7 @@ options:
     authorization_policy:
         description:
             - Authorization policy settings.
-            - Field introduced in 18.2.4.
+            - Field introduced in 18.2.5.
     name:
         description:
             - Name of the sso policy.
@@ -62,8 +64,9 @@ options:
         description:
             - Sso policy type.
             - Enum options - SSO_TYPE_SAML, SSO_TYPE_PINGACCESS.
-            - Field introduced in 18.2.4.
+            - Field introduced in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as SSO_TYPE_SAML.
+        required: true
     url:
         description:
             - Avi controller URL of the object.
@@ -111,7 +114,7 @@ def main():
         authorization_policy=dict(type='dict',),
         name=dict(type='str', required=True),
         tenant_ref=dict(type='str',),
-        type=dict(type='str',),
+        type=dict(type='str', required=True),
         url=dict(type='str',),
         uuid=dict(type='str',),
     )
