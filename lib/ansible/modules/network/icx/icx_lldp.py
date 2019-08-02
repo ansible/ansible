@@ -94,7 +94,6 @@ def has_lldp(module):
     is_lldp_enable = False
     if len(output) > 0 and "LLDP is not running" not in output[0]:
         is_lldp_enable = True
-
     return is_lldp_enable
 
 
