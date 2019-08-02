@@ -33,6 +33,7 @@ options:
       - Configure the IP domain name on the remote device to the provided value.
        Value should be in the dotted name form and 
        will be appended to the hostname to create a fully-qualified domain name.
+    type: list
   domain_search:
     description:
       - Provides the list of domain names to
