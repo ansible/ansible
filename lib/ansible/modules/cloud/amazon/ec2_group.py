@@ -732,9 +732,13 @@ def validate_ip(module, cidr_ip):
                             "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
         except ValueError:
             # IPv6 works a little differently. We don't want to modify the cidr_ip, just make sure it's valid.
-            if not isinstance(ip_network(cidr_ip), IPv6Network):
-                # TODO: warn or fail?  probably better to let aws decide what it'll accept?
-                module.fail_json("One of your IPv6 CIDR addresses is invalid: {0}".format(cidr_ip))
+            if not isinstance(ip_network(to_text(cidr_ip)), IPv6Network):
+                module.fail_json("One of your IPv6 CIDR addresses ({0}) is not a valid IPv6 network.".format(cidr_ip))
+            ip6 = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
+            if ip6 != cidr_ip:
+                module.warn("One of your IPv6 CIDR addresses ({0}) has host bits set. If you did not intend to specify"
+                            "a device address or range of devices, check the network mask and make sure that only "
+                            "network bits are set: {1}. Proceeding with address {0}.".format(cidr_ip, ip6))
             ip = cidr_ip
         return ip
     return cidr_ip
