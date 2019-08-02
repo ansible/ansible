@@ -292,7 +292,7 @@ class TestManager(unittest.TestCase):
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
 
-        assert 'must be between' in str(ex)
+        assert 'must be between' in str(ex.value)
 
     def test_set_multicast_address(self, *args):
         set_module_args(dict(
