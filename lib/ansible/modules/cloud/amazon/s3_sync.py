@@ -31,7 +31,6 @@ options:
   mode:
     description:
     - sync direction.
-    required: true
     default: 'push'
     choices: [ push ]
   file_change_strategy:
