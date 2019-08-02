@@ -108,7 +108,7 @@ class FortiAnalyzerHandler(object):
 
     def workspace_check(self):
         """
-       Checks FortiAnalyzer for the use of Workspace mode
+       Checks FortiAnalyzer for the use of Workspace mode.
        """
         url = "/cli/global/system/global"
         data = {"fields": ["workspace-mode", "adom-status"]}
