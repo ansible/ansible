@@ -533,10 +533,6 @@ files:
   $modules/windows/win_security_policy.py:
     <<: *windows
     maintainers: defionscode
-  bin/ansible-connection:
-    keywords:
-      - persistent connection
-    labels: networking
   contrib/:
     support: community
   contrib/inventory:
@@ -1421,7 +1417,11 @@ files:
 
 ##############################
 # other lib
-  lib/ansible/executor/powershell: *windows_core
+lib/ansible/cli/scripts/ansible_connection_cli_stub.py:
+  keywords:
+    - persistent connection
+  labels: networking
+lib/ansible/executor/powershell: *windows_core
   lib/ansible/template:
     keywords:
       - jinja
