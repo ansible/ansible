@@ -39,8 +39,7 @@ options:
     required: true
     type: str
   configured_password:
-    description:
-      - The password to be configured on the ICX device.
+    description: The password to be configured on the ICX device.
     type: str
   update_password:
     description:
