@@ -729,6 +729,15 @@ def get_netplan_dict(params):
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('dhcp4-overrides'):
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'] = dict()
                 netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'][override_option] = params.get(key)
+            elif key in BONDS:
+                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('parameters'):
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'] = dict()
+                # Put bonding-mode param into mode param.
+                # This is used because mode param is used in others locals like: Tunnels and wifis.
+                if key == 'bonding-mode':
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['mode'] = params.get(key)
+                else:
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'][key] = params.get(key)
             elif key in ROUTES:
                 routes_option = '{0}'.format(key.split('routes-')[1])
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('routes'):
