@@ -138,6 +138,7 @@ options:
       - Specifies the fully qualified DNS hostname of the server used in Server Name Indication communications.
         When creating a new profile, the setting is provided by the parent profile.
       - The server name can also be a wildcard string containing the asterisk C(*) character.
+    type: str
     version_added: 2.8
   sni_default:
     description:
