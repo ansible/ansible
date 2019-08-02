@@ -175,7 +175,9 @@ class TaskQueueManager:
 
         # get all configured callbacks and add whitelisted callbacks that refer to collections, which don't appear in normal listing
         callback_list = list(callback_loader.all(class_only=True))
-        callback_list.extend(list((c for c in C.DEFAULT_CALLBACK_WHITELIST if is_collection_ref(c) and c not in callback_list)))
+        for c in C.DEFAULT_CALLBACK_WHITELIST:
+            if is_collection_ref(c) and c not in callback_list:
+                callback_list.append(c)
 
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
