@@ -12,11 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ecs_taskdefinition_facts
+module: ecs_taskdefinition_info
 short_description: describe a task definition in ecs
 notes:
     - for details of the parameters and returns see
       U(http://boto3.readthedocs.io/en/latest/reference/services/ecs.html#ECS.Client.describe_task_definition)
+    - This module was called C(ecs_taskdefinition_facts) before Ansible 2.9. The usage did not change.
 description:
     - Describes a task definition in ecs.
 version_added: "2.5"
@@ -38,7 +39,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- ecs_taskdefinition_facts:
+- ecs_taskdefinition_info:
     task_definition: test-td
 '''
 
@@ -316,6 +317,8 @@ def main():
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'ecs_taskdefinition_facts':
+        module.deprecate("The 'ecs_taskdefinition_facts' module has been renamed to 'ecs_taskdefinition_info'", version='2.13')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     ecs = boto3_conn(module, conn_type='client', resource='ecs',
