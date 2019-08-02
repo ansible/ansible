@@ -30,7 +30,8 @@ class TestICXFactsModule(TestICXModule):
                 resp = list()
                 for cmd in commands:
                     fixtureName = cmd.replace(" ", "_")
-                    output = load_fixture(fixtureName).strip()
+                    newFixtureName = fixtureName.replace("_|_", "_")
+                    output = load_fixture(newFixtureName).strip()
                     if(output):
                         resp.append(output)
                 return resp
