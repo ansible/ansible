@@ -50,21 +50,21 @@ author:
 EXAMPLES = r'''
 - name: Touch a file (creates if not present, updates modification time if present)
   win_file:
-    path: C:\Temp\foo.conf
+    path: C:\\Temp\\foo.conf
     state: touch
 
 - name: Remove a file, if present
   win_file:
-    path: C:\Temp\foo.conf
+    path: C:/Temp/foo.conf
     state: absent
 
 - name: Create directory structure
   win_file:
-    path: C:\Temp\folder\subfolder
+    path: C:\\Temp\\folder\\subfolder
     state: directory
 
 - name: Remove directory structure
   win_file:
-    path: C:\Temp
+    path: c:/Temp
     state: absent
 '''
