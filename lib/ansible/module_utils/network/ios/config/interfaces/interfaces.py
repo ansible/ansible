@@ -118,8 +118,8 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _state_replaced(want, have):
+    @classmethod
+    def _state_replaced(cls, want, have):
         """ The command generator when state is replaced
 
         :param want: the desired configuration as a dictionary
@@ -148,8 +148,8 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _state_overridden(want, have):
+    @classmethod
+    def _state_overridden(cls, want, have):
         """ The command generator when state is overridden
 
         :param want: the desired configuration as a dictionary
@@ -181,8 +181,8 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _state_merged(want, have):
+    @classmethod
+    def _state_merged(cls, want, have):
         """ The command generator when state is merged
 
         :param want: the additive configuration as a dictionary
@@ -203,8 +203,8 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _state_deleted(want, have):
+    @classmethod
+    def _state_deleted(cls, want, have):
         """ The command generator when state is deleted
 
         :param want: the objects from which the configuration should be removed
@@ -232,8 +232,8 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _set_config(want, have):
+    @classmethod
+    def _set_config(cls, want, have):
         # Set the interface config based on the want and have config
         commands = []
         interface = 'interface ' + want['name']
@@ -256,8 +256,8 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _clear_config(want, have):
+    @classmethod
+    def _clear_config(cls, want, have):
         # Delete the interface config based on the want and have config
         commands = []
 
