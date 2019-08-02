@@ -21,6 +21,9 @@ from ansible.module_utils.network.iosxr.facts.lldp_global.lldp_global import Lld
 from ansible.module_utils.network.iosxr.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.iosxr.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.iosxr.facts.legacy.base import Default, Hardware, Interfaces, Config
+from ansible.module_utils.network.iosxr.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
+from ansible.module_utils.network.iosxr.facts.legacy.\
+    base import Default, Hardware, Interfaces, Config
 
 
 FACT_LEGACY_SUBSETS = dict(
@@ -35,6 +38,7 @@ FACT_RESOURCE_SUBSETS = dict(
     lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_interfacesFacts,
     interfaces=InterfacesFacts,
+    l2_interfaces=L2_InterfacesFacts,
 )
 
 
