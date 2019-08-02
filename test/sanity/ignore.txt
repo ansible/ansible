@@ -150,6 +150,8 @@ hacking/test-module.py metaclass-boilerplate
 hacking/tests/gen_distribution_version_testcase.py future-import-boilerplate
 hacking/tests/gen_distribution_version_testcase.py metaclass-boilerplate
 lib/ansible/cli/console.py pylint:blacklisted-name
+lib/ansible/cli/scripts/ansible_cli_stub.py shebang
+lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/compat/selectors/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/compat/selectors/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/compat/selectors/_selectors2.py pylint:blacklisted-name
