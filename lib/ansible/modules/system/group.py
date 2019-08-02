@@ -121,8 +121,10 @@ class Group(object):
         return self.execute_command(cmd)
 
     def _local_check_gid_exists(self):
-        if self.gid and self.gid in [gr.gr_gid for gr in grp.getgrall()]:
-            self.module.fail_json(msg="GID '{0}' already exists".format(self.gid))
+        if self.gid:
+            for gr in grp.getgrall():
+                if self.gid == gr.gr_gid and self.name != gr.gr_name:
+                    self.module.fail_json(msg="GID '{0}' already exists with group '{1}'".format(self.gid, gr.gr_name))
 
     def group_add(self, **kwargs):
         if self.local:
