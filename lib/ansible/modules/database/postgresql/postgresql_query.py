@@ -94,10 +94,10 @@ EXAMPLES = r'''
       id_val: 1
       story_val: test
 
-- name: Insert query to db test_db
+- name: Insert query to test_table in db test_db
   postgresql_query:
     db: test_db
-    query: INSERT INTO test_db (id, story) VALUES (2, 'my_long_story')
+    query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
 
 - name: Run queries from SQL script
   postgresql_query:
@@ -111,6 +111,14 @@ EXAMPLES = r'''
     db: test_db
     query: VACUUM
     autocommit: yes
+
+- name: >
+    Insert data to the column of array type using positional_args.
+    Note that we use quotes here, the same as for passing JSON, etc.
+  postgresql_query:
+    query: INSERT INTO test_table (array_column) VALUES (%s)
+    positional_args:
+    - '{1,2,3}'
 '''
 
 RETURN = r'''
