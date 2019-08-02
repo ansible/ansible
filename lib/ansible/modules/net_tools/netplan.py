@@ -23,29 +23,29 @@ short_description: Manage network configurations using netplan.
 version_added: "2.8"
 description:
     - This module allows to you manage network configurations using netplan.
-      It creates/edits a netplan YAML file and saves on /etc/netplan/ directory
-      and apply on system.
+      It creates/edits a netplan YAML file, saves on /etc/netplan/ directory
+      and apply the YAML files on system (neplan apply).
 
 requirements: [ PyYAML, netplan ]
 notes:
-    - Online netplan page U(https://github.com/CanonicalLtd/netplan/blob/master/doc/netplan.md)
+    - Introduction to Netplan U(https://github.com/CanonicalLtd/netplan/blob/master/doc/netplan.md)
 options:
   filename:
     description:
-      - Name of file that will be create or open to add or remove network
+      - Name of file that will be create or open to add/remove network
         interfaces.
     required: true
 
   renderer:
     description:
-      - Use the given networking backend for this definition. Currently
-        supported are networkd and NetworkManager. Default is networkd.
+      - Network backend to use for this definition. Currently supported
+        are `networkd`(default) and `NetworkManager`.
     choices: [ networkd, NetworkManager ]
     required: false
 
   version:
     description:
-      - The YAML currently being used
+      - The syntax of the YAML file currently being used.
     required: false
     type: int
 
@@ -56,15 +56,15 @@ options:
 
   type:
     description:
-      - Interface type. Depends on type, you can use specific params
+      - Interface type. Some types support additional parameters.
         (E.g bridges can use stp param).
     choices: [ bridges, bonds, ethernets, vlans, wifis ]
     required: true
 
   state:
     description:
-      - C(present) define a net interface on C(filename);
-        C(absent) undefine a net interface on C(filename).
+      - C(present) add a net interface on C(filename);
+        C(absent) remove a net interface on C(filename).
     choices: [ present, absent ]
     required: true
 
@@ -83,8 +83,8 @@ options:
   link-local:
     description:
       - Configure the link-local addresses to bring up. Valid options are
-        ipv4 and 'ipv6', which respectively allow enabling IPv4 and IPv6
-        link local addressing.
+        'ipv4' and 'ipv6'(default), which respectively allow enabling IPv4
+        and IPv6 link local addressing.
     choices: [ ipv4, ipv6 ]
     required: false
 
@@ -93,6 +93,7 @@ options:
       - Designate the connection as "critical to the system", meaning that
         special care will be taken by systemd-networkd to not release the IP
         from DHCP when it the daemon is restarted. Networkd backend only.
+        False for default.
     required: false
     type: bool
 
@@ -115,11 +116,9 @@ options:
 
   addresses:
     description:
-      - Add static addresses to the interface in addition to the ones received
-        through DHCP or RA. Each sequence entry is in CIDR notation, i. e. of
-        the form C(addr)/C(prefixlen). C(addr) is an IPv4 or IPv6 address as
-        recognized by C(inet_pton) and C(prefixlen) the number of bits of the
-        subnet.
+      - Addresses statically assigned to the interface. They are used in
+        addition to the autoconfigured ones, and are represented in
+        CIDR notation.
     required: false
     type: list
 
@@ -185,19 +184,19 @@ options:
   match-name:
     description:
       - This selects the current interface name in physical devices
-        by various hardware properties.
+        by various hardware properties. Globs are supported.
     required: false
 
   match-macaddress:
     description:
       - This selects the physical device that matchs with MAC address
-        in the form "XX:XX:XX:XX:XX:XX".
+        in the form "XX:XX:XX:XX:XX:XX". Globs are not supported.
     required: false
 
   match-driver:
     description:
       - This selects the physical device that matchs with Kernel driver name
-        corresponding to the C(DRIVER) udev property.
+        corresponding to the C(DRIVER) udev property. Globs are supported.
     required: false
 
   set-name:
@@ -208,22 +207,22 @@ options:
 
   wakeonlan:
     description:
-      - Enable wake on LAN. Off by default.
+      - Enable/Disable(default) wake on LAN.
     required: false
     type: bool
 
   dhcp4-overrides-use-dns:
     description:
       - The DNS servers received from the DHCP server will be used and take
-        precedence over any statically. Only C(networkd) backend and C(dhcp4)
-        must be true.
+        precedence statically-configured ones. Only C(networkd) backend and
+        C(dhcp4) must be true.
     required: false
     type: bool
 
   dhcp4-overrides-use-ntp:
     description:
       - The NTP servers received from the DHCP server will be used by
-        systemd-timesyncd and take precedence over any statically configured
+        systemd-timesyncd and take precedence statically-configured
         ones. Only C(networkd) backend and C(dhcp4) must be true.
     required: false
     type: bool
@@ -295,16 +294,16 @@ options:
     required: false
     type: list
 
-  mode:
+  bonding-mode:
     description:
-      - Set the bonding mode used for the interfaces.
+      - Set the link bonding mode used for the interfaces.
     choices: [ balance-rr, active-backup, balance-xor, broadcast,
                802.3ad, balance-tlb, balance-alb ]
     required: false
 
   lacp-rate:
     description:
-      - Set the rate at which LACPDUs are transmitted. This is only useful
+      - Set the rate at which LACP DUs are transmitted. This is only useful
         in 802.3ad mode. Possible values are C(slow) (30 seconds, default),
         and C(fast) (every second).
     choices: [ slow, fast ]
@@ -322,7 +321,7 @@ options:
   min-links:
     description:
       - The minimum number of links up in a bond to consider the bond
-        interface to be up.
+        interface to be up (default value: 1).
     required: false
     type: int
 
@@ -615,7 +614,7 @@ DHCP_OVERRIDES = ['dhcp4-overrides-use-dns',
 ROUTES = ['routes-from', 'routes-to', 'routes-via', 'routes-on-link',
           'routes-metric', 'routes-type', 'routes-scope', 'routes-table']
 
-BONDS = ['mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
+BONDS = ['bonding-mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
          'transmit-hash-policy', 'ad-select', 'all-slaves-active',
          'arp-interval', 'arp-ip-targets', 'arp-validate', 'arp-all-targets',
          'up-delay', 'down-delay', 'fail-over-mac-policy', 'gratuitous-arp',
@@ -649,31 +648,31 @@ def validate_args(module):
                 if key in WIFIS:
                     module.fail_json(msg='WIFIs options can not be defined with bonds Type')
                 # Verify bonds params dependences:
-                # lacpt-rate depends on mode == 802.3ad
-                # transmit-hash-policy depends on mode == 802.3ad or balance-tlb or balance-xor
-                # ad-select depends on mode == 802.3ad
-                # arp-all-target depends on mode == active-backup and arp-validate == true
-                # gratuitous-arp depends on mode == active-backup
-                # packets-per-slave depends on mode == balance-rr
-                # learn-packet-interval depends on mode == balance-tlb or balance-alb
+                # lacpt-rate depends on bonding-mode == 802.3ad
+                # transmit-hash-policy depends on bonding-mode == 802.3ad or balance-tlb or balance-xor
+                # ad-select depends on bonding-mode == 802.3ad
+                # arp-all-target depends on bonding-mode == active-backup and arp-validate == true
+                # gratuitous-arp depends on bonding-mode == active-backup
+                # packets-per-slave depends on bonding-mode == balance-rr
+                # learn-packet-interval depends on bonding-mode == balance-tlb or balance-alb
                 if key == 'lacpt-rate' or key == 'ad-select':
-                    if module.params['mode'] != '802.3ad':
-                        module.fail_json(msg='mode must be 802.3ad to define {0} param'.format(key))
+                    if module.params['bonding-mode'] != '802.3ad':
+                        module.fail_json(msg='bonding-mode must be 802.3ad to define {0} param'.format(key))
                 if key == 'transmit-hash-policy':
-                    if module.params['mode'] != '802.3ad' or module.params['mode'] != 'balance-tlb' or module.params['mode'] != 'balance-xor':
-                        module.fail_json(msg='mode must be 802.3ad or balance-tlb or balance-xor to define {0} param'.format(key))
+                    if module.params['bonding-mode'] != '802.3ad' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-xor':
+                        module.fail_json(msg='bonding-mode must be 802.3ad or balance-tlb or balance-xor to define {0} param'.format(key))
                 if key == 'arp-all-target':
-                    if module.params['mode'] != 'active-backup' and not module.params['arp-validate']:
-                        module.fail_json(msg='mode and arp-validade both must be active-backup and true to define {0} param'.format(key))
+                    if module.params['bonding-mode'] != 'active-backup' and not module.params['arp-validate']:
+                        module.fail_json(msg='bonding-mode and arp-validade both must be active-backup and true to define {0} param'.format(key))
                 if key == 'gratuitous-arp':
-                    if module.params['mode'] != 'active-backup':
-                        module.fail_json(msg='mode must be active-backup to define {0} param'.format(key))
+                    if module.params['bonding-mode'] != 'active-backup':
+                        module.fail_json(msg='bonding-mode must be active-backup to define {0} param'.format(key))
                 if key == 'packets-per-slave':
-                    if module.params['mode'] != 'balance-rr':
-                        module.fail_json(msg='mode must be balance-rr to define {0} param'.format(key))
+                    if module.params['bonding-mode'] != 'balance-rr':
+                        module.fail_json(msg='bonding-mode must be balance-rr to define {0} param'.format(key))
                 if key == 'learn-packet-interval':
-                    if module.params['mode'] != 'balance-tlb' or module.params['mode'] != 'balance-alb':
-                        module.fail_json(msg='mode must be balance-tlb or balance-alb to define {0} param'.format(key))
+                    if module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
+                        module.fail_json(msg='bonding-mode must be balance-tlb or balance-alb to define {0} param'.format(key))
     if module.params['type'] == 'ethernets':
         for key in module.params:
             if module.params.get(key) is not None:
@@ -792,7 +791,7 @@ def main():
         'dhcp6-overrides-send-hostname': {'required': False, 'type': 'bool'},
         'dhcp6-overrides-hostname': {'required': False},
         'interfaces': {'required': False, 'type': 'list'},
-        'mode': {'choices': ['balance-rr', 'active-backup', 'balance-xor',
+        'bonding-mode': {'choices': ['balance-rr', 'active-backup', 'balance-xor',
                              'broadcast', '802.3ad', 'balance-tlb',
                              'balance-alb'],
                  'required': False},
@@ -834,7 +833,7 @@ def main():
     }
 
     # This is not necessary if state is absent
-    required_if = [['type', 'bonds', ['interfaces', 'mode']],
+    required_if = [['type', 'bonds', ['interfaces', 'bonding-mode']],
                    ['type', 'vlans', ['id', 'link']]]
 
     module = AnsibleModule(argument_spec,
