@@ -1510,7 +1510,7 @@ class TaskParameters(DockerBaseClass):
                         break
                 except NotFound as dummy:
                     self.client.fail(
-                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], e),
+                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], dummy),
                         exception=traceback.format_exc()
                     )
         return ip
