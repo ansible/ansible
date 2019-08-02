@@ -13,13 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: gcpubsub_facts
+module: gcpubsub_info
 version_added: "2.3"
 short_description: List Topics/Subscriptions and Messages from Google PubSub.
 description:
     - List Topics/Subscriptions from Google PubSub.  Use the gcpubsub module for
       topic/subscription management.
       See U(https://cloud.google.com/pubsub/docs) for an overview.
+    - This module was called C(gcpubsub_facts) before Ansible 2.9. The usage did not change.
 requirements:
   - "python >= 2.6"
   - "google-auth >= 0.5.0"
@@ -45,17 +46,17 @@ options:
 
 EXAMPLES = '''
 ## List all Topics in a project
-- gcpubsub_facts:
+- gcpubsub_info:
     view: topics
     state: list
 
 ## List all Subscriptions in a project
-- gcpubsub_facts:
+- gcpubsub_info:
     view: subscriptions
     state: list
 
 ## List all Subscriptions for a Topic in a project
-- gcpubsub_facts:
+- gcpubsub_info:
     view: subscriptions
     topic: my-topic
     state: list
@@ -108,6 +109,8 @@ def main():
         service_account_email=dict(),
         credentials_file=dict(),
         project_id=dict(), ),)
+    if module._name == 'gcpubsub_facts':
+        module.deprecate("The 'gcpubsub_facts' module has been renamed to 'gcpubsub_info'", version='2.13')
 
     if not HAS_PYTHON26:
         module.fail_json(
