@@ -13,9 +13,9 @@ import random
 import re
 import tempfile
 
-import lib.types as t
+from .. import types as t
 
-from lib.util import (
+from ..util import (
     ApplicationError,
     display,
     is_shippable,
@@ -26,15 +26,15 @@ from lib.util import (
     make_dirs,
 )
 
-from lib.target import (
+from ..target import (
     TestTarget,
 )
 
-from lib.config import (
+from ..config import (
     IntegrationConfig,
 )
 
-from lib.data import (
+from ..data import (
     data_context,
 )
 

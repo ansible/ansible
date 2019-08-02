@@ -7,7 +7,7 @@ import re
 import sys
 import tempfile
 
-from lib.executor import (
+from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
     HTTPTESTER_HOSTS,
     create_shell_command,
@@ -19,7 +19,7 @@ from lib.executor import (
     get_remote_completion,
 )
 
-from lib.config import (
+from .config import (
     TestConfig,
     EnvironmentConfig,
     IntegrationConfig,
@@ -28,16 +28,16 @@ from lib.config import (
     UnitsConfig,
 )
 
-from lib.core_ci import (
+from .core_ci import (
     AnsibleCoreCI,
 )
 
-from lib.manage_ci import (
+from .manage_ci import (
     ManagePosixCI,
     ManageWindowsCI,
 )
 
-from lib.util import (
+from .util import (
     ApplicationError,
     common_environment,
     pass_vars,
@@ -46,11 +46,11 @@ from lib.util import (
     ANSIBLE_TEST_DATA_ROOT,
 )
 
-from lib.util_common import (
+from .util_common import (
     run_command,
 )
 
-from lib.docker_util import (
+from .docker_util import (
     docker_exec,
     docker_get,
     docker_pull,
@@ -62,19 +62,19 @@ from lib.docker_util import (
     get_docker_networks,
 )
 
-from lib.cloud import (
+from .cloud import (
     get_cloud_providers,
 )
 
-from lib.target import (
+from .target import (
     IntegrationTarget,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 
-from lib.payload import (
+from .payload import (
     create_payload,
 )
 

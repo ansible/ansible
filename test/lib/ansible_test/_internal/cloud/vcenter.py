@@ -5,13 +5,13 @@ __metaclass__ = type
 import os
 import time
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.util import (
+from ..util import (
     find_executable,
     display,
     ApplicationError,
@@ -20,7 +20,7 @@ from lib.util import (
     SubprocessError,
 )
 
-from lib.docker_util import (
+from ..docker_util import (
     docker_run,
     docker_rm,
     docker_inspect,
@@ -28,11 +28,11 @@ from lib.docker_util import (
     get_docker_container_id,
 )
 
-from lib.core_ci import (
+from ..core_ci import (
     AnsibleCoreCI,
 )
 
-from lib.http import (
+from ..http import (
     HttpClient,
 )
 

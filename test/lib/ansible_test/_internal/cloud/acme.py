@@ -5,24 +5,24 @@ __metaclass__ = type
 import os
 import time
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.util import (
+from ..util import (
     find_executable,
     display,
     ApplicationError,
     SubprocessError,
 )
 
-from lib.http import (
+from ..http import (
     HttpClient,
 )
 
-from lib.docker_util import (
+from ..docker_util import (
     docker_run,
     docker_rm,
     docker_inspect,

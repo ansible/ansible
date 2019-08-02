@@ -6,9 +6,9 @@ import abc
 import collections
 import os
 
-import lib.types as t
+from ... import types as t
 
-from lib.util import (
+from ...util import (
     ANSIBLE_ROOT,
 )
 

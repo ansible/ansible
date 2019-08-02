@@ -6,7 +6,7 @@ import os
 import tempfile
 import time
 
-from lib.util import (
+from .util import (
     SubprocessError,
     ApplicationError,
     cmd_quote,
@@ -14,24 +14,24 @@ from lib.util import (
     ANSIBLE_TEST_DATA_ROOT,
 )
 
-from lib.util_common import (
+from .util_common import (
     intercept_command,
     run_command,
 )
 
-from lib.core_ci import (
+from .core_ci import (
     AnsibleCoreCI,
 )
 
-from lib.ansible_util import (
+from .ansible_util import (
     ansible_environment,
 )
 
-from lib.config import (
+from .config import (
     ShellConfig,
 )
 
-from lib.payload import (
+from .payload import (
     create_payload,
 )
 

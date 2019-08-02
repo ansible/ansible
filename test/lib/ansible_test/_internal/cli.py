@@ -8,11 +8,11 @@ import sys
 
 # This import should occur as early as possible.
 # It must occur before subprocess has been imported anywhere in the current process.
-from lib.init import (
+from .init import (
     CURRENT_RLIMIT_NOFILE,
 )
 
-from lib.util import (
+from .util import (
     ApplicationError,
     display,
     raw_command,
@@ -24,12 +24,12 @@ from lib.util import (
     ANSIBLE_TEST_DATA_ROOT,
 )
 
-from lib.delegation import (
+from .delegation import (
     check_delegation_args,
     delegate,
 )
 
-from lib.executor import (
+from .executor import (
     command_posix_integration,
     command_network_integration,
     command_windows_integration,
@@ -42,7 +42,7 @@ from lib.executor import (
     check_startup,
 )
 
-from lib.config import (
+from .config import (
     IntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
@@ -52,19 +52,19 @@ from lib.config import (
     ShellConfig,
 )
 
-from lib.env import (
+from .env import (
     EnvConfig,
     command_env,
     configure_timeout,
 )
 
-from lib.sanity import (
+from .sanity import (
     command_sanity,
     sanity_init,
     sanity_get_tests,
 )
 
-from lib.target import (
+from .target import (
     find_target_completion,
     walk_posix_integration_targets,
     walk_network_integration_targets,
@@ -73,23 +73,23 @@ from lib.target import (
     walk_sanity_targets,
 )
 
-from lib.core_ci import (
+from .core_ci import (
     AWS_ENDPOINTS,
 )
 
-from lib.cloud import (
+from .cloud import (
     initialize_cloud_plugins,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 
-from lib.util_common import (
+from .util_common import (
     CommonConfig,
 )
 
-from lib.cover import (
+from .cover import (
     command_coverage_combine,
     command_coverage_erase,
     command_coverage_html,

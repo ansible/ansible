@@ -5,11 +5,11 @@ __metaclass__ = type
 import json
 import os
 
-from lib.constants import (
+from .constants import (
     SOFT_RLIMIT_NOFILE,
 )
 
-from lib.util import (
+from .util import (
     common_environment,
     display,
     find_python,
@@ -18,16 +18,16 @@ from lib.util import (
     ANSIBLE_TEST_DATA_ROOT,
 )
 
-from lib.util_common import (
+from .util_common import (
     run_command,
 )
 
-from lib.config import (
+from .config import (
     IntegrationConfig,
     EnvironmentConfig,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

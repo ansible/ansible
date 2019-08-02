@@ -6,7 +6,7 @@ import json
 import os
 import time
 
-from lib.util import (
+from .util import (
     ApplicationError,
     common_environment,
     display,
@@ -14,11 +14,11 @@ from lib.util import (
     SubprocessError,
 )
 
-from lib.util_common import (
+from .util_common import (
     run_command,
 )
 
-from lib.config import (
+from .config import (
     EnvironmentConfig,
 )
 

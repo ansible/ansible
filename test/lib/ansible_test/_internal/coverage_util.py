@@ -6,18 +6,18 @@ import contextlib
 import os
 import tempfile
 
-from lib.config import (
+from .config import (
     IntegrationConfig,
     SanityConfig,
     TestConfig,
 )
 
-from lib.util import (
+from .util import (
     COVERAGE_CONFIG_PATH,
     remove_tree,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

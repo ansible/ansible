@@ -8,18 +8,18 @@ import os
 import shutil
 import tempfile
 
-from lib.target import (
+from ..target import (
     analyze_integration_target_dependencies,
     walk_integration_targets,
 )
 
-from lib.config import (
+from ..config import (
     NetworkIntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
 )
 
-from lib.util import (
+from ..util import (
     ApplicationError,
     display,
     make_dirs,
@@ -32,23 +32,23 @@ from lib.util import (
     to_bytes,
 )
 
-from lib.util_common import (
+from ..util_common import (
     named_temporary_file,
 )
 
-from lib.coverage_util import (
+from ..coverage_util import (
     generate_collection_coverage_config,
 )
 
-from lib.cache import (
+from ..cache import (
     CommonCache,
 )
 
-from lib.cloud import (
+from ..cloud import (
     CloudEnvironmentConfig,
 )
 
-from lib.data import (
+from ..data import (
     data_context,
 )
 

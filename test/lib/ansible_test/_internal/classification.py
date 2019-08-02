@@ -7,7 +7,7 @@ import os
 import re
 import time
 
-from lib.target import (
+from .target import (
     walk_module_targets,
     walk_integration_targets,
     walk_units_targets,
@@ -17,36 +17,36 @@ from lib.target import (
     analyze_integration_target_dependencies,
 )
 
-from lib.util import (
+from .util import (
     display,
     is_subdir,
 )
 
-from lib.import_analysis import (
+from .import_analysis import (
     get_python_module_utils_imports,
     get_python_module_utils_name,
 )
 
-from lib.csharp_import_analysis import (
+from .csharp_import_analysis import (
     get_csharp_module_utils_imports,
     get_csharp_module_utils_name,
 )
 
-from lib.powershell_import_analysis import (
+from .powershell_import_analysis import (
     get_powershell_module_utils_imports,
     get_powershell_module_utils_name,
 )
 
-from lib.config import (
+from .config import (
     TestConfig,
     IntegrationConfig,
 )
 
-from lib.metadata import (
+from .metadata import (
     ChangeDescription,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

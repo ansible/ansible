@@ -5,23 +5,23 @@ __metaclass__ = type
 import re
 import os
 
-from lib.util import (
+from .util import (
     ApplicationError,
     SubprocessError,
     MissingEnvironmentVariable,
     display,
 )
 
-from lib.util_common import (
+from .util_common import (
     CommonConfig,
 )
 
-from lib.http import (
+from .http import (
     HttpClient,
     urlencode,
 )
 
-from lib.git import (
+from .git import (
     Git,
 )
 

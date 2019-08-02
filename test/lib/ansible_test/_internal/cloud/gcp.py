@@ -6,12 +6,12 @@ __metaclass__ = type
 
 import os
 
-from lib.util import (
+from ..util import (
     display,
     ConfigParser,
 )
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,

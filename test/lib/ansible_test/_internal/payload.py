@@ -6,21 +6,21 @@ import os
 import tarfile
 import time
 
-from lib.config import (
+from .config import (
     IntegrationConfig,
     ShellConfig,
 )
 
-from lib.util import (
+from .util import (
     display,
     ANSIBLE_ROOT,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 
-from lib.util_common import (
+from .util_common import (
     CommonConfig,
 )
 

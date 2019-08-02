@@ -4,30 +4,30 @@ __metaclass__ = type
 
 import os
 
-import lib.types as t
+from . import types as t
 
-from lib.util import (
+from .util import (
     ApplicationError,
     import_plugins,
     ANSIBLE_ROOT,
     is_subdir,
 )
 
-from lib.provider import (
+from .provider import (
     find_path_provider,
     get_path_provider_classes,
     ProviderNotFoundForPath,
 )
 
-from lib.provider.source import (
+from .provider.source import (
     SourceProvider,
 )
 
-from lib.provider.source.unversioned import (
+from .provider.source.unversioned import (
     UnversionedSource,
 )
 
-from lib.provider.layout import (
+from .provider.layout import (
     ContentLayout,
     InstallLayout,
     LayoutProvider,

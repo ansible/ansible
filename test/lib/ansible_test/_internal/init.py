@@ -4,7 +4,7 @@ __metaclass__ = type
 
 import resource
 
-from lib.constants import (
+from .constants import (
     SOFT_RLIMIT_NOFILE,
 )
 

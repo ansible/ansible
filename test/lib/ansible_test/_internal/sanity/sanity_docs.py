@@ -4,7 +4,7 @@ __metaclass__ = type
 
 import os
 
-from lib.sanity import (
+from ..sanity import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
@@ -12,11 +12,11 @@ from lib.sanity import (
     sanity_get_tests,
 )
 
-from lib.config import (
+from ..config import (
     SanityConfig,
 )
 
-from lib.data import (
+from ..data import (
     data_context,
 )
 

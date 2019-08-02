@@ -5,9 +5,9 @@ __metaclass__ = type
 import abc
 import os
 
-import lib.types as t
+from .. import types as t
 
-from lib.util import (
+from ..util import (
     ABC,
     ApplicationError,
     get_subclasses,

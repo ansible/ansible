@@ -9,7 +9,7 @@ import shutil
 import tempfile
 import textwrap
 
-from lib.util import (
+from .util import (
     common_environment,
     COVERAGE_CONFIG_PATH,
     COVERAGE_OUTPUT_PATH,

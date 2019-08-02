@@ -5,32 +5,32 @@ __metaclass__ = type
 import os
 import re
 
-from lib.target import (
+from .target import (
     walk_module_targets,
     walk_compile_targets,
 )
 
-from lib.util import (
+from .util import (
     display,
     ApplicationError,
     common_environment,
 )
 
-from lib.util_common import (
+from .util_common import (
     run_command,
 )
 
-from lib.config import (
+from .config import (
     CoverageConfig,
     CoverageReportConfig,
 )
 
-from lib.executor import (
+from .executor import (
     Delegate,
     install_command_requirements,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

@@ -9,7 +9,7 @@ import errno
 import itertools
 import abc
 
-from lib.util import (
+from .util import (
     ApplicationError,
     display,
     read_lines_without_comments,
@@ -18,7 +18,7 @@ from lib.util import (
     to_bytes,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

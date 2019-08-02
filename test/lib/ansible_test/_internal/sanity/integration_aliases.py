@@ -7,9 +7,9 @@ import textwrap
 import re
 import os
 
-import lib.types as t
+from .. import types as t
 
-from lib.sanity import (
+from ..sanity import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
@@ -17,11 +17,11 @@ from lib.sanity import (
     SanityTargets,
 )
 
-from lib.config import (
+from ..config import (
     SanityConfig,
 )
 
-from lib.target import (
+from ..target import (
     filter_targets,
     walk_posix_integration_targets,
     walk_windows_integration_targets,
@@ -29,11 +29,11 @@ from lib.target import (
     walk_module_targets,
 )
 
-from lib.cloud import (
+from ..cloud import (
     get_cloud_platforms,
 )
 
-from lib.util import (
+from ..util import (
     display,
 )
 

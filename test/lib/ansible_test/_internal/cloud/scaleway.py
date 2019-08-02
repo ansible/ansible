@@ -4,13 +4,13 @@ __metaclass__ = type
 
 import os
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.util import ConfigParser
+from ..util import ConfigParser
 
 
 class ScalewayCloudProvider(CloudProvider):

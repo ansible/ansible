@@ -18,23 +18,23 @@ import random
 import string
 import shutil
 
-import lib.types as t
+from . import types as t
 
-from lib.thread import (
+from .thread import (
     WrappedThread,
 )
 
-from lib.core_ci import (
+from .core_ci import (
     AnsibleCoreCI,
     SshKey,
 )
 
-from lib.manage_ci import (
+from .manage_ci import (
     ManageWindowsCI,
     ManageNetworkCI,
 )
 
-from lib.cloud import (
+from .cloud import (
     cloud_filter,
     cloud_init,
     get_cloud_environment,
@@ -42,7 +42,7 @@ from lib.cloud import (
     CloudEnvironmentConfig,
 )
 
-from lib.util import (
+from .util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
@@ -66,14 +66,14 @@ from lib.util import (
     is_subdir,
 )
 
-from lib.util_common import (
+from .util_common import (
     get_python_path,
     intercept_command,
     named_temporary_file,
     run_command,
 )
 
-from lib.docker_util import (
+from .docker_util import (
     docker_pull,
     docker_run,
     docker_available,
@@ -82,12 +82,12 @@ from lib.docker_util import (
     get_docker_container_ip,
 )
 
-from lib.ansible_util import (
+from .ansible_util import (
     ansible_environment,
     check_pyyaml,
 )
 
-from lib.target import (
+from .target import (
     IntegrationTarget,
     walk_internal_targets,
     walk_posix_integration_targets,
@@ -96,20 +96,20 @@ from lib.target import (
     walk_units_targets,
 )
 
-from lib.changes import (
+from .changes import (
     ShippableChanges,
     LocalChanges,
 )
 
-from lib.git import (
+from .git import (
     Git,
 )
 
-from lib.classification import (
+from .classification import (
     categorize_changes,
 )
 
-from lib.config import (
+from .config import (
     TestConfig,
     EnvironmentConfig,
     IntegrationConfig,
@@ -120,21 +120,21 @@ from lib.config import (
     WindowsIntegrationConfig,
 )
 
-from lib.metadata import (
+from .metadata import (
     ChangeDescription,
 )
 
-from lib.integration import (
+from .integration import (
     integration_test_environment,
     integration_test_config_file,
     setup_common_temp_dir,
 )
 
-from lib.coverage_util import (
+from .coverage_util import (
     coverage_context,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

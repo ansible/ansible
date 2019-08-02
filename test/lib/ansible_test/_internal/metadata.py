@@ -4,14 +4,14 @@ __metaclass__ = type
 
 import json
 
-import lib.types as t
+from . import types as t
 
-from lib.util import (
+from .util import (
     display,
     is_shippable,
 )
 
-from lib.diff import (
+from .diff import (
     parse_diff,
     FileDiff,
 )

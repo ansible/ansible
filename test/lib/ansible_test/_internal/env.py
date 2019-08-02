@@ -12,12 +12,12 @@ import signal
 import sys
 import time
 
-from lib.config import (
+from .config import (
     CommonConfig,
     TestConfig,
 )
 
-from lib.util import (
+from .util import (
     display,
     find_executable,
     raw_command,
@@ -25,28 +25,28 @@ from lib.util import (
     ApplicationError,
 )
 
-from lib.ansible_util import (
+from .ansible_util import (
     ansible_environment,
 )
 
-from lib.git import (
+from .git import (
     Git,
 )
 
-from lib.docker_util import (
+from .docker_util import (
     docker_info,
     docker_version
 )
 
-from lib.thread import (
+from .thread import (
     WrappedThread,
 )
 
-from lib.constants import (
+from .constants import (
     TIMEOUT_PATH,
 )
 
-from lib.test import (
+from .test import (
     TestTimeout,
 )
 

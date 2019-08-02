@@ -5,9 +5,9 @@ __metaclass__ = type
 import os
 import sys
 
-import lib.types as t
+from . import types as t
 
-from lib.util import (
+from .util import (
     is_shippable,
     docker_qualify_image,
     find_python,
@@ -16,15 +16,15 @@ from lib.util import (
     ApplicationError,
 )
 
-from lib.util_common import (
+from .util_common import (
     CommonConfig,
 )
 
-from lib.metadata import (
+from .metadata import (
     Metadata,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

@@ -5,11 +5,11 @@ __metaclass__ = type
 import os
 import re
 
-from lib.util import (
+from .util import (
     display,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

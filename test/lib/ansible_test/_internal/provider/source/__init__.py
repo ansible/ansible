@@ -4,7 +4,7 @@ __metaclass__ = type
 
 import abc
 
-import lib.types as t
+from ... import types as t
 
 from .. import (
     PathProvider,

@@ -4,9 +4,9 @@ __metaclass__ = type
 
 import os
 
-import lib.types as t
+from ... import types as t
 
-from lib.git import (
+from ...git import (
     Git,
 )
 

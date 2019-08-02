@@ -4,20 +4,20 @@ __metaclass__ = type
 
 import os
 
-from lib.util import (
+from ..util import (
     ApplicationError,
     display,
     is_shippable,
     ConfigParser,
 )
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.core_ci import (
+from ..core_ci import (
     AnsibleCoreCI,
 )
 

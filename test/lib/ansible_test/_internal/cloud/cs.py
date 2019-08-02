@@ -7,13 +7,13 @@ import os
 import re
 import time
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.util import (
+from ..util import (
     find_executable,
     ApplicationError,
     display,
@@ -22,13 +22,13 @@ from lib.util import (
     ConfigParser,
 )
 
-from lib.http import (
+from ..http import (
     HttpClient,
     HttpError,
     urlparse,
 )
 
-from lib.docker_util import (
+from ..docker_util import (
     docker_run,
     docker_rm,
     docker_inspect,

@@ -6,9 +6,9 @@ import re
 import textwrap
 import traceback
 
-import lib.types as t
+from . import types as t
 
-from lib.util import (
+from .util import (
     ApplicationError,
 )
 

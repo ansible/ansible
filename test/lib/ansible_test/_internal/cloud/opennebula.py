@@ -2,13 +2,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.util import (
+from ..util import (
     display,
     ConfigParser,
 )

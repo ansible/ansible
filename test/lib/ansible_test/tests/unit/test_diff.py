@@ -6,12 +6,12 @@ import os
 import subprocess
 import pytest
 
-from lib.util import (
+from ..._internal.util import (
     to_text,
     to_bytes,
 )
 
-from lib.diff import (
+from ..._internal.diff import (
     parse_diff,
     FileDiff,
 )

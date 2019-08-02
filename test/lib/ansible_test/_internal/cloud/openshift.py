@@ -7,24 +7,24 @@ import os
 import re
 import time
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.util import (
+from ..util import (
     find_executable,
     ApplicationError,
     display,
     SubprocessError,
 )
 
-from lib.http import (
+from ..http import (
     HttpClient,
 )
 
-from lib.docker_util import (
+from ..docker_util import (
     docker_exec,
     docker_run,
     docker_rm,

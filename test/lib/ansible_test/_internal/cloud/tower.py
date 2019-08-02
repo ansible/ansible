@@ -5,7 +5,7 @@ __metaclass__ = type
 import os
 import time
 
-from lib.util import (
+from ..util import (
     display,
     ApplicationError,
     is_shippable,
@@ -13,17 +13,17 @@ from lib.util import (
     ConfigParser,
 )
 
-from lib.util_common import (
+from ..util_common import (
     run_command,
 )
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.core_ci import (
+from ..core_ci import (
     AnsibleCoreCI,
 )
 

@@ -5,12 +5,12 @@ __metaclass__ = type
 import ast
 import os
 
-from lib.util import (
+from .util import (
     display,
     ApplicationError,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

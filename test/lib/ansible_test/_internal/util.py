@@ -41,7 +41,7 @@ except ImportError:
     # noinspection PyProtectedMember
     from pipes import quote as cmd_quote
 
-import lib.types as t
+from . import types as t
 
 try:
     C = t.TypeVar('C')

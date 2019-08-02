@@ -9,9 +9,9 @@ import os
 import re
 import collections
 
-import lib.types as t
+from .. import types as t
 
-from lib.util import (
+from ..util import (
     ApplicationError,
     SubprocessError,
     display,
@@ -28,22 +28,22 @@ from lib.util import (
     paths_to_dirs,
 )
 
-from lib.util_common import (
+from ..util_common import (
     run_command,
 )
 
-from lib.ansible_util import (
+from ..ansible_util import (
     ansible_environment,
     check_pyyaml,
 )
 
-from lib.target import (
+from ..target import (
     walk_internal_targets,
     walk_sanity_targets,
     TestTarget,
 )
 
-from lib.executor import (
+from ..executor import (
     get_changes_filter,
     AllTargetsSkipped,
     Delegate,
@@ -51,11 +51,11 @@ from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
 )
 
-from lib.config import (
+from ..config import (
     SanityConfig,
 )
 
-from lib.test import (
+from ..test import (
     TestSuccess,
     TestFailure,
     TestSkipped,
@@ -63,11 +63,11 @@ from lib.test import (
     calculate_best_confidence,
 )
 
-from lib.data import (
+from ..data import (
     data_context,
 )
 
-from lib.env import (
+from ..env import (
     get_ansible_version,
 )
 

@@ -5,7 +5,7 @@ __metaclass__ = type
 import os
 import re
 
-import lib.types as t
+from ... import types as t
 
 from . import (
     ContentLayout,

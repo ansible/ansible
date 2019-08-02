@@ -9,15 +9,15 @@ import uuid
 import errno
 import time
 
-import lib.types as t
+from . import types as t
 
-from lib.http import (
+from .http import (
     HttpClient,
     HttpResponse,
     HttpError,
 )
 
-from lib.util import (
+from .util import (
     ApplicationError,
     make_dirs,
     display,
@@ -25,15 +25,15 @@ from lib.util import (
     to_text,
 )
 
-from lib.util_common import (
+from .util_common import (
     run_command,
 )
 
-from lib.config import (
+from .config import (
     EnvironmentConfig,
 )
 
-from lib.data import (
+from .data import (
     data_context,
 )
 

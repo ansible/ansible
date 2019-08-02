@@ -6,15 +6,15 @@ import datetime
 import json
 import os
 
-import lib.types as t
+from . import types as t
 
-from lib.util import (
+from .util import (
     display,
     make_dirs,
     to_bytes,
 )
 
-from lib.config import (
+from .config import (
     TestConfig,
 )
 

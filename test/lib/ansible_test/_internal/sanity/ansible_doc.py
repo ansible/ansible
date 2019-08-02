@@ -6,42 +6,42 @@ import collections
 import os
 import re
 
-import lib.types as t
+from .. import types as t
 
-from lib.sanity import (
+from ..sanity import (
     SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
     SanityMessage,
 )
 
-from lib.target import (
+from ..target import (
     TestTarget,
 )
 
-from lib.util import (
+from ..util import (
     SubprocessError,
     display,
     is_subdir,
 )
 
-from lib.util_common import (
+from ..util_common import (
     intercept_command,
 )
 
-from lib.ansible_util import (
+from ..ansible_util import (
     ansible_environment,
 )
 
-from lib.config import (
+from ..config import (
     SanityConfig,
 )
 
-from lib.data import (
+from ..data import (
     data_context,
 )
 
-from lib.coverage_util import (
+from ..coverage_util import (
     coverage_context,
 )
 

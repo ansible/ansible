@@ -6,9 +6,9 @@ import json
 import os
 import re
 
-import lib.types as t
+from .. import types as t
 
-from lib.sanity import (
+from ..sanity import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
@@ -17,25 +17,25 @@ from lib.sanity import (
     SANITY_ROOT,
 )
 
-from lib.target import (
+from ..target import (
     TestTarget,
 )
 
-from lib.util import (
+from ..util import (
     SubprocessError,
     find_executable,
     ANSIBLE_TEST_DATA_ROOT,
 )
 
-from lib.util_common import (
+from ..util_common import (
     run_command,
 )
 
-from lib.config import (
+from ..config import (
     SanityConfig,
 )
 
-from lib.data import (
+from ..data import (
     data_context,
 )
 

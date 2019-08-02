@@ -9,13 +9,13 @@ __metaclass__ = type
 
 from os.path import isfile
 
-from lib.cloud import (
+from . import (
     CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
 )
 
-from lib.util import ConfigParser, display
+from ..util import ConfigParser, display
 
 
 class CloudscaleCloudProvider(CloudProvider):

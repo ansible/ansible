@@ -21,13 +21,13 @@ except ImportError:
     # noinspection PyCompatibility, PyUnresolvedReferences
     from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
 
-from lib.util import (
+from .util import (
     ApplicationError,
     SubprocessError,
     display,
 )
 
-from lib.util_common import (
+from .util_common import (
     CommonConfig,
     run_command,
 )
