@@ -13,12 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: icx_vlan
-version_added: "1.0"
-author: "Ruckus: https://support.ruckuswireless.com/contact-us"
+version_added: "2.9"
+author: "Ruckus Wireless (@Commscope)"
 short_description: Manage VLANs on Ruckus ICX 7000 series switches
 description:
   - This module provides declarative management of VLANs
     on ICX network devices.
+notes:
+  - Tested against ICX 10.1
 options:
   name:
     description:
@@ -42,7 +44,7 @@ options:
         description:
           - Purge interfaces not defined in the I(name)
         type: bool
-    type: dict
+    type: list
   tagged:
     description:
       - List of ethernet ports or LAGS to be added as trunk(tagged) ports to the vlan.
@@ -56,7 +58,7 @@ options:
         description:
           - Purge interfaces not defined in the I(name)
         type: bool
-    type: dict
+    type: list
   ip_dhcp_snooping:
     description:
       - Enables DHCP snooping on a VLAN.
@@ -90,6 +92,7 @@ options:
         description:
           - Specifiy the type of spanning-tree
         type: str
+        default: 802-1w
         choices: ['802-1w','rstp']
       priority:
         description:
@@ -101,7 +104,7 @@ options:
         description:
           - Manage the state(Enable/Disable) of the spanning_tree_802_1w in the current vlan
         type: bool
-    type: dict
+    type: list
   aggregate:
     description: List of VLANs definitions.
     type: list
@@ -628,14 +631,14 @@ def main():
     element_spec = dict(
         vlan_id=dict(type='int'),
         name=dict(),
-        interfaces=dict(type='dict', elements='dict', options=inter_spec),
-        tagged=dict(type='dict', elements='dict', options=tagged_spec),
+        interfaces=dict(type='list', elements='dict', options=inter_spec),
+        tagged=dict(type='list', elements='dict', options=tagged_spec),
         ip_dhcp_snooping=dict(type='bool'),
         ip_arp_inspection=dict(type='bool'),
         associated_interfaces=dict(type='list'),
         associated_tagged=dict(type='list'),
         delay=dict(default=10, type='int'),
-        stp=dict(type='dict', elements='dict', options=stp_spec),
+        stp=dict(type='list', elements='dict', options=stp_spec),
         state=dict(default='present', choices=['present', 'absent']),
         check_running_config=dict(default=True, type='bool', fallback=(env_fallback, ['ANSIBLE_CHECK_ICX_RUNNING_CONFIG']))
     )
