@@ -416,6 +416,10 @@ class PodmanImageManager(object):
                 splitline = line.rsplit(split_on, maxsplit)
                 layer_ids.append(splitline[1])
 
+        # Podman 1.4 changed the output to only include the layer id when run in quiet mode
+        if not layer_ids:
+            layer_ids = lines.splitlines()
+
         return(layer_ids[-1])
 
     def present(self):
