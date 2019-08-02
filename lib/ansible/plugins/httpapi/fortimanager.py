@@ -386,7 +386,7 @@ class HttpApi(HttpApiBase):
             try:
                 if resp_obj[1]["status"]["message"] == "OK":
                     self._lock_info = None
-            except:
+            except BaseException:
                 self._lock_info = resp_obj[1]
         return resp_obj
 
@@ -423,7 +423,7 @@ class HttpApi(HttpApiBase):
                 try:
                     if adom_lock_info[1]["status"]["message"] == "OK":
                         continue
-                except:
+                except BaseException:
                     pass
                 try:
                     if adom_lock_info[1][0]["lock_user"]:
