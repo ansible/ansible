@@ -27,6 +27,12 @@ options:
   hostname:
     description:
       - Configure the device hostname parameter. This option takes an ASCII string value.
+    type: str
+  domain_name:
+    description:
+      - Configure the IP domain name on the remote device to the provided value.
+       Value should be in the dotted name form and 
+       will be appended to the hostname to create a fully-qualified domain name.
   domain_search:
     description:
       - Provides the list of domain names to
@@ -52,6 +58,7 @@ options:
       hostname:
         description:
           - Configures the host name of the RADIUS server
+        type: str
       auth_port_type:
         description:
           - specifies the type of the authentication port
@@ -60,9 +67,11 @@ options:
       auth_port_num:
         description:
           - Configures the authentication UDP port. The default value is 1812.
+        type: str
       acct_port_num:
         description:
           - Configures the accounting UDP port. The default value is 1813.
+        type: str
       acct_type:
         description:
           - Usage of the accounting port.
@@ -71,6 +80,7 @@ options:
       auth_key:
         description:
           - Configure the key for the server
+        type: str
       auth_key_type:
         description:
           - List of authentication level specified in the choices
