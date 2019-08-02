@@ -1,0 +1,24 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface loopback888
+      no description
+      no shutdown
+      interface loopback999
+      no description
+      no shutdown
+      interface GigabitEthernet 0/1
+      no description
+      no mtu
+      no duplex
+      no speed
+      no shutdown
+      interface GigabitEthernet 0/2
+      no description
+      no mtu
+      no duplex
+      no speed
+      no shutdown
