@@ -36,7 +36,6 @@ options:
         type: str
         choices: ['present', 'absent', 'enabled', 'disabled']
     type: list
-    choices: ['present', 'absent', 'enabled', 'disabled']
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
@@ -47,6 +46,7 @@ options:
     description:
       - Enables the receipt and transmission of Link Layer Discovery Protocol (LLDP) globally.
     type: str
+    choices: ['present', 'absent', 'enabled', 'disabled']
 """
 
 EXAMPLES = """
