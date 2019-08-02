@@ -430,6 +430,26 @@ options:
     required: false
     type: int
 
+  primary-reselect-policy:
+    description:
+      - Specific the reselection policy for the primary slave. On failure of
+        the active slave, the system will use this policy to decide how the new
+        active slave will be chosen and how recovery will be handled. The
+        possible values are C(always), C(better), and C(failure).
+    required: false
+    choices: [ always, better, failure ]
+
+  resend-igmp:
+    description:
+      - Specifies how many IGMP membership reports are issued on a failover
+        event. Values range from 0 to 255. 0 disables sending membership
+        reports. Otherwise, the first membership report is sent on failover and
+        subsequent reports are sent at 200ms intervals. In modes C(balance-rr),
+        C(active-backup), C(balance-tlb) and C(balance-alb), a failover can
+        switch IGMP traffic from one slave to another.
+    required: false
+    type: int
+
   learn-packet-interval:
     description:
       - Specify the interval (seconds) between sending learning packets to
@@ -439,6 +459,13 @@ options:
         maps to the LearnPacketIntervalSec= property.
     required: false
     type: int
+
+  primary:
+    description:
+      - Specify a device to be used as a primary slave, or preferred device
+        to use as a slave for the bond (ie. the preferred device to send
+        data through), whenever it is available. This only affects
+        C(active-backup), C(balance-alb), and C(balance-tlb) bonding-modes.
 
   ageing-time:
     description:
@@ -618,7 +645,8 @@ BONDS = ['bonding-mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
          'transmit-hash-policy', 'ad-select', 'all-slaves-active',
          'arp-interval', 'arp-ip-targets', 'arp-validate', 'arp-all-targets',
          'up-delay', 'down-delay', 'fail-over-mac-policy', 'gratuitous-arp',
-         'packets-per-slave', 'learn-packet-interval']
+         'packets-per-slave', 'primary-reselect-policy', 'resend-igmp',
+         'learn-packet-interval', 'primary']
 
 BRIDGES = ['ageing-time', 'priority', 'forward-delay', 'hello-time',
            'max-age', 'path-cost', 'stp']
@@ -655,6 +683,7 @@ def validate_args(module):
                 # gratuitous-arp depends on bonding-mode == active-backup
                 # packets-per-slave depends on bonding-mode == balance-rr
                 # learn-packet-interval depends on bonding-mode == balance-tlb or balance-alb
+                # primary depends on bonding-mode == active-backup or balance-tlb or balance-alb
                 if key == 'lacpt-rate' or key == 'ad-select':
                     if module.params['bonding-mode'] != '802.3ad':
                         module.fail_json(msg='bonding-mode must be 802.3ad to define {0} param'.format(key))
@@ -673,6 +702,9 @@ def validate_args(module):
                 if key == 'learn-packet-interval':
                     if module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
                         module.fail_json(msg='bonding-mode must be balance-tlb or balance-alb to define {0} param'.format(key))
+                if key == 'primary':
+                    if module.params['bonding-mode'] != 'active-backup' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
+                        module.fail_json(msg='bonding-mode must be active-backup or balance-tlb or balance-alb to define {0} param'.format(key))
     if module.params['type'] == 'ethernets':
         for key in module.params:
             if module.params.get(key) is not None:
