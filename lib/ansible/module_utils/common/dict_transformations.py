@@ -30,7 +30,7 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
         checked_list = []
         for item in camel_list:
             if isinstance(item, dict):
-                checked_list.append(camel_dict_to_snake_dict(item, reversible))
+                checked_list.append(camel_dict_to_snake_dict(item, reversible, ignore_list))
             elif isinstance(item, list):
                 checked_list.append(value_is_list(item))
             else:
@@ -41,7 +41,7 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
     snake_dict = {}
     for k, v in camel_dict.items():
         if isinstance(v, dict) and k not in ignore_list:
-            snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible, ignore_list)
         elif isinstance(v, list) and k not in ignore_list:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
         else:
