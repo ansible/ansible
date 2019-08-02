@@ -27,21 +27,28 @@ options:
     description:
       - Channel-group number for the port-channel
         Link aggregation group. Range 1-255 or set to 'auto' to auto-generates a LAG ID
+    type: int
   name:
     description:
       - Name of the LAG
+    type: str
   mode:
     description:
       - Mode of the link aggregation group.
+    type: str
     choices: ['dynamic', 'static']
   members:
     description:
       - List of port members or ranges of the link aggregation group.
+    type: list
   aggregate:
-    description: List of link aggregation definitions.
+    description:
+      - List of link aggregation definitions.
+    type: list
   state:
     description:
       - State of the link aggregation group.
+    type: str
     default: present
     choices: ['present', 'absent']
   purge:
