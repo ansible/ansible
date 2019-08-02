@@ -34,7 +34,7 @@ options:
         description:
           - State of lldp configuration for interfaces
         type: str
-        choices: ['present', 'absent']
+        choices: ['present', 'absent', 'enabled', 'disabled']
     type: list
   state:
     description:
