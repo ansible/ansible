@@ -1,0 +1,467 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: register dummy OIDC config
+    set_fact:
+      AuthenticateOidcActionConfig:
+        AuthorizationEndpoint: "https://www.example.com/auth"
+        ClientId: "eeeeeeeeeeeeeeeeeeeeeeeeee"
+        ClientSecret: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        Issuer: "https://www.example.com/issuer"
+        OnUnauthenticatedRequest: "authenticate"
+        Scope: "openid"
+        SessionCookieName: "AWSELBAuthSessionCookie"
+        SessionTimeout: 604800
+        TokenEndpoint: "https://www.example.com/token"
+        UserInfoEndpoint: "https://www.example.com/userinfo"
+        UseExistingClientSecret: true
+
+  - name: register fixed response action
+    set_fact:
+      FixedResponseActionConfig:
+        ContentType: "text/plain"
+        MessageBody: "This is the page you're looking for"
+        StatusCode: "200"
+
+  - name: register redirect action
+    set_fact:
+      RedirectActionConfig:
+        Host: "#{host}"
+        Path: "/example/redir" # or /#{path}
+        Port: "#{port}"
+        Protocol: "#{protocol}"
+        Query: "#{query}"
+        StatusCode: "HTTP_302" # or HTTP_301
+
+  - name: delete existing ALB to avoid target group association issues
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      state: absent
+      <<: *aws_connection_info
+      wait: yes
+      wait_timeout: 600
+
+  - name: cleanup tg to avoid target group association issues
+    elb_target_group:
+      name: "{{ tg_name }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: absent
+      wait: yes
+      wait_timeout: 600
+      <<: *aws_connection_info
+    register: cleanup_tg
+    retries: 5
+    delay: 3
+    until: cleanup_tg is success
+
+  - name: recreate a target group
+    elb_target_group:
+      name: "{{ tg_name }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      <<: *aws_connection_info
+    register: tg
+
+  - name: create ALB with redirect DefaultAction
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 443
+          DefaultActions:
+            - Type: redirect
+              RedirectConfig: "{{ RedirectActionConfig }}"
+          Certificates:
+            - CertificateArn: "{{ cert_arn }}"
+          SslPolicy: ELBSecurityPolicy-2016-08
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - alb.listeners|length == 1
+        - alb.listeners[0].rules[0].actions|length == 1
+        - alb.listeners[0].rules[0].actions[0].type == "redirect"
+
+  - name: test idempotence with redirect DefaultAction
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 443
+          DefaultActions:
+            - Type: redirect
+              RedirectConfig: "{{ RedirectActionConfig }}"
+          Certificates:
+            - CertificateArn: "{{ cert_arn }}"
+          SslPolicy: ELBSecurityPolicy-2016-08
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - not alb.changed
+        - alb.listeners|length == 1
+        - alb.listeners[0].rules[0].actions|length == 1
+        - alb.listeners[0].rules[0].actions[0].type == "redirect"
+
+  - name: update ALB with fixed-response DefaultAction
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 443
+          DefaultActions:
+            - Type: fixed-response
+              FixedResponseConfig: "{{ FixedResponseActionConfig }}"
+          Certificates:
+            - CertificateArn: "{{ cert_arn }}"
+          SslPolicy: ELBSecurityPolicy-2016-08
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - alb.listeners|length == 1
+        - alb.listeners[0].rules[0].actions|length == 1
+        - alb.listeners[0].rules[0].actions[0].type == "fixed-response"
+
+  - name: test idempotence with fixed-response DefaultAction
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 443
+          DefaultActions:
+            - Type: fixed-response
+              FixedResponseConfig: "{{ FixedResponseActionConfig }}"
+          Certificates:
+            - CertificateArn: "{{ cert_arn }}"
+          SslPolicy: ELBSecurityPolicy-2016-08
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - not alb.changed
+        - alb.listeners|length == 1
+        - alb.listeners[0].rules[0].actions|length == 1
+        - alb.listeners[0].rules[0].actions[0].type == "fixed-response"
+
+  - name: test multiple non-default rules
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 443
+          DefaultActions:
+            - Type: fixed-response
+              FixedResponseConfig: "{{ FixedResponseActionConfig }}"
+          Certificates:
+            - CertificateArn: "{{ cert_arn }}"
+          SslPolicy: ELBSecurityPolicy-2016-08
+          Rules:
+            - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - "/forward-path/*"
+              Priority: 1
+              Actions:
+                - Type: forward
+                  TargetGroupName: "{{ tg_name }}"
+            - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - "/redirect-path/*"
+              Priority: 2
+              Actions:
+                - Type: redirect
+                  RedirectConfig: "{{ RedirectActionConfig }}"
+            - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - "/fixed-response-path/"
+              Priority: 3
+              Actions:
+                - Type: fixed-response
+                  FixedResponseConfig: "{{ FixedResponseActionConfig }}"
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - alb.changed
+        - alb.listeners|length == 1
+        - alb.listeners[0].rules|length == 4 ## defaultactions is included as a rule
+        - alb.listeners[0].rules[0].actions|length == 1
+        - alb.listeners[0].rules[0].actions[0].type == "forward"
+        - alb.listeners[0].rules[1].actions|length == 1
+        - alb.listeners[0].rules[1].actions[0].type == "redirect"
+        - alb.listeners[0].rules[2].actions|length == 1
+        - alb.listeners[0].rules[2].actions[0].type == "fixed-response"
+
+  - name: test idempotence multiple non-default rules
+    elb_application_lb:
+      name: "{{ alb_name }}"
+      subnets: "{{ alb_subnets }}"
+      security_groups: "{{ sec_group.group_id }}"
+      state: present
+      listeners:
+        - Protocol: HTTPS
+          Port: 443
+          DefaultActions:
+            - Type: fixed-response
+              FixedResponseConfig: "{{ FixedResponseActionConfig }}"
+          Certificates:
+            - CertificateArn: "{{ cert_arn }}"
+          SslPolicy: ELBSecurityPolicy-2016-08
+          Rules:
+            - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - "/forward-path/*"
+              Priority: 1
+              Actions:
+                - Type: forward
+                  TargetGroupName: "{{ tg_name }}"
+            - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - "/redirect-path/*"
+              Priority: 2
+              Actions:
+                - Type: redirect
+                  RedirectConfig: "{{ RedirectActionConfig }}"
+            - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - "/fixed-response-path/"
+              Priority: 3
+              Actions:
+                - Type: fixed-response
+                  FixedResponseConfig: "{{ FixedResponseActionConfig }}"
+      <<: *aws_connection_info
+    register: alb
+
+  - assert:
+      that:
+        - not alb.changed
+        - alb.listeners|length == 1
+        - alb.listeners[0].rules|length == 4 ## defaultactions is included as a rule
+        - alb.listeners[0].rules[0].actions|length == 1
+        - alb.listeners[0].rules[0].actions[0].type == "forward"
+        - alb.listeners[0].rules[1].actions|length == 1
+        - alb.listeners[0].rules[1].actions[0].type == "redirect"
+        - alb.listeners[0].rules[2].actions|length == 1
+        - alb.listeners[0].rules[2].actions[0].type == "fixed-response"
+
+
+#  - name: test creating ALB with a default listener with multiple actions
+#    elb_application_lb:
+#      name: "{{ alb_name }}"
+#      subnets: "{{ alb_subnets }}"
+#      security_groups: "{{ sec_group.group_id }}"
+#      state: present
+#      listeners:
+#        - Protocol: HTTPS
+#          Port: 443
+#          DefaultActions:
+#            - Type: forward
+#              TargetGroupName: "{{ tg_name }}"
+#              Order: 2
+#            - Type: authenticate-oidc
+#              AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#              Order: 1
+#          Certificates:
+#            - CertificateArn: "{{ cert_arn }}"
+#          SslPolicy: ELBSecurityPolicy-2016-08
+#      <<: *aws_connection_info
+#    register: alb
+#
+#  - assert:
+#      that:
+#        - alb.listeners|length == 1
+#        - alb.listeners[0].rules[0].actions|length == 2
+#
+#  - name: test changing order of actions
+#    elb_application_lb:
+#      name: "{{ alb_name }}"
+#      subnets: "{{ alb_subnets }}"
+#      security_groups: "{{ sec_group.group_id }}"
+#      state: present
+#      listeners:
+#        - Protocol: HTTPS
+#          Port: 443
+#          DefaultActions:
+#            - Type: authenticate-oidc
+#              AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#              Order: 1
+#            - Type: forward
+#              TargetGroupName: "{{ tg_name }}"
+#              Order: 2
+#          Certificates:
+#            - CertificateArn: "{{ cert_arn }}"
+#          SslPolicy: ELBSecurityPolicy-2016-08
+#      <<: *aws_connection_info
+#    register: alb
+#
+#  - assert:
+#      that:
+#        - not alb.changed
+#        - alb.listeners|length == 1
+#        - alb.listeners[0].rules[0].actions|length == 2
+#
+#  - name: test non-default rule with multiple actions
+#    elb_application_lb:
+#      name: "{{ alb_name }}"
+#      subnets: "{{ alb_subnets }}"
+#      security_groups: "{{ sec_group.group_id }}"
+#      state: present
+#      listeners:
+#        - Protocol: HTTPS
+#          Port: 443
+#          DefaultActions:
+#            - Type: authenticate-oidc
+#              AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#              Order: 1
+#            - Type: forward
+#              TargetGroupName: "{{ tg_name }}"
+#              Order: 2
+#          Certificates:
+#            - CertificateArn: "{{ cert_arn }}"
+#          SslPolicy: ELBSecurityPolicy-2016-08
+#          Rules:
+#            - Conditions:
+#                - Field: path-pattern
+#                  Values:
+#                    - "*"
+#              Priority: 1
+#              Actions:
+#                - Type: forward
+#                  TargetGroupName: "{{ tg_name }}"
+#                  Order: 2
+#                - Type: authenticate-oidc
+#                  AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#                  Order: 1
+#      <<: *aws_connection_info
+#    register: alb
+#
+#  - assert:
+#      that:
+#        - alb.changed
+#        - alb.listeners|length == 1
+#        - alb.listeners[0].rules[0].actions|length == 2
+#        - alb.listeners[0].rules[1].actions|length == 2
+#
+#  - name: test idempotency non-default rule with multiple actions
+#    elb_application_lb:
+#      name: "{{ alb_name }}"
+#      subnets: "{{ alb_subnets }}"
+#      security_groups: "{{ sec_group.group_id }}"
+#      state: present
+#      listeners:
+#        - Protocol: HTTPS
+#          Port: 443
+#          DefaultActions:
+#            - Type: authenticate-oidc
+#              AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#              Order: 1
+#            - Type: forward
+#              TargetGroupName: "{{ tg_name }}"
+#              Order: 2
+#          Certificates:
+#            - CertificateArn: "{{ cert_arn }}"
+#          SslPolicy: ELBSecurityPolicy-2016-08
+#          Rules:
+#            - Conditions:
+#                - Field: path-pattern
+#                  Values:
+#                    - "*"
+#              Priority: 1
+#              Actions:
+#                - Type: forward
+#                  TargetGroupName: "{{ tg_name }}"
+#                  Order: 2
+#                - Type: authenticate-oidc
+#                  AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#                  Order: 1
+#      <<: *aws_connection_info
+#    register: alb
+#
+#  - assert:
+#      that:
+#        - not alb.changed
+#        - alb.listeners|length == 1
+#        - alb.listeners[0].rules[0].actions|length == 2
+#        - alb.listeners[0].rules[1].actions|length == 2
+#
+#  - name: test non-default rule action order change
+#    elb_application_lb:
+#      name: "{{ alb_name }}"
+#      subnets: "{{ alb_subnets }}"
+#      security_groups: "{{ sec_group.group_id }}"
+#      state: present
+#      listeners:
+#        - Protocol: HTTPS
+#          Port: 443
+#          DefaultActions:
+#            - Type: authenticate-oidc
+#              AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#              Order: 1
+#            - Type: forward
+#              TargetGroupName: "{{ tg_name }}"
+#              Order: 2
+#          Certificates:
+#            - CertificateArn: "{{ cert_arn }}"
+#          SslPolicy: ELBSecurityPolicy-2016-08
+#          Rules:
+#            - Conditions:
+#                - Field: path-pattern
+#                  Values:
+#                    - "*"
+#              Priority: 1
+#              Actions:
+#                - Type: authenticate-oidc
+#                  AuthenticateOidcConfig: "{{ AuthenticateOidcActionConfig }}"
+#                  Order: 1
+#                - Type: forward
+#                  TargetGroupName: "{{ tg_name }}"
+#                  Order: 2
+#      <<: *aws_connection_info
+#    register: alb
+#
+#  - assert:
+#      that:
+#        - not alb.changed
+#        - alb.listeners|length == 1
+#        - alb.listeners[0].rules[0].actions|length == 2
+#        - alb.listeners[0].rules[1].actions|length == 2
