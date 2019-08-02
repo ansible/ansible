@@ -607,6 +607,28 @@ EXAMPLES = '''
      type: bridge
      interfaces: eth1
      state: present
+
+ - name: Create bond0 interface
+   netplan:
+     filename: 11-brs
+     type: bonds
+     interface-id: bond0
+     state: present
+     bonding-mode: 802.3ad
+     lacp-rate: slow
+     mii-monitor-interval: 10
+     min-links: 10
+     up-delay: 20
+     down-delay: 30
+     all-slaves-active: true
+     ad-select: stable
+     arp-interval: 15
+     arp-validate: all
+     arp-all-targets: all
+     fail-over-mac-policy: none
+     arp-ip-targets: [10.10.10.10, 20.20.20.20]
+     interfaces: [br0, br1]
+     dhcp4: true
 '''
 
 RETURN = '''
