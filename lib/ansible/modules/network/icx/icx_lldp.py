@@ -36,10 +36,6 @@ options:
         type: str
         choices: ['present', 'absent', 'enabled', 'disabled']
     type: list
-  state:
-    description:
-      - Enables the receipt and transmission of Link Layer Discovery Protocol (LLDP) globally.
-    type: str
     choices: ['present', 'absent', 'enabled', 'disabled']
   check_running_config:
     description:
@@ -47,6 +43,10 @@ options:
        Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
     type: bool
     default: yes
+  state:
+    description:
+      - Enables the receipt and transmission of Link Layer Discovery Protocol (LLDP) globally.
+    type: str
 """
 
 EXAMPLES = """
