@@ -31,6 +31,7 @@ options:
       description:
         - ip-addr | host-name | vrf vrf-name | ipv6 [ ipv6-addr | host-name | vrf vrf-name]  (resolvable by switch) of the remote node.
       required: true
+      type: str
     timeout:
       description:
         - Specifies the time, in milliseconds for which the device waits for a reply from the pinged device.
@@ -51,12 +52,15 @@ options:
     source:
       description:
         - IP address to be used as the origin of the ping packets.
+      type: str
     vrf:
       description:
         - Specifies the Virtual Routing and Forwarding (VRF) instance of the device to be pinged.
+      type: str
     state:
       description:
         - Determines if the expected result is success or fail.
+      type: str
       choices: [ absent, present ]
       default: present
 """
@@ -203,9 +207,9 @@ def main():
     argument_spec = dict(
         count=dict(type="int", default=1),
         dest=dict(type="str", required=True),
-        timeout=dict(default=5000),
-        ttl=dict(default=64),
-        size=dict(default=16),
+        timeout=dict(type="int", default=5000),
+        ttl=dict(type="int", default=64),
+        size=dict(type="int", default=16),
         source=dict(type="str"),
         state=dict(type="str", choices=["absent", "present"], default="present"),
         vrf=dict(type="str")
