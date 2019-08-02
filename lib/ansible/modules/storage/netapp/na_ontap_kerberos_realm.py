@@ -1,6 +1,6 @@
 #!/usr/bin/python
 '''
-(c) 2018-2019, NetApp, Inc
+(c) 2019, Red Hat, Inc
 GNU General Public License v3.0+
 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 '''
@@ -20,7 +20,7 @@ short_description: NetApp ONTAP vserver nfs kerberos realm
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.9'
-author: Milan Zink (@zeten30) <zeten30@gmail.com>/<mzink@redhat.com>
+author: Milan Zink (@zeten30) <zeten30@gmail.com>,<mzink@redhat.com>
 
 description:
 - Create, modify or delete vserver kerberos realm configuration
