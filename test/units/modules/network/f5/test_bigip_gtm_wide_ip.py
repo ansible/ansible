@@ -120,7 +120,7 @@ class TestParameters(unittest.TestCase):
         with pytest.raises(F5ModuleError) as excinfo:
             p = ModuleParameters(params=args)
             assert p.name == 'foo'
-        assert 'The provided name must be a valid FQDN' in str(excinfo)
+        assert 'The provided name must be a valid FQDN' in str(excinfo.value)
 
 
 class TestUntypedManager(unittest.TestCase):
