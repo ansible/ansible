@@ -173,7 +173,8 @@ class TaskQueueManager:
 
         loaded_callbacks = []
 
-        # first, load callbacks in the core distribution and configured callback paths
+        # get all configured callbacks and add whitelisted callbacks that refer to collections, which don't appear in normal listing
+        callback_list = list(callback_loader.all(class_only=True)) + list((c for c in C.DEFAULT_CALLBACK_WHITELIST if is_collection_ref(c)))
         for callback_plugin in callback_loader.all(class_only=True)  # + (c for c in C.DEFAULT_CALLBACK_WHITELIST if is_collection_ref(c)):
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
