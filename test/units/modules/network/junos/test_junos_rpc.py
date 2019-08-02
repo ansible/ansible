@@ -20,9 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
-    from lxml.etree import tostring, fromstring
+    from lxml.etree import fromstring
 except ImportError:
-    from xml.etree.ElementTree import tostring, fromstring
+    from xml.etree.ElementTree import fromstring
 
 from units.compat.mock import patch
 from ansible.modules.network.junos import junos_rpc

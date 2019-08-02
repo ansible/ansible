@@ -9,7 +9,7 @@ except ImportError:
 
 from ansible.module_utils.netapp import NetAppESeriesModule
 from ansible.modules.storage.netapp.netapp_e_volume import NetAppESeriesVolume
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
+from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
 

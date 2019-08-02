@@ -5,7 +5,7 @@
 from mock import MagicMock
 
 from ansible.modules.storage.netapp.netapp_e_iscsi_target import IscsiTarget
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
+from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
 

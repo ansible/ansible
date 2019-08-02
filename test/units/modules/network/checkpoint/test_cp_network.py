@@ -22,7 +22,7 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_objects, api_call
+from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.checkpoint import cp_network
 
 

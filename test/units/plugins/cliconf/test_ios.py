@@ -22,7 +22,7 @@ __metaclass__ = type
 from os import path
 import json
 
-from mock import MagicMock, call
+from mock import MagicMock
 
 from units.compat import unittest
 from ansible.plugins.cliconf import ios

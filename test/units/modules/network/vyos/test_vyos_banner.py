@@ -20,7 +20,7 @@ __metaclass__ = type
 from units.compat.mock import patch
 from ansible.modules.network.vyos import vyos_banner
 from units.modules.utils import set_module_args
-from .vyos_module import TestVyosModule, load_fixture
+from .vyos_module import TestVyosModule
 
 
 class TestVyosBannerModule(TestVyosModule):
