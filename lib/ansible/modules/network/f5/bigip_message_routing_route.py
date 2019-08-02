@@ -158,6 +158,7 @@ try:
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import is_empty_list
     from library.module_utils.network.f5.compare import cmp_str_with_none
     from library.module_utils.network.f5.compare import cmp_simple_list
     from library.module_utils.network.f5.icontrol import tmos_version
@@ -169,6 +170,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import is_empty_list
     from ansible.module_utils.network.f5.compare import cmp_str_with_none
     from ansible.module_utils.network.f5.compare import cmp_simple_list
     from ansible.module_utils.network.f5.icontrol import tmos_version
@@ -216,7 +218,7 @@ class ModuleParameters(Parameters):
     def peers(self):
         if self._values['peers'] is None:
             return None
-        if len(self._values['peers']) == 1 and self._values['peers'][0] == "":
+        if is_empty_list(self._values['peers']):
             return ""
         result = [fq_name(self.partition, peer) for peer in self._values['peers']]
         return result
