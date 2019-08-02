@@ -122,7 +122,10 @@
             "Effect": "Allow",
             "Action": [
                 "iam:ListServerCertificates",
-                "iam:UploadServerCertificate"
+                "iam:UploadServerCertificate",
+                "iam:UpdateServerCertificate",
+                "iam:DeleteServerCertificate",
+                "iam:GetServerCertificate"
             ],
             "Resource": "*"
         }
