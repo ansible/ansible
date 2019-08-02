@@ -51,17 +51,18 @@ options:
     type: str
     default: present
     choices: ['present', 'absent']
-  purge:
-    description:
-      - Purge links not defined in the I(aggregate) parameter.
-    type: bool
-    default: false
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
        Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
     type: bool
     default: yes
+  purge:
+    description:
+      - Purge links not defined in the I(aggregate) parameter.
+    type: bool
+    default: no
+
 """
 
 EXAMPLES = """
