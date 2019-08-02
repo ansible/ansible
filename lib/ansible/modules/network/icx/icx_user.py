@@ -44,7 +44,7 @@ options:
     type: bool
   update_password:
     description:
-      - This  argument will instruct the module when to change the password.  When
+      - This  argument will instruct the module when to change the password. When
         set to C(always), the password will always be updated in the device
         and when set to C(on_create) the password will be updated only if
         the username is created.
@@ -55,7 +55,7 @@ options:
     description:
       - The privilege level to be granted to the user
     default: 0
-    choices: [0, 4, 5]
+    choices: ['0', '4', '5']
     type: str
   nopassword:
     description:
