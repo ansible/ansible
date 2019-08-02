@@ -1,0 +1,214 @@
+---
+merged:
+  before:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/1
+      speed: auto
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/2
+      speed: auto
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "description Configured and Merged by Ansible-Network"
+    - "mtu 110"
+    - "duplex half"
+    - "interface GigabitEthernet0/2"
+    - "description Configured and Merged by Ansible-Network"
+    - "mtu 2800"
+    - "speed 100"
+    - "duplex full"
+    - "shutdown"
+
+  after:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - description: Configured and Merged by Ansible-Network
+      duplex: half
+      enabled: true
+      mtu: 110
+      name: GigabitEthernet0/1
+      speed: auto
+    - description: Configured and Merged by Ansible-Network
+      duplex: full
+      enabled: false
+      mtu: 2800
+      name: GigabitEthernet0/2
+      speed: '100'
+
+replaced:
+  before:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - description: this is interface1
+      duplex: auto
+      enabled: true
+      mtu: 65
+      name: GigabitEthernet0/1
+      speed: '10'
+    - description: this is interface2
+      duplex: auto
+      enabled: false
+      mtu: 110
+      name: GigabitEthernet0/2
+      speed: '100'
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no speed"
+    - "description Configured and Replaced by Ansible-Network"
+    - "mtu 110"
+    - "interface GigabitEthernet0/2"
+    - "no shutdown"
+    - "no mtu"
+    - "description Configured and Replaced by Ansible-Network"
+    - "speed 10"
+
+  after:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - description: Configured and Replaced by Ansible-Network
+      duplex: auto
+      enabled: true
+      mtu: 110
+      name: GigabitEthernet0/1
+      speed: auto
+    - description: Configured and Replaced by Ansible-Network
+      duplex: auto
+      enabled: true
+      name: GigabitEthernet0/2
+      speed: '10'
+
+overridden:
+  before:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - description: this is interface1
+      duplex: auto
+      enabled: true
+      mtu: 65
+      name: GigabitEthernet0/1
+      speed: '10'
+    - description: this is interface2
+      duplex: auto
+      enabled: false
+      mtu: 110
+      name: GigabitEthernet0/2
+      speed: '100'
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no description"
+    - "no speed"
+    - "no mtu"
+    - "interface GigabitEthernet0/2"
+    - "no speed"
+    - "description Configured and Overridden by Ansible-Network"
+    - "mtu 2000"
+    - "duplex full"
+
+  after:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/1
+      speed: auto
+    - description: Configured and Overridden by Ansible-Network
+      duplex: full
+      enabled: false
+      mtu: 2000
+      name: GigabitEthernet0/2
+      speed: auto
+
+deleted:
+  before:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - description: this is interface1
+      duplex: auto
+      enabled: true
+      mtu: 65
+      name: GigabitEthernet0/1
+      speed: '10'
+    - description: this is interface2
+      duplex: auto
+      enabled: false
+      mtu: 110
+      name: GigabitEthernet0/2
+      speed: '100'
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no description"
+    - "no speed"
+    - "no mtu"
+    - "interface GigabitEthernet0/2"
+    - "no description"
+    - "no shutdown"
+    - "no speed"
+    - "no mtu"
+
+  after:
+    - enabled: true
+      name: loopback888
+    - enabled: true
+      name: loopback999
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/0
+      speed: auto
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/1
+      speed: auto
+    - duplex: auto
+      enabled: true
+      name: GigabitEthernet0/2
+      speed: auto
