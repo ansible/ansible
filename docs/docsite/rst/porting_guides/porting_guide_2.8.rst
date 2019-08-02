@@ -105,20 +105,20 @@ Ansible 2.8:
 +===========================+===============================================+
 | | auto                    | | If a Python interpreter is discovered,      |
 | | (future default)        | | Ansible uses the discovered Python, even if |
-| |                         | | ``/usr/bin/python`` is also present. Warns  |
-| |                         | | when using the fallback list.               |
+| |                         | | :command:`/usr/bin/python` is also present. |
+| |                         | | Warns when using the fallback list.         |
 +---------------------------+-----------------------------------------------+
 | | **auto_legacy**         | | If a Python interpreter is discovered, and  |
-| | (Ansible 2.8 default)   | | ``/usr/bin/python`` is absent, Ansible      |
-| |                         | | uses the discovered Python. Warns when      |
-| |                         | | using the fallback list.                    |
+| | (Ansible 2.8 default)   | | :command:`/usr/bin/python` is absent,       |
+| |                         | | Ansible uses the discovered Python. Warns   |
+| |                         | | when using the fallback list.               |
 | |                         | |                                             |
 | |                         | | If a Python interpreter is discovered, and  |
-| |                         | | ``/usr/bin/python`` is present, Ansible     |
-| |                         | | uses ``/usr/bin/python`` and prints a       |
-| |                         | | deprecation warning about future default    |
-| |                         | | behavior. Warns when using the fallback     |
-| |                         | | list.                                       |
+| |                         | | :command:`/usr/bin/python` is present,      |
+| |                         | | Ansible uses :command:`/usr/bin/python` and |
+| |                         | | prints a deprecation warning about future   |
+| |                         | | default behavior. Warns when using the      |
+| |                         | | fallback list.                              |
 +---------------------------+-----------------------------------------------+
 | | auto_legacy_silent      | | Behaves like ``auto_legacy`` but suppresses |
 | |                         | | the deprecation and fallback-list warnings. |
@@ -136,7 +136,7 @@ use the discovered Python, regardless of whether :command:`/usr/bin/python` exis
 defaulted to :command:`/usr/bin/python`.
 
 If you installed Python and dependencies (``boto``, etc.) to
-``/usr/bin/python`` as a workaround on distros with a different default Python
+:command:`/usr/bin/python` as a workaround on distros with a different default Python
 interpreter (for example, Ubuntu 16.04+, RHEL8, Fedora 23+), you have two
 options:
 
