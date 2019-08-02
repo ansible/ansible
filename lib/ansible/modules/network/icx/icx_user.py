@@ -38,9 +38,6 @@ options:
         Please note that this option is not same as C(provider username).
     required: true
     type: str
-  configured_password:
-    description: The password to be configured on the ICX device.
-    type: str
   update_password:
     description:
       - This  argument will instruct the module when to change the password. When
