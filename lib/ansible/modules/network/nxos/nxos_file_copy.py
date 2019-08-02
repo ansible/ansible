@@ -294,10 +294,12 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
     try:
         child = pexpect.spawn('ssh ' + username + '@' + hostname + ' -p' + str(port))
         # response could be unknown host addition or Password
-        index = child.expect(['yes', '(?i)Password', '#'])
+        # The "# " is here so to better avoid catching '#' in a banner.
+        index = child.expect(['yes', '(?i)Password', '# '])
         if index == 0:
             child.sendline('yes')
             child.expect('(?i)Password')
+            index = 1
         if index == 1:
             child.sendline(password)
             child.expect('#')
@@ -341,7 +343,7 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
         # remote file non-existent or success,
         # timeout due to large file transfer or network too slow,
         # success
-        index = child.expect(['No space', 'Permission denied', 'No such file', pexpect.TIMEOUT, '#'], timeout=fpt)
+        index = child.expect(['No space', 'Permission denied', '(?i)No such file', pexpect.TIMEOUT, '#'], timeout=fpt)
         if index == 0:
             module.fail_json(msg='File copy failed due to no space left on the device')
         elif index == 1:
