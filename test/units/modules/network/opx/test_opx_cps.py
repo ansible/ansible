@@ -22,7 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch, Mock, MagicMock
+from units.compat.mock import patch, Mock
 import sys
 sys.modules['cps'] = Mock(QUALIFIERS=[
     "target",

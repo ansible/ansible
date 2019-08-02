@@ -23,7 +23,7 @@ import sys
 from collections import defaultdict
 
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from units.compat.mock import MagicMock
 from ansible.template.safe_eval import safe_eval
 
 

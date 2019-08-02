@@ -3,7 +3,7 @@
 
 from mock import MagicMock
 
-from ansible.module_utils import basic, netapp
+from ansible.module_utils import netapp
 from ansible.modules.storage.netapp import netapp_e_host
 from ansible.modules.storage.netapp.netapp_e_host import Host
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args

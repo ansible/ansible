@@ -25,7 +25,7 @@ import textwrap
 import types
 
 from units.compat import unittest
-from units.compat.mock import patch, mock_open, MagicMock
+from units.compat.mock import MagicMock
 
 from ansible.plugins.callback import CallbackBase
 

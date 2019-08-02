@@ -7,7 +7,7 @@ __metaclass__ = type
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_vrouter_bgp_network
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestVrouterBGPNetworkModule(TestNvosModule):
