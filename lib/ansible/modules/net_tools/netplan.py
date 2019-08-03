@@ -540,6 +540,44 @@ options:
     required: false
     type: bool
 
+  tunneling-mode:
+    description:
+      - Defines the tunnel mode. Valid options are sit, gre, ip6gre, ipip,
+        ipip6, ip6ip6, vti, and vti6. Additionally, the networkd backend also
+        supports gretap and ip6gretap modes. In addition, the NetworkManager
+        backend supports isatap tunnels.
+    required: false
+    choices: [ sit, gre, ip6gre, ipip, ipip6, ip6ip6, vti, vti6, gretap,
+               ip6gretap, isatap ]
+
+  local:
+    description:
+       - Defines the address of the local endpoint of the tunnel.
+    required: false
+
+  remote:
+    description:
+      - Defines the address of the remote endpoint of the tunnel.
+    required: false
+
+  key:
+    description:
+      - Specifiy key to use for the tunnel. The key can be a number or a dotted
+        quad (an IPv4 address). It is used for identification of IP transforms.
+        This is only required for C(vti) and C(vti6) when using the C(networkd)
+        backend, and for C(gre) or C(ip6gre) tunnels when using the
+        NetworkManager backend.
+    required: false
+
+  keys-input-output:
+    description:
+      - Specifiy input and output keys to use for the tunnel. If this param is
+        defined, you can't define the key param. The first value passed on list
+        is the input key and the second value is the output key.
+        E.g: [1234, 5678].
+    required: false
+    type: list
+
   id:
     description:
       - VLAN ID, a number between 0 and 4094.
@@ -730,6 +768,8 @@ BONDS = ['bonding-mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
 BRIDGES = ['ageing-time', 'priority', 'port-priority', 'forward-delay',
            'hello-time', 'max-age', 'path-cost', 'stp']
 
+TUNNELS = ['tunneling-mode', 'local', 'remote', 'key', 'keys-input-output']
+
 VLANS = ['id', 'link']
 
 WIFIS = ['access-points-ssid', 'access-points-password', 'access-points-mode']
@@ -741,6 +781,8 @@ def validate_args(module):
             if module.params.get(key) is not None:
                 if key in BONDS:
                     module.fail_json(msg='BONDs options can not be defined with bridge Type')
+                if key in TUNNELS:
+                    module.fail_json(msg='TUNNELs options can not be defined with bridge Type')
                 if key in VLANS:
                     module.fail_json(msg='VLANs options can not be defined with bridge Type')
                 if key in WIFIS:
@@ -750,6 +792,8 @@ def validate_args(module):
             if module.params.get(key) is not None:
                 if key in BRIDGES:
                     module.fail_json(msg='BRIDGES options can not be defined with bonds Type')
+                if key in TUNNELS:
+                    module.fail_json(msg='TUNNELs options can not be defined with bonds Type')
                 if key in VLANS:
                     module.fail_json(msg='VLANS options can not be defined with bonds Type')
                 if key in WIFIS:
@@ -784,6 +828,26 @@ def validate_args(module):
                 if key == 'primary':
                     if module.params['bonding-mode'] != 'active-backup' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
                         module.fail_json(msg='bonding-mode must be active-backup or balance-tlb or balance-alb to define {0} param'.format(key))
+    if module.params['type'] == 'tunnels':
+        for key in module.params:
+            if module.params.get(key) is not None:
+                if key in BONDS:
+                    module.fail_json(msg='BONDs options can not be defined with tunnel Type')
+                if key in BRIDGES:
+                    module.fail_json(msg='BRIDGES options can not be defined with tunnel Type')
+                if key in VLANS:
+                    module.fail_json(msg='VLANs options can not be defined with tunnel Type')
+                if key in WIFIS:
+                    module.fail_json(msg='WIFIs options can not be defined with tunnel Type')
+                # gretap and ip6gretap tunneling-mode only supported if renderer == networkd
+                # isatap tunneling-mode only supported if renderer == NetworkManager
+                if key == 'tunneling-mode':
+                    if module.params['tunneling-mode'] == 'gretap' or module.params['ip6gretap']:
+                        if module.params['renderer'] != 'networkd':
+                            module.fail_json(msg="gretap and ip6gretap tunneling-mode are only supported on networkd render")
+                    if module.params['tunneling-mode'] == 'isatap':
+                        if module.params['renderer'] != 'NetworkManager':
+                            module.fail_json(msg="isatap tunneling-mode is only supported on NetworkManager render")
     if module.params['type'] == 'ethernets':
         for key in module.params:
             if module.params.get(key) is not None:
@@ -791,6 +855,8 @@ def validate_args(module):
                     module.fail_json(msg='BONDS options can not be defined with ethernets Type')
                 if key in BRIDGES:
                     module.fail_json(msg='BRIDGES options can not be defined with ethernets Type')
+                if key in TUNNELS:
+                    module.fail_json(msg='TUNNELs options can not be defined with ethernets Type')
                 if key in VLANS:
                     module.fail_json(msg='VLANS options can not be defined with ethernets Type')
                 if key in WIFIS:
@@ -802,17 +868,21 @@ def validate_args(module):
                     module.fail_json(msg='BONDS options can not be defined with vlans Type')
                 if key in BRIDGES:
                     module.fail_json(msg='BRIDGES options can not be defined with vlans Type')
+                if key in TUNNELS:
+                    module.fail_json(msg='TUNNELS options can not be defined with vlans Type')
                 if key in WIFIS:
                     module.fail_json(msg='WIFIs options can not be defined with vlans Type')
     if module.params['type'] == 'wifis':
         for key in module.params:
             if module.params.get(key) is not None:
                 if key in BONDS:
-                    module.fail_json(msg='BONDS options can not be defined with vlans Type')
+                    module.fail_json(msg='BONDS options can not be defined with wifis Type')
                 if key in BRIDGES:
-                    module.fail_json(msg='BRIDGES options can not be defined with vlans Type')
+                    module.fail_json(msg='BRIDGES options can not be defined with wifis Type')
+                if key in TUNNELS:
+                    module.fail_json(msg='TUNNELS options can not be defined with wifis Type')
                 if key in VLANS:
-                    module.fail_json(msg='VLANS options can not be defined with ethernets Type')
+                    module.fail_json(msg='VLANS options can not be defined with wifis Type')
 
 
 def get_netplan_dict(params):
@@ -864,7 +934,16 @@ def get_netplan_dict(params):
                         netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['port-priority'][pp[0]] = pp[1]
                 else:
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'][key] = params.get(key)
-
+            elif key in TUNNELS:
+                if key == 'tunneling-mode':
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode'] = params.get(key)
+                elif key == 'keys-input-output':
+                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode'].get('keys'):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode']['keys'] = dict()
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode']['keys']['input'] = params.get(key)[0]
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode']['keys']['output'] = params.get(key)[1]
+                else:
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')][key] = params.get(key)
             elif key in ROUTES:
                 routes_option = '{0}'.format(key.split('routes-')[1])
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('routes'):
@@ -965,7 +1044,15 @@ def main():
         'max-age': {'required': False, 'type': 'int'},
         'path-cost': {'required': False, 'type': 'list'},
         'stp': {'required': False, 'type': 'bool'},
+        'tunneling-mode': {'choices': ['sit', 'gre', 'ip6gre', 'ipip', 'ipip6',
+                              'ip6ip6', 'vti', 'vti6', 'gretap',
+                              'ip6gretap', 'isatap'],
+                            'required': False},
+        'local': {'required': False},
+        'remote': {'required': False},
         'id': {'required': False, 'type': 'int'},
+        'key': {'required': False, 'type': 'int'},
+        'keys-input-output': {'required': False, 'type': 'list'},
         'link': {'required': False},
         'access-points-ssid': {'required': False},
         'access-points-password': {'required': False},
