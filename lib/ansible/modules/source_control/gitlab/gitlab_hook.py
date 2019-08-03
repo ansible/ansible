@@ -58,6 +58,10 @@ options:
       - Trigger hook on push events.
     type: bool
     default: yes
+  push_events_branch_filter:
+    description:
+      - Branch name of wildcard to trigger hook on push events
+    type: str
   issues_events:
     description:
       - Trigger hook on issues events.
@@ -200,6 +204,7 @@ class GitLabHook(object):
             hook = self.createHook(project, {
                 'url': hook_url,
                 'push_events': options['push_events'],
+                'push_events_branch_filter': options['push_events_branch_filter'],
                 'issues_events': options['issues_events'],
                 'merge_requests_events': options['merge_requests_events'],
                 'tag_push_events': options['tag_push_events'],
@@ -213,6 +218,7 @@ class GitLabHook(object):
         else:
             changed, hook = self.updateHook(self.hookObject, {
                 'push_events': options['push_events'],
+                'push_events_branch_filter': options['push_events_branch_filter'],
                 'issues_events': options['issues_events'],
                 'merge_requests_events': options['merge_requests_events'],
                 'tag_push_events': options['tag_push_events'],
@@ -300,6 +306,7 @@ def main():
         project=dict(type='str', required=True),
         hook_url=dict(type='str', required=True),
         push_events=dict(type='bool', default=True),
+        push_events_branch_filter=dict(type='str'),
         issues_events=dict(type='bool', default=False),
         merge_requests_events=dict(type='bool', default=False),
         tag_push_events=dict(type='bool', default=False),
@@ -330,6 +337,7 @@ def main():
     project_identifier = module.params['project']
     hook_url = module.params['hook_url']
     push_events = module.params['push_events']
+    push_events_branch_filter = module.params['push_events_branch_filter']
     issues_events = module.params['issues_events']
     merge_requests_events = module.params['merge_requests_events']
     tag_push_events = module.params['tag_push_events']
@@ -364,6 +372,7 @@ def main():
     if state == 'present':
         if gitlab_hook.createOrUpdateHook(project, hook_url, {
                                           "push_events": push_events,
+                                          "push_events_branch_filter": push_events_branch_filter,
                                           "issues_events": issues_events,
                                           "merge_requests_events": merge_requests_events,
                                           "tag_push_events": tag_push_events,
