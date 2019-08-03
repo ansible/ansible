@@ -1421,7 +1421,6 @@ class ApiParameters(Parameters):
             result = Destination(ip=None, port=None, route_domain=None, mask=None)
             return result
         destination = re.sub(r'^/[a-zA-Z0-9_.-]+/', '', self._values['destination'])
-
         # Covers the following examples
         #
         # /Common/2700:bc00:1f10:101::6%2.80
@@ -1459,11 +1458,12 @@ class ApiParameters(Parameters):
             )
             return result
 
-        pattern = r'(?P<ip>^[a-zA-Z0-9_.-]+):(?P<port>[0-9]+)'
+        # this will match any IPV4 Address and port, no RD
+        pattern = r'^(?P<ip>(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4]' \
+                  r'[0-9]|25[0-5])):(?P<port>[0-9]+)'
+
         matches = re.search(pattern, destination)
         if matches:
-            # this will match any IPv4 address as well as any alphanumeric Virtual Address
-            # that does not look like an IPv6 address.
             result = Destination(
                 ip=matches.group('ip'),
                 port=int(matches.group('port')),
@@ -1471,14 +1471,29 @@ class ApiParameters(Parameters):
                 mask=self.mask
             )
             return result
-        parts = destination.split('.')
-        if len(parts) == 2:
-            # IPv6
-            ip, port = destination.split('.')
+
+        # match standalone IPV6 address, no port
+        pattern = r'^([0-9a-f]{0,4}:){2,7}(:|[0-9a-f]{1,4})$'
+        matches = re.search(pattern, destination)
+        if matches:
+            result = Destination(
+                ip=destination,
+                port=None,
+                route_domain=None,
+                mask=self.mask
+            )
+            return result
+
+        # match IPV6 address with port
+        pattern = r'(?P<ip>([0-9a-f]{0,4}:){2,7}(:|[0-9a-f]{1,4}).(?P<port>[0-9]+|any))'
+        matches = re.search(pattern, destination)
+        if matches:
+            ip = matches.group('ip').split('.')[0]
             try:
-                port = int(port)
+                port = int(matches.group('port'))
             except ValueError:
                 # Can be a port of "any". This only happens with IPv6
+                port = matches.group('port')
                 if port == 'any':
                     port = 0
             result = Destination(
@@ -1488,19 +1503,33 @@ class ApiParameters(Parameters):
                 mask=self.mask
             )
             return result
-        # this check needs to be the last as for some reason IPv6 addr with %2 %2.port were also caught
-        if is_valid_ip(destination):
+
+        # this will match any alphanumeric Virtual Address and port
+        pattern = r'(?P<name>^[a-zA-Z0-9_.-]+):(?P<port>[0-9]+)'
+        matches = re.search(pattern, destination)
+        if matches:
             result = Destination(
-                ip=destination,
+                ip=matches.group('name'),
+                port=int(matches.group('port')),
+                route_domain=None,
+                mask=self.mask
+            )
+            return result
+
+        # this will match any alphanumeric Virtual Address
+        pattern = r'(?P<name>^[a-zA-Z0-9_.-]+)'
+        matches = re.search(pattern, destination)
+        if matches:
+            result = Destination(
+                ip=matches.group('name'),
                 port=None,
                 route_domain=None,
                 mask=self.mask
             )
             return result
 
-        else:
-            result = Destination(ip=None, port=None, route_domain=None, mask=None)
-            return result
+        result = Destination(ip=None, port=None, route_domain=None, mask=None)
+        return result
 
     @property
     def port(self):
@@ -3000,7 +3029,6 @@ class Difference(object):
             return None
 
         have = self.have.destination_tuple
-
         if self.want.port is None:
             self.want.update({'port': have.port})
         if self.want.route_domain is None:
@@ -3009,7 +3037,6 @@ class Difference(object):
             address = have.ip
         else:
             address = self.want.destination_tuple.ip
-
         want = self.want._format_destination(address, self.want.port, self.want.route_domain)
         if want != self.have.destination:
             return fq_name(self.want.partition, want)
