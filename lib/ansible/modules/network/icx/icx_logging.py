@@ -26,7 +26,7 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', 'console', 'monitor', 'buffered', 'persistence', 'rfc5424']
+    choices: ['on', 'host', 'console', 'buffered', 'persistence', 'rfc5424']
     type: str
   name:
     description:
