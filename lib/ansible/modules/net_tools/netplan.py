@@ -564,6 +564,7 @@ options:
         ipip6, ip6ip6, vti, and vti6. Additionally, the networkd backend also
         supports gretap and ip6gretap modes. In addition, the NetworkManager
         backend supports isatap tunnels.
+        Required if I(state=present) and I(type=tunnels).
     required: false
     choices: [ sit, gre, ip6gre, ipip, ipip6, ip6ip6, vti, vti6, gretap,
                ip6gretap, isatap ]
@@ -571,11 +572,13 @@ options:
   local:
     description:
        - Defines the address of the local endpoint of the tunnel.
+         Required if I(state=present) and I(type=tunnels).
     required: false
 
   remote:
     description:
       - Defines the address of the remote endpoint of the tunnel.
+        Required if I(state=present) and I(type=tunnels).
     required: false
 
   key:
@@ -705,7 +708,7 @@ EXAMPLES = '''
 
  - name: Add ethernet config interfaces
    netplan:
-     filename: 11-test
+     filename: 10-interfaces
      interface-id: eth0
      type: ethernets
      state: present
@@ -715,7 +718,7 @@ EXAMPLES = '''
 
  - name: Add bridge config interface
    netplan:
-     filename: 11-test
+     filename: 11-bridges
      interface-id: br0
      type: bridge
      interfaces: eth1
@@ -723,7 +726,7 @@ EXAMPLES = '''
 
  - name: Create bond0 interface
    netplan:
-     filename: 11-bonds
+     filename: 13-bonds
      type: bonds
      interface-id: bond0
      state: present
@@ -742,6 +745,20 @@ EXAMPLES = '''
      arp-ip-targets: [10.10.10.10, 20.20.20.20]
      interfaces: [br0, br1]
      dhcp4: true
+
+ - name: Create tunnel0 interface
+   netplan:
+     filename: 14-tunnel
+     type: tunnels
+     interface-id: tunnel0
+     tunneling-mode: sit
+     local: 1.1.1.1
+     remote: 2.2.2.2
+     addresses:
+       - 9.9.9.9/8
+     state: present
+     dhcp4: false
+
 '''
 
 RETURN = '''
@@ -847,6 +864,9 @@ def validate_args(module):
                     if module.params['bonding-mode'] != 'active-backup' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
                         module.fail_json(msg='bonding-mode must be active-backup or balance-tlb or balance-alb to define {0} param'.format(key))
     if module.params['type'] == 'tunnels':
+        if module.params['state'] == 'present':
+            if not module.params.get('tunneling-mode') or not module.params.get('local') or not module.params.get('remote'):
+                module.fail_json(msg='tunnels type require: [tunneling-mode, local, remote]')
         for key in module.params:
             if module.params.get(key) is not None:
                 if key in BONDS:
@@ -860,11 +880,11 @@ def validate_args(module):
                 # gretap and ip6gretap tunneling-mode only supported if renderer == networkd
                 # isatap tunneling-mode only supported if renderer == NetworkManager
                 if key == 'tunneling-mode':
-                    if module.params['tunneling-mode'] == 'gretap' or module.params['ip6gretap']:
-                        if module.params['renderer'] != 'networkd':
+                    if module.params['tunneling-mode'] == 'gretap' or module.params['tunneling-mode'] == 'ip6gretap':
+                        if module.params['renderer'] == 'NetworkManager':
                             module.fail_json(msg="gretap and ip6gretap tunneling-mode are only supported on networkd render")
                     if module.params['tunneling-mode'] == 'isatap':
-                        if module.params['renderer'] != 'NetworkManager':
+                        if module.params['renderer'] == 'networkd' or not module.params.get('renderer'):
                             module.fail_json(msg="isatap tunneling-mode is only supported on NetworkManager render")
     if module.params['type'] == 'ethernets':
         for key in module.params:
