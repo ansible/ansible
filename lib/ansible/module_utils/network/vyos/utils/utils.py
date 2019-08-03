@@ -6,6 +6,7 @@
 # utils
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+from ansible.module_utils.six import iteritems
 
 
 def search_obj_in_list(name, lst, key='name'):
@@ -117,3 +118,25 @@ def list_diff_want_only(want_list, have_list):
     else:
         diff = [i for i in have_list + want_list if i in want_list and i not in have_list]
     return diff
+
+
+def search_dict_tv_in_list(type, value, lst, key1, key2):
+    obj = next((item for item in lst if item[key1] == type and item[key2] == value), None)
+    if obj:
+        return obj
+    else:
+        return None
+
+
+def key_value_in_dict(have_key, have_value, want_dict):
+    for key, value in iteritems(want_dict):
+        if key == have_key and value == have_value:
+            return True
+    return False
+
+
+def is_dict_element_present(dict, key):
+    for item in dict:
+        if item == key:
+            return True
+    return False
