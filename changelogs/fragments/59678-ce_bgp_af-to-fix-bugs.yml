@@ -1,0 +1,2 @@
+bugfixes:
+- ce_bgp_af - update to fix some bugs - XML query result error, update_cmds statement missing. (https://github.com/ansible/ansible/pull/59678)
