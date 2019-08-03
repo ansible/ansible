@@ -39,7 +39,7 @@ options:
   renderer:
     description:
       - Network backend to use for this definition. Currently supported
-        are `networkd`(default) and `NetworkManager`.
+        are C(networkd)(default) and C(NetworkManager).
     choices: [ networkd, NetworkManager ]
     required: false
 
@@ -57,8 +57,26 @@ options:
   type:
     description:
       - Interface type. Some types support additional parameters.
-        (E.g bridges can use stp param).
-    choices: [ bridges, bonds, ethernets, vlans, wifis ]
+        C(bridges) specific params:C(ageing-time), C(priority),
+        C(port-priority), C(forward-delay), C(hello-time), C(max-age),
+        C(path-cost) and C(stp).
+
+        C(bonds) specific params:C(bonding-mode), C(lacp-rate),
+        C(mii-monitor-interval), C(min-links), C(transmit-hash-policy),
+        C(ad-select), C(all-slaves-active), C(arp-interval), C(arp-ip-targets),
+        C(arp-validate), C(arp-all-targets), C(up-delay), C(down-delay),
+        C(fail-over-mac-policy), C(gratuitous-arp), C(packets-per-slave),
+        C(primary-reselect-policy), C(resend-igmp), C(learn-packet-interval)
+        and C(primary).
+
+        C(tunnels) specific params:C(tunneling-mode), C(local), C(remote),
+        C(key), C(keys-input-output).
+
+        C(vlans) specific params:C(id) and C(link).
+
+        C(wifis) specific params:C(access-points-ssid),
+        C(access-points-password) and C(access-points-mode).
+    choices: [ bridges, bonds, tunnels, ethernets, vlans, wifis ]
     required: true
 
   state:
@@ -83,7 +101,7 @@ options:
   link-local:
     description:
       - Configure the link-local addresses to bring up. Valid options are
-        'ipv4' and 'ipv6'(default), which respectively allow enabling IPv4
+        C(ipv4) and C(ipv6) (default), which respectively allow enabling IPv4
         and IPv6 link local addressing.
     choices: [ ipv4, ipv6 ]
     required: false
@@ -965,7 +983,8 @@ def main():
         'renderer': {'choices': ['networkd', 'NetworkManager'],
                      'required': False},
         'version': {'required': False},
-        'type': {'choices': ['bridges', 'bonds', 'ethernets', 'vlans', 'wifis'],
+        'type': {'choices': ['bridges', 'bonds', 'tunnels', 'ethernets',
+                             'vlans', 'wifis'],
                  'required': True},
         'interface-id': {'required': True},
         'state': {'choices': ['present', 'absent'], 'required': True},
