@@ -258,7 +258,7 @@ Try {
             $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
 
             Write-DebugLog "Uninstalling domain controller..."
-            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred -LogPath $log_path
+            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }
