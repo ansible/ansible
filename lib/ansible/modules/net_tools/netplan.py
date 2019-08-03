@@ -45,7 +45,7 @@ options:
 
   version:
     description:
-      - The syntax of the YAML file currently being used.
+      - The syntax of the YAML file currently being used. Default is 2.
     required: false
     type: int
 
@@ -321,7 +321,7 @@ options:
   min-links:
     description:
       - The minimum number of links up in a bond to consider the bond
-        interface to be up (default value: 1).
+        interface to be up (default is 1).
     required: false
     type: int
 
@@ -492,7 +492,7 @@ options:
         maps to the ForwardDelaySec= property for the networkd renderer.
         If no time suffix is specified, the value will be interpreted as
         seconds. You must define an array, with a interface name and the
-        forward delay. E.g: ['eno1', 15].
+        forward delay. E.g:['eno1', 15].
     required: false
     type: list
 
@@ -528,7 +528,7 @@ options:
         a lower cost. This allows a finer control on the network topology
         so that the fastest paths are available whenever possible.
         You must define a list, with a interface name and the path-cost.
-        E.g: ['eno1', 15].
+        E.g:['eno1', 15].
     required: false
     type: list
 
@@ -574,7 +574,7 @@ options:
       - Specifiy input and output keys to use for the tunnel. If this param is
         defined, you can't define the key param. The first value passed on list
         is the input key and the second value is the output key.
-        E.g: [1234, 5678].
+        E.g:[1234, 5678].
     required: false
     type: list
 
