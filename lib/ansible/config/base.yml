@@ -1493,6 +1493,16 @@ INVENTORY_ENABLED:
   ini:
   - {key: enable_plugins, section: inventory}
   type: list
+INVENTORY_RESTORE_ENABLED:
+  name: Inventory fallback toggle to the last good state
+  default: False
+  description:
+    - If a plugin modifies inventory and subsequently fails, the changes to inventory remain.
+    - Setting this option to True keeps a copy of the last good inventory. If an error is encountered the inventory is restored to that state.
+  env: [{name: ANSIBLE_INVENTORY_RESTORE_ENABLED}]
+  ini:
+  - {key: restore, section: inventory}
+  type: bool
 INVENTORY_EXPORT:
   name: Set ansible-inventory into export mode
   default: False
