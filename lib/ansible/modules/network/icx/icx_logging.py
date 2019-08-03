@@ -28,7 +28,7 @@ options:
       - Destination of the logs.
     choices: ['on', 'host', 'console', 'monitor', 'buffered', 'persistence', 'rfc5424']
     type: str
-  host:
+  name:
     description:
       - ipv4 address/ipv6 address/name of  syslog server.
     type: str
@@ -114,7 +114,7 @@ commands:
 
 import re
 from copy import deepcopy
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError, exec_command
 from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_v6_address
 from ansible.module_utils.network.icx.icx import get_config, load_config
@@ -503,8 +503,7 @@ def main():
             choices=[
                 'present',
                 'absent']),
-        check_running_config=dict(
-            type='bool'))
+        check_running_config=dict(default=True, type='bool', fallback=(env_fallback, ['ANSIBLE_CHECK_ICX_RUNNING_CONFIG'])))
 
     aggregate_spec = deepcopy(element_spec)
 
