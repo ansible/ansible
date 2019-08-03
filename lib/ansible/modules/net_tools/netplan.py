@@ -631,16 +631,16 @@ EXAMPLES = '''
 
  - name: Add vlan config interfaces
    netplan:
-     filename: 11-test
+     filename: 12-vlans
      interface-id: brvlan15
      state: present
      type: vlans
      id: 15
      link: br0
 
- - name: Delete vlan config interfaces
+ - name: Remove vlan config interfaces into netplan YAML file
    netplan:
-     filename: 11-test
+     filename: 12-vlans
      interface-id: brvlan15
      type: vlans
      state: absent
