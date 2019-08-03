@@ -50,11 +50,6 @@ options:
       description:
         - The name of the workflow to apply schedule to
       type: str
-    enabled:
-      description:
-        - Is the schedule enabled ?
-      type: bool
-      default: true
     state:
       description:
         - Desired state of the resource.
