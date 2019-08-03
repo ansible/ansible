@@ -45,6 +45,14 @@ options:
     description:
       - List of link aggregation definitions.
     type: list
+    suboptions:
+            group: See I(group)
+            name: See I(name)
+            mode: See I(mode)
+            members: See I(member)
+            state: See I(state)
+            check_running_config: See I(check_running_config)
+
   state:
     description:
       - State of the link aggregation group.
