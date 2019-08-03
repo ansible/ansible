@@ -41,7 +41,7 @@ options:
       - Specifies log facility to log messages from the device.
     choices: ['auth','cron','daemon','kern','local0', 'local1', 'local2', 'local3', 'local4', 'local5', 'local6', 'local7', 'user',
               'lpr','mail','news','syslog','sys9','sys10','sys11','sys12','sys13','sys14','user','uucp']
-    type: list
+    type: str
   level:
     description:
       - Specifies the message level.
