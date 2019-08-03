@@ -77,6 +77,17 @@ EXAMPLES = '''
     tower_password: '{{ tower__password }}'
 '''
 
+RETURN = '''
+schedule:
+    description: the name of the schedule
+    type: str
+    returned: success
+state:
+    description: the effective state of the schedule
+    type: str
+    returned: success
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ansible_tower import (
     TowerModule,
@@ -112,14 +123,13 @@ def main():
         inventory_source=dict(type='str'),
         project=dict(type='str'),
         workflow=dict(type='str'),
-        enabled=dict(type='bool', default=True),
-        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        state=dict(type='str', choices=['present', 'disabled', 'absent'], default='present'),
     )
 
     module = TowerModule(
         argument_spec=argument_spec,
-        mutually_exclusive = [
-          ['job_template', 'inventory_source', 'project', 'workflow'],
+        mutually_exclusive=[
+            ['job_template', 'inventory_source', 'project', 'workflow'],
         ],
         supports_check_mode=True
     )
