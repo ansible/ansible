@@ -613,59 +613,59 @@ options:
 '''
 
 EXAMPLES = '''
-  - name: Add eth1 interface
-    netplan:
-      filename: 10-interfaces
-      type: ethernets
-      interface-id: eth1
-      state: present
-      dhcp4: false
-      addresses:
-        - 192.168.1.100/24
+ - name: Add eth1 interface
+   netplan:
+     filename: 10-interfaces
+     type: ethernets
+     interface-id: eth1
+     state: present
+     dhcp4: false
+     addresses:
+       - 192.168.1.100/24
 
-  - name: Add eth2 interface
-    netplan:
-      filename: 10-interfaces
-      type: ethernets
-      interface-id: eth2
-      state: present
-      dhcp4: false
-      addresses:
-        - 192.168.2.100/24
+ - name: Add eth2 interface
+   netplan:
+     filename: 10-interfaces
+     type: ethernets
+     interface-id: eth2
+     state: present
+     dhcp4: false
+     addresses:
+       - 192.168.2.100/24
 
-  - name: Add br0 bridge interface
-    netplan:
-      filename: 11-bridges
-      type: bridges
-      interfaces:
-        - eth1
-        - eth2
-      interface-id: br0
-      state: present
-      ageing-time: 100
-      priority: 2
-      port-priority:
-        - [eth1, 20]
-        - [eth2, 15]
-      path-cost:
-        - [eth1, 20]
-        - [eth2, 15]
-      forward-delay: 150
-      hello-time: 200
-      max-age: 500
-      stp: false
-      dhcp4: false
-      addresses:
-        - 192.168.1.1/24
-        - 192.168.1.2/24
+ - name: Add br0 bridge interface
+   netplan:
+     filename: 11-bridges
+     type: bridges
+     interfaces:
+       - eth1
+       - eth2
+     interface-id: br0
+     state: present
+     ageing-time: 100
+     priority: 2
+     port-priority:
+       - [eth1, 20]
+       - [eth2, 15]
+     path-cost:
+       - [eth1, 20]
+       - [eth2, 15]
+     forward-delay: 150
+     hello-time: 200
+     max-age: 500
+     stp: false
+     dhcp4: false
+     addresses:
+       - 192.168.1.1/24
+       - 192.168.1.2/24
 
-  - name: Add br1 bridge interface
-    netplan:
-      filename: 11-bridges
-      type: bridges
-      interface-id: br1
-      state: present
-      dhcp4: false
+ - name: Add br1 bridge interface
+   netplan:
+     filename: 11-bridges
+     type: bridges
+     interface-id: br1
+     state: present
+     dhcp4: false
 
  - name: Add vlan config interfaces
    netplan:
