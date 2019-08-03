@@ -413,7 +413,7 @@ If ($state -eq "present") {
 
 	$present_params = @{
 		path = $path
-		regexp = $regex
+		regex = $regex
 		line = $line
 		insertafter = $insertafter
 		insertbefore = $insertbefore
@@ -437,7 +437,7 @@ ElseIf ($state -eq "absent") {
 
 	$absent_params = @{
 		path = $path
-		regexp = $regex
+		regex = $regex
 		line = $line
 		backup = $backup
 		validate = $validate
