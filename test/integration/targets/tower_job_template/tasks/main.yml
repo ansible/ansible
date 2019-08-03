@@ -52,3 +52,15 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Create a Job Schedule
+  tower_schedule:
+    name: hello-world__schedule
+    job_template: hello-world
+    rrule: 'DTSTART;TZID=Europe/Paris:20190625T001500 RRULE:FREQ=HOURLY;INTERVAL=3'
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
