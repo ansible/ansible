@@ -137,6 +137,7 @@
 - name: Format volume with file inside without force
   win_format:
     path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
   register: format_volume_without_force
   ignore_errors: True
 
