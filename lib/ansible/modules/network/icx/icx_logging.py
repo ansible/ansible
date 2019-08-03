@@ -282,7 +282,7 @@ def map_config_to_obj(module):
     dest_group = ('host', 'console', 'buffered', 'persistence', 'enable')
     dest_level = ('alerts', 'critical', 'debugging', 'emergencies', 'errors', 'informational', 'notifications', 'warnings')
     buff_level = list()
-    if module, module.params['check_running_config'] is False:
+    if module.params['check_running_config'] is False:
         return []
     data = get_config(module, flags=['| include logging'])
     facility_match = re.search(r'^logging facility (\S+)', data, re.M)
