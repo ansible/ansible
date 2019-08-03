@@ -466,6 +466,7 @@ options:
         to use as a slave for the bond (ie. the preferred device to send
         data through), whenever it is available. This only affects
         C(active-backup), C(balance-alb), and C(balance-tlb) bonding-modes.
+    required: false
 
   ageing-time:
     description:
@@ -483,6 +484,17 @@ options:
         the root bridge.
     required: false
     type: int
+
+  port-priority:
+    description:
+      - Specify the period of time the bridge will remain in Listening and
+        Learning states before getting to the Forwarding state. This field
+        maps to the ForwardDelaySec= property for the networkd renderer.
+        If no time suffix is specified, the value will be interpreted as
+        seconds. You must define an array, with a interface name and the
+        forward delay. E.g: ['eno1', 15].
+    required: false
+    type: list
 
   forward-delay:
     description:
@@ -512,11 +524,13 @@ options:
 
   path-cost:
     description:
-      - Set the maximum age (in seconds) of a hello packet. If the last hello
-        packet is older than that value, the bridge will attempt to become the
-        root bridge. This maps to the MaxAgeSec= property when the networkd.
+      - Set the cost of a path on the bridge. Faster interfaces should have
+        a lower cost. This allows a finer control on the network topology
+        so that the fastest paths are available whenever possible.
+        You must define a list, with a interface name and the path-cost.
+        E.g: ['eno1', 15].
     required: false
-    type: int
+    type: list
 
   stp:
     description:
@@ -561,16 +575,59 @@ options:
 '''
 
 EXAMPLES = '''
- - name: Add br0 config interfaces
-   netplan:
-    filename: 11-test
-    interface-id: br0
-    type: bridges
-    state: present
-    dhcp4: false
-    addresses:
-      - 192.168.1.1/24
-      - 192.168.1.2/24
+  - name: Add eth1 interface
+    netplan:
+      filename: 10-interfaces
+      type: ethernets
+      interface-id: eth1
+      state: present
+      dhcp4: false
+      addresses:
+        - 192.168.1.100/24
+
+  - name: Add eth2 interface
+    netplan:
+      filename: 10-interfaces
+      type: ethernets
+      interface-id: eth2
+      state: present
+      dhcp4: false
+      addresses:
+        - 192.168.2.100/24
+
+  - name: Add br0 bridge interface
+    netplan:
+      filename: 11-bridges
+      type: bridges
+      interfaces:
+        - eth1
+        - eth2
+      interface-id: br0
+      state: present
+      ageing-time: 100
+      priority: 2
+      port-priority:
+        - [eth1, 20]
+        - [eth2, 15]
+      path-cost:
+        - [eth1, 20]
+        - [eth2, 15]
+      forward-delay: 150
+      hello-time: 200
+      max-age: 500
+      stp: false
+      dhcp4: false
+      addresses:
+        - 192.168.1.1/24
+        - 192.168.1.2/24
+
+  - name: Add br1 bridge interface
+    netplan:
+      filename: 11-bridges
+      type: bridges
+      interface-id: br1
+      state: present
+      dhcp4: false
 
  - name: Add vlan config interfaces
    netplan:
@@ -610,7 +667,7 @@ EXAMPLES = '''
 
  - name: Create bond0 interface
    netplan:
-     filename: 11-brs
+     filename: 11-bonds
      type: bonds
      interface-id: bond0
      state: present
@@ -670,8 +727,8 @@ BONDS = ['bonding-mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
          'packets-per-slave', 'primary-reselect-policy', 'resend-igmp',
          'learn-packet-interval', 'primary']
 
-BRIDGES = ['ageing-time', 'priority', 'forward-delay', 'hello-time',
-           'max-age', 'path-cost', 'stp']
+BRIDGES = ['ageing-time', 'priority', 'port-priority', 'forward-delay',
+           'hello-time', 'max-age', 'path-cost', 'stp']
 
 VLANS = ['id', 'link']
 
@@ -792,6 +849,22 @@ def get_netplan_dict(params):
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['mode'] = params.get(key)
                 else:
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'][key] = params.get(key)
+            elif key in BRIDGES:
+                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('parameters'):
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'] = dict()
+                if key == 'path-cost':
+                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'].get('path-cost'):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['path-cost'] = dict()
+                    for pc in params.get(key):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['path-cost'][pc[0]] = pc[1]
+                elif key == 'port-priority':
+                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'].get('port-priority'):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['port-priority'] = dict()
+                    for pp in params.get(key):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['port-priority'][pp[0]] = pp[1]
+                else:
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'][key] = params.get(key)
+
             elif key in ROUTES:
                 routes_option = '{0}'.format(key.split('routes-')[1])
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('routes'):
@@ -879,13 +952,18 @@ def main():
                                  'required': False},
         'gratuitous-arp': {'required': False, 'type': 'int'},
         'packets-per-slave': {'required': False, 'type': 'int'},
+        'primary-reselect-policy': {'choices': ['always', 'better',
+                                       'failure'], 'required': False},
+        'resend-igmp': {'required': False, 'type': 'int'},
+        'primary': {'required': False},
         'learn-packet-interval': {'required': False, 'type': 'int'},
         'ageing-time': {'required': False, 'type': 'int'},
         'priority': {'required': False, 'type': 'int'},
+        'port-priority': {'required': False, 'type': 'list'},
         'forward-delay': {'required': False, 'type': 'int'},
         'hello-time': {'required': False, 'type': 'int'},
         'max-age': {'required': False, 'type': 'int'},
-        'path-cost': {'required': False, 'type': 'int'},
+        'path-cost': {'required': False, 'type': 'list'},
         'stp': {'required': False, 'type': 'bool'},
         'id': {'required': False, 'type': 'int'},
         'link': {'required': False},
