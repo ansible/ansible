@@ -151,6 +151,6 @@
     that:
       - add_file_to_volume is changed
       - format_volume_without_force is failed
-      - format_volume_without_force_same_fs is ok
+      - format_volume_without_force_same_fs not changed
       - 'format_volume_without_force.msg == "Force format must be specified to format non-pristine volumes"'
       - format_volume_with_force is changed
