@@ -58,7 +58,8 @@ options:
     state:
       description:
         - Desired state of the resource.
-      choices: ["present", "absent"]
+      type: str
+      choices: ["present", "disabled", "absent"]
       default: "present"
 
 extends_documentation_fragment:
@@ -159,8 +160,12 @@ def main():
         project_res = tower_cli.get_resource('project')
         workflow_res = tower_cli.get_resource('workflow')
         params = {}
-        for k in ['name', 'enabled', 'rrule']:
+        for k in ['name', 'rrule']:
             params[k] = module.params.get(k)
+        if module.params['state'] == 'disabled':
+            params['enabled'] = False
+        else:
+            params['enabled'] = True
 
         try:
             try:
@@ -198,8 +203,8 @@ def main():
                     changed=False
                 )
 
-            if state == 'present':
-                if prev_state != state:
+            if state in ['present', 'disabled']:
+                if prev_state == 'absent' and state != 'absent':
                     for key, value in params.items():
                         diff['after'][key] = str(value)
 
@@ -222,7 +227,7 @@ def main():
                             changed = result['changed']
                         else:
                             changed = True
-            elif state == 'absent' and state != prev_state:
+            elif state == 'absent' and prev_state != 'absent':
                 if not module.check_mode:
                     result = schedule_res.delete(name=name)
                     changed = result['changed']
