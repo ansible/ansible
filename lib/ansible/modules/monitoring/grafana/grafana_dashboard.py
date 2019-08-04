@@ -79,10 +79,12 @@ options:
       - Override existing dashboard when state is present.
     type: bool
     default: 'no'
-  message:
+  commit_message:
     description:
       - Set a commit message for the version history.
       - Only used when C(state) is C(present).
+      - C(message) alias is deprecated in Ansible 2.10, since it is used internally by Ansible Core Engine.
+    aliases: [ 'message' ]
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated.
@@ -116,7 +118,7 @@ EXAMPLES = '''
         grafana_url: http://grafana.company.com
         grafana_api_key: "{{ grafana_api_key }}"
         state: present
-        message: Updated by ansible
+        commit_message: Updated by ansible
         overwrite: yes
         path: /path/to/dashboards/foo.json
 
@@ -353,8 +355,8 @@ def grafana_create_dashboard(module, data):
             # update
             if 'overwrite' in data and data['overwrite']:
                 payload['overwrite'] = True
-            if 'message' in data and data['message']:
-                payload['message'] = data['message']
+            if 'commit_message' in data and data['commit_message']:
+                payload['message'] = data['commit_message']
 
             r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'],
                                 data=json.dumps(payload), headers=headers, method='POST')
@@ -371,7 +373,7 @@ def grafana_create_dashboard(module, data):
             else:
                 body = json.loads(info['body'])
                 raise GrafanaAPIException('Unable to update the dashboard %s : %s (HTTP: %d)' %
-                                          (uid, body['message'], info['status']))
+                                          (uid, body['commit_message'], info['status']))
         else:
             # unchanged
             result['uid'] = uid
@@ -499,7 +501,7 @@ def main():
         slug=dict(type='str'),
         path=dict(type='str'),
         overwrite=dict(type='bool', default=False),
-        message=dict(type='str'),
+        commit_message=dict(type='str', aliases=['message'], deprecated_aliases=[dict(name='message', version='2.14')]),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -507,6 +509,9 @@ def main():
         required_together=[['url_username', 'url_password', 'org_id']],
         mutually_exclusive=[['grafana_user', 'grafana_api_key'], ['uid', 'slug']],
     )
+
+    if 'message' in module.params:
+        module.fail_json(msg="'message' is reserved keyword, please change this parameter to 'commit_message'")
 
     try:
         if module.params['state'] == 'present':
