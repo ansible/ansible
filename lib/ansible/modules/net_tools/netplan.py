@@ -308,13 +308,15 @@ options:
   interfaces:
     description:
       - All devices matching this ID list will be added or associated to
-        bridges or bonds.
+        bridges or bonds. Required if I(state=present) and I(type=bonds) or
+        I(type=bridges).
     required: false
     type: list
 
   bonding-mode:
     description:
       - Set the link bonding mode used for the interfaces.
+        Required if I(state=present) and I(type=bonds).
     choices: [ balance-rr, active-backup, balance-xor, broadcast,
                802.3ad, balance-tlb, balance-alb ]
     required: false
@@ -823,6 +825,9 @@ def validate_args(module):
                 if key in WIFIS:
                     module.fail_json(msg='WIFIs options can not be defined with bridge Type')
     if module.params['type'] == 'bonds':
+        if module.params['state'] == 'present':
+            if not module.params.get('interfaces') or not module.params.get('bonding-mode'):
+                module.fail_json(msg='bonds type require: [interfaces, bonding-mode]')
         for key in module.params:
             if module.params.get(key) is not None:
                 if key in BRIDGES:
@@ -1066,7 +1071,7 @@ def main():
                       'required': False},
         'all-slaves-active': {'required': False, 'type': 'bool'},
         'arp-interval': {'required': False, 'type': 'int'},
-        'arp-ip-targets': {'required': False},
+        'arp-ip-targets': {'required': False, 'type': 'list'},
         'arp-validate': {'choices': ['none', 'active', 'backup', 'all'],
                          'required': False},
         'arp-all-targets': {'choices': ['any', 'all'], 'required': False},
@@ -1105,12 +1110,7 @@ def main():
                                'required': False}
     }
 
-    # This is not necessary if state is absent
-    required_if = [['type', 'bonds', ['interfaces', 'bonding-mode']]]
-
-    module = AnsibleModule(argument_spec,
-                           required_if=required_if,
-                           supports_check_mode=True)
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     if not HAS_YAML:
         module.fail_json(msg='The PyYAML Python module is required')
