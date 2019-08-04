@@ -813,125 +813,127 @@ WIFIS = ['access-points-ssid', 'access-points-password', 'access-points-mode']
 
 
 def validate_args(module):
-    if module.params['type'] == 'bridges':
-        for key in module.params:
-            if module.params.get(key) is not None:
-                if key in BONDS:
-                    module.fail_json(msg='BONDs options can not be defined with bridge Type')
-                if key in TUNNELS:
-                    module.fail_json(msg='TUNNELs options can not be defined with bridge Type')
-                if key in VLANS:
-                    module.fail_json(msg='VLANs options can not be defined with bridge Type')
-                if key in WIFIS:
-                    module.fail_json(msg='WIFIs options can not be defined with bridge Type')
-    if module.params['type'] == 'bonds':
-        if module.params['state'] == 'present':
+    if module.params['state'] == 'present':
+        if module.params['type'] == 'bridges':
+            for key in module.params:
+                if module.params.get(key) is not None:
+                    if key in BONDS:
+                        module.fail_json(msg='BONDs options can not be defined with bridge Type')
+                    if key in TUNNELS:
+                        module.fail_json(msg='TUNNELs options can not be defined with bridge Type')
+                    if key in VLANS:
+                        module.fail_json(msg='VLANs options can not be defined with bridge Type')
+                    if key in WIFIS:
+                        module.fail_json(msg='WIFIs options can not be defined with bridge Type')
+        if module.params['type'] == 'bonds':
             if not module.params.get('interfaces') or not module.params.get('bonding-mode'):
                 module.fail_json(msg='bonds type require: [interfaces, bonding-mode]')
-        for key in module.params:
-            if module.params.get(key) is not None:
-                if key in BRIDGES:
-                    module.fail_json(msg='BRIDGES options can not be defined with bonds Type')
-                if key in TUNNELS:
-                    module.fail_json(msg='TUNNELs options can not be defined with bonds Type')
-                if key in VLANS:
-                    module.fail_json(msg='VLANS options can not be defined with bonds Type')
-                if key in WIFIS:
-                    module.fail_json(msg='WIFIs options can not be defined with bonds Type')
-                # Verify bonds params dependences:
-                # lacpt-rate depends on bonding-mode == 802.3ad
-                # transmit-hash-policy depends on bonding-mode == 802.3ad or balance-tlb or balance-xor
-                # ad-select depends on bonding-mode == 802.3ad
-                # arp-all-target depends on bonding-mode == active-backup and arp-validate == true
-                # gratuitous-arp depends on bonding-mode == active-backup
-                # packets-per-slave depends on bonding-mode == balance-rr
-                # learn-packet-interval depends on bonding-mode == balance-tlb or balance-alb
-                # primary depends on bonding-mode == active-backup or balance-tlb or balance-alb
-                if key == 'lacpt-rate' or key == 'ad-select':
-                    if module.params['bonding-mode'] != '802.3ad':
-                        module.fail_json(msg='bonding-mode must be 802.3ad to define {0} param'.format(key))
-                if key == 'transmit-hash-policy':
-                    if module.params['bonding-mode'] != '802.3ad' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-xor':
-                        module.fail_json(msg='bonding-mode must be 802.3ad or balance-tlb or balance-xor to define {0} param'.format(key))
-                if key == 'arp-all-target':
-                    if module.params['bonding-mode'] != 'active-backup' and not module.params['arp-validate']:
-                        module.fail_json(msg='bonding-mode and arp-validade both must be active-backup and true to define {0} param'.format(key))
-                if key == 'gratuitous-arp':
-                    if module.params['bonding-mode'] != 'active-backup':
-                        module.fail_json(msg='bonding-mode must be active-backup to define {0} param'.format(key))
-                if key == 'packets-per-slave':
-                    if module.params['bonding-mode'] != 'balance-rr':
-                        module.fail_json(msg='bonding-mode must be balance-rr to define {0} param'.format(key))
-                if key == 'learn-packet-interval':
-                    if module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
-                        module.fail_json(msg='bonding-mode must be balance-tlb or balance-alb to define {0} param'.format(key))
-                if key == 'primary':
-                    if module.params['bonding-mode'] != 'active-backup' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
-                        module.fail_json(msg='bonding-mode must be active-backup or balance-tlb or balance-alb to define {0} param'.format(key))
-    if module.params['type'] == 'tunnels':
-        if module.params['state'] == 'present':
+            for key in module.params:
+                if module.params.get(key) is not None:
+                    if key in BRIDGES:
+                        module.fail_json(msg='BRIDGES options can not be defined with bonds Type')
+                    if key in TUNNELS:
+                        module.fail_json(msg='TUNNELs options can not be defined with bonds Type')
+                    if key in VLANS:
+                        module.fail_json(msg='VLANS options can not be defined with bonds Type')
+                    if key in WIFIS:
+                        module.fail_json(msg='WIFIs options can not be defined with bonds Type')
+                    # Verify bonds params dependences:
+                    # lacpt-rate depends on bonding-mode == 802.3ad
+                    # transmit-hash-policy depends on bonding-mode == 802.3ad or balance-tlb or balance-xor
+                    # ad-select depends on bonding-mode == 802.3ad
+                    # arp-all-target depends on bonding-mode == active-backup and arp-validate == true
+                    # gratuitous-arp depends on bonding-mode == active-backup
+                    # packets-per-slave depends on bonding-mode == balance-rr
+                    # learn-packet-interval depends on bonding-mode == balance-tlb or balance-alb
+                    # primary depends on bonding-mode == active-backup or balance-tlb or balance-alb
+                    if key == 'lacpt-rate' or key == 'ad-select':
+                        if module.params['bonding-mode'] != '802.3ad':
+                            module.fail_json(msg='bonding-mode must be 802.3ad to define {0} param'.format(key))
+                    if key == 'transmit-hash-policy':
+                        if module.params['bonding-mode'] != '802.3ad' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-xor':
+                            module.fail_json(msg='bonding-mode must be 802.3ad or balance-tlb or balance-xor to define {0} param'.format(key))
+                    if key == 'arp-all-target':
+                        if module.params['bonding-mode'] != 'active-backup' and not module.params['arp-validate']:
+                            module.fail_json(msg='bonding-mode and arp-validade both must be active-backup and true to define {0} param'.format(key))
+                    if key == 'gratuitous-arp':
+                        if module.params['bonding-mode'] != 'active-backup':
+                            module.fail_json(msg='bonding-mode must be active-backup to define {0} param'.format(key))
+                    if key == 'packets-per-slave':
+                        if module.params['bonding-mode'] != 'balance-rr':
+                            module.fail_json(msg='bonding-mode must be balance-rr to define {0} param'.format(key))
+                    if key == 'learn-packet-interval':
+                        if module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
+                            module.fail_json(msg='bonding-mode must be balance-tlb or balance-alb to define {0} param'.format(key))
+                    if key == 'primary':
+                        if module.params['bonding-mode'] != 'active-backup' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
+                            module.fail_json(msg='bonding-mode must be active-backup or balance-tlb or balance-alb to define {0} param'.format(key))
+        if module.params['type'] == 'tunnels':
             if not module.params.get('tunneling-mode') or not module.params.get('local') or not module.params.get('remote'):
                 module.fail_json(msg='tunnels type require: [tunneling-mode, local, remote]')
-        for key in module.params:
-            if module.params.get(key) is not None:
-                if key in BONDS:
-                    module.fail_json(msg='BONDs options can not be defined with tunnel Type')
-                if key in BRIDGES:
-                    module.fail_json(msg='BRIDGES options can not be defined with tunnel Type')
-                if key in VLANS:
-                    module.fail_json(msg='VLANs options can not be defined with tunnel Type')
-                if key in WIFIS:
-                    module.fail_json(msg='WIFIs options can not be defined with tunnel Type')
-                # gretap and ip6gretap tunneling-mode only supported if renderer == networkd
-                # isatap tunneling-mode only supported if renderer == NetworkManager
-                if key == 'tunneling-mode':
-                    if module.params['tunneling-mode'] == 'gretap' or module.params['tunneling-mode'] == 'ip6gretap':
-                        if module.params['renderer'] == 'NetworkManager':
-                            module.fail_json(msg="gretap and ip6gretap tunneling-mode are only supported on networkd render")
-                    if module.params['tunneling-mode'] == 'isatap':
-                        if module.params['renderer'] == 'networkd' or not module.params.get('renderer'):
-                            module.fail_json(msg="isatap tunneling-mode is only supported on NetworkManager render")
-    if module.params['type'] == 'ethernets':
-        for key in module.params:
-            if module.params.get(key) is not None:
-                if key in BONDS:
-                    module.fail_json(msg='BONDS options can not be defined with ethernets Type')
-                if key in BRIDGES:
-                    module.fail_json(msg='BRIDGES options can not be defined with ethernets Type')
-                if key in TUNNELS:
-                    module.fail_json(msg='TUNNELs options can not be defined with ethernets Type')
-                if key in VLANS:
-                    module.fail_json(msg='VLANS options can not be defined with ethernets Type')
-                if key in WIFIS:
-                    module.fail_json(msg='WIFIs options can not be defined with ethernets Type')
-    if module.params['type'] == 'vlans':
-        if module.params['state'] == 'present':
+            for key in module.params:
+                if module.params.get(key) is not None:
+                    if key in BONDS:
+                        module.fail_json(msg='BONDs options can not be defined with tunnel Type')
+                    if key in BRIDGES:
+                        module.fail_json(msg='BRIDGES options can not be defined with tunnel Type')
+                    if key in VLANS:
+                        module.fail_json(msg='VLANs options can not be defined with tunnel Type')
+                    if key in WIFIS:
+                        module.fail_json(msg='WIFIs options can not be defined with tunnel Type')
+                    # gretap and ip6gretap tunneling-mode only supported if renderer == networkd
+                    # isatap tunneling-mode only supported if renderer == NetworkManager
+                    if key == 'tunneling-mode':
+                        if module.params['tunneling-mode'] == 'gretap' or module.params['tunneling-mode'] == 'ip6gretap':
+                            if module.params['renderer'] == 'NetworkManager':
+                                module.fail_json(msg="gretap and ip6gretap tunneling-mode are only supported on networkd render")
+                        if module.params['tunneling-mode'] == 'isatap':
+                            if module.params['renderer'] == 'networkd' or not module.params.get('renderer'):
+                                module.fail_json(msg="isatap tunneling-mode is only supported on NetworkManager render")
+        if module.params['type'] == 'ethernets':
+            for key in module.params:
+                if module.params.get(key) is not None:
+                    if key in BONDS:
+                        module.fail_json(msg='BONDS options can not be defined with ethernets Type')
+                    if key in BRIDGES:
+                        module.fail_json(msg='BRIDGES options can not be defined with ethernets Type')
+                    if key in TUNNELS:
+                        module.fail_json(msg='TUNNELs options can not be defined with ethernets Type')
+                    if key in VLANS:
+                        module.fail_json(msg='VLANS options can not be defined with ethernets Type')
+                    if key in WIFIS:
+                        module.fail_json(msg='WIFIs options can not be defined with ethernets Type')
+        if module.params['type'] == 'vlans':
             if not module.params.get('id') or not module.params.get('link'):
                 module.fail_json(msg='vlans type require: [id, link]')
-        for key in module.params:
-            if module.params.get(key) is not None:
-                if key in BONDS:
-                    module.fail_json(msg='BONDS options can not be defined with vlans Type')
-                if key in BRIDGES:
-                    module.fail_json(msg='BRIDGES options can not be defined with vlans Type')
-                if key in TUNNELS:
-                    module.fail_json(msg='TUNNELS options can not be defined with vlans Type')
-                if key in WIFIS:
-                    module.fail_json(msg='WIFIs options can not be defined with vlans Type')
-    if module.params['type'] == 'wifis':
-        if module.params['state'] == 'present':
+            for key in module.params:
+                if module.params.get(key) is not None:
+                    if key in BONDS:
+                        module.fail_json(msg='BONDS options can not be defined with vlans Type')
+                    if key in BRIDGES:
+                        module.fail_json(msg='BRIDGES options can not be defined with vlans Type')
+                    if key in TUNNELS:
+                        module.fail_json(msg='TUNNELS options can not be defined with vlans Type')
+                    if key in WIFIS:
+                        module.fail_json(msg='WIFIs options can not be defined with vlans Type')
+        if module.params['type'] == 'wifis':
             if not module.params.get('access-points-ssid') or not module.params.get('access-points-password') or not module.params.get('access-points-mode'):
                 module.fail_json(msg='wifis type require: [access-points-ssid, access-points-password, access-points-mode]')
+            for key in module.params:
+                if module.params.get(key) is not None:
+                    if key in BONDS:
+                        module.fail_json(msg='BONDS options can not be defined with wifis Type')
+                    if key in BRIDGES:
+                        module.fail_json(msg='BRIDGES options can not be defined with wifis Type')
+                    if key in TUNNELS:
+                        module.fail_json(msg='TUNNELS options can not be defined with wifis Type')
+                    if key in VLANS:
+                        module.fail_json(msg='VLANS options can not be defined with wifis Type')
+    else:
         for key in module.params:
             if module.params.get(key) is not None:
-                if key in BONDS:
-                    module.fail_json(msg='BONDS options can not be defined with wifis Type')
-                if key in BRIDGES:
-                    module.fail_json(msg='BRIDGES options can not be defined with wifis Type')
-                if key in TUNNELS:
-                    module.fail_json(msg='TUNNELS options can not be defined with wifis Type')
-                if key in VLANS:
-                    module.fail_json(msg='VLANS options can not be defined with wifis Type')
+                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + ROUTES + DHCP_OVERRIDES + MATCH:
+                    module.fail_json(msg="When state is absent, just use this params:[filename, type, interface-id]")
 
 
 def get_netplan_dict(params):
@@ -1146,9 +1148,7 @@ def main():
         # Remove interface
         else:
             if not netplan_file_dict['network'].get(module.params.get('type'), False):
-                module.fail_json(msg='Type {0} or Interface {1} does not defined on {2} file'.format(module.params.get('type'),
-                                                                                                     module.params.get('interface-id'),
-                                                                                                     NETPLAN_FILENAME))
+                module.exit_json(changed=False)
             if not netplan_file_dict['network'][module.params.get('type')].pop(module.params.get('interface-id'), False):
                 module.exit_json(changed=False)
             else:
@@ -1167,7 +1167,7 @@ def main():
             module.run_command('netplan apply', check_rc=True)
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg='Interface {0} can not removed because {1} file does not exist'.format(module.params.get('interface-id'), NETPLAN_FILENAME))
+            module.fail_json(msg='Interface {0} can not be removed because {1} file does not exist'.format(module.params.get('interface-id'), NETPLAN_FILENAME))
 
 
 if __name__ == '__main__':
