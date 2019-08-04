@@ -404,8 +404,8 @@ def _sign_request_cryptography(module, payload64, protected64, key_data):
     sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
     if isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
         padding = cryptography.hazmat.primitives.asymmetric.padding.PKCS1v15()
-        hashalg = cryptography.hazmat.primitives.hashes.SHA256()
-        signature = key_data['key_obj'].sign(sign_payload, padding, hash)
+        hashalg = cryptography.hazmat.primitives.hashes.SHA256
+        signature = key_data['key_obj'].sign(sign_payload, padding, hashalg())
     elif isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
         if key_data['hash'] == 'sha256':
             hashalg = cryptography.hazmat.primitives.hashes.SHA256
