@@ -26,6 +26,9 @@
 # Copyright (c) the OpenSSL contributors
 # For more details, search for the function _OID_MAP.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 from distutils.version import LooseVersion
 

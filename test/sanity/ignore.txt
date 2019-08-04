@@ -211,8 +211,6 @@ lib/ansible/module_utils/compat/ipaddress.py no-assert
 lib/ansible/module_utils/compat/ipaddress.py no-unicode-literals
 lib/ansible/module_utils/connection.py future-import-boilerplate
 lib/ansible/module_utils/connection.py metaclass-boilerplate
-lib/ansible/module_utils/crypto.py future-import-boilerplate
-lib/ansible/module_utils/crypto.py metaclass-boilerplate
 lib/ansible/module_utils/database.py future-import-boilerplate
 lib/ansible/module_utils/database.py metaclass-boilerplate
 lib/ansible/module_utils/digital_ocean.py future-import-boilerplate
@@ -6084,8 +6082,6 @@ lib/ansible/plugins/doc_fragments/a10.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/a10.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/aci.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/aci.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/acme.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/acme.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/aireos.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/aireos.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/alicloud.py future-import-boilerplate
@@ -6325,8 +6321,6 @@ test/integration/targets/aws_lambda/files/mini_lambda.py metaclass-boilerplate
 test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/module_utils/MyPSMU.psm1 pslint:PSUseApprovedVerbs
 test/integration/targets/expect/files/test_command.py future-import-boilerplate
 test/integration/targets/expect/files/test_command.py metaclass-boilerplate
-test/integration/targets/get_certificate/files/process_certs.py future-import-boilerplate
-test/integration/targets/get_certificate/files/process_certs.py metaclass-boilerplate
 test/integration/targets/get_url/files/testserver.py future-import-boilerplate
 test/integration/targets/get_url/files/testserver.py metaclass-boilerplate
 test/integration/targets/group/files/gidget.py future-import-boilerplate
@@ -6484,8 +6478,6 @@ test/units/mock/path.py future-import-boilerplate
 test/units/mock/path.py metaclass-boilerplate
 test/units/mock/yaml_helper.py future-import-boilerplate
 test/units/mock/yaml_helper.py metaclass-boilerplate
-test/units/module_utils/acme/test_acme.py future-import-boilerplate
-test/units/module_utils/acme/test_acme.py metaclass-boilerplate
 test/units/module_utils/aws/test_aws_module.py metaclass-boilerplate
 test/units/module_utils/basic/test__symbolic_mode_to_octal.py future-import-boilerplate
 test/units/module_utils/basic/test_deprecate_warn.py future-import-boilerplate
@@ -6640,8 +6632,6 @@ test/units/modules/cloud/xenserver/FakeXenAPI.py future-import-boilerplate
 test/units/modules/cloud/xenserver/FakeXenAPI.py metaclass-boilerplate
 test/units/modules/conftest.py future-import-boilerplate
 test/units/modules/conftest.py metaclass-boilerplate
-test/units/modules/crypto/test_luks_device.py future-import-boilerplate
-test/units/modules/crypto/test_luks_device.py metaclass-boilerplate
 test/units/modules/files/test_copy.py future-import-boilerplate
 test/units/modules/messaging/rabbitmq/test_rabbimq_user.py future-import-boilerplate
 test/units/modules/messaging/rabbitmq/test_rabbimq_user.py metaclass-boilerplate
