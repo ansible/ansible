@@ -269,6 +269,8 @@ class RedfishUtils(object):
     def get_logs(self):
         log_svcs_uri_list = []
         list_of_logs = []
+        properties = ['Severity', 'Created', 'EntryType', 'OemRecordFormat',
+                      'Message', 'MessageId', 'MessageArgs']
 
         # Find LogService
         response = self.get_request(self.root_uri + self.manager_uri)
@@ -304,12 +306,12 @@ class RedfishUtils(object):
                                            'Collection of log entries')
             # Get all log entries for each type of log found
             for logEntry in data.get('Members', []):
-                # I only extract some fields - Are these entry names standard?
-                list_of_log_entries.append(dict(
-                    Name=logEntry.get('Name'),
-                    Created=logEntry.get('Created'),
-                    Message=logEntry.get('Message'),
-                    Severity=logEntry.get('Severity')))
+                entry = {}
+                for prop in properties:
+                    if prop in logEntry:
+                        entry[prop] = logEntry.get(prop)
+                if entry:
+                    list_of_log_entries.append(entry)
             log_name = log_svcs_uri.split('/')[-1]
             logs[log_name] = list_of_log_entries
             list_of_logs.append(logs)
