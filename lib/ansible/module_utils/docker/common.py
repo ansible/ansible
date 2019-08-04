@@ -562,12 +562,12 @@ class AnsibleDockerClient(Client):
         '''
         Lookup a network and return the inspection results.
         '''
-        if name is None and id is None:
+        if name is None and network_id is None:
             return None
 
         result = None
 
-        if id is None:
+        if network_id is None:
             try:
                 for network in self.networks():
                     self.log("testing network: %s" % (network['Name']))
@@ -583,12 +583,12 @@ class AnsibleDockerClient(Client):
                 self.fail("Error retrieving network list: %s" % exc)
 
         if result is not None:
-            id = result['Id']
+            network_id = result['Id']
 
-        if id is not None:
+        if network_id is not None:
             try:
-                self.log("Inspecting network Id %s" % id)
-                result = self.inspect_network(id)
+                self.log("Inspecting network Id %s" % network_id)
+                result = self.inspect_network(network_id)
                 self.log("Completed network inspection")
             except NotFound as dummy:
                 return None
