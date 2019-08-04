@@ -637,19 +637,19 @@ def generate_pgroups_dict(array):
             pgroups_facts[protgroup]['days'] = prot_reten['days']
             pgroups_facts[protgroup]['all_for'] = prot_reten['all_for']
             pgroups_facts[protgroup]['target_all_for'] = prot_reten['target_all_for']
-            if ":" in protgroup:
-                snap_transfers = array.get_pgroup(protgroup, snap=True, transfer=True)
-                pgroups_facts[protgroup]['snaps'] = {}
-                for snap_transfer in range(0, len(snap_transfers)):
-                    snap = snap_transfers[snap_transfer]['name']
-                    pgroups_facts[protgroup]['snaps'][snap] = {
-                        'created': snap_transfers[snap_transfer]['created'],
-                        'started': snap_transfers[snap_transfer]['started'],
-                        'completed': snap_transfers[snap_transfer]['completed'],
-                        'physical_bytes_written': snap_transfers[snap_transfer]['physical_bytes_written'],
-                        'data_transferred': snap_transfers[snap_transfer]['data_transferred'],
-                        'progress': snap_transfers[snap_transfer]['progress'],
-                    }
+        if ":" in protgroup:
+            snap_transfers = array.get_pgroup(protgroup, snap=True, transfer=True)
+            pgroups_facts[protgroup]['snaps'] = {}
+            for snap_transfer in range(0, len(snap_transfers)):
+                snap = snap_transfers[snap_transfer]['name']
+                pgroups_facts[protgroup]['snaps'][snap] = {
+                    'created': snap_transfers[snap_transfer]['created'],
+                    'started': snap_transfers[snap_transfer]['started'],
+                    'completed': snap_transfers[snap_transfer]['completed'],
+                    'physical_bytes_written': snap_transfers[snap_transfer]['physical_bytes_written'],
+                    'data_transferred': snap_transfers[snap_transfer]['data_transferred'],
+                    'progress': snap_transfers[snap_transfer]['progress'],
+                }
     return pgroups_facts
 
 
