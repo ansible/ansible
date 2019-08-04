@@ -258,9 +258,9 @@ class CertificateSet(object):
         '''
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if os.path.isdir(b_path):
-            for dir, dummy, files in os.walk(b_path, followlinks=True):
+            for directory, dummy, files in os.walk(b_path, followlinks=True):
                 for file in files:
-                    self._load_file(os.path.join(dir, file))
+                    self._load_file(os.path.join(directory, file))
         else:
             self._load_file(b_path)
 

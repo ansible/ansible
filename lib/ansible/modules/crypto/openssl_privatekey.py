@@ -487,7 +487,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
             self.module.fail_json(msg='Your cryptography version does not support Ed448')
 
     def _generate_private_key_data(self):
-        format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
+        export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
         try:
             if self.type == 'RSA':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
@@ -502,16 +502,16 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 )
             if CRYPTOGRAPHY_HAS_X25519_FULL and self.type == 'X25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if self.type == 'ECC' and self.curve in self.curves:
                 if self.curves[self.curve]['deprecated']:
                     self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.curve))
@@ -533,7 +533,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         # Serialize key
         return self.privatekey.private_bytes(
             encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
-            format=format,
+            format=export_format,
             encryption_algorithm=encryption_algorithm
         )
 

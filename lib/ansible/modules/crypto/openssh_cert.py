@@ -365,7 +365,7 @@ class Certificate(object):
 
         # This function is for backwards compatability only because .total_seconds() is new in python2.7
         def timedelta_total_seconds(time_delta):
-            return ((time_delta.microseconds + 0.0 + (time_delta.seconds + time_delta.days * 24 * 3600) * 10 ** 6) / 10 ** 6)
+            return (time_delta.microseconds + 0.0 + (time_delta.seconds + time_delta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
         # try to use .total_ seconds() from python2.7
         try:
             return (datetime_one - datetime_two).total_seconds() == 0.0
@@ -517,7 +517,6 @@ class Certificate(object):
                 raise CertificateError(exc)
             else:
                 pass
-        return
 
 
 def main():

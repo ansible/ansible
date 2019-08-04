@@ -1735,10 +1735,10 @@ def cryptography_get_name(name):
     raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
 
 
-def _get_hex(bytes):
-    if bytes is None:
-        return bytes
-    data = binascii.hexlify(bytes)
+def _get_hex(bytesstr):
+    if bytesstr is None:
+        return bytesstr
+    data = binascii.hexlify(bytesstr)
     data = to_text(b':'.join(data[i:i + 2] for i in range(0, len(data), 2)))
     return data
 
