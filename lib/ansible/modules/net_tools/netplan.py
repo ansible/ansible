@@ -305,6 +305,33 @@ options:
         must be true.
     required: false
 
+  routes:
+    description:
+      - Defines standard static routes for an interface. The routes must be
+        defined using a list of dicts, E.g:- {to:0.0.0.0/0, via:1.1.1.1/8}.
+        Valid dict keys are:
+        C(from) set a source IP address for traffic going through the route;
+        C(to) defines the destination address for the route;
+        C(via) defines the gateway address to use for this route;
+        C(on-link) specifies that the route is directly connected to
+        the interface (boolean);
+        C(metric) specifies the relative priority of the route.
+        Must be a positive integer value;
+        C(type) specifies the type of route. Valid options are "unicast"
+        (default), "unreachable", "blackhole" or "prohibit";
+        C(scope) defines the route scope, how wide-ranging it is to the network.
+        Possible values are "global", "link", or "host";
+        C(table) defines the table number to use for the route.
+        In some scenarios, it may be useful to set routes in a separate
+        routing table. It may also be used to refer to routing policy rules
+        which also accept a table parameter. Allowed values are positive
+        integers starting from 1. Some values are already in use to refer to
+        specific routing tables:see C(/etc/iproute2/rt_tables).
+
+        At least the suboptions I(to) and I(via) must be specified.
+    required: false
+    type: list
+
   interfaces:
     description:
       - All devices matching this ID list will be added or associated to
@@ -657,6 +684,9 @@ EXAMPLES = '''
      dhcp4: false
      addresses:
        - 192.168.2.100/24
+     routes:
+       - {to: 0.0.0.0/0, via: 192.168.2.1/24, type: unicast, scope: global}
+       - {to: 10.0.0.0/0, via: 192.168.2.2/24}
 
  - name: Add br0 bridge interface
    netplan:
@@ -792,8 +822,7 @@ DHCP_OVERRIDES = ['dhcp4-overrides-use-dns',
                   'dhcp6-overrides-send-hostname',
                   'dhcp6-overrides-hostname']
 
-ROUTES = ['routes-from', 'routes-to', 'routes-via', 'routes-on-link',
-          'routes-metric', 'routes-type', 'routes-scope', 'routes-table']
+ROUTES = ['from', 'to', 'via', 'on-link', 'metric', 'type', 'scope', 'table']
 
 BONDS = ['bonding-mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
          'transmit-hash-policy', 'ad-select', 'all-slaves-active',
@@ -814,6 +843,39 @@ WIFIS = ['access-points-ssid', 'access-points-password', 'access-points-mode']
 
 def validate_args(module):
     if module.params['state'] == 'present':
+        # validate general params
+        if module.params.get('routes'):
+            for route in module.params.get('routes'):
+                # to and via specified
+                if not route.get('to', False) or not route.get('via', False):
+                    module.fail_json(msg='Route keys \'to\' and \'via\' must be specified on route dict')
+                # on-link specified
+                if route.get('on-link'):
+                    on_link_values = ['true', 'false']
+                    if route.get('on-link') not in on_link_values:
+                        module.fail_json(msg='Routes on-link supported: {0}'.format(on_link_values))
+                # metric specified
+                if route.get('metric'):
+                    if int(route.get('metric')) < 0:
+                        module.fail_json(msg='Routes metric must be a positive integer value')
+                # type specified
+                if route.get('type'):
+                    type_values = ['unicast', 'unreachable', 'blackhole', 'prohibit']
+                    if route.get('type') not in type_values:
+                        module.fail_json(msg='Routes type supported: {0}'.format(type_values))
+                # scope specified
+                if route.get('scope'):
+                    scope_values = ['global', 'link', 'host']
+                    if route.get('scope') not in scope_values:
+                        module.fail_json(msg='Routes scope supported: {0}'.format(scope_values))
+                # table specified
+                # Verify /etc/iproute2/rt_tables before try to add a table.
+                if route.get('table'):
+                    if int(route.get('table')) < 1:
+                        module.fail_json(msg='Routes table values must be positive integers starting from 1.')
+                for route_keys in route.keys():
+                    if route_keys not in ROUTES:
+                        module.fail_json(msg='Routes subparams supported: {0}'.format(ROUTES))
         if module.params['type'] == 'bridges':
             for key in module.params:
                 if module.params.get(key) is not None:
@@ -932,7 +994,7 @@ def validate_args(module):
     else:
         for key in module.params:
             if module.params.get(key) is not None:
-                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + ROUTES + DHCP_OVERRIDES + MATCH:
+                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + MATCH:
                     module.fail_json(msg="When state is absent, just use this params:[filename, type, interface-id]")
 
 
@@ -995,11 +1057,6 @@ def get_netplan_dict(params):
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode']['keys']['output'] = params.get(key)[1]
                 else:
                     netplan_dict['network'][params.get('type')][params.get('interface-id')][key] = params.get(key)
-            elif key in ROUTES:
-                routes_option = '{0}'.format(key.split('routes-')[1])
-                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('routes'):
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['routes'] = dict()
-                netplan_dict['network'][params.get('type')][params.get('interface-id')]['routes'][routes_option] = params.get(key)
             elif key in WIFIS:
                 wifi_option = key.split('access-points-')[1]
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
@@ -1057,6 +1114,7 @@ def main():
         'dhcp6-overrides-use-hostname': {'required': False, 'type': 'bool'},
         'dhcp6-overrides-send-hostname': {'required': False, 'type': 'bool'},
         'dhcp6-overrides-hostname': {'required': False},
+        'routes': {'required': False, 'type': 'list'},
         'interfaces': {'required': False, 'type': 'list'},
         'bonding-mode': {'choices': ['balance-rr', 'active-backup', 'balance-xor',
                              'broadcast', '802.3ad', 'balance-tlb',
