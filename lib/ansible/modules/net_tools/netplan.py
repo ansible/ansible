@@ -705,8 +705,6 @@ EXAMPLES = '''
      interface-id: brvlan15
      type: vlans
      state: absent
-     id: 15
-     link: br0
 
  - name: Add ethernet config interfaces
    netplan:
@@ -902,6 +900,9 @@ def validate_args(module):
                 if key in WIFIS:
                     module.fail_json(msg='WIFIs options can not be defined with ethernets Type')
     if module.params['type'] == 'vlans':
+        if module.params['state'] == 'present':
+            if not module.params.get('id') or not module.params.get('link'):
+                module.fail_json(msg='vlans type require: [id, link]')
         for key in module.params:
             if module.params.get(key) is not None:
                 if key in BONDS:
@@ -1105,8 +1106,7 @@ def main():
     }
 
     # This is not necessary if state is absent
-    required_if = [['type', 'bonds', ['interfaces', 'bonding-mode']],
-                   ['type', 'vlans', ['id', 'link']]]
+    required_if = [['type', 'bonds', ['interfaces', 'bonding-mode']]]
 
     module = AnsibleModule(argument_spec,
                            required_if=required_if,
