@@ -250,8 +250,8 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
             curve = 'P-521'
         else:
             return 'unknown elliptic curve: %s / %s' % (asn1_oid_curve, nist_curve), {}
-        no_bytes = (bits + 7) // 8
-        if len(pub_hex) != 2 * no_bytes:
+        num_bytes = (bits + 7) // 8
+        if len(pub_hex) != 2 * num_bytes:
             return 'bad elliptic curve point (%s / %s)' % (asn1_oid_curve, nist_curve), {}
         return None, {
             'key_file': key_file,
@@ -260,8 +260,8 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
             'jwk': {
                 "kty": "EC",
                 "crv": curve,
-                "x": nopad_b64(pub_hex[:no_bytes]),
-                "y": nopad_b64(pub_hex[no_bytes:]),
+                "x": nopad_b64(pub_hex[:num_bytes]),
+                "y": nopad_b64(pub_hex[num_bytes:]),
             },
             'hash': hashalg,
             'point_size': point_size,
@@ -382,7 +382,7 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             curve = 'P-521'
         else:
             return 'unknown elliptic curve: {0}'.format(pk.curve.name), {}
-        no_bytes = (bits + 7) // 8
+        num_bytes = (bits + 7) // 8
         return None, {
             'key_obj': key,
             'type': 'ec',
@@ -390,8 +390,8 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             'jwk': {
                 "kty": "EC",
                 "crv": curve,
-                "x": nopad_b64(_convert_int_to_bytes(no_bytes, pk.x)),
-                "y": nopad_b64(_convert_int_to_bytes(no_bytes, pk.y)),
+                "x": nopad_b64(_convert_int_to_bytes(num_bytes, pk.x)),
+                "y": nopad_b64(_convert_int_to_bytes(num_bytes, pk.y)),
             },
             'hash': hashalg,
             'point_size': point_size,
