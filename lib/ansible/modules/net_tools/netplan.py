@@ -613,7 +613,7 @@ options:
 
   access-points-ssid:
     description:
-      - Network SSID.
+      - Network SSID. Required if I(state=present) and (type=wifis).
     required: false
 
   access-points-password:
@@ -621,6 +621,7 @@ options:
       - Enable WPA2 authentication and set the passphrase for it. If defined
         C(None), the network is assumed to be open. Other authentication modes
         are not currently supported.
+        Required if I(state=present) and (type=wifis).
     required: false
 
   access-points-mode:
@@ -629,6 +630,7 @@ options:
         C(ap) (create an access point to which other devices can connect),
         and C(adhoc) (peer to peer networks without a central access point).
         C(ap) is only supported with C(NetworkManager).
+        Required if I(state=present) and (type=wifis).
     required: false
     choices: [ infrastructure, ap, adhoc ]
 '''
@@ -911,6 +913,9 @@ def validate_args(module):
                 if key in WIFIS:
                     module.fail_json(msg='WIFIs options can not be defined with vlans Type')
     if module.params['type'] == 'wifis':
+        if module.params['state'] == 'present':
+            if not module.params.get('access-points-ssid') or not module.params.get('access-points-password') or not module.params.get('access-points-mode'):
+                module.fail_json(msg='wifis type require: [access-points-ssid, access-points-password, access-points-mode]')
         for key in module.params:
             if module.params.get(key) is not None:
                 if key in BONDS:
