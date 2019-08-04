@@ -581,9 +581,6 @@ options:
           - Corresponds to the C(--rollback-order) option of C(docker service create).
           - Requires API version >= 1.29.
         type: str
-        choices:
-          - stop-first
-          - start-first
     type: dict
     version_added: "2.8"
   secrets:
