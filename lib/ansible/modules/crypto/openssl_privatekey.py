@@ -270,7 +270,6 @@ else:
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.six import string_types
 
 
 class PrivateKeyError(crypto_utils.OpenSSLObjectError):
@@ -520,7 +519,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
                     curve=self.curves[self.curve]['create'](self.size),
                     backend=self.cryptography_backend
                 )
-        except cryptography.exceptions.UnsupportedAlgorithm as e:
+        except cryptography.exceptions.UnsupportedAlgorithm as dummy:
             self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
         # Select key encryption

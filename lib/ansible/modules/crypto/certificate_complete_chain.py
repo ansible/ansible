@@ -141,7 +141,7 @@ try:
     from distutils.version import LooseVersion
     HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.5'))
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
-except ImportError as e:
+except ImportError as dummy:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     HAS_CRYPTOGRAPHY = False
 
@@ -185,7 +185,7 @@ def is_parent(module, cert, potential_parent):
             module.warn('Unknown public key type "{0}"'.format(public_key))
             return False
         return True
-    except cryptography.exceptions.InvalidSignature as e:
+    except cryptography.exceptions.InvalidSignature as dummy:
         return False
     except Exception as e:
         module.fail_json(msg='Unknown error on signature validation: {0}'.format(e))
