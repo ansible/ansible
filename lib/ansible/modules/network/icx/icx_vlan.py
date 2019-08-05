@@ -106,7 +106,8 @@ options:
         type: bool
     type: list
   aggregate:
-    description: List of VLANs definitions.
+    description:
+      - List of VLANs definitions.
     type: list
     suboptions:
       name:
@@ -118,34 +119,6 @@ options:
           - ID of the VLAN. Range 1-4094.
         required: true
         type: int
-      interfaces:
-        description:
-          - List of ethernet ports or LAGS to be added as access(untagged) ports to the vlan.
-            To add a range of ports use 'to' keyword. See the example.
-        suboptions:
-          name:
-            description:
-              - Name of the interface or lag
-            type: list
-          purge:
-            description:
-              - Purge interfaces not defined in the I(name)
-            type: bool
-        type: list
-      tagged:
-        description:
-          - List of ethernet ports or LAGS to be added as trunk(tagged) ports to the vlan.
-            To add a range of ports use 'to' keyword. See the example.
-        suboptions:
-          name:
-            description:
-              - Name of the interface or lag
-            type: list
-          purge:
-            description:
-              - Purge interfaces not defined in the I(name)
-            type: bool
-        type: list
       ip_dhcp_snooping:
         description:
           - Enables DHCP snooping on a VLAN.
@@ -169,32 +142,10 @@ options:
       delay:
         description:
           - Delay the play should wait to check for declarative intent params values.
-        default: 10
         type: int
-      stp:
-        description:
-          - Enable spanning-tree 802-1w/rstp for this vlan.
-        suboptions:
-          type:
-            description:
-              - Specifiy the type of spanning-tree
-            type: str
-            choices: ['802-1w','rstp']
-          priority:
-            description:
-              - Configures the priority of the bridge. The value ranges from
-                0 through 65535. A lower numerical value means the bridge has
-                a higher priority. Thus, the highest priority is 0. The default is 32768.
-            type: str
-          enabled:
-            description:
-              - Manage the state(Enable/Disable) of the spanning_tree_802_1w in the current vlan
-            type: bool
-        type: list
       purge:
         description:
           - Purge VLANs not defined in the I(aggregate) parameter.
-        default: no
         type: bool
       state:
         description:
