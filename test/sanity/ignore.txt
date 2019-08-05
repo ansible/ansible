@@ -6402,7 +6402,6 @@ lib/ansible/modules/storage/netapp/netapp_e_flashcache.py validate-modules:E338
 lib/ansible/modules/storage/netapp/netapp_e_global.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_host.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_hostgroup.py validate-modules:E337
-lib/ansible/modules/storage/netapp/netapp_e_hostgroup.py validate-modules:E338
 lib/ansible/modules/storage/netapp/netapp_e_iscsi_interface.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_iscsi_target.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_ldap.py validate-modules:E337
