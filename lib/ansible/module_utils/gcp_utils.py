@@ -160,7 +160,7 @@ class GcpSession(object):
                 cred = json.loads(self.module.params.get('service_account_contents'))
             except json.decoder.JSONDecodeError as e:
                 self.module.fail_json(
-                    msg="Unable to decode service_account_contents as JSON : %s" % to_native(e)
+                    msg="Unable to decode service_account_contents as JSON"
                 )
             return service_account.Credentials.from_service_account_info(cred).with_scopes(self.module.params['scopes'])
         elif cred_type == 'machineaccount':
