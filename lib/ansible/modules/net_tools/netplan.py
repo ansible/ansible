@@ -100,6 +100,15 @@ options:
     required: false
     type: bool
 
+  ipv6-privacy:
+    description:
+      - Enable IPv6 Privacy Extensions (RFC 4941) for the specified interface,
+        and prefer temporary addresses. Defaults to false
+        (no privacy extensions). There is currently no way to have a
+        private address but prefer the public address.
+    required: false
+    type: bool
+
   link-local:
     description:
       - Configure the link-local addresses to bring up. Valid options are
@@ -841,7 +850,7 @@ NETPLAN_PATH = '/etc/netplan'
 SPECIFC_ANSIBLE_NETPLAN = ['filename', 'renderer', 'version', 'type',
                            'interface-id', 'state']
 
-GENERAL = ['addresses', 'dhcp4', 'dhcp6', 'link-local',
+GENERAL = ['addresses', 'dhcp4', 'dhcp6', 'ipv6-privacy', 'link-local',
            'critical', 'dhcp-identifier', 'accept-ra', 'addresses',
            'gateway4', 'gateway6', 'nameservers-search',
            'nameservers-addresses', 'macaddress', 'optional',
@@ -1120,6 +1129,7 @@ def main():
         'state': {'choices': ['present', 'absent'], 'required': True},
         'dhcp4': {'required': False},
         'dhcp6': {'required': False},
+        'ipv6-privacy': {'required': False, 'type': 'bool'},
         'link-local': {'choices': ['ipv4', 'ipv6'],
                        'required': False,
                        'type': 'list'},
