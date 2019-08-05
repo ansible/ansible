@@ -230,6 +230,12 @@ options:
             - 'Some valid choices include: "SCRATCH", "PERSISTENT"'
             required: false
             type: str
+      labels:
+        description:
+        - Labels to apply to this address. A list of key->value pairs.
+        required: false
+        type: dict
+        version_added: 2.9
       machine_type:
         description:
         - The machine type to use in the VM instance template.
@@ -673,6 +679,11 @@ properties:
             the default is PERSISTENT.
           returned: success
           type: str
+    labels:
+      description:
+      - Labels to apply to this address. A list of key->value pairs.
+      returned: success
+      type: dict
     machineType:
       description:
       - The machine type to use in the VM instance template.
@@ -921,6 +932,7 @@ def main():
                             type=dict(type='str'),
                         ),
                     ),
+                    labels=dict(type='dict'),
                     machine_type=dict(required=True, type='str'),
                     min_cpu_platform=dict(type='str'),
                     metadata=dict(type='dict'),
@@ -1190,6 +1202,7 @@ class InstanceTemplateProperties(object):
                 u'canIpForward': self.request.get('can_ip_forward'),
                 u'description': self.request.get('description'),
                 u'disks': InstanceTemplateDisksArray(self.request.get('disks', []), self.module).to_request(),
+                u'labels': self.request.get('labels'),
                 u'machineType': self.request.get('machine_type'),
                 u'minCpuPlatform': self.request.get('min_cpu_platform'),
                 u'metadata': self.request.get('metadata'),
@@ -1207,6 +1220,7 @@ class InstanceTemplateProperties(object):
                 u'canIpForward': self.request.get(u'canIpForward'),
                 u'description': self.request.get(u'description'),
                 u'disks': InstanceTemplateDisksArray(self.request.get(u'disks', []), self.module).from_response(),
+                u'labels': self.request.get(u'labels'),
                 u'machineType': self.request.get(u'machineType'),
                 u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
                 u'metadata': self.request.get(u'metadata'),

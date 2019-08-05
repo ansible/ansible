@@ -35,7 +35,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#network'"
 - name: verify that network was created
   gcp_compute_network_facts:
       filters:
@@ -64,7 +63,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#network'"
 #----------------------------------------------------------
 - name: delete a network
   gcp_compute_network:
