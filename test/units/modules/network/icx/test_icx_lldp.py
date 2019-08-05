@@ -37,7 +37,7 @@ class TestICXlldpModule(TestICXModule):
                 return load_fixture('icx_lldp_%s' % state).strip()
             else:
                 return ''
-            
+
         self.run_commands.side_effect = load_from_file
 
     def test_icx_lldp_enable_state_None(self):
