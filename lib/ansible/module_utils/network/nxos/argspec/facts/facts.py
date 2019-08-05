@@ -11,6 +11,7 @@ CHOICES = [
     'all',
     'lag_interfaces',
     'telemetry',
+    'vlans',
 ]
 
 
