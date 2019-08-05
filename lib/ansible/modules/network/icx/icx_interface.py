@@ -143,35 +143,8 @@ options:
         description:
           - State of the Interface configuration, C(up) means present and
             operationally up and C(down) means present and operationally C(down)
-        type: str
         choices: ['present', 'absent', 'up', 'down']
-      power:
-        description:
-          - Inline power on Power over Ethernet (PoE) ports.
-        type: list
-        suboptions:
-            by_class:
-              description:
-                - "The range is 0-4"
-                - "The power limit based on class value for given interface C(name)"
-              choices: ['0', '1', '2', '3', '4']
-              type: str
-            limit:
-              description:
-                - "The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW"
-                - "The power limit based on actual power value for given interface C(name)"
-              type: str
-            priority:
-              description:
-                - "The range is 1 (highest) to 3 (lowest)"
-                - "The priority for power management or given interface C(name)"
-              choices: ['1', '2', '3']
-              type: str
-            enabled:
-              description:
-                - "enable/disable the poe of the given interface C(name)"
-              default: true
-              type: bool
+        type: str
       check_running_config:
         description:
           - Check running configuration. This can be set as environment variable.
