@@ -1,9 +1,9 @@
-.PHONY: all sanity units
+all: sanity unit
 
-all: sanity units
-
+.PHONY: sanity
 sanity:
-	./ansible-test sanity test/runner/ ${TEST_FLAGS}
+	ansible-test sanity test/runner/ ${FLAGS}
 
-units:
-	PYTHONPATH=. pytest units ${TEST_FLAGS}
+.PHONY: unit
+unit:
+	PYTHONPATH=.:.. pytest unit ${FLAGS}
