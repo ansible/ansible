@@ -17,49 +17,57 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_monitordiagnosticsettings
 version_added: "2.9"
-short_description: Manage Azure monitor diagnostic setting.
+short_description: Manage Azure monitor diagnostic setting
 description:
     - Create, updata and delete an Azure monitor diagnostic setting.
 options:
     name:
         description:
             - The name of the diagnostic setting.
+        type: str
     resource_id:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
-            - It can also be a dict contains C(name), C(namespace), C(types), C(resource_group) and optional C(subscription_id).
+            - It can also be a dict contains I(name), I(namespace), I(types), I(resource_group) and optional I(subscription_id).
+        type: raw
     state:
         default: present
         description:
-            -Assert the state of the diagnostic setting. Use C(present) to create or update and C(absent) to delete.
+            -State of the diagnostic setting. Use C(present) to create or update and C(absent) to delete.
+        type: str
         choices:
             - present
             - absent
     storage_account:
         description:
             - The resource name or ID of the storage account to which you would like to send Diagnostic Logs.
-            - It can also be a dict contains C(name), C(resource_group) and optional C(subscription_id).
+            - It can also be a dict contains I(name), I(resource_group) and optional I(subscription_id).
+        type: raw
     event_hub_authorization_rule:
         description:
-            - The resource name or Id for the event hub authorization rule.
-            - It can also be a dict contains C(name), C(resource_group), optional C(key_name) and optional C(subscription_id).
-            - The C(name) means the name of the event hub namespace.
+            - The resource name or ID for the event hub authorization rule.
+            - It can also be a dict contains I(name), I(resource_group), optional I(key_name) and optional I(subscription_id).
+            - The I(name) means the name of the event hub namespace.
+        type: raw
     event_hub_name:
         description:
             - The name of the event hub.
+        type: str
     metrics:
         description:
             - The list of metric settings.
-            - Each type of resourse has its own designed metric
+            - Each type of resourse has its own designed metric.
         type: list
         suboptions:
             time_grain:
                 description:
                     - The timegrain of the metric in ISO8601 format.
+                type: str
             category:
                 description:
                     - Name of a Diagnostic Metric category for a resource type this setting is applied to.
+                type: str
             enabled:
                 description:
                     - A value indicating whether this category is enabled.
@@ -81,12 +89,13 @@ options:
     logs:
         description:
             - The list of logs settings.
-            - Each type of resourse has its own designed logs
+            - Each type of resourse has its own designed logs.
         type: list
         suboptions:
             category:
                 description:
                     - Name of a Diagnostic Logs category for a resource type this setting is applied to.
+                type: str
             enabled:
                 description:
                     - A value indicating whether this category is enabled.
@@ -108,13 +117,13 @@ options:
     workspace:
         description:
             - The resource name or ID for a Log Analytics workspace to which you would like to send Diagnostic Logs.
-            - It can also be a dict contains C(name), C(resource_group) and optional C(subscription_id).
-
+            - It can also be a dict contains I(name), I(resource_group) and optional I(subscription_id).
+        type: str
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -148,7 +157,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: diagnostic setting resource path.
+    description:
+        - Diagnostic setting resource path.
     type: str
     returned: success
     example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/

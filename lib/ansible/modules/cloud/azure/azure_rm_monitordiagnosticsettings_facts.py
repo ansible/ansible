@@ -16,21 +16,23 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_monitordiagnosticsettings_facts
 version_added: "2.9"
-short_description: Get information of Azure monitor diagnostic setting.
+short_description: Get information of Azure monitor diagnostic setting
 description:
     - Get information of Azure monitor diagnostic setting.
 options:
     name:
         description:
             - The name of the diagnostic setting.
+        type: str
     resource_id:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
-            - It can also be a dict contains C(name), C(namespace), C(types), C(resource_group) and optional C(subscription_id).
+            - It can also be a dict contains I(name), I(namespace), I(types), I(resource_group) and optional I(subscription_id).
+        type: raw
     show_category:
         description:
-            - List the diagnostic settings category when I(show_category) is set to true
+            - List the diagnostic settings category when I(show_category=true).
             - Note this will cost one more network overhead.
         type: bool
 
@@ -38,7 +40,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -56,7 +58,8 @@ EXAMPLES = '''
 
 RETURN = '''
 labs:
-    description: A list of dictionaries containing facts for diagnostic setting.
+    description:
+        - A list of dictionaries containing facts for diagnostic setting.
     returned: always
     type: complex
     contains:
@@ -84,7 +87,7 @@ labs:
                 - The list of logs settings.
             returned: always
             type: list
-            sample: '[
+            sample: [
                         {
                             "category": "DDoSProtectionNotifications",
                             "enabled": false,
@@ -109,13 +112,13 @@ labs:
                                 "enabled": true
                             }
                         }
-                    ]'
+                    ]
         metrics:
             description:
                 - The list of metric settings.
             returned: always
             type: list
-            sample: '[
+            sample: [
                         {
                             "category": "AllMetrics",
                             "enabled": false,
@@ -124,15 +127,16 @@ labs:
                                 "enabled": false
                             }
                         }
-                    ]'
+                    ]
 category:
-    description: A list of dictionaries containing facts for diagnostic setting category.
-    returned: when I(show_category) is set to true
+    description:
+        - A list of dictionaries containing facts for diagnostic setting category.
+    returned: when I(show_category=true)
     type: complex
     contains:
         category_type:
             description:
-                - The type of the diagnostic settings category. Possible values include 'Metrics' and 'Logs'
+                - The type of the diagnostic settings category. Possible values include C(Metrics) and C(Logs).
             returned: always
             type: str
             example: "Logs"
