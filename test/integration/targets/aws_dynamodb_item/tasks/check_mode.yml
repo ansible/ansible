@@ -63,4 +63,4 @@
 - name: assert status
   assert:
     that:
-      - result.changed
+      - result is not failed
