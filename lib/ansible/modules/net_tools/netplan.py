@@ -384,6 +384,78 @@ options:
     required: false
     type: list
 
+  auth-key-management:
+    description:
+      - The supported key management modes are C(none) (no key management);
+        C(psk) (WPA with pre-shared key, common for home wifi); C(eap) (WPA
+        with EAP, common for enterprise wifi); and C(802.1x) (used primarily
+        for wired Ethernet connections). Supported ethernets and wifis device
+        types.
+    choices: [ none, psk, eap, 802.1x ]
+    required: false
+
+  auth-password:
+    description:
+      - The password string for EAP, or the pre-shared key for WPA-PSK.
+         Supported ethernets and wifis device types.
+    required: false
+
+  auth-method:
+    description:
+      - The EAP/802.1x method to use. The supported EAP/802.1x methods are
+        C(tls) (TLS), C(peap) (Protected EAP), and C(ttls) (Tunneled TLS).
+        I(auth-key-management=eap) or I(auth-key-management=802.1x).
+        Supported ethernets and wifis device types.
+    choices: [ tls, peap, ttls ]
+    required: false
+
+  auth-identity:
+    description:
+      - The identity to use for EAP/802.1x.
+        I(auth-key-management=eap) or I(auth-key-management=802.1x).
+        Supported ethernets and wifis device types.
+    required: false
+
+  auth-anonymous-identity:
+    description:
+      - The identity to pass over the unencrypted channel if the chosen
+        EAP/802.1x method supports passing a different tunnelled identity.
+        I(auth-key-management=eap) or I(auth-key-management=802.1x).
+        Supported ethernets and wifis device types.
+    required: false
+
+  auth-ca-certificate:
+    description:
+      - Path to a file with one or more trusted certificate authority (CA)
+        certificates.
+        I(auth-key-management=eap) or I(auth-key-management=802.1x).
+        Supported ethernets and wifis device types.
+    required: false
+
+  auth-client-certificate:
+    description:
+      - Path to a file containing the certificate to be used by the client
+        during authentication.
+        I(auth-key-management=eap) or I(auth-key-management=802.1x).
+        Supported ethernets and wifis device types.
+    required: false
+
+  auth-client-key:
+    description:
+      - Path to a file containing the private key corresponding to
+        C(auth-client-certificate).
+        I(auth-key-management=eap) or I(auth-key-management=802.1x).
+        Supported ethernets and wifis device types.
+    required: false
+
+  auth-client-key-password:
+    description:
+      - Password to use to decrypt the private key specified in
+        C(auth-client-key) if it is encrypted.
+        I(auth-key-management=eap) or I(auth-key-management=802.1x).
+        Supported ethernets and wifis device types.
+    required: false
+
   interfaces:
     description:
       - All devices matching this ID list will be added or associated to
@@ -864,6 +936,24 @@ EXAMPLES = '''
        - 9.9.9.9/8
      state: present
      dhcp4: false
+
+ - name: Up veths interfaces
+   netplan:
+     filename: 15-wifis
+     type: wifis
+     interface-id: wifi00
+     state: present
+     access-points-ssid: asdf
+     access-points-password: test1234
+     access-points-mode: infrastructure
+     auth-key-management: eap
+     auth-method: tls
+     auth-anonymous-identity: "@cust.example.com"
+     auth-identity: "cert-joe@cust.example.com"
+     auth-ca-certificate: /etc/ssl/cust-cacrt.pem
+     auth-client-certificate: /etc/ssl/cust-crt.pem
+     auth-client-key: /etc/ssl/cust-key.pem
+     auth-client-key-password: "d3cryptPr1v4t3K3y"
 '''
 
 RETURN = '''
@@ -906,6 +996,11 @@ DHCP_OVERRIDES = ['dhcp4-overrides-use-dns',
 ROUTES = ['from', 'to', 'via', 'on-link', 'metric', 'type', 'scope', 'table']
 
 ROUTING_POLICY = ['from', 'to', 'table', 'priority', 'mark', 'type-of-service']
+
+AUTH = ['auth-key-management', 'auth-password', 'auth-method', 'auth-identity',
+        'auth-anonymous-identity', 'auth-ca-certificate',
+        'auth-client-certificate', 'auth-client-key',
+        'auth-client-key-password']
 
 BONDS = ['bonding-mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
          'transmit-hash-policy', 'ad-select', 'all-slaves-active',
@@ -984,6 +1079,8 @@ def validate_args(module):
                         module.fail_json(msg='VLANs options can not be defined with bridge Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with bridge Type')
+                    if key in AUTH:
+                        module.fail_json(msg='AUTHs options can not be defined with bridge Type')
         if module.params['type'] == 'bonds':
             if not module.params.get('interfaces') or not module.params.get('bonding-mode'):
                 module.fail_json(msg='bonds type require: [interfaces, bonding-mode]')
@@ -997,6 +1094,8 @@ def validate_args(module):
                         module.fail_json(msg='VLANS options can not be defined with bonds Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with bonds Type')
+                    if key in AUTH:
+                        module.fail_json(msg='AUTHs options can not be defined with bond Type')
                     # Verify bonds params dependences:
                     # lacpt-rate depends on bonding-mode == 802.3ad
                     # transmit-hash-policy depends on bonding-mode == 802.3ad or balance-tlb or balance-xor
@@ -1010,7 +1109,8 @@ def validate_args(module):
                         if module.params['bonding-mode'] != '802.3ad':
                             module.fail_json(msg='bonding-mode must be 802.3ad to define {0} param'.format(key))
                     if key == 'transmit-hash-policy':
-                        if module.params['bonding-mode'] != '802.3ad' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-xor':
+                        if module.params['bonding-mode'] != '802.3ad' or module.params['bonding-mode'] != 'balance-tlb' \
+                           or module.params['bonding-mode'] != 'balance-xor':
                             module.fail_json(msg='bonding-mode must be 802.3ad or balance-tlb or balance-xor to define {0} param'.format(key))
                     if key == 'arp-all-target':
                         if module.params['bonding-mode'] != 'active-backup' and not module.params['arp-validate']:
@@ -1025,7 +1125,8 @@ def validate_args(module):
                         if module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
                             module.fail_json(msg='bonding-mode must be balance-tlb or balance-alb to define {0} param'.format(key))
                     if key == 'primary':
-                        if module.params['bonding-mode'] != 'active-backup' or module.params['bonding-mode'] != 'balance-tlb' or module.params['bonding-mode'] != 'balance-alb':
+                        if module.params['bonding-mode'] != 'active-backup' or module.params['bonding-mode'] != 'balance-tlb' or \
+                           module.params['bonding-mode'] != 'balance-alb':
                             module.fail_json(msg='bonding-mode must be active-backup or balance-tlb or balance-alb to define {0} param'.format(key))
         if module.params['type'] == 'tunnels':
             if not module.params.get('tunneling-mode') or not module.params.get('local') or not module.params.get('remote'):
@@ -1040,6 +1141,8 @@ def validate_args(module):
                         module.fail_json(msg='VLANs options can not be defined with tunnel Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with tunnel Type')
+                    if key in AUTH:
+                        module.fail_json(msg='AUTHs options can not be defined with tunnel Type')
                     # gretap and ip6gretap tunneling-mode only supported if renderer == networkd
                     # isatap tunneling-mode only supported if renderer == NetworkManager
                     if key == 'tunneling-mode':
@@ -1075,6 +1178,8 @@ def validate_args(module):
                         module.fail_json(msg='TUNNELS options can not be defined with vlans Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with vlans Type')
+                    if key in AUTH:
+                        module.fail_json(msg='AUTHs options can not be defined with vlans Type')
         if module.params['type'] == 'wifis':
             if not module.params.get('access-points-ssid') or not module.params.get('access-points-password') or not module.params.get('access-points-mode'):
                 module.fail_json(msg='wifis type require: [access-points-ssid, access-points-password, access-points-mode]')
@@ -1091,7 +1196,7 @@ def validate_args(module):
     else:
         for key in module.params:
             if module.params.get(key) is not None:
-                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + GENERAL + PHYSICAL:
+                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + GENERAL + PHYSICAL + AUTH:
                     module.fail_json(msg="When state is absent, just use this params:[filename, type, interface-id]")
 
 
@@ -1155,10 +1260,34 @@ def get_netplan_dict(params):
                 else:
                     netplan_dict['network'][params.get('type')][params.get('interface-id')][key] = params.get(key)
             elif key in WIFIS:
-                wifi_option = key.split('access-points-')[1]
-                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'] = dict()
-                netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'][wifi_option] = params.get(key)
+                if key != 'access-points-ssid':
+                    wifi_option = key.split('access-points-')[1]
+                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'] = dict()
+                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'].get(params.get('access-points-ssid')):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'][params.get('access-points-ssid')] = dict()
+                    # PEP8 annoying
+                    p_type = params.get('type')
+                    p_intid = params.get('interface-id')
+                    netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')][wifi_option] = params.get(key)
+            elif key in AUTH:
+                auth_option = key.split('auth-')[1]
+                if params.get('type') == 'wifis':
+                    # PEP8 annoying
+                    p_type = params.get('type')
+                    p_intid = params.get('interface-id')
+                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'] = dict()
+                    if not netplan_dict['network'][p_type][p_intid]['access-points'].get(params.get('access-points-ssid')):
+                        netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')] = dict()
+                    if not netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')].get('auth'):
+                        netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')]['auth'] = dict()
+                    netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')]['auth'][auth_option] = params.get(key)
+                else:
+                    # type == ethernets
+                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('auth'):
+                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['auth'] = dict()
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['auth'][auth_option] = params.get(key)
             else:
                 netplan_dict['network'][params.get('type')][params.get('interface-id')][key] = params.get(key)
     return netplan_dict
@@ -1214,11 +1343,21 @@ def main():
         'dhcp6-overrides-hostname': {'required': False},
         'routes': {'required': False, 'type': 'list'},
         'routing-policy': {'required': False, 'type': 'list'},
+        'auth-key-management': {'choices': ['none', 'psk', 'eap', '802.1x'],
+                                'required': False},
+        'auth-password': {'required': False},
+        'auth-method': {'choices': ['tls', 'peap', 'ttls'], 'required': False},
+        'auth-identity': {'required': False},
+        'auth-anonymous-identity': {'required': False},
+        'auth-ca-certificate': {'required': False},
+        'auth-client-certificate': {'required': False},
+        'auth-client-key': {'required': False},
+        'auth-client-key-password': {'required': False},
         'interfaces': {'required': False, 'type': 'list'},
         'bonding-mode': {'choices': ['balance-rr', 'active-backup', 'balance-xor',
-                             'broadcast', '802.3ad', 'balance-tlb',
-                             'balance-alb'],
-                 'required': False},
+                                     'broadcast', '802.3ad', 'balance-tlb',
+                                     'balance-alb'],
+                         'required': False},
         'lacp-rate': {'choices': ['slow', 'fast'],
                       'required': False},
         'mii-monitor-interval': {'required': False, 'type': 'int'},
@@ -1241,7 +1380,8 @@ def main():
         'gratuitous-arp': {'required': False, 'type': 'int'},
         'packets-per-slave': {'required': False, 'type': 'int'},
         'primary-reselect-policy': {'choices': ['always', 'better',
-                                       'failure'], 'required': False},
+                                                'failure'],
+                                    'required': False},
         'resend-igmp': {'required': False, 'type': 'int'},
         'primary': {'required': False},
         'learn-packet-interval': {'required': False, 'type': 'int'},
@@ -1254,9 +1394,9 @@ def main():
         'path-cost': {'required': False, 'type': 'list'},
         'stp': {'required': False, 'type': 'bool'},
         'tunneling-mode': {'choices': ['sit', 'gre', 'ip6gre', 'ipip', 'ipip6',
-                              'ip6ip6', 'vti', 'vti6', 'gretap',
-                              'ip6gretap', 'isatap'],
-                            'required': False},
+                                       'ip6ip6', 'vti', 'vti6', 'gretap',
+                                       'ip6gretap', 'isatap'],
+                           'required': False},
         'local': {'required': False},
         'remote': {'required': False},
         'id': {'required': False, 'type': 'int'},
