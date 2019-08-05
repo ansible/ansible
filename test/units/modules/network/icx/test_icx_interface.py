@@ -35,10 +35,11 @@ class TestICXInterfaceModule(TestICXModule):
 
         def load_file(*args, **kwargs):
             module, commands, val = args
-            if arg.params['check_running_config'] is True:
-                return load_fixture('icx_interface_config.cfg').strip()
-            else:
-                return ''
+            for arg in args:
+                if arg.params['check_running_config'] is True:
+                    return load_fixture('icx_interface_config.cfg').strip()
+                else:
+                    return ''
 
         self.get_config.side_effect = load_file
         self.load_config.return_value = None
