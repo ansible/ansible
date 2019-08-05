@@ -30,7 +30,7 @@ command -v pip
 pip --version
 pip list --disable-pip-version-check
 
-export PATH="test/runner:${PATH}"
+export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
 
 if [ "${JOB_TRIGGERED_BY_NAME:-}" == "nightly-trigger" ]; then

@@ -20,7 +20,9 @@ import shutil
 
 import lib.types as t
 
-import lib.thread
+from lib.thread import (
+    WrappedThread,
+)
 
 from lib.core_ci import (
     AnsibleCoreCI,
@@ -380,7 +382,7 @@ def command_network_integration(args):
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
 
     if args.platform:
         get_python_path(args, args.python_executable)  # initialize before starting threads
@@ -394,7 +396,7 @@ def command_network_integration(args):
             if not config:
                 continue
 
-            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version, config))
+            instance = WrappedThread(functools.partial(network_run, args, platform, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
@@ -435,7 +437,7 @@ def network_init(args, internal_targets):
 
     platform_targets = set(a for target in internal_targets for a in target.aliases if a.startswith('network/'))
 
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
 
     # generate an ssh key (if needed) up front once, instead of for each instance
     SshKey(args)
@@ -449,7 +451,7 @@ def network_init(args, internal_targets):
                 platform_version, platform))
             continue
 
-        instance = lib.thread.WrappedThread(functools.partial(network_start, args, platform, version))
+        instance = WrappedThread(functools.partial(network_start, args, platform, version))
         instance.daemon = True
         instance.start()
         instances.append(instance)
@@ -545,7 +547,7 @@ def command_windows_integration(args):
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
     pre_target = None
     post_target = None
     httptester_id = None
@@ -558,7 +560,7 @@ def command_windows_integration(args):
         for version in args.windows:
             config = configs['windows/%s' % version]
 
-            instance = lib.thread.WrappedThread(functools.partial(windows_run, args, version, config))
+            instance = WrappedThread(functools.partial(windows_run, args, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
@@ -660,10 +662,10 @@ def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, u
     if args.metadata.instance_config is not None:
         return
 
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
 
     for version in args.windows:
-        instance = lib.thread.WrappedThread(functools.partial(windows_start, args, version))
+        instance = WrappedThread(functools.partial(windows_start, args, version))
         instance.daemon = True
         instance.start()
         instances.append(instance)
