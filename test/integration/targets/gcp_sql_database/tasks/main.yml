@@ -52,7 +52,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'sql#database'"
 - name: verify that database was created
   gcp_sql_database_facts:
       instance: "{{ instance }}"
@@ -81,7 +80,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'sql#database'"
 #----------------------------------------------------------
 - name: delete a database
   gcp_sql_database:
