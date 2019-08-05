@@ -51,7 +51,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#instanceGroup'"
 - name: verify that instance_group was created
   gcp_compute_instance_group_facts:
       filters:
@@ -85,7 +84,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#instanceGroup'"
 #----------------------------------------------------------
 - name: delete a instance group
   gcp_compute_instance_group:
