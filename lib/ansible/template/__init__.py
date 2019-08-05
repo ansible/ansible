@@ -48,7 +48,7 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -744,7 +744,7 @@ class Templar:
                     ran = wrap_var(ran)
                 else:
                     try:
-                        ran = AnsibleUnsafeText(u",".join(ran))
+                        ran = wrap_var(",".join(ran))
                     except TypeError:
                         # Lookup Plugins should always return lists.  Throw an error if that's not
                         # the case:
