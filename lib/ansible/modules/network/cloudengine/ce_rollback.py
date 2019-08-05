@@ -170,6 +170,7 @@ class RollBack(object):
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""
         self.commands.append("return")
+        self.commands.append("mmi-mode enable")
 
         if self.action == "commit":
             self.commands.append("sys")
@@ -246,19 +247,15 @@ class RollBack(object):
         if self.action == "rollback":
             if self.commit_id:
                 cmd = "rollback configuration to commit-id %s" % self.commit_id
-                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
                 self.cli_add_command(cmd)
             if self.label:
                 cmd = "rollback configuration to label %s" % self.label
-                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
                 self.cli_add_command(cmd)
             if self.filename:
                 cmd = "rollback configuration to file %s" % self.filename
-                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
                 self.cli_add_command(cmd)
             if self.last:
                 cmd = "rollback configuration last %s" % self.last
-                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
                 self.cli_add_command(cmd)
         elif self.action == "set":
             if self.commit_id and self.label:
@@ -270,7 +267,6 @@ class RollBack(object):
                 self.cli_add_command(cmd)
             if self.oldest:
                 cmd = "clear configuration commit oldest %s" % self.oldest
-                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
                 self.cli_add_command(cmd)
         elif self.action == "commit":
             if self.label:
@@ -280,6 +276,8 @@ class RollBack(object):
         elif self.action == "display":
             self.rollback_info = self.get_rollback_dict()
         if self.commands:
+            self.commands.append('return')
+            self.commands.append('undo mmi-mode enable')
             self.cli_load_config(self.commands)
             self.changed = True
 
