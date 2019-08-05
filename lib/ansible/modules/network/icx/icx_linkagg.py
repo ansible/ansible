@@ -41,18 +41,6 @@ options:
     description:
       - List of port members or ranges of the link aggregation group.
     type: list
-  aggregate:
-    description:
-      - List of link aggregation definitions.
-    type: list
-    suboptions:
-            group: See I(group)
-            name: See I(name)
-            mode: See I(mode)
-            members: See I(member)
-            state: See I(state)
-            check_running_config: See I(check_running_config)
-
   state:
     description:
       - State of the link aggregation group.
@@ -65,6 +53,41 @@ options:
        Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
     type: bool
     default: yes
+  aggregate:
+    description:
+      - List of link aggregation definitions.
+    type: list
+    suboptions:
+      group:
+        description:
+          - Channel-group number for the port-channel
+            Link aggregation group. Range 1-255 or set to 'auto' to auto-generates a LAG ID
+        type: int
+      name:
+        description:
+          - Name of the LAG
+        type: str
+      mode:
+        description:
+          - Mode of the link aggregation group.
+        type: str
+        choices: ['dynamic', 'static']
+      members:
+        description:
+          - List of port members or ranges of the link aggregation group.
+        type: list
+      state:
+        description:
+          - State of the link aggregation group.
+        type: str
+        default: present
+        choices: ['present', 'absent']
+      check_running_config:
+        description:
+          - Check running configuration. This can be set as environment variable.
+           Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+        type: bool
+        default: yes
   purge:
     description:
       - Purge links not defined in the I(aggregate) parameter.
@@ -270,8 +293,7 @@ def main():
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec,
-                       required_together=required_together),
+        aggregate=dict(type='list', elements='dict', required_together=required_together),
         purge=dict(default=False, type='bool')
     )
 
