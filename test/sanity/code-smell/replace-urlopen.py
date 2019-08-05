@@ -12,6 +12,7 @@ def main():
         'lib/ansible/module_utils/urls.py',
         'test/units/module_utils/urls/test_Request.py',
         'test/units/module_utils/urls/test_fetch_url.py',
+        'test/utils/shippable/check_matrix.py',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
