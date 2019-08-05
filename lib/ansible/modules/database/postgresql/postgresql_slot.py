@@ -231,7 +231,18 @@ def main():
     if immediately_reserve and slot_type == 'logical':
         module.fail_json(msg="Module parameters immediately_reserve and slot_type=logical are mutually exclusive")
 
-    conn_params = get_conn_params(module, module.params)
+    # When slot_type is logical and parameter db is not passed,
+    # the default database will be used to create the slot and
+    # the user should know about this.
+    # When the slot type is physical,
+    # it doesn't matter which database will be used
+    # because physical slots are global objects.
+    if slot_type == 'logical':
+        warn_db_default = True
+    else:
+        warn_db_default = False
+
+    conn_params = get_conn_params(module, module.params, warn_db_default=warn_db_default)
     db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
