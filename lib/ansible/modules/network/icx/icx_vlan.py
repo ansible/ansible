@@ -127,6 +127,74 @@ options:
         description:
           - Enables dynamic ARP inspection on a VLAN.
         type: bool
+      tagged:
+        description:
+          - List of ethernet ports or LAGS to be added as trunk(tagged) ports to the vlan.
+            To add a range of ports use 'to' keyword. See the example.
+        suboptions:
+          name:
+            description:
+              - Name of the interface or lag
+            type: list
+          purge:
+            description:
+              - Purge interfaces not defined in the I(name)
+            type: bool
+        type: list
+      interfaces:
+        description:
+          - List of ethernet ports or LAGS to be added as access(untagged) ports to the vlan.
+            To add a range of ports use 'to' keyword. See the example.
+        suboptions:
+          name:
+            description:
+              - Name of the interface or lag
+            type: list
+          purge:
+            description:
+              - Purge interfaces not defined in the I(name)
+            type: bool
+        type: list
+      delay:
+        description:
+          - Delay the play should wait to check for declarative intent params values.
+        default: 10
+        type: int
+      stp:
+        description:
+          - Enable spanning-tree 802-1w/rstp for this vlan.
+        suboptions:
+          type:
+            description:
+              - Specifiy the type of spanning-tree
+            type: str
+            default: 802-1w
+            choices: ['802-1w','rstp']
+          priority:
+            description:
+              - Configures the priority of the bridge. The value ranges from
+                0 through 65535. A lower numerical value means the bridge has
+                a higher priority. Thus, the highest priority is 0. The default is 32768.
+            type: str
+          enabled:
+            description:
+              - Manage the state(Enable/Disable) of the spanning_tree_802_1w in the current vlan
+            type: bool
+        type: list
+      state:
+        description:
+          - State of the VLAN configuration.
+        type: str
+        choices: ['present', 'absent']
+      purge:
+        description:
+          - Purge VLANs not defined in the I(aggregate) parameter.
+        type: bool
+      check_running_config:
+        description:
+          - Check running configuration. This can be set as environment variable.
+           Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+        type: bool
       associated_interfaces:
         description:
           - This is a intent option and checks the operational state of the for given vlan C(name)
