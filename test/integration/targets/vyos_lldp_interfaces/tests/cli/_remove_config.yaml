@@ -6,4 +6,3 @@
     lines: |
       delete service lldp interface
       delete service lldp 
-

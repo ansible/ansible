@@ -12,4 +12,3 @@
       set service lldp interface eth2 location coordinate-based altitude 2200
       set service lldp interface eth2 location coordinate-based datum WGS84
       set service lldp interface eth2 location coordinate-based longitude 222.267255W
-

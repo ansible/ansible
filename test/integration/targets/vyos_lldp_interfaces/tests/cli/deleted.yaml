@@ -7,8 +7,7 @@
 - name: Delete attributes of given LLDP interfaces.
   vyos_lldp_interfaces: &deleted
     config:
-    config:
-      - name: 'eth1'     
+      - name: 'eth1'
       - name: 'eth2'     
     state: deleted
   register: result

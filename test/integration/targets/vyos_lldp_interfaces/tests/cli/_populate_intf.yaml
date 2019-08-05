@@ -8,4 +8,3 @@
       set service lldp interface eth2 location civic-based country-code US
       set service lldp interface eth2 location civic-based ca-type 0 ca-value ENGLISH
       set service lldp interface eth2 disable
-

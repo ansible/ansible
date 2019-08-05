@@ -35,7 +35,7 @@ _DEVICE_CONFIGS = {}
 
 vyos_provider_spec = {
     'host': dict(),
-    'port': dict(type='int'),
+    'port': dict(type='int', default=22),
 
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),

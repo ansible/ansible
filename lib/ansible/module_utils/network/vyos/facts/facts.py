@@ -58,4 +58,3 @@ class Facts(FactsBase):
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
 
         return self.ansible_facts, self._warnings
-

@@ -9,6 +9,11 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 from re import findall, search, M
 from copy import deepcopy
 
@@ -87,7 +92,7 @@ class Lldp_interfacesFacts(object):
 
         coordinate_based_conf = self.parse_attribs(
             ['altitude', 'datum', 'longitude', 'latitude'], coordinate_conf
-         )
+        )
         elin_based_conf = self.parse_lldp_elin_based(elin_conf)
         civic_based_conf = self.parse_lldp_civic_based(civic_conf)
         if disable:
@@ -143,4 +148,3 @@ class Lldp_interfacesFacts(object):
             elin_based = e_num.group(1).strip("'")
 
         return elin_based
-

@@ -10,6 +10,11 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.vyos.facts.facts import Facts
 from ansible.module_utils.network.common.utils import to_list, dict_diff
@@ -45,7 +50,7 @@ class Lldp_interfaces(ConfigBase):
         :rtype: A dictionary
         :returns: Th      e current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, \
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset,
                                                          self.gather_network_resources)
         lldp_interfaces_facts = facts['ansible_network_resources'].get('lldp_interfaces')
         if not lldp_interfaces_facts:
@@ -141,7 +146,7 @@ class Lldp_interfaces(ConfigBase):
         commands = []
         if have:
             commands.extend(Lldp_interfaces._render_del_commands(want, have))
-        commands.extend(Lldp_interfaces._state_merged(want,have))
+        commands.extend(Lldp_interfaces._state_merged(want, have))
         return commands
 
     @staticmethod
@@ -162,10 +167,7 @@ class Lldp_interfaces(ConfigBase):
         for want_item in want:
             name = want_item['name']
             lldp_in_have = search_obj_in_list(name, have)
-            commands.extend(
-                Lldp_interfaces._state_replaced(want_item, lldp_in_have
-                )
-            )
+            commands.extend(Lldp_interfaces._state_replaced(want_item, lldp_in_have))
         return commands
 
     @staticmethod

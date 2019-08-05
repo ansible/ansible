@@ -19,6 +19,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'network'}
@@ -36,14 +41,14 @@ description:
 deprecated:
   removed_in: '2.13'
   alternative: vyos_lldp_interfaces
-  why: Updated modules released with more functionality.    
+  why: Updated modules released with more functionality.
 notes:
   - Tested against VYOS 1.1.7
 options:
   name:
     description:
       - Name of the interface LLDP should be configured on.
-    type: str  
+    type: str
   aggregate:
     description: List of interfaces LLDP should be configured on.
     type: list
@@ -96,6 +101,8 @@ commands:
     - set service lldp eth1
     - set service lldp eth2 disable
 """
+
+
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule

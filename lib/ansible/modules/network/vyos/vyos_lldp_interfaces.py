@@ -57,6 +57,7 @@ options:
         description:
           - to disable lldp on the interface.
         type: bool
+        default: True
       location:
         description:
           - LLDP-MED location data.
