@@ -67,7 +67,7 @@ options:
         description:
             - "Enables passthrough to an SR-IOV-enabled host NIC."
             - "When enabled C(qos) and  C(network_filter) are automatically set to None and C(port_mirroring) to False."
-            - "When enabled and C(qos) or C(network_filter) or C(port_mirroring) specified module will raise exeption."
+            - "Port mirroring, QoS and network filters are not supported on passthrough profiles."
         choices: ['disabled', 'enabled']
     migratable:
         description:
@@ -182,6 +182,7 @@ class EntityVnicPorfileModule(BaseModule):
 
     def _get_network_filter(self):
         network_filter = None
+        # Order of these condition is necessary. When would network_filter and pass_through specified it would try to create and network_filter and fail on engine.
         if self.param('network_filter') == '' or self.param('pass_through') == 'enabled':
             network_filter = otypes.NetworkFilter()
         elif self.param('network_filter'):
@@ -190,6 +191,7 @@ class EntityVnicPorfileModule(BaseModule):
 
     def _get_qos(self):
         qos = None
+        # Order of these condition is necessary. When would qos and pass_through specified it would try to create and qos and fail on engine.
         if self.param('qos') == '' or self.param('pass_through') == 'enabled':
             qos = otypes.Qos()
         elif self.param('qos'):
