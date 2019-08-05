@@ -36,23 +36,23 @@ description:
 options:
     resource_group:
         description:
-        - The name of the resource group in which to create the Batch Account.
+            - The name of the resource group in which to create the Batch Account.
         required: true
         type: str
     name:
         description:
-        - The name of the Batch Account.
+            - The name of the Batch Account.
         type: str
     tags:
         description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
         type: list
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Junyi Yi (@JunyiYi)"
+    - Junyi Yi (@JunyiYi)
 '''
 
 EXAMPLES = '''
@@ -68,60 +68,66 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
+    description:
+        - List of items.
     returned: always
     type: complex
     contains:
         id:
             description:
-            - The ID of the Batch account.
+                - The ID of the Batch account.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Batch/batchAccounts/mybatchaccount"
         resource_group:
             description:
-            - The name of the resource group in which to create the Batch Account.
+                - The name of the resource group in which to create the Batch Account.
             returned: always
             type: str
+            sample: myResourceGroup
         name:
             description:
-            - The name of the Batch Account.
+                - The name of the Batch Account.
             returned: always
             type: str
+            sample: mybatchaccount
         location:
             description:
-            - Specifies the supported Azure location where the resource exists.
+                - Specifies the supported Azure location where the resource exists.
             returned: always
             type: str
+            sample: eastus
         account_endpoint:
             description:
-            - The account endpoint used to interact with the Batch service.
+                - The account endpoint used to interact with the Batch service.
             returned: always
             type: str
             sample: sampleacct.westus.batch.azure.com
         auto_storage_account:
             description:
-            - Existing storage account with which to associate the Batch Account.
+                - Existing storage account with which to associate the Batch Account.
             returned: always
             type: str
             sample:
               "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
         key_vault:
             description:
-            - Existing key vault with which to associate the Batch Account.
+                - Existing key vault with which to associate the Batch Account.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myKeyVault"
         pool_allocation_mode:
             description:
-            - The pool acclocation mode of the Batch Account.
+                - The pool acclocation mode of the Batch Account.
             returned: always
             type: str
+            sample: batch_service
         tags:
             description:
-            - Resource tags.
+                - Resource tags.
             returned: always
-            type: list
+            type: dict
+            sample: { 'key1': 'value1', 'key2': 'value2' }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
