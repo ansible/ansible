@@ -61,7 +61,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#router'"
 - name: verify that router was created
   gcp_compute_router_facts:
       filters:
@@ -100,7 +99,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#router'"
 #----------------------------------------------------------
 - name: delete a router
   gcp_compute_router:

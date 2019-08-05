@@ -35,7 +35,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetPool'"
 - name: verify that target_pool was created
   gcp_compute_target_pool_facts:
       filters:
@@ -65,7 +64,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetPool'"
 #----------------------------------------------------------
 - name: delete a target pool
   gcp_compute_target_pool:

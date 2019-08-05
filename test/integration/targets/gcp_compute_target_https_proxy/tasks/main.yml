@@ -115,7 +115,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetHttpsProxy'"
 - name: verify that target_https_proxy was created
   gcp_compute_target_https_proxy_facts:
       filters:
@@ -146,7 +145,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetHttpsProxy'"
 #----------------------------------------------------------
 - name: delete a target https proxy
   gcp_compute_target_https_proxy:
