@@ -1,0 +1,3 @@
+bugfixes:
+- async - Fix async callback plugins to allow async output to be displayed
+  when running command/shell (https://github.com/ansible/ansible/issues/15988)
