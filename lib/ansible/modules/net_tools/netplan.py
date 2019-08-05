@@ -105,7 +105,8 @@ options:
       - Enable IPv6 Privacy Extensions (RFC 4941) for the specified interface,
         and prefer temporary addresses. Defaults to false
         (no privacy extensions). There is currently no way to have a
-        private address but prefer the public address.
+        private address but prefer the public address. Supported for all device
+        types.
     required: false
     type: bool
 
