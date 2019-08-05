@@ -46,5 +46,4 @@ redhat_packages_py3:
 
 pip_packages:
   - psutil
-  - requests[security]
   - pymongo
