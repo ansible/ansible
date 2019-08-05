@@ -129,7 +129,7 @@ def main():
         server_version=dict(),
     )
 
-    conn_params = get_conn_params(module, module.params)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
     db_connection = connect_to_db(module, conn_params, fail_on_conn=False)
 
     if db_connection is not None:

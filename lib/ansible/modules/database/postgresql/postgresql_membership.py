@@ -271,7 +271,7 @@ def main():
     fail_on_role = module.params['fail_on_role']
     state = module.params['state']
 
-    conn_params = get_conn_params(module, module.params)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
     db_connection = connect_to_db(module, conn_params, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
