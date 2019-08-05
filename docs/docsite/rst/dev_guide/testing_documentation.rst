@@ -33,4 +33,4 @@ To ensure that your module documentation matches your ``argument_spec``:
 
 #. run the ``validate-modules`` test::
 
-   ansible-test sanity --test validate-modules mymodule
+    ansible-test sanity --test validate-modules mymodule
