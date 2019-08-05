@@ -5708,6 +5708,7 @@ lib/ansible/plugins/action/netconf.py action-plugin-docs # base class for deprec
 lib/ansible/plugins/action/network.py action-plugin-docs # base class for network action plugins
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/action/nxos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/qnos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/sros.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/vyos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
