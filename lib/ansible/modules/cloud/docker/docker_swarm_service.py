@@ -285,12 +285,14 @@ options:
       type:
         description:
           - The mount type.
+          - Note that C(npipe) is only supported by Docker for Windows.
         type: str
         default: bind
         choices:
           - bind
           - volume
           - tmpfs
+          - npipe
       readonly:
         description:
           - Whether the mount should be read-only.
@@ -2535,7 +2537,7 @@ def main():
             type=dict(
                 type='str',
                 default='bind',
-                choices=['bind', 'volume', 'tmpfs'],
+                choices=['bind', 'volume', 'tmpfs', 'npipe'],
             ),
             readonly=dict(type='bool'),
             labels=dict(type='dict'),
