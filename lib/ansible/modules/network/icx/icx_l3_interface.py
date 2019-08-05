@@ -94,6 +94,18 @@ options:
             If this keyword is omitted, the configured address is the primary IP address.
         choices: ['yes', 'no']
         type: str
+      state:
+        description:
+          - State of the Layer-3 interface configuration. It indicates if the configuration should
+            be present or absent on remote device.
+        choices: ['present', 'absent']
+        type: str
+      check_running_config:
+        description:
+          - Check running configuration. This can be set as environment variable.
+           Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+        type: bool
+        default: yes
   state:
     description:
       - State of the Layer-3 interface configuration. It indicates if the configuration should
