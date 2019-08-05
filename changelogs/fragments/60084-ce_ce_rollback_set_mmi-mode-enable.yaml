@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_rollback - set mmi-mode enable to run commands and unset after running(https://github.com/ansible/ansible/pull/60075).
