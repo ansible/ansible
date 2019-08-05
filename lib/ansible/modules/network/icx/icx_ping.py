@@ -24,9 +24,8 @@ notes:
 options:
     count:
       description:
-        - Number of packets to send.
+        - Number of packets to send. Default is 1.
       type: int
-      default: 1
     dest:
       description:
         - ip-addr | host-name | vrf vrf-name | ipv6 [ ipv6-addr | host-name | vrf vrf-name]  (resolvable by switch) of the remote node.
@@ -35,20 +34,17 @@ options:
     timeout:
       description:
         - Specifies the time, in milliseconds for which the device waits for a reply from the pinged device.
-          The value can range from 1 to 4294967296.
+          The value can range from 1 to 4294967296. The default is 5000 (5 seconds).
       type: int
-      default: 5000
     ttl:
       description:
-        - Specifies the time to live as a maximum number of hops. The value can range from 1 to 255.
+        - Specifies the time to live as a maximum number of hops. The value can range from 1 to 255. The default is 64.
       type: int
-      default: 64
     size:
       description:
         - Specifies the size of the ICMP data portion of the packet, in bytes. This is the payload and does not include the header.
-          The value can range from 0 to 10000
+          The value can range from 0 to 10000. The default is 16..
       type: int
-      default: 16
     source:
       description:
         - IP address to be used as the origin of the ping packets.
@@ -205,11 +201,11 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        count=dict(type="int", default=1),
+        count=dict(type="int"),
         dest=dict(type="str", required=True),
-        timeout=dict(type="int", default=5000),
-        ttl=dict(type="int", default=64),
-        size=dict(type="int", default=16),
+        timeout=dict(type="int"),
+        ttl=dict(type="int"),
+        size=dict(type="int"),
         source=dict(type="str"),
         state=dict(type="str", choices=["absent", "present"], default="present"),
         vrf=dict(type="str")
