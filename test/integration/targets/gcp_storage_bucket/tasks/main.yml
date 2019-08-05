@@ -33,7 +33,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'storage#bucket'"
 # ----------------------------------------------------------------------------
 - name: create a bucket that already exists
   gcp_storage_bucket:
@@ -47,7 +46,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'storage#bucket'"
 #----------------------------------------------------------
 - name: delete a bucket
   gcp_storage_bucket:

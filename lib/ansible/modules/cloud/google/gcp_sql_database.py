@@ -187,8 +187,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'sql')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="SQL objects can't be updated to ensure data safety")
 
 
 def delete(module, link, kind):
