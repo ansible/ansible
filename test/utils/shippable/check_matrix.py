@@ -35,10 +35,10 @@ def main():  # type: () -> None
              'Did you modify the "shippable.yml" file?')
 
     run_id = os.environ['SHIPPABLE_BUILD_ID']
-    sleep = 3
+    sleep = 1
     jobs = []
 
-    for attempts_remaining in range(10, -1, -1):
+    for attempts_remaining in range(4, -1, -1):
         try:
             jobs = json.loads(urlopen('https://api.shippable.com/jobs?runIds=%s' % run_id).read())
 
