@@ -61,7 +61,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#forwardingRule'"
 - name: verify that forwarding_rule was created
   gcp_compute_forwarding_rule_facts:
       filters:
@@ -95,7 +94,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#forwardingRule'"
 #----------------------------------------------------------
 - name: delete a forwarding rule
   gcp_compute_forwarding_rule:
