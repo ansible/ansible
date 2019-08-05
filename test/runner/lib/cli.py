@@ -88,7 +88,16 @@ from lib.util_common import (
     CommonConfig,
 )
 
-import lib.cover
+from lib.cover import (
+    command_coverage_combine,
+    command_coverage_erase,
+    command_coverage_html,
+    command_coverage_report,
+    command_coverage_xml,
+    COVERAGE_GROUPS,
+    CoverageConfig,
+    CoverageReportConfig,
+)
 
 
 def main():
@@ -478,8 +487,8 @@ def parse_args():
                                                       parents=[coverage_common],
                                                       help='combine coverage data and rewrite remote paths')
 
-    coverage_combine.set_defaults(func=lib.cover.command_coverage_combine,
-                                  config=lib.cover.CoverageConfig)
+    coverage_combine.set_defaults(func=command_coverage_combine,
+                                  config=CoverageConfig)
 
     add_extra_coverage_options(coverage_combine)
 
@@ -487,15 +496,15 @@ def parse_args():
                                                     parents=[coverage_common],
                                                     help='erase coverage data files')
 
-    coverage_erase.set_defaults(func=lib.cover.command_coverage_erase,
-                                config=lib.cover.CoverageConfig)
+    coverage_erase.set_defaults(func=command_coverage_erase,
+                                config=CoverageConfig)
 
     coverage_report = coverage_subparsers.add_parser('report',
                                                      parents=[coverage_common],
                                                      help='generate console coverage report')
 
-    coverage_report.set_defaults(func=lib.cover.command_coverage_report,
-                                 config=lib.cover.CoverageReportConfig)
+    coverage_report.set_defaults(func=command_coverage_report,
+                                 config=CoverageReportConfig)
 
     coverage_report.add_argument('--show-missing',
                                  action='store_true',
@@ -516,8 +525,8 @@ def parse_args():
                                                    parents=[coverage_common],
                                                    help='generate html coverage report')
 
-    coverage_html.set_defaults(func=lib.cover.command_coverage_html,
-                               config=lib.cover.CoverageConfig)
+    coverage_html.set_defaults(func=command_coverage_html,
+                               config=CoverageConfig)
 
     add_extra_coverage_options(coverage_html)
 
@@ -525,8 +534,8 @@ def parse_args():
                                                   parents=[coverage_common],
                                                   help='generate xml coverage report')
 
-    coverage_xml.set_defaults(func=lib.cover.command_coverage_xml,
-                              config=lib.cover.CoverageConfig)
+    coverage_xml.set_defaults(func=command_coverage_xml,
+                              config=CoverageConfig)
 
     add_extra_coverage_options(coverage_xml)
 
@@ -710,8 +719,8 @@ def add_extra_coverage_options(parser):
     parser.add_argument('--group-by',
                         metavar='GROUP',
                         action='append',
-                        choices=lib.cover.COVERAGE_GROUPS,
-                        help='group output by: %s' % ', '.join(lib.cover.COVERAGE_GROUPS))
+                        choices=COVERAGE_GROUPS,
+                        help='group output by: %s' % ', '.join(COVERAGE_GROUPS))
 
     parser.add_argument('--all',
                         action='store_true',
