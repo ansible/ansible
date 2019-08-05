@@ -53,7 +53,7 @@ class Lldp_interfacesArgs(object):  # pylint: disable=R0903
                                                                                   'longitude': {'required': True,
                                                                                                 'type': 'str'}},
                                                                       'type': 'dict'},
-                                                 'elin': {'type': 'int'}},
+                                                 'elin': {'type': 'str'}},
                                      'type': 'dict'},
                         'name': {'required': True, 'type': 'str'}},
             'type': 'list'},

@@ -44,7 +44,6 @@ class Facts(FactsBase):
 
     def get_facts(self, legacy_facts_type=None, resource_facts_type=None, data=None):
         """ Collect the facts for vyos
-
         :param legacy_facts_type: List of legacy facts types
         :param resource_facts_type: List of resource fact types
         :param data: previously collected conf
@@ -59,3 +58,4 @@ class Facts(FactsBase):
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
 
         return self.ansible_facts, self._warnings
+

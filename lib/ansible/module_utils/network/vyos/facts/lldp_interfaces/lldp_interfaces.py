@@ -140,7 +140,7 @@ class Lldp_interfacesFacts(object):
         elin_based = None
         if conf:
             e_num = search(r'^.* elin (.+)', conf, M)
-            elin_based = int(e_num.group(1).strip("'"))
+            elin_based = e_num.group(1).strip("'")
 
         return elin_based
 
