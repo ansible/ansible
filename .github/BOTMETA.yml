@@ -216,7 +216,7 @@ files:
     labels: crypto
     maintainers: $team_crypto
     supershipit: felixfontein
-  $modules/crypto/openssl_certificate.py
+  $modules/crypto/openssl_certificate.py:
     maintainers: ctrufan
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
