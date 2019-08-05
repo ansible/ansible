@@ -66,11 +66,11 @@ options:
     suboptions:
       host:
         description:
-          - "CDP/LLDP neighbor host for given interface C(name)."
+          - CDP/LLDP neighbor host for given interface C(name).
         type: str
       port:
         description:
-          - "CDP/LLDP neighbor port to which given interface C(name) is connected."
+          - CDP/LLDP neighbor port to which given interface C(name) is connected.
         type: str
   delay:
     description:
@@ -97,8 +97,7 @@ options:
           type: str
         limit:
           description:
-            - The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW.
-            The power limit based on actual power value for given interface C(name)"
+            - The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW. The power limit based on actual power value for given interface C(name)
           type: str
         priority:
           description:
