@@ -88,6 +88,12 @@ options:
     default: present
     type: str
     choices: ['present', 'absent', 'up', 'down']
+  check_running_config:
+    description:
+      - Check running configuration. This can be set as environment variable.
+      Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+    type: bool
+    default: yes
   power:
     description:
       - Inline power on Power over Ethernet (PoE) ports.
