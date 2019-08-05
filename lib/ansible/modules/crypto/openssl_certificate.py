@@ -58,7 +58,8 @@ options:
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
             - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
-            - The C(entrust) provider was added for Ansible 2.9 and requires credentials for the Entrust Certificate Services (ECS) API
+            - "The C(entrust) provider was added for Ansible 2.9 and requires credentials for the
+               L(https://www.entrustdatacard.com/products/categories/ssl-certificates,Entrust Certificate Services) (ECS) API."
         type: str
         required: true
         choices: [ acme, assertonly, entrust, ownca, selfsigned ]
@@ -387,7 +388,7 @@ options:
         description:
             - The email of the requester of the certificate (for tracking purposes).
             - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - This is required if the provider is C(entrust).
         type: str
         version_added: "2.9"
 
@@ -395,7 +396,7 @@ options:
         description:
             - The name of the requester of the certificate (for tracking purposes).
             - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - This is required if the provider is C(entrust).
         type: str
         version_added: "2.9"
 
@@ -403,7 +404,7 @@ options:
         description:
             - The phone number of the requester of the certificate (for tracking purposes).
             - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - This is required if the provider is C(entrust).
         type: str
         version_added: "2.9"
 
@@ -411,7 +412,7 @@ options:
         description:
             - The username for authentication to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - This is required if the provider is C(entrust).
         type: str
         version_added: "2.9"
 
@@ -419,7 +420,7 @@ options:
         description:
             - The key (password) for authentication to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - This is required if the provider is C(entrust).
         type: str
         version_added: "2.9"
 
@@ -427,15 +428,15 @@ options:
         description:
             - The path of the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - This is required if the provider is C(entrust).
         type: path
         version_added: "2.9"
 
     entrust_api_client_cert_key_path:
         description:
-            - The path of the key for the client certificate used to authenticate to the Entrust Certificate Services (ECS) API
+            - The path of the key for the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - This is required if the provider is C(entrust).
         type: path
         version_added: "2.9"
 
@@ -652,7 +653,6 @@ from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
 from ansible.module_utils.ecs.api import ECSClient, RestOperationException, SessionConfigurationException
-from ansible.module_utils.urls import fetch_url
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -1853,7 +1853,7 @@ class EntrustCertificate(Certificate):
             body['tracking'] = {
                 'requesterName': module.params['entrust_requester_name'],
                 'requesterEmail': module.params['entrust_requester_email'],
-                'requesterPhone': module.params['entrust_requester_phone']
+                'requesterPhone': module.params['entrust_requester_phone'],
             }
 
             try:
@@ -1930,6 +1930,9 @@ class EntrustCertificate(Certificate):
             'privatekey': self.privatekey_path,
             'csr': self.csr_path,
         }
+
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         result.update(self._get_cert_details())
 
@@ -2071,9 +2074,9 @@ def main():
             entrust_requester_name=dict(type='str'),
             entrust_requester_phone=dict(type='str'),
             entrust_api_user=dict(type='str'),
-            entrust_api_key=dict(type='str'),
+            entrust_api_key=dict(type='str', no_log=True),
             entrust_api_client_cert_path=dict(type='path'),
-            entrust_api_client_cert_key_path=dict(type='path'),
+            entrust_api_client_cert_key_path=dict(type='path', no_log=True),
             entrust_api_specification_path=dict(type='path', default='https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml'),
             entrust_not_after=dict(type='str', default='+365d'),
         ),

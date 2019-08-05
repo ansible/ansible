@@ -1,0 +1,2 @@
+minor_changes:
+  - Add support for a new provider 'entrust' in openssl_certificate module (https://github.com/ansible/ansible/pull/59272).
