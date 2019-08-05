@@ -202,8 +202,7 @@ def create(module, link):
 
 
 def update(module, link):
-    auth = GcpSession(module, 'spanner')
-    return wait_for_operation(module, auth.patch(link, resource_to_update(module)))
+    module.fail_json(msg="Spanner objects can't be updated to ensure data safety")
 
 
 def delete(module, link):

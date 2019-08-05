@@ -186,8 +186,7 @@ def create(module, link):
 
 
 def update(module, link):
-    delete(module, self_link(module))
-    create(module, collection(module))
+    module.fail_json(msg="Spanner objects can't be updated to ensure data safety")
 
 
 def delete(module, link):

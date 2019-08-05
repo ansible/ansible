@@ -45,7 +45,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'storage#bucketAccessControl'"
 # ----------------------------------------------------------------------------
 - name: create a bucket access control that already exists
   gcp_storage_bucket_access_control:
@@ -61,7 +60,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'storage#bucketAccessControl'"
 #----------------------------------------------------------
 - name: delete a bucket access control
   gcp_storage_bucket_access_control:
