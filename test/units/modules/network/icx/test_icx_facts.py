@@ -82,9 +82,6 @@ class TestICXFactsModule(TestICXModule):
             result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
         )
         self.assertEqual(
-            result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
-        )
-        self.assertEqual(
             result['ansible_facts']['ansible_net_memfree_mb'], 367152
         )
         self.assertEqual(
@@ -101,9 +98,6 @@ class TestICXFactsModule(TestICXModule):
         result = self.execute_module()
         self.assertEqual(
             result['ansible_facts']['ansible_net_filesystems'], "flash"
-        )
-        self.assertEqual(
-            result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
         )
         self.assertEqual(
             result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
