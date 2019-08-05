@@ -173,6 +173,28 @@ EXAMPLES = '''
     memory: 1024
     state: present
     network_mode: awsvpc
+
+# Create Task Definition with Environment Variables and Secrets
+- name: Create task definition
+  ecs_taskdefinition:
+    family: nginx
+    containers:
+    - name: nginx
+      essential: true
+      image: "nginx"
+      environment:
+        - name: "PORT"
+          value: "8080"
+      secrets:
+        - name: "VAR_NAME_1"
+          valueFrom: "arn:aws:secretsmanager:region:aws_account_id:secret:secret_name_for_ENV_NAME_1"
+        - name: "VAR_NAME_2"
+          valueFrom: "arn:aws:ssm:region:aws_account_id:parameter/parameter_name_for_ENV_NAME_2"
+    launch_type: FARGATE
+    cpu: 512
+    memory: 1GB
+    state: present
+    network_mode: awsvpc
 '''
 RETURN = '''
 taskdefinition:
