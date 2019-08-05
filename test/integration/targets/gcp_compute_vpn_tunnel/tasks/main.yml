@@ -77,7 +77,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#vpnTunnel'"
 - name: verify that vpn_tunnel was created
   gcp_compute_vpn_tunnel_facts:
       filters:
@@ -110,7 +109,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#vpnTunnel'"
 #----------------------------------------------------------
 - name: delete a vpn tunnel
   gcp_compute_vpn_tunnel:
