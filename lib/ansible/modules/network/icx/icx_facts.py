@@ -247,7 +247,7 @@ class Hardware(FactsBase):
                 facts[fs]['spacetotal'] = match.group(1)
             match = re.match(r'\W+Code Flash Free Space = (\S+)', line)
             if match:
-                facts[fs]['spacefree'] = int(match.group(1)) / 1024
+                facts[fs]['spacefree'] = int(int(match.group(1)) / 1024)
                 facts[fs]['spacefree'] = str(facts[fs]['spacefree']) + "Kb"
         return {"flash": facts}
 
