@@ -362,6 +362,9 @@ def main():
             elif size[-1] in 'bskmgtpe':
                 size_unit = size[-1]
                 size = size[0:-1]
+                if '+' in size:
+                    size_operator = '+'
+                    size = size[1:]
 
             try:
                 float(size)
