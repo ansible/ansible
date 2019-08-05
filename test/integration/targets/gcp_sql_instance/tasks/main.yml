@@ -47,7 +47,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'sql#instance'"
 - name: verify that instance was created
   gcp_sql_instance_facts:
       project: "{{ gcp_project }}"
@@ -80,7 +79,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'sql#instance'"
 #----------------------------------------------------------
 - name: delete a instance
   gcp_sql_instance:

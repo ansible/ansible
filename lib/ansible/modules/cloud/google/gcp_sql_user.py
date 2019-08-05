@@ -215,7 +215,7 @@ def resource_to_request(module):
 
 
 def unwrap_resource_filter(module):
-    return {'host': module.params['host'], 'name': module.params['name']}
+    return {'name': module.params['name'], 'host': module.params['host']}
 
 
 def unwrap_resource(result, module):
