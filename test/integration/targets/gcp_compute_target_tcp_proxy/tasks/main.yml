@@ -75,7 +75,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetTcpProxy'"
 - name: verify that target_tcp_proxy was created
   gcp_compute_target_tcp_proxy_facts:
       filters:
@@ -105,7 +104,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetTcpProxy'"
 #----------------------------------------------------------
 - name: delete a target tcp proxy
   gcp_compute_target_tcp_proxy:
