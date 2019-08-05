@@ -53,7 +53,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'bigquery#table'"
 - name: verify that table was created
   gcp_bigquery_table_facts:
       dataset: example_dataset
@@ -85,7 +84,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'bigquery#table'"
 #----------------------------------------------------------
 - name: delete a table
   gcp_bigquery_table:

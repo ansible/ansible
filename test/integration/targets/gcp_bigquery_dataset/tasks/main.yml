@@ -37,7 +37,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'bigquery#dataset'"
 - name: verify that dataset was created
   gcp_bigquery_dataset_facts:
       project: "{{ gcp_project }}"
@@ -65,7 +64,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'bigquery#dataset'"
 #----------------------------------------------------------
 - name: delete a dataset
   gcp_bigquery_dataset:
