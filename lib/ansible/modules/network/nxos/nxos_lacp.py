@@ -162,7 +162,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['lacp system-priority 15', 'lacp system-mac 00c1.4c00.bd15 role primary']
 """
 
 

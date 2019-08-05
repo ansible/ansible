@@ -21,7 +21,6 @@
 #   builder template.
 #
 #############################################
-
 """
 The arg spec for the nxos_lacp module
 """
@@ -36,14 +35,35 @@ class LacpArgs(object):
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'options': {'system': {'options': {'mac': {'options': {'address': {'type': 'str'},
-                                                                                       'role': {'choices': ['primary',
-                                                                                                            'secondary'],
-                                                                                                'type': 'str'}},
-                                                                           'type': 'dict'},
-                                                                   'priority': {'type': 'int'}},
-                                                       'type': 'dict'}},
-                                'type': 'dict'},
-                     'state': {'choices': ['merged', 'replaced', 'deleted'],
-                               'default': 'merged',
-                               'type': 'str'}}
+    argument_spec = {
+        'config': {
+            'options': {
+                'system': {
+                    'options': {
+                        'mac': {
+                            'options': {
+                                'address': {
+                                    'type': 'str'
+                                },
+                                'role': {
+                                    'choices': ['primary', 'secondary'],
+                                    'type': 'str'
+                                }
+                            },
+                            'type': 'dict'
+                        },
+                        'priority': {
+                            'type': 'int'
+                        }
+                    },
+                    'type': 'dict'
+                }
+            },
+            'type': 'dict'
+        },
+        'state': {
+            'choices': ['merged', 'replaced', 'deleted'],
+            'default': 'merged',
+            'type': 'str'
+        }
+    }
