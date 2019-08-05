@@ -39,7 +39,6 @@ class TestICXSCPModule(TestICXModule):
                     return load_fixture('show_running-config_include_username.txt').strip()
                 else:
                     return ''
-                
         self.get_config.side_effect = load_file
         self.load_config.return_value = None
 
