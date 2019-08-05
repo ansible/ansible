@@ -30,6 +30,57 @@ options:
         exclusive with the C(name) argument.
     aliases: ['users', 'collection']
     type: list
+    suboptions:
+      name:
+        description:
+          - The username to be configured on the ICX device.
+            This argument accepts a string value and is mutually exclusive
+            with the C(aggregate) argument.
+            Please note that this option is not same as C(provider username).
+        required: true
+        type: str
+      configured_password:
+        description: The password to be configured on the ICX device.
+        type: str
+      update_password:
+        description:
+          - This argument will instruct the module when to change the password. When
+            set to C(always), the password will always be updated in the device
+            and when set to C(on_create) the password will be updated only if
+            the username is created.
+        choices: ['on_create', 'always']
+        type: str
+      privilege:
+        description:
+          - The privilege level to be granted to the user
+        choices: ['0', '4', '5']
+        type: str
+      nopassword:
+        description:
+          - Defines the username without assigning
+            a password. This will allow the user to login to the system
+            without being authenticated by a password.
+        type: bool
+      state:
+        description:
+          - Configures the state of the username definition
+            as it relates to the device operational configuration. When set
+            to I(present), the username(s) should be configured in the device active
+            configuration and when set to I(absent) the username(s) should not be
+            in the device active configuration
+        choices: ['present', 'absent']
+        type: str
+      access_time:
+        description:
+          - This parameter indicates the time the file's access time should be set to.
+           Should be preserve when no modification is required, YYYYMMDDHHMM.SS when using default time format, or now.
+           Default is None meaning that preserve is the default for state=[file,directory,link,hard] and now is default for state=touch
+        type: str
+      check_running_config:
+        description:
+          - Check running configuration. This can be set as environment variable.
+           Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+        type: bool
   name:
     description:
       - The username to be configured on the ICX device.
