@@ -118,7 +118,7 @@ options:
         description:
           - ID of the VLAN. Range 1-4094.
         required: true
-        type: int
+        type: str
       ip_dhcp_snooping:
         description:
           - Enables DHCP snooping on a VLAN.
@@ -158,7 +158,6 @@ options:
       delay:
         description:
           - Delay the play should wait to check for declarative intent params values.
-        default: 10
         type: int
       stp:
         description:
@@ -186,10 +185,6 @@ options:
           - State of the VLAN configuration.
         type: str
         choices: ['present', 'absent']
-      purge:
-        description:
-          - Purge VLANs not defined in the I(aggregate) parameter.
-        type: bool
       check_running_config:
         description:
           - Check running configuration. This can be set as environment variable.
