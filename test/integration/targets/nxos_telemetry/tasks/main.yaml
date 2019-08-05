@@ -1,0 +1,18 @@
+---
+- set_fact: run_test="true"
+
+# Telemetry module only supported on N9k
+- set_fact: run_test="false"
+  when: platform is not search("N9K")
+
+# Telemetry module not supported on versions earlier then 7.0(3)I7(x)
+- set_fact: run_test="false"
+  when: imagetag is search("I2|I3|I4|I5|I6")
+
+- include: cli.yaml
+  tags: 'cli'
+  when: run_test
+# Uncomment below when nxapi is supported for resource module builder modules
+# - include: nxapi.yaml
+#   tags: 'nxapi'
+#   when: run_test
