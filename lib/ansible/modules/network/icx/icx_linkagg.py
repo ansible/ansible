@@ -293,7 +293,7 @@ def main():
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', required_together=required_together),
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, required_together=required_together),
         purge=dict(default=False, type='bool')
     )
 
