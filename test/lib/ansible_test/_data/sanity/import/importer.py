@@ -135,7 +135,7 @@ def main():
             else:
                 for result in results:
                     if result[0].startswith(filter_dir):
-                        source = result[0][len(base_dir) + 1:].replace('test/sanity/import/', '')
+                        source = result[0][len(base_dir) + 1:].replace('test/lib/ansible_test/_data/sanity/import/', '')
                         line = result[1] or 0
                         break
 

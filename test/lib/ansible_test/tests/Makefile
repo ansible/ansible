@@ -2,8 +2,8 @@ all: sanity unit
 
 .PHONY: sanity
 sanity:
-	ansible-test sanity test/runner/ ${FLAGS}
+	ansible-test sanity test/lib/ ${FLAGS}
 
 .PHONY: unit
 unit:
-	PYTHONPATH=.:.. pytest unit ${FLAGS}
+	PYTHONPATH=../../lib/ pytest unit ${FLAGS}

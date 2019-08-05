@@ -132,7 +132,7 @@ def main():
 
     for filename in files_with_bundled_metadata.difference(bundled_libs):
         print('{0}: ERROR: File contains _BUNDLED_METADATA but needs to be added to'
-              ' test/sanity/code-smell/update-bundled.py'.format(filename))
+              ' test/lib/ansible_test/_data/sanity/code-smell/update-bundled.py'.format(filename))
 
     for filename in bundled_libs:
         try:

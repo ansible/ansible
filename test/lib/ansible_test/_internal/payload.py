@@ -40,10 +40,8 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
         files = [f for f in files if
                  f[1].startswith('bin/') or
                  f[1].startswith('lib/') or
-                 f[1].startswith('test/runner/') or
+                 f[1].startswith('test/lib/') or
                  f[1].startswith('packaging/requirements/') or
-                 f[1].startswith('test/sanity/') or  # sanity only
-                 f[1].startswith('test/units/pytest/plugins/') or  # units only
                  f[1] in (
                      'setup.py',
                      'README.rst',

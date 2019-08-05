@@ -19,7 +19,7 @@ from ..util import (
     load_plugins,
     parse_to_list_of_dict,
     ABC,
-    ANSIBLE_ROOT,
+    ANSIBLE_TEST_DATA_ROOT,
     is_binary_file,
     read_lines_without_comments,
     get_available_python_versions,
@@ -72,7 +72,7 @@ from ..env import (
 )
 
 COMMAND = 'sanity'
-SANITY_ROOT = os.path.join(ANSIBLE_ROOT, 'test', 'sanity')
+SANITY_ROOT = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'sanity')
 
 
 def command_sanity(args):

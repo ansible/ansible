@@ -13,7 +13,7 @@ def main():
                 match = re.search(r'^[^;#]*?([<>=])(?!.*sanity_ok.*)', text)
 
                 if match:
-                    print('%s:%d:%d: put constraints in `test/runner/requirements/constraints.txt`' % (
+                    print('%s:%d:%d: put constraints in `test/lib/ansible_test/_data/requirements/constraints.txt`' % (
                         path, line + 1, match.start(1) + 1))
 
 

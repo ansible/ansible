@@ -54,7 +54,7 @@ def ansible_environment(args, color=True, ansible_config=None):
     elif isinstance(args, IntegrationConfig):
         ansible_config = os.path.join(ANSIBLE_ROOT, 'test/integration/%s.cfg' % args.command)
     else:
-        ansible_config = os.path.join(ANSIBLE_ROOT, 'test/%s/ansible.cfg' % args.command)
+        ansible_config = os.path.join(ANSIBLE_TEST_DATA_ROOT, '%s/ansible.cfg' % args.command)
 
     if not args.explain and not os.path.exists(ansible_config):
         raise ApplicationError('Configuration not found: %s' % ansible_config)

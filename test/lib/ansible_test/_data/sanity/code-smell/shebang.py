@@ -64,7 +64,9 @@ def main():
 
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
-            elif path.startswith('lib/') or path.startswith('test/runner/lib/'):
+            elif path.startswith('test/lib/ansible_test/_data/'):
+                pass
+            elif path.startswith('lib/') or path.startswith('test/lib/'):
                 if executable:
                     print('%s:%d:%d: should not be executable' % (path, 0, 0))
 

@@ -1386,7 +1386,7 @@ def command_units(args):
             plugins.append('ansible_pytest_collections')
 
         if plugins:
-            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_ROOT, 'test/units/pytest/plugins')
+            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest/plugins')
 
             for plugin in plugins:
                 cmd.extend(['-p', plugin])

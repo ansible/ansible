@@ -25,7 +25,6 @@ from ..util import (
     SubprocessError,
     display,
     ConfigParser,
-    ANSIBLE_ROOT,
     is_subdir,
     find_python,
 )
@@ -126,9 +125,9 @@ class PylintTest(SanitySingleVersion):
         if data_context().content.collection:
             add_context(remaining_paths, 'collection', lambda p: True)
         else:
-            add_context(remaining_paths, 'validate-modules', filter_path('test/sanity/validate-modules/'))
-            add_context(remaining_paths, 'sanity', filter_path('test/sanity/'))
-            add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
+            add_context(remaining_paths, 'validate-modules', filter_path('test/lib/ansible_test/_data/sanity/validate-modules/'))
+            add_context(remaining_paths, 'sanity', filter_path('test/lib/ansible_test/_data/sanity/'))
+            add_context(remaining_paths, 'ansible-test', filter_path('test/lib/'))
             add_context(remaining_paths, 'test', filter_path('test/'))
             add_context(remaining_paths, 'hacking', filter_path('hacking/'))
             add_context(remaining_paths, 'ansible', lambda p: True)

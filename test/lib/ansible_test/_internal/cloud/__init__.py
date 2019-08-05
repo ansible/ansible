@@ -183,7 +183,7 @@ class CloudBase(ABC):
         :type args: IntegrationConfig
         """
         self.args = args
-        self.platform = self.__module__.split('.')[2]
+        self.platform = self.__module__.split('.')[-1]
 
         def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the config file to the payload file list."""

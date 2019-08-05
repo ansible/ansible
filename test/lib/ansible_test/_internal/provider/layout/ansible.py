@@ -7,6 +7,10 @@ import re
 
 from ... import types as t
 
+from ...util import (
+    ANSIBLE_TEST_ROOT,
+)
+
 from . import (
     ContentLayout,
     LayoutProvider,
@@ -23,10 +27,10 @@ class AnsibleLayout(LayoutProvider):
     def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
         """Create a Layout using the given root and paths."""
         plugin_types = sorted(set(p.split('/')[3] for p in paths if re.search(r'^lib/ansible/plugins/[^/]+/', p)))
-        provider_types = sorted(set(p.split('/')[4] for p in paths if re.search(r'^test/runner/lib/provider/[^/]+/', p)))
+        provider_types = sorted(set(p.split('/')[5] for p in paths if re.search(r'^test/lib/ansible_test/_internal/provider/[^/]+/', p)))
 
         plugin_paths = dict((p, os.path.join('lib/ansible/plugins', p)) for p in plugin_types)
-        provider_paths = dict((p, os.path.join('test/runner/lib/provider', p)) for p in provider_types)
+        provider_paths = dict((p, os.path.join(ANSIBLE_TEST_ROOT, '_internal/provider', p)) for p in provider_types)
 
         plugin_paths.update(dict(
             modules='lib/ansible/modules',

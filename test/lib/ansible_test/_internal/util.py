@@ -62,8 +62,9 @@ except AttributeError:
 COVERAGE_CONFIG_PATH = '.coveragerc'
 COVERAGE_OUTPUT_PATH = 'coverage'
 
-ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_ROOT, 'test', 'runner')
+ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+ANSIBLE_TEST_ROOT = os.path.join(ANSIBLE_ROOT, 'test', 'lib', 'ansible_test')
+ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
