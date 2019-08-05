@@ -247,7 +247,7 @@ class Connection(NetworkConnectionBase):
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
                 self.queue_message('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os)
-                self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
+                self._sub_plugin.extend([{'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}])
             else:
                 self.queue_message('vvvv', 'unable to load cliconf for network_os %s' % self._network_os)
         else:
@@ -256,6 +256,13 @@ class Connection(NetworkConnectionBase):
                 'manually configure ansible_network_os value for this host'
             )
         self.queue_message('log', 'network_os is set to %s' % self._network_os)
+
+        self._terminal = terminal_loader.get(self._network_os, self)
+        if self._terminal:
+            self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
+            self._sub_plugin.extend([{'type': 'terminal', 'name': self._network_os, 'obj': self._terminal}])
+        else:
+            raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -273,6 +280,7 @@ class Connection(NetworkConnectionBase):
         # the local connection
         if self._ssh_shell:
             try:
+
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
                 for key in ('prompt', 'answer', 'sendonly', 'newline', 'prompt_retry_check'):
@@ -332,17 +340,12 @@ class Connection(NetworkConnectionBase):
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
 
-            self._terminal = terminal_loader.get(self._network_os, self)
-            if not self._terminal:
-                raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
+            terminal_initial_prompt = self._terminal.get_option('terminal_initial_prompt') or self._terminal.terminal_initial_prompt
+            terminal_initial_answer = self._terminal.get_option('terminal_initial_answer') or self._terminal.terminal_initial_answer
+            newline = self._terminal.get_option('terminal_inital_prompt_newline') or self._terminal.terminal_inital_prompt_newline
+            check_all = self._terminal.get_option('terminal_initial_prompt_checkall') or False
 
-            self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
-
-            self.receive(
-                prompts=self._terminal.terminal_initial_prompt,
-                answer=self._terminal.terminal_initial_answer,
-                newline=self._terminal.terminal_inital_prompt_newline
-            )
+            self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
             self.queue_message('vvvv', 'firing event: on_open_shell()')
             self._terminal.on_open_shell()
@@ -385,6 +388,10 @@ class Connection(NetworkConnectionBase):
         handled = False
         command_prompt_matched = False
         matched_prompt_window = window_count = 0
+
+        # set terminal regex values for command prompt and errors in response
+        self._terminal_stderr_re = self._get_terminal_std_re('terminal_stderr_re')
+        self._terminal_stdout_re = self._get_terminal_std_re('terminal_stdout_re')
 
         cache_socket_timeout = self._ssh_shell.gettimeout()
         command_timeout = self.get_option('persistent_command_timeout')
@@ -463,8 +470,10 @@ class Connection(NetworkConnectionBase):
             if prompt_len != answer_len:
                 raise AnsibleConnectionFailure("Number of prompts (%s) is not same as that of answers (%s)" % (prompt_len, answer_len))
         try:
-            self._history.append(command)
-            self._ssh_shell.sendall(b'%s\r' % command)
+            cmd = b'%s\r' % command
+            self._history.append(cmd)
+            self._ssh_shell.sendall(cmd)
+            self._log_messages('send command: %s' % cmd)
             if sendonly:
                 return
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
@@ -513,7 +522,7 @@ class Connection(NetworkConnectionBase):
             single_prompt = True
         if not isinstance(answer, list):
             answer = [answer]
-        prompts_regex = [re.compile(r, re.I) for r in prompts]
+        prompts_regex = [re.compile(to_bytes(r), re.I) for r in prompts]
         for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
@@ -557,13 +566,14 @@ class Connection(NetworkConnectionBase):
         '''
         errored_response = None
         is_error_message = False
-        for regex in self._terminal.terminal_stderr_re:
+
+        for regex in self._terminal_stderr_re:
             if regex.search(response):
                 is_error_message = True
 
                 # Check if error response ends with command prompt if not
                 # receive it buffered prompt
-                for regex in self._terminal.terminal_stdout_re:
+                for regex in self._terminal_stdout_re:
                     match = regex.search(response)
                     if match:
                         errored_response = response
@@ -573,7 +583,7 @@ class Connection(NetworkConnectionBase):
                         break
 
         if not is_error_message:
-            for regex in self._terminal.terminal_stdout_re:
+            for regex in self._terminal_stdout_re:
                 match = regex.search(response)
                 if match:
                     self._matched_pattern = regex.pattern
@@ -604,3 +614,22 @@ class Connection(NetworkConnectionBase):
         self.close()
         self._connect()
         self.close()
+
+    def _get_terminal_std_re(self, option):
+        terminal_std_option = self._terminal.get_option(option)
+        terminal_std_re = []
+
+        if terminal_std_option:
+            for item in terminal_std_option:
+                if "pattern" not in item:
+                    raise AnsibleConnectionFailure("'pattern' is a required key for option '%s',"
+                                                   " received option value is %s" % (option, item))
+                pattern = br"%s" % to_bytes(item['pattern'])
+                flag = item.get('flags', 0)
+                if flag:
+                    flag = getattr(re, flag.split('.')[1] )
+                terminal_std_re.append(re.compile(pattern, flag))
+        else:
+            terminal_std_re = getattr(self._terminal, option)
+
+        return terminal_std_re

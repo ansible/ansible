@@ -19,8 +19,117 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+terminal: ios
+short_description: Use terminal plugin to configure ios terminal options
+description:
+  - This ios terminal plugin provides low level abstraction api's and options for
+    setting the remote host terminal after initial login.
+version_added: "2.9"
+options:
+  terminal_stdout_re:
+    type: list
+    description:
+      - A single regex pattern or a sequence of patterns along with optional flags
+        to match the command prompt from the received response chunk.
+    default:
+      - pattern: '[\r\n]?[\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$'
+    env:
+      - name: ANSIBLE_TERMINAL_STDOUT_RE
+    vars:
+      - name: ansible_terminal_stdout_re
+  terminal_stderr_re:
+    type: list
+    elements: dict
+    description:
+      - This option provides the regex pattern and optional flags to match the
+        error string from the received response chunk.
+    default:
+      - pattern: '% ?Error'
+      - pattern: '% ?Bad secret'
+      - pattern: '[\r\n%] Bad passwords'
+      - pattern: 'invalid input'
+        flags: 're.I'
+      - pattern: '(?:incomplete|ambiguous) command'
+        flags: 're.I'
+      - pattern: 'connection timed out'
+        flags: 're.I'
+      - pattern: '[^\r\n]+ not found'
+      - pattern: >
+                ''[^']' +returned error code: ?\d+'
+      - pattern: 'Bad mask'
+        flags: 're.I'
+      - pattern: '% ?(\S+) ?overlaps with ?(\S+)'
+        flags: 're.I'
+      - pattern: '[%\S] ?Error: ?[\s]+'
+        flags: 're.I'
+      - pattern: '[%\S] ?Informational: ?[\s]+'
+        flags: 're.I'
+      - pattern: 'Command authorization failed'
+    env:
+      - name: ANSIBLE_TERMINAL_STDERR_RE
+    vars:
+      - name: ansible_terminal_stderr_re
+  terminal_initial_prompt:
+    type: list
+    description:
+      - A single regex pattern or a sequence of patterns to evaluate the expected
+        prompt at the time of initial login to the remote host.
+    ini:
+      - section: ios_terminal_plugin
+        key: terminal_initial_prompt
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_PROMPT
+    vars:
+      - name: ansible_terminal_initial_prompt
+  terminal_initial_answer:
+    type: list
+    description:
+      - The answer to reply with if the C(terminal_initial_prompt) is matched. The value can be a single answer
+        or a list of answer for multiple terminal_initial_prompt. In case the login menu has
+        multiple prompts the sequence of the prompt and excepted answer should be in same order and the value
+        of I(terminal_prompt_checkall) should be set to I(True) if all the values in C(terminal_initial_prompt) are
+        expected to be matched and set to I(False) if any one login prompt is to be matched.
+    ini:
+      - section: ios_terminal_plugin
+        key: terminal_initial_answer
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_ANSWER
+    vars:
+      - name: ansible_terminal_initial_answer
+  terminal_initial_prompt_checkall:
+    type: boolean
+    description:
+      - By default the value is set to I(False) and any one of the prompts mentioned in C(terminal_initial_prompt)
+        option is matched it won't check for other prompts. When set to I(True) it will check for all the prompts
+        mentioned in C(terminal_initial_prompt) option in the given order and all the prompts
+        should be received from remote host if not it will result in timeout.
+    default: False
+    ini:
+      - section: ios_terminal_plugin
+        key: terminal_inital_prompt_checkall
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_CHECKALL
+    vars:
+      - name: ansible_terminal_initial_prompt_checkall
+  terminal_inital_prompt_newline:
+    type: boolean
+    description:
+      - This boolean flag, that when set to I(True) will send newline in the response if any of values
+        in I(terminal_initial_prompt) is matched.
+    default: True
+    ini:
+      - section: ios_terminal_plugin
+        key: terminal_inital_prompt_newline
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_NEWLINE
+    vars:
+      - name: ansible_terminal_initial_prompt_newline
+"""
+
 import json
-import re
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text, to_bytes
@@ -31,27 +140,6 @@ display = Display()
 
 
 class TerminalModule(TerminalBase):
-
-    terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$")
-    ]
-
-    terminal_stderr_re = [
-        re.compile(br"% ?Error"),
-        # re.compile(br"^% \w+", re.M),
-        re.compile(br"% ?Bad secret"),
-        re.compile(br"[\r\n%] Bad passwords"),
-        re.compile(br"invalid input", re.I),
-        re.compile(br"(?:incomplete|ambiguous) command", re.I),
-        re.compile(br"connection timed out", re.I),
-        re.compile(br"[^\r\n]+ not found"),
-        re.compile(br"'[^']' +returned error code: ?\d+"),
-        re.compile(br"Bad mask", re.I),
-        re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
-        re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
-        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I),
-        re.compile(br"Command authorization failed")
-    ]
 
     def on_open_shell(self):
         try:

@@ -35,7 +35,6 @@ from ansible.utils.vars import combine_vars, isidentifier
 
 display = Display()
 
-
 __all__ = ['TaskExecutor']
 
 
@@ -941,9 +940,13 @@ class TaskExecutor:
         final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
 
         option_vars = C.config.get_plugin_vars('connection', connection._load_name)
-        plugin = connection._sub_plugin
-        if plugin.get('type'):
-            option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
+
+        plugins = connection._sub_plugin
+        if not isinstance(plugins, list):
+            plugins = [plugins]
+        for sub_plugin in plugins:
+            if sub_plugin.get('type'):
+                option_vars.extend(C.config.get_plugin_vars(sub_plugin['type'], sub_plugin['name']))
 
         options = {}
         for k in option_vars:
