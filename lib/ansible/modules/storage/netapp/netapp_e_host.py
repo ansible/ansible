@@ -244,7 +244,6 @@ class Host(object):
                 if re.match(r'^(0x)?[0-9a-f]{16}$', port['port'].replace(':', '')):
                     port['port'] = port['port'].replace(':', '').replace('0x', '')
 
-    @property
     def valid_host_type(self):
         host_types = None
         try:
@@ -319,7 +318,6 @@ class Host(object):
 
         return used_host_ports
 
-    @property
     def group_id(self):
         if self.group:
             try:
@@ -339,7 +337,6 @@ class Host(object):
             # Return the value equivalent of no group
             return "0000000000000000000000000000000000000000"
 
-    @property
     def host_exists(self):
         """Determine if the requested host exists
         As a side effect, set the full list of defined hosts in 'all_hosts', and the target host in 'host_obj'.
@@ -376,18 +373,16 @@ class Host(object):
         self.all_hosts = all_hosts
         return match
 
-    @property
     def needs_update(self):
         """Determine whether we need to update the Host object
         As a side effect, we will set the ports that we need to update (portsForUpdate), and the ports we need to add
         (newPorts), on self.
         """
         changed = False
-        if (self.host_obj["clusterRef"].lower() != self.group_id.lower() or
+        if (self.host_obj["clusterRef"].lower() != self.group_id().lower() or
                 self.host_obj["hostTypeIndex"] != self.host_type_index):
             self._logger.info("Either hostType or the clusterRef doesn't match, an update is required.")
             changed = True
-
         current_host_ports = dict((port["id"], {"type": port["type"], "port": port["address"], "label": port["label"]})
                                   for port in self.host_obj["hostSidePorts"])
 
@@ -397,7 +392,6 @@ class Host(object):
                     if port == current_host_ports[current_host_port_id]:
                         current_host_ports.pop(current_host_port_id)
                         break
-
                     elif port["port"] == current_host_ports[current_host_port_id]["port"]:
                         if self.port_on_diff_host(port) and not self.force_port:
                             self.module.fail_json(msg="The port you specified [%s] is associated with a different host."
@@ -444,7 +438,7 @@ class Host(object):
             self._logger.info("No host ports were defined.")
 
         if self.group:
-            self.post_body['groupId'] = self.group_id
+            self.post_body['groupId'] = self.group_id()
         else:
             self.post_body['groupId'] = "0000000000000000000000000000000000000000"
 
@@ -474,7 +468,7 @@ class Host(object):
         post_body = dict(
             name=self.name,
             hostType=dict(index=self.host_type_index),
-            groupId=self.group_id,
+            groupId=self.group_id(),
         )
 
         if self.ports:
@@ -483,21 +477,19 @@ class Host(object):
         api = self.url + "storage-systems/%s/hosts" % self.ssid
         self._logger.info('POST => url=%s, body=%s', api, pformat(post_body))
 
-        if not (self.host_exists and self.check_mode):
-            try:
-                (rc, self.host_obj) = request(api, method='POST',
-                                              url_username=self.user, url_password=self.pwd, validate_certs=self.certs,
-                                              data=json.dumps(post_body), headers=HEADERS)
-            except Exception as err:
-                self.module.fail_json(
-                    msg="Failed to create host. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
-        else:
-            payload = self.build_success_payload(self.host_obj)
-            self.module.exit_json(changed=False,
-                                  msg="Host already exists. Id [%s]. Host [%s]." % (self.ssid, self.name), **payload)
+        if not self.check_mode:
+            if not self.host_exists():
+                try:
+                    (rc, self.host_obj) = request(api, method='POST', url_username=self.user, url_password=self.pwd, validate_certs=self.certs,
+                                                  data=json.dumps(post_body), headers=HEADERS)
+                except Exception as err:
+                    self.module.fail_json(
+                        msg="Failed to create host. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
+            else:
+                payload = self.build_success_payload(self.host_obj)
+                self.module.exit_json(changed=False, msg="Host already exists. Id [%s]. Host [%s]." % (self.ssid, self.name), **payload)
 
         payload = self.build_success_payload(self.host_obj)
-
         self.module.exit_json(changed=True, msg='Host created.', **payload)
 
     def remove_host(self):
@@ -523,17 +515,17 @@ class Host(object):
 
     def apply(self):
         if self.state == 'present':
-            if self.host_exists:
-                if self.needs_update and self.valid_host_type:
+            if self.host_exists():
+                if self.needs_update() and self.valid_host_type():
                     self.update_host()
                 else:
                     payload = self.build_success_payload(self.host_obj)
                     self.module.exit_json(changed=False, msg="Host already present; no changes required.", **payload)
-            elif self.valid_host_type:
+            elif self.valid_host_type():
                 self.create_host()
         else:
             payload = self.build_success_payload()
-            if self.host_exists:
+            if self.host_exists():
                 self.remove_host()
                 self.module.exit_json(changed=True, msg="Host removed.", **payload)
             else:
