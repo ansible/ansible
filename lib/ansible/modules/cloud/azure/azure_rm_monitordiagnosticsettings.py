@@ -118,7 +118,7 @@ options:
         description:
             - The resource name or ID for a Log Analytics workspace to which you would like to send Diagnostic Logs.
             - It can also be a dict contains I(name), I(resource_group) and optional I(subscription_id).
-        type: str
+        type: raw
 extends_documentation_fragment:
     - azure
 
@@ -161,7 +161,7 @@ id:
         - Diagnostic setting resource path.
     type: str
     returned: success
-    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
               microsoft.network/publicipaddresses/myip/providers/microsoft.insights/diagnosticSettings/myipdiagnostic"
 '''
 

@@ -68,7 +68,7 @@ labs:
                 - The identifier of the resource.
             returned: always
             type: str
-            example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
                       microsoft.network/publicipaddresses/myip/providers/microsoft.insights/diagnosticSettings/myipdiagnostic"
         storage_account_id:
             description:
@@ -139,13 +139,13 @@ category:
                 - The type of the diagnostic settings category. Possible values include C(Metrics) and C(Logs).
             returned: always
             type: str
-            example: "Logs"
+            sample: "Logs"
         id:
             description:
                 - The identifier of the resource.
             returned: always
             type: str
-            example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
                       microsoft.network/publicipaddresses/myip/providers/microsoft.insights/diagnosticSettingsCategories/DDoSProtectionNotifications"
         name:
             description:
