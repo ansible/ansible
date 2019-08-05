@@ -105,7 +105,6 @@ options:
           - Check running configuration. This can be set as environment variable.
            Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
         type: bool
-        default: yes
   state:
     description:
       - State of the Layer-3 interface configuration. It indicates if the configuration should
