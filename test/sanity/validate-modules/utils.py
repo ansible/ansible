@@ -38,8 +38,6 @@ class AnsibleTextIOWrapper(TextIOWrapper):
 
 def find_executable(executable, cwd=None, path=None):
     """Finds the full path to the executable specified"""
-    # This is mostly a copy from test/runner/lib/util.py. Should be removed once validate-modules has been integrated
-    # into ansible-test
     match = None
     real_cwd = os.getcwd()
 
