@@ -70,7 +70,7 @@ options:
     - Absolute path to place the exported files on the server running this task, must have write permission.
     - If folder not exist will create it, also create a folder under this path named with VM name.
     required: yes
-    type: str
+    type: path
   export_with_images:
     default: false
     description:
@@ -82,6 +82,7 @@ options:
     - If the vmdk file is too large to export in 10 minutes, specify the value larger than 10, the maximum value is 60.
     default: 10
     type: int
+    version_added: '2.9'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -165,7 +166,7 @@ class VMwareExportVmOvf(PyVmomi):
         self.download_timeout = 10
 
     def create_export_dir(self, vm_obj):
-        self.ovf_dir = os.path.join(os.path.expanduser(self.params['export_dir']), vm_obj.name)
+        self.ovf_dir = os.path.join(self.params['export_dir'], vm_obj.name)
         if not os.path.exists(self.ovf_dir):
             try:
                 os.makedirs(self.ovf_dir)
@@ -328,7 +329,7 @@ def main():
         moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
-        export_dir=dict(type='str', required=True),
+        export_dir=dict(type='path', required=True),
         export_with_images=dict(type='bool', default=False),
         download_timeout=dict(type='int', default=10),
     )
