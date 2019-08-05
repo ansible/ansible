@@ -1,15 +1,17 @@
 """Monkey patch os._exit when running under coverage so we don't lose coverage data in forks, such as with `pytest --boxed`."""
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 def pytest_configure():
+    """Configure this pytest plugin."""
     try:
         import coverage
     except ImportError:
         coverage = None
 
     try:
-        test = coverage.Coverage
+        coverage.Coverage
     except AttributeError:
         coverage = None
 
@@ -41,7 +43,8 @@ def pytest_configure():
     else:
         cov = None
 
-    os_exit = os._exit
+    # noinspection PyProtectedMember
+    os_exit = os._exit  # pylint: disable=protected-access
 
     def coverage_exit(*args, **kwargs):
         for instance in coverage_instances:
@@ -50,7 +53,7 @@ def pytest_configure():
 
         os_exit(*args, **kwargs)
 
-    os._exit = coverage_exit
+    os._exit = coverage_exit  # pylint: disable=protected-access
 
     if cov:
         cov.start()
