@@ -89,12 +89,14 @@ options:
   dhcp4:
     description:
       - Enable/Disable DHCP for IPv4. Default is disabled.
+        Supported for all device types.
     required: false
     type: bool
 
   dhcp6:
     description:
       - Enable/Disable DHCP for IPv6. Default is disabled.
+        Supported for all device types.
     required: false
     type: bool
 
@@ -102,7 +104,7 @@ options:
     description:
       - Configure the link-local addresses to bring up. Valid options are
         C(ipv4) and C(ipv6) (default), which respectively allow enabling IPv4
-        and IPv6 link local addressing.
+        and IPv6 link local addressing. Supported for all device types.
     choices: [ ipv4, ipv6 ]
     required: false
 
@@ -111,7 +113,7 @@ options:
       - Designate the connection as "critical to the system", meaning that
         special care will be taken by systemd-networkd to not release the IP
         from DHCP when it the daemon is restarted. Networkd backend only.
-        False for default.
+        False for default. Supported for all device types.
     required: false
     type: bool
 
@@ -120,7 +122,7 @@ options:
       - When set to C(mac); pass that setting over to systemd-networkd to use
         the device's MAC address as a unique identifier rather than a
         RFC4361-compliant Client ID. This has no effect when NetworkManager
-        is used as a renderer.
+        is used as a renderer. Supported for all device types.
     required: false
 
   accept-ra:
@@ -128,7 +130,7 @@ options:
       - Accept Router Advertisement that would have the kernel configure IPv6
         by itself. When enabled, accept Router Advertisements. When disabled,
         do not respond to Router Advertisements. If unset use the host kernel
-        default setting.
+        default setting. Supported for all device types.
     required: false
     type: bool
 
@@ -136,7 +138,7 @@ options:
     description:
       - Addresses statically assigned to the interface. They are used in
         addition to the autoconfigured ones, and are represented in
-        CIDR notation.
+        CIDR notation. Supported for all device types.
     required: false
     type: list
 
@@ -144,38 +146,41 @@ options:
     description:
       - Set default gateway for IPv4, for manual address configuration.
         This requires setting addresses too. Gateway IPs must be in a form
-        recognized by C(inet_pton).
+        recognized by C(inet_pton). Supported for all device types.
     required: false
 
   gateway6:
     description:
       - Set default gateway for IPv6, for manual address configuration.
         This requires setting addresses too. Gateway IPs must be in a form
-        recognized by C(inet_pton).
+        recognized by C(inet_pton). Supported for all device types.
     required: false
 
   nameservers-search:
     description:
       -  Set a list of DNS servers search domains.
+         Supported for all device types.
     required: false
     type: list
 
   nameservers-addresses:
     description:
       -  Set a list of ipv4/ipv6 DNS servers.
+         Supported for all device types.
     required: false
     type: list
 
   macaddress:
     description:
       - Set the device's MAC address. The MAC address must be in the form
-        XX:XX:XX:XX:XX:XX.
+        XX:XX:XX:XX:XX:XX. Supported for all device types.
     required: false
 
   mtu:
     description:
       - Set the Maximum Transmission Unit for the interface.
         The default is 1500. Valid values depend on your network interface.
+        Supported for all device types.
     required: false
     type: int
 
@@ -185,7 +190,7 @@ options:
         will wait some time for device to become configured before proceeding
         with booting. However, if a device is marked as optional, networkd will
         not wait for it. This is only supported by networkd, and the
-        default is false.
+        default is false. Supported for all device types.
     required: false
     type: bool
 
@@ -196,6 +201,7 @@ options:
         to avoid waiting for addresses that are marked optional, and thus
         consider the interface as "usable" sooner. This does not disable
         these addresses, which will be brought up anyway.
+        Supported for all device types.
     required: false
     type: list
 
@@ -203,29 +209,33 @@ options:
     description:
       - This selects the current interface name in physical devices
         by various hardware properties. Globs are supported.
+        Supported only physical devices.
     required: false
 
   match-macaddress:
     description:
       - This selects the physical device that matchs with MAC address
         in the form "XX:XX:XX:XX:XX:XX". Globs are not supported.
+        Supported only physical devices.
     required: false
 
   match-driver:
     description:
       - This selects the physical device that matchs with Kernel driver name
         corresponding to the C(DRIVER) udev property. Globs are supported.
+        Supported only physical devices.
     required: false
 
   set-name:
     description:
       - This property can be used to give that device a more
         specific/desirable/nicer name than the default from udev's ifnames.
+        Supported only physical devices.
     required: false
 
   wakeonlan:
     description:
-      - Enable/Disable(default) wake on LAN.
+      - Enable/Disable(default) wake on LAN. Supported only physical devices.
     required: false
     type: bool
 
@@ -233,7 +243,7 @@ options:
     description:
       - The DNS servers received from the DHCP server will be used and take
         precedence statically-configured ones. Only C(networkd) backend and
-        C(dhcp4) must be true.
+        C(dhcp4) must be true. Supported for all device types.
     required: false
     type: bool
 
@@ -242,6 +252,7 @@ options:
       - The NTP servers received from the DHCP server will be used by
         systemd-timesyncd and take precedence statically-configured
         ones. Only C(networkd) backend and C(dhcp4) must be true.
+        Supported for all device types.
     required: false
     type: bool
 
@@ -249,7 +260,7 @@ options:
     description:
       - The hostname received from the DHCP server will be set as the transient
         hostname of the system. Only C(networkd) backend and C(dhcp4)
-        must be true.
+        must be true. Supported for all device types.
     required: false
     type: bool
 
@@ -257,6 +268,7 @@ options:
     description:
       - The machine's hostname will be sent to the DHCP serverself.
         Only C(networkd) backend and C(dhcp4) must be true.
+        Supported for all device types.
     required: false
     type: bool
 
@@ -264,14 +276,14 @@ options:
     description:
       - Use this value for the hostname which is sent to the DHCP server,
         instead of machine's hostname. Only C(networkd) backend and C(dhcp4)
-        must be true.
+        must be true. Supported for all device types.
     required: false
 
   dhcp6-overrides-use-dns:
     description:
       - The DNS servers received from the DHCP server will be used and take
         precedence over any statically. Only C(networkd) backend and C(dhcp6)
-        must be true.
+        must be true. Supported for all device types.
     required: false
     type: bool
 
@@ -280,6 +292,7 @@ options:
       - The NTP servers received from the DHCP server will be used by
         systemd-timesyncd and take precedence over any statically configured
         ones. Only C(networkd) backend and C(dhcp6) must be true.
+        Supported for all device types.
     required: false
     type: bool
 
@@ -287,7 +300,7 @@ options:
     description:
       - The hostname received from the DHCP server will be set as the transient
         hostname of the system. Only C(networkd) backend and C(dhcp6)
-        must be true.
+        must be true. Supported for all device types.
     required: false
     type: bool
 
@@ -295,6 +308,7 @@ options:
     description:
       - The machine's hostname will be sent to the DHCP serverself.
         Only C(networkd) backend and C(dhcp6) must be true.
+        Supported for all device types.
     required: false
     type: bool
 
@@ -302,15 +316,15 @@ options:
     description:
       - Use this value for the hostname which is sent to the DHCP server,
         instead of machine's hostname. Only C(networkd) backend and C(dhcp6)
-        must be true.
+        must be true. Supported for all device types.
     required: false
 
   routes:
     description:
       - Defines standard static routes for an interface. The routes must be
         defined using a list of dicts, E.g:- {to:0.0.0.0/0, via:1.1.1.1/8}.
-        Valid dict keys are:
-        C(from) set a source IP address for traffic going through the route;
+        Valid dict keys are:C(from) set a source IP address for traffic going
+        through the route;
         C(to) defines the destination address for the route;
         C(via) defines the gateway address to use for this route;
         C(on-link) specifies that the route is directly connected to
@@ -329,6 +343,7 @@ options:
         specific routing tables:see C(/etc/iproute2/rt_tables).
 
         At least the suboptions I(to) and I(via) must be specified.
+        Supported for all device types.
     required: false
     type: list
 
@@ -336,7 +351,7 @@ options:
     description:
       - All devices matching this ID list will be added or associated to
         bridges or bonds. Required if I(state=present) and I(type=bonds) or
-        I(type=bridges).
+        I(type=bridges). Supported bridges and bonds device types.
     required: false
     type: list
 
@@ -344,6 +359,7 @@ options:
     description:
       - Set the link bonding mode used for the interfaces.
         Required if I(state=present) and I(type=bonds).
+        Supported only bond device types.
     choices: [ balance-rr, active-backup, balance-xor, broadcast,
                802.3ad, balance-tlb, balance-alb ]
     required: false
@@ -352,7 +368,7 @@ options:
     description:
       - Set the rate at which LACP DUs are transmitted. This is only useful
         in 802.3ad mode. Possible values are C(slow) (30 seconds, default),
-        and C(fast) (every second).
+        and C(fast) (every second). Supported only bond device types.
     choices: [ slow, fast ]
     required: false
 
@@ -361,14 +377,14 @@ options:
       - Specifies the interval for MII monitoring (verifying if an interface
         of the bond has carrier). The default is 0; which disables MII
         monitoring. This is equivalent to the MIIMonitorSec= field for the
-        networkd backend.
+        networkd backend. Supported only bond device types.
     required: false
     type: int
 
   min-links:
     description:
       - The minimum number of links up in a bond to consider the bond
-        interface to be up (default is 1).
+        interface to be up (default is 1). Supported only bond device types.
     required: false
     type: int
 
@@ -377,7 +393,7 @@ options:
       - Specifies the transmit hash policy for the selection of slaves. This
         is only useful in balance-xor, 802.3ad and balance-tlb modes. Possible
         values are C(layer2), C(layer3+4), C(layer2+3), C(encap2+3), and
-        C(encap3+4).
+        C(encap3+4). Supported only bond device types.
     choices: [ layer2, layer3+4, layer2+3, encap2+3, encap3+4 ]
     required: false
 
@@ -385,7 +401,7 @@ options:
     description:
       - Set the aggregation selection mode. Possible values are C(stable),
         C(bandwidth), and C(count). This option is only used in C(802.3ad)
-        mode.
+        mode. Supported only bond device types.
     choices: [ stable, bandwidth, count ]
     required: false
 
@@ -394,7 +410,7 @@ options:
       - If the bond should drop duplicate frames received on inactive ports,
         set this option to C(false). If they should be delivered, set this
         option to C(true). The default value is false, and is the desirable
-        behavior in most situations.
+        behavior in most situations. Supported only bond device types.
     required: false
     type: bool
 
@@ -403,6 +419,7 @@ options:
       - Set the interval value for how frequently ARP link monitoring should
         happen. The default value is 0, which disables ARP monitoring.
         For the networkd backend, this maps to the ARPIntervalSec= property.
+        Supported only bond device types.
     required: false
 
   arp-ip-targets:
@@ -412,7 +429,7 @@ options:
         C(arp-interval) is set to a value other than 0. At least one IP
         address must be given for ARP link monitoring to function. Only IPv4
         addresses are supported. You can specify up to 16 IP addresses. The
-        default value is an empty list.
+        default value is an empty list. Supported only bond device types.
     required: false
     type: list
 
@@ -420,7 +437,8 @@ options:
     description:
       - Configure how ARP replies are to be validated when using ARP link
         monitoring. Possible values are C(none), C(active), C(backup),
-        and C(all).
+        and C(all). Supported only bond device types.
+        Supported only bond device types.
     choices: [ none, active, backup, all ]
     required: false
 
@@ -430,6 +448,7 @@ options:
         a slave to be considered up; or if all the targets must be up. This
         is only used for C(active-backup) mode when C(arp-validate) is
         enabled. Possible values are C(any) and C(all).
+        Supported only bond device types.
     choices: [ any, all ]
     required: false
 
@@ -437,7 +456,7 @@ options:
     description:
       - Specify the delay before enabling a link once the link is physically
         up. The default value is 0. This maps to the UpDelaySec= property for
-        the networkd renderer.
+        the networkd renderer. Supported only bond device types.
     required: false
     type: int
 
@@ -445,7 +464,7 @@ options:
     description:
       - Specify the delay before disabling a link once the link has been
         lost. The default value is 0. This maps to the DownDelaySec=
-        property for the networkd renderer.
+        property for the networkd renderer. Supported only bond device types.
     required: false
     type: int
 
@@ -454,6 +473,7 @@ options:
       - Set whether to set all slaves to the same MAC address when adding
         them to the bond, or how else the system should handle MAC addresses.
         The possible values are C(none), C(active), and C(follow).
+        Supported only bond device types.
     required: false
     choices: [ none, active, follow ]
 
@@ -463,7 +483,7 @@ options:
         up on a new slave, a notification is sent and possibly repeated if
         this value is set to a number greater than 1. The default value
         is 1 and valid values are between 1 and 255. This only affects
-        active-backup mode.
+        active-backup mode. Supported only bond device types.
     required: false
     type: int
 
@@ -473,7 +493,7 @@ options:
         on a slave before switching to the next. When this value is set to
         0, slaves are chosen at random. Allowable values are between
         0 and 65535. The default value is 1. This setting is
-        only used in C(balance-rr) mode.
+        only used in C(balance-rr) mode. Supported only bond device types.
     required: false
     type: int
 
@@ -483,6 +503,7 @@ options:
         the active slave, the system will use this policy to decide how the new
         active slave will be chosen and how recovery will be handled. The
         possible values are C(always), C(better), and C(failure).
+        Supported only bond device types.
     required: false
     choices: [ always, better, failure ]
 
@@ -494,6 +515,7 @@ options:
         subsequent reports are sent at 200ms intervals. In modes C(balance-rr),
         C(active-backup), C(balance-tlb) and C(balance-alb), a failover can
         switch IGMP traffic from one slave to another.
+        Supported only bond device types.
     required: false
     type: int
 
@@ -504,6 +526,7 @@ options:
         The default value is 1. This option only affects C(balance-tlb)
         and C(balance-alb) modes. Using the networkd renderer, this field
         maps to the LearnPacketIntervalSec= property.
+        Supported only bond device types.
     required: false
     type: int
 
@@ -513,6 +536,7 @@ options:
         to use as a slave for the bond (ie. the preferred device to send
         data through), whenever it is available. This only affects
         C(active-backup), C(balance-alb), and C(balance-tlb) bonding-modes.
+        Supported only bond device types.
     required: false
 
   ageing-time:
@@ -520,6 +544,7 @@ options:
       - Set the period of time (in seconds) to keep a MAC address in the
         forwarding database after a packet is received. This maps to the
         AgeingTimeSec= property when the networkd renderer is used.
+        Supported only bridge device types.
     required: false
     type: int
 
@@ -528,7 +553,7 @@ options:
       - Set the priority value for the bridge. This value should be a
         number between 0 and 65535. Lower values mean higher priority.
         The bridge with the higher priority will be elected as
-        the root bridge.
+        the root bridge. Supported only bridge device types.
     required: false
     type: int
 
@@ -539,7 +564,7 @@ options:
         maps to the ForwardDelaySec= property for the networkd renderer.
         If no time suffix is specified, the value will be interpreted as
         seconds. You must define an array, with a interface name and the
-        forward delay. E.g:['eno1', 15].
+        forward delay. E.g:['eno1', 15]. Supported only bridge device types.
     required: false
     type: list
 
@@ -548,7 +573,7 @@ options:
       - Specify the period of time (in seconds) the bridge will remain in
         Listening and Learning states before getting to the Forwarding state.
         This field maps to the ForwardDelaySec= property for the networkd
-        renderer.
+        renderer. Supported only bridge device types.
     required: false
     type: int
 
@@ -558,6 +583,7 @@ options:
         out from the root and designated bridges. Hello packets communicate
         information about the network topology. When the networkd renderer
         is used, this maps to the HelloTimeSec= property.
+        Supported only bridge device types.
     required: false
     type: int
 
@@ -566,6 +592,7 @@ options:
       - Set the maximum age (in seconds) of a hello packet. If the last hello
         packet is older than that value, the bridge will attempt to become the
         root bridge. This maps to the MaxAgeSec= property when the networkd.
+        Supported only bridge device types.
     required: false
     type: int
 
@@ -575,7 +602,7 @@ options:
         a lower cost. This allows a finer control on the network topology
         so that the fastest paths are available whenever possible.
         You must define a list, with a interface name and the path-cost.
-        E.g:['eno1', 15].
+        E.g:['eno1', 15]. Supported only bridge device types.
     required: false
     type: list
 
@@ -583,7 +610,7 @@ options:
     description:
       - Define whether the bridge should use Spanning Tree Protocol. The
         default value is C(true), which means that Spanning Tree should be
-        used.
+        used. Supported only bridge device types.
     required: false
     type: bool
 
@@ -594,6 +621,7 @@ options:
         supports gretap and ip6gretap modes. In addition, the NetworkManager
         backend supports isatap tunnels.
         Required if I(state=present) and I(type=tunnels).
+        Supported only tunnel device types.
     required: false
     choices: [ sit, gre, ip6gre, ipip, ipip6, ip6ip6, vti, vti6, gretap,
                ip6gretap, isatap ]
@@ -602,12 +630,14 @@ options:
     description:
        - Defines the address of the local endpoint of the tunnel.
          Required if I(state=present) and I(type=tunnels).
+         Supported only tunnel device types.
     required: false
 
   remote:
     description:
       - Defines the address of the remote endpoint of the tunnel.
         Required if I(state=present) and I(type=tunnels).
+        Supported only tunnel device types.
     required: false
 
   key:
@@ -616,7 +646,7 @@ options:
         quad (an IPv4 address). It is used for identification of IP transforms.
         This is only required for C(vti) and C(vti6) when using the C(networkd)
         backend, and for C(gre) or C(ip6gre) tunnels when using the
-        NetworkManager backend.
+        NetworkManager backend. Supported only tunnel device types.
     required: false
 
   keys-input-output:
@@ -624,25 +654,26 @@ options:
       - Specifiy input and output keys to use for the tunnel. If this param is
         defined, you can't define the key param. The first value passed on list
         is the input key and the second value is the output key.
-        E.g:[1234, 5678].
+        E.g:[1234, 5678]. Supported only tunnel device types.
     required: false
     type: list
 
   id:
     description:
-      - VLAN ID, a number between 0 and 4094.
+      - VLAN ID, a number between 0 and 4094. Supported only vlan device types.
     required: false
     type: int
 
   link:
     description:
       - netplan ID of the underlying device definition on which this VLAN
-        gets created.
+        gets created. Supported only vlan device types.
     required: false
 
   access-points-ssid:
     description:
       - Network SSID. Required if I(state=present) and (type=wifis).
+        Supported only wifi device types.
     required: false
 
   access-points-password:
@@ -651,6 +682,7 @@ options:
         C(None), the network is assumed to be open. Other authentication modes
         are not currently supported.
         Required if I(state=present) and (type=wifis).
+        Supported only wifi device types.
     required: false
 
   access-points-mode:
@@ -660,6 +692,7 @@ options:
         and C(adhoc) (peer to peer networks without a central access point).
         C(ap) is only supported with C(NetworkManager).
         Required if I(state=present) and (type=wifis).
+        Supported only wifi device types.
     required: false
     choices: [ infrastructure, ap, adhoc ]
 '''
