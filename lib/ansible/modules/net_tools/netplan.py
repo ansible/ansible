@@ -1025,7 +1025,7 @@ def validate_args(module):
         if module.params.get('routes'):
             for route in module.params.get('routes'):
                 # to and via specified
-                if not route.get('to', False) or not route.get('via', False):
+                if not route.get('to') or not route.get('via'):
                     module.fail_json(msg='Route keys \'to\' and \'via\' must be specified on route dict')
                 # on-link specified
                 if route.get('on-link'):
@@ -1070,7 +1070,7 @@ def validate_args(module):
                         module.fail_json(msg='Routing-policy subparams supported: {0}'.format(ROUTING_POLICY))
         if module.params['type'] == 'bridges':
             for key in module.params:
-                if module.params.get(key) is not None:
+                if module.params.get(key):
                     if key in BONDS:
                         module.fail_json(msg='BONDs options can not be defined with bridge Type')
                     if key in TUNNELS:
@@ -1085,7 +1085,7 @@ def validate_args(module):
             if not module.params.get('interfaces') or not module.params.get('bonding-mode'):
                 module.fail_json(msg='bonds type require: [interfaces, bonding-mode]')
             for key in module.params:
-                if module.params.get(key) is not None:
+                if module.params.get(key):
                     if key in BRIDGES:
                         module.fail_json(msg='BRIDGES options can not be defined with bonds Type')
                     if key in TUNNELS:
@@ -1132,7 +1132,7 @@ def validate_args(module):
             if not module.params.get('tunneling-mode') or not module.params.get('local') or not module.params.get('remote'):
                 module.fail_json(msg='tunnels type require: [tunneling-mode, local, remote]')
             for key in module.params:
-                if module.params.get(key) is not None:
+                if module.params.get(key):
                     if key in BONDS:
                         module.fail_json(msg='BONDs options can not be defined with tunnel Type')
                     if key in BRIDGES:
@@ -1154,7 +1154,7 @@ def validate_args(module):
                                 module.fail_json(msg="isatap tunneling-mode is only supported on NetworkManager render")
         if module.params['type'] == 'ethernets':
             for key in module.params:
-                if module.params.get(key) is not None:
+                if module.params.get(key):
                     if key in BONDS:
                         module.fail_json(msg='BONDS options can not be defined with ethernets Type')
                     if key in BRIDGES:
@@ -1169,7 +1169,7 @@ def validate_args(module):
             if not module.params.get('id') or not module.params.get('link'):
                 module.fail_json(msg='vlans type require: [id, link]')
             for key in module.params:
-                if module.params.get(key) is not None:
+                if module.params.get(key):
                     if key in BONDS:
                         module.fail_json(msg='BONDS options can not be defined with vlans Type')
                     if key in BRIDGES:
@@ -1184,7 +1184,7 @@ def validate_args(module):
             if not module.params.get('access-points-ssid') or not module.params.get('access-points-password') or not module.params.get('access-points-mode'):
                 module.fail_json(msg='wifis type require: [access-points-ssid, access-points-password, access-points-mode]')
             for key in module.params:
-                if module.params.get(key) is not None:
+                if module.params.get(key):
                     if key in BONDS:
                         module.fail_json(msg='BONDS options can not be defined with wifis Type')
                     if key in BRIDGES:
@@ -1195,12 +1195,16 @@ def validate_args(module):
                         module.fail_json(msg='VLANS options can not be defined with wifis Type')
     else:
         for key in module.params:
-            if module.params.get(key) is not None:
+            if module.params.get(key):
                 if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + GENERAL + PHYSICAL + AUTH:
                     module.fail_json(msg="When state is absent, just use this params:[filename, type, interface-id]")
 
 
 def get_netplan_dict(params):
+    # Alias to improve readability
+    p_type = params.get('type')
+    p_ifid = params.get('interface-id')
+
     netplan_dict = {'network': dict()}
     # Define default netplan version and renderes both to 2 and networkd
     if params.get('version'):
@@ -1211,85 +1215,79 @@ def get_netplan_dict(params):
         netplan_dict['network']['renderer'] = params.get('renderer')
     else:
         netplan_dict['network']['renderer'] = 'networkd'
-    netplan_dict['network'][params.get('type')] = dict()
-    netplan_dict['network'][params.get('type')][params.get('interface-id')] = dict()
+    netplan_dict['network'][p_type] = dict()
+    netplan_dict['network'][p_type][p_ifid] = dict()
     for key in params:
-        if key not in SPECIFC_ANSIBLE_NETPLAN and params.get(key) is not None:
+        if key not in SPECIFC_ANSIBLE_NETPLAN and params.get(key):
             if key in MATCH:
                 match_option = '{0}'.format(key.split('match-')[1])
-                netplan_dict['network'][params.get('type')][params.get('interface-id')]['match'] = dict()
-                netplan_dict['network'][params.get('type')][params.get('interface-id')]['match'][match_option] = params.get(key)
+                netplan_dict['network'][p_type][p_ifid]['match'] = dict()
+                netplan_dict['network'][p_type][p_ifid]['match'][match_option] = params.get(key)
             # dhcp4-overrides
             elif key in DHCP_OVERRIDES:
                 override_option = '{0}'.format(key.split('dhcp4-overrides-')[1])
-                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('dhcp4-overrides'):
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'] = dict()
-                netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'][override_option] = params.get(key)
+                if not netplan_dict['network'][p_type][p_ifid].get('dhcp4-overrides'):
+                    netplan_dict['network'][p_type][p_ifid]['dhcp4-overrides'] = dict()
+                netplan_dict['network'][p_type][p_ifid]['dhcp4-overrides'][override_option] = params.get(key)
             elif key in BONDS:
-                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('parameters'):
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'] = dict()
+                if not netplan_dict['network'][p_type][p_ifid].get('parameters'):
+                    netplan_dict['network'][p_type][p_ifid]['parameters'] = dict()
                 # Put bonding-mode param into mode param.
                 # This is used because mode param is used in others locals like: Tunnels and wifis.
                 if key == 'bonding-mode':
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['mode'] = params.get(key)
+                    netplan_dict['network'][p_type][p_ifid]['parameters']['mode'] = params.get(key)
                 else:
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'][key] = params.get(key)
+                    netplan_dict['network'][p_type][p_ifid]['parameters'][key] = params.get(key)
             elif key in BRIDGES:
-                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('parameters'):
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'] = dict()
+                if not netplan_dict['network'][p_type][p_ifid].get('parameters'):
+                    netplan_dict['network'][p_type][p_ifid]['parameters'] = dict()
                 if key == 'path-cost':
-                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'].get('path-cost'):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['path-cost'] = dict()
+                    if not netplan_dict['network'][p_type][p_ifid]['parameters'].get('path-cost'):
+                        netplan_dict['network'][p_type][p_ifid]['parameters']['path-cost'] = dict()
                     for pc in params.get(key):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['path-cost'][pc[0]] = pc[1]
+                        netplan_dict['network'][p_type][p_ifid]['parameters']['path-cost'][pc[0]] = pc[1]
                 elif key == 'port-priority':
-                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'].get('port-priority'):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['port-priority'] = dict()
+                    if not netplan_dict['network'][p_type][p_ifid]['parameters'].get('port-priority'):
+                        netplan_dict['network'][p_type][p_ifid]['parameters']['port-priority'] = dict()
                     for pp in params.get(key):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters']['port-priority'][pp[0]] = pp[1]
+                        netplan_dict['network'][p_type][p_ifid]['parameters']['port-priority'][pp[0]] = pp[1]
                 else:
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['parameters'][key] = params.get(key)
+                    netplan_dict['network'][p_type][p_ifid]['parameters'][key] = params.get(key)
             elif key in TUNNELS:
                 if key == 'tunneling-mode':
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode'] = params.get(key)
+                    netplan_dict['network'][p_type][p_ifid]['mode'] = params.get(key)
                 elif key == 'keys-input-output':
-                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode'].get('keys'):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode']['keys'] = dict()
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode']['keys']['input'] = params.get(key)[0]
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['mode']['keys']['output'] = params.get(key)[1]
+                    if not netplan_dict['network'][p_type][p_ifid]['mode'].get('keys'):
+                        netplan_dict['network'][p_type][p_ifid]['mode']['keys'] = dict()
+                    netplan_dict['network'][p_type][p_ifid]['mode']['keys']['input'] = params.get(key)[0]
+                    netplan_dict['network'][p_type][p_ifid]['mode']['keys']['output'] = params.get(key)[1]
                 else:
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')][key] = params.get(key)
+                    netplan_dict['network'][p_type][p_ifid][key] = params.get(key)
             elif key in WIFIS:
                 if key != 'access-points-ssid':
                     wifi_option = key.split('access-points-')[1]
-                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'] = dict()
-                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'].get(params.get('access-points-ssid')):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'][params.get('access-points-ssid')] = dict()
-                    # PEP8 annoying
-                    p_type = params.get('type')
-                    p_intid = params.get('interface-id')
-                    netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')][wifi_option] = params.get(key)
+                    if not netplan_dict['network'][p_type][p_ifid].get('access-points'):
+                        netplan_dict['network'][p_type][p_ifid]['access-points'] = dict()
+                    if not netplan_dict['network'][p_type][p_ifid]['access-points'].get(params.get('access-points-ssid')):
+                        netplan_dict['network'][p_type][p_ifid]['access-points'][params.get('access-points-ssid')] = dict()
+                    netplan_dict['network'][p_type][p_ifid]['access-points'][params.get('access-points-ssid')][wifi_option] = params.get(key)
             elif key in AUTH:
                 auth_option = key.split('auth-')[1]
-                if params.get('type') == 'wifis':
-                    # PEP8 annoying
-                    p_type = params.get('type')
-                    p_intid = params.get('interface-id')
-                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'] = dict()
-                    if not netplan_dict['network'][p_type][p_intid]['access-points'].get(params.get('access-points-ssid')):
-                        netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')] = dict()
-                    if not netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')].get('auth'):
-                        netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')]['auth'] = dict()
-                    netplan_dict['network'][p_type][p_intid]['access-points'][params.get('access-points-ssid')]['auth'][auth_option] = params.get(key)
+                if p_type == 'wifis':
+                    if not netplan_dict['network'][p_type][p_ifid].get('access-points'):
+                        netplan_dict['network'][p_type][p_ifid]['access-points'] = dict()
+                    if not netplan_dict['network'][p_type][p_ifid]['access-points'].get(params.get('access-points-ssid')):
+                        netplan_dict['network'][p_type][p_ifid]['access-points'][params.get('access-points-ssid')] = dict()
+                    if not netplan_dict['network'][p_type][p_ifid]['access-points'][params.get('access-points-ssid')].get('auth'):
+                        netplan_dict['network'][p_type][p_ifid]['access-points'][params.get('access-points-ssid')]['auth'] = dict()
+                    netplan_dict['network'][p_type][p_ifid]['access-points'][params.get('access-points-ssid')]['auth'][auth_option] = params.get(key)
                 else:
                     # type == ethernets
-                    if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('auth'):
-                        netplan_dict['network'][params.get('type')][params.get('interface-id')]['auth'] = dict()
-                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['auth'][auth_option] = params.get(key)
+                    if not netplan_dict['network'][p_type][p_ifid].get('auth'):
+                        netplan_dict['network'][p_type][p_ifid]['auth'] = dict()
+                    netplan_dict['network'][p_type][p_ifid]['auth'][auth_option] = params.get(key)
             else:
-                netplan_dict['network'][params.get('type')][params.get('interface-id')][key] = params.get(key)
+                netplan_dict['network'][p_type][p_ifid][key] = params.get(key)
     return netplan_dict
 
 
@@ -1418,6 +1416,10 @@ def main():
 
     NETPLAN_FILENAME = '{0}/{1}.yaml'.format(NETPLAN_PATH, module.params.get('filename'))
 
+    # Alias to improve readability
+    p_type = module.params.get('type')
+    p_ifid = module.params.get('interface-id')
+
     if os.path.isfile(NETPLAN_FILENAME):
         with open(NETPLAN_FILENAME, 'r') as yamlfile:
             netplan_file_dict = yaml.load(yamlfile)
@@ -1428,30 +1430,28 @@ def main():
             if netplan_file_dict == netplan_module_dict:
                 module.exit_json(changed=False)
             else:
-                if not netplan_file_dict['network'].get(module.params.get('type'), False):
-                    netplan_file_dict['network'][module.params.get('type')] = dict()
+                if not netplan_file_dict['network'].get(p_type):
+                    netplan_file_dict['network'][p_type] = dict()
                 # Verify if interface exist and if dicts are equal
-                if netplan_file_dict['network'][module.params.get('type')].get(module.params.get('interface-id'), False):
-                    if netplan_file_dict['network'][module.params.get('type')][module.params.get('interface-id')] == \
-                            netplan_module_dict['network'][module.params.get('type')][module.params.get('interface-id')]:
+                if netplan_file_dict['network'][p_type].get(p_ifid):
+                    if netplan_file_dict['network'][p_type][p_ifid] == netplan_module_dict['network'][p_type][p_ifid]:
                         module.exit_json(changed=False)
-                netplan_file_dict['network'][module.params.get('type')][module.params.get('interface-id')] = dict()
-                netplan_file_dict['network'][module.params.get('type')][module.params.get('interface-id')] = \
-                    netplan_module_dict['network'][module.params.get('type')][module.params.get('interface-id')]
+                netplan_file_dict['network'][p_type][p_ifid] = dict()
+                netplan_file_dict['network'][p_type][p_ifid] = netplan_module_dict['network'][p_type][p_ifid]
                 with open(NETPLAN_FILENAME, 'w') as yamlfile:
                     yaml.dump(netplan_file_dict, yamlfile, default_flow_style=False)
                 module.run_command('netplan apply', check_rc=True)
                 module.exit_json(changed=True)
         # Remove interface
         else:
-            if not netplan_file_dict['network'].get(module.params.get('type'), False):
+            if not netplan_file_dict['network'].get(p_type):
                 module.exit_json(changed=False)
-            if not netplan_file_dict['network'][module.params.get('type')].pop(module.params.get('interface-id'), False):
+            if not netplan_file_dict['network'][p_type].pop(p_ifid):
                 module.exit_json(changed=False)
             else:
                 # Verify if type key is None to remove from dict
-                if not netplan_file_dict['network'].get(module.params.get('type')):
-                    netplan_file_dict['network'].pop(module.params.get('type'))
+                if not netplan_file_dict['network'].get(p_type):
+                    netplan_file_dict['network'].pop(p_type)
                 with open(NETPLAN_FILENAME, 'w') as yamlfile:
                     yaml.dump(netplan_file_dict, yamlfile, default_flow_style=False)
                 module.run_command('netplan apply', check_rc=True)
@@ -1464,7 +1464,7 @@ def main():
             module.run_command('netplan apply', check_rc=True)
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg='Interface {0} can not be removed because {1} file does not exist'.format(module.params.get('interface-id'), NETPLAN_FILENAME))
+            module.fail_json(msg='Interface {0} can not be removed because {1} file does not exist'.format(p_ifid, NETPLAN_FILENAME))
 
 
 if __name__ == '__main__':
