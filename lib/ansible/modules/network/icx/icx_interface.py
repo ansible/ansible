@@ -79,19 +79,6 @@ options:
         I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
     type: int
     default: 10
-  aggregate:
-    description:
-      - List of Interfaces definitions.
-    type: list
-    suboptions:
-      name:
-        description:
-          - Name of the Interface.
-        type: str
-      description:
-        description:
-          - Name of the description.
-        type: str
   state:
     description:
       - State of the Interface configuration, C(up) means present and
@@ -99,12 +86,6 @@ options:
     default: present
     type: str
     choices: ['present', 'absent', 'up', 'down']
-  check_running_config:
-    description:
-      - Check running configuration. This can be set as environment variable.
-      Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
-    type: bool
-    default: yes
   power:
     description:
       - Inline power on Power over Ethernet (PoE) ports.
@@ -118,20 +99,30 @@ options:
           type: str
         limit:
           description:
-            - The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW.
-            - The power limit based on actual power value for given interface C(name).
+            - "The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW"
+            - "The power limit based on actual power value for given interface C(name)"
           type: str
         priority:
           description:
-            - The range is 1 (highest) to 3 (lowest).
-            - The priority for power management or given interface C(name).
+            - "The range is 1 (highest) to 3 (lowest)"
+            - "The priority for power management or given interface C(name)"
           choices: ['1', '2', '3']
           type: str
         enabled:
           description:
-            - enable/disable the poe of the given interface C(name)
+            - "enable/disable the poe of the given interface C(name)"
           default: true
           type: bool
+  aggregate:
+    description:
+      - List of Interfaces definitions.
+    type: list
+  check_running_config:
+    description:
+      - Check running configuration. This can be set as environment variable.
+      Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+    type: bool
+    default: yes
 """
 
 EXAMPLES = """
