@@ -790,7 +790,6 @@ EXAMPLES = '''
        - 9.9.9.9/8
      state: present
      dhcp4: false
-
 '''
 
 RETURN = '''
@@ -809,7 +808,15 @@ NETPLAN_PATH = '/etc/netplan'
 SPECIFC_ANSIBLE_NETPLAN = ['filename', 'renderer', 'version', 'type',
                            'interface-id', 'state']
 
+GENERAL = ['addresses', 'dhcp4', 'dhcp6', 'link-local',
+           'critical', 'dhcp-identifier', 'accept-ra', 'addresses',
+           'gateway4', 'gateway6', 'nameservers-search',
+           'nameservers-addresses', 'macaddress', 'optional',
+           'optional-addresses', 'routes', 'routing-policy']
+
 MATCH = ['match-name', 'match-macaddress', 'match-driver']
+
+PHYSICAL = MATCH + ['set-name', 'wakeonlan']
 
 DHCP_OVERRIDES = ['dhcp4-overrides-use-dns',
                   'dhcp4-overrides-use-ntp',
@@ -994,7 +1001,7 @@ def validate_args(module):
     else:
         for key in module.params:
             if module.params.get(key) is not None:
-                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + MATCH:
+                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + GENERAL + PHYSICAL:
                     module.fail_json(msg="When state is absent, just use this params:[filename, type, interface-id]")
 
 
