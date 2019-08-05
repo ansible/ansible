@@ -66,11 +66,11 @@ options:
     suboptions:
       host:
         description:
-          - CDP/LLDP neighbor host for given interface C(name).
+          - "CDP/LLDP neighbor host for given interface C(name)."
         type: str
       port:
         description:
-          - CDP/LLDP neighbor port to which given interface C(name) is connected.
+          - "CDP/LLDP neighbor port to which given interface C(name) is connected."
         type: str
   delay:
     description:
@@ -93,19 +93,22 @@ options:
     suboptions:
         by_class:
           description:
-            - The range is 0-4. The power limit based on class value for given interface C(name)
+            - "The range is 0-4"
+            - "The power limit based on class value for given interface C(name)"
           type: str
         limit:
           description:
-            - The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW. The power limit based on actual power value for given interface C(name)
+            - "The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW"
+            - "The power limit based on actual power value for given interface C(name)"
           type: str
         priority:
           description:
-            - The range is 1 (highest) to 3 (lowest). The priority for power management or given interface C(name)
+            - "The range is 1 (highest) to 3 (lowest)"
+            - "The priority for power management or given interface C(name)"
           type: str
         enabled:
           description:
-            - enable/disable the poe of the given interface C(name)
+            - "enable/disable the poe of the given interface C(name)"
           default: true
           type: bool
   aggregate:
