@@ -17,3 +17,8 @@
   yum:
     name: "{{ redhat_packages_py36 }}"
     state: absent
+
+- name: remove mongodb pip packages
+  pip:
+    name: "{{ pip_packages }}"
+    state: absent

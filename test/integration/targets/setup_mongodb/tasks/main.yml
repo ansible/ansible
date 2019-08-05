@@ -184,3 +184,4 @@
   pip:
     name: "{{ pip_packages }}"
     state: present
+  notify: remove mongodb pip packages
