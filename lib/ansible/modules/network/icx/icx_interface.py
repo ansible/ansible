@@ -163,18 +163,12 @@ options:
         suboptions:
           host:
             description:
-              - "CDP/LLDP neighbor host for given interface C(name)."
+              - CDP/LLDP neighbor host for given interface C(name).
             type: str
           port:
             description:
-              - "CDP/LLDP neighbor port to which given interface C(name) is connected."
+              - CDP/LLDP neighbor port to which given interface C(name) is connected.
             type: str
-      delay:
-        description:
-          - Time in seconds to wait before checking for the operational state on remote
-            device. This wait is applicable for operational state argument which are
-            I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
-        type: int
       state:
         description:
           - State of the Interface configuration, C(up) means present and
