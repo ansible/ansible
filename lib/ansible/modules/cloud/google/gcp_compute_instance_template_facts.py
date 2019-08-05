@@ -56,7 +56,6 @@ EXAMPLES = '''
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
-    state: facts
 '''
 
 RETURN = '''
@@ -258,6 +257,11 @@ resources:
                 specified, the default is PERSISTENT.
               returned: success
               type: str
+        labels:
+          description:
+          - Labels to apply to this address. A list of key->value pairs.
+          returned: success
+          type: dict
         machineType:
           description:
           - The machine type to use in the VM instance template.
