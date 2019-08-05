@@ -139,24 +139,6 @@ options:
             for associated tagged ports and lags. If the value in the C(associated_tagged) does not match with
             the operational state of vlan interfaces on device it will result in failure.
         type: list
-      delay:
-        description:
-          - Delay the play should wait to check for declarative intent params values.
-        type: int
-      purge:
-        description:
-          - Purge VLANs not defined in the I(aggregate) parameter.
-        type: bool
-      state:
-        description:
-          - State of the VLAN configuration.
-        type: str
-        choices: ['present', 'absent']
-      check_running_config:
-        description:
-          - Check running configuration. This can be set as environment variable.
-          Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
-        type: bool
   purge:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
