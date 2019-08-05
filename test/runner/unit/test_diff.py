@@ -6,6 +6,11 @@ import os
 import subprocess
 import pytest
 
+from lib.util import (
+    to_text,
+    to_bytes,
+)
+
 from lib.diff import (
     parse_diff,
     FileDiff,
@@ -19,18 +24,18 @@ def get_diff(base, head=None):
     :rtype: list[str]
     """
     if not head or head == 'HEAD':
-        head = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+        head = to_text(subprocess.check_output(['git', 'rev-parse', 'HEAD'])).strip()
 
     cache = '/tmp/git-diff-cache-%s-%s.log' % (base, head)
 
     if os.path.exists(cache):
-        with open(cache, 'r') as cache_fd:
-            lines = cache_fd.read().splitlines()
+        with open(cache, 'rb') as cache_fd:
+            lines = to_text(cache_fd.read()).splitlines()
     else:
-        lines = subprocess.check_output(['git', 'diff', base, head]).splitlines()
+        lines = to_text(subprocess.check_output(['git', 'diff', base, head]), errors='replace').splitlines()
 
-        with open(cache, 'w') as cache_fd:
-            cache_fd.write('\n'.join(lines))
+        with open(cache, 'wb') as cache_fd:
+            cache_fd.write(to_bytes('\n'.join(lines)))
 
     assert lines
 

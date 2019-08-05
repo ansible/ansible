@@ -285,7 +285,7 @@ class TestFailure(TestResult):
         if self.summary:
             command = self.format_command()
             message = 'The test `%s` failed. See stderr output for details.' % command
-            path = 'test/runner/ansible-test'
+            path = ''
             message = TestMessage(message, path)
             print(message)
         else:

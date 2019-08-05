@@ -169,8 +169,8 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
         coverage_file = ''
 
     # Enable code coverage collection on local Python programs (this does not include Ansible modules).
-    # Used by the injectors in test/runner/injector/ to support code coverage.
-    # Used by unit tests in test/units/conftest.py to support code coverage.
+    # Used by the injectors to support code coverage.
+    # Used by the pytest unit test plugin to support code coverage.
     # The COVERAGE_FILE variable is also used directly by the 'coverage' module.
     env = dict(
         COVERAGE_CONF=config_file,

@@ -812,10 +812,11 @@ def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> Non
         root = os.path.dirname(__file__)
 
     path = os.path.join(root, directory)
-    prefix = 'lib.%s.' % directory.replace(os.sep, '.')
+    package = __name__.rsplit('.', 1)[0]
+    prefix = '%s.%s.' % (package, directory.replace(os.sep, '.'))
 
     for (_module_loader, name, _ispkg) in pkgutil.iter_modules([path], prefix=prefix):
-        module_path = os.path.join(root, name[4:].replace('.', os.sep) + '.py')
+        module_path = os.path.join(root, name[len(package) + 1:].replace('.', os.sep) + '.py')
         load_module(module_path, name)
 
 
@@ -824,7 +825,7 @@ def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C
     Load plugins of the specified type and track them in the specified database.
     Only plugins which have already been imported will be loaded.
     """
-    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: t.Dict[str, t.Type[C]]
+    plugins = dict((sc.__module__.rsplit('.', 1)[1], sc) for sc in get_subclasses(base_type))  # type: t.Dict[str, t.Type[C]]
 
     for plugin in plugins:
         database[plugin] = plugins[plugin]
@@ -832,6 +833,9 @@ def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C
 
 def load_module(path, name):  # type: (str, str) -> None
     """Load a Python module using the given name and path."""
+    if name in sys.modules:
+        return
+
     if sys.version_info >= (3, 4):
         # noinspection PyUnresolvedReferences
         import importlib.util
