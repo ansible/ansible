@@ -29,11 +29,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported
 
 DOCUMENTATION = '''
 ---
-module: gcp_compute_route_facts
+module: gcp_compute_snapshot_facts
 description:
-- Gather facts for GCP Route
-short_description: Gather facts for GCP Route
-version_added: 2.7
+- Gather facts for GCP Snapshot
+short_description: Gather facts for GCP Snapshot
+version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -50,8 +50,8 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a route facts"
-  gcp_compute_route_facts:
+- name: " a snapshot facts"
+  gcp_compute_snapshot_facts:
     filters:
     - name = test_object
     project: test_project
@@ -65,21 +65,24 @@ resources:
   returned: always
   type: complex
   contains:
-    destRange:
+    creationTimestamp:
       description:
-      - The destination range of outgoing packets that this route applies to.
-      - Only IPv4 is supported.
+      - Creation timestamp in RFC3339 text format.
       returned: success
       type: str
-    description:
+    id:
       description:
-      - An optional description of this resource. Provide this property when you create
-        the resource.
+      - The unique identifier for the resource.
       returned: success
-      type: str
+      type: int
+    diskSizeGb:
+      description:
+      - Size of the snapshot, specified in GB.
+      returned: success
+      type: int
     name:
       description:
-      - Name of the resource. Provided by the client when the resource is created.
+      - Name of the resource; provided by the client when the resource is created.
         The name must be 1-63 characters long, and comply with RFC1035. Specifically,
         the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
         which means the first character must be a lowercase letter, and all following
@@ -87,57 +90,88 @@ resources:
         which cannot be a dash.
       returned: success
       type: str
-    network:
+    description:
       description:
-      - The network that this route applies to.
+      - An optional description of this resource.
       returned: success
-      type: dict
-    priority:
+      type: str
+    storageBytes:
       description:
-      - The priority of this route. Priority is used to break ties in cases where
-        there is more than one matching route of equal prefix length.
-      - In the case of two routes with equal prefix length, the one with the lowest-numbered
-        priority value wins.
-      - Default value is 1000. Valid range is 0 through 65535.
+      - A size of the the storage used by the snapshot. As snapshots share storage,
+        this number is expected to change with snapshot creation/deletion.
       returned: success
       type: int
-    tags:
+    licenses:
       description:
-      - A list of instance tags to which this route applies.
+      - A list of public visible licenses that apply to this snapshot. This can be
+        because the original image had licenses attached (such as a Windows image).
+        snapshotEncryptionKey nested object Encrypts the snapshot using a customer-supplied
+        encryption key.
       returned: success
       type: list
-    nextHopGateway:
+    labels:
       description:
-      - URL to a gateway that should handle matching packets.
-      - 'Currently, you can only specify the internet gateway, using a full or partial
-        valid URL: * U(https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway)
-        * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
-        .'
-      returned: success
-      type: str
-    nextHopInstance:
-      description:
-      - URL to an instance that should handle matching packets.
-      - 'You can specify this as a full or partial URL. For example: * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
-        instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
-        .'
+      - Labels to apply to this Snapshot.
       returned: success
       type: dict
-    nextHopIp:
+    labelFingerprint:
       description:
-      - Network IP address of an instance that should handle matching packets.
+      - The fingerprint used for optimistic locking of this resource. Used internally
+        during updates.
       returned: success
       type: str
-    nextHopVpnTunnel:
+    sourceDisk:
       description:
-      - URL to a VpnTunnel that should handle matching packets.
+      - A reference to the disk used to create this snapshot.
       returned: success
       type: dict
-    nextHopNetwork:
+    zone:
       description:
-      - URL to a Network that should handle matching packets.
+      - A reference to the zone where the disk is hosted.
       returned: success
       type: str
+    snapshotEncryptionKey:
+      description:
+      - The customer-supplied encryption key of the snapshot. Required if the source
+        snapshot is protected by a customer-supplied encryption key.
+      returned: success
+      type: complex
+      contains:
+        rawKey:
+          description:
+          - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+            base64 to either encrypt or decrypt this resource.
+          returned: success
+          type: str
+        sha256:
+          description:
+          - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
+            key that protects this resource.
+          returned: success
+          type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
+          returned: success
+          type: str
+    sourceDiskEncryptionKey:
+      description:
+      - The customer-supplied encryption key of the source snapshot. Required if the
+        source snapshot is protected by a customer-supplied encryption key.
+      returned: success
+      type: complex
+      contains:
+        rawKey:
+          description:
+          - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+            base64 to either encrypt or decrypt this resource.
+          returned: success
+          type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
+          returned: success
+          type: str
 '''
 
 ################################################################################
@@ -167,7 +201,7 @@ def main():
 
 
 def collection(module):
-    return "https://www.googleapis.com/compute/v1/projects/{project}/global/routes".format(**module.params)
+    return "https://www.googleapis.com/compute/v1/projects/{project}/global/snapshots".format(**module.params)
 
 
 def fetch_list(module, link, query):
