@@ -43,7 +43,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#sslPolicy'"
 - name: verify that ssl_policy was created
   gcp_compute_ssl_policy_facts:
       filters:
@@ -76,7 +75,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#sslPolicy'"
 #----------------------------------------------------------
 - name: delete a ssl policy
   gcp_compute_ssl_policy:

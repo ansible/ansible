@@ -48,7 +48,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#subnetwork'"
 - name: verify that subnetwork was created
   gcp_compute_subnetwork_facts:
       filters:
@@ -80,7 +79,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#subnetwork'"
 #----------------------------------------------------------
 - name: delete a subnetwork
   gcp_compute_subnetwork:
