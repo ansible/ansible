@@ -64,7 +64,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#backendService'"
 - name: verify that backend_service was created
   gcp_compute_backend_service_facts:
       filters:
@@ -97,7 +96,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#backendService'"
 #----------------------------------------------------------
 - name: delete a backend service
   gcp_compute_backend_service:

@@ -47,7 +47,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#backendBucket'"
 - name: verify that backend_bucket was created
   gcp_compute_backend_bucket_facts:
       filters:
@@ -78,7 +77,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#backendBucket'"
 #----------------------------------------------------------
 - name: delete a backend bucket
   gcp_compute_backend_bucket:
