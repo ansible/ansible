@@ -260,8 +260,6 @@ groupings:
   - aws
   ecs_taskdefinition:
   - aws
-  ecs_taskdefinition_facts:
-  - aws
   ecs_taskdefinition_info:
   - aws
   efs:

@@ -219,7 +219,7 @@
       ignore_errors: yes
 
     - name: obtain ECS task definition facts
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
         <<: *aws_connection_info
 
@@ -392,15 +392,15 @@
       register: ecs_task_definition_vpc_with_host_port
 
     - name: obtain ECS task definition facts
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition_vpc_with_host_port.taskdefinition.revision }}"
         <<: *aws_connection_info
-      register: ecs_taskdefinition_facts
+      register: ecs_taskdefinition_info
 
     - name: assert that network mode is awsvpc
       assert:
         that:
-          - "ecs_taskdefinition_facts.network_mode == 'awsvpc'"
+          - "ecs_taskdefinition_info.network_mode == 'awsvpc'"
 
     - name: pause to allow service to scale down
       pause:
@@ -626,7 +626,7 @@
           - "'networkConfiguration' in ecs_service_facts.ansible_facts.services[0]"
 
     - name: attempt to get facts from missing task definition
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition.taskdefinition.revision + 1}}"
         <<: *aws_connection_info
 
@@ -699,7 +699,7 @@
       register: ecs_fargate_task_definition
 
     - name: obtain ECS task definition facts
-      ecs_taskdefinition_facts:
+      ecs_taskdefinition_info:
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_fargate_task_definition.taskdefinition.revision }}"
         <<: *aws_connection_info
 

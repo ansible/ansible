@@ -2,5 +2,5 @@ cloud/aws
 ecs_service_facts
 ecs_task
 ecs_taskdefinition
-ecs_taskdefinition_facts
+ecs_taskdefinition_info
 unsupported

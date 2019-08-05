@@ -138,6 +138,7 @@ Noteworthy module changes
 * The ``ec2_vpc_subnet_facts`` module was renamed to :ref:`ec2_vpc_subnet_info <ec2_vpc_subnet_info_module>`.
 * The ``ec2_vpc_vgw_facts`` module was renamed to :ref:`ec2_vpc_vgw_info <ec2_vpc_vgw_info_module>`.
 * The ``ec2_vpc_vpn_facts`` module was renamed to :ref:`ec2_vpc_vpn_info <ec2_vpc_vpn_info_module>`.
+* The ``ecs_taskdefinition_facts`` module was renamed to :ref:`ecs_taskdefinition_info <ecs_taskdefinition_info_module>`.
 * The ``elasticache_facts`` module was renamed to :ref:`elasticache_info <elasticache_info_module>`.
 * The ``elb_application_lb_facts`` module was renamed to :ref:`elb_application_lb_info <elb_application_lb_info_module>`.
 * The ``elb_classic_lb_facts`` module was renamed to :ref:`elb_classic_lb_info <elb_classic_lb_info_module>`.
