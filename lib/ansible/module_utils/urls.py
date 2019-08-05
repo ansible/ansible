@@ -397,6 +397,7 @@ class NoSSLError(SSLValidationError):
 CustomHTTPSConnection = None
 CustomHTTPSHandler = None
 HTTPSClientAuthHandler = None
+UnixHTTPSConnection = None
 if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
@@ -478,32 +479,34 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 return UnixHTTPSConnection(self._unix_socket)(host, **kwargs)
             return httplib.HTTPSConnection(host, **kwargs)
 
+    @contextmanager
+    def unix_socket_patch_httpconnection_connect():
+        '''Monkey patch ``httplib.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
+        so that when calling ``super(UnixHTTPSConnection, self).connect()`` we get the
+        correct behavior of creating self.sock for the unix socket
+        '''
+        _connect = httplib.HTTPConnection.connect
+        httplib.HTTPConnection.connect = UnixHTTPConnection.connect
+        yield
+        httplib.HTTPConnection.connect = _connect
 
-@contextmanager
-def unix_socket_patch_httpconnection_connect():
-    '''Monkey patch ``httplib.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
-    so that when calling ``super(UnixHTTPSConnection, self).connect()`` we get the
-    correct behavior of creating self.sock for the unix socket
-    '''
-    _connect = httplib.HTTPConnection.connect
-    httplib.HTTPConnection.connect = UnixHTTPConnection.connect
-    yield
-    httplib.HTTPConnection.connect = _connect
+    class UnixHTTPSConnection(httplib.HTTPSConnection):
+        def __init__(self, unix_socket):
+            self._unix_socket = unix_socket
 
+        def connect(self):
+            # This method exists simply to ensure we monkeypatch
+            # httplib.HTTPConnection.connect to call UnixHTTPConnection.connect
+            with unix_socket_patch_httpconnection_connect():
+                # Disable pylint check for the super() call. It complains about UnixHTTPSConnection
+                # being a NoneType because of the initial definition above, but it won't actually
+                # be a NoneType when this code runs
+                # pylint: disable=bad-super-call
+                super(UnixHTTPSConnection, self).connect()
 
-class UnixHTTPSConnection(httplib.HTTPSConnection):
-    def __init__(self, unix_socket):
-        self._unix_socket = unix_socket
-
-    def connect(self):
-        # This method exists simply to ensure we monkeypatch
-        # httplib.HTTPConnection.connect to call UnixHTTPConnection.connect
-        with unix_socket_patch_httpconnection_connect():
-            super(UnixHTTPSConnection, self).connect()
-
-    def __call__(self, *args, **kwargs):
-        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
-        return self
+        def __call__(self, *args, **kwargs):
+            httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            return self
 
 
 class UnixHTTPConnection(httplib.HTTPConnection):
