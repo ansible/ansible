@@ -95,7 +95,6 @@ options:
           description:
             - "The range is 0-4"
             - "The power limit based on class value for given interface C(name)"
-          choices: ['0', '1', '2', '3', '4']
           type: str
         limit:
           description:
@@ -106,7 +105,6 @@ options:
           description:
             - "The range is 1 (highest) to 3 (lowest)"
             - "The priority for power management or given interface C(name)"
-          choices: ['1', '2', '3']
           type: str
         enabled:
           description:
