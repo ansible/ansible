@@ -555,14 +555,15 @@ class Connection(NetworkConnectionBase):
                 cleaned.append(line)
         return b'\n'.join(cleaned).strip()
 
-        def _find_prompt(self, response, previous_stderr_prompt_matched, previous_errored_response):
-        '''Searches the buffered response for a matching command prompt
-           return list for searching results: 
-           (stdout_prompt_matched, stderr_prompt_macthed, errored_response)
-           stdout_prompt_matched indicates if exepcted command ending prompt is found
-           stderr_prompt_macthed indicates the first error key word is found
-           errored_response stores error command output when stderr_prompt_macthed is True
-           and stores current response when stderr_prompt_macthed is False
+    def _find_prompt(self, response, previous_stderr_prompt_matched, previous_errored_response):
+        '''
+        Searches the buffered response for a matching command prompt
+        return list for searching results:
+        (stdout_prompt_matched, stderr_prompt_macthed, errored_response)
+        stdout_prompt_matched indicates if exepcted command ending prompt is found
+        stderr_prompt_macthed indicates the first error key word is found
+        errored_response stores error command output when stderr_prompt_macthed is True
+        and stores current response when stderr_prompt_macthed is False
         '''
         stderr_prompt_matched = False
         stdout_prompt_matched = False
