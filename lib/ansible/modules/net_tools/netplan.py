@@ -356,6 +356,33 @@ options:
     required: false
     type: list
 
+  routing-policy:
+    description:
+      - Defines  extra routing policy for a network, where traffic may be
+        handled specially based on the source IP, firewall marking, etc.
+        The routing-policy must be defined using a list of dicts,
+        E.g:- {from:192.168.0.0/24, table:102}. Valid dict keys are:C(from)
+        set a source IP address to match traffic for this policy rule;
+        C(to) match on traffic going to the specified destination;
+        C(table) specifies the table number to match for the route.
+        In some scenarios, it may be useful to set routes in a separate
+        routing table. It may also be used to refer to routes which also accept
+        a table parameter. Allowed values are positive integers starting from 1.
+        Some values are already in use to refer to specific routing tables:see
+        C(/etc/iproute2/rt_tables);
+        C(priority) specifies a priority for the routing policy rule, to
+        influence the order in which routing rules are processed. A higher
+        number means lower priority (rules are processed in order by increasing
+        priority number);
+        C(mark) defines a mark that this routing policy rule match on
+        traffic that has been marked by the iptables firewall with this value.
+        Allowed values are positive integers starting from 1;
+        C(type-of-service) defines this policy rule based on the type of
+        service number applied to the traffic;
+        Supported for all devices types.
+    required: false
+    type: list
+
   interfaces:
     description:
       - All devices matching this ID list will be added or associated to
@@ -729,6 +756,10 @@ EXAMPLES = '''
      routes:
        - {to: 0.0.0.0/0, via: 192.168.2.1/24, type: unicast, scope: global}
        - {to: 10.0.0.0/0, via: 192.168.2.2/24}
+     routing-policy:
+        - {from: 192.168.100.0/24, table: 1, priority: 10}
+        - {from: 192.168.200.0/24, table: 2, mark: 100}
+
 
  - name: Add br0 bridge interface
    netplan:
@@ -873,6 +904,8 @@ DHCP_OVERRIDES = ['dhcp4-overrides-use-dns',
 
 ROUTES = ['from', 'to', 'via', 'on-link', 'metric', 'type', 'scope', 'table']
 
+ROUTING_POLICY = ['from', 'to', 'table', 'priority', 'mark', 'type-of-service']
+
 BONDS = ['bonding-mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
          'transmit-hash-policy', 'ad-select', 'all-slaves-active',
          'arp-interval', 'arp-ip-targets', 'arp-validate', 'arp-all-targets',
@@ -925,6 +958,20 @@ def validate_args(module):
                 for route_keys in route.keys():
                     if route_keys not in ROUTES:
                         module.fail_json(msg='Routes subparams supported: {0}'.format(ROUTES))
+        if module.params.get('routing-policy'):
+            for rp in module.params.get('routing-policy'):
+                # table specified
+                # Verify /etc/iproute2/rt_tables before try to add a table.
+                if rp.get('table'):
+                    if int(rp.get('table')) < 1:
+                        module.fail_json(msg='Routing-policy table values must be positive integers starting from 1.')
+                # mark specified
+                if rp.get('mark'):
+                    if int(rp.get('mark')) < 1:
+                        module.fail_json(msg='Routing-policy mark values must be positive integers starting from 1.')
+                for rp_key in rp.keys():
+                    if rp_key not in ROUTING_POLICY:
+                        module.fail_json(msg='Routing-policy subparams supported: {0}'.format(ROUTING_POLICY))
         if module.params['type'] == 'bridges':
             for key in module.params:
                 if module.params.get(key) is not None:
@@ -1165,6 +1212,7 @@ def main():
         'dhcp6-overrides-send-hostname': {'required': False, 'type': 'bool'},
         'dhcp6-overrides-hostname': {'required': False},
         'routes': {'required': False, 'type': 'list'},
+        'routing-policy': {'required': False, 'type': 'list'},
         'interfaces': {'required': False, 'type': 'list'},
         'bonding-mode': {'choices': ['balance-rr', 'active-backup', 'balance-xor',
                              'broadcast', '802.3ad', 'balance-tlb',
