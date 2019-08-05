@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_config  - It is also necessary to undo mmi-mode enable after running commands.Otherwise it will make a effect to next tasks.(https://github.com/ansible/ansible/pull/60071).
