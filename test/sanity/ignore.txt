@@ -7947,8 +7947,6 @@ test/units/plugins/shell/test_cmd.py metaclass-boilerplate
 test/units/plugins/shell/test_powershell.py future-import-boilerplate
 test/units/plugins/shell/test_powershell.py metaclass-boilerplate
 test/units/plugins/test_plugins.py pylint:blacklisted-name
-test/units/pytest/plugins/ansible_pytest_collections.py metaclass-boilerplate
-test/units/pytest/plugins/ansible_pytest_coverage.py metaclass-boilerplate
 test/units/template/test_templar.py pylint:blacklisted-name
 test/units/test_constants.py future-import-boilerplate
 test/units/test_context.py future-import-boilerplate
