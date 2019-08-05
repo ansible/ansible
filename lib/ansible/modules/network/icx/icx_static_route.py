@@ -41,6 +41,35 @@ options:
   aggregate:
     description: List of static route definitions.
     type: list
+    suboptions:
+      prefix:
+        description:
+          - Network prefix of the static route.
+        type: str
+      mask:
+        description:
+          - Network prefix mask of the static route.
+        type: str
+      next_hop:
+        description:
+          - Next hop IP of the static route.
+        type: str
+      admin_distance:
+        description:
+          - Admin distance of the static route. Range is 1 to 255.
+        type: int
+      state:
+        description:
+          - State of the static route configuration.
+        type: str
+        default: present
+        choices: ['present', 'absent']
+      check_running_config:
+        description:
+          - Check running configuration. This can be set as environment variable.
+           Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+        type: bool
+        default: yes
   purge:
     description:
       - Purge routes not defined in the I(aggregate) parameter.
