@@ -76,7 +76,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#instanceTemplate'"
 - name: verify that instance_template was created
   gcp_compute_instance_template_facts:
       filters:
@@ -117,7 +116,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#instanceTemplate'"
 #----------------------------------------------------------
 - name: delete a instance template
   gcp_compute_instance_template:

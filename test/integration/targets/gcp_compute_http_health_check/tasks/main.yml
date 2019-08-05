@@ -41,7 +41,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#httpHealthCheck'"
 - name: verify that http_health_check was created
   gcp_compute_http_health_check_facts:
       filters:
@@ -73,7 +72,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#httpHealthCheck'"
 #----------------------------------------------------------
 - name: delete a http health check
   gcp_compute_http_health_check:

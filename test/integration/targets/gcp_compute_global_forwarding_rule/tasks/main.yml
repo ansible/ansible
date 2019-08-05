@@ -101,7 +101,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#forwardingRule'"
 - name: verify that global_forwarding_rule was created
   gcp_compute_global_forwarding_rule_facts:
       filters:
@@ -133,7 +132,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#forwardingRule'"
 #----------------------------------------------------------
 - name: delete a global forwarding rule
   gcp_compute_global_forwarding_rule:
