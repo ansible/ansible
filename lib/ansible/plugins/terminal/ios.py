@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+# pylint: disable=anomalous-backslash-in-string
 DOCUMENTATION = """
 ---
 author: Ansible Networking Team
@@ -127,7 +128,7 @@ options:
       - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_NEWLINE
     vars:
       - name: ansible_terminal_initial_prompt_newline
-"""
+"""  # noqa W605
 
 import json
 

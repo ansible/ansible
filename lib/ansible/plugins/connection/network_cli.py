@@ -627,7 +627,7 @@ class Connection(NetworkConnectionBase):
                 pattern = br"%s" % to_bytes(item['pattern'])
                 flag = item.get('flags', 0)
                 if flag:
-                    flag = getattr(re, flag.split('.')[1] )
+                    flag = getattr(re, flag.split('.')[1])
                 terminal_std_re.append(re.compile(pattern, flag))
         else:
             terminal_std_re = getattr(self._terminal, option)
