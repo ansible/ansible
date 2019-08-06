@@ -71,7 +71,7 @@ EXAMPLES = '''
 '''
 
 RETURN = """
-logs:
+metric_filters:
     description: Return the origin response value
     returned: success
     type: list
@@ -193,7 +193,7 @@ def main():
                   for item in response['metricFilters']]
 
     module.exit_json(
-        changed=change, logs=retval)
+        changed=change, metric_filters=retval)
 
 
 if __name__ == '__main__':
