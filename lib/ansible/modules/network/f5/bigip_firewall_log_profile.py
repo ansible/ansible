@@ -100,6 +100,7 @@ options:
           - To specify the log_publisher on a different partition from the AFM log profile, specify the name in fullpath
             format, e.g. C(/Foobar/log-publisher), otherwise the partition for log publisher
             is inferred from C(partition) module parameter.
+        type: str
       rate_limit:
         description:
           - Defines a rate limit for all combined port misuse log messages per second. Beyond this rate limit,
