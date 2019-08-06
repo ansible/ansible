@@ -58,6 +58,7 @@ DOCUMENTATION = '''
                 - device_types
                 - manufacturers
                 - platforms
+                - regions
             default: []
         query_filters:
             description: List of parameters passed to the query string (Multiple values may be separated by commas)
@@ -145,6 +146,8 @@ ALLOWED_DEVICE_QUERY_PARAMETERS = (
     "position",
     "rack_group_id",
     "rack_id",
+    "region",
+    "region_id",
     "role",
     "role_id",
     "serial",
@@ -273,6 +276,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
+        
+    def extract_region(self, host):
+        try:
+            return [self.regions_lookup[self.sites_lookup["region"]["id"]]]
+        except Exception:
+            return
 
     def extract_primary_ip(self, host):
         try:
@@ -306,12 +315,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def refresh_sites_lookup(self):
         url = self.api_endpoint + "/api/dcim/sites/?limit=0"
         sites = self.get_resource_list(api_url=url)
-        self.sites_lookup = dict((site["id"], site["name"]) for site in sites)
+        self.sites_lookup = dict((site["id"], site["name"], site["region"]["id") for site in sites)
 
     def refresh_regions_lookup(self):
         url = self.api_endpoint + "/api/dcim/regions/?limit=0"
         regions = self.get_resource_list(api_url=url)
-        self.regions_lookup = dict((region["id"], region["name"]) for region in regions)
+        self.regions_lookup = dict((region["id"], region["name"], region["slug"]) for region in regions)
 
     def refresh_tenants_lookup(self):
         url = self.api_endpoint + "/api/tenancy/tenants/?limit=0"
