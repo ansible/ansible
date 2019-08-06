@@ -280,7 +280,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         
     def extract_region(self, host):
         try:
-            return [self.regions_lookup[self.sites_lookup["region"]["id"]]]
+            return [self.regions_lookup[[self.sites_region_lookup[host["site"]["id"]]]]
         except Exception:
             return
 
@@ -317,11 +317,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         url = self.api_endpoint + "/api/dcim/sites/?limit=0"
         sites = self.get_resource_list(api_url=url)
         self.sites_lookup = dict((site["id"], site["name"], site["region"]["id"]) for site in sites)
+        self.sites_region_lookup = dict((site["id"], site["region"]["id"]) for site in sites)
 
     def refresh_regions_lookup(self):
         url = self.api_endpoint + "/api/dcim/regions/?limit=0"
         regions = self.get_resource_list(api_url=url)
-        self.regions_lookup = dict((region["id"], region["name"], region["slug"]) for region in regions)
+        self.regions_lookup = dict((region["id"], region["slug"]) for region in regions)
 
     def refresh_tenants_lookup(self):
         url = self.api_endpoint + "/api/tenancy/tenants/?limit=0"
