@@ -45,6 +45,8 @@
       loop:
         - subfolderA
         - subfolderB
+        - subfolder_with_special'*:"&^%äß¿èẽ_chars
+        - subfolder/with/\slashes
 
     - name: Move VMs to new folders
       vmware_guest_move:
