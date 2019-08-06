@@ -23,7 +23,7 @@ with_tags: False
 VMWARE_YAML
 
 cleanup() {
-    echo "Cleanup"
+    echo "Cleanup: Starting"
     if [ -f "${VMWARE_CONFIG}" ]; then
         rm -f "${VMWARE_CONFIG}"
     fi
@@ -31,11 +31,23 @@ cleanup() {
         echo "Removing ${inventory_cache}"
         rm -rf "${inventory_cache}"
     fi
-    echo "Done"
-    exit 0
+    echo "Cleanup: Done"
 }
 
-trap cleanup INT TERM EXIT
+# This is required, as otherwise we overwite exit codes of commands we call and the integration
+# test fails prematurely, but reports successful execution
+failure_cleanup() {
+    echo "Previous command faild."
+    cleanup
+    exit 1
+}
+
+# Register a exception handler to perform a cleanup after one of the following commands fails
+# and exit with exit code 1
+trap failure_cleanup INT TERM
+# Register a handler for the Exit event (the script finished execution normally or exit was called)
+# to perform a cleanup
+trap cleanup EXIT
 
 echo "DEBUG: Using ${VCENTER_HOSTNAME} with username ${VCENTER_USERNAME} and password ${VCENTER_PASSWORD}"
 
@@ -48,10 +60,10 @@ curl "http://${VCENTER_HOSTNAME}:${port}/spawn?datacenter=1&cluster=1&folder=0" 
 echo "Debugging new instances"
 curl "http://${VCENTER_HOSTNAME}:${port}/govc_find"
 
-# Creates folder structure to test inventory folder support
+echo "Creates folder structure to test inventory folder support"
 ansible-playbook -i 'localhost,' test_vmware_prep_folders.yml
 
-# Get inventory
+echo "Get inventory"
 ansible-inventory -i ${VMWARE_CONFIG} --list
 
 echo "Check if cache is working for inventory plugin"
@@ -61,10 +73,10 @@ if [ ! -n "$(find "${inventory_cache}" -maxdepth 1 -name 'vmware_vm_inventory_*'
 fi
 echo "Cache is working"
 
-# Get inventory using YAML
+echo "Get inventory using YAML"
 ansible-inventory -i ${VMWARE_CONFIG} --list --yaml
 
-# Install TOML for --toml
+echo "Install TOML for --toml"
 ${PYTHON} -m pip freeze | grep toml > /dev/null 2>&1
 TOML_TEST_RESULT=$?
 if [ $TOML_TEST_RESULT -ne 0 ]; then
@@ -74,7 +86,7 @@ else
     echo "TOML package already exists, skipping installation"
 fi
 
-# Get inventory using TOML
+echo "Get inventory using TOML"
 ansible-inventory -i ${VMWARE_CONFIG} --list --toml
 TOML_INVENTORY_LIST_RESULT=$?
 if [ $TOML_INVENTORY_LIST_RESULT -ne 0 ]; then
@@ -82,5 +94,5 @@ if [ $TOML_INVENTORY_LIST_RESULT -ne 0 ]; then
     exit 1
 fi
 
-# Test playbook with given inventory
+echo "Test playbook with given inventory"
 ansible-playbook -i ${VMWARE_CONFIG} test_vmware_vm_inventory.yml --connection=local "$@"
