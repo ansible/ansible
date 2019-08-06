@@ -22,38 +22,38 @@
         update_host_type: 28
         ports:
           - type: 'iscsi'
-            label: 'I_1'
-            port: 'iqn.1996-04.de.suse:01:56f86f9bd1fe'
+            label: 'I1_1'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1fe-PORT1'
           - type: 'iscsi'
-            label: 'I_2'
-            port: 'iqn.1996-04.de.suse:01:56f86f9bd1ff'
+            label: 'I1_2'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1ff-port1'
         ports2:
           - type: 'iscsi'
-            label: 'I_1'
-            port: 'iqn.1996-04.de.suse:01:56f86f9bd1fe'
+            label: 'I1_1'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1fe-port2'
           - type: 'iscsi'
-            label: 'I_2'
-            port: 'iqn.1996-04.de.suse:01:56f86f9bd1ff'
-          - type: 'fc'
-            label: 'FC_3'
-            port: '10:00:8C:7C:FF:1A:B9:01'
+            label: 'I1_2'
+            port: 'iqn.1996-04.de.suse:01:56f86f9bd1ff-port2'
+          - type: 'iscsi'
+            label: 'I1_3'
+            port: 'iqn.1996-04.redhat:01:56f86f9bd1fe-PORT1'
       2:
         host_type: 27
         update_host_type: 28
         ports:
-          - type: 'fc'
-            label: 'FC_1'
-            port: '10:00:8C:7C:FF:1A:B9:01'
-          - type: 'fc'
-            label: 'FC_2'
-            port: '10:00:8C:7C:FF:1A:B9:00'
+          - type: 'iscsi'
+            label: 'I2_1'
+            port: 'iqn.1996-04.redhat:01:56f86f9bd1fe-port1'
+          - type: 'iscsi'
+            label: 'I2_2'
+            port: 'iqn.1996-04.redhat:01:56f86f9bd1ff-port1'
         ports2:
-          - type: 'fc'
-            label: 'FC_6'
-            port: '10:00:8C:7C:FF:1A:B9:01'
-          - type: 'fc'
-            label: 'FC_4'
-            port: '10:00:8C:7C:FF:1A:B9:00'
+          - type: 'iscsi'
+            label: 'I2_1'
+            port: 'iqn.1996-04.redhat:01:56f86f9bd1fe-port2'
+          - type: 'iscsi'
+            label: 'I2_2'
+            port: 'iqn.1996-04.redhat:01:56f86f9bd1ff-PORT2'
 
 
 # ********************************************
