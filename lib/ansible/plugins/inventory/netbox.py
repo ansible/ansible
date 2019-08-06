@@ -76,7 +76,7 @@ DOCUMENTATION = '''
             description: Length of group name prefix
             type: int
             default: full
-        slugify_groups:
+        slugify_group:
             description: Use slug instead of name for group name suffix
             type: boolean
             default: false
@@ -120,7 +120,8 @@ compose:
   bar: display_name
   nested_variable: rack.display_name
   
-substr: 4
+substr_group: 4
+slugify_group: True
 '''
 
 import json
