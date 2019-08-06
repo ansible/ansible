@@ -315,7 +315,6 @@ commands:
 """
 
 import re
-
 from copy import deepcopy
 from time import sleep
 from ansible.module_utils._text import to_text
