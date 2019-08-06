@@ -1,0 +1,40 @@
+---
+- debug:
+    msg: "START junos_vlans overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_overridden_output:
+      - name: vlan1
+        vlan_id: 100
+
+- block:
+    - name: Override the provided configuration with the exisiting running configuration
+      junos_vlans: &overridden
+        config:
+          - name: vlan1
+            vlan_id: 100
+        state: overridden
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_overridden_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Override the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_vlans: *overridden
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_vlans overridden integration tests on connection={{ ansible_connection }}"
