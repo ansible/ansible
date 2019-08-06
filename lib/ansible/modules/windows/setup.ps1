@@ -20,6 +20,10 @@ Function Get-CustomFacts {
         $result.ansible_facts.Add("ansible_$(($FactsFile.Name).Split('.')[0])", $out)
     }
   }
+  else
+  {
+        Add-Warning $result "Non existing path was set for local facts - $factpath"
+  }
 }
 
 Function Get-MachineSid {
