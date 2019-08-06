@@ -119,7 +119,8 @@ class NetAppOntapIgroupInitiator(object):
         :rtype: list() or None
         """
         igroup_info = netapp_utils.zapi.NaElement('igroup-get-iter')
-        attributes = dict(query={'initiator-group-info': {'initiator-group-name': self.parameters['initiator_group']}})
+        attributes = dict(query={'initiator-group-info': {'initiator-group-name': self.parameters['initiator_group'],
+                                                          'vserver': self.parameters['vserver']}})
         igroup_info.translate_struct(attributes)
         result, current = None, []
 
@@ -156,8 +157,9 @@ class NetAppOntapIgroupInitiator(object):
 
     def apply(self):
         self.autosupport_log()
-        initiators, present = self.get_initiators(), None
+        initiators = self.get_initiators()
         for initiator in self.parameters['names']:
+            present = None
             if initiator in initiators:
                 present = True
             cd_action = self.na_helper.get_cd_action(present, self.parameters)
