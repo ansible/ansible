@@ -15,6 +15,7 @@ from ansible.module_utils.network.junos.facts.legacy.base import Default, Hardwa
 from ansible.module_utils.network.junos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.junos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.junos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
+from ansible.module_utils.network.junos.facts.vlans.vlans import VlansFacts
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
@@ -26,6 +27,7 @@ FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
     lag_interfaces=Lag_interfacesFacts,
     l3_interfaces=L3_interfacesFacts,
+    vlans=VlansFacts,
 )
 
 
