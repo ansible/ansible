@@ -12,7 +12,7 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import to_list, param_list_to_dict
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.eos.facts.facts import Facts
@@ -93,8 +93,8 @@ class Interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        want = _param_list_to_dict(want)
-        have = _param_list_to_dict(have)
+        want = param_list_to_dict(want)
+        have = param_list_to_dict(have)
         state = self._module.params['state']
         if state == 'overridden':
             commands = self._state_overridden(want, have)
@@ -162,16 +162,6 @@ class Interfaces(ConfigBase):
         """
         commands = _compute_commands(want, have, remove=True)
         return _flatten_commands(commands['remove'])
-
-
-def _param_list_to_dict(param_list):
-    param_dict = {}
-    for params in param_list:
-        params = params.copy()
-        name = params.pop('name')
-        param_dict[name] = params
-
-    return param_dict
 
 
 def _compute_commands(want, have, replace=False, remove=False):
