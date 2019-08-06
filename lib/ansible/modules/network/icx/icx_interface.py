@@ -26,21 +26,20 @@ options:
   name:
     description:
       - Name of the Interface.
-    type: str
   description:
     description:
       - Name of the description.
-    type: str
   enabled:
     description:
       - Interface link status
+    default: yes
     type: bool
   speed:
     description:
       - Interface link speed/duplex
-    choices: ['10-full', '10-half', '100-full', '100-half', '1000-full',
-    '1000-full-master', '1000-full-slave', '10g-full', '10g-full-master', '10g-full-slave', '2500-full',
-    '2500-full-master', '2500-full-slave', '5g-full', '5g-full-master', '5g-full-slave', 'auto']
+    choices: ['10-full', '10-half', '100-full', '100-half', '1000-full', '1000-full-master',
+    '1000-full-slave', '10g-full', '10g-full-master', '10g-full-slave', '2500-full', '2500-full-master',
+    '2500-full-slave', '5g-full', '5g-full-master', '5g-full-slave', 'auto']
     type: str
   stp:
     description:
@@ -48,25 +47,25 @@ options:
     type: bool
   tx_rate:
     description:
-      - Transmit rate in bits per second (bps). This is state check parameter only.
-    type: str
+      - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
-      - Receiver rate in bits per second (bps). This is state check parameter only.
-    type: str
+      - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   neighbors:
     description:
-      - Check the operational state of given interface C(name) for CDP/LLDP neighbor. The following suboptions are available.
-    type: list
+      - Check the operational state of given interface C(name) for CDP/LLDP neighbor.
+      - The following suboptions are available.
     suboptions:
       host:
         description:
-          - CDP/LLDP neighbor host for given interface C(name).
-        type: str
+            - "CDP/LLDP neighbor host for given interface C(name)."
       port:
-        description:
-          - CDP/LLDP neighbor port to which given interface C(name) is connected.
-        type: str
+          description:
+            - "CDP/LLDP neighbor port to which given interface C(name) is connected."
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -84,35 +83,34 @@ options:
   power:
     description:
       - Inline power on Power over Ethernet (PoE) ports.
-    type: list
     suboptions:
         by_class:
           description:
-            - The range is 0-4. The power limit based on class value for given interface C(name)
-          type: str
+            - "The range is 0-4"
+            - "The power limit based on class value for given interface C(name)"
         limit:
           description:
-            - The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW. The power limit based on actual power value for given interface C(name)
-          type: str
+            - "The range is 1000-15400|30000mW. For PoH ports the range is 1000-95000mW"
+            - "The power limit based on actual power value for given interface C(name)"
         priority:
           description:
-            - The range is 1 (highest) to 3 (lowest). The priority for power management or given interface C(name)
-          type: str
+            - "The range is 1 (highest) to 3 (lowest)"
+            - "The priority for power management or given interface C(name)"
         enabled:
           description:
-            - enable/disable the poe of the given interface C(name)
+            - "enable/disable the poe of the given interface C(name)"
           default: true
           type: bool
   aggregate:
     description:
       - List of Interfaces definitions.
-    type: list
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
-      Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
-    type: bool
+      - Module will use environment variable value(default:True), unless it is overriden,
+       by specifying it as module parameter.
     default: yes
+    type: bool
 """
 
 EXAMPLES = """
