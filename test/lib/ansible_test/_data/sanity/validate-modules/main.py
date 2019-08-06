@@ -1742,8 +1742,8 @@ def main():
             if ModuleValidator.is_blacklisted(path):
                 continue
             with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                 base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv:
-                mv.validate()
+                                 base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv1:
+                mv1.validate()
                 check_dirs.add(os.path.dirname(path))
 
         for root, dirs, files in os.walk(module):
@@ -1765,8 +1765,8 @@ def main():
                 if ModuleValidator.is_blacklisted(path):
                     continue
                 with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                     base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv:
-                    mv.validate()
+                                     base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv2:
+                    mv2.validate()
 
     for path in sorted(check_dirs):
         pv = PythonPackageValidator(path, reporter=reporter)
