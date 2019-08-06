@@ -45,26 +45,26 @@ options:
         description:
             - A collection of information that defines how metric data gets emitted.
         suboptions:
-            metricName:
-            metricNamespace:
-            matricValue:
-            defaultValue:
+            metric_name:
+            metric_namespace:
+            matric_value:
+            default_value:
 '''
 
 EXAMPLES = '''
 - name: set metric filter on log group /fluentd/testcase
-    lekker_cloudwatch_metric_filter:
+    cloudwatchlogs_log_group_metric_filter:
     log_group_name: /fluentd/testcase
     filter_name: BoxFreeStorage
     filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
     state: present
     metric_transformation:
-        metricName: box_free_space
-        metricNamespace: fluentd_metrics
-        metricValue: "$.value"
+        metric_name: box_free_space
+        metric_namespace: fluentd_metrics
+        metric_value: "$.value"
 
 - name: delete metric filter on log group /fluentd/testcase
-    lekker_cloudwatch_metric_filter:
+    cloudwatchlogs_log_group_metric_filter:
     log_group_name: /fluentd/testcase
     filter_name: BoxFreeStorage
     state: absent
@@ -76,13 +76,14 @@ logs:
     returned: success
     type: list
     contains:
-        creationTime:
-        filterName:
-        filterPattern:
-        logGroupName:
-        metricTransformation:
+        creation_time:
+        filter_name:
+        filter_pattern:
+        log_group_name:
+        metric_filter_count:
 """
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code, get_boto3_client_method_parameters
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError, WaiterError
@@ -94,27 +95,29 @@ def metricTransformationHandler(metricTransformations, originMetricTransformatio
 
     if originMetricTransformations:
         change = False
-        for item in ["defaultValue", "metricName", "metricNamespace", "metricValue"]:
+        originMetricTransformations = camel_dict_to_snake_dict(
+            originMetricTransformations)
+        for item in ["default_value", "metric_name", "metric_namespace", "metric_value"]:
             if metricTransformations.get(item) != originMetricTransformations.get(item):
                 change = True
     else:
         change = True
 
-    if metricTransformations.get("defaultValue"):
+    if metricTransformations.get("default_value"):
         retval = [
             {
-                'metricName': metricTransformations.get("metricName"),
-                'metricNamespace': metricTransformations.get("metricNamespace"),
-                'metricValue': metricTransformations.get("metricValue"),
-                'defaultValue': metricTransformations.get("defaultValue")
+                'metricName': metricTransformations.get("metric_name"),
+                'metricNamespace': metricTransformations.get("metric_namespace"),
+                'metricValue': metricTransformations.get("metric_value"),
+                'defaultValue': metricTransformations.get("default_value")
             }
         ]
     else:
         retval = [
             {
-                'metricName': metricTransformations.get("metricName"),
-                'metricNamespace': metricTransformations.get("metricNamespace"),
-                'metricValue': metricTransformations.get("metricValue"),
+                'metricName': metricTransformations.get("metric_name"),
+                'metricNamespace': metricTransformations.get("metric_namespace"),
+                'metricValue': metricTransformations.get("metric_value"),
             }
         ]
 
@@ -184,7 +187,13 @@ def main():
                     metricTransformations=metricTransformation
                 )
 
-    module.exit_json(changed=change, logs=response.get("metricFilters"))
+    retval = None
+    if response.get("metricFilters"):
+        retval = [camel_dict_to_snake_dict(item)
+                  for item in response['metricFilters']]
+
+    module.exit_json(
+        changed=change, logs=retval)
 
 
 if __name__ == '__main__':

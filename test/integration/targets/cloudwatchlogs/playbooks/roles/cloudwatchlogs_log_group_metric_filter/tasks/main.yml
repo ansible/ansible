@@ -26,9 +26,9 @@
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
-          metricName: box_free_space
-          metricNamespace: fluentd_metrics
-          metricValue: "$.value"
+          metric_name: box_free_space
+          metric_namespace: fluentd_metrics
+          metric_value: "$.value"
       check_mode: yes
       register: out
 
@@ -45,9 +45,9 @@
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
-          metricName: box_free_space
-          metricNamespace: fluentd_metrics
-          metricValue: "$.value"
+          metric_name: box_free_space
+          metric_namespace: fluentd_metrics
+          metric_value: "$.value"
       register: out
 
     - name: create metric filter
@@ -63,9 +63,9 @@
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
-          metricName: box_free_space
-          metricNamespace: fluentd_metrics
-          metricValue: "$.value"
+          metric_name: box_free_space
+          metric_namespace: fluentd_metrics
+          metric_value: "$.value"
       register: out
 
     - name: metric filter must not change
@@ -81,9 +81,9 @@
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
-          metricName: box_free_space
-          metricNamespace: made_with_ansible
-          metricValue: "$.value"
+          metric_name: box_free_space
+          metric_namespace: made_with_ansible
+          metric_value: "$.value"
       register: out
 
     - name: update metric filter
@@ -99,9 +99,9 @@
         filter_pattern: '{ ($.value = *) && ($.hostname = "ansible")}'
         state: present
         metric_transformation:
-          metricName: box_free_space
-          metricNamespace: made_with_ansible
-          metricValue: "$.value"
+          metric_name: box_free_space
+          metric_namespace: made_with_ansible
+          metric_value: "$.value"
       register: out
 
     - name: update metric filter
