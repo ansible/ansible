@@ -57,16 +57,22 @@ extends_documentation_fragment:
     - zabbix
 '''
 
+RETURN = '''
+'''
+
 EXAMPLES = '''
-- name: Create a new host macro or update an existing macro's value
+- name: Create a value map
   local_action:
-    module: zabbix_hostmacro
-    server_url: http://monitor.example.com
+    module: zabbix_valuemap
+    server_url: http://zabbix.example.com
     login_user: username
     login_password: password
-    host_name: ExampleHost
-    macro_name: EXAMPLE.MACRO
-    macro_value: Example value
+    name: Numbers
+    mappings:
+      - value: 1
+        map_to: one
+      - value: 2
+        map_to: two
     state: present
 '''
 
@@ -106,6 +112,7 @@ def construct_parameters(**kwargs):
             ) for mapping in kwargs['mappings']
         ]
     )
+
 
 def check_if_valuemap_exists(module, zbx, name):
     """Checks if value map exists.
@@ -220,7 +227,7 @@ def main():
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True,
-        required_if = [
+        required_if=[
             ['state', 'present', ['mappings']],
         ]
     )
@@ -238,7 +245,6 @@ def main():
     state = module.params['state']
     mappings = module.params['mappings']
     timeout = module.params['timeout']
-
 
     zbx = None
     # login to zabbix
@@ -258,7 +264,7 @@ def main():
     )
 
     if valuemap_exists:
-        valuemap_id = valuemap_object['valuemapid'] 
+        valuemap_id = valuemap_object['valuemapid']
         if state == 'absent':
             if module.check_mode:
                 module.exit_json(
@@ -326,6 +332,7 @@ def main():
                     _id=valuemap_id
                 )
             )
+
 
 if __name__ == '__main__':
     main()
