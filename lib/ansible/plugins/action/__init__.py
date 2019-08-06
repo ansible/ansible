@@ -1210,7 +1210,7 @@ class ActionBase(ABC):
 
     def _parse_returned_data(self, res):
         try:
-            filtered_output = read_json_documents(BytesIO(res.get('stdout', u'').encode()))
+            filtered_output = read_json_documents(BytesIO(to_bytes(res.get('stdout', u''), errors='surrogate_or_strict')))
             try:
                 data = next(filtered_output)
             except StopIteration:

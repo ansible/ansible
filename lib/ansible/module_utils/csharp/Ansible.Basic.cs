@@ -1326,7 +1326,7 @@ namespace Ansible.Basic
             if (Diff.Count > 0 && DiffMode)
                 result["diff"] = Diff;
 
-            return ToJson(result);
+            return "" + ToJson(result);
         }
 
         private string FormatLogData(object data, int indentLevel)
