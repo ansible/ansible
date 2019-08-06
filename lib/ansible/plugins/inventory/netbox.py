@@ -72,6 +72,10 @@ DOCUMENTATION = '''
             description: List of custom ansible host vars to create from the device object fetched from NetBox
             default: {}
             type: dict
+        substr:
+            description: Length of group name prefix
+            type: int
+            default: full
 '''
 
 EXAMPLES = '''
@@ -111,6 +115,8 @@ compose:
   foo: last_updated
   bar: display_name
   nested_variable: rack.display_name
+  
+substr: 4
 '''
 
 import json
@@ -412,7 +418,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 continue
 
             for sub_group in sub_groups:
-                group_name = "_".join([group, sub_group])
+                if isset(self.substr):
+                  group_name = "_".join([group[:substr], sub_group])
+                else
+                  group_name = "_".join([group, sub_group])
                 self.inventory.add_group(group=group_name)
                 self.inventory.add_host(group=group_name, host=hostname)
 
@@ -473,4 +482,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         # Filter and group_by options
         self.group_by = self.get_option("group_by")
         self.query_filters = self.get_option("query_filters")
+        self.substr = self.get_option("substr")
         self.main()
