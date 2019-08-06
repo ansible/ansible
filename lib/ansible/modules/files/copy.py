@@ -168,14 +168,14 @@ EXAMPLES = r'''
   copy:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: /usr/sbin/visudo -cf %s
+    validate: /usr/sbin/visudo -csf %s
 
 - name: Copy a "sudoers" file on the remote machine for editing
   copy:
     src: /etc/sudoers
     dest: /etc/sudoers.edit
     remote_src: yes
-    validate: /usr/sbin/visudo -cf %s
+    validate: /usr/sbin/visudo -csf %s
 
 - name: Copy using inline content
   copy:
