@@ -52,9 +52,7 @@ options:
     type: str
   rx_rate:
     description:
-      - Receiver rate in bits per second (bps).
-      This is state check parameter only.
-      Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
+      - Receiver rate in bits per second (bps). This is state check parameter only.
     type: str
   neighbors:
     description:
