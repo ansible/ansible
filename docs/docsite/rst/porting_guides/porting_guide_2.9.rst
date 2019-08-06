@@ -65,6 +65,8 @@ The following modules will be removed in Ansible 2.13. Please update update your
 * nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
 
 * vyos_interface use :ref:`vyos_interfaces <vyos_interfaces_module>` instead.
+ 
+* vyos_l3_interface use :ref:`vyos_l3_interfaces <vyos_l3_interfaces_module>` instead.
 
 
 Noteworthy module changes
