@@ -1,0 +1,3 @@
+---
+bugfixes:
+- mount - properly escape paths with newlines or tabs for fstab

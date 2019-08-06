@@ -172,6 +172,8 @@ def write_fstab(module, lines, path):
 def _escape_fstab(v):
     """Escape invalid characters in fstab fields.
 
+    tab (011)
+    newline (012)
     space (040)
     ampersand (046)
     backslash (134)
@@ -183,6 +185,8 @@ def _escape_fstab(v):
         return(
             v.
             replace('\\', '\\134').
+            replace('\t', '\\011').
+            replace('\n', '\\012').
             replace(' ', '\\040').
             replace('&', '\\046'))
 
