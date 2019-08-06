@@ -304,6 +304,7 @@ EXAMPLES = """
 RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device.
+  returned: always
   type: list
   sample:
   - interface ethernet 1/1/1
