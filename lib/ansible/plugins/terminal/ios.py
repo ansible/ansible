@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# pylint: disable=anomalous-backslash-in-string
 DOCUMENTATION = """
 ---
 author: Ansible Networking Team
@@ -34,9 +33,11 @@ options:
     type: list
     description:
       - A single regex pattern or a sequence of patterns along with optional flags
-        to match the command prompt from the received response chunk.
-    default:
-      - pattern: '[\r\n]?[\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$'
+        to match the command prompt from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDOUT_RE
     vars:
@@ -46,29 +47,11 @@ options:
     elements: dict
     description:
       - This option provides the regex pattern and optional flags to match the
-        error string from the received response chunk.
-    default:
-      - pattern: '% ?Error'
-      - pattern: '% ?Bad secret'
-      - pattern: '[\r\n%] Bad passwords'
-      - pattern: 'invalid input'
-        flags: 're.I'
-      - pattern: '(?:incomplete|ambiguous) command'
-        flags: 're.I'
-      - pattern: 'connection timed out'
-        flags: 're.I'
-      - pattern: '[^\r\n]+ not found'
-      - pattern: >
-                ''[^']' +returned error code: ?\d+'
-      - pattern: 'Bad mask'
-        flags: 're.I'
-      - pattern: '% ?(\S+) ?overlaps with ?(\S+)'
-        flags: 're.I'
-      - pattern: '[%\S] ?Error: ?[\s]+'
-        flags: 're.I'
-      - pattern: '[%\S] ?Informational: ?[\s]+'
-        flags: 're.I'
-      - pattern: 'Command authorization failed'
+        error string from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDERR_RE
     vars:
@@ -128,10 +111,10 @@ options:
       - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_NEWLINE
     vars:
       - name: ansible_terminal_initial_prompt_newline
-"""  # noqa W605
+"""
 
 import json
-
+import re
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
@@ -141,6 +124,27 @@ display = Display()
 
 
 class TerminalModule(TerminalBase):
+
+    terminal_stdout_re = [
+        re.compile(br"[\r\n]?[\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$")
+    ]
+
+    terminal_stderr_re = [
+        re.compile(br"% ?Error"),
+        # re.compile(br"^% \w+", re.M),
+        re.compile(br"% ?Bad secret"),
+        re.compile(br"[\r\n%] Bad passwords"),
+        re.compile(br"invalid input", re.I),
+        re.compile(br"(?:incomplete|ambiguous) command", re.I),
+        re.compile(br"connection timed out", re.I),
+        re.compile(br"[^\r\n]+ not found"),
+        re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"Bad mask", re.I),
+        re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
+        re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
+        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I),
+        re.compile(br"Command authorization failed")
+    ]
 
     def on_open_shell(self):
         try:

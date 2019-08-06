@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# pylint: disable=anomalous-backslash-in-string
 DOCUMENTATION = """
 ---
 author: Ansible Networking Team
@@ -34,10 +33,11 @@ options:
     type: list
     description:
       - A single regex pattern or a sequence of patterns along with optional flags
-        to match the command prompt from the received response chunk.
-    default:
-      - pattern: '[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$'
-      - pattern: '\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$'
+        to match the command prompt from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDOUT_RE
     vars:
@@ -47,29 +47,11 @@ options:
     elements: dict
     description:
       - This option provides the regex pattern and optional flags to match the
-        error string from the received response chunk.
-    default:
-      - pattern: '% ?Error'
-      - pattern: '%^% \w+'
-        flags: 're.M'
-      - pattern: '% User not present'
-      - pattern: '% ?Bad secret'
-      - pattern: 'invalid input'
-        flags: 're.I'
-      - pattern: '(?:incomplete|ambiguous) command'
-        flags: 're.I'
-      - pattern: 'connection timed out'
-        flags: 're.I'
-      - pattern: '[^\r\n]+ not found(?! in current VLAN)'
-        flags: 're.I'
-      - pattern: >
-                ''[^']' +returned error code: ?\d+'
-      - pattern: '[^\r\n](?<! shell )\/bin\/(?:ba)?sh'
-      - pattern: '% More than \d+ OSPF instance'
-        flags: 're.I'
-      - pattern: '% Subnet [0-9a-f.:/]+ overlaps'
-        flags: 're.I'
-      - pattern: 'Maximum number of pending sessions has been reached'
+        error string from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDERR_RE
     vars:
@@ -132,9 +114,10 @@ options:
       - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_NEWLINE
     vars:
       - name: ansible_terminal_initial_prompt_newline
-"""  # noqa W605
+"""
 
 import json
+import re
 
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
@@ -142,6 +125,28 @@ from ansible.module_utils._text import to_bytes, to_text
 
 
 class TerminalModule(TerminalBase):
+
+    terminal_stdout_re = [
+        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
+
+    terminal_stderr_re = [
+        re.compile(br"% ?Error"),
+        # re.compile(br"^% \w+", re.M),
+        re.compile(br"% User not present"),
+        re.compile(br"% ?Bad secret"),
+        re.compile(br"invalid input", re.I),
+        re.compile(br"(?:incomplete|ambiguous) command", re.I),
+        re.compile(br"connection timed out", re.I),
+        # Strings like this regarding VLANs are not errors
+        re.compile(br"[^\r\n]+ not found(?! in current VLAN)", re.I),
+        re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"[^\r\n](?<! shell )\/bin\/(?:ba)?sh"),
+        re.compile(br"% More than \d+ OSPF instance", re.I),
+        re.compile(br"% Subnet [0-9a-f.:/]+ overlaps", re.I),
+        re.compile(br"Maximum number of pending sessions has been reached"),
+    ]
 
     def on_open_shell(self):
         try:

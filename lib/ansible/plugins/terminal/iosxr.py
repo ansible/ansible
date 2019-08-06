@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# pylint: disable=anomalous-backslash-in-string
 DOCUMENTATION = """
 ---
 author: Ansible Networking Team
@@ -34,10 +33,11 @@ options:
     type: list
     description:
       - A single regex pattern or a sequence of patterns along with optional flags
-        to match the command prompt from the received response chunk.
-    default:
-      - pattern: '[\r\n][\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$'
-      - pattern: ']]>]]>[\r\n]?'
+        to match the command prompt from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDOUT_RE
     vars:
@@ -47,23 +47,11 @@ options:
     elements: dict
     description:
       - This option provides the regex pattern and optional flags to match the
-        error string from the received response chunk.
-    default:
-      - pattern: '% ?Error'
-      - pattern: '% ?Bad secret'
-      - pattern: '% ?This command is not authorized'
-      - pattern: 'invalid input'
-        flags: 're.I'
-      - pattern: '(?:incomplete|ambiguous) command'
-        flags: 're.I'
-      - pattern: '?<!\()connection timed out(?!\))'
-        flags: 're.I'
-      - pattern: '[^\r\n]+ not found'
-        flags: 're.I'
-      - pattern: >
-                ''[^']' +returned error code: ?\d+'
-      - pattern: 'Failed to commit'
-        flags: 're.I'
+        error string from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDERR_RE
     vars:
@@ -123,13 +111,31 @@ options:
       - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_NEWLINE
     vars:
       - name: ansible_terminal_initial_prompt_newline
-"""  # noqa W605
+"""
+import re
 
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
 
 
 class TerminalModule(TerminalBase):
+
+    terminal_stdout_re = [
+        re.compile(br"[\r\n][\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br']]>]]>[\r\n]?')
+    ]
+
+    terminal_stderr_re = [
+        re.compile(br"% ?Error"),
+        re.compile(br"% ?Bad secret"),
+        re.compile(br"% ?This command is not authorized"),
+        re.compile(br"invalid input", re.I),
+        re.compile(br"(?:incomplete|ambiguous) command", re.I),
+        re.compile(br"(?<!\()connection timed out(?!\))", re.I),
+        re.compile(br"[^\r\n]+ not found", re.I),
+        re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"Failed to commit", re.I)
+    ]
 
     def on_open_shell(self):
         try:

@@ -37,14 +37,11 @@ class TestConnectionClass(unittest.TestCase):
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect_error(self, mocked_super):
         pc = PlayContext()
-        pc.network_os = 'ios'
-        conn = connection_loader.get('network_cli', pc, '/dev/null')
+        pc.network_os = 'does not exist'
 
-        conn.ssh = MagicMock()
-        conn.receive = MagicMock()
-        conn._network_os = 'does not exist'
-
-        self.assertRaises(AnsibleConnectionFailure, conn._connect)
+        with self.assertRaises(AnsibleConnectionFailure) as fail:
+            connection_loader.get('network_cli', pc, '/dev/null')
+        self.assertEqual('network os does not exist is not supported', to_text(fail.exception))
 
     def test_network_cli__invalid_os(self):
         pc = PlayContext()
@@ -111,15 +108,16 @@ class TestConnectionClass(unittest.TestCase):
         self.assertEqual(out, b'command response')
         mock_send.assert_called_with(command=b'command')
 
+    @patch("ansible.plugins.connection.network_cli.Connection._get_terminal_std_re")
     @patch("ansible.plugins.connection.network_cli.Connection._connect")
-    def test_network_cli_send(self, mocked_connect):
+    def test_network_cli_send(self, mocked_connect, mocked_terminal_re):
+
         pc = PlayContext()
         pc.network_os = 'ios'
         conn = connection_loader.get('network_cli', pc, '/dev/null')
 
         mock__terminal = MagicMock()
-        mock__terminal.terminal_stdout_re = [re.compile(b'device#')]
-        mock__terminal.terminal_stderr_re = [re.compile(b'^ERROR')]
+        mocked_terminal_re.side_effect = [[re.compile(b'^ERROR')], [re.compile(b'device#')]]
         conn._terminal = mock__terminal
 
         mock__shell = MagicMock()
@@ -139,7 +137,7 @@ class TestConnectionClass(unittest.TestCase):
 
         mock__shell.reset_mock()
         mock__shell.recv.side_effect = [b"ERROR: error message device#"]
-
+        mocked_terminal_re.side_effect = [[re.compile(b'^ERROR')], [re.compile(b'device#')]]
         with self.assertRaises(AnsibleConnectionFailure) as exc:
             conn.send(b'command')
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')

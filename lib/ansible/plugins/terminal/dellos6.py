@@ -34,7 +34,11 @@ options:
     type: list
     description:
       - A single regex pattern or a sequence of patterns along with optional flags
-        to match the command prompt from the received response chunk.
+        to match the command prompt from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDOUT_RE
     vars:
@@ -44,7 +48,11 @@ options:
     elements: dict
     description:
       - This option provides the regex pattern and optional flags to match the
-        error string from the received response chunk.
+        error string from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDERR_RE
     vars:

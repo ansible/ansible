@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-# pylint: disable=anomalous-backslash-in-string
 DOCUMENTATION = """
 ---
 author: Ansible Networking Team
@@ -34,10 +33,11 @@ options:
     type: list
     description:
       - A single regex pattern or a sequence of patterns along with optional flags
-        to match the command prompt from the received response chunk.
-    default:
-      - pattern: '[\r\n](?!\s*<)?(\x1b\S+)*[a-zA-Z_0-9]{1}[a-zA-Z0-9-_.]*[>|#](?:\s*)(\x1b\S+)*$'
-      - pattern" '[\r\n]?[a-zA-Z0-9]{1}[a-zA-Z0-9-_.]*\(.+\)#(?:\s*)$'
+        to match the command prompt from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDOUT_RE
     vars:
@@ -47,31 +47,11 @@ options:
     elements: dict
     description:
       - This option provides the regex pattern and optional flags to match the
-        error string from the received response chunk.
-    default:
-      - pattern: '% ?Error'
-      - pattern: '^error:(.*)'
-        flags: 're.I'
-      - pattern: '^% \w+'
-        flags: 're.M'
-      - pattern: '% ?Bad secret'
-      - pattern: 'invalid input'
-        flags: 're.I'
-      - pattern: '(?:incomplete|ambiguous) command'
-        flags: 're.I'
-      - pattern: 'connection timed out'
-        flags: 're.I'
-      - pattern: '[^\r\n]+ not found'
-        flags: 're.I'
-      - pattern: >
-                ''[^']' +returned error code: ?\d+'
-      - pattern: 'syntax error'
-      - pattern: 'unknown command'
-      - pattern: 'user not present'
-      - pattern: 'invalid (.+?)at '\^' marker'
-        flags: 're.I'
-      - pattern: '[B|b]aud rate of console should be.* (\d*) to increase [a-z]* level'
-        flags: 're.I'
+        error string from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
     env:
       - name: ANSIBLE_TERMINAL_STDERR_RE
     vars:
@@ -131,7 +111,7 @@ options:
       - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_NEWLINE
     vars:
       - name: ansible_terminal_initial_prompt_newline
-"""  # noqa W605
+"""
 
 import re
 import json
@@ -142,6 +122,28 @@ from ansible.module_utils._text import to_bytes, to_text
 
 
 class TerminalModule(TerminalBase):
+
+    terminal_stdout_re = [
+        re.compile(br'[\r\n](?!\s*<)?(\x1b\S+)*[a-zA-Z_0-9]{1}[a-zA-Z0-9-_.]*[>|#](?:\s*)(\x1b\S+)*$'),
+        re.compile(br'[\r\n]?[a-zA-Z0-9]{1}[a-zA-Z0-9-_.]*\(.+\)#(?:\s*)$')
+    ]
+
+    terminal_stderr_re = [
+        re.compile(br"% ?Error"),
+        re.compile(br"^error:(.*)", re.I),
+        re.compile(br"^% \w+", re.M),
+        re.compile(br"% ?Bad secret"),
+        re.compile(br"invalid input", re.I),
+        re.compile(br"(?:incomplete|ambiguous) command", re.I),
+        re.compile(br"connection timed out", re.I),
+        re.compile(br"[^\r\n]+ not found", re.I),
+        re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"syntax error"),
+        re.compile(br"unknown command"),
+        re.compile(br"user not present"),
+        re.compile(br"invalid (.+?)at '\^' marker", re.I),
+        re.compile(br"[B|b]aud rate of console should be.* (\d*) to increase [a-z]* level", re.I),
+    ]
 
     def on_become(self, passwd=None):
         if self._get_prompt().endswith(b'enable#'):
