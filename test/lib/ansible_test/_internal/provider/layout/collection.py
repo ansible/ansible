@@ -29,11 +29,7 @@ class CollectionLayout(LayoutProvider):
 
     def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
         """Create a Layout using the given root and paths."""
-        plugin_types = sorted(set(p.split('/')[1] for p in paths if re.search(r'^plugins/[^/]+/', p)))
-        provider_types = sorted(set(p.split('/')[2] for p in paths if re.search(r'^test/provider/[^/]+/', p)))
-
-        plugin_paths = dict((p, os.path.join('plugins', p)) for p in plugin_types)
-        provider_paths = dict((p, os.path.join('test/provider', p)) for p in provider_types)
+        plugin_paths = dict((p, os.path.join('plugins', p)) for p in self.PLUGIN_TYPES)
 
         collection_root = os.path.dirname(os.path.dirname(root))
         collection_dir = os.path.relpath(root, collection_root)
@@ -45,17 +41,13 @@ class CollectionLayout(LayoutProvider):
         return ContentLayout(root,
                              paths,
                              plugin_paths=plugin_paths,
-                             provider_paths=provider_paths,
-                             code_path='',
                              collection=CollectionDetail(
                                  name=collection_name,
                                  namespace=collection_namespace,
                                  root=collection_root,
                                  prefix=collection_prefix,
                              ),
-                             util_path='test/util',
                              unit_path='test/unit',
                              unit_module_path='test/unit/plugins/modules',
                              unit_module_utils_path='test/unit/plugins/module_utils',
-                             integration_path='test/integration',
                              )

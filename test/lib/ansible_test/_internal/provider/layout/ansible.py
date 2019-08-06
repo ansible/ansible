@@ -26,11 +26,7 @@ class AnsibleLayout(LayoutProvider):
 
     def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
         """Create a Layout using the given root and paths."""
-        plugin_types = sorted(set(p.split('/')[3] for p in paths if re.search(r'^lib/ansible/plugins/[^/]+/', p)))
-        provider_types = sorted(set(p.split('/')[5] for p in paths if re.search(r'^test/lib/ansible_test/_internal/provider/[^/]+/', p)))
-
-        plugin_paths = dict((p, os.path.join('lib/ansible/plugins', p)) for p in plugin_types)
-        provider_paths = dict((p, os.path.join(ANSIBLE_TEST_ROOT, '_internal/provider', p)) for p in provider_types)
+        plugin_paths = dict((p, os.path.join('lib/ansible/plugins', p)) for p in self.PLUGIN_TYPES)
 
         plugin_paths.update(dict(
             modules='lib/ansible/modules',
@@ -40,11 +36,7 @@ class AnsibleLayout(LayoutProvider):
         return ContentLayout(root,
                              paths,
                              plugin_paths=plugin_paths,
-                             provider_paths=provider_paths,
-                             code_path='lib/ansible',
-                             util_path='test/utils',
                              unit_path='test/units',
                              unit_module_path='test/units/modules',
                              unit_module_utils_path='test/units/module_utils',
-                             integration_path='test/integration',
                              )
