@@ -15,6 +15,7 @@ from lib.util import (
     find_python,
     ApplicationError,
     ANSIBLE_ROOT,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 from lib.util_common import (
@@ -96,7 +97,7 @@ def check_pyyaml(args, version):
         return
 
     python = find_python(version)
-    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_ROOT, 'test/runner/yamlcheck.py')], capture=True)
+    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')], capture=True)
 
     if args.explain:
         return

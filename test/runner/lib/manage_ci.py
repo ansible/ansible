@@ -11,12 +11,12 @@ from lib.util import (
     ApplicationError,
     cmd_quote,
     display,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 from lib.util_common import (
     intercept_command,
     run_command,
-    ANSIBLE_ROOT,
 )
 
 from lib.core_ci import (
@@ -255,7 +255,7 @@ class ManagePosixCI:
         """Configure remote host for testing.
         :type python_version: str
         """
-        self.upload(os.path.join(ANSIBLE_ROOT, 'test/runner/setup/remote.sh'), '/tmp')
+        self.upload(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'remote.sh'), '/tmp')
         self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s' % (self.core_ci.platform, python_version))
 
     def upload_source(self):

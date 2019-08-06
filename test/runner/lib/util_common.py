@@ -22,6 +22,7 @@ from lib.util import (
     PYTHON_PATHS,
     raw_command,
     to_bytes,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 
@@ -210,7 +211,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     cmd = list(cmd)
     version = python_version or args.python_version
     interpreter = virtualenv or find_python(version)
-    inject_path = os.path.join(ANSIBLE_ROOT, 'test/runner/injector')
+    inject_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector')
 
     if not virtualenv:
         # injection of python into the path is required when not activating a virtualenv

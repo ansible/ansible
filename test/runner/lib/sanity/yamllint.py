@@ -12,6 +12,7 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -21,7 +22,6 @@ from lib.target import (
 from lib.util import (
     SubprocessError,
     display,
-    ANSIBLE_ROOT,
     is_subdir,
     find_python,
 )
@@ -92,7 +92,7 @@ class YamllintTest(SanitySingleVersion):
         """
         cmd = [
             python,
-            os.path.join(ANSIBLE_ROOT, 'test/sanity/yamllint/yamllinter.py'),
+            os.path.join(SANITY_ROOT, 'yamllint', 'yamllinter.py'),
         ]
 
         data = '\n'.join(paths)
