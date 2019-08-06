@@ -173,14 +173,14 @@ class DataLoader:
     def path_dwim(self, given):
         """Make relative paths work like folks expect.
 
-        :parama given: The path
+        :param given: The path
         :type data: str
 
         :return: The modify path
         :rtype: str
         """
         if not isinstance(given, string_types):
-            return given
+            raise TypeError('The type of the given argument must be a string')
 
         given = unquote(given)
         given = to_text(given, errors='surrogate_or_strict')

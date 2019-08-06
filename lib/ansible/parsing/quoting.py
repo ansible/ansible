@@ -34,7 +34,7 @@ def unquote(data):
     """Removes first and last quotes from a string, if the string starts and
     ends with the same quotes.
 
-    :parama data: The string to modify
+    :param data: The string to modify
     :type data: str
 
     :return: The string without quotes
