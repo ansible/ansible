@@ -1347,6 +1347,13 @@ class PyVmomiHelper(PyVmomi):
                 else:
                     pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
+                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
+                # For now, check if we are able to find distributed virtual switch
+                if not pg_obj.config.distributedVirtualSwitch:
+                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
+                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
+                                              " the given distributed virtual portgroup. Also, check if user has correct"
+                                              " permission to access distributed virtual switch in the given portgroup." % pg_obj.name)
                 if (nic.device.backing and
                     (not hasattr(nic.device.backing, 'port') or
                      (nic.device.backing.port.portgroupKey != pg_obj.key or
@@ -1363,12 +1370,6 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
                                               " virtual portgroup '%s'. Please make sure host system is associated"
                                               " with given distributed virtual portgroup" % (host_system, pg_obj.name))
-                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
-                # For now, check if we are able to find distributed virtual switch
-                if not pg_obj.config.distributedVirtualSwitch:
-                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
-                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
-                                              " the given distributed virtual portgroup." % pg_obj.name)
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection

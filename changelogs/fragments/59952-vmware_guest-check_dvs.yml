@@ -1,0 +1,2 @@
+minor_changes:
+  - Check dvs in the given portgroup before accessing any properties of dvs (https://github.com/ansible/ansible/issues/59952). This can be due to permission issue or no association between distributed virtual portgroup and dvswitch.
