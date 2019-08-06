@@ -164,6 +164,13 @@ options:
         type: bool
         default: false
         version_added: 2.8
+    initialization_timeout:
+        description:
+            - Duration in seconds before the wait_for_initialization operation will terminate.
+            - M(wait_for_initialization==True) to have any effect on module's operations.
+        type: int
+        required: false
+        version_added: 2.9
 """
 EXAMPLES = """
 - name: Create simple volume with workload tags (volume meta data)
@@ -244,9 +251,7 @@ msg:
     returned: always
     sample: "Standard volume [workload_vol_1] has been created."
 """
-
-import time
-
+from time import sleep
 from ansible.module_utils.netapp import NetAppESeriesModule
 from ansible.module_utils._text import to_native
 
@@ -275,7 +280,8 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             write_cache_enable=dict(type="bool", default=True),
             workload_name=dict(type="str", required=False),
             metadata=dict(type="dict", require=False),
-            wait_for_initialization=dict(type="bool", default=False))
+            wait_for_initialization=dict(type="bool", default=False),
+            initialization_timeout=dict(type="int", required=False))
 
         required_if = [
             ["state", "present", ["storage_pool_name", "size"]],
@@ -317,6 +323,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.workload_name = args["workload_name"]
         self.metadata = args["metadata"]
         self.wait_for_initialization = args["wait_for_initialization"]
+        self.initialization_timeout = args["initialization_timeout"]
 
         # convert metadata to a list of dictionaries containing the keys "key" and "value" corresponding to
         #   each of the workload attributes dictionary entries
@@ -381,7 +388,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             self.module.fail_json(msg="Timed out waiting for the volume %s to become available. Array [%s]."
                                       % (self.name, self.ssid))
         if not self.get_volume():
-            time.sleep(5)
+            sleep(5)
             self.wait_for_volume_availability(retries=retries - 1)
 
     def wait_for_volume_action(self, timeout=None):
@@ -391,7 +398,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         action = "unknown"
         percent_complete = None
         while action != "complete":
-            time.sleep(5)
+            sleep(5)
 
             try:
                 rc, operations = self.request("storage-systems/%s/symbol/getLongLivedOpsProgress" % self.ssid)
@@ -792,7 +799,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
 
                 if self.wait_for_initialization:
                     self.module.log("Waiting for volume operation to complete.")
-                    self.wait_for_volume_action()
+                    self.wait_for_volume_action(timeout=self.initialization_timeout)
 
             elif self.state == 'absent':
                 self.delete_volume()

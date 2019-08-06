@@ -7859,7 +7859,6 @@ test/units/modules/storage/netapp/test_netapp_e_iscsi_target.py future-import-bo
 test/units/modules/storage/netapp/test_netapp_e_ldap.py future-import-boilerplate
 test/units/modules/storage/netapp/test_netapp_e_mgmt_interface.py future-import-boilerplate
 test/units/modules/storage/netapp/test_netapp_e_syslog.py future-import-boilerplate
-test/units/modules/storage/netapp/test_netapp_e_volume.py future-import-boilerplate
 test/units/modules/system/interfaces_file/test_interfaces_file.py future-import-boilerplate
 test/units/modules/system/interfaces_file/test_interfaces_file.py metaclass-boilerplate
 test/units/modules/system/interfaces_file/test_interfaces_file.py pylint:blacklisted-name
