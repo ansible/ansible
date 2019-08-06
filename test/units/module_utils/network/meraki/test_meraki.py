@@ -65,20 +65,26 @@ def module():
     return MerakiModule(module)
 
 
-def mocked_fetch_url():
-    response_mock = Mock()
-    if args[0] == 'https://api.meraki.com/404':
+def mocked_fetch_url(*args, **kwargs):
+    print(args)
+    if args[1] == 'https://api.meraki.com/api/v0/404':
         info = {'status': 404,
-                'body': "404 - Page is missing",
+                'msg': '404 - Page is missing',
+                'url': 'https://api.meraki.com/api/v0/404',
                 }
+        info['body'] = '404'
     return (None, info)
 
 
-@mock.patch('ansible.module_utils.urls.fetch_url', side_effect=mocked_fetch_url)
+def mocked_fail_json(*args, **kwargs):
+    pass
+
+
 def test_fetch_url_404(module, mocker):
-    url = 'https://api.meraki.com/404'
+    url = '404'
+    mocker.patch('ansible.module_utils.network.meraki.meraki.fetch_url', side_effect=mocked_fetch_url)
+    mocker.patch('ansible.module_utils.network.meraki.meraki.MerakiModule.fail_json', side_effect=mocked_fail_json)
     data = module.request(url, method='GET')
-    print(data)
     assert module.status == 404
 
 
