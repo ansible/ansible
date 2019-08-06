@@ -212,7 +212,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "device_types": self.extract_device_type,
             "config_context": self.extract_config_context,
             "manufacturers": self.extract_manufacturer,
-            "regions": self.extract_region,
+            "regions": self.extract_region
         }
 
     def extract_disk(self, host):
