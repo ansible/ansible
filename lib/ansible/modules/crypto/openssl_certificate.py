@@ -380,8 +380,7 @@ options:
             - This is only used by the C(entrust) provider.
         type: str
         default: STANDARD_SSL
-        choices: [ 'STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL', 'PRIVATE_SSL', 'PD_SSL', 'CODE_SIGNING', 'EV_CODE_SIGNING',
-        'CDS_INDIVIDUAL', 'CDS_GROUP', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT' ]
+        choices: [ 'STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL', 'PRIVATE_SSL', 'PD_SSL', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT' ]
         version_added: "2.9"
 
     entrust_requester_email:
@@ -676,6 +675,7 @@ try:
     from cryptography.hazmat.primitives.serialization import Encoding
     from cryptography.hazmat.primitives.hashes import SHA1
     from cryptography.x509 import NameAttribute, Name
+    from cryptography.x509.oid import NameOID
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
@@ -1817,6 +1817,35 @@ class EntrustCertificate(Certificate):
         super(EntrustCertificate, self).__init__(module, backend)
         self.trackingId = None
         self.notAfter = self.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after')
+        self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+
+        # ECS API defaults to using the validated organization tied to the account.
+        # We want to always force behavior of trying to use the organization provided in the CSR.
+        # To that end we need to parse out the organization from the CSR.
+        self.csr_org = None
+        if self.backend == 'pyopenssl':
+            csr_subject = self.csr.get_subject()
+            csr_subject_components = csr_subject.get_components()
+            for k, v in csr_subject_components:
+                if k.upper() == 'O':
+                    # Entrust does not support multiple validated organizations in a single certificate
+                    if self.csr_org is not None:
+                        module.fail_json(msg=("Entrust provider does not currently support multiple validated organizations. Multiple organizations found in "
+                                              "Subject DN: '{0}'. ".format(csr_subject)))
+                    else:
+                        self.csr_org = v
+        elif self.backend == 'cryptography':
+            csr_subject_orgs = self.csr.subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)
+            if len(csr_subject_orgs) == 1:
+                self.csr_org = csr_subject_orgs[0].value
+            elif len(csr_subject_orgs) > 1:
+                module.fail_json(msg=("Entrust provider does not currently support multiple validated organizations. Multiple organizations found in "
+                                      "Subject DN: '{0}'. ".format(self.csr.subject)))
+        # If no organization in the CSR, explicitly tell ECS that it should be blank in issued cert, not defaulted to
+        # organization tied to the account.
+        if self.csr_org is None:
+            self.csr_org = ''
+
         try:
             self.ecs_client = ECSClient(
                 entrust_api_user=module.params.get('entrust_api_user'),
@@ -1850,6 +1879,7 @@ class EntrustCertificate(Certificate):
 
             expiry_iso3339 = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
             body['certExpiryDate'] = expiry_iso3339
+            body['org'] = self.csr_org
             body['tracking'] = {
                 'requesterName': module.params['entrust_requester_name'],
                 'requesterEmail': module.params['entrust_requester_email'],
@@ -2068,8 +2098,7 @@ def main():
             # provider: entrust
             entrust_cert_type=dict(type='str', default='STANDARD_SSL',
                                    choices=['STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL',
-                                            'PRIVATE_SSL', 'PD_SSL', 'CODE_SIGNING', 'EV_CODE_SIGNING', 'CDS_INDIVIDUAL',
-                                            'CDS_GROUP', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT']),
+                                            'PRIVATE_SSL', 'PD_SSL', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT']),
             entrust_requester_email=dict(type='str'),
             entrust_requester_name=dict(type='str'),
             entrust_requester_phone=dict(type='str'),
