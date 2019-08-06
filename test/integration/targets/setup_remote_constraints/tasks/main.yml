@@ -4,5 +4,5 @@
 
 - name: copy constraints.txt to remote host
   copy:
-    src: "{{ role_path }}/../../../runner/requirements/constraints.txt"
+    src: "{{ role_path }}/../../../lib/ansible_test/_data/requirements/constraints.txt"
     dest: "{{ remote_constraints }}"
