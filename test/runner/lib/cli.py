@@ -21,6 +21,7 @@ from lib.util import (
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 from lib.delegation import (
@@ -88,7 +89,16 @@ from lib.util_common import (
     CommonConfig,
 )
 
-import lib.cover
+from lib.cover import (
+    command_coverage_combine,
+    command_coverage_erase,
+    command_coverage_html,
+    command_coverage_report,
+    command_coverage_xml,
+    COVERAGE_GROUPS,
+    CoverageConfig,
+    CoverageReportConfig,
+)
 
 
 def main():
@@ -478,8 +488,8 @@ def parse_args():
                                                       parents=[coverage_common],
                                                       help='combine coverage data and rewrite remote paths')
 
-    coverage_combine.set_defaults(func=lib.cover.command_coverage_combine,
-                                  config=lib.cover.CoverageConfig)
+    coverage_combine.set_defaults(func=command_coverage_combine,
+                                  config=CoverageConfig)
 
     add_extra_coverage_options(coverage_combine)
 
@@ -487,15 +497,15 @@ def parse_args():
                                                     parents=[coverage_common],
                                                     help='erase coverage data files')
 
-    coverage_erase.set_defaults(func=lib.cover.command_coverage_erase,
-                                config=lib.cover.CoverageConfig)
+    coverage_erase.set_defaults(func=command_coverage_erase,
+                                config=CoverageConfig)
 
     coverage_report = coverage_subparsers.add_parser('report',
                                                      parents=[coverage_common],
                                                      help='generate console coverage report')
 
-    coverage_report.set_defaults(func=lib.cover.command_coverage_report,
-                                 config=lib.cover.CoverageReportConfig)
+    coverage_report.set_defaults(func=command_coverage_report,
+                                 config=CoverageReportConfig)
 
     coverage_report.add_argument('--show-missing',
                                  action='store_true',
@@ -516,8 +526,8 @@ def parse_args():
                                                    parents=[coverage_common],
                                                    help='generate html coverage report')
 
-    coverage_html.set_defaults(func=lib.cover.command_coverage_html,
-                               config=lib.cover.CoverageConfig)
+    coverage_html.set_defaults(func=command_coverage_html,
+                               config=CoverageConfig)
 
     add_extra_coverage_options(coverage_html)
 
@@ -525,8 +535,8 @@ def parse_args():
                                                   parents=[coverage_common],
                                                   help='generate xml coverage report')
 
-    coverage_xml.set_defaults(func=lib.cover.command_coverage_xml,
-                              config=lib.cover.CoverageConfig)
+    coverage_xml.set_defaults(func=command_coverage_xml,
+                              config=CoverageConfig)
 
     add_extra_coverage_options(coverage_xml)
 
@@ -710,8 +720,8 @@ def add_extra_coverage_options(parser):
     parser.add_argument('--group-by',
                         metavar='GROUP',
                         action='append',
-                        choices=lib.cover.COVERAGE_GROUPS,
-                        help='group output by: %s' % ', '.join(lib.cover.COVERAGE_GROUPS))
+                        choices=COVERAGE_GROUPS,
+                        help='group output by: %s' % ', '.join(COVERAGE_GROUPS))
 
     parser.add_argument('--all',
                         action='store_true',
@@ -817,7 +827,8 @@ def complete_remote_shell(prefix, parsed_args, **_):
     images = sorted(get_remote_completion().keys())
 
     # 2008 doesn't support SSH so we do not add to the list of valid images
-    images.extend(["windows/%s" % i for i in read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True) if i != '2008'])
+    windows_completion_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'windows.txt')
+    images.extend(["windows/%s" % i for i in read_lines_without_comments(windows_completion_path, remove_blank_lines=True) if i != '2008'])
 
     return [i for i in images if i.startswith(prefix)]
 
@@ -841,7 +852,7 @@ def complete_windows(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    images = read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True)
+    images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'windows.txt'), remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
 
@@ -852,7 +863,7 @@ def complete_network_platform(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    images = read_lines_without_comments('test/runner/completion/network.txt', remove_blank_lines=True)
+    images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'network.txt'), remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 

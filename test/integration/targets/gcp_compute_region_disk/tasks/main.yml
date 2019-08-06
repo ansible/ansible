@@ -47,7 +47,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#disk'"
 - name: verify that region_disk was created
   gcp_compute_region_disk_facts:
       filters:
@@ -83,7 +82,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#disk'"
 #----------------------------------------------------------
 - name: delete a region disk
   gcp_compute_region_disk:

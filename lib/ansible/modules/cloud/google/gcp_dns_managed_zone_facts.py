@@ -43,6 +43,7 @@ options:
   dns_name:
     description:
     - Restricts the list to return only zones with this domain name.
+    type: list
 extends_documentation_fragment: gcp
 '''
 
@@ -53,7 +54,6 @@ EXAMPLES = '''
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
-    state: facts
 '''
 
 RETURN = '''

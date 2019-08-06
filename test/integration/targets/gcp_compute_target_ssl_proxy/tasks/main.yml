@@ -110,7 +110,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#targetSslProxy'"
 - name: verify that target_ssl_proxy was created
   gcp_compute_target_ssl_proxy_facts:
       filters:
@@ -141,7 +140,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#targetSslProxy'"
 #----------------------------------------------------------
 - name: delete a target ssl proxy
   gcp_compute_target_ssl_proxy:

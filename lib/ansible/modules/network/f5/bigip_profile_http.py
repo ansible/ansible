@@ -1719,7 +1719,7 @@ class ArgumentSpec(object):
                     poll_interval=dict(type='int'),
                     poll_interval_global=dict(type='bool'),
                     sampling_rate=dict(type='int'),
-                    sampling_rate_global=dict(type='int'),
+                    sampling_rate_global=dict(type='bool'),
                 )
             ),
             state=dict(

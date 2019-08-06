@@ -22,6 +22,7 @@ from lib.util import (
     PYTHON_PATHS,
     raw_command,
     to_bytes,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 
@@ -169,8 +170,8 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
         coverage_file = ''
 
     # Enable code coverage collection on local Python programs (this does not include Ansible modules).
-    # Used by the injectors in test/runner/injector/ to support code coverage.
-    # Used by unit tests in test/units/conftest.py to support code coverage.
+    # Used by the injectors to support code coverage.
+    # Used by the pytest unit test plugin to support code coverage.
     # The COVERAGE_FILE variable is also used directly by the 'coverage' module.
     env = dict(
         COVERAGE_CONF=config_file,
@@ -210,7 +211,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     cmd = list(cmd)
     version = python_version or args.python_version
     interpreter = virtualenv or find_python(version)
-    inject_path = os.path.join(ANSIBLE_ROOT, 'test/runner/injector')
+    inject_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector')
 
     if not virtualenv:
         # injection of python into the path is required when not activating a virtualenv

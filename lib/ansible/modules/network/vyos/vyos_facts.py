@@ -51,7 +51,7 @@ options:
         specific subset should not be collected.
     required: false
     version_added: "2.9"
-    choices: ['all', 'interfaces', '!interfaces']
+    choices: ['all', 'interfaces', '!interfaces', 'l3_interfaces', '!l3_interfaces']
 """
 
 EXAMPLES = """

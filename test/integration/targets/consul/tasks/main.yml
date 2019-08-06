@@ -74,8 +74,6 @@
     - vars:
         remote_dir: '{{ echo_output_dir.stdout }}'
       block:
-        # output_dir is hardcoded/created in test/runner/lib/executor.py and
-        # contains '~': expand remote path
         - command: 'echo {{ output_dir }}'
           register: echo_output_dir
 

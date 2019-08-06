@@ -6,7 +6,7 @@ from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 from ansible.modules.cloud.amazon.s3_bucket_notification import AmazonBucket, Config
 from ansible.modules.cloud.amazon import s3_bucket_notification
 try:
-    from botocore.exceptions import ClientError, ParamValidationError, BotoCoreError
+    from botocore.exceptions import ClientError
 except ImportError:
     pass
 

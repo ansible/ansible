@@ -25,7 +25,7 @@ import uuid
 
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult

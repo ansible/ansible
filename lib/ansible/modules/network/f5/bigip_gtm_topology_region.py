@@ -23,6 +23,7 @@ options:
   name:
     description:
       - Specifies the name of the region.
+    type: str
     required: True
   region_members:
     description:
@@ -38,6 +39,11 @@ options:
           - Only a single list entry can be specified together with negate.
         type: bool
         default: no
+      subnet:
+        description:
+          - An IP address and network mask in the CIDR format.
+        type: str
+        version_added: 2.9
       region:
         description:
           - Specifies the name of region already defined in the configuration.
@@ -167,6 +173,7 @@ try:
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_simple_list
+    from library.module_utils.network.f5.ipaddress import is_valid_ip_network
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -176,6 +183,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_simple_list
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_network
 
 
 class Parameters(AnsibleF5Parameters):
@@ -531,7 +539,18 @@ class ModuleParameters(Parameters):
             return key, self.countries.get(value, value)
         if key == 'geo_isp':
             return 'geoip-isp', value
+        if key == 'subnet':
+            return key, self._test_subnet(value)
         return key, value
+
+    def _test_subnet(self, item):
+        if item is None:
+            return None
+        if is_valid_ip_network(item):
+            return item
+        raise F5ModuleError(
+            "Specified 'subnet' is not a valid subnet."
+        )
 
 
 class Changes(Parameters):
@@ -822,6 +841,7 @@ class ArgumentSpec(object):
                 type='list',
                 elements='dict',
                 options=dict(
+                    subnet=dict(),
                     region=dict(),
                     continent=dict(),
                     country=dict(),

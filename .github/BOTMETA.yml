@@ -85,7 +85,7 @@ files:
   $modules/cloud/amazon/ecs_service_facts.py: willthames
   $modules/cloud/amazon/ecs_task.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition.py: willthames
-  $modules/cloud/amazon/ecs_taskdefinition_facts.py: willthames
+  $modules/cloud/amazon/ecs_taskdefinition_info.py: willthames
   $modules/cloud/amazon/elasticache.py: alachaum
   $modules/cloud/amazon/elb_target_group_info.py: willthames
   $modules/cloud/amazon/iam.py: $team_ansible
@@ -533,10 +533,6 @@ files:
   $modules/windows/win_security_policy.py:
     <<: *windows
     maintainers: defionscode
-  bin/ansible-connection:
-    keywords:
-      - persistent connection
-    labels: networking
   contrib/:
     support: community
   contrib/inventory:
@@ -1421,6 +1417,10 @@ files:
 
 ##############################
 # other lib
+  lib/ansible/cli/scripts/ansible_connection_cli_stub.py:
+    keywords:
+      - persistent connection
+    labels: networking
   lib/ansible/executor/powershell: *windows_core
   lib/ansible/template:
     keywords:
@@ -1559,8 +1559,6 @@ files:
   hacking/report.py:
     notified: mattclay
   shippable.yml:
-    notified: mattclay
-  tox.ini:
     notified: mattclay
 macros:
   module_utils: lib/ansible/module_utils

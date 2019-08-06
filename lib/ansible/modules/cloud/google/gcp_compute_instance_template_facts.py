@@ -45,6 +45,7 @@ options:
     - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
+    type: list
 extends_documentation_fragment: gcp
 '''
 
@@ -56,7 +57,6 @@ EXAMPLES = '''
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
-    state: facts
 '''
 
 RETURN = '''
@@ -258,6 +258,11 @@ resources:
                 specified, the default is PERSISTENT.
               returned: success
               type: str
+        labels:
+          description:
+          - Labels to apply to this address. A list of key->value pairs.
+          returned: success
+          type: dict
         machineType:
           description:
           - The machine type to use in the VM instance template.

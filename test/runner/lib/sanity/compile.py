@@ -12,6 +12,7 @@ from lib.sanity import (
     SanityFailure,
     SanitySuccess,
     SanityTargets,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -23,7 +24,6 @@ from lib.util import (
     display,
     find_python,
     parse_to_list_of_dict,
-    ANSIBLE_ROOT,
     is_subdir,
 )
 
@@ -53,7 +53,7 @@ class CompileTest(SanityMultipleVersion):
 
         paths = [target.path for target in targets.include]
 
-        cmd = [find_python(python_version), os.path.join(ANSIBLE_ROOT, 'test/sanity/compile/compile.py')]
+        cmd = [find_python(python_version), os.path.join(SANITY_ROOT, 'compile', 'compile.py')]
 
         data = '\n'.join(paths)
 

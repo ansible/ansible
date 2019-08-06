@@ -261,7 +261,12 @@ def _load_config(module, config):
                         print_msg = print_msg2
                     module.fail_json(msg=print_msg)
 
-    exec_command(module, 'return')
+    rc, out, err = exec_command(module, 'return')
+    if rc != 0:
+        module.fail_json(msg='unable to return', output=err)
+    rc, out, err = exec_command(module, 'undo mmi-mode enable')
+    if rc != 0:
+        module.fail_json(msg='unable to undo mmi-mode enable', output=err)
 
 
 def conversion_src(module):

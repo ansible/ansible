@@ -1068,9 +1068,9 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
         argument_spec = dict(
-            name=dict(
+            username_credential=dict(
                 required=True,
-                aliases=['username_credential']
+                aliases=['name']
             ),
             password_credential=dict(
                 no_log=True,

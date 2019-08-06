@@ -20,7 +20,9 @@ import shutil
 
 import lib.types as t
 
-import lib.thread
+from lib.thread import (
+    WrappedThread,
+)
 
 from lib.core_ci import (
     AnsibleCoreCI,
@@ -59,6 +61,7 @@ from lib.util import (
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
     ANSIBLE_ROOT,
+    ANSIBLE_TEST_DATA_ROOT,
     get_available_python_versions,
     is_subdir,
 )
@@ -312,8 +315,8 @@ def generate_pip_install(pip, command, packages=None):
     :type packages: list[str] | None
     :rtype: list[str] | None
     """
-    constraints = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/constraints.txt')
-    requirements = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/%s.txt' % command)
+    constraints = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
+    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
 
     options = []
 
@@ -380,7 +383,7 @@ def command_network_integration(args):
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
 
     if args.platform:
         get_python_path(args, args.python_executable)  # initialize before starting threads
@@ -394,7 +397,7 @@ def command_network_integration(args):
             if not config:
                 continue
 
-            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version, config))
+            instance = WrappedThread(functools.partial(network_run, args, platform, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
@@ -435,7 +438,7 @@ def network_init(args, internal_targets):
 
     platform_targets = set(a for target in internal_targets for a in target.aliases if a.startswith('network/'))
 
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
 
     # generate an ssh key (if needed) up front once, instead of for each instance
     SshKey(args)
@@ -449,7 +452,7 @@ def network_init(args, internal_targets):
                 platform_version, platform))
             continue
 
-        instance = lib.thread.WrappedThread(functools.partial(network_start, args, platform, version))
+        instance = WrappedThread(functools.partial(network_start, args, platform, version))
         instance.daemon = True
         instance.start()
         instances.append(instance)
@@ -545,7 +548,7 @@ def command_windows_integration(args):
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
     pre_target = None
     post_target = None
     httptester_id = None
@@ -558,7 +561,7 @@ def command_windows_integration(args):
         for version in args.windows:
             config = configs['windows/%s' % version]
 
-            instance = lib.thread.WrappedThread(functools.partial(windows_run, args, version, config))
+            instance = WrappedThread(functools.partial(windows_run, args, version, config))
             instance.daemon = True
             instance.start()
             instances.append(instance)
@@ -608,7 +611,7 @@ def command_windows_integration(args):
 
                 for remote in [r for r in remotes if r.version != '2008']:
                     manage = ManageWindowsCI(remote)
-                    manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
+                    manage.upload(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'windows-httptester.ps1'), watcher_path)
 
                     # We cannot pass an array of string with -File so we just use a delimiter for multiple values
                     script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\%s -Hosts \"%s\"" \
@@ -660,10 +663,10 @@ def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, u
     if args.metadata.instance_config is not None:
         return
 
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: t.List[WrappedThread]
 
     for version in args.windows:
-        instance = lib.thread.WrappedThread(functools.partial(windows_start, args, version))
+        instance = WrappedThread(functools.partial(windows_start, args, version))
         instance.daemon = True
         instance.start()
         instances.append(instance)
@@ -1369,7 +1372,7 @@ def command_units(args):
             '--color',
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
-            '-c', os.path.join(ANSIBLE_ROOT, 'test/runner/pytest.ini'),
+            '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
             '--junit-xml',
             'test/results/junit/python%s-units.xml' % version,
         ]
@@ -1861,7 +1864,7 @@ class EnvironmentDescription:
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
-        version_check = os.path.join(ANSIBLE_ROOT, 'test/runner/versions.py')
+        version_check = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'versions.py')
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
         program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])
