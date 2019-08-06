@@ -1,0 +1,9 @@
+{
+    "prefixes": [
+        "test/lib/ansible_test/_data/requirements/"
+    ],
+    "extensions": [
+        ".txt"
+    ],
+    "output": "path-line-column-message"
+}

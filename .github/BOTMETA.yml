@@ -1464,16 +1464,16 @@ files:
   docs/docsite/rst/user_guide/windows: *windows_core
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
-  test/sanity/validate-modules:
+  test/lib/ansible_test/_data/sanity/validate-modules:
     notified:
       - mattclay
     keywords:
       - validate-modules
-  test/sanity/validate-modules/schema.py:
+  test/lib/ansible_test/_data/sanity/validate-modules/schema.py:
     notified:
       - gundalow
       - sivel
-  test/sanity/validate-modules/main.py:
+  test/lib/ansible_test/_data/sanity/validate-modules/main.py:
     notified:
       - gundalow
       - sivel
@@ -1520,9 +1520,9 @@ files:
   test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
-  test/runner/:
+  test/lib/:
     notified: mattclay
-  test/runner/lib/cloud/acme.py: *crypto
+  test/lib/ansible_test/_internal/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
   test/units/module_utils/docker/:
