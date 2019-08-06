@@ -1,0 +1,52 @@
+---
+- debug:
+    msg: "START vyos_l3_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+  - include_tasks: _populate.yaml
+
+  - name: Overrides all device configuration with provided configuration
+    vyos_l3_interfaces: &overridden
+      config:
+        - name: eth0
+          ipv4:
+            - address: dhcp
+        - name: eth1
+          ipv4:
+            - address: "192.0.2.15/24"
+      state: overridden
+    register: result
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+      that:
+        - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
+
+  - name: Assert that correct commands were generated
+    assert:
+      that:
+        - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Assert that after dicts were correctly generated
+    assert:
+      that:
+        - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Overrides all device configuration with provided configurations (IDEMPOTENT)
+    vyos_l3_interfaces: *overridden
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result['changed'] == false"
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+      that:
+        - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+  always:
+  - include_tasks: _remove_config.yaml
