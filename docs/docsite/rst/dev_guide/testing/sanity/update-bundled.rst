@@ -15,7 +15,7 @@ This test can error in the following ways:
   added, this error should go away.
 
 * A file has a _BUNDLED_METADATA variable but the file isn't specified in
-  :file:`test/sanity/code-smell/update-bundled.py`.  This typically happens when a new bundled
+  :file:`test/lib/ansible_test/_data/sanity/code-smell/update-bundled.py`.  This typically happens when a new bundled
   library is added.  Add the file to the `get_bundled_libs()` function in the `update-bundled.py`
   test script to solve this error.
 

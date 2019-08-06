@@ -1,4 +1,4 @@
 shippable/posix/group2
 destructive
 needs/target/setup_openssl
-needs/file/test/runner/requirements/constraints.txt
+needs/file/test/lib/ansible_test/_data/requirements/constraints.txt
