@@ -20,7 +20,9 @@ options:
         choices: [ application, machineaccount, serviceaccount ]
     service_account_contents:
         description:
-            - The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+            - A string representing the contents of a Service Account JSON file.
+            - This should not be passed in as a dictionary, but a string
+              that has the exact contents of a service account json file (valid JSON)
         type: str
     service_account_file:
         description:
