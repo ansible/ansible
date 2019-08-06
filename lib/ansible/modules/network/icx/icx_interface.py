@@ -180,6 +180,12 @@ options:
             operationally up and C(down) means present and operationally C(down)
         type: str
         choices: ['present', 'absent', 'up', 'down']
+      check_running_config:
+        description:
+          - Check running configuration. This can be set as environment variable.
+          - Module will use environment variable value(default:True), unless it is overriden,
+          by specifying it as module parameter.
+        type: bool
       power:
         description:
           - Inline power on Power over Ethernet (PoE) ports.
