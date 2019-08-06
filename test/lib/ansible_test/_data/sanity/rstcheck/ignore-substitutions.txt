@@ -1,2 +1,11 @@
-version
+acapi
+acrn
+ac
+acversion
+acversionshort
+versionshortest
 versiondev
+pubdate
+rhel
+br
+_
