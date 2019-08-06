@@ -23,6 +23,7 @@ options:
   name:
     description:
       - Specifies the name of the region.
+    type: str
     required: True
   region_members:
     description:

@@ -42,6 +42,7 @@ options:
         description:
           - Specifies the type of source address translation associated with the specified transport config.
           - When set to C(snat) the C(pool) parameter needs to contain a name for a valid LSN or SNAT pool.
+        type: str
         choices:
           - snat
           - none
