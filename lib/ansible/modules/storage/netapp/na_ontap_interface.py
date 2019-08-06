@@ -267,9 +267,12 @@ class NetAppOntapInterface(object):
             data_protocols_obj = netapp_utils.zapi.NaElement('data-protocols')
             for protocol in self.parameters.get('protocols'):
                 if protocol.lower() in ['fc-nvme', 'fcp']:
-                    required_keys.remove('address')
-                    required_keys.remove('home_port')
-                    required_keys.remove('netmask')
+                    if 'address' in required_keys:
+                        required_keys.remove('address')
+                    if 'home_port' in required_keys:
+                        required_keys.remove('home_port')
+                    if 'netmask' in required_keys:
+                        required_keys.remove('netmask')
                     not_required_params = set(['address', 'netmask', 'firewall_policy'])
                     if not not_required_params.isdisjoint(set(self.parameters.keys())):
                         self.module.fail_json(msg='Error: Following parameters for creating interface are not supported'
@@ -324,7 +327,7 @@ class NetAppOntapInterface(object):
         if self.parameters.get('subnet_name') is None:
             required_keys.add('address')
             required_keys.add('netmask')
-            data_protocols_obj = self.set_protocol_option(required_keys)
+        data_protocols_obj = self.set_protocol_option(required_keys)
         self.validate_create_parameters(required_keys)
 
         options = {'interface-name': self.parameters['interface_name'],
