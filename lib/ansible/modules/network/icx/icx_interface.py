@@ -38,7 +38,8 @@ options:
   speed:
     description:
       - Interface link speed/duplex
-    choices: ['10-full', '10-half', '100-full', '100-half', '1000-full', '1000-full-master', '1000-full-slave', '10g-full', '10g-full-master', '10g-full-slave', '2500-full', '2500-full-master', '2500-full-slave', '5g-full', '5g-full-master', '5g-full-slave', 'auto']
+    choices: ['10-full', '10-half', '100-full', '100-half', '1000-full',
+    '1000-full-master', '1000-full-slave', '10g-full', '10g-full-master', '10g-full-slave', '2500-full', '2500-full-master', '2500-full-slave', '5g-full', '5g-full-master', '5g-full-slave', 'auto']
     type: str
   stp:
     description:
