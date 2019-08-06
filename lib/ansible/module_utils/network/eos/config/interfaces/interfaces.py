@@ -97,71 +97,71 @@ class Interfaces(ConfigBase):
         have = param_list_to_dict(have)
         state = self._module.params['state']
         if state == 'overridden':
-            commands = self._state_overridden(want, have)
+            commands = state_overridden(want, have)
         elif state == 'deleted':
-            commands = self._state_deleted(want, have)
+            commands = state_deleted(want, have)
         elif state == 'merged':
-            commands = self._state_merged(want, have)
+            commands = state_merged(want, have)
         elif state == 'replaced':
-            commands = self._state_replaced(want, have)
+            commands = state_replaced(want, have)
         return commands
 
-    @staticmethod
-    def _state_replaced(want, have):
-        """ The command generator when state is replaced
 
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = _compute_commands(want, have, replace=True, remove=True)
+def state_replaced(want, have):
+    """ The command generator when state is replaced
 
-        replace = commands['replace']
-        remove = commands['remove']
+    :rtype: A list
+    :returns: the commands necessary to migrate the current configuration
+              to the desired configuration
+    """
+    commands = _compute_commands(want, have, replace=True, remove=True)
 
-        commands_by_interface = replace
-        for interface, commands in remove.items():
-            commands_by_interface[interface] = replace.get(interface, []) + commands
+    replace = commands['replace']
+    remove = commands['remove']
 
-        return _flatten_commands(commands_by_interface)
+    commands_by_interface = replace
+    for interface, commands in remove.items():
+        commands_by_interface[interface] = replace.get(interface, []) + commands
 
-    @staticmethod
-    def _state_overridden(want, have):
-        """ The command generator when state is overridden
+    return _flatten_commands(commands_by_interface)
 
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        # Add empty desired state for unspecified interfaces
-        for key in have:
-            if key not in want:
-                want[key] = {}
 
-        # Otherwise it's the same as replaced
-        return Interfaces._state_replaced(want, have)
+def state_overridden(want, have):
+    """ The command generator when state is overridden
 
-    @staticmethod
-    def _state_merged(want, have):
-        """ The command generator when state is merged
+    :rtype: A list
+    :returns: the commands necessary to migrate the current configuration
+              to the desired configuration
+    """
+    # Add empty desired state for unspecified interfaces
+    for key in have:
+        if key not in want:
+            want[key] = {}
 
-        :rtype: A list
-        :returns: the commands necessary to merge the provided into
-                  the current configuration
-        """
-        commands = _compute_commands(want, have, replace=True)
-        return _flatten_commands(commands['replace'])
+    # Otherwise it's the same as replaced
+    return state_replaced(want, have)
 
-    @staticmethod
-    def _state_deleted(want, have):
-        """ The command generator when state is deleted
 
-        :rtype: A list
-        :returns: the commands necessary to remove the current configuration
-                  of the provided objects
-        """
-        commands = _compute_commands(want, have, remove=True)
-        return _flatten_commands(commands['remove'])
+def state_merged(want, have):
+    """ The command generator when state is merged
+
+    :rtype: A list
+    :returns: the commands necessary to merge the provided into
+              the current configuration
+    """
+    commands = _compute_commands(want, have, replace=True)
+    return _flatten_commands(commands['replace'])
+
+
+def state_deleted(want, have):
+    """ The command generator when state is deleted
+
+    :rtype: A list
+    :returns: the commands necessary to remove the current configuration
+              of the provided objects
+    """
+    commands = _compute_commands(want, have, remove=True)
+    return _flatten_commands(commands['remove'])
 
 
 def _compute_commands(want, have, replace=False, remove=False):
