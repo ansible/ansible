@@ -619,6 +619,14 @@ def update_key(connection, module, key):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Failed to update key description")
 
+    if module.params.get('policy'):
+        policy = module.params['policy']
+        try:
+            connection.put_key_policy(KeyId=key['key_id'], PolicyName='default', Policy=policy, BypassPolicyLockoutSafetyCheck=True)
+            changed = True
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to update key policy")
+
     desired_tags = module.params.get('tags')
     to_add, to_remove = compare_aws_tags(key['tags'], desired_tags,
                                          module.params.get('purge_tags'))
