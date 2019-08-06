@@ -206,12 +206,6 @@ options:
               description:
                 - "enable/disable the poe of the given interface C(name)"
               type: bool
-      check_running_config:
-        description:
-          - Check running configuration. This can be set as environment variable.
-          - Module will use environment variable value(default:True), unless it is overriden,
-          by specifying it as module parameter.
-        type: bool
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
