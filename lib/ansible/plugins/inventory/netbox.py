@@ -72,10 +72,14 @@ DOCUMENTATION = '''
             description: List of custom ansible host vars to create from the device object fetched from NetBox
             default: {}
             type: dict
-        substr:
+        substr_group:
             description: Length of group name prefix
             type: int
             default: full
+        slugify_groups:
+            description: Use slug instead of name for group name suffix
+            type: boolean
+            default: false
 '''
 
 EXAMPLES = '''
@@ -204,22 +208,40 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         return hosts_list
 
     @property
-    def group_extractors(self):
-        return {
-            "sites": self.extract_site,
-            "tenants": self.extract_tenant,
-            "racks": self.extract_rack,
-            "tags": self.extract_tags,
-            "disk": self.extract_disk,
-            "memory": self.extract_memory,
-            "vcpus": self.extract_vcpus,
-            "device_roles": self.extract_device_role,
-            "platforms": self.extract_platform,
-            "device_types": self.extract_device_type,
-            "config_context": self.extract_config_context,
-            "manufacturers": self.extract_manufacturer,
-            "regions": self.extract_region
-        }
+    if !self.slugify:
+        def group_extractors(self):
+            return {
+                "sites": self.extract_site,
+                "tenants": self.extract_tenant,
+                "racks": self.extract_rack,
+                "tags": self.extract_tags,
+                "disk": self.extract_disk,
+                "memory": self.extract_memory,
+                "vcpus": self.extract_vcpus,
+                "device_roles": self.extract_device_role,
+                "platforms": self.extract_platform,
+                "device_types": self.extract_device_type,
+                "config_context": self.extract_config_context,
+                "manufacturers": self.extract_manufacturer,
+                "regions": self.extract_region
+            }
+    else:
+        def group_extractors(self):
+            return {
+                "sites": self.extract_site_slug,
+                "tenants": self.extract_tenant_slug,
+                "racks": self.extract_rack,
+                "tags": self.extract_tags,
+                "disk": self.extract_disk,
+                "memory": self.extract_memory,
+                "vcpus": self.extract_vcpus,
+                "device_roles": self.extract_device_role_slug,
+                "platforms": self.extract_platform_slug,
+                "device_types": self.extract_device_type,
+                "config_context": self.extract_config_context,
+                "manufacturers": self.extract_manufacturer_slug,
+                "regions": self.extract_region_slug
+            }
 
     def extract_disk(self, host):
         return host.get("disk")
@@ -233,6 +255,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_platform(self, host):
         try:
             return [self.platforms_lookup[host["platform"]["id"]]]
+        except Exception:
+            return
+        
+    def extract_platform_slug(self, host):
+        try:
+            return [self.platforms_slug_lookup[host["platform"]["id"]]]
         except Exception:
             return
 
@@ -318,22 +346,26 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         url = self.api_endpoint + "/api/dcim/platforms/?limit=0"
         platforms = self.get_resource_list(api_url=url)
         self.platforms_lookup = dict((platform["id"], platform["name"]) for platform in platforms)
+        self.platforms_slug_lookup = dict((platform["id"], platform["slug"]) for platform in platforms)
 
     def refresh_sites_lookup(self):
         url = self.api_endpoint + "/api/dcim/sites/?limit=0"
         sites = self.get_resource_list(api_url=url)
         self.sites_lookup = dict((site["id"], site["name"]) for site in sites)
+        self.sites_slug_lookup = dict((site["id"], site["slug"]) for site in sites)
         self.sites_region_lookup = dict((site["id"], site["region"]["slug"]) for site in sites)
 
     def refresh_regions_lookup(self):
         url = self.api_endpoint + "/api/dcim/regions/?limit=0"
         regions = self.get_resource_list(api_url=url)
-        self.regions_lookup = dict((region["id"], region["slug"]) for region in regions)
+        self.regions_lookup = dict((region["id"], region["name"]) for region in regions)
+        self.regions_slug_lookup = dict((region["id"], region["slug"]) for region in regions)
 
     def refresh_tenants_lookup(self):
         url = self.api_endpoint + "/api/tenancy/tenants/?limit=0"
         tenants = self.get_resource_list(api_url=url)
         self.tenants_lookup = dict((tenant["id"], tenant["name"]) for tenant in tenants)
+        self.tenants_slug_lookup = dict((tenant["id"], tenant["slug"]) for tenant in tenants)
 
     def refresh_racks_lookup(self):
         url = self.api_endpoint + "/api/dcim/racks/?limit=0"
@@ -344,6 +376,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         url = self.api_endpoint + "/api/dcim/device-roles/?limit=0"
         device_roles = self.get_resource_list(api_url=url)
         self.device_roles_lookup = dict((device_role["id"], device_role["name"]) for device_role in device_roles)
+        self.device_roles_slug_lookup = dict((device_role["id"], device_role["slug"]) for device_role in device_roles)
 
     def refresh_device_types_lookup(self):
         url = self.api_endpoint + "/api/dcim/device-types/?limit=0"
@@ -354,6 +387,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         url = self.api_endpoint + "/api/dcim/manufacturers/?limit=0"
         manufacturers = self.get_resource_list(api_url=url)
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
+        self.manufacturers_slug_lookup = dict((manufacturer["id"], manufacturer["slug"]) for manufacturer in manufacturers)
 
     def refresh_lookups(self):
         lookup_processes = (
@@ -419,9 +453,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
             for sub_group in sub_groups:
                 if isset(self.substr):
-                  group_name = "_".join([group[:substr], sub_group])
+                    group_name = "_".join([group[:substr], sub_group])
                 else
-                  group_name = "_".join([group, sub_group])
+                    group_name = "_".join([group, sub_group])
                 self.inventory.add_group(group=group_name)
                 self.inventory.add_host(group=group_name, host=hostname)
 
@@ -482,5 +516,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         # Filter and group_by options
         self.group_by = self.get_option("group_by")
         self.query_filters = self.get_option("query_filters")
-        self.substr = self.get_option("substr")
+        self.substr = self.get_option("substr_group")
+        self.slugify = self.get_option("slugify_group")
         self.main()
