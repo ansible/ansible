@@ -205,8 +205,8 @@ class GcpModule(AnsibleModule):
                 service_account_contents=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_SERVICE_ACCOUNT_CONTENTS']),
-                    no_log=True,
-                    type='jsonarg'),
+                    type='str',
+                    no_log=True),
                 scopes=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_SCOPES']),

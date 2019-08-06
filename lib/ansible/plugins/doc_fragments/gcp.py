@@ -21,7 +21,7 @@ options:
     service_account_contents:
         description:
             - The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
-        type: jsonarg
+        type: str
     service_account_file:
         description:
             - The path of a Service Account JSON file if serviceaccount is selected as type.
