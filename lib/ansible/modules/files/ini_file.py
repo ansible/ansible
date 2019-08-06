@@ -124,16 +124,24 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 
 
-def match_opt(option, line):
+def match_opt(option, line, allow_no_value):
     option = re.escape(option)
-    return re.match('( |\t)*%s( |\t)*(=|$)' % option, line) \
-        or re.match('#( |\t)*%s( |\t)*(=|$)' % option, line) \
-        or re.match(';( |\t)*%s( |\t)*(=|$)' % option, line)
+    if allow_no_value:
+        match_end = '(=|$)'
+    else:
+        match_end = '='
+    return re.match('( |\t)*%s( |\t)*%s' % (option, match_end), line) \
+        or re.match('#( |\t)*%s( |\t)*%s' % (option, match_end), line) \
+        or re.match(';( |\t)*%s( |\t)*%s' % (option, match_end), line)
 
 
-def match_active_opt(option, line):
+def match_active_opt(option, line, allow_no_value):
     option = re.escape(option)
-    return re.match('( |\t)*%s( |\t)*(=|$)' % option, line)
+    if allow_no_value:
+        match_end = '(=|$)'
+    else:
+        match_end = '='
+    return re.match('( |\t)*%s( |\t)*%s' % (option, match_end), line)
 
 
 def do_ini(module, filename, section=None, option=None, value=None,
@@ -227,7 +235,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
             if within_section and option:
                 if state == 'present':
                     # change the existing option line
-                    if match_opt(option, line):
+                    if match_opt(option, line, allow_no_value):
                         if not value and allow_no_value:
                             newline = '%s\n' % option
                         else:
@@ -244,14 +252,14 @@ def do_ini(module, filename, section=None, option=None, value=None,
                                 line = ini_lines[index]
                                 if line.startswith('['):
                                     break
-                                if match_active_opt(option, line):
+                                if match_active_opt(option, line, allow_no_value):
                                     del ini_lines[index]
                                 else:
                                     index = index + 1
                         break
                 elif state == 'absent':
                     # delete the existing line
-                    if match_active_opt(option, line):
+                    if match_active_opt(option, line, allow_no_value):
                         del ini_lines[index]
                         changed = True
                         msg = 'option changed'
