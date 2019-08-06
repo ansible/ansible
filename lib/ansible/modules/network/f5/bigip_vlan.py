@@ -902,7 +902,7 @@ class ArgumentSpec(object):
                 options=dict(
                     interface=dict(),
                     tagging=dict(
-                        choice=['tagged', 'untagged']
+                        choices=['tagged', 'untagged']
                     )
                 )
             ),
