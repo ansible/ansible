@@ -100,7 +100,7 @@
     that:
       - result.changed == true
 - name: verify that autoscaler was created
-  gcp_compute_autoscaler_facts:
+  gcp_compute_autoscaler_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a
@@ -157,7 +157,7 @@
     that:
       - result.changed == true
 - name: verify that autoscaler was deleted
-  gcp_compute_autoscaler_facts:
+  gcp_compute_autoscaler_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a

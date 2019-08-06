@@ -62,7 +62,7 @@
     that:
       - result.changed == true
 - name: verify that router was created
-  gcp_compute_router_facts:
+  gcp_compute_router_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1
@@ -123,7 +123,7 @@
     that:
       - result.changed == true
 - name: verify that router was deleted
-  gcp_compute_router_facts:
+  gcp_compute_router_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1

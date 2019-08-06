@@ -319,10 +319,9 @@ options:
             type: str
       network:
         description:
-        - Specifies the title of an existing network. When creating an instance, if
-          neither the network nor the subnetwork is specified, the default network
-          global/networks/default is used; if the network is not specified but the
-          subnetwork is specified, the network is inferred.
+        - Specifies the title of an existing network. Not setting the network title
+          will select the default network interface, which could have SSH already
+          configured .
         - 'This field represents a link to a Network resource in GCP. It can be specified
           in two ways. First, you can place a dictionary with key ''selfLink'' and
           value of your resource''s selfLink Alternatively, you can add `register:
@@ -787,10 +786,9 @@ networkInterfaces:
       type: str
     network:
       description:
-      - Specifies the title of an existing network. When creating an instance, if
-        neither the network nor the subnetwork is specified, the default network global/networks/default
-        is used; if the network is not specified but the subnetwork is specified,
-        the network is inferred.
+      - Specifies the title of an existing network. Not setting the network title
+        will select the default network interface, which could have SSH already configured
+        .
       returned: success
       type: dict
     networkIP:

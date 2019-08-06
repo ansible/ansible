@@ -56,7 +56,7 @@
     that:
       - result.changed == true
 - name: verify that job was created
-  gcp_cloudscheduler_job_facts:
+  gcp_cloudscheduler_job_info:
       region: us-central1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -117,7 +117,7 @@
     that:
       - result.changed == true
 - name: verify that job was deleted
-  gcp_cloudscheduler_job_facts:
+  gcp_cloudscheduler_job_info:
       region: us-central1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

@@ -49,7 +49,7 @@
     that:
       - result.changed == true
 - name: verify that database was created
-  gcp_spanner_database_facts:
+  gcp_spanner_database_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -90,7 +90,7 @@
     that:
       - result.changed == true
 - name: verify that database was deleted
-  gcp_spanner_database_facts:
+  gcp_spanner_database_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
