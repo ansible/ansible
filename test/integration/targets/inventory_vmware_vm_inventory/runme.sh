@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Run locally using: test/runner/ansible-test integration -v inventory_vmware_vm_inventory --docker
 
 [[ -n "$DEBUG" || -n "$ANSIBLE_DEBUG" ]] && set -x
 
@@ -12,20 +13,51 @@ export VMWARE_SERVER="${VCENTER_HOSTNAME}"
 export VMWARE_USERNAME="${VCENTER_USERNAME}"
 export VMWARE_PASSWORD="${VCENTER_PASSWORD}"
 port=5000
-VMWARE_CONFIG=test-config.vmware.yaml
 inventory_cache="$(pwd)/inventory_cache"
+
+VMWARE_CONFIG_PREFIX="test-config.vmware"
+VMWARE_CONFIG_POSTFIX=".yaml"
+VMWARE_CONFIG="${VMWARE_CONFIG_PREFIX}${VMWARE_CONFIG_POSTFIX}"
+VMWARE_CONFIG_NS_instanceUUID="${VMWARE_CONFIG_PREFIX}001${VMWARE_CONFIG_POSTFIX}"
+VMWARE_CONFIG_NS_full_name="${VMWARE_CONFIG_PREFIX}002${VMWARE_CONFIG_POSTFIX}"
+
+echo "Installing TOML package"
+${PYTHON} -m pip install toml
 
 cat > "$VMWARE_CONFIG" <<VMWARE_YAML
 plugin: vmware_vm_inventory
 strict: False
 validate_certs: False
 with_tags: False
+naming_schema: name_and_smbios_uuid
+VMWARE_YAML
+
+cat > "$VMWARE_CONFIG_NS_instanceUUID" <<VMWARE_YAML
+plugin: vmware_vm_inventory
+strict: False
+validate_certs: False
+with_tags: False
+naming_schema: instanceUUID
+VMWARE_YAML
+
+cat > "$VMWARE_CONFIG_NS_full_name" <<VMWARE_YAML
+plugin: vmware_vm_inventory
+strict: False
+validate_certs: False
+with_tags: False
+naming_schema: full_name
 VMWARE_YAML
 
 cleanup() {
     echo "Cleanup: Starting"
     if [ -f "${VMWARE_CONFIG}" ]; then
         rm -f "${VMWARE_CONFIG}"
+    fi
+    if [ -f "${VMWARE_CONFIG_NS_instanceUUID}" ]; then
+        rm -f "${VMWARE_CONFIG_NS_instanceUUID}"
+    fi
+    if [ -f "${VMWARE_CONFIG_NS_full_name}" ]; then
+        rm -f "${VMWARE_CONFIG_NS_full_name}"
     fi
     if [ -d "${inventory_cache}" ]; then
         echo "Removing ${inventory_cache}"
@@ -63,18 +95,37 @@ curl "http://${VCENTER_HOSTNAME}:${port}/govc_find"
 echo "Creates folder structure to test inventory folder support"
 ansible-playbook -i 'localhost,' test_vmware_prep_folders.yml
 
-echo "Get inventory"
-ansible-inventory -i ${VMWARE_CONFIG} --list
+check_cache() {
+    ls -la $inventory_cache
+    echo "Check if cache is working for inventory plugin"
+    if [ ! -n "$(find "${inventory_cache}" -maxdepth 1 -name 'vmware_vm_inventory_*' -print -quit)" ]; then
+        echo "Cache directory not found. Please debug"
+        exit 1
+    fi
+    echo "Cache is working"
+}
 
-echo "Check if cache is working for inventory plugin"
-if [ ! -n "$(find "${inventory_cache}" -maxdepth 1 -name 'vmware_vm_inventory_*' -print -quit)" ]; then
-    echo "Cache directory not found. Please debug"
-    exit 1
-fi
-echo "Cache is working"
+clear_cache() {
+    echo "Removing ${inventory_cache}"
+    rm -rf "${inventory_cache}"
+}
 
-echo "Get inventory using YAML"
-ansible-inventory -i ${VMWARE_CONFIG} --list --yaml
+get_inventory() {
+    echo "Get inventory ${1}"
+    ansible-inventory -i ${1} --list
+    check_cache
+    clear_cache
+
+    echo "Get inventory using YAML"
+    ansible-inventory -i ${1} --list --yaml
+    check_cache
+    clear_cache
+
+    echo "Get inventory using TOML"
+    ansible-inventory -i ${1} --list --toml
+    check_cache
+    clear_cache
+}
 
 echo "Install TOML for --toml"
 ${PYTHON} -m pip freeze | grep toml > /dev/null 2>&1
@@ -86,13 +137,14 @@ else
     echo "TOML package already exists, skipping installation"
 fi
 
-echo "Get inventory using TOML"
-ansible-inventory -i ${VMWARE_CONFIG} --list --toml
-TOML_INVENTORY_LIST_RESULT=$?
-if [ $TOML_INVENTORY_LIST_RESULT -ne 0 ]; then
-    echo "Inventory plugin failed to list inventory host using --toml, please debug"
-    exit 1
-fi
+echo "Test inventury using name_and_smbios_uuid naming_schema"
+get_inventory ${VMWARE_CONFIG}
 
-echo "Test playbook with given inventory"
+echo "Test inventory using instanceUUID naming_schema"
+get_inventory ${VMWARE_CONFIG_NS_instanceUUID}
+
+echo "Test inventory using full_name naming_schema"
+get_inventory ${VMWARE_CONFIG_NS_full_name}
+
+echo "Test playbook with full_name naming_schema"
 ansible-playbook -i ${VMWARE_CONFIG} test_vmware_vm_inventory.yml --connection=local "$@"
