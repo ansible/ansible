@@ -1079,6 +1079,8 @@ def validate_args(module):
                         module.fail_json(msg='VLANs options can not be defined with bridge Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with bridge Type')
+                    if key in PHYSICAL:
+                        module.fail_json(msg='PHYSICALs options can not be defined with bridge Type')
                     if key in AUTH:
                         module.fail_json(msg='AUTHs options can not be defined with bridge Type')
         if module.params['type'] == 'bonds':
@@ -1094,6 +1096,8 @@ def validate_args(module):
                         module.fail_json(msg='VLANS options can not be defined with bonds Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with bonds Type')
+                    if key in PHYSICAL:
+                        module.fail_json(msg='PHYSICALs options can not be defined with bonds Type')
                     if key in AUTH:
                         module.fail_json(msg='AUTHs options can not be defined with bond Type')
                     # Verify bonds params dependences:
@@ -1143,6 +1147,10 @@ def validate_args(module):
                         module.fail_json(msg='WIFIs options can not be defined with tunnel Type')
                     if key in AUTH:
                         module.fail_json(msg='AUTHs options can not be defined with tunnel Type')
+                    if key in PHYSICAL:
+                        module.fail_json(msg='PHYSICALs options can not be defined with tunnel Type')
+                    if key == 'interfaces':
+                        module.fail_json(msg='interfaces can not be defined with tunnel Type')
                     # gretap and ip6gretap tunneling-mode only supported if renderer == networkd
                     # isatap tunneling-mode only supported if renderer == NetworkManager
                     if key == 'tunneling-mode':
@@ -1165,6 +1173,8 @@ def validate_args(module):
                         module.fail_json(msg='VLANS options can not be defined with ethernets Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with ethernets Type')
+                    if key == 'interfaces':
+                        module.fail_json(msg='interfaces can not be defined with ethernets Type')
         if module.params['type'] == 'vlans':
             if not module.params.get('id') or not module.params.get('link'):
                 module.fail_json(msg='vlans type require: [id, link]')
@@ -1178,8 +1188,12 @@ def validate_args(module):
                         module.fail_json(msg='TUNNELS options can not be defined with vlans Type')
                     if key in WIFIS:
                         module.fail_json(msg='WIFIs options can not be defined with vlans Type')
+                    if key in PHYSICAL:
+                        module.fail_json(msg='PHYSICALs options can not be defined with vlans Type')
                     if key in AUTH:
                         module.fail_json(msg='AUTHs options can not be defined with vlans Type')
+                    if key == 'interfaces':
+                        module.fail_json(msg='interfaces can not be defined with vlan Type')
         if module.params['type'] == 'wifis':
             if not module.params.get('access-points-ssid') or not module.params.get('access-points-password') or not module.params.get('access-points-mode'):
                 module.fail_json(msg='wifis type require: [access-points-ssid, access-points-password, access-points-mode]')
@@ -1193,10 +1207,12 @@ def validate_args(module):
                         module.fail_json(msg='TUNNELS options can not be defined with wifis Type')
                     if key in VLANS:
                         module.fail_json(msg='VLANS options can not be defined with wifis Type')
+                    if key == 'interfaces':
+                        module.fail_json(msg='interfaces can not be defined with wifis Type')
     else:
         for key in module.params:
             if module.params.get(key):
-                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + GENERAL + PHYSICAL + AUTH:
+                if key in BRIDGES + BONDS + TUNNELS + VLANS + WIFIS + DHCP_OVERRIDES + GENERAL + PHYSICAL + AUTH + ['interfaces']:
                     module.fail_json(msg="When state is absent, just use this params:[filename, type, interface-id]")
 
 
