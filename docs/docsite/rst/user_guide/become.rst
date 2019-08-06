@@ -693,6 +693,8 @@ Be aware of the following limitations with ``become`` on Windows:
   ``ansible_winrm_transport`` was either ``basic`` or ``credssp``. This
   restriction has been lifted since the 2.4 release of Ansible for all hosts
   except Windows Server 2008 (non R2 version).
+  
+* The Secondary Logon service ``seclogon`` must be running to use ``ansible_become_method: runas``
 
 .. seealso::
 
