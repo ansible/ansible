@@ -21,6 +21,7 @@ from lib.util import (
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 from lib.delegation import (
@@ -826,7 +827,8 @@ def complete_remote_shell(prefix, parsed_args, **_):
     images = sorted(get_remote_completion().keys())
 
     # 2008 doesn't support SSH so we do not add to the list of valid images
-    images.extend(["windows/%s" % i for i in read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True) if i != '2008'])
+    windows_completion_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'windows.txt')
+    images.extend(["windows/%s" % i for i in read_lines_without_comments(windows_completion_path, remove_blank_lines=True) if i != '2008'])
 
     return [i for i in images if i.startswith(prefix)]
 
@@ -850,7 +852,7 @@ def complete_windows(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    images = read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True)
+    images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'windows.txt'), remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
 
@@ -861,7 +863,7 @@ def complete_network_platform(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    images = read_lines_without_comments('test/runner/completion/network.txt', remove_blank_lines=True)
+    images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'network.txt'), remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 

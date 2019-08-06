@@ -42,11 +42,12 @@ from lib.util import (
     common_environment,
     pass_vars,
     display,
+    ANSIBLE_ROOT,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 from lib.util_common import (
     run_command,
-    ANSIBLE_ROOT,
 )
 
 from lib.docker_util import (
@@ -162,7 +163,7 @@ def delegate_tox(args, exclude, require, integration_targets):
     }
 
     for version in versions:
-        tox = ['tox', '-c', 'test/runner/tox.ini', '-e', 'py' + version.replace('.', '')]
+        tox = ['tox', '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'tox.ini'), '-e', 'py' + version.replace('.', '')]
 
         if args.tox_sitepackages:
             tox.append('--sitepackages')
@@ -304,7 +305,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 test_id = test_id.strip()
 
             # write temporary files to /root since /tmp isn't ready immediately on container start
-            docker_put(args, test_id, os.path.join(ANSIBLE_ROOT, 'test/runner/setup/docker.sh'), '/root/docker.sh')
+            docker_put(args, test_id, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'docker.sh'), '/root/docker.sh')
             docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
             docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
             docker_exec(args, test_id, ['mkdir', '/root/ansible'])
