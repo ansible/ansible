@@ -16,16 +16,16 @@ DOCUMENTATION = '''
 
 module: docker_compose
 
-short_description: Manage docker services and containers.
+short_description: Manage docker containers with Docker Compose.
 
 version_added: "2.1"
 
 author: "Chris Houseknecht (@chouseknecht)"
 
 description:
-  - Consumes docker compose to start, shutdown and scale services.
+  - Uses Docker Compose to start, shutdown and scale services.
   - Works with compose versions 1 and 2.
-  - Compose can be read from a docker-compose.yml (or .yaml) file or inline using the I(definition) option.
+  - Configuration can be read from a C(docker-compose.yml) or C(docker-compose.yaml) file or inline using the I(definition) option.
   - See the examples for more details.
   - Supports check mode.
   - This module was called I(docker_service) before Ansible 2.8. The usage did not change.
@@ -33,7 +33,7 @@ description:
 options:
   project_src:
     description:
-      - Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
+      - Path to a directory containing a C(docker-compose.yml) or C(docker-compose.yaml) file.
       - Mutually exclusive with I(definition).
       - Required when no I(definition) is provided.
     type: path
@@ -44,13 +44,13 @@ options:
     type: str
   files:
     description:
-      - List of file names relative to I(project_src). Overrides docker-compose.yml or docker-compose.yaml.
+      - List of Compose file names relative to I(project_src). Overrides C(docker-compose.yml) or C(docker-compose.yaml).
       - Files are loaded and merged in the order given.
     type: list
   state:
     description:
       - Desired state of the project.
-      - Specifying C(present) is the same as running C(docker-compose up) / C(docker-compose stop) (with I(stopped)) / C(docker-compose restart)
+      - Specifying C(present) is the same as running C(docker-compose up) resp. C(docker-compose stop) (with I(stopped)) resp. C(docker-compose restart)
         (with I(restarted)).
       - Specifying C(absent) is the same as running C(docker-compose down).
     type: str
@@ -60,8 +60,8 @@ options:
       - present
   services:
     description:
-      - When I(state) is C(present) run C(docker-compose up) / C(docker-compose stop) (with I(stopped)) / C(docker-compose restart) (with I(restarted)) on a
-        subset of services.
+      - When I(state) is C(present) run C(docker-compose up) resp. C(docker-compose stop) (with I(stopped)) resp. C(docker-compose restart) (with I(restarted))
+        on a subset of services.
     type: list
   scale:
     description:
@@ -75,7 +75,7 @@ options:
     default: yes
   definition:
     description:
-      - Provide docker-compose yaml describing one or more services, networks and volumes.
+      - Compose file describing one or more services, networks and volumes.
       - Mutually exclusive with I(project_src) and I(files).
     type: dict
   hostname_check:
