@@ -74,26 +74,18 @@ class ContentLayout(Layout):
                  root,  # type: str
                  paths,  # type: t.List[str]
                  plugin_paths,  # type: t.Dict[str, str]
-                 provider_paths,  # type: t.Dict[str, str]
-                 code_path=None,  # type: t.Optional[str]
                  collection=None,  # type: t.Optional[CollectionDetail]
-                 util_path=None,  # type: t.Optional[str]
                  unit_path=None,  # type: t.Optional[str]
                  unit_module_path=None,  # type: t.Optional[str]
                  unit_module_utils_path=None,  # type: t.Optional[str]
-                 integration_path=None,  # type: t.Optional[str]
                  ):  # type: (...) -> None
         super(ContentLayout, self).__init__(root, paths)
 
         self.plugin_paths = plugin_paths
-        self.provider_paths = provider_paths
-        self.code_path = code_path
         self.collection = collection
-        self.util_path = util_path
         self.unit_path = unit_path
         self.unit_module_path = unit_module_path
         self.unit_module_utils_path = unit_module_utils_path
-        self.integration_path = integration_path
         self.is_ansible = root == ANSIBLE_ROOT
 
     @property
@@ -148,6 +140,28 @@ class CollectionDetail:
 
 class LayoutProvider(PathProvider):
     """Base class for layout providers."""
+    PLUGIN_TYPES = (
+        'action',
+        'become',
+        'cache',
+        'callback',
+        'cliconf',
+        'connection',
+        'doc_fragments',
+        'filter',
+        'httpapi',
+        'inventory',
+        'lookup',
+        'module_utils',
+        'modules',
+        'netconf',
+        'shell',
+        'strategy',
+        'terminal',
+        'test',
+        'vars',
+    )
+
     @abc.abstractmethod
     def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
         """Create a layout using the given root and paths."""
