@@ -20,7 +20,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -33,6 +33,10 @@ short_description: Manage L3 interfaces on VyOS network devices
 description:
   - This module provides declarative management of L3 interfaces
     on VyOS network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: vyos_l3_interfaces
+  why: Updated modules released with more functionality.
 notes:
   - Tested against VYOS 1.1.7
 options:
