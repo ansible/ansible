@@ -73,6 +73,12 @@ def mocked_fetch_url(*args, **kwargs):
                 'url': 'https://api.meraki.com/api/v0/404',
                 }
         info['body'] = '404'
+    elif args[1] == 'https://api.meraki.com/api/v0/429':
+        info = {'status': 429,
+                'msg': '429 - Rate limit hit',
+                'url': 'https://api.meraki.com/api/v0/429',
+                }
+        info['body'] = '429'
     return (None, info)
 
 
@@ -86,6 +92,14 @@ def test_fetch_url_404(module, mocker):
     mocker.patch('ansible.module_utils.network.meraki.meraki.MerakiModule.fail_json', side_effect=mocked_fail_json)
     data = module.request(url, method='GET')
     assert module.status == 404
+
+
+def test_fetch_url_429(module, mocker):
+    url = '429'
+    mocker.patch('ansible.module_utils.network.meraki.meraki.fetch_url', side_effect=mocked_fetch_url)
+    mocker.patch('ansible.module_utils.network.meraki.meraki.MerakiModule.fail_json', side_effect=mocked_fail_json)
+    data = module.request(url, method='GET')
+    assert module.status == 429
 
 
 def test_define_protocol_https(module):
