@@ -1,0 +1,13 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      delete interfaces ethernet "{{ intf }}" address
+      delete interfaces ethernet "{{ intf }}" vif
+  loop:
+    - eth1
+    - eth2
+  loop_control:
+    loop_var: intf
