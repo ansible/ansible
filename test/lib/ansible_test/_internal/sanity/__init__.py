@@ -209,21 +209,17 @@ def command_sanity(args):
             raise ApplicationError(message)
 
 
-def collect_code_smell_tests():
-    """
-    :rtype: tuple[SanityFunc]
-    """
-    skip_file = os.path.join(SANITY_ROOT, 'code-smell', 'skip.txt')
-    ansible_only_file = os.path.join(SANITY_ROOT, 'code-smell', 'ansible-only.txt')
-
-    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
-
-    if not data_context().content.is_ansible:
-        skip_tests += read_lines_without_comments(ansible_only_file, remove_blank_lines=True)
-
+def collect_code_smell_tests():  # type: () -> t.Tuple[SanityFunc, ...]
+    """Return a tuple of available code smell sanity tests."""
     paths = glob.glob(os.path.join(SANITY_ROOT, 'code-smell', '*.py'))
-    paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
+    if data_context().content.is_ansible:
+        # include Ansible specific code-smell tests which are not configured to be skipped
+        ansible_code_smell_root = os.path.join(data_context().content.root, 'test', 'sanity', 'code-smell')
+        skip_tests = read_lines_without_comments(os.path.join(ansible_code_smell_root, 'skip.txt'), remove_blank_lines=True, optional=True)
+        paths.extend(path for path in glob.glob(os.path.join(ansible_code_smell_root, '*.py')) if os.path.basename(path) not in skip_tests)
+
+    paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p))
     tests = tuple(SanityCodeSmellTest(p) for p in paths)
 
     return tests
