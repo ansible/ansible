@@ -1175,6 +1175,11 @@ def validate_args(module):
                         module.fail_json(msg='WIFIs options can not be defined with ethernets Type')
                     if key == 'interfaces':
                         module.fail_json(msg='interfaces can not be defined with ethernets Type')
+                    if key in AUTH[2:]:
+                        if not module.params.get('auth-key-management') or not module.params.get('auth-password'):
+                            module.fail_json(msg='Define auth-key-management and auth-password to use {0}.'.format(key))
+                        if module.params.get('auth-key-management') != 'eap' and module.params.get('auth-key-management') != '802.1x':
+                            module.fail_json(msg='auth-key-management needs to be eap or 802.1x to use {0}.'.format(key))
         if module.params['type'] == 'vlans':
             if not module.params.get('id') or not module.params.get('link'):
                 module.fail_json(msg='vlans type require: [id, link]')
@@ -1209,6 +1214,11 @@ def validate_args(module):
                         module.fail_json(msg='VLANS options can not be defined with wifis Type')
                     if key == 'interfaces':
                         module.fail_json(msg='interfaces can not be defined with wifis Type')
+                    if key in AUTH[2:]:
+                        if not module.params.get('auth-key-management') or not module.params.get('auth-password'):
+                            module.fail_json(msg='Define auth-key-management and auth-password to use {0}.'.format(key))
+                        if module.params.get('auth-key-management') != 'eap' and module.params.get('auth-key-management') != '802.1x':
+                            module.fail_json(msg='auth-key-management needs to be eap or 802.1x to use {0}.'.format(key))
     else:
         for key in module.params:
             if module.params.get(key):
