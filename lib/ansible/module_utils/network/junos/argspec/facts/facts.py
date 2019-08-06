@@ -10,7 +10,8 @@ CHOICES = [
     'all',
     'interfaces',
     'lag_interfaces',
-    'l3_interfaces'
+    'l3_interfaces',
+    'vlans'
 ]
 
 
