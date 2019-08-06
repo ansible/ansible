@@ -51,6 +51,7 @@ options:
   value:
     description:
     - The value(s) to specify. Required when C(state=present).
+    - When c(type=PTR) only the partial part of the IP should be given.
     aliases: [ values ]
     type: list
   zone:
@@ -75,6 +76,13 @@ EXAMPLES = r'''
     type: "CNAME"
     value: "cgyl1404p.amer.example.com"
     zone: "amer.example.com"
+
+- name: PTR example
+  win_dns_record:
+    name: "db1"
+    type: "PTR"
+    value: "1.1.1"
+    zone: "10.in-addr.arpa"
 
 - name: Remove static record
   win_dns_record:
