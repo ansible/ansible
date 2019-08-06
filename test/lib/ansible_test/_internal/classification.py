@@ -742,6 +742,11 @@ class PathMapper:
                 'sanity': 'all',  # test infrastructure, run all sanity checks
             }
 
+        if path.startswith('test/lib/ansible_test/_data/sanity/'):
+            return {
+                'sanity': 'all',  # test infrastructure, run all sanity checks
+            }
+
         if path.startswith('test/lib/ansible_test/_data/requirements/'):
             if name in (
                     'integration',
