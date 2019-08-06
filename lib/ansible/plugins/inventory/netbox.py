@@ -316,7 +316,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def refresh_sites_lookup(self):
         url = self.api_endpoint + "/api/dcim/sites/?limit=0"
         sites = self.get_resource_list(api_url=url)
-        self.sites_lookup = dict((site["id"], site["name"], site["region"]["id") for site in sites)
+        self.sites_lookup = dict((site["id"], site["name"], site["region"]["id"]) for site in sites)
 
     def refresh_regions_lookup(self):
         url = self.api_endpoint + "/api/dcim/regions/?limit=0"
