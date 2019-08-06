@@ -1,1 +1,0 @@
-gcp_compute_autoscaler_info.py
