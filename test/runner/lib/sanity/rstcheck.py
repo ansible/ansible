@@ -11,6 +11,7 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -21,7 +22,6 @@ from lib.util import (
     SubprocessError,
     parse_to_list_of_dict,
     read_lines_without_comments,
-    ANSIBLE_ROOT,
     find_python,
 )
 
@@ -47,7 +47,7 @@ class RstcheckTest(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/rstcheck/ignore-substitutions.txt')
+        ignore_file = os.path.join(SANITY_ROOT, 'rstcheck', 'ignore-substitutions.txt')
         ignore_substitutions = sorted(set(read_lines_without_comments(ignore_file, remove_blank_lines=True)))
 
         settings = self.load_processor(args)

@@ -14,6 +14,7 @@ from lib.sanity import (
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -23,11 +24,11 @@ from lib.target import (
 from lib.util import (
     SubprocessError,
     find_executable,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 from lib.util_common import (
     run_command,
-    ANSIBLE_ROOT,
 )
 
 from lib.config import (
@@ -66,9 +67,9 @@ class PslintTest(SanityVersionNeutral):
         cmds = []
 
         if args.requirements:
-            cmds.append([os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/sanity.ps1')])
+            cmds.append([os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'sanity.ps1')])
 
-        cmds.append([os.path.join(ANSIBLE_ROOT, 'test/sanity/pslint/pslint.ps1')] + paths)
+        cmds.append([os.path.join(SANITY_ROOT, 'pslint', 'pslint.ps1')] + paths)
 
         stdout = ''
 

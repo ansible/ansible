@@ -72,6 +72,7 @@ from lib.env import (
 )
 
 COMMAND = 'sanity'
+SANITY_ROOT = os.path.join(ANSIBLE_ROOT, 'test', 'sanity')
 
 
 def command_sanity(args):
@@ -212,15 +213,15 @@ def collect_code_smell_tests():
     """
     :rtype: tuple[SanityFunc]
     """
-    skip_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/code-smell/skip.txt')
-    ansible_only_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/code-smell/ansible-only.txt')
+    skip_file = os.path.join(SANITY_ROOT, 'code-smell', 'skip.txt')
+    ansible_only_file = os.path.join(SANITY_ROOT, 'code-smell', 'ansible-only.txt')
 
     skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
 
     if not data_context().content.is_ansible:
         skip_tests += read_lines_without_comments(ansible_only_file, remove_blank_lines=True)
 
-    paths = glob.glob(os.path.join(ANSIBLE_ROOT, 'test/sanity/code-smell/*.py'))
+    paths = glob.glob(os.path.join(SANITY_ROOT, 'code-smell', '*.py'))
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
     tests = tuple(SanityCodeSmellTest(p) for p in paths)

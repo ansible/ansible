@@ -17,6 +17,7 @@ from lib.sanity import (
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -26,7 +27,6 @@ from lib.target import (
 from lib.util import (
     SubprocessError,
     read_lines_without_comments,
-    ANSIBLE_ROOT,
     find_executable,
 )
 
@@ -56,7 +56,7 @@ class ShellcheckTest(SanityVersionNeutral):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        exclude_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/shellcheck/exclude.txt')
+        exclude_file = os.path.join(SANITY_ROOT, 'shellcheck', 'exclude.txt')
         exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
 
         settings = self.load_processor(args)

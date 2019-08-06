@@ -61,6 +61,7 @@ from lib.util import (
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
     ANSIBLE_ROOT,
+    ANSIBLE_TEST_DATA_ROOT,
     get_available_python_versions,
     is_subdir,
 )
@@ -314,8 +315,8 @@ def generate_pip_install(pip, command, packages=None):
     :type packages: list[str] | None
     :rtype: list[str] | None
     """
-    constraints = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/constraints.txt')
-    requirements = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/%s.txt' % command)
+    constraints = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
+    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
 
     options = []
 
@@ -610,7 +611,7 @@ def command_windows_integration(args):
 
                 for remote in [r for r in remotes if r.version != '2008']:
                     manage = ManageWindowsCI(remote)
-                    manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
+                    manage.upload(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'windows-httptester.ps1'), watcher_path)
 
                     # We cannot pass an array of string with -File so we just use a delimiter for multiple values
                     script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\%s -Hosts \"%s\"" \
@@ -1371,7 +1372,7 @@ def command_units(args):
             '--color',
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
-            '-c', os.path.join(ANSIBLE_ROOT, 'test/runner/pytest.ini'),
+            '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
             '--junit-xml',
             'test/results/junit/python%s-units.xml' % version,
         ]
@@ -1863,7 +1864,7 @@ class EnvironmentDescription:
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
-        version_check = os.path.join(ANSIBLE_ROOT, 'test/runner/versions.py')
+        version_check = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'versions.py')
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
         program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])

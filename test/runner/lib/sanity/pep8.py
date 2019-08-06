@@ -11,6 +11,7 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -21,7 +22,6 @@ from lib.util import (
     SubprocessError,
     read_lines_without_comments,
     parse_to_list_of_dict,
-    ANSIBLE_ROOT,
     find_python,
     is_subdir,
 )
@@ -53,7 +53,7 @@ class Pep8Test(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        current_ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/pep8/current-ignore.txt')
+        current_ignore_file = os.path.join(SANITY_ROOT, 'pep8', 'current-ignore.txt')
         current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
 
         settings = self.load_processor(args)

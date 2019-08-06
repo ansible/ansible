@@ -14,6 +14,7 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -64,7 +65,7 @@ class PylintTest(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        plugin_dir = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/plugins')
+        plugin_dir = os.path.join(SANITY_ROOT, 'pylint', 'plugins')
         plugin_names = sorted(p[0] for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
 
@@ -185,13 +186,13 @@ class PylintTest(SanitySingleVersion):
             python,  # type: str
     ):  # type: (...) -> t.List[t.Dict[str, str]]
         """Run pylint using the config specified by the context on the specified paths."""
-        rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
+        rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0])
 
         if not os.path.exists(rcfile):
             if data_context().content.collection:
-                rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/collection')
+                rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', 'collection')
             else:
-                rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/default')
+                rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', 'default')
 
         parser = ConfigParser()
         parser.read(rcfile)

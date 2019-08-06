@@ -12,6 +12,7 @@ from lib.sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SANITY_ROOT,
 )
 
 from lib.target import (
@@ -21,7 +22,6 @@ from lib.target import (
 from lib.util import (
     SubprocessError,
     display,
-    ANSIBLE_ROOT,
     find_python,
 )
 
@@ -75,7 +75,7 @@ class ValidateModulesTest(SanitySingleVersion):
 
         cmd = [
             find_python(python_version),
-            os.path.join(ANSIBLE_ROOT, 'test/sanity/validate-modules/validate-modules'),
+            os.path.join(SANITY_ROOT, 'validate-modules', 'validate-modules'),
             '--format', 'json',
             '--arg-spec',
         ] + paths
