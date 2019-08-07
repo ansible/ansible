@@ -48,15 +48,10 @@ The ``galaxy.yml`` file must contain the following keys in valid YAML:
         {%- endif %}
 
 
-      - {% if entry.description is string -%}
-@{ entry.description | replace ('\n', '\n\n        ') | trim | rst_ify }@
-
-        {% else -%}
-          {%- for desc in entry.description -%}
-@{ desc | replace('\n', '\n\n') | trim | rst_ify }@
+      - {% for desc in entry.description -%}
+        @{ desc | trim | rst_ify }@
 
         {% endfor -%}
-        {%- endif -%}
 {%- endfor %}
 
 

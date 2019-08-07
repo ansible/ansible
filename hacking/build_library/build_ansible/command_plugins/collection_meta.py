@@ -12,6 +12,7 @@ import pathlib
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
 
 # Pylint doesn't understand Python3 namespace modules.
@@ -22,6 +23,13 @@ from ..jinja2.filters import documented_type, rst_ify  # pylint: disable=relativ
 
 DEFAULT_TEMPLATE_FILE = 'collections_galaxy_meta.rst.j2'
 DEFAULT_TEMPLATE_DIR = pathlib.Path(__file__).parents[4] / 'docs/templates'
+
+
+def normalize_options(options):
+    """Normalize the options to make for easy templating"""
+    for opt in options:
+        if isinstance(opt['description'], string_types):
+            opt['description'] = [opt['description']]
 
 
 class DocumentCollectionMeta(Command):
@@ -50,6 +58,8 @@ class DocumentCollectionMeta(Command):
 
         with open(args.collection_defs) as f:
             options = yaml.safe_load(f)
+
+        normalize_options(options)
 
         env = Environment(loader=FileSystemLoader(template_dir),
                           variable_start_string="@{",
