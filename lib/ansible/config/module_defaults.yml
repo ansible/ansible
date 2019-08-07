@@ -58,7 +58,7 @@ groupings:
   - aws
   aws_s3:
   - aws
-  aws_s3_bucket_facts:
+  aws_s3_bucket_info:
   - aws
   aws_s3_cors:
   - aws
