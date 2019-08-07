@@ -79,16 +79,6 @@ class TestICXConfigModule(TestICXModule):
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.conn.edit_config.call_count, 0)
 
-    def test_icx_config_save(self):
-        self.run_commands.return_value = "hostname foo"
-        set_module_args(dict(save=True))
-        self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 2)
-        self.assertEqual(self.get_config.call_count, 0)
-        self.assertEqual(self.conn.edit_config.call_count, 0)
-        args = self.run_commands.call_args[0][1]
-        self.assertIn('write memory', args)
-
     def test_icx_config_lines_wo_parents(self):
         lines = ['hostname foo']
         set_module_args(dict(lines=lines))

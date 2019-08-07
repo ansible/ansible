@@ -94,17 +94,6 @@ options:
         configuration action.
     type: str
     default: "@"
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in Ansible 2.9.
-    type: bool
-    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -134,15 +123,6 @@ options:
         config for comparison.
     type: str
     aliases: ['config']
-  save:
-    description:
-      - The C(save) argument instructs the module to save the running-
-        config to the configuration at the conclusion of the module
-        running.  If check mode is specified, this argument is ignored.
-      - This option is deprecated as of Ansible 2.4 and will be removed
-        in Ansible 2.8, use C(save_when) instead.
-    type: bool
-    default: 'no'
   save_when:
     description:
       - When changes are made to the device running-configuration, the
@@ -365,15 +345,10 @@ def main():
         diff_against=dict(choices=['startup', 'intended', 'running']),
         diff_ignore_lines=dict(type='list'),
 
-        save=dict(default=False, type='bool'),
-
-        # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     mutually_exclusive = [('lines', 'src'),
-                          ('parents', 'src'),
-                          ('save', 'save_when')]
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
@@ -445,7 +420,7 @@ def main():
     running_config = module.params['running_config']
     startup_config = None
 
-    if module.params['save_when'] == 'always' or module.params['save']:
+    if module.params['save_when'] == 'always':
         save_config(module, result)
     elif module.params['save_when'] == 'modified':
         output = run_commands(module, ['show running-config', 'show configuration'])
