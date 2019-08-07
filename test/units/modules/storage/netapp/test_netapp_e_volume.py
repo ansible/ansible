@@ -238,16 +238,14 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
             self._set_args(arg_set)
             volume_object = NetAppESeriesVolume()
 
-            size_unit_multiplier = NetAppESeriesModule.SIZE_UNIT_MAP[arg_set["size_unit"]]
-            self.assertEqual(volume_object.size_b, arg_set["size"] * size_unit_multiplier)
-            self.assertEqual(volume_object.thin_volume_repo_size_b,
-                             arg_set["thin_volume_repo_size"] * size_unit_multiplier)
+            self.assertEqual(volume_object.size_b, volume_object.convert_to_aligned_bytes(arg_set["size"]))
+            self.assertEqual(volume_object.thin_volume_repo_size_b, volume_object.convert_to_aligned_bytes(arg_set["thin_volume_repo_size"]))
             self.assertEqual(volume_object.thin_volume_expansion_policy, "automatic")
             if "thin_volume_max_repo_size" not in arg_set.keys():
-                self.assertEqual(volume_object.thin_volume_max_repo_size_b, arg_set["size"] * size_unit_multiplier)
+                self.assertEqual(volume_object.thin_volume_max_repo_size_b, volume_object.convert_to_aligned_bytes(arg_set["size"]))
             else:
                 self.assertEqual(volume_object.thin_volume_max_repo_size_b,
-                                 arg_set["thin_volume_max_repo_size"] * size_unit_multiplier)
+                                 volume_object.convert_to_aligned_bytes(arg_set["thin_volume_max_repo_size"]))
 
         # validate metadata form
         self._set_args(

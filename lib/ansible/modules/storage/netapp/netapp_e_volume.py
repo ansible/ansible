@@ -316,7 +316,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.size_unit = args["size_unit"]
         self.segment_size_kb = args["segment_size_kb"]
         if args["size"]:
-            self.size_b = int(args["size"] * self.SIZE_UNIT_MAP[self.size_unit])
+            self.size_b = self.convert_to_aligned_bytes(args["size"])
 
         self.owning_controller_id = None
         if args["owning_controller"]:
@@ -336,10 +336,9 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.thin_volume_max_repo_size_b = None
 
         if args["thin_volume_repo_size"]:
-            self.thin_volume_repo_size_b = args["thin_volume_repo_size"] * self.SIZE_UNIT_MAP[self.size_unit]
+            self.thin_volume_repo_size_b = self.convert_to_aligned_bytes(args["thin_volume_repo_size"])
         if args["thin_volume_max_repo_size"]:
-            self.thin_volume_max_repo_size_b = int(args["thin_volume_max_repo_size"] *
-                                                   self.SIZE_UNIT_MAP[self.size_unit])
+            self.thin_volume_max_repo_size_b = self.convert_to_aligned_bytes(args["thin_volume_max_repo_size"])
 
         self.workload_name = args["workload_name"]
         self.metadata = args["metadata"]
@@ -381,6 +380,13 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.volume_detail = None
         self.pool_detail = None
         self.workload_id = None
+
+    def convert_to_aligned_bytes(self, size):
+        """Convert size to the truncated byte size that aligns on the segment size."""
+        size_bytes = int(size * self.SIZE_UNIT_MAP[self.size_unit])
+        segment_size_bytes = int(self.segment_size_kb * self.SIZE_UNIT_MAP["kb"])
+        segment_count = int(size_bytes / segment_size_bytes)
+        return segment_count * segment_size_bytes
 
     def get_volume(self):
         """Retrieve volume details from storage array."""
