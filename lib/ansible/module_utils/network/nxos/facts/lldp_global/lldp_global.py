@@ -9,10 +9,11 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
-import re
-import q
-from copy import deepcopy
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
+import re
+from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.argspec.lldp_global.lldp_global import Lldp_globalArgs
 
@@ -46,7 +47,7 @@ class Lldp_globalFacts(object):
 
         if not data:
             data = connection.get('show running-config | include lldp')
-        
+
         objs = {}
         objs = self.render_config(self.generated_spec, data)
 
@@ -59,7 +60,6 @@ class Lldp_globalFacts(object):
         else:
             facts['lldp_global'] = {}
 
-        q(facts)
         ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
 
@@ -74,9 +74,8 @@ class Lldp_globalFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
- 
-        data = re.split('\n',conf)
-        if len(data)>1:
+        data = re.split('\n', conf)
+        if len(data) > 1:
             for key in data:
                 words = key.split()
                 if len(words) > 0 and len(words) < 4:
@@ -86,10 +85,9 @@ class Lldp_globalFacts(object):
                         config['reinit'] = words[2]
                     elif 'timer' in words[1]:
                         config['timer'] = words[2]
-                    elif 'portid-subtype' in words[1]:      
+                    elif 'portid-subtype' in words[1]:
                         config['port_id'] = words[2]
-               
-                elif len(words) > 3:    
+                elif len(words) > 3:
                     if 'dcbxp' in words[3]:
                         config['tlv_select']['dcbxp'] = False
                     elif 'management-address' in words[3]:
@@ -111,6 +109,4 @@ class Lldp_globalFacts(object):
                             config['tlv_select']['system']['capabilities'] = False
                         elif 'description' in words[3]:
                             config['tlv_select']['system']['description'] = False
-
-        return utils.remove_empties(config) 
-
+        return utils.remove_empties(config)

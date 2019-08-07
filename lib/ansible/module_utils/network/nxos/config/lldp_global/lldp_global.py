@@ -10,9 +10,13 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff, dict_merge
 from ansible.module_utils.network.nxos.facts.facts import Facts
+
 
 class Lldp_global(ConfigBase):
     """
@@ -26,7 +30,7 @@ class Lldp_global(ConfigBase):
     gather_network_resources = [
         'lldp_global',
     ]
-    
+
     def __init__(self, module):
         super(Lldp_global, self).__init__(module)
 
@@ -79,7 +83,7 @@ class Lldp_global(ConfigBase):
         """
         want = self._module.params['config']
         have = existing_lldp_global_facts
-        if len(have) is 0:
+        if len(have) == 0:
             have = {}
         resp = self.set_state(remove_empties(want), have)
         return resp.split('\n')[:-1]
@@ -97,12 +101,12 @@ class Lldp_global(ConfigBase):
         if state == 'deleted':
             commands = self._state_deleted(have)
         elif state == 'merged':
-            commands = self._state_merged(want,have)
+            commands = self._state_merged(want, have)
         elif state == 'replaced':
-            commands = self._state_replaced(want,have)
+            commands = self._state_replaced(want, have)
         return commands
 
-    def _state_replaced(self,want,have):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -110,13 +114,12 @@ class Lldp_global(ConfigBase):
                   to the desired configuration
         """
         commands = ''
-        diff = dict_diff(have,want) #diff will contain unique and new values in want
-        wantk = want.keys() #find keys in want to ignore them for defaults
+        diff = dict_diff(have, want)  # diff will contain unique and new values in want
+        wantk = want.keys()  # find keys in want to ignore them for defaults
         havek = have.keys()
-        wantk = self.get_nested_keys(want,wantk)
-        havek = self.get_nested_keys(have,havek)
-        include_params = list (set(havek) - set(wantk)) #keys in have and not in want; they need to be defaulted 
-
+        wantk = self.get_nested_keys(want, wantk)
+        havek = self.get_nested_keys(have, havek)
+        include_params = list(set(havek) - set(wantk))  # keys in have and not in want; they need to be defaulted
         for param in include_params:
             commands += 'lldp '
             if 'holdtime' in param:
@@ -127,35 +130,33 @@ class Lldp_global(ConfigBase):
                 commands += 'reinit 2\n'
             elif 'port_id' in param:
                 commands += 'portid-subtype 0\n'
-            else:   
-                commands += param +'\n'                
-        
+            else:
+                commands += param + '\n'
         commands += self.set_commands(diff)
         return commands
 
-    def get_nested_keys(self,dict_param,keys):
+    def get_nested_keys(self, dict_param, keys):
         """
-        Returns names of keys nested inside tlv_select 
+        Returns names of keys nested inside tlv_select
         """
-    
-        if 'tlv_select' in keys: 
+        if 'tlv_select' in keys:
             keys.remove('tlv_select')
             for key in dict_param['tlv_select'].keys():
-                if not isinstance(dict_param['tlv_select'][key],dict):
+                if not isinstance(dict_param['tlv_select'][key], dict):
                     x = 'tlv_select ' + key
-                    x = x.replace('_','-')
-                    keys.append(x) #ex: tlv-select dcbxp, tlv-select power-management
+                    x = x.replace('_', '-')
+                    keys.append(x)  # tlv-select dcbxp, tlv-select power-management
                 else:
                     for k1 in dict_param['tlv_select'][key].keys():
-                        key = key.replace('_','-')
-                        if k1=='v4' or k1=='v6':
+                        key = key.replace('_', '-')
+                        if k1 == 'v4' or k1 == 'v6':
                             x = 'tlv-select ' + key + ' ' + k1
                         else:
-                            x = 'tlv-select '+key+ '-' + k1
+                            x = 'tlv-select ' + key + '-' + k1
                         keys.append(x)
         return keys
 
-    def _state_merged(self,want,have):
+    def _state_merged(self, want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -163,11 +164,11 @@ class Lldp_global(ConfigBase):
                   the current configuration
         """
         commands = ''
-        diff = dict_diff(have,want)        
+        diff = dict_diff(have, want)
         commands += self.set_commands(diff)
         return commands
 
-    def _state_deleted(self,have):
+    def _state_deleted(self, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -175,7 +176,7 @@ class Lldp_global(ConfigBase):
                   of the provided objects
         """
         commands = ''
-        for key,val in have.items():
+        for key, val in have.items():
             if 'holdtime' in key:
                 if val != 120:
                     commands += 'lldp holdtime 120\n'
@@ -189,17 +190,16 @@ class Lldp_global(ConfigBase):
                 if val != 0:
                     commands += 'lldp portid-subtype 0\n'
             elif 'tlv_select' in key:
-                    commands += self.process_nested_dict(val)
-            
-        return commands
-    
-    def set_commands(self,diff):
-        commands = '' 
-        for key,val in diff.items():
-            commands += (self.add_commands(key,val))
+                commands += self.process_nested_dict(val)
         return commands
 
-    def add_commands(self,key,val):
+    def set_commands(self, diff):
+        commands = ''
+        for key, val in diff.items():
+            commands += (self.add_commands(key, val))
+        return commands
+
+    def add_commands(self, key, val):
         command = ''
         if 'port_id' in key:
             command = 'lldp portid-subtype ' + str(val) + '\n'
@@ -207,15 +207,15 @@ class Lldp_global(ConfigBase):
             command = self.process_nested_dict(val)
         else:
             if val:
-                command = 'lldp ' + key + ' ' + str(val)+'\n'
+                command = 'lldp ' + key + ' ' + str(val) + '\n'
         return command
 
-    def process_nested_dict(self,val):
+    def process_nested_dict(self, val):
         nested_commands = ''
         state = self._module.params['state']
-        for k,v in val.items():
-            if isinstance(v,dict):
-                for k1,v1 in v.items():
+        for k, v in val.items():
+            if isinstance(v, dict):
+                for k1, v1 in v.items():
                     com1 = 'lldp tlv-select '
                     com2 = ''
                     if 'system' in k:
@@ -224,13 +224,11 @@ class Lldp_global(ConfigBase):
                         com2 = 'management-address ' + k1
                     elif 'port' in k:
                         com2 = 'port-' + k1
-
                     com1 += com2 + '\n'
-                
-                    if state!='deleted':
+
+                    if state != 'deleted':
                         if not v1:
                             com1 = 'no ' + com1
-                
                     nested_commands += com1
             else:
                 com1 = 'lldp tlv-select '
@@ -238,10 +236,9 @@ class Lldp_global(ConfigBase):
                     com1 += 'power-management'
                 else:
                     com1 += k
-                
-                if state!='deleted': #deleted state will not have 'no lldp ' command
+
+                if state != 'deleted':  # deleted state will not have 'no lldp ' command
                     if not v:
                         com1 = 'no ' + com1
-                
                 nested_commands += com1 + '\n'
         return nested_commands

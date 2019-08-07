@@ -25,6 +25,8 @@
 """
 The arg spec for the nxos_lldp_global module
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 class Lldp_globalArgs(object):  # pylint: disable=R0903
@@ -35,23 +37,23 @@ class Lldp_globalArgs(object):  # pylint: disable=R0903
         pass
 
     argument_spec = {'config': {'options': {'holdtime': {'type': 'int'},
-                        'port_id': {'type': 'int'},
-                        'reinit': {'type': 'int'},
-                        'timer': {'type': 'int'},
-                        'tlv_select': {'options': {'dcbxp': {'type': 'bool'},
-                                                   'management_address': {'options': {'v4': {'type': 'bool'},
-                                                                                      'v6': {'type': 'bool'}},
-                                                                          'type': 'dict'},
-                                                   'port': {'options': {'description': {'type': 'bool'},
-                                                                        'vlan': {'type': 'bool'}},
-                                                            'type': 'dict'},
-                                                   'power_management': {'type': 'bool'},
-                                                   'system': {'options': {'capabilities': {'type': 'bool'},
-                                                                          'description': {'type': 'bool'},
-                                                                          'name': {'type': 'bool'}},
-                                                              'type': 'dict'}},
-                                       'type': 'dict'}},
-            'type': 'dict'},
- 'state': {'choices': ['merged', 'replaced', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+                                            'port_id': {'type': 'int'},
+                                            'reinit': {'type': 'int'},
+                                            'timer': {'type': 'int'},
+                                            'tlv_select': {'options': {'dcbxp': {'type': 'bool'},
+                                                                       'management_address': {'options': {'v4': {'type': 'bool'},
+                                                                                                          'v6': {'type': 'bool'}},
+                                                                                              'type': 'dict'},
+                                                                       'port': {'options': {'description': {'type': 'bool'},
+                                                                                            'vlan': {'type': 'bool'}},
+                                                                                'type': 'dict'},
+                                                                       'power_management': {'type': 'bool'},
+                                                                       'system': {'options': {'capabilities': {'type': 'bool'},
+                                                                                              'description': {'type': 'bool'},
+                                                                                              'name': {'type': 'bool'}},
+                                                                                  'type': 'dict'}},
+                                                           'type': 'dict'}},
+                                'type': 'dict'},
+                     'state': {'choices': ['merged', 'replaced', 'deleted'],
+                               'default': 'merged',
+                               'type': 'str'}}

@@ -25,15 +25,12 @@
 """
 The module file for nxos_lldp_global
 """
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -54,12 +51,12 @@ options:
         description:
           - Amount of time the receiving device should hold the information (in seconds)
         type: int
-      port_id: 
+      port_id:
         description:
           - This attribute defines if the interface names should be advertised in the long(0) or short(1) form.
         type: int
         choice: [0,1]
-      reinit: 
+      reinit:
         description:
           - Amount of time to delay the intialization of LLDP on any interface (in seconds)
         type: int
@@ -71,13 +68,13 @@ options:
         description:
           - This attribute can be used to specify the TLVs that need to be sent and received in the LLDP packets. By default, all TLVs are advertised
         type: dict
-        suboptions: 
+        suboptions:
           dcbxp:
-            description: 
+            description:
               - Used to specify the Data Center Bridging Exchange Protocol TLV
             type: bool
-          management_address: 
-            description: 
+          management_address:
+            description:
               - Used to specify the management address in TLV messages
             type: dict
             suboptions:
@@ -93,7 +90,7 @@ options:
             type: dict
             suboptions:
               description:
-                description: 
+                description:
                   - Used to specify the port description TLV
                 type: bool
               vlan:
@@ -114,7 +111,7 @@ options:
                   - Used to specify the system capabilities TLV
                 type: bool
               description:
-                description: 
+                description:
                   - Used to specify the system description TLV
                 type: bool
               name:
@@ -122,10 +119,10 @@ options:
                   - Used to specify the system name TLV
                 type: bool
   state:
-    description: 
+    description:
       - The state the configuration should be left in
     type: str
-    choices:  
+    choices:
       - merged
       - replaced
       - deleted
@@ -137,7 +134,7 @@ EXAMPLES = """
 # -------------
 #
 # user(config)# show running-config | include lldp
-# feature lldp 
+# feature lldp
 
 - name: Merge provided configuration with device configuration
   nxos_lldp_global:
@@ -152,7 +149,7 @@ EXAMPLES = """
 # user(config)# show running-config | include lldp
 # feature lldp
 # lldp timer 35
-# lldp holdtime 100 
+# lldp holdtime 100
 
 
 # Using replaced
@@ -167,9 +164,9 @@ EXAMPLES = """
 
 - name: Replace device configuration of specific LLDP attributes with provided configuration
   nxos_lldp_global:
-    config: 
+    config:
       timer: 40
-      tlv_select: 
+      tlv_select:
         system:
           description: true
           name: false
@@ -201,9 +198,9 @@ EXAMPLES = """
 
 # After state:
 # ------------
-# 
+#
 # user(config)# show running-config | include lldp
-# feature lldp 
+# feature lldp
 
 
 """
