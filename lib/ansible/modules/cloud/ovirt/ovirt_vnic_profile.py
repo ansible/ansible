@@ -67,15 +67,8 @@ options:
         description:
             - "Enables passthrough to an SR-IOV-enabled host NIC."
             - "When enabled C(qos) and  C(network_filter) are automatically set to None and C(port_mirroring) to False."
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
             - "When enabled and C(migratable) not specified then C(migratable) is enabled."
             - "Port mirroring, QoS and network filters are not supported on passthrough profiles."
->>>>>>> 279617a94e... add docs (#60192)
-=======
-            - "Port mirroring, QoS and network filters are not supported on passthrough profiles."
->>>>>>> fb87bafaae... ovirt vnic network filter fix (#59727)
         choices: ['disabled', 'enabled']
     migratable:
         description:
@@ -241,18 +234,10 @@ class EntityVnicPorfileModule(BaseModule):
         pass_through = getattr(entity.pass_through.mode, 'name', None)
         return (
             check_custom_properties() and
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
             # The reason why we can't use equal method, is we get None from _get_network_filter_id or _get_qos_id method, when passing empty string.
             # And when first param of equal method is None it retruns true.
             self._get_network_filter_id() == getattr(entity.network_filter, 'id', None) and
             self._get_qos_id() == getattr(entity.qos, 'id', None) and
->>>>>>> 279617a94e... add docs (#60192)
-=======
-            self._get_network_filter_id() == getattr(entity.network_filter, 'id', None) and
-            self._get_qos_id() == getattr(entity.qos, 'id', None) and
->>>>>>> fb87bafaae... ovirt vnic network filter fix (#59727)
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
             equal(self.param('pass_through'), pass_through.lower() if pass_through else None) and
             equal(self.param('description'), entity.description) and
