@@ -1469,11 +1469,11 @@ files:
       - mattclay
     keywords:
       - validate-modules
-  test/lib/ansible_test/_data/sanity/validate-modules/schema.py:
+  test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/schema.py:
     notified:
       - gundalow
       - sivel
-  test/lib/ansible_test/_data/sanity/validate-modules/main.py:
+  test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/main.py:
     notified:
       - gundalow
       - sivel
