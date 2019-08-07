@@ -76,11 +76,17 @@ class AnsibleUnsafeBytes(binary_type, AnsibleUnsafe):
 
 class UnsafeProxy(object):
     def __new__(cls, obj, *args, **kwargs):
+        if isinstance(obj, AnsibleUnsafe):
+            # Already marked unsafe
+            return obj
+
         # In our usage we should only receive unicode strings.
         # This conditional and conversion exists to sanity check the values
         # we're given but we may want to take it out for testing and sanitize
         # our input instead.
-        if isinstance(obj, string_types) and not isinstance(obj, AnsibleUnsafeBytes):
+        # Note that this does the wrong thing if we're *intentionall* passing a byte string to this
+        # function.
+        if isinstance(obj, string_types):
             obj = AnsibleUnsafeText(to_text(obj, errors='surrogate_or_strict'))
         return obj
 
