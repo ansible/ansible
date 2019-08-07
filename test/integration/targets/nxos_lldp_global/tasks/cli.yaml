@@ -2,7 +2,7 @@
 - name: collect cli test cases
   find:
     paths: "{{ role_path }}/tests/cli"
-    patterns: "{{ testcase }}.yaml"
+    patterns: "{{ testcase }}.yml"
   connection: local
   register: test_cases
 

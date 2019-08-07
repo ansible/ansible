@@ -8,6 +8,16 @@
       state: enabled
 
   - block:
+    - name: Setup
+      cli_config:
+        config: |
+          lldp holdtime 125
+          lldp timer 32
+          no lldp tlv-select dcbxp 
+          lldp tlv-select system-name
+          no lldp tlv-select system-description
+          lldp tlv-select power-management
+
     - name: Gather lldp_global facts
       nxos_facts: &facts
         gather_subset:
@@ -15,20 +25,7 @@
           - '!min'
         gather_network_resources: lldp_global
 
-    - name: merged
-      nxos_lldp_global: 
-        config:
-          holdtime: 125
-          timer: 32
-          tlv_select:
-            dcbxp: false
-            system:
-              name: true
-              description: false
-            power_management: true
-          state: merged
-
-    - name: deleted
+    - name: Deleted
       nxos_lldp_global: &deleted
         state: deleted
       register: result
@@ -40,13 +37,15 @@
           - "'lldp timer 30' in result.commands"
           - "'lldp tlv-select dcbxp' in result.commands"
           - "'lldp tlv-select system-description' in result.commands"
+          - "result.changed == true "
+          - "result.after | length == 0"
 
     - name: Gather lldp_global post facts
       nxos_facts: *facts
 
     - assert:
         that:
-          - "result.after | length == 0"
+          - "ansible_facts.network_resources.lldp_global == {} "
 
     - name: Idempotence - deleted
       nxos_lldp_global: *deleted
@@ -56,6 +55,7 @@
         that:
           - "result.changed == false"
           - "result.commands|length == 0"
+
     always:
     - name: teardown
       nxos_feature:

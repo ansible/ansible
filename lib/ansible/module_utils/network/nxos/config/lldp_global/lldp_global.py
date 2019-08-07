@@ -62,9 +62,9 @@ class Lldp_global(ConfigBase):
 
         changed_lldp_global_facts = self.get_lldp_global_facts()
 
-        result['before'] = existing_lldp_global_facts
+        result['before'] = dict(existing_lldp_global_facts)
         if result['changed']:
-            result['after'] = changed_lldp_global_facts
+            result['after'] = dict(changed_lldp_global_facts)
 
         result['warnings'] = warnings
         return result

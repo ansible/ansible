@@ -8,25 +8,14 @@
       state: enabled
 
   - block:
-    - name: Gather lldp_global facts
-      nxos_facts: &facts
-        gather_subset:
-          - '!all'
-          - '!min'
-        gather_network_resources: lldp_global
-
-    - name: Merged
-      nxos_lldp_global: &merged
-        config:
-          holdtime: 125
-          port_id: 1
-          tlv_select:
-            system: 
-              name: true
-            port:
-              vlan: false
-            power_management: false
-        state: merged
+    - name: Setup
+      cli_config:
+        config: |
+          lldp holdtime 125
+          lldp portid-subtype 1
+          lldp tlv-select system-name 
+          no lldp tlv-select port-vlan 
+          no lldp tlv-select power-management
 
     - name: Replaced
       nxos_lldp_global: &replaced
@@ -35,8 +24,8 @@
           timer: 35
           tlv_select:
             system: 
-              name: false
-              description: false
+               name: false
+               description: false
             port:
               vlan: false
             dcbxp: false
@@ -45,7 +34,6 @@
 
     - assert:
         that:
-          - "ansible_facts.network_resources.lldp_global == result.before"
           - "result.changed == true"
           - "'lldp timer 35' in result.commands"
           - "'lldp tlv-select power-management' in result.commands"
@@ -53,14 +41,18 @@
           - "'no lldp tlv-select system-name' in result.commands"
           - "'no lldp tlv-select system-description' in result.commands"
           - "'no lldp tlv-select dcbxp' in result.commands"
-          - "result.commands|length == 7"
+          - "result.commands|length == 6"
 
     - name: Gather lldp_global post facts
-      nxos_facts: *facts
+      nxos_facts: 
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: lldp_global
 
     - assert: 
         that:
-          - "ansible_facts.network_resources.lldp_global == results.after"
+          - "ansible_facts.network_resources.lldp_global == result.after"
 
     - name: Idempotence - Replaced
       nxos_lldp_global: *replaced

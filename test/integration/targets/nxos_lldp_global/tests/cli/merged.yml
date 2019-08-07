@@ -40,7 +40,7 @@
           - "ansible_facts.network_resources.lldp_global == result.after"
  
     - name: Idempotence - Merged
-      nxos_lldp_global: &merged
+      nxos_lldp_global: *merged
       register: result
 
     - assert:
@@ -52,5 +52,4 @@
     - name: teardown
       nxos_feature: 
         feature: lldp
-        state: disbaled
-
+        state: disabled

@@ -10,6 +10,7 @@ for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
 import re
+import q
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
@@ -46,7 +47,7 @@ class Lldp_globalFacts(object):
         if not data:
             data = connection.get('show running-config | include lldp')
         
-        objs = []
+        objs = {}
         objs = self.render_config(self.generated_spec, data)
 
         ansible_facts['ansible_network_resources'].pop('lldp_global', None)
@@ -54,8 +55,12 @@ class Lldp_globalFacts(object):
         if objs:
             params = utils.validate_config(self.argument_spec, {'config': objs})
             facts['lldp_global'] = params['config']
+            facts = utils.remove_empties(facts)
+        else:
+            facts['lldp_global'] = {}
 
-        ansible_facts['ansible_network_resources'].update(utils.remove_empties(facts))
+        q(facts)
+        ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
 
     def render_config(self, spec, conf):
