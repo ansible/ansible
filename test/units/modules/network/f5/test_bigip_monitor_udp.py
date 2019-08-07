@@ -305,7 +305,7 @@ class TestManager(unittest.TestCase):
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
 
-        assert "must be less than" in str(ex)
+        assert "must be less than" in str(ex.value)
 
     def test_update_interval_larger_than_new_timeout(self, *args):
         set_module_args(dict(
@@ -335,7 +335,7 @@ class TestManager(unittest.TestCase):
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
 
-        assert "must be less than" in str(ex)
+        assert "must be less than" in str(ex.value)
 
     def test_update_send(self, *args):
         set_module_args(dict(
