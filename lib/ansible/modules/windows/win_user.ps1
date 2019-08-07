@@ -73,14 +73,19 @@ namespace Ansible
     $env:TMP = $original_tmp
 
     $handle = [IntPtr]::Zero
-    $logon_res = [Ansible.WinUserPInvoke]::LogonUser($Username, $null, $Password,
-        $LOGON32_LOGON_NETWORK, $LOGON32_PROVIDER_DEFAULT, [Ref]$handle)
+    $logon_res = [Ansible.WinUserPInvoke]::LogonUser(
+        $Username,
+        $null,
+        $Password,
+        $LOGON32_LOGON_NETWORK,
+        $LOGON32_PROVIDER_DEFAULT,
+        [Ref]$handle
+    ); $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
 
     if ($logon_res) {
         $valid_credentials = $true
         [Ansible.WinUserPInvoke]::CloseHandle($handle) > $null
     } else {
-        $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
         # following errors indicate the creds are correct but the user was
         # unable to log on for other reasons, which we don't care about
         $success_codes = @(
