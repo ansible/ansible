@@ -96,7 +96,7 @@ echo "Creates folder structure to test inventory folder support"
 ansible-playbook -i 'localhost,' test_vmware_prep_folders.yml
 
 check_cache() {
-    ls -la $inventory_cache
+    ls -la "$inventory_cache"
     echo "Check if cache is working for inventory plugin"
     if [ ! -n "$(find "${inventory_cache}" -maxdepth 1 -name 'vmware_vm_inventory_*' -print -quit)" ]; then
         echo "Cache directory not found. Please debug"
@@ -112,17 +112,17 @@ clear_cache() {
 
 get_inventory() {
     echo "Get inventory ${1}"
-    ansible-inventory -i ${1} --list
+    ansible-inventory -i "${1}" --list
     check_cache
     clear_cache
 
     echo "Get inventory using YAML"
-    ansible-inventory -i ${1} --list --yaml
+    ansible-inventory -i "${1}" --list --yaml
     check_cache
     clear_cache
 
     echo "Get inventory using TOML"
-    ansible-inventory -i ${1} --list --toml
+    ansible-inventory -i "${1}" --list --toml
     check_cache
     clear_cache
 }
