@@ -1,203 +1,203 @@
 - block:
-    - name: Install foo-1.0-1
+    - name: Install dinginessentail-1.0-1
       dnf:
-        name: foo-1.0-1
+        name: dinginessentail-1.0-1
         state: present
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-1')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
 
     - name: Verify dnf module outputs
       assert:
         that:
             - "'results' in dnf_result"
     # ============================================================================
-    - name: Install foo-1.0-1 again
+    - name: Install dinginessentail-1.0-1 again
       dnf:
-        name: foo-1.0-1
+        name: dinginessentail-1.0-1
         state: present
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "not dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-1')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
 
     - name: Verify dnf module outputs
       assert:
         that:
             - "'msg' in dnf_result"
     # ============================================================================
-    - name: Install foo-1:1.0-2
+    - name: Install dinginessentail-1:1.0-2
       dnf:
-        name: "foo-1:1.0-2.{{ ansible_architecture }}"
+        name: "dinginessentail-1:1.0-2.{{ ansible_architecture }}"
         state: present
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-2')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
 
     - name: Verify dnf module outputs
       assert:
         that:
             - "'results' in dnf_result"
     # ============================================================================
-    - name: Update to the latest foo
+    - name: Update to the latest dinginessentail
       dnf:
-        name: foo
+        name: dinginessentail
         state: latest
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.1-1')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
 
     - name: Verify dnf module outputs
       assert:
         that:
             - "'results' in dnf_result"
     # ============================================================================
-    - name: Install foo-1.0-1 from a file (downgrade)
+    - name: Install dinginessentail-1.0-1 from a file (downgrade)
       dnf:
-        name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
         allow_downgrade: True
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-1')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
 
     - name: Verify dnf module outputs
       assert:
         that:
             - "'results' in dnf_result"
 
-    - name: Remove foo
+    - name: Remove dinginessentail
       dnf:
-        name: foo
+        name: dinginessentail
         state: absent
     # ============================================================================
-    - name: Install foo-1.0-1 from a file
+    - name: Install dinginessentail-1.0-1 from a file
       dnf:
-        name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-1')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
 
     - name: Verify dnf module outputs
       assert:
         that:
             - "'results' in dnf_result"
     # ============================================================================
-    - name: Install foo-1.0-1 from a file again
+    - name: Install dinginessentail-1.0-1 from a file again
       dnf:
-        name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "not dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-1')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
     # ============================================================================
-    - name: Install foo-1.0-2 from a file
+    - name: Install dinginessentail-1.0-2 from a file
       dnf:
-        name: "{{ repodir }}/foo-1.0-2.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
         state: present
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-2')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
 
     - name: Verify dnf module outputs
       assert:
         that:
             - "'results' in dnf_result"
     # ============================================================================
-    - name: Install foo-1.0-2 from a file again
+    - name: Install dinginessentail-1.0-2 from a file again
       dnf:
-        name: "{{ repodir }}/foo-1.0-2.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
         state: present
       register: dnf_result
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
 
     - name: Verify installation
       assert:
         that:
             - "not dnf_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-2')"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
     # ============================================================================
-    - name: Remove foo
+    - name: Remove dinginessentail
       dnf:
-        name: foo
+        name: dinginessentail
         state: absent
 
     - name: Try to install incompatible arch
       dnf:
-        name: "{{ repodir_ppc64 }}/foo-1.0-1.ppc64.rpm"
+        name: "{{ repodir_ppc64 }}/dinginessentail-1.0-1.ppc64.rpm"
         state: present
       register: dnf_result
       ignore_errors: yes
 
-    - name: Check foo with rpm
-      shell: rpm -q foo
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
       register: rpm_result
       ignore_errors: yes
 
@@ -209,18 +209,18 @@
             - "dnf_result is failed"
     # ============================================================================
 
-    # Should install foo-with-weak-dep and foo-weak-dep
+    # Should install dinginessentail-with-weak-dep and dinginessentail-weak-dep
     - name: Install package with defaults
       dnf:
-        name: foo-with-weak-dep
+        name: dinginessentail-with-weak-dep
         state: present
 
-    - name: Check if foo-with-weak-dep is installed
-      shell: rpm -q foo-with-weak-dep
+    - name: Check if dinginessentail-with-weak-dep is installed
+      shell: rpm -q dinginessentail-with-weak-dep
       register: rpm_main_result
 
-    - name: Check if foo-weak-dep is installed
-      shell: rpm -q foo-weak-dep
+    - name: Check if dinginessentail-weak-dep is installed
+      shell: rpm -q dinginessentail-weak-dep
       register: rpm_weak_result
 
     - name: Verify install with weak deps
@@ -229,25 +229,25 @@
         - rpm_main_result.rc == 0
         - rpm_weak_result.rc == 0
 
-    - name: Uninstall foo weak dep packages
+    - name: Uninstall dinginessentail weak dep packages
       dnf:
         name:
-        - foo-with-weak-dep
-        - foo-weak-dep
+        - dinginessentail-with-weak-dep
+        - dinginessentail-weak-dep
         state: absent
 
     - name: Install package with weak deps but skip weak deps
       dnf:
-        name: foo-with-weak-dep
+        name: dinginessentail-with-weak-dep
         install_weak_deps: False
         state: present
 
-    - name: Check if foo-with-weak-dep is installed
-      shell: rpm -q foo-with-weak-dep
+    - name: Check if dinginessentail-with-weak-dep is installed
+      shell: rpm -q dinginessentail-with-weak-dep
       register: rpm_main_result
 
-    - name: Check if foo-weak-dep is installed
-      shell: rpm -q foo-weak-dep
+    - name: Check if dinginessentail-weak-dep is installed
+      shell: rpm -q dinginessentail-weak-dep
       register: rpm_weak_result
       ignore_errors: yes
 
@@ -258,18 +258,18 @@
         - rpm_weak_result.rc == 1  # the weak dependency shouldn't be installed
 
     # https://github.com/ansible/ansible/issues/55938
-    - name: Install foo-*
+    - name: Install dinginessentail-*
       dnf:
-        name: foo-*
+        name: dinginessentail-*
         state: present
 
-    - name: Uninstall foo-*
+    - name: Uninstall dinginessentail-*
       dnf:
-        name: foo-*
+        name: dinginessentail-*
         state: absent
 
-    - name: Check if all foo packages are removed
-      shell: rpm -qa foo-* | wc -l
+    - name: Check if all dinginessentail packages are removed
+      shell: rpm -qa dinginessentail-* | wc -l
       register: rpm_result
 
     - name: Verify rpm result
@@ -280,7 +280,7 @@
     - name: Clean up
       dnf:
         name:
-        - foo
-        - foo-with-weak-dep
-        - foo-weak-dep
+        - dinginessentail
+        - dinginessentail-with-weak-dep
+        - dinginessentail-weak-dep
         state: absent
