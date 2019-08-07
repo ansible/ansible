@@ -31,6 +31,14 @@ def dict_diff(sample_dict):
     test_dict = {}
     for k, v in iteritems(sample_dict):
         if v is not None:
+            if type(v) is list:
+                if type(v[0]) is dict:
+                    li = []
+                    for each in v:
+                        li.extend(tuple(each.items()))
+                    v = tuple(li)
+                else:
+                    v = tuple(v)
             test_dict.update({k: v})
     return_set = set(tuple(test_dict.items()))
     return return_set
@@ -41,6 +49,9 @@ def filter_dict_having_none_value(want, have):
     test_dict = dict()
     test_dict['name'] = want.get('name')
     for k, v in iteritems(want):
+        if k == 'l2protocol':
+            if want[k] != have.get('l2protocol') and have.get('l2protocol'):
+                test_dict.update({k: v})
         if v is None:
             val = have.get(k)
             test_dict.update({k: val})

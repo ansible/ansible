@@ -38,7 +38,7 @@ class L2_InterfacesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
-    def populate_facts(self, module, connection, data=None):
+    def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for l2_interfaces
         :param module: the module instance
         :param connection: the device connection
@@ -64,8 +64,8 @@ class L2_InterfacesFacts(object):
             for cfg in params['config']:
                 facts['l2_interfaces'].append(utils.remove_empties(cfg))
 
-        self.ansible_facts['ansible_network_resources'].update(facts)
-        return self.ansible_facts
+        ansible_facts['ansible_network_resources'].update(facts)
+        return ansible_facts
 
     def render_config(self, spec, conf):
         """
@@ -78,36 +78,51 @@ class L2_InterfacesFacts(object):
         config = deepcopy(spec)
         match = re.search(r'^(\S+)', conf)
 
-        if len(match.group().split('.')) > 1:
-            sub_match = re.search(r'^(\S+ \S+)', conf)
-            if sub_match:
-                intf = sub_match.group()
-                config['name'] = intf
-            else:
-                intf = match.group(1)
-                config['name'] = intf
-        else:
-            intf = match.group(1)
-            if get_interface_type(intf) == 'unknown':
-                return {}
-            # populate the facts from the configuration
-            config['name'] = normalize_interface(intf)
+        intf = match.group(1)
+        config['name'] = normalize_interface(intf)
+
+        if match.group(1).lower() == "preconfigure":
+            match = re.search(r'^(\S+).*', conf)
+            if match:
+                config['name'] = match.group()
+        if get_interface_type(intf) == 'unknown':
+            return {}
+
+        # populate the facts from the configuration
         native_vlan = re.search(r"dot1q native vlan (\d+)", conf)
         if native_vlan:
-            config["native_vlan"] = {"vlan": int(native_vlan.group(1))}
-        if 'l2transport' in config['name']:
-            config['q_vlan'] = utils.parse_conf_arg(conf, 'dot1q vlan')
-        else:
-            config['q_vlan'] = utils.parse_conf_arg(conf, 'encapsulation dot1q')
+            config["native_vlan"] = int(native_vlan.group(1))
 
+        if 'l2transport' in config['name']:
+            dot1q = utils.parse_conf_arg(conf, 'dot1q vlan')
+            config['q_vlan'] = []
+            if dot1q:
+                config['q_vlan'].append(int(dot1q.split(' ')[0]))
+                config['q_vlan'].append(dot1q.split(' ')[1])
+        if 'preconfigure' in config['name'] and 'l2transport' not in config['name']:
+            dot1q = utils.parse_conf_arg(conf, 'encapsulation dot1q')
+            config['q_vlan'] = []
+            if dot1q:
+                config['q_vlan'].append(int(dot1q.split(' ')[0]))
+                config['q_vlan'].append(int(dot1q.split(' ')[2]))
+
+        if utils.parse_conf_cmd_arg(conf, 'l2transport', True):
+            config['l2transport'] = True
         if utils.parse_conf_arg(conf, 'propagate'):
             config['propagate'] = True
-        config['l2protocol_cdp'] = utils.parse_conf_arg(conf, 'l2protocol cdp')
-        config['l2protocol_pvst'] = utils.parse_conf_arg(conf, 'l2protocol pvst')
-        config['l2protocol_stp'] = utils.parse_conf_arg(conf, 'l2protocol stp')
-        config['l2protocol_vtp'] = utils.parse_conf_arg(conf, 'l2protocol vtp')
-        if config.get('propagate') or config.get('l2protocol_cdp') or config.get('l2protocol_pvst') or \
-                config.get('l2protocol_stp') or config.get('l2protocol_vtp'):
-            config['l2transport'] = True
+        config['l2protocol'] = []
+
+        cdp = utils.parse_conf_arg(conf, 'l2protocol cdp')
+        pvst = utils.parse_conf_arg(conf, 'l2protocol pvst')
+        stp = utils.parse_conf_arg(conf, 'l2protocol stp')
+        vtp = utils.parse_conf_arg(conf, 'l2protocol vtp')
+        if cdp:
+            config['l2protocol'].append({'cdp': cdp})
+        if pvst:
+            config['l2protocol'].append({'pvst': pvst})
+        if stp:
+            config['l2protocol'].append({'stp': stp})
+        if vtp:
+            config['l2protocol'].append({'vtp': vtp})
 
         return utils.remove_empties(config)

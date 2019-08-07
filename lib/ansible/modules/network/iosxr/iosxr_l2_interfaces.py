@@ -41,7 +41,7 @@ DOCUMENTATION = """
   module: iosxr_l2_interfaces
   version_added: 2.9
   short_description: Manage Layer-2 interface on Cisco IOS-XR devices
-  description: This module provides declarative management of a Layer-2 interface on Cisco IOS-XR devices.
+  description: This module manages the Layer-2 interface attributes on Cisco IOS-XR devices.
   author: Sumit Jaiswal (@justjais)
   options:
     config:
@@ -95,7 +95,8 @@ DOCUMENTATION = """
           type: list
         propagate:
           description:
-          - Propagate Layer 2 transport events. Note that it will work only when the I(l2tranport) option is set to True
+          - Propagate Layer 2 transport events. Note that it will work only when the I(l2tranport) option is set
+            to TRUE
           type: bool
     state:
       choices:
@@ -406,7 +407,7 @@ def main():
     Main entry point for module execution
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=L2_Interfaces.argument_spec,
+    module = AnsibleModule(argument_spec=L2_InterfacesArgs.argument_spec,
                            supports_check_mode=True)
 
     result = L2_Interfaces(module).execute_module()

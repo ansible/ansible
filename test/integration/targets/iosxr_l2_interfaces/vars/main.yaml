@@ -1,0 +1,185 @@
+---
+merged:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - name: GigabitEthernet0/0/0/1
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - dot1q native vlan 10
+    - l2transport l2protocol pvst tunnel
+    - l2transport l2protocol cdp forward
+    - l2transport propagate remote-status
+    - interface preconfigure GigabitEthernet0/0/0/1.2 l2transport
+    - dot1q vlan 10 any
+    - interface preconfigure GigabitEthernet0/0/0/3.900
+    - dot1q vlan 20 40
+
+  after:
+    - name: loopback888
+    - name: loopback999
+    - l2protocol:
+      - cdp: forward
+      - pvst: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
+      q_vlan:
+      - 10
+      - any
+    - name: preconfigure GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 20
+      - 40
+
+replaced:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - l2protocol:
+      - cdp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+    - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
+      q_vlan:
+      - 30
+      - any
+    - name: preconfigure GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - no l2transport
+    - dot1q native vlan 40
+    - l2transport l2protocol vtp tunnel
+    - interface preconfigure GigabitEthernet0/0/0/1.2 l2transport
+    - dot1q vlan 10 any
+
+  after:
+    - name: loopback888
+    - name: loopback999
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 40
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+    - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
+      q_vlan:
+      - 10
+      - any
+    - name: preconfigure GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+
+overridden:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - l2protocol:
+      - cdp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+    - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
+      q_vlan:
+      - 30
+      - any
+    - name: preconfigure GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - no dot1q native vlan
+    - no l2transport
+    - interface GigabitEthernet0/0/0/4
+    - no l2transport
+    - dot1q native vlan 40
+    - l2transport l2protocol stp forward
+    - interface preconfigure GigabitEthernet0/0/0/1.2 l2transport
+    - no dot1q vlan
+    - interface preconfigure GigabitEthernet0/0/0/3.900
+    - dot1q vlan 20 40
+
+  after:
+    - name: loopback888
+    - name: loopback999
+    - name: GigabitEthernet0/0/0/1
+    - l2protocol:
+      - stp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 40
+    - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
+    - name: preconfigure GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 20
+      - 40
+
+deleted:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - l2protocol:
+      - cdp: forward
+      l2transport: true
+      name: GigabitEthernet0/0/0/1
+      native_vlan: 10
+      propagate: true
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
+    - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
+      q_vlan:
+      - 30
+      - any
+    - name: preconfigure GigabitEthernet0/0/0/3.900
+      q_vlan:
+      - 40
+      - 60
+
+  commands:
+    - interface GigabitEthernet0/0/0/1
+    - no dot1q native vlan
+    - no l2transport
+    - interface GigabitEthernet0/0/0/4
+    - no dot1q native vlan
+    - no l2transport
+    - interface preconfigure GigabitEthernet0/0/0/1.2 l2transport
+    - no dot1q vlan
+    - interface preconfigure GigabitEthernet0/0/0/3.900
+    - no encapsulation dot1q
+
+  after:
+    - name: loopback888
+    - name: loopback999
+    - name: GigabitEthernet0/0/0/1
+    - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
+    - name: preconfigure GigabitEthernet0/0/0/3.900
