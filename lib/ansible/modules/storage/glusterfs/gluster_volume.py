@@ -49,6 +49,10 @@ options:
     description:
       - Disperse count for volume.
     version_added: '2.2'
+  disperse_data:
+    description:
+      - Number of bricks that is part of the dispersed volume, excluding the count of the redundant bricks
+    version_added: '2.9'
   redundancies:
     description:
       - Redundancy count for volume.
@@ -103,6 +107,20 @@ EXAMPLES = """
     cluster:
       - 192.0.2.10
       - 192.0.2.11
+  run_once: true
+
+- name: create dispersed gluster volume
+  gluster_volume:
+    state: present
+    name: test1
+    disperse_data: 4
+    redundancy: 2
+    bricks: /bricks/brick1/g1,/bricks/brick2/g1
+    rebalance: yes
+    cluster:
+      - 192.0.2.10
+      - 192.0.2.11
+      - 192.0.2.12
   run_once: true
 
 - name: tune
@@ -323,7 +341,7 @@ def probe_all_peers(hosts, peers, myhostname):
             probe(host, myhostname)
 
 
-def create_volume(name, stripe, replica, arbiter, disperse, redundancy, transport, hosts, bricks, force):
+def create_volume(name, stripe, replica, arbiter, disperse, disperse_data, redundancy, transport, hosts, bricks, force):
     args = ['volume', 'create']
     args.append(name)
     if stripe:
@@ -338,6 +356,9 @@ def create_volume(name, stripe, replica, arbiter, disperse, redundancy, transpor
     if disperse:
         args.append('disperse')
         args.append(str(disperse))
+    if disperse_data:
+        args.append('disperse-data')
+        args.append(str(disperse_data))
     if redundancy:
         args.append('redundancy')
         args.append(str(redundancy))
@@ -454,6 +475,7 @@ def main():
             replicas=dict(type='int'),
             arbiters=dict(type='int'),
             disperses=dict(type='int'),
+            disperse_data=dict(type='int'),
             redundancies=dict(type='int'),
             transport=dict(type='str', default='tcp', choices=['tcp', 'rdma', 'tcp,rdma']),
             bricks=dict(type='str', aliases=['brick']),
@@ -479,6 +501,7 @@ def main():
     replicas = module.params['replicas']
     arbiters = module.params['arbiters']
     disperses = module.params['disperses']
+    disperse_data = module.params['disperse_data']
     redundancies = module.params['redundancies']
     transport = module.params['transport']
     myhostname = module.params['host']
@@ -526,7 +549,7 @@ def main():
 
         # create if it doesn't exist
         if volume_name not in volumes:
-            create_volume(volume_name, stripes, replicas, arbiters, disperses, redundancies, transport, cluster, brick_paths, force)
+            create_volume(volume_name, stripes, replicas, arbiters, disperses, disperse_data, redundancies, transport, cluster, brick_paths, force)
             volumes = get_volumes()
             changed = True
 
