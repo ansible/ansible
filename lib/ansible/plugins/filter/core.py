@@ -309,7 +309,7 @@ def combine(*terms, **kwargs):
     recursive = kwargs.pop('recursive', False)
     list_merge = kwargs.pop('list_merge', 'replace')
     if kwargs:
-        raise AnsibleFilterError("'recursive' and 'list_merge' are the only valid keyword argument")
+        raise AnsibleFilterError("'recursive' and 'list_merge' are the only valid keyword arguments")
 
     # allow the user to do `[dict1, dict2, ...] | combine`
     dictionaries = flatten(terms, levels=1)
