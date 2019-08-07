@@ -2389,7 +2389,6 @@ lib/ansible/modules/monitoring/monit.py validate-modules:E337
 lib/ansible/modules/monitoring/monit.py validate-modules:E338
 lib/ansible/modules/monitoring/nagios.py validate-modules:E317
 lib/ansible/modules/monitoring/nagios.py validate-modules:E324
-lib/ansible/modules/monitoring/nagios.py validate-modules:E337
 lib/ansible/modules/monitoring/nagios.py validate-modules:E338
 lib/ansible/modules/monitoring/newrelic_deployment.py validate-modules:E338
 lib/ansible/modules/monitoring/pagerduty.py validate-modules:E324
