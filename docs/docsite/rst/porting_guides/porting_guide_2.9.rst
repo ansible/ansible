@@ -153,6 +153,18 @@ Noteworthy module changes
 * The ``rds_snapshot_facts`` module was renamed to :ref:`rds_snapshot_info <rds_snapshot_info_module>`.
 * The ``redshift_facts`` module was renamed to :ref:`redshift_info <redshift_info_module>`.
 * The ``route53_facts`` module was renamed to :ref:`route53_info <route53_info_module>`.
+* The ``aws_s3_bucket_facts`` module was renamed to :ref:`aws_s3_bucket_info <aws_s3_bucket_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+* The ``cloudformation_facts`` module was renamed to :ref:`cloudformation_info <cloudformation_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+* The ``cloudfront_facts`` module was renamed to :ref:`cloudfront_info <cloudfront_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+* The ``ecs_service_facts`` module was renamed to :ref:`ecs_service_info <ecs_service_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+* The ``efs_facts`` module was renamed to :ref:`efs_info <efs_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+* The ``lambda_facts`` module was renamed to :ref:`lambda_info <lambda_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
 * The deprecated ``force`` option in ``win_firewall_rule`` has been removed.
 
 
