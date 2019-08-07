@@ -1,0 +1,776 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: NetApp Test ASUP module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+
+- set_fact:
+    credentials: *creds
+
+# test setup
+- name: Delete raid 0 storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+  loop:
+    - storage_pool
+    - storage_pool2
+    - storage_pool3
+
+# Thick volume testing: create, delete, expand, change properties (read/write cache), expand and change properties,
+- name: Create raid 0 storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: storage_pool
+    criteria_min_usable_capacity: 5
+    criteria_size_unit: tb
+    erase_secured_drives: yes
+    raid_level: raid0
+
+- name: Delete volume in raid 0 storage pool
+  netapp_e_volume:
+    <<: *creds
+    state: absent
+    name: volume
+
+- name: Create volume in raid 0 storage pool
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 100
+    size_unit: gb
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '107374182400' and item.segmentSize == 131072}}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+- name: Re-execute volume creation in raid 0 storage pool
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 100
+    size_unit: gb
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ not results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '107374182400' and item.segmentSize == 131072}}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+- name: Update volume size
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 200
+    size_unit: gb
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '214748364800' and item.segmentSize == 131072}}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+- pause: seconds=15
+
+- name: Update volume properties
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 200
+    size_unit: gb
+    write_cache_enable: true
+    read_cache_enable: false
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '214748364800' and item.segmentSize == 131072 and
+              not item.cacheSettings.readCacheEnable and item.cacheSettings.writeCacheEnable}}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+- name: Update volume properties and expand storage capabilities
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 300
+    size_unit: gb
+    write_cache_enable: false
+    read_cache_enable: true
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '322122547200' and item.segmentSize == 131072 and
+              item.cacheSettings.readCacheEnable and not item.cacheSettings.writeCacheEnable}}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+# Workload tagging testing: create, utilize existing (name only, name with same attributes), modify attributes
+- name: Add workload tag (change, new workload tag)
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 300
+    size_unit: gb
+    write_cache_enable: false
+    read_cache_enable: true
+    workload_name: volume_tag
+    metadata:
+      volume_tag_key: volume_tag_value
+  register: results
+- pause: seconds=15
+- name: Validate volume workload changes
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '322122547200' and item.segmentSize == 131072 and
+              item.cacheSettings.readCacheEnable and not item.cacheSettings.writeCacheEnable and
+              {'key': 'volumeTypeId', 'value': 'volume'} in item.metadata }}"
+    msg: "Failed to modify volume metadata!"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/workloads"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: workload_tags
+- assert:
+    that: "{{ item.name == 'volume_tag' and
+              {'key': 'volume_tag_key', 'value': 'volume_tag_value'} in item.workloadAttributes }}"
+    msg: "Workload tag failed to be created!"
+  loop: "{{ lookup('list', volume_tag_id, wantList=True) }}"
+  vars:
+    volume_tag_id: "{{ workload_tags | json_query('json[?name==`volume_tag`]') }}"
+
+- name: Repeat add workload tag (no change)
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 300
+    size_unit: gb
+    write_cache_enable: false
+    read_cache_enable: true
+    workload_name: volume_tag
+    metadata:
+      volume_tag_key: volume_tag_value
+  register: results
+- pause: seconds=15
+- name: Validate volume workload changes
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ not results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '322122547200' and item.segmentSize == 131072 and
+              item.cacheSettings.readCacheEnable and not item.cacheSettings.writeCacheEnable and
+              {'key': 'volumeTypeId', 'value': 'volume'} in item.metadata }}"
+    msg: "Failed to not modify volume metadata!"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/workloads"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: workload_tags
+- assert:
+    that: "{{ item.name == 'volume_tag' and
+              {'key': 'volume_tag_key', 'value': 'volume_tag_value'} in item.workloadAttributes }}"
+    msg: "Workload tag failed not to be changed"
+  loop: "{{ lookup('list', volume_tag_id, wantList=True) }}"
+  vars:
+    volume_tag_id: "{{ workload_tags | json_query('json[?name==`volume_tag`]') }}"
+
+- name: Workload tag (no change, just using workload_name)
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 300
+    size_unit: gb
+    write_cache_enable: false
+    read_cache_enable: true
+    workload_name: volume_tag
+  register: results
+- pause: seconds=15
+- name: Validate volume workload changes
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ not results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '322122547200' and item.segmentSize == 131072 and
+              item.cacheSettings.readCacheEnable and not item.cacheSettings.writeCacheEnable and
+              {'key': 'volumeTypeId', 'value': 'volume'} in item.metadata }}"
+    msg: "Failed to not modify volume metadata!"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/workloads"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: workload_tags
+- assert:
+    that: "{{ item.name == 'volume_tag' and
+              {'key': 'volume_tag_key', 'value': 'volume_tag_value'} in item.workloadAttributes }}"
+    msg: "Workload tag failed to not be modified!"
+  loop: "{{ lookup('list', volume_tag_id, wantList=True) }}"
+  vars:
+    volume_tag_id: "{{ workload_tags | json_query('json[?name==`volume_tag`]') }}"
+
+- name: Add workload tag (change, new attributes)
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 300
+    size_unit: gb
+    write_cache_enable: false
+    read_cache_enable: true
+    workload_name: volume_tag
+    metadata:
+      volume_tag_key2: volume_tag_value2
+  register: results
+- pause: seconds=15
+- name: Validate volume workload changes
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '322122547200' and item.segmentSize == 131072 and
+              item.cacheSettings.readCacheEnable and not item.cacheSettings.writeCacheEnable and
+              {'key': 'volumeTypeId', 'value': 'volume'} in item.metadata }}"
+    msg: "Failed to not modify volume metadata!"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/workloads"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: workload_tags
+- assert:
+    that: "{{ item.name == 'volume_tag' and
+              {'key': 'volume_tag_key2', 'value': 'volume_tag_value2'} in item.workloadAttributes }}"
+    msg: "Workload tag failed to be updated!"
+  loop: "{{ lookup('list', volume_tag_id, wantList=True) }}"
+  vars:
+    volume_tag_id: "{{ workload_tags | json_query('json[?name==`volume_tag`]') }}"
+
+- name: Remove workload tag from volume (change)
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool
+    size: 300
+    size_unit: gb
+    write_cache_enable: false
+    read_cache_enable: true
+  register: results
+- pause: seconds=15
+- name: Validate volume workload changes
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '322122547200' and item.segmentSize == 131072 and
+              item.cacheSettings.readCacheEnable and not item.cacheSettings.writeCacheEnable and
+              item.metadata == []}}"
+    msg: "Failed to not modify volume metadata!"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/workloads"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: workload_tags
+- assert:
+    that: "{{ item.name == 'volume_tag' and
+              {'key': 'volume_tag_key2', 'value': 'volume_tag_value2'} in item.workloadAttributes }}"
+    msg: "Workload tag failed to be updated!"
+  loop: "{{ lookup('list', volume_tag_id, wantList=True) }}"
+  vars:
+    volume_tag_id: "{{ workload_tags | json_query('json[?name==`volume_tag`]') }}"
+
+- name: Delete workload tag
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/workloads"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: workload_tags
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/workloads/{{ item }}"
+    method: DELETE
+    status_code: 204
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  loop: "{{ lookup('list', volume_tag_id, wantList=True) }}"
+  vars:
+    volume_tag_id: "{{ workload_tags | json_query('json[?name==`volume_tag`].id') }}"
+
+- name: Delete raid 0 storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: storage_pool
+
+
+# *** Thin volume testing (May not work with simulator) ***
+- name: Create dynamic disk pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: storage_pool
+    criteria_min_usable_capacity: 2
+    criteria_size_unit: tb
+
+- name: Create thin volume
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: thin_volume
+    storage_pool_name: storage_pool
+    size: 131072
+    size_unit: gb
+    thin_provision: true
+    thin_volume_repo_size: 32
+    thin_volume_max_repo_size: 1024
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/thin-volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'thin_volume' and item.thinProvisioned and
+              item.capacity == '140737488355328' and item.initialProvisionedCapacity == '34359738368' and
+              item.provisionedCapacityQuota == '1099511627776' and item.expansionPolicy == 'automatic' }}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`thin_volume`]') }}"
+
+- name: (Rerun) Create thin volume
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: thin_volume
+    storage_pool_name: storage_pool
+    size: 131072
+    size_unit: gb
+    thin_provision: true
+    thin_volume_repo_size: 32
+    thin_volume_max_repo_size: 1024
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/thin-volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ not results.changed and item.name == 'thin_volume' and item.thinProvisioned and
+              item.capacity == '140737488355328' and item.initialProvisionedCapacity == '34359738368' and
+              item.provisionedCapacityQuota == '1099511627776' and item.expansionPolicy == 'automatic' }}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`thin_volume`]') }}"
+
+
+- name: Expand thin volume's virtual size
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: thin_volume
+    storage_pool_name: storage_pool
+    size: 262144
+    size_unit: gb
+    thin_provision: true
+    thin_volume_repo_size: 32
+    thin_volume_max_repo_size: 1024
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/thin-volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'thin_volume' and item.thinProvisioned and
+              item.capacity == '281474976710656' and item.initialProvisionedCapacity == '34359738368' and
+              item.provisionedCapacityQuota == '1099511627776' and item.expansionPolicy == 'automatic' }}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`thin_volume`]') }}"
+
+
+- name: Expand thin volume's maximum repository size
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: thin_volume
+    storage_pool_name: storage_pool
+    size: 262144
+    size_unit: gb
+    thin_provision: true
+    thin_volume_repo_size: 32
+    thin_volume_max_repo_size: 2048
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/thin-volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'thin_volume' and item.thinProvisioned and
+              item.capacity == '281474976710656' and item.initialProvisionedCapacity == '34359738368' and
+              item.provisionedCapacityQuota == '2199023255552' and item.expansionPolicy == 'automatic' }}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`thin_volume`]') }}"
+
+- name: Create dynamic disk pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: storage_pool2
+    criteria_min_usable_capacity: 2
+    criteria_size_unit: tb
+- pause: seconds=15
+
+- name: Create second thin volume with manual expansion policy
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: thin_volume2
+    storage_pool_name: storage_pool2
+    size_unit: gb
+    size: 131072
+    thin_provision: true
+    thin_volume_repo_size: 32
+    thin_volume_max_repo_size: 32
+    thin_volume_expansion_policy: manual
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/thin-volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'thin_volume2' and item.thinProvisioned and
+              item.capacity == '140737488355328' and item.initialProvisionedCapacity == '34359738368' and
+              item.currentProvisionedCapacity == '34359738368' and item.expansionPolicy == 'manual' }}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`thin_volume2`]') }}"
+
+
+- name: Create second thin volume with manual expansion policy
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: thin_volume2
+    storage_pool_name: storage_pool2
+    size_unit: gb
+    size: 131072
+    thin_provision: true
+    thin_volume_repo_size: 288
+    thin_volume_max_repo_size: 288
+    thin_volume_expansion_policy: manual
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/thin-volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'thin_volume2' and item.thinProvisioned and
+              item.capacity == '140737488355328' and item.initialProvisionedCapacity == '34359738368' and
+              item.currentProvisionedCapacity == '309237645312' and item.expansionPolicy == 'manual' }}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`thin_volume2`]') }}"
+
+- name: Modify second thin volume to use automatic expansion policy
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: thin_volume2
+    storage_pool_name: storage_pool2
+    size_unit: gb
+    size: 131072
+    thin_provision: true
+    thin_volume_repo_size: 288
+    thin_volume_max_repo_size: 288
+    thin_volume_expansion_policy: automatic
+  register: results
+- pause: seconds=15
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/thin-volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'thin_volume2' and item.thinProvisioned and
+              item.capacity == '140737488355328' and item.initialProvisionedCapacity == '34359738368' and
+              item.currentProvisionedCapacity == '309237645312' and item.expansionPolicy == 'automatic' }}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`thin_volume2`]') }}"
+
+- name: Delete raid 0 storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+  loop:
+    - storage_pool
+    - storage_pool2
+
+- name: Create raid 0 storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: storage_pool
+    criteria_min_usable_capacity: 5
+    criteria_size_unit: tb
+    erase_secured_drives: yes
+    raid_level: raid0
+
+# Thick volume expansion testing: wait and don't wait for operation to complete
+- name: Create raid 6 storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: storage_pool3
+    criteria_min_usable_capacity: 5
+    criteria_size_unit: tb
+    erase_secured_drives: yes
+    raid_level: raid6
+
+- name: Delete volume in raid 6 storage pool
+  netapp_e_volume:
+    <<: *creds
+    state: absent
+    name: volume
+
+- name: Create volume in raid 0 storage pool for expansion testing
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool3
+    size: 1
+    size_unit: gb
+  register: results
+- pause: seconds=10
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '1073741824' and item.segmentSize == 131072}}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+- name: Modify volume in raid 0 storage pool and wait for expansion testing
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool3
+    size: 10
+    size_unit: gb
+    wait_for_initialization: True
+  register: results
+- pause: seconds=10
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes/{{ volume[0]['id'] }}/expand"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: expansion_state
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '10737418240' and item.segmentSize == 131072 and
+              expansion_state['json']['action'] == 'none'}}"
+    msg: "Volume expansion test failed."
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+- name: Modify volume in raid 0 storage pool and don't wait for expansion testing
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: volume
+    storage_pool_name: storage_pool3
+    size: 100
+    size_unit: gb
+    wait_for_initialization: False
+  register: results
+- pause: seconds=10
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: current
+- uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/volumes/{{ volume[0]['id'] }}/expand"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    validate_certs: no
+  register: expansion_state
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+- assert:
+    that: "{{ results.changed and item.name == 'volume' and not item.thinProvisioned and
+              item.capacity == '107374182400' and item.segmentSize == 131072 and expansion_state['json']['action'] != 'none'}}"
+    msg: "Failed to create volume"
+  loop: "{{ lookup('list', volume, wantList=True) }}"
+  vars:
+    volume: "{{ current | json_query('json[?name==`volume`]') }}"
+
+- name: Delete raid 0 storage pool
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: "{{ item }}"
+  loop:
+    - storage_pool3
