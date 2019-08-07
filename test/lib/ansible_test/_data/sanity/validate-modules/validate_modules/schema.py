@@ -177,7 +177,7 @@ def author(value):
             raise Invalid("Invalid author")
 
 
-def doc_schema(module_name):
+def doc_schema(module_name, version_added=True):
     deprecated_module = False
 
     if module_name.startswith('_'):
@@ -196,6 +196,9 @@ def doc_schema(module_name):
         'options': Any(None, *list_dict_option_schema),
         'extends_documentation_fragment': Any(list_string_types, *string_types)
     }
+
+    if version_added:
+        doc_schema_dict[Required('version_added')] = Any(float, *string_types)
 
     if deprecated_module:
         deprecation_required_scheme = {

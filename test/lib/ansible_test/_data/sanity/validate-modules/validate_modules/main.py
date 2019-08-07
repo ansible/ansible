@@ -236,7 +236,7 @@ class ModuleValidator(Validator):
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
-    def __init__(self, path, analyze_arg_spec=False, base_branch=None, git_cache=None, reporter=None):
+    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
@@ -244,6 +244,8 @@ class ModuleValidator(Validator):
         self.name = os.path.splitext(self.basename)[0]
 
         self.analyze_arg_spec = analyze_arg_spec
+
+        self.collection = collection
 
         self.base_branch = base_branch
         self.git_cache = git_cache or GitCache()
@@ -282,6 +284,11 @@ class ModuleValidator(Validator):
     @property
     def object_path(self):
         return self.path
+
+    def _get_collection_meta(self):
+        """Implement if we need this for version_added comparisons
+        """
+        pass
 
     def _python_module(self):
         if self.path.endswith('.py') or self._python_module_override:
@@ -1006,13 +1013,30 @@ class ModuleValidator(Validator):
                     if os.path.islink(self.object_path):
                         # This module has an alias, which we can tell as it's a symlink
                         # Rather than checking for `module: $filename` we need to check against the true filename
-                        self._validate_docs_schema(doc, doc_schema(os.readlink(self.object_path).split('.')[0]), 'DOCUMENTATION', 305)
+                        self._validate_docs_schema(
+                            doc,
+                            doc_schema(
+                                os.readlink(self.object_path).split('.')[0]),
+                                version_added=not bool(self.collection)
+                            ),
+                            'DOCUMENTATION',
+                            305
+                        )
                     else:
                         # This is the normal case
-                        self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
+                        self._validate_docs_schema(
+                            doc,
+                            doc_schema(
+                                self.object_name.split('.')[0]),
+                                version_added=not bool(self.collection)
+                            ),
+                            'DOCUMENTATION',
+                            305
+                        )
 
-                    existing_doc = self._check_for_new_args(doc, metadata)
-                    self._check_version_added(doc, existing_doc)
+                    if not self.collection:
+                        existing_doc = self._check_for_new_args(doc, metadata)
+                        self._check_version_added(doc, existing_doc)
 
             if not bool(doc_info['EXAMPLES']['value']):
                 self.reporter.error(
@@ -1723,6 +1747,9 @@ def run():
     parser.add_argument('--output', default='-',
                         help='Output location, use "-" for stdout. '
                              'Default "%(default)s"')
+    parser.add_argument('--collection',
+                        help='Specifies the root path to the collection, when '
+                             'validating files within a collection')
 
     args = parser.parse_args()
 
@@ -1740,7 +1767,7 @@ def run():
                 continue
             if ModuleValidator.is_blacklisted(path):
                 continue
-            with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
+            with ModuleValidator(path, collection=args.collection, analyze_arg_spec=args.arg_spec,
                                  base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv1:
                 mv1.validate()
                 check_dirs.add(os.path.dirname(path))
@@ -1763,13 +1790,14 @@ def run():
                     continue
                 if ModuleValidator.is_blacklisted(path):
                     continue
-                with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
+                with ModuleValidator(path, collection=args.collection, analyze_arg_spec=args.arg_spec,
                                      base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv2:
                     mv2.validate()
 
-    for path in sorted(check_dirs):
-        pv = PythonPackageValidator(path, reporter=reporter)
-        pv.validate()
+    if not args.collection:
+        for path in sorted(check_dirs):
+            pv = PythonPackageValidator(path, reporter=reporter)
+            pv.validate()
 
     if args.format == 'plain':
         sys.exit(reporter.plain(warnings=args.warnings, output=args.output))
