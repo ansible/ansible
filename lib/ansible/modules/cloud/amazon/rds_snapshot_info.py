@@ -339,7 +339,7 @@ def cluster_snapshot_info(module, conn):
         if snapshot_type == 'public':
             params['IsPublic'] = True
         elif snapshot_type == 'shared':
-            params['IsShared'] = True
+            params['IncludeShared'] = True
 
     return common_snapshot_info(module, conn, 'describe_db_cluster_snapshots', 'DBClusterSnapshot', params)
 
@@ -359,7 +359,7 @@ def standalone_snapshot_info(module, conn):
         if snapshot_type == 'public':
             params['IsPublic'] = True
         elif snapshot_type == 'shared':
-            params['IsShared'] = True
+            params['IncludeShared'] = True
 
     return common_snapshot_info(module, conn, 'describe_db_snapshots', 'DBSnapshot', params)
 
