@@ -30,6 +30,13 @@ try:
     from com.vmware.vapi.std_client import DynamicID
     from vmware.vapi.vsphere.client import create_vsphere_client
     from com.vmware.vapi.std.errors_client import Unauthorized
+    from com.vmware.content.library_client import Item
+    from com.vmware.vcenter_client import (Folder,
+                                           Datacenter,
+                                           ResourcePool,
+                                           Datastore,
+                                           Cluster,
+                                           Host)
     HAS_VSPHERE = True
 except ImportError:
     VSPHERE_IMP_ERR = traceback.format_exc()
@@ -163,6 +170,106 @@ class VmwareRestClient(object):
         for t in temp_tags_model:
             tags.append(t.name)
         return tags
+
+    def get_library_item_by_name(self, name):
+        """
+        Returns the identifier of the library item with the given name.
+
+        Args:
+            name (str): The name of item to look for
+
+        Returns:
+            str: The item ID or None if the item is not found
+        """
+        find_spec = Item.FindSpec(name=name)
+        item_ids = self.api_client.content.library.Item.find(find_spec)
+        item_id = item_ids[0] if item_ids else None
+        return item_id
+
+    def get_datacenter_by_name(self, datacenter_name):
+        """
+        Returns the identifier of a datacenter
+        Note: The method assumes only one datacenter with the mentioned name.
+        """
+        filter_spec = Datacenter.FilterSpec(names=set([datacenter_name]))
+        datacenter_summaries = self.api_client.vcenter.Datacenter.list(filter_spec)
+        datacenter = datacenter_summaries[0].datacenter if len(datacenter_summaries) > 0 else None
+        return datacenter
+
+    def get_folder_by_name(self, datacenter_name, folder_name):
+        """
+        Returns the identifier of a folder
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        filter_spec = Folder.FilterSpec(type=Folder.Type.VIRTUAL_MACHINE,
+                                        names=set([folder_name]),
+                                        datacenters=set([datacenter]))
+        folder_summaries = self.api_client.vcenter.Folder.list(filter_spec)
+        folder = folder_summaries[0].folder if len(folder_summaries) > 0 else None
+        return folder
+
+    def get_resource_pool_by_name(self, datacenter_name, resourcepool_name):
+        """
+        Returns the identifier of a resource pool
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([resourcepool_name]) if resourcepool_name else None
+        filter_spec = ResourcePool.FilterSpec(datacenters=set([datacenter]),
+                                              names=names)
+        resource_pool_summaries = self.api_client.vcenter.ResourcePool.list(filter_spec)
+        resource_pool = resource_pool_summaries[0].resource_pool if len(resource_pool_summaries) > 0 else None
+        return resource_pool
+
+    def get_datastore_by_name(self, datacenter_name, datastore_name):
+        """
+        Returns the identifier of a datastore
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([datastore_name]) if datastore_name else None
+        filter_spec = Datastore.FilterSpec(datacenters=set([datacenter]),
+                                           names=names)
+        datastore_summaries = self.api_client.vcenter.Datastore.list(filter_spec)
+        datastore = datastore_summaries[0].datastore if len(datastore_summaries) > 0 else None
+        return datastore
+
+    def get_cluster_by_name(self, datacenter_name, cluster_name):
+        """
+        Returns the identifier of a cluster
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([cluster_name]) if cluster_name else None
+        filter_spec = Cluster.FilterSpec(datacenters=set([datacenter]),
+                                         names=names)
+        cluster_summaries = self.api_client.vcenter.Cluster.list(filter_spec)
+        cluster = cluster_summaries[0].cluster if len(cluster_summaries) > 0 else None
+        return cluster
+
+    def get_host_by_name(self, datacenter_name, host_name):
+        """
+        Returns the identifier of a Host
+        with the mentioned names.
+        """
+        datacenter = self.get_datacenter_by_name(datacenter_name)
+        if not datacenter:
+            return None
+        names = set([host_name]) if host_name else None
+        filter_spec = Host.FilterSpec(datacenters=set([datacenter]),
+                                      names=names)
+        host_summaries = self.api_client.vcenter.Host.list(filter_spec)
+        host = host_summaries[0].host if len(host_summaries) > 0 else None
+        return host
 
     @staticmethod
     def search_svc_object_by_name(service, svc_obj_name=None):
