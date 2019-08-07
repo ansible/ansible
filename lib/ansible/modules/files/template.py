@@ -18,13 +18,6 @@ DOCUMENTATION = r'''
 module: template
 version_added: historical
 options:
-  backup:
-    description:
-    - Determine whether a backup should be created.
-    - When set to C(yes), create a backup file including the timestamp information
-      so you can get the original file back if you somehow clobbered it incorrectly.
-    type: bool
-    default: no
   follow:
     description:
     - Determine whether symbolic links should be followed.
@@ -46,6 +39,7 @@ author:
 - Ansible Core Team
 - Michael DeHaan
 extends_documentation_fragment:
+- backup
 - files
 - template_common
 - validate
