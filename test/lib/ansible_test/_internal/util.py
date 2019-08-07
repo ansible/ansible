@@ -59,8 +59,8 @@ try:
 except AttributeError:
     MAXFD = -1
 
-COVERAGE_CONFIG_PATH = '.coveragerc'
-COVERAGE_OUTPUT_PATH = 'coverage'
+COVERAGE_CONFIG_NAME = 'coveragerc'
+COVERAGE_OUTPUT_NAME = 'coverage'
 
 ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 ANSIBLE_TEST_ROOT = os.path.join(ANSIBLE_ROOT, 'test', 'lib', 'ansible_test')
