@@ -153,7 +153,6 @@ Noteworthy module changes
 * The ``gcp_cloudscheduler_job_facts`` module was renamed to :ref:`gcp_cloudscheduler_job_info <gcp_cloudscheduler_job_info_module>`.
 * The ``gcp_cloudtasks_queue_facts`` module was renamed to :ref:`gcp_cloudtasks_queue_info <gcp_cloudtasks_queue_info_module>`.
 * The ``gcp_compute_address_facts`` module was renamed to :ref:`gcp_compute_address_info <gcp_compute_address_info_module>`.
-* The ``gcp_compute_autoscaler_facts`` module was renamed to :ref:`gcp_compute_autoscaler_info <gcp_compute_autoscaler_info_module>`.
 * The ``gcp_compute_backend_bucket_facts`` module was renamed to :ref:`gcp_compute_backend_bucket_info <gcp_compute_backend_bucket_info_module>`.
 * The ``gcp_compute_backend_service_facts`` module was renamed to :ref:`gcp_compute_backend_service_info <gcp_compute_backend_service_info_module>`.
 * The ``gcp_compute_disk_facts`` module was renamed to :ref:`gcp_compute_disk_info <gcp_compute_disk_info_module>`.
@@ -174,7 +173,6 @@ Noteworthy module changes
 * The ``gcp_compute_region_disk_facts`` module was renamed to :ref:`gcp_compute_region_disk_info <gcp_compute_region_disk_info_module>`.
 * The ``gcp_compute_route_facts`` module was renamed to :ref:`gcp_compute_route_info <gcp_compute_route_info_module>`.
 * The ``gcp_compute_router_facts`` module was renamed to :ref:`gcp_compute_router_info <gcp_compute_router_info_module>`.
-* The ``gcp_compute_snapshot_facts`` module was renamed to :ref:`gcp_compute_snapshot_info <gcp_compute_snapshot_info_module>`.
 * The ``gcp_compute_ssl_certificate_facts`` module was renamed to :ref:`gcp_compute_ssl_certificate_info <gcp_compute_ssl_certificate_info_module>`.
 * The ``gcp_compute_ssl_policy_facts`` module was renamed to :ref:`gcp_compute_ssl_policy_info <gcp_compute_ssl_policy_info_module>`.
 * The ``gcp_compute_subnetwork_facts`` module was renamed to :ref:`gcp_compute_subnetwork_info <gcp_compute_subnetwork_info_module>`.
