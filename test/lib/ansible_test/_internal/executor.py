@@ -323,6 +323,10 @@ def generate_pip_install(pip, command, packages=None):
     if os.path.exists(requirements) and os.path.getsize(requirements):
         options += ['-r', requirements]
 
+    if data_context().content.is_ansible:
+        if command == 'sanity':
+            options += ['-r', os.path.join(data_context().content.root, 'test', 'sanity', 'requirements.txt')]
+
     if packages:
         options += packages
 
