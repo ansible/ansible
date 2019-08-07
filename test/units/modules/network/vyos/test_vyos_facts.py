@@ -14,28 +14,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
 import json
-
 from units.compat.mock import patch
 from ansible.modules.network.vyos import vyos_facts
 from units.modules.utils import set_module_args
 from .vyos_module import TestVyosModule, load_fixture
-
-
 class TestVyosFactsModule(TestVyosModule):
-
     module = vyos_facts
 
     def setUp(self):
         super(TestVyosFactsModule, self).setUp()
+        self.mock_run_commands = patch('ansible.modules.network.vyos.vyos_facts.run_commands')
         self.mock_run_commands = patch('ansible.module_utils.network.vyos.facts.legacy.base.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.vyos.vyos_facts.get_capabilities')
         self.mock_get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
         self.get_resource_connection = self.mock_get_resource_connection.start()
 
@@ -50,7 +46,6 @@ class TestVyosFactsModule(TestVyosModule):
             },
             'network_api': 'cliconf'
         }
-
     def tearDown(self):
         super(TestVyosFactsModule, self).tearDown()
         self.mock_run_commands.stop()
@@ -61,7 +56,6 @@ class TestVyosFactsModule(TestVyosModule):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
-
             for item in commands:
                 try:
                     obj = json.loads(item)
@@ -71,13 +65,12 @@ class TestVyosFactsModule(TestVyosModule):
                 filename = str(command).replace(' ', '_')
                 output.append(load_fixture(filename))
             return output
-
         self.run_commands.side_effect = load_from_file
-
     def test_vyos_facts_default(self):
         set_module_args(dict(gather_subset='default'))
         result = self.execute_module()
         facts = result.get('ansible_facts')
+        self.assertEqual(len(facts), 8)
         self.assertEqual(len(facts), 10)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
@@ -86,6 +79,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset='!all'))
         result = self.execute_module()
         facts = result.get('ansible_facts')
+        self.assertEqual(len(facts), 8)
         self.assertEqual(len(facts), 10)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
@@ -94,6 +88,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset=['!neighbors', '!config']))
         result = self.execute_module()
         facts = result.get('ansible_facts')
+        self.assertEqual(len(facts), 8)
         self.assertEqual(len(facts), 10)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
