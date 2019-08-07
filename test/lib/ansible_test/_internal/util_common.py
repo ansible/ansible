@@ -11,8 +11,8 @@ import textwrap
 
 from .util import (
     common_environment,
-    COVERAGE_CONFIG_PATH,
-    COVERAGE_OUTPUT_PATH,
+    COVERAGE_CONFIG_NAME,
+    COVERAGE_OUTPUT_NAME,
     display,
     find_python,
     ANSIBLE_ROOT,
@@ -155,15 +155,21 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
         # config and results are in a temporary directory
         coverage_config_base_path = temp_path
         coverage_output_base_path = temp_path
-    else:
+    elif args.coverage_config_base_path:
         # unit tests, sanity tests and other special cases (localhost only)
-        # config and results are in the source tree
-        coverage_config_base_path = args.coverage_config_base_path or ANSIBLE_ROOT
+        # config is in a temporary directory
+        # results are in the source tree
+        coverage_config_base_path = args.coverage_config_base_path
         coverage_output_base_path = os.path.abspath(os.path.join('test/results'))
+    else:
+        raise Exception('No temp path and no coverage config base path. Check for missing coverage_context usage.')
 
-    config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_PATH)
-    coverage_file = os.path.join(coverage_output_base_path, COVERAGE_OUTPUT_PATH, '%s=%s=%s=%s=coverage' % (
+    config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_NAME)
+    coverage_file = os.path.join(coverage_output_base_path, COVERAGE_OUTPUT_NAME, '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version))
+
+    if not args.explain and not os.path.exists(config_file):
+        raise Exception('Missing coverage config file: %s' % config_file)
 
     if args.coverage_check:
         # cause the 'coverage' module to be found, but not imported or enabled
@@ -190,7 +196,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
 
 
 def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, module_coverage=True,
-                      virtualenv=None):
+                      virtualenv=None, disable_coverage=False):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
@@ -203,6 +209,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     :type temp_path: str | None
     :type module_coverage: bool
     :type virtualenv: str | None
+    :type disable_coverage: bool
     :rtype: str | None, str | None
     """
     if not env:
@@ -223,7 +230,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
 
-    if args.coverage:
+    if args.coverage and not disable_coverage:
         # add the necessary environment variables to enable code coverage collection
         env.update(get_coverage_environment(args, target_name, version, temp_path, module_coverage))
 

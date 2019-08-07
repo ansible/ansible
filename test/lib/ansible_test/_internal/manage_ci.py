@@ -79,7 +79,7 @@ class ManageWindowsCI:
 
         for dummy in range(1, 120):
             try:
-                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env, disable_coverage=True)
                 return
             except SubprocessError:
                 time.sleep(10)
@@ -171,7 +171,7 @@ class ManageNetworkCI:
 
         for dummy in range(1, 90):
             try:
-                intercept_command(self.core_ci.args, cmd, 'ping', env=env)
+                intercept_command(self.core_ci.args, cmd, 'ping', env=env, disable_coverage=True)
                 return
             except SubprocessError:
                 time.sleep(10)
