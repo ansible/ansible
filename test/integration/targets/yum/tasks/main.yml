@@ -22,7 +22,7 @@
 
     - name: On Fedora 28 the above won't remove the group which results in a failure in repo.yml below
       yum:
-        name: foo
+        name: dinginessentail
         state: absent
       when:
         - ansible_distribution in ['Fedora']
