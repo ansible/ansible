@@ -9,8 +9,6 @@ Terminal Plugins
 
 Terminal plugins provides low level abstraction APIs and options for setting
 the remote host terminal after initial login.
-Httpapi plugins tell Ansible how to interact with a remote device's HTTP-based API and execute tasks on the
-device.
 
 These plugins generally correspond one-to-one to network device platforms. The appropriate terminal plugin will
 thus be automatically loaded based on the ``ansible_network_os`` variable.
