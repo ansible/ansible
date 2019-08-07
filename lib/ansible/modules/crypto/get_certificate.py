@@ -55,6 +55,7 @@ notes:
   - When using ca_cert on OS X it has been reported that in some conditions the validate will always succeed.
 
 requirements:
+  - "python >= 2.7"
   - "pyOpenSSL >= 0.15"
 '''
 
