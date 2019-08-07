@@ -29,10 +29,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported
 
 DOCUMENTATION = '''
 ---
-module: gcp_compute_autoscaler_facts
+module: gcp_compute_autoscaler_info
 description:
-- Gather facts for GCP Autoscaler
-short_description: Gather facts for GCP Autoscaler
+- Gather info for GCP Autoscaler
+short_description: Gather info for GCP Autoscaler
 version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -55,8 +55,8 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a autoscaler facts"
-  gcp_compute_autoscaler_facts:
+- name: " a autoscaler info"
+  gcp_compute_autoscaler_info:
     zone: us-central1-a
     filters:
     - name = test_object
