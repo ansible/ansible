@@ -59,10 +59,6 @@ options:
           - Full name of interface, e.g. ge-0/0/1
         type: str
         required: True
-      description:
-        description:
-          - Description about the interface, like an alias
-        type: str
       unit:
         description:
           - Logical interface number. Value of C(unit) should be of type integer
