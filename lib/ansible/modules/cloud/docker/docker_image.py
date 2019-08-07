@@ -349,6 +349,8 @@ EXAMPLES = '''
   docker_image:
     name: myimage:7.1.2
     repository: myimage:latest
+    # As 'latest' usually already is present, we need to enable overwriting of existing tags:
+    force_tag: yes
     source: local
 
 - name: Remove image
