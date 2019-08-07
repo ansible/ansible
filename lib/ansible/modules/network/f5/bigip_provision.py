@@ -54,7 +54,7 @@ options:
         For example, changing one module to C(dedicated) requires setting all
         others to C(none). Setting the level of a module to C(none) means that
         the module is not activated.
-      - Use c(state) absent to set c(level) to none and de-provision module.
+      - Use C(state) absent to set c(level) to none and de-provision module.
       - This parameter is not relevant to C(cgnat - pre tmos 15.0) or C(mgmt) and will not be
         applied to the C(cgnat - pre tmos 15.0) or C(mgmt) module.
     type: str
@@ -72,7 +72,7 @@ options:
       - Specifying C(large) reserves an additional 500MB for mgmt module.
       - Specifying C(medium) reserves an additional 200MB for mgmt module.
       - Specifying C(small) reserves no additional RAM for mgmt module.
-      - Use Large for configurations containing more than 2000 objects, or
+      - Use C(large) for configurations containing more than 2000 objects, or
         more specifically, for any configuration that exceeds 1000 objects
         per 2 GB of installed memory. Changing the Management C(mgmt) size
         after initial provisioning causes a reprovision operation
@@ -931,10 +931,10 @@ class ModuleManager(object):
             time.sleep(5)
 
     def _wait_for_mgmt_ready(self):
-        """Waits specifically for CGNAT
+        """Waits specifically for MGMT
 
         Modifying memory reserve for mgmt can take longer to actually start up than all the previous checks take.
-        This check here is specifically waiting for a cgnat API to stop raising
+        This check here is specifically waiting for a MGMT API to stop raising
         errors.
         :return:
         """
