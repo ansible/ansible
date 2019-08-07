@@ -25,6 +25,7 @@ from units.compat.mock import patch
 from ansible.modules.network.aireos import aireos_command
 from units.modules.utils import set_module_args
 from .aireos_module import TestCiscoWlcModule, load_fixture
+from ansible.module_utils import six 
 
 
 class TestCiscoWlcCommandModule(TestCiscoWlcModule):
@@ -114,7 +115,7 @@ class TestCiscoWlcCommandModule(TestCiscoWlcModule):
         `\xc8\x92\xef\xbf\xbdR\x7f`\xc8\x92\xef\xbf\xbdR\x7f`
         wlan wgb broadcast-tagging disable 1
         '''.strip()
-        test_string = unicode(test_data, 'utf-8')
+        test_string = six.u(test_data)
         test_stdout = [test_string, ]
         result = list(aireos_command.to_lines(test_stdout))
         print(result[0])
