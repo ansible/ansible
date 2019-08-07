@@ -912,13 +912,14 @@ class PyVmomi(object):
         vm_obj = None
         user_desired_path = None
         use_instance_uuid = self.params.get('use_instance_uuid') or False
-        if self.params['uuid'] and not use_instance_uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
-        elif self.params['uuid'] and use_instance_uuid:
-            vm_obj = find_vm_by_id(self.content,
-                                   vm_id=self.params['uuid'],
-                                   vm_id_type="instance_uuid")
-        elif self.params['name']:
+        if 'uuid' in self.params and self.params['uuid']:
+            if not use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
+            elif use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content,
+                                       vm_id=self.params['uuid'],
+                                       vm_id_type="instance_uuid")
+        elif 'name' in self.params and self.params['name']:
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             vms = []
 
@@ -936,10 +937,10 @@ class PyVmomi(object):
                 # We have found multiple virtual machines, decide depending upon folder value
                 if self.params['folder'] is None:
                     self.module.fail_json(msg="Multiple virtual machines with same name [%s] found, "
-                                              "Folder value is a required parameter to find uniqueness "
-                                              "of the virtual machine" % self.params['name'],
+                                          "Folder value is a required parameter to find uniqueness "
+                                          "of the virtual machine" % self.params['name'],
                                           details="Please see documentation of the vmware_guest module "
-                                                  "for folder parameter.")
+                                          "for folder parameter.")
 
                 # Get folder path where virtual machine is located
                 # User provided folder where user thinks virtual machine is present
@@ -959,8 +960,8 @@ class PyVmomi(object):
                     # User provided blank value or
                     # User provided only root value, we fail
                     self.module.fail_json(msg="vmware_guest found multiple virtual machines with same "
-                                              "name [%s], please specify folder path other than blank "
-                                              "or '/'" % self.params['name'])
+                                          "name [%s], please specify folder path other than blank "
+                                          "or '/'" % self.params['name'])
                 elif user_folder.startswith('/vm/'):
                     # User provided nested folder under VMware default vm folder i.e. folder = /vm/india/finance
                     user_desired_path = "%s%s%s" % (dcpath, user_defined_dc, user_folder)
@@ -984,7 +985,7 @@ class PyVmomi(object):
             elif vms:
                 # Unique virtual machine found.
                 vm_obj = vms[0]
-        elif self.params['moid']:
+        elif 'moid' in self.params and self.params['moid']:
             vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
         if vm_obj:
