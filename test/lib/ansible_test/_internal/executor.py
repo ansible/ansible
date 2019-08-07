@@ -58,7 +58,7 @@ from .util import (
     find_python,
     get_docker_completion,
     get_remote_completion,
-    COVERAGE_OUTPUT_PATH,
+    COVERAGE_OUTPUT_NAME,
     cmd_quote,
     ANSIBLE_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
@@ -985,7 +985,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
     finally:
         if not args.explain:
             if args.coverage:
-                coverage_temp_path = os.path.join(common_temp_path, COVERAGE_OUTPUT_PATH)
+                coverage_temp_path = os.path.join(common_temp_path, COVERAGE_OUTPUT_NAME)
                 coverage_save_path = 'test/results/coverage'
 
                 for filename in os.listdir(coverage_temp_path):

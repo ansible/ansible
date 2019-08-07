@@ -13,7 +13,7 @@ from .config import (
 )
 
 from .util import (
-    COVERAGE_CONFIG_PATH,
+    COVERAGE_CONFIG_NAME,
     remove_tree,
 )
 
@@ -35,16 +35,18 @@ def coverage_context(args):  # type: (TestConfig) -> None
 
 def coverage_setup(args):  # type: (TestConfig) -> None
     """Set up code coverage configuration before running tests."""
-    if args.coverage and data_context().content.collection:
-        coverage_config = generate_collection_coverage_config(args)
+    if not args.coverage:
+        return
 
-        if args.explain:
-            args.coverage_config_base_path = '/tmp/coverage-temp-dir'
-        else:
-            args.coverage_config_base_path = tempfile.mkdtemp()
+    coverage_config = generate_coverage_config(args)
 
-            with open(os.path.join(args.coverage_config_base_path, COVERAGE_CONFIG_PATH), 'w') as coverage_config_path_fd:
-                coverage_config_path_fd.write(coverage_config)
+    if args.explain:
+        args.coverage_config_base_path = '/tmp/coverage-temp-dir'
+    else:
+        args.coverage_config_base_path = tempfile.mkdtemp()
+
+        with open(os.path.join(args.coverage_config_base_path, COVERAGE_CONFIG_NAME), 'w') as coverage_config_path_fd:
+            coverage_config_path_fd.write(coverage_config)
 
 
 def coverage_cleanup(args):  # type: (TestConfig) -> None
@@ -54,8 +56,38 @@ def coverage_cleanup(args):  # type: (TestConfig) -> None
         args.coverage_config_base_path = None
 
 
-def generate_collection_coverage_config(args):  # type: (TestConfig) -> str
+def generate_coverage_config(args):  # type: (TestConfig) -> str
     """Generate code coverage configuration for tests."""
+    if data_context().content.collection:
+        coverage_config = generate_collection_coverage_config(args)
+    else:
+        coverage_config = generate_ansible_coverage_config()
+
+    return coverage_config
+
+
+def generate_ansible_coverage_config():  # type: () -> str
+    """Generate code coverage configuration for Ansible tests."""
+    coverage_config = '''
+[run]
+branch = True
+concurrency = multiprocessing
+parallel = True
+
+omit =
+    */python*/dist-packages/*
+    */python*/site-packages/*
+    */python*/distutils/*
+    */pyshared/*
+    */pytest
+    */AnsiballZ_*.py
+'''
+
+    return coverage_config
+
+
+def generate_collection_coverage_config(args):  # type: (TestConfig) -> str
+    """Generate code coverage configuration for Ansible Collection tests."""
     coverage_config = '''
 [run]
 branch = True
