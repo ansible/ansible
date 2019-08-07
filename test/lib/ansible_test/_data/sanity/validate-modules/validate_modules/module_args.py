@@ -28,7 +28,7 @@ from contextlib import contextmanager
 
 from ansible.module_utils.six import reraise
 
-from utils import find_executable
+from .utils import find_executable
 
 
 class AnsibleModuleCallError(RuntimeError):
