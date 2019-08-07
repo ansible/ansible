@@ -62,6 +62,7 @@ options:
     description:
       - When I(state) is C(present) run C(docker-compose up) resp. C(docker-compose stop) (with I(stopped)) resp. C(docker-compose restart) (with I(restarted))
         on a subset of services.
+      - If empty, which is the default, the operation will be performed on all services defined in the Compose file (or inline I(definition)).
     type: list
   scale:
     description:
@@ -119,7 +120,7 @@ options:
     version_added: "2.2"
   remove_images:
     description:
-      - Use with I(state) C(absent) to remove the all images or only local images.
+      - Use with I(state) C(absent) to remove all images or only local images.
     type: str
     choices:
         - 'all'
@@ -131,17 +132,19 @@ options:
     default: no
   stopped:
     description:
-      - Use with I(state) C(present) to stop containers.
+      - Use with I(state) C(present) to stop all containers defined in the Compose file.
+      - If I(services) is defined, only the containers listed there will be stopped.
     type: bool
     default: no
   restarted:
     description:
-      - Use with I(state) C(present) to restart containers.
+      - Use with I(state) C(present) to restart all containers defined in the Compose file.
+      - If I(services) is defined, only the containers listed there will be restarted.
     type: bool
     default: no
   remove_orphans:
     description:
-      - Remove containers for services not defined in the compose file.
+      - Remove containers for services not defined in the Compose file.
     type: bool
     default: no
   timeout:
