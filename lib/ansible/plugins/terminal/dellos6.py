@@ -26,7 +26,7 @@ DOCUMENTATION = """
 terminal: dellos6
 short_description: Use terminal plugin to configure dellos6 terminal options
 description:
-  - This dellos6 terminal plugin provides low level abstraction api's and options for
+  - This dellos6 terminal plugin provides low level abstraction APIs and options for
     setting the remote host terminal after initial login.
 version_added: "2.9"
 options:
@@ -73,7 +73,7 @@ options:
     type: list
     description:
       - The answer to reply with if the C(terminal_initial_prompt) is matched. The value can be a single answer
-        or a list of answer for multiple terminal_initial_prompt. In case the login menu has
+        or a list of answers for multiple terminal_initial_prompt. In case the login menu has
         multiple prompts the sequence of the prompt and excepted answer should be in same order and the value
         of I(terminal_prompt_checkall) should be set to I(True) if all the values in C(terminal_initial_prompt) are
         expected to be matched and set to I(False) if any one login prompt is to be matched.

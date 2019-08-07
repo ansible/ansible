@@ -26,7 +26,7 @@ author: Ansible Networking Team
 terminal: junos
 short_description: Use terminal plugin to configure junos terminal options
 description:
-  - This junos terminal plugin provides low level abstraction api's and options for
+  - This junos terminal plugin provides low level abstraction APIs and options for
     setting the remote host terminal after initial login.
 version_added: "2.9"
 options:
@@ -73,7 +73,7 @@ options:
     type: list
     description:
       - The answer to reply with if the C(terminal_initial_prompt) is matched.
-        The value can be a single answer or a list of answer for multiple
+        The value can be a single answer or a lists of answer for multiple
         terminal_initial_prompt. In case the login menu has multiple prompts
         the sequence of the prompt and excepted answer should be in same order
         and the value of I(terminal_prompt_checkall) should be set to I(True) if

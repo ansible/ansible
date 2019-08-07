@@ -561,14 +561,14 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    connect_retry_timeout = 30
 
 
-Timeout issue due to platform specific login menu with network_cli connection type
-----------------------------------------------------------------------------------
+Timeout issue due to platform specific login menu with ``network_cli`` connection type
+--------------------------------------------------------------------------------------
 
-Starting in Ansible 2.9 version onwards the terminal plugin supports configuration options
-to handle the platform specific login menu. These options can be set at global or group/host or as
+In Ansible 2.9 and later,  the terminal plugin supports configuration options
+to handle the platform specific login menu. These options can be set as global, group/host or
 tasks variables.
 
-Example Handle login menu with host variables
+Example: Handle single login menu prompts with host variables
 
 .. code-block:: console
 
@@ -579,7 +579,7 @@ Example Handle login menu with host variables
     ansible_terminal_initial_answer:
       - "3"
 
-Example Handle remote host login menu with host variables
+Example: Handle remote host multiple login menu prompts with host variables
 
 .. code-block:: console
 
@@ -593,11 +593,13 @@ Example Handle remote host login menu with host variables
       - "3"
     ansible_terminal_initial_prompt_checkall: True
 
-To handle multiple login menu prompts the values of ``ansible_terminal_initial_prompt`` and
-``ansible_terminal_initial_answer`` should be a list and the prompt sequence should match the
-answer sequence and value of ``ansible_terminal_initial_prompt_checkall`` should be set to
-``True``. If all the prompts in sequence are not received from remote host it will result in
-timeout. These terminal plugin configuration options can also be set as group variables.
+To handle multiple login menu prompts:
+* The values of ``ansible_terminal_initial_prompt`` and ``ansible_terminal_initial_answer`` should
+  be a list.
+* The prompt sequence should match the answer sequence.
+* The value of ``ansible_terminal_initial_prompt_checkall`` should be set to ``True``.
+
+.. note:: If all the prompts in sequence are not received from remote host at the time connection initialization it will result in a timeout.
 
 
 Playbook issues
@@ -797,15 +799,15 @@ To make this a global setting, add the following to your ``ansible.cfg`` file:
 This timer delay per command executed on remote host can be disabled by setting the value to zero.
 
 
-Task failure due to mismatched error regex within command response using network_cli connection type
-----------------------------------------------------------------------------------------------------
+Task failure due to mismatched error regex within command response using ``network_cli`` connection type
+--------------------------------------------------------------------------------------------------------
 
-Starting in Ansible 2.9 version onwards the terminal plugin supports configuration options
+In Ansible 2.9 and later the terminal plugin supports configuration options
 to handle the stdout and stderr regex to identify if the command execution response consist
-of normal response or error response. These options can be set group/host variables or as
+of a normal response or an error response. These options can be set group/host variables or as
 tasks variables.
 
-Example For mismatched error response
+Example: For mismatched error response
 
 .. code-block:: yaml
 
@@ -828,7 +830,7 @@ Playbook run output:
 
 Suggestions to resolve:
 
-Modify the error regex for individual task
+Modify the error regex for individual task.
 
 .. code-block:: yaml
 
@@ -841,8 +843,6 @@ Modify the error regex for individual task
         - pattern: 'connection timed out'
           flags: 're.I'
 
-The terminal plugin regex options ``ansible_terminal_stderr_re`` and ``ansible_terminal_stdout_re`` has
-``pattern`` and ``flags`` as keys. The value of ``flags`` key should be a value that is accepted by
-``re.compile`` python method.
-
-These options can also be set as either host or group variables.
+The terminal plugin regex options ``ansible_terminal_stderr_re`` and ``ansible_terminal_stdout_re`` have
+``pattern`` and ``flags`` as keys. The value of the ``flags`` key should be a value that is accepted by
+the ``re.compile`` python method.

@@ -630,6 +630,7 @@ class Connection(NetworkConnectionBase):
                     flag = getattr(re, flag.split('.')[1])
                 terminal_std_re.append(re.compile(pattern, flag))
         else:
+            # To maintain backward compatibility
             terminal_std_re = getattr(self._terminal, option)
 
         return terminal_std_re
