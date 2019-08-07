@@ -68,10 +68,14 @@ options:
             - "Enables passthrough to an SR-IOV-enabled host NIC."
             - "When enabled C(qos) and  C(network_filter) are automatically set to None and C(port_mirroring) to False."
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             - "When enabled and C(migratable) not specified then C(migratable) is enabled."
             - "Port mirroring, QoS and network filters are not supported on passthrough profiles."
 >>>>>>> 279617a94e... add docs (#60192)
+=======
+            - "Port mirroring, QoS and network filters are not supported on passthrough profiles."
+>>>>>>> fb87bafaae... ovirt vnic network filter fix (#59727)
         choices: ['disabled', 'enabled']
     migratable:
         description:
@@ -166,8 +170,10 @@ class EntityVnicPorfileModule(BaseModule):
         return get_id_by_name(networks_service, self.param('network'))
 
     def _get_qos_id(self):
-        qoss_service = self._get_dcs_service().service(self._get_dcs_id()).qoss_service()
-        return get_id_by_name(qoss_service, self.param('qos'))
+        if self.param('qos'):
+            qoss_service = self._get_dcs_service().service(self._get_dcs_id()).qoss_service()
+            return get_id_by_name(qoss_service, self.param('qos')) if self.param('qos') else None
+        return None
 
     def _get_network_filter_id(self):
         nf_service = self._connection.system_service().network_filters_service()
@@ -175,18 +181,21 @@ class EntityVnicPorfileModule(BaseModule):
 
     def _get_network_filter(self):
         network_filter = None
-        if self.param('network_filter'):
-            network_filter = otypes.NetworkFilter(id=self._get_network_filter_id())
-        elif self.param('network_filter') == '' or self.param('pass_through') == 'enabled':
+        # The order of these condition is necessary.
+        # When would network_filter and pass_through specified it would try to create and network_filter and fail on engine.
+        if self.param('network_filter') == '' or self.param('pass_through') == 'enabled':
             network_filter = otypes.NetworkFilter()
+        elif self.param('network_filter'):
+            network_filter = otypes.NetworkFilter(id=self._get_network_filter_id())
         return network_filter
 
     def _get_qos(self):
         qos = None
-        if self.param('qos'):
-            qos = otypes.Qos(id=self._get_qos_id())
-        elif self.param('qos') == '' or self.param('pass_through') == 'enabled':
+        # The order of these condition is necessary. When would qos and pass_through specified it would try to create and qos and fail on engine.
+        if self.param('qos') == '' or self.param('pass_through') == 'enabled':
             qos = otypes.Qos()
+        elif self.param('qos'):
+            qos = otypes.Qos(id=self._get_qos_id())
         return qos
 
     def _get_port_mirroring(self):
@@ -194,13 +203,18 @@ class EntityVnicPorfileModule(BaseModule):
             return False
         return self.param('port_mirroring')
 
+    def _get_migratable(self):
+        if self.param('migratable') is not None:
+            return self.param('migratable')
+        if self.param('pass_through') == 'enabled':
+            return True
+
     def build_entity(self):
         return otypes.VnicProfile(
             name=self.param('name'),
             network=otypes.Network(id=self._get_network_id()),
-            description=self.param('description') if self.param('description') else None,
+            description=self.param('description') if self.param('description') is not None else None,
             pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self.param('pass_through'))) if self.param('pass_through') else None,
-            migratable=self.param('migratable') if self.param('migratable') else None,
             custom_properties=[
                 otypes.CustomProperty(
                     name=cp.get('name'),
@@ -208,6 +222,7 @@ class EntityVnicPorfileModule(BaseModule):
                     value=str(cp.get('value')),
                 ) for cp in self.param('custom_properties') if cp
             ] if self.param('custom_properties') else None,
+            migratable=self._get_migratable(),
             qos=self._get_qos(),
             port_mirroring=self._get_port_mirroring(),
             network_filter=self._get_network_filter()
@@ -223,8 +238,10 @@ class EntityVnicPorfileModule(BaseModule):
                 return sorted(current) == sorted(passed)
             return True
 
+        pass_through = getattr(entity.pass_through.mode, 'name', None)
         return (
             check_custom_properties() and
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
             # The reason why we can't use equal method, is we get None from _get_network_filter_id or _get_qos_id method, when passing empty string.
@@ -232,11 +249,13 @@ class EntityVnicPorfileModule(BaseModule):
             self._get_network_filter_id() == getattr(entity.network_filter, 'id', None) and
             self._get_qos_id() == getattr(entity.qos, 'id', None) and
 >>>>>>> 279617a94e... add docs (#60192)
+=======
+            self._get_network_filter_id() == getattr(entity.network_filter, 'id', None) and
+            self._get_qos_id() == getattr(entity.qos, 'id', None) and
+>>>>>>> fb87bafaae... ovirt vnic network filter fix (#59727)
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
-            equal(self.param('pass_through'), getattr(entity.pass_through.mode, 'name', None)) and
+            equal(self.param('pass_through'), pass_through.lower() if pass_through else None) and
             equal(self.param('description'), entity.description) and
-            equal(self.param('network_filter'), getattr(entity.network_filter, 'name', None)) and
-            equal(self.param('qos'), getattr(entity.qos, 'name', None)) and
             equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
         )
 
@@ -248,6 +267,12 @@ def get_entity(vnic_services, entitynics_module):
         # When vNIC already exist update it, when not create it
         if vnic.name == entitynics_module.param('name') and network_id == vnic.network.id:
             return vnic
+
+
+def check_params(module):
+    if (module.params.get('port_mirroring') or module.params.get('network_filter') or module.params.get('qos'))\
+            and module.params.get('pass_through') == 'enabled':
+        module.fail_json(msg="Cannot edit VM network interface profile. 'Port Mirroring,'Qos' and 'Network Filter' are not supported on passthrough profiles.")
 
 
 def main():
@@ -270,6 +295,7 @@ def main():
 
     )
     check_sdk(module)
+    check_params(module)
     try:
         auth = module.params.pop('auth')
         connection = create_connection(auth)
