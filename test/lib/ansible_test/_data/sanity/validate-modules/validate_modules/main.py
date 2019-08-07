@@ -42,11 +42,11 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
-from module_args import AnsibleModuleImportError, get_argument_spec
+from .module_args import AnsibleModuleImportError, get_argument_spec
 
-from schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
+from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
-from utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
+from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
@@ -1707,7 +1707,7 @@ def re_compile(value):
         raise TypeError(e)
 
 
-def main():
+def run():
     parser = argparse.ArgumentParser(prog="validate-modules")
     parser.add_argument('modules', nargs='+',
                         help='Path to module or module directory')
@@ -1842,8 +1842,8 @@ class GitError(Exception):
         self.status = status
 
 
-if __name__ == '__main__':
+def main():
     try:
-        main()
+        run()
     except KeyboardInterrupt:
         pass
