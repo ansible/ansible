@@ -49,15 +49,22 @@ options:
   manager_attribute_name:
     required: false
     description:
-      - name of iDRAC attribute to update
+      - (deprecated) name of iDRAC attribute to update
     default: 'null'
     type: str
   manager_attribute_value:
     required: false
     description:
-      - value of iDRAC attribute to update
+      - (deprecated) value of iDRAC attribute to update
     default: 'null'
     type: str
+  manager_attributes:
+    required: false
+    description:
+      - dictionary of iDRAC attribute name and value pairs to update
+    default: {}
+    type: 'dict'
+    version_added: '2.9'
   timeout:
     description:
       - Timeout in seconds for URL requests to iDRAC controller
@@ -74,36 +81,48 @@ author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''
-  - name: Enable NTP in iDRAC
+  - name: Enable NTP and set NTP server and Time zone attributes in iDRAC
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
       resource_id: iDRAC.Embedded.1
-      manager_attribute_name: NTPConfigGroup.1.NTPEnable
-      manager_attribute_value: Enabled
+      manager_attributes:
+        NTPConfigGroup.1.NTPEnable: "Enabled"
+        NTPConfigGroup.1.NTP1: "{{ ntpserver1 }}"
+        Time.1.Timezone: "{{ timezone }}"
       baseuri: "{{ baseuri }}"
       username: "{{ username}}"
       password: "{{ password }}"
-  - name: Set NTP server 1 to {{ ntpserver1 }} in iDRAC
+
+  - name: Enable Syslog and set Syslog servers in iDRAC
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
       resource_id: iDRAC.Embedded.1
-      manager_attribute_name: NTPConfigGroup.1.NTP1
-      manager_attribute_value: "{{ ntpserver1 }}"
+      manager_attributes:
+        SysLog.1.SysLogEnable: "Enabled"
+        SysLog.1.Server1: "{{ syslog_server1 }}"
+        SysLog.1.Server2: "{{ syslog_server2 }}"
       baseuri: "{{ baseuri }}"
       username: "{{ username}}"
       password: "{{ password }}"
-  - name: Set Timezone to {{ timezone }} in iDRAC
+
+  - name: Configure SNMP community string, port, protocol and trap format
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
       resource_id: iDRAC.Embedded.1
-      manager_attribute_name: Time.1.Timezone
-      manager_attribute_value: "{{ timezone }}"
+      manager_attributes:
+        SNMP.1.AgentEnable: "Enabled"
+        SNMP.1.AgentCommunity: "public_community_string"
+        SNMP.1.TrapFormat: "SNMPv1"
+        SNMP.1.SNMPProtocol: "All"
+        SNMP.1.DiscoveryPort: 161
+        SNMP.1.AlertPort: 162
       baseuri: "{{ baseuri }}"
       username: "{{ username}}"
       password: "{{ password }}"
+
 '''
 
 RETURN = '''
@@ -114,7 +133,6 @@ msg:
     sample: "Action was successful"
 '''
 
-import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
@@ -123,11 +141,14 @@ from ansible.module_utils._text import to_native
 class IdracRedfishUtils(RedfishUtils):
 
     def set_manager_attributes(self, attr):
+
         result = {}
         # Here I'm making the assumption that the key 'Attributes' is part of the URI.
         # It may not, but in the hardware I tested with, getting to the final URI where
         # the Manager Attributes are, appear to be part of a specific OEM extension.
         key = "Attributes"
+        manager_attr = {}
+        exclude_manager_attr = {}
 
         # Search for key entry and extract URI from it
         response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
@@ -139,26 +160,30 @@ class IdracRedfishUtils(RedfishUtils):
         if key not in data:
             return {'ret': False, 'msg': "Key %s not found" % key}
 
-        # Check if attribute exists
-        if attr['mgr_attr_name'] not in data[key]:
-            return {'ret': False, 'msg': "Manager attribute %s not found" % attr['mgr_attr_name']}
+        for mgr_attr_name, mgr_attr_value in attr.items():
+            # Check if attribute exists
+            if mgr_attr_name not in data[key]:
+                return {'ret': False, 'msg': "Manager attribute %s not found" % mgr_attr_name}
 
-        # Example: manager_attr = {\"name\":\"value\"}
-        # Check if value is a number. If so, convert to int.
-        if attr['mgr_attr_value'].isdigit():
-            manager_attr = "{\"%s\": %i}" % (attr['mgr_attr_name'], int(attr['mgr_attr_value']))
-        else:
-            manager_attr = "{\"%s\": \"%s\"}" % (attr['mgr_attr_name'], attr['mgr_attr_value'])
+            # Example: manager_attr = {\"name\":\"value\"}
+            # Check if value is a number. If so, convert to int.
+            mgr_attr_value = int(mgr_attr_value) if mgr_attr_value.isdigit() else mgr_attr_value
 
-        # Find out if value is already set to what we want. If yes, return
-        if data[key][attr['mgr_attr_name']] == attr['mgr_attr_value']:
-            return {'ret': True, 'changed': False, 'msg': "Manager attribute already set"}
+            # Find out if value is already set to what we want. If yes, exclude
+            # those attributes
+            if data[key][mgr_attr_name] == mgr_attr_value:
+                exclude_manager_attr.update({mgr_attr_name: mgr_attr_value})
+            else:
+                manager_attr.update({mgr_attr_name: mgr_attr_value})
 
-        payload = {"Attributes": json.loads(manager_attr)}
+        if not manager_attr:
+            return {'ret': True, 'changed': False, 'msg': "Manager attributes already set"}
+
+        payload = {"Attributes": manager_attr}
         response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload)
         if response['ret'] is False:
             return response
-        return {'ret': True, 'changed': True, 'msg': "Modified Manager attribute %s" % attr['mgr_attr_name']}
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager attributes %s" % manager_attr}
 
 
 CATEGORY_COMMANDS_ALL = {
@@ -175,8 +200,9 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            manager_attribute_name=dict(default='null'),
-            manager_attribute_value=dict(default='null'),
+            manager_attribute_name=dict(default=None),
+            manager_attribute_value=dict(default=None),
+            manager_attributes=dict(type='dict', default={}),
             timeout=dict(type='int', default=10),
             resource_id=dict()
         ),
@@ -194,8 +220,10 @@ def main():
     timeout = module.params['timeout']
 
     # iDRAC attributes to update
-    mgr_attributes = {'mgr_attr_name': module.params['manager_attribute_name'],
-                      'mgr_attr_value': module.params['manager_attribute_value']}
+    mgr_attributes = {
+        module.params['manager_attribute_name']: module.params['manager_attribute_value']
+    }
+    mgr_attributes.update(module.params['manager_attributes'])
 
     # System, Manager or Chassis ID to modify
     resource_id = module.params['resource_id']
@@ -227,9 +255,17 @@ def main():
             if command == "SetManagerAttributes":
                 result = rf_utils.set_manager_attributes(mgr_attributes)
 
+    if any((module.params['manager_attribute_name'], module.params['manager_attribute_value'])):
+        result['warnings'] = [('Arguments `manager_attribute_name` and `manager_attribute_value` '
+                               'are deprecated since Ansible 2.9. Use '
+                               '`manager_attributes` instead for passing in the '
+                               'manager attribute name and value pairs.')]
+
     # Return data back or fail with proper message
     if result['ret'] is True:
-        module.exit_json(changed=result['changed'], msg=to_native(result['msg']))
+        module.exit_json(changed=result['changed'],
+                         msg=to_native(result['msg']),
+                         warnings=to_native(result['warnings']))
     else:
         module.fail_json(msg=to_native(result['msg']))
 
