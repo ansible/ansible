@@ -90,7 +90,7 @@ groupings:
   - aws
   cloudfront_distribution:
   - aws
-  cloudfront_facts:
+  cloudfront_info:
   - aws
   cloudfront_invalidation:
   - aws
