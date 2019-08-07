@@ -146,12 +146,9 @@ Noteworthy module changes
 * The ``elb_classic_lb_facts`` module was renamed to :ref:`elb_classic_lb_info <elb_classic_lb_info_module>`.
 * The ``elb_target_facts`` module was renamed to :ref:`elb_target_info <elb_target_info_module>`.
 * The ``elb_target_group_facts`` module was renamed to :ref:`elb_target_group_info <elb_target_group_info_module>`.
-* The ``gcp_appengine_firewall_rule_facts`` module was renamed to :ref:`gcp_appengine_firewall_rule_info <gcp_appengine_firewall_rule_info_module>`.
 * The ``gcp_bigquery_dataset_facts`` module was renamed to :ref:`gcp_bigquery_dataset_info <gcp_bigquery_dataset_info_module>`.
 * The ``gcp_bigquery_table_facts`` module was renamed to :ref:`gcp_bigquery_table_info <gcp_bigquery_table_info_module>`.
 * The ``gcp_cloudbuild_trigger_facts`` module was renamed to :ref:`gcp_cloudbuild_trigger_info <gcp_cloudbuild_trigger_info_module>`.
-* The ``gcp_cloudscheduler_job_facts`` module was renamed to :ref:`gcp_cloudscheduler_job_info <gcp_cloudscheduler_job_info_module>`.
-* The ``gcp_cloudtasks_queue_facts`` module was renamed to :ref:`gcp_cloudtasks_queue_info <gcp_cloudtasks_queue_info_module>`.
 * The ``gcp_compute_address_facts`` module was renamed to :ref:`gcp_compute_address_info <gcp_compute_address_info_module>`.
 * The ``gcp_compute_backend_bucket_facts`` module was renamed to :ref:`gcp_compute_backend_bucket_info <gcp_compute_backend_bucket_info_module>`.
 * The ``gcp_compute_backend_service_facts`` module was renamed to :ref:`gcp_compute_backend_service_info <gcp_compute_backend_service_info_module>`.
@@ -190,8 +187,6 @@ Noteworthy module changes
 * The ``gcp_dns_resource_record_set_facts`` module was renamed to :ref:`gcp_dns_resource_record_set_info <gcp_dns_resource_record_set_info_module>`.
 * The ``gcp_iam_role_facts`` module was renamed to :ref:`gcp_iam_role_info <gcp_iam_role_info_module>`.
 * The ``gcp_iam_service_account_facts`` module was renamed to :ref:`gcp_iam_service_account_info <gcp_iam_service_account_info_module>`.
-* The ``gcp_mlengine_model_facts`` module was renamed to :ref:`gcp_mlengine_model_info <gcp_mlengine_model_info_module>`.
-* The ``gcp_mlengine_version_facts`` module was renamed to :ref:`gcp_mlengine_version_info <gcp_mlengine_version_info_module>`.
 * The ``gcp_pubsub_subscription_facts`` module was renamed to :ref:`gcp_pubsub_subscription_info <gcp_pubsub_subscription_info_module>`.
 * The ``gcp_pubsub_topic_facts`` module was renamed to :ref:`gcp_pubsub_topic_info <gcp_pubsub_topic_info_module>`.
 * The ``gcp_redis_instance_facts`` module was renamed to :ref:`gcp_redis_instance_info <gcp_redis_instance_info_module>`.
