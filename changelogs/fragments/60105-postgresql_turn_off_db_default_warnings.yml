@@ -1,0 +1,5 @@
+bugfixes:
+- postgresql_slot - turn off the default database warning for slot_type physical (https://github.com/ansible/ansible/issues/60043)
+- postgresql_membership - turn off the default database warning (https://github.com/ansible/ansible/pull/60043)
+- postgresql_ping - turn off the default database warning (https://github.com/ansible/ansible/pull/60043)
+- postgresql_tablespace - turn off the default database warning (https://github.com/ansible/ansible/pull/60043)
