@@ -51,7 +51,7 @@ options:
         can also be used with an initial C(M(!)) to specify that a
         specific subset should not be collected.
     required: false
-    choices: ['all', 'lacp']
+    choices: ['all', 'lacp', '!lacp', 'lacp_interfaces', '!lacp_interfaces']
     version_added: "2.9"
 """
 
@@ -71,7 +71,7 @@ EXAMPLES = """
     gather_subset:
       - "!hardware"
 
-# Collect only the lag_interfaces facts
+# Collect only the lacp facts
 - iosxr_facts:
     gather_subset:
       - "!all"
@@ -79,12 +79,12 @@ EXAMPLES = """
     gather_network_resources:
       - lacp
 
-# Do not collect lag_interfaces facts
+# Do not collect lacp_interfaces facts
 - iosxr_facts:
     gather_network_resources:
-      - "!lacp"
+      - "!lacp_interfaces"
 
-# Collect lag_interfaces and minimal default facts
+# Collect lacp and minimal default facts
 - iosxr_facts:
     gather_subset: min
     gather_network_resources: lacp

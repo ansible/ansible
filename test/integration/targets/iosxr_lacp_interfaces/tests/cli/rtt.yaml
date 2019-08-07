@@ -1,0 +1,60 @@
+---
+- debug:
+    msg: "START isoxr_lacp_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- block:
+    - include_tasks: _remove_config.yaml
+
+    - name: Apply the provided configuration (base config)
+      iosxr_lacp_interfaces:
+        config:
+          - name: Bundle-Ether10
+            churn_logging: actor
+            collector_max_delay: 200
+
+          - name: Bundle-Ether11
+            period: 100
+
+          - name: GigabitEthernet0/0/0/0
+            period: 200
+        state: merged
+      register: base_config
+        
+    - name: Gather interfaces facts
+      iosxr_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - lacp_interfaces
+
+    - name: Apply the provided configuration (config to be reverted)
+      iosxr_lacp_interfaces:
+        config:
+          - name: Bundle-Ether10
+            churn_logging: partner
+
+          - name: Bundle-Ether11
+            period: 200
+
+          - name: GigabitEthernet0/0/0/0
+            period: 300
+        state: overridden
+      register: result
+      
+    - name: Assert that changes were applied
+      assert:
+        that: "{{ round_trip['after'] | symmetric_difference(result['after']) |length == 0  }}"
+
+    - name: Revert back to base config using facts round trip
+      iosxr_lacp_interfaces:
+        config: "{{ ansible_facts['network_resources']['lacp_interfaces'] }}"
+        state: overridden
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ base_config['after'] | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml
