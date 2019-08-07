@@ -669,7 +669,7 @@ lib/ansible/modules/cloud/amazon/aws_waf_web_acl.py validate-modules:E338
 lib/ansible/modules/cloud/amazon/cloudformation.py validate-modules:E324
 lib/ansible/modules/cloud/amazon/cloudformation.py validate-modules:E337
 lib/ansible/modules/cloud/amazon/cloudformation.py validate-modules:E338
-lib/ansible/modules/cloud/amazon/cloudformation_facts.py validate-modules:E338
+lib/ansible/modules/cloud/amazon/cloudformation_info.py validate-modules:E338
 lib/ansible/modules/cloud/amazon/cloudformation_stack_set.py validate-modules:E322
 lib/ansible/modules/cloud/amazon/cloudformation_stack_set.py validate-modules:E337
 lib/ansible/modules/cloud/amazon/cloudformation_stack_set.py validate-modules:E338

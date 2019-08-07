@@ -84,7 +84,7 @@ groupings:
   - aws
   cloudformation:
   - aws
-  cloudformation_facts:
+  cloudformation_info:
   - aws
   cloudformation_stack_set:
   - aws
