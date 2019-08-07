@@ -316,7 +316,7 @@ EXAMPLES = """
 # !
 #
 
-- name: Delete L2 attributes of given interfaces (Note: This won't delete the interface itself)
+- name: "Delete L2 attributes of given interfaces (Note: This won't delete the interface itself)"
   iosxr_l2_interfaces:
     config:
       - name: GigabitEthernet0/0/0/4
@@ -361,7 +361,7 @@ EXAMPLES = """
 #  !
 # !
 
-- name: Delete L2 attributes of all interfaces (Note: This won't delete the interface itself)
+- name: "Delete L2 attributes of all interfaces (Note: This won't delete the interface itself)"
   iosxr_l2_interfaces:
     state: deleted
 
