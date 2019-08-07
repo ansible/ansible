@@ -58,7 +58,7 @@ DOCUMENTATION = """
         native_vlan:
           description:
           - Configure a native VLAN ID for the trunk
-          type: str
+          type: int
         l2transport:
           description:
           - Switchport mode access command to configure the interface as a layer 2 access
@@ -66,6 +66,7 @@ DOCUMENTATION = """
         l2protocol:
           description:
           - Configures Layer 2 protocol tunneling and protocol data unit (PDU) filtering on an interface.
+          type: list
           suboptions:
             cdp:
               description:
@@ -313,6 +314,7 @@ EXAMPLES = """
 #   l2protocol stp tunnel
 #  !
 # !
+#
 
 - name: Delete L2 attributes of given interfaces (Note: This won't delete the interface itself)
   iosxr_l2_interfaces:

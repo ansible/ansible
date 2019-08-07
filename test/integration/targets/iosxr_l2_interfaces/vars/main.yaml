@@ -45,11 +45,6 @@ replaced:
       name: GigabitEthernet0/0/0/1
       native_vlan: 10
       propagate: true
-    - l2protocol:
-      - vtp: tunnel
-      l2transport: true
-      name: GigabitEthernet0/0/0/4
-      native_vlan: 20
     - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
       q_vlan:
       - 30
@@ -58,6 +53,11 @@ replaced:
       q_vlan:
       - 40
       - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
 
   commands:
     - interface GigabitEthernet0/0/0/1
@@ -75,11 +75,6 @@ replaced:
       l2transport: true
       name: GigabitEthernet0/0/0/1
       native_vlan: 40
-    - l2protocol:
-      - vtp: tunnel
-      l2transport: true
-      name: GigabitEthernet0/0/0/4
-      native_vlan: 20
     - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
       q_vlan:
       - 10
@@ -88,6 +83,11 @@ replaced:
       q_vlan:
       - 40
       - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
 
 overridden:
   before:
@@ -99,11 +99,6 @@ overridden:
       name: GigabitEthernet0/0/0/1
       native_vlan: 10
       propagate: true
-    - l2protocol:
-      - vtp: tunnel
-      l2transport: true
-      name: GigabitEthernet0/0/0/4
-      native_vlan: 20
     - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
       q_vlan:
       - 30
@@ -112,6 +107,11 @@ overridden:
       q_vlan:
       - 40
       - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
 
   commands:
     - interface GigabitEthernet0/0/0/1
@@ -133,13 +133,13 @@ overridden:
     - l2protocol:
       - stp: forward
       l2transport: true
-      name: GigabitEthernet0/0/0/4
-      native_vlan: 40
     - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
     - name: preconfigure GigabitEthernet0/0/0/3.900
       q_vlan:
       - 20
       - 40
+    - name: GigabitEthernet0/0/0/4
+      native_vlan: 40
 
 deleted:
   before:
@@ -151,11 +151,6 @@ deleted:
       name: GigabitEthernet0/0/0/1
       native_vlan: 10
       propagate: true
-    - l2protocol:
-      - vtp: tunnel
-      l2transport: true
-      name: GigabitEthernet0/0/0/4
-      native_vlan: 20
     - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
       q_vlan:
       - 30
@@ -164,6 +159,11 @@ deleted:
       q_vlan:
       - 40
       - 60
+    - l2protocol:
+      - vtp: tunnel
+      l2transport: true
+      name: GigabitEthernet0/0/0/4
+      native_vlan: 20
 
   commands:
     - interface GigabitEthernet0/0/0/1

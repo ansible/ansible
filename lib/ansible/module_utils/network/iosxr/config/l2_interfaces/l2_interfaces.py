@@ -138,8 +138,8 @@ class L2_Interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        not_in_have = {()}
-        in_have = {()}
+        not_in_have = set()
+        in_have = set()
         for each in have:
             for interface in want:
                 if each['name'] == interface['name']:
