@@ -145,16 +145,9 @@ import re
 import time
 from ansible.module_utils.network.icx.icx import run_commands
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.utils import ComplexList, to_lines
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
-
-
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        yield item
 
 
 def parse_commands(module, warnings):
