@@ -23,8 +23,8 @@ from ..util import (
     ApplicationError,
     display,
     make_dirs,
-    COVERAGE_CONFIG_PATH,
-    COVERAGE_OUTPUT_PATH,
+    COVERAGE_CONFIG_NAME,
+    COVERAGE_OUTPUT_NAME,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
@@ -37,7 +37,7 @@ from ..util_common import (
 )
 
 from ..coverage_util import (
-    generate_collection_coverage_config,
+    generate_coverage_config,
 )
 
 from ..cache import (
@@ -46,10 +46,6 @@ from ..cache import (
 
 from ..cloud import (
     CloudEnvironmentConfig,
-)
-
-from ..data import (
-    data_context,
 )
 
 
@@ -64,22 +60,20 @@ def setup_common_temp_dir(args, path):
     os.mkdir(path)
     os.chmod(path, MODE_DIRECTORY)
 
-    coverage_config_path = os.path.join(path, COVERAGE_CONFIG_PATH)
+    if args.coverage:
+        coverage_config_path = os.path.join(path, COVERAGE_CONFIG_NAME)
 
-    if data_context().content.collection:
-        coverage_config = generate_collection_coverage_config(args)
+        coverage_config = generate_coverage_config(args)
 
         with open(coverage_config_path, 'w') as coverage_config_fd:
             coverage_config_fd.write(coverage_config)
-    else:
-        shutil.copy(os.path.join(ANSIBLE_ROOT, COVERAGE_CONFIG_PATH), coverage_config_path)
 
-    os.chmod(coverage_config_path, MODE_FILE)
+        os.chmod(coverage_config_path, MODE_FILE)
 
-    coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_PATH)
+        coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_NAME)
 
-    os.mkdir(coverage_output_path)
-    os.chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
+        os.mkdir(coverage_output_path)
+        os.chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
 
 
 def generate_dependency_map(integration_targets):

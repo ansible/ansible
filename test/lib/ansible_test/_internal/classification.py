@@ -835,7 +835,6 @@ class PathMapper:
 
             if path in (
                     'shippable.yml',
-                    '.coveragerc',
             ):
                 return all_tests(self.args)  # test infrastructure, run all tests
 
