@@ -79,9 +79,9 @@ EXAMPLES = r'''
 
 - name: PTR example
   win_dns_record:
-    name: "db1"
+    name: "1.1.1"
     type: "PTR"
-    value: "1.1.1"
+    value: "db1"
     zone: "10.in-addr.arpa"
 
 - name: Remove static record
