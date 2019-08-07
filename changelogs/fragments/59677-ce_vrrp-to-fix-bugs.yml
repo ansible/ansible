@@ -1,0 +1,2 @@
+bugfixes:
+- ce_vrrp - update to fix some bugs - Solving the mistake of parameter judgment, update_cmds statement missing. (https://github.com/ansible/ansible/pull/59677)
