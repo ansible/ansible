@@ -6091,7 +6091,7 @@ udp_profiles:
       sample: yes
   sample: hash/dictionary of values
 users:
-  description: Details of the users on the system
+  description: Details of the users on the system.
   returned: When C(users) is specified in C(gather_subset).
   type: complex
   contains:
@@ -6121,19 +6121,19 @@ users:
       contains:
         name:
           description:
-            - Name of patition
+            - Name of partition
           returned: queried
           type: str
           sample: all-partitions
         role:
           description:
-            - Role allowed to user on parition
+            - Role allowed to user on partition.
           returned: queried
           type: str
           sample: auditor
     shell:
       description:
-        - The shell assigned to the user account
+        - The shell assigned to the user account.
       returned: queried
       type: str
       sample: tmsh
