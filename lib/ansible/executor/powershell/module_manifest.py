@@ -134,13 +134,17 @@ class PSModuleDepFinder(object):
                                'for \'%s\'' % m)
 
         module_util_data = to_bytes(_slurp(mu_path))
+        util_info = {
+            'data': module_util_data,
+            'path': to_text(mu_path),
+        }
         if ext == ".psm1":
-            self.ps_modules[m] = module_util_data
+            self.ps_modules[m] = util_info
         else:
             if wrapper:
-                self.cs_utils_wrapper[m] = module_util_data
+                self.cs_utils_wrapper[m] = util_info
             else:
-                self.cs_utils_module[m] = module_util_data
+                self.cs_utils_module[m] = util_info
         self.scan_module(module_util_data, wrapper=wrapper,
                          powershell=(ext == ".psm1"))
 
@@ -202,10 +206,10 @@ def _strip_comments(source):
     return b'\n'.join(buf)
 
 
-def _create_powershell_wrapper(b_module_data, module_args, environment,
-                               async_timeout, become, become_method,
-                               become_user, become_password, become_flags,
-                               substyle):
+def _create_powershell_wrapper(b_module_data, module_path, module_args,
+                               environment, async_timeout, become,
+                               become_method, become_user, become_password,
+                               become_flags, substyle, task_vars):
     # creates the manifest/wrapper used in PowerShell/C# modules to enable
     # things like become and async - this is also called in action/script.py
 
@@ -227,7 +231,7 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
         module_args=module_args,
         actions=[module_wrapper],
         environment=environment,
-        encoded_output=False
+        encoded_output=False,
     )
     finder.scan_exec_script(module_wrapper)
 
@@ -261,6 +265,16 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
         exec_manifest['become_password'] = None
         exec_manifest['become_flags'] = None
 
+    coverage_manifest = dict(
+        module_path=module_path,
+        module_util_paths=dict(),
+        output=None,
+    )
+    coverage_output = C.config.get_config_value('COVERAGE_REMOTE_OUTPUT', variables=task_vars)
+    if coverage_output and substyle == 'powershell':
+        finder.scan_exec_script('coverage_wrapper')
+        coverage_manifest['output'] = coverage_output
+
     # make sure Ansible.ModuleUtils.AddType is added if any C# utils are used
     if len(finder.cs_utils_wrapper) > 0 or len(finder.cs_utils_module) > 0:
         finder._add_module((b"Ansible.ModuleUtils.AddType", ".psm1"),
@@ -283,15 +297,23 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
         exec_manifest[name] = b64_data
 
     for name, data in finder.ps_modules.items():
-        b64_data = to_text(base64.b64encode(data))
+        b64_data = to_text(base64.b64encode(data['data']))
         exec_manifest['powershell_modules'][name] = b64_data
+        coverage_manifest['module_util_paths'][name] = data['path']
 
-    cs_utils = finder.cs_utils_wrapper
-    cs_utils.update(finder.cs_utils_module)
+    cs_utils = {}
+    for cs_util in [finder.cs_utils_wrapper, finder.cs_utils_module]:
+        for name, data in cs_util.items():
+            cs_utils[name] = data['data']
+
     for name, data in cs_utils.items():
         b64_data = to_text(base64.b64encode(data))
         exec_manifest['csharp_utils'][name] = b64_data
     exec_manifest['csharp_utils_module'] = list(finder.cs_utils_module.keys())
+
+    # To save on the data we are sending across we only add the coverage info if coverage is being run
+    if 'coverage_wrapper' in exec_manifest:
+        exec_manifest['coverage'] = coverage_manifest
 
     b_json = to_bytes(json.dumps(exec_manifest))
     # delimit the payload JSON from the wrapper to keep sensitive contents out of scriptblocks (which can be logged)

@@ -62,6 +62,8 @@ from .util import (
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_CONFIG_ROOT,
     get_ansible_version,
+    tempdir,
+    open_zipfile,
 )
 
 from .util_common import (
@@ -679,15 +681,42 @@ def command_windows_integration(args):
             pre_target = forward_ssh_ports
             post_target = cleanup_ssh_ports
 
+    def run_playbook(playbook, playbook_vars):
+        playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
+        command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(playbook_vars)]
+        if args.verbosity:
+            command.append('-%s' % ('v' * args.verbosity))
+
+        env = ansible_environment(args)
+        intercept_command(args, command, '', env, disable_coverage=True)
+
+    remote_temp_path = None
+
+    if args.coverage and not args.coverage_check:
+        # Create the remote directory that is writable by everyone. Use Ansible to talk to the remote host.
+        remote_temp_path = 'C:\\ansible_test_coverage_%s' % time.time()
+        playbook_vars = {'remote_temp_path': remote_temp_path}
+        run_playbook('windows_coverage_setup.yml', playbook_vars)
+
     success = False
 
     try:
         command_integration_filtered(args, internal_targets, all_targets, inventory_path, pre_target=pre_target,
-                                     post_target=post_target)
+                                     post_target=post_target, remote_temp_path=remote_temp_path)
         success = True
     finally:
         if httptester_id:
             docker_rm(args, httptester_id)
+
+        if remote_temp_path:
+            # Zip up the coverage files that were generated and fetch it back to localhost.
+            with tempdir() as local_temp_path:
+                playbook_vars = {'remote_temp_path': remote_temp_path, 'local_temp_path': local_temp_path}
+                run_playbook('windows_coverage_teardown.yml', playbook_vars)
+
+                for filename in os.listdir(local_temp_path):
+                    with open_zipfile(os.path.join(local_temp_path, filename)) as coverage_zip:
+                        coverage_zip.extractall(os.path.join(data_context().results, 'coverage'))
 
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             for instance in instances:
@@ -878,7 +907,8 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     return internal_targets
 
 
-def command_integration_filtered(args, targets, all_targets, inventory_path, pre_target=None, post_target=None):
+def command_integration_filtered(args, targets, all_targets, inventory_path, pre_target=None, post_target=None,
+                                 remote_temp_path=None):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
@@ -886,6 +916,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
     :type inventory_path: str
     :type pre_target: (IntegrationTarget) -> None | None
     :type post_target: (IntegrationTarget) -> None | None
+    :type remote_temp_path: str | None
     """
     found = False
     passed = []
@@ -986,9 +1017,11 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
                         try:
                             if target.script_path:
-                                command_integration_script(args, target, test_dir, inventory_path, common_temp_path)
+                                command_integration_script(args, target, test_dir, inventory_path, common_temp_path,
+                                                           remote_temp_path=remote_temp_path)
                             else:
-                                command_integration_role(args, target, start_at_task, test_dir, inventory_path, common_temp_path)
+                                command_integration_role(args, target, start_at_task, test_dir, inventory_path,
+                                                         common_temp_path, remote_temp_path=remote_temp_path)
                                 start_at_task = None
                         finally:
                             if post_target:
@@ -1275,13 +1308,14 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     return env
 
 
-def command_integration_script(args, target, test_dir, inventory_path, temp_path):
+def command_integration_script(args, target, test_dir, inventory_path, temp_path, remote_temp_path=None):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type test_dir: str
     :type inventory_path: str
     :type temp_path: str
+    :type remote_temp_path: str | None
     """
     display.info('Running %s integration test script' % target.name)
 
@@ -1310,10 +1344,11 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
                 cmd += ['-e', '@%s' % config_path]
 
             module_coverage = 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path,
+                              remote_temp_path=remote_temp_path, module_coverage=module_coverage)
 
 
-def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path):
+def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path, remote_temp_path=None):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
@@ -1321,6 +1356,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
     :type test_dir: str
     :type inventory_path: str
     :type temp_path: str
+    :type remote_temp_path: str | None
     """
     display.info('Running %s integration test role' % target.name)
 
@@ -1406,7 +1442,8 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
 
             module_coverage = 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path,
+                              remote_temp_path=remote_temp_path, module_coverage=module_coverage)
 
 
 def get_changes_filter(args):

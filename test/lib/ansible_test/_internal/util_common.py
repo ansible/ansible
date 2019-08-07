@@ -148,13 +148,14 @@ def cleanup_python_paths():
         shutil.rmtree(path)
 
 
-def get_coverage_environment(args, target_name, version, temp_path, module_coverage):
+def get_coverage_environment(args, target_name, version, temp_path, module_coverage, remote_temp_path=None):
     """
     :type args: TestConfig
     :type target_name: str
     :type version: str
     :type temp_path: str
     :type module_coverage: bool
+    :type remote_temp_path: str | None
     :rtype: dict[str, str]
     """
     if temp_path:
@@ -199,11 +200,17 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
             _ANSIBLE_COVERAGE_OUTPUT=coverage_file,
         ))
 
+        if remote_temp_path:
+            # Include the command, target and label so the remote host can create a filename with that info. The remote
+            # is responsible for adding '={language version}=coverage.{hostname}.{pid}.{id}'
+            env['_ANSIBLE_COVERAGE_REMOTE_OUTPUT'] = os.path.join(remote_temp_path, '%s=%s=%s' % (
+                args.command, target_name, args.coverage_label or 'remote'))
+
     return env
 
 
 def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, module_coverage=True,
-                      virtualenv=None, disable_coverage=False):
+                      virtualenv=None, disable_coverage=False, remote_temp_path=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
@@ -217,6 +224,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     :type module_coverage: bool
     :type virtualenv: str | None
     :type disable_coverage: bool
+    :type remote_temp_path: str | None
     :rtype: str | None, str | None
     """
     if not env:
@@ -239,7 +247,8 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
 
     if args.coverage and not disable_coverage:
         # add the necessary environment variables to enable code coverage collection
-        env.update(get_coverage_environment(args, target_name, version, temp_path, module_coverage))
+        env.update(get_coverage_environment(args, target_name, version, temp_path, module_coverage,
+                                            remote_temp_path=remote_temp_path))
 
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 

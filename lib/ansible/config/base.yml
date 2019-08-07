@@ -1814,4 +1814,15 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
+COVERAGE_REMOTE_OUTPUT:
+  name: Sets the output directory and filename prefix to generate coverage run info.
+  description:
+    - Sets the output directory on the remote host to generate coverage reports to.
+    - Currently only used for remote coverage on PowerShell modules.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_OUTPUT}
+  vars:
+  - {name: _ansible_coverage_remote_output}
+  version_added: '2.9'
 ...
