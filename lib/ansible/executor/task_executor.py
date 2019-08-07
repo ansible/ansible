@@ -28,7 +28,7 @@ from ansible.plugins.loader import become_loader, cliconf_loader, connection_loa
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var, AnsibleUnsafe
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
@@ -267,7 +267,7 @@ class TaskExecutor:
         if items:
             for idx, item in enumerate(items):
                 if item is not None and not isinstance(item, AnsibleUnsafe):
-                    items[idx] = UnsafeProxy(item)
+                    items[idx] = wrap_var(item)
 
         return items
 

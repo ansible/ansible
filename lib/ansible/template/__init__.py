@@ -48,7 +48,7 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -250,7 +250,7 @@ class AnsibleContext(Context):
     A custom context, which intercepts resolve() calls and sets a flag
     internally if any variable lookup returns an AnsibleUnsafe value. This
     flag is checked post-templating, and (when set) will result in the
-    final templated result being wrapped via UnsafeProxy.
+    final templated result being wrapped in AnsibleUnsafe.
     '''
     def __init__(self, *args, **kwargs):
         super(AnsibleContext, self).__init__(*args, **kwargs)
@@ -744,7 +744,7 @@ class Templar:
                     ran = wrap_var(ran)
                 else:
                     try:
-                        ran = UnsafeProxy(",".join(ran))
+                        ran = wrap_var(",".join(ran))
                     except TypeError:
                         # Lookup Plugins should always return lists.  Throw an error if that's not
                         # the case:
