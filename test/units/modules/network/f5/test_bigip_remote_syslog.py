@@ -231,4 +231,4 @@ class TestManager(unittest.TestCase):
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
 
-        assert "Multiple occurrences of hostname" in str(ex)
+        assert "Multiple occurrences of hostname" in str(ex.value)
