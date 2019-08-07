@@ -24,6 +24,7 @@ from ..util import (
     ABC,
     to_bytes,
     make_dirs,
+    ANSIBLE_TEST_CONFIG_ROOT,
 )
 
 from ..target import (
@@ -283,8 +284,9 @@ class CloudProvider(CloudBase):
         super(CloudProvider, self).__init__(args)
 
         self.remove_config = False
-        self.config_static_path = '%s/cloud-config-%s%s' % (self.TEST_DIR, self.platform, config_extension)
-        self.config_template_path = '%s.template' % self.config_static_path
+        self.config_static_name = 'cloud-config-%s%s' % (self.platform, config_extension)
+        self.config_static_path = os.path.join(self.TEST_DIR, self.config_static_name)
+        self.config_template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, '%s.template' % self.config_static_name)
         self.config_extension = config_extension
 
     def filter(self, targets, exclude):
