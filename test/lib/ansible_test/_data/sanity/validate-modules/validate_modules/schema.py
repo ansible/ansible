@@ -187,7 +187,6 @@ def doc_schema(module_name, version_added=True):
         Required('module'): module_name,
         Required('short_description'): Any(*string_types),
         Required('description'): Any(list_string_types, *string_types),
-        Required('version_added'): Any(float, *string_types),
         Required('author'): All(Any(None, list_string_types, *string_types), author),
         'notes': Any(None, list_string_types),
         'seealso': Any(None, seealso_schema),
