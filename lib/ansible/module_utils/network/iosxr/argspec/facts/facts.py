@@ -20,7 +20,10 @@ class FactsArgs(object):  # pylint: disable=R0903
 
     choices = [
         'all',
-        'lacp'
+        'lacp',
+        '!lacp',
+        'lacp_interfaces',
+        '!lacp_interfaces'
     ]
 
     argument_spec = {
