@@ -305,6 +305,7 @@ from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.common.network import to_ipv6_subnet, to_subnet
+from ansible.module_utils.compat.ipaddress import ip_network, IPv6Network
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 
@@ -723,14 +724,26 @@ def validate_ip(module, cidr_ip):
     split_addr = cidr_ip.split('/')
     if len(split_addr) == 2:
         # this_ip is a IPv4 or IPv6 CIDR that may or may not have host bits set
-        # Get the network bits.
+        # Get the network bits if IPv4, and validate if IPv6.
         try:
             ip = to_subnet(split_addr[0], split_addr[1])
+            if ip != cidr_ip:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(
+                                cidr_ip, ip))
         except ValueError:
-            ip = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
-        if ip != cidr_ip:
-            module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
-                        "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
+            # to_subnet throws a ValueError on IPv6 networks, so we should be working with v6 if we get here
+            try:
+                isinstance(ip_network(to_text(cidr_ip)), IPv6Network)
+                ip = cidr_ip
+            except ValueError:
+                # If a host bit is set on something other than a /128, IPv6Network will throw a ValueError
+                # The ipv6_cidr in this case probably looks like "2001:DB8:A0B:12F0::1/64" and we just want the network bits
+                ip6 = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
+                if ip6 != cidr_ip:
+                    module.warn("One of your IPv6 CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                                "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip6))
+                return ip6
         return ip
     return cidr_ip
 
