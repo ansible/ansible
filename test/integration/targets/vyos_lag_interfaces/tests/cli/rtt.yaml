@@ -10,14 +10,14 @@
   vyos_lag_interfaces:
     config:
       - name: bond0
-        hash-policy: "layer2"
+        hash_policy: "layer2"
         mode: "active-backup"
         members:
           - member: eth1
         primary: eth1
 
       - name: bond1
-        hash-policy: "layer2+3"
+        hash_policy: "layer2+3"
         mode: "active-backup"
         members:
           - member: eth2
@@ -37,13 +37,13 @@
   vyos_lag_interfaces:
     config:
       - name: bond0
-        hash-policy: "layer2+3"
+        hash_policy: "layer2+3"
         mode: "802.3ad"
         members:
           - member: eth1
 
       - name: bond1
-        hash-policy: "layer2"
+        hash_policy: "layer2"
         mode: "xor-hash"
         members:
           - member: eth2

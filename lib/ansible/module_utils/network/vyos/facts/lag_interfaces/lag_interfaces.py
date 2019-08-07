@@ -82,7 +82,11 @@ class Lag_interfacesFacts(object):
 
         facts = {}
         if objs:
-            facts['lag_interfaces'] = objs
+            facts['lag_interfaces'] = []
+            params = utils.validate_config(self.argument_spec, {'config': objs})
+            for cfg in params['config']:
+                facts['lag_interfaces'].append(utils.remove_empties(cfg))
+
         ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
 
@@ -97,11 +101,13 @@ class Lag_interfacesFacts(object):
         :returns: The generated config
         """
         arp_monitor_conf = '\n'.join(filter(lambda x: ('arp-monitor' in x), conf))
+        hash_policy_conf = '\n'.join(filter(lambda x: ('hash-policy' in x), conf))
         lag_conf = '\n'.join(filter(lambda x: ('bond' in x), conf))
         config = self.parse_attribs(
-            ['hash-policy', 'mode', 'primary'], lag_conf
+            ['mode', 'primary'], lag_conf
         )
-        config['arp-monitor'] = self.parse_arp_monitor(arp_monitor_conf)
+        config['arp_monitor'] = self.parse_arp_monitor(arp_monitor_conf)
+        config['hash_policy'] = self.parse_hash_policy(hash_policy_conf)
 
         return utils.remove_empties(config)
 
@@ -130,3 +136,10 @@ class Lag_interfacesFacts(object):
                 value = interval.group(1).strip("'")
                 arp_monitor['interval'] = int(value)
         return arp_monitor
+
+    def parse_hash_policy(self, conf):
+        hash_policy = None
+        if conf:
+            hash_policy = search(r'^.*hash-policy (.+)', conf, M)
+            hash_policy = hash_policy.group(1).strip("'")
+        return hash_policy

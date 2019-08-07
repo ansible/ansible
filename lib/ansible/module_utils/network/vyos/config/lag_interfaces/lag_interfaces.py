@@ -33,9 +33,7 @@ class Lag_interfaces(ConfigBase):
         'lag_interfaces',
     ]
 
-    params = ['arp-monitor', 'hash-policy', 'members', 'mode', 'name', 'primary']
-    set_cmd = 'set interfaces bonding '
-    del_cmd = 'delete interfaces bonding '
+    params = ['arp_monitor', 'hash_policy', 'members', 'mode', 'name', 'primary']
 
     def __init__(self, module):
         super(Lag_interfaces, self).__init__(module)
@@ -128,6 +126,7 @@ class Lag_interfaces(ConfigBase):
                     commands.extend(self._state_merged(want_item, obj_in_have))
                 elif state == 'replaced':
                     commands.extend(self._state_replaced(want_item, obj_in_have))
+        return commands
 
     def _state_replaced(self, want, have):
         """ The command generator when state is replaced
@@ -138,8 +137,8 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         if have:
-            commands.extend(Lag_interfaces._render_del_commands(want, have))
-        commands.extend(Lag_interfaces._state_merged(want, have))
+            commands.extend(self._render_del_commands(want, have))
+        commands.extend(self._state_merged(want, have))
         return commands
 
     def _state_overridden(self, want, have):
@@ -154,12 +153,12 @@ class Lag_interfaces(ConfigBase):
             lag_name = have_item['name']
             obj_in_want = search_obj_in_list(lag_name, want)
             if not obj_in_want:
-                commands.extend(Lag_interfaces._purge_attribs(have_item))
+                commands.extend(self._purge_attribs(have_item))
 
         for want_item in want:
             name = want_item['name']
             obj_in_have = search_obj_in_list(name, have)
-            commands.extend(Lag_interfaces._state_replaced(want_item, obj_in_have))
+            commands.extend(self._state_replaced(want_item, obj_in_have))
         return commands
 
     def _state_merged(self, want, have):
@@ -171,9 +170,9 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         if have:
-            commands.extend(Lag_interfaces._render_updates(want, have))
+            commands.extend(self._render_updates(want, have))
         else:
-            commands.extend(Lag_interfaces._render_set_commands(want))
+            commands.extend(self._render_set_commands(want))
         return commands
 
     def _state_deleted(self, have):
@@ -185,15 +184,12 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         if have:
-            commands.extend(Lag_interfaces._purge_attribs(have))
+            commands.extend(self._purge_attribs(have))
         return commands
 
     def _render_updates(self, want, have):
         commands = []
 
-        lag_name = have['name']
-
-        set_cmd = Lag_interfaces.set_cmd + lag_name
         try:
             temp_have_members = have.pop('members', None)
             temp_want_members = want.pop('members', None)
@@ -207,19 +203,17 @@ class Lag_interfaces(ConfigBase):
         if temp_want_members:
             want['members'] = temp_want_members
 
-        commands.extend(Lag_interfaces._add_bond_members(want, have))
+        commands.extend(self._add_bond_members(want, have))
 
         if updates:
             for key, value in iteritems(updates):
                 if value:
-                    if key == 'arp-monitor':
+                    if key == 'arp_monitor':
                         commands.extend(
-                            Lag_interfaces._add_arp_monitor(updates, key, want, have)
+                            self._add_arp_monitor(updates, key, want, have)
                         )
                     else:
-                        commands.append(
-                            set_cmd + ' ' + key + " '" + str(value) + "'"
-                        )
+                        commands.append(self._compute_command(have['name'], key, str(value)))
         return commands
 
     def _render_set_commands(self, want):
@@ -231,32 +225,32 @@ class Lag_interfaces(ConfigBase):
         for attrib in params:
             value = want[attrib]
             if value:
-                if attrib == 'arp-monitor':
+                if attrib == 'arp_monitor':
                     commands.extend(
-                        Lag_interfaces._add_arp_monitor(want, attrib, want, have)
+                        self._add_arp_monitor(want, attrib, want, have)
                     )
                 elif attrib == 'members':
                     commands.extend(
-                        Lag_interfaces._add_bond_members(want, have)
+                        self._add_bond_members(want, have)
                     )
                 elif attrib != 'name':
                     commands.append(
-                        Lag_interfaces.set_cmd + ' ' + attrib + " '" + str(value) + "'"
+                        self._compute_command(want['name'], attrib, value=str(value))
                     )
         return commands
 
     def _purge_attribs(self, have):
         commands = []
-        del_lag = Lag_interfaces.del_cmd + have['name']
-
         for item in Lag_interfaces.params:
             if have.get(item):
                 if item == 'members':
                     commands.extend(
-                        Lag_interfaces._delete_bond_members(have)
+                        self._delete_bond_members(have)
                     )
                 elif item != 'name':
-                    commands.append(del_lag + ' ' + item)
+                    commands.append(
+                        self._compute_command(have['name'], attrib=item, set_flag=False)
+                    )
         return commands
 
     def _render_del_commands(self, want, have):
@@ -266,45 +260,51 @@ class Lag_interfaces(ConfigBase):
         for attrib in params:
             if attrib == 'members':
                 commands.extend(
-                    Lag_interfaces._update_bond_members(attrib, want, have)
+                    self._update_bond_members(attrib, want, have)
                 )
-            elif attrib == 'arp-monitor':
+            elif attrib == 'arp_monitor':
                 commands.extend(
-                    Lag_interfaces._update_arp_monitor(attrib, want, have)
+                    self._update_arp_monitor(attrib, want, have)
                 )
             elif have.get(attrib) and not want.get(attrib):
-                commands.append(Lag_interfaces.del_cmd + ' ' + attrib)
+                commands.append(
+                    self._compute_command(have['name'], attrib, set_flag=False)
+                )
         return commands
 
     def _add_bond_members(self, want, have):
         commands = []
-        bond_name = want['name']
-        diff_members = get_lst_diff_for_dicts(want, have, 'member')
+        diff_members = get_lst_diff_for_dicts(want, have, 'members')
         if diff_members:
             for key in diff_members:
                 commands.append(
-                    'set interfaces ethernet ' + key['member'] + ' bond-group ' + bond_name
+                    self._compute_command(key['member'], 'bond-group', want['name'], type='ethernet')
                 )
         return commands
 
     def _add_arp_monitor(self, updates, key, want, have):
         commands = []
-        set_cmd = Lag_interfaces.set_cmd + ' ' + key
         arp_monitor = updates.get(key) or {}
-        diff_targets = Lag_interfaces._get_arp_monitor_target_diff(want, have, key, 'target')
+        diff_targets = self._get_arp_monitor_target_diff(want, have, key, 'target')
 
         if 'interval' in arp_monitor:
-            commands.append(set_cmd + ' interval ' + str(arp_monitor['interval']))
+            commands.append(
+                self._compute_command(key, 'interval', str(arp_monitor['interval']))
+            )
         if diff_targets:
             for target in diff_targets:
-                commands.append(set_cmd + ' target ' + target)
+                commands.append(
+                    self._compute_commands(key, 'target', target)
+                )
         return commands
 
     def _delete_bond_members(self, have):
         commands = []
         for member in have['members']:
             commands.append(
-                'delete interfaces ethernet ' + member['member'] + ' bond-group ' + have['name']
+                self._compute_command(
+                    member['member'], 'bond-group', have['name'], False, 'ethernet'
+                )
             )
         return commands
 
@@ -314,7 +314,7 @@ class Lag_interfaces(ConfigBase):
         have_arp_target = []
         want_arp_monitor = want.get(key) or {}
         have_arp_monitor = have.get(key) or {}
-        del_cmd = Lag_interfaces.del_cmd + have['name']
+        del_cmd = 'delete interface bonding ' + have['name']
 
         if want_arp_monitor and 'target' in want_arp_monitor:
             want_arp_target = want_arp_monitor['target']
@@ -334,7 +334,6 @@ class Lag_interfaces(ConfigBase):
 
     def _update_bond_members(self, key, want, have):
         commands = []
-        name = have['name']
         want_members = want.get(key) or []
         have_members = have.get(key) or []
 
@@ -342,7 +341,9 @@ class Lag_interfaces(ConfigBase):
         if members_diff:
             for member in members_diff:
                 commands.append(
-                    'delete interfaces ethernet ' + member[key] + ' bond-group ' + name
+                    self._compute_command(
+                        member[key], 'bond-group', have['name'], False, 'ethernet'
+                    )
                 )
         return commands
 
@@ -364,4 +365,17 @@ class Lag_interfaces(ConfigBase):
             diff = list_diff_want_only(want_arp_target, have_arp_target)
         return diff
 
-
+    def _compute_command(self, name, attrib, value=None, set_flag=True, type='bonding'):
+        if set_flag:
+            cmd = 'set interfaces ' + type
+        else:
+            cmd = 'delete interfaces ' + type
+        cmd += (' ' + name)
+        if attrib == 'arp_monitor':
+            attrib = 'arp-monitor'
+        elif attrib == 'hash_policy':
+            attrib = 'hash-policy'
+        cmd += (' ' + attrib)
+        if value:
+            cmd += (" '" + value + "'")
+        return cmd

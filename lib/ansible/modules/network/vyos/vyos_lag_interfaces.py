@@ -77,7 +77,7 @@ options:
         description:
           - Primary device interfaces for the LAG (bond).
         type: str
-      hash-policy:
+      hash_policy:
         description:
           - LAG or bonding transmit hash policy.
         type: str
@@ -85,7 +85,7 @@ options:
           - layer2
           - layer2+3
           - layer3+4
-      arp-monitor:
+      arp_monitor:
         description:
           - ARP Link monitoring parameters.
         type: dict
@@ -128,12 +128,12 @@ EXAMPLES = """
         members:
          - member: eth2
          - member: eth1
-        hash-policy: layer2
+        hash_policy: layer2
         primary: eth2
 
       - name: 'bond3'
         mode: 'active-backup'
-        hash-policy: 'layer2+3'
+        hash_policy: 'layer2+3'
         members:
          - member: eth3
         primary: 'eth3'
@@ -167,7 +167,7 @@ EXAMPLES = """
 #
 #     "after": [
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth1"
@@ -181,7 +181,7 @@ EXAMPLES = """
 #            "primary": "eth2"
 #        },
 #        {
-#            "hash-policy": "layer2+3",
+#            "hash_policy": "layer2+3",
 #            "members": [
 #                {
 #                    "member": "eth3"
@@ -229,7 +229,7 @@ EXAMPLES = """
     config:
       - name: bond3
         mode: '802.3ad'
-        hash-policy: 'layer2'
+        hash_policy: 'layer2'
         members:
          - member: eth3
     state: replaced
@@ -241,7 +241,7 @@ EXAMPLES = """
 #
 #    "before": [
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth1"
@@ -255,7 +255,7 @@ EXAMPLES = """
 #            "primary": "eth2"
 #        },
 #        {
-#            "hash-policy": "layer2+3",
+#            "hash_policy": "layer2+3",
 #            "members": [
 #                {
 #                    "member": "eth3"
@@ -275,7 +275,7 @@ EXAMPLES = """
 #
 # "after": [
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth1"
@@ -289,7 +289,7 @@ EXAMPLES = """
 #            "primary": "eth2"
 #        },
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth3"
@@ -339,7 +339,7 @@ EXAMPLES = """
          - member: eth2
          - member: eth3
         primary: eth3
-        hash-policy: layer2
+        hash_policy: layer2
     state: overridden
 #
 #
@@ -349,7 +349,7 @@ EXAMPLES = """
 #
 #    "before": [
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth1"
@@ -363,7 +363,7 @@ EXAMPLES = """
 #            "primary": "eth2"
 #        },
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth3"
@@ -391,7 +391,7 @@ EXAMPLES = """
 #            "name": "bond2"
 #        },
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth1"
@@ -453,7 +453,7 @@ EXAMPLES = """
 #
 # "before": [
 #        {
-#            "hash-policy": "layer2",
+#            "hash_policy": "layer2",
 #            "members": [
 #                {
 #                    "member": "eth1"
@@ -467,7 +467,7 @@ EXAMPLES = """
 #            "primary": "eth2"
 #        },
 #        {
-#            "hash-policy": "layer2+3",
+#            "hash_policy": "layer2+3",
 #            "members": [
 #                {
 #                    "member": "eth3"

@@ -11,7 +11,7 @@
       config:
           - name: bond1
             mode: "802.3ad"
-            hash-policy: "layer2"
+            hash_policy: "layer2"
             members:
                 - member: eth2
       state: replaced

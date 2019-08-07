@@ -16,7 +16,7 @@
             members:
                 - member: eth2
             primary: eth2
-            hash-policy: layer2
+            hash_policy: layer2
       state: overridden
   register: result
 

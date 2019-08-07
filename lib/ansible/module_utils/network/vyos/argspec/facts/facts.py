@@ -8,10 +8,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-
 class FactsArgs(object):  # pylint: disable=R0903
     """ The arg spec for the vyos facts module
     """

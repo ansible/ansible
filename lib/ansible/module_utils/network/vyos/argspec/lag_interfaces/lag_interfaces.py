@@ -39,13 +39,13 @@ class Lag_interfacesArgs(object):  # pylint: disable=R0903
             'config': {
                 'elements': 'dict',
                 'options': {
-                    'arp-monitor': {
+                    'arp_monitor': {
                         'options': {
                             'interval': {'type': 'int'},
                             'target': {'type': 'list'}
                         },
                         'type': 'dict'},
-                    'hash-policy': {'choices': ['layer2', 'layer2+3', 'layer3+4'],
+                    'hash_policy': {'choices': ['layer2', 'layer2+3', 'layer3+4'],
                                     'type': 'str'},
                     'members': {'elements': 'dict', 'options': {
                         'member': {'type': 'str'}}, 'type': 'list'},

@@ -7,11 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-
 def search_obj_in_list(name, lst, key='name'):
     for item in lst:
         if item[key] == name:
@@ -93,13 +88,9 @@ def list_diff_want_only(want_list, have_list):
 def get_lst_diff_for_dicts(want, have, lst):
     if not have:
         diff = want.get(lst) or []
+
     else:
         want_elements = want.get(lst) or {}
         have_elements = have.get(lst) or {}
         diff = list_diff_want_only(want_elements, have_elements)
     return diff
-
-
-
-
-
