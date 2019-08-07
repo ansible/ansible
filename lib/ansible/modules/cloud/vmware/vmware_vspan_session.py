@@ -116,6 +116,7 @@ options:
              Valid values are between 1 to 65535, and default value is 1.
         type: int
         required: False
+        default: 1
     source_vm_transmitted:
         description:
             - With this parameter it is possible, to add a NIC of a VM to a port mirroring session.
@@ -631,4 +632,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
