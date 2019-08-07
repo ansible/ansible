@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - read_csv: path=files/test.csv fieldnames=name,key,comment
+      register: csvstuff
+
+    - debug: var=item.comment
+      loop: '{{csvstuff["list"]}}'
+      loop_control:
+        label: "{{item['name']}}"

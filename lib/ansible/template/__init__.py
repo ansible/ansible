@@ -43,12 +43,14 @@ from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVar
 from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var, is_unsafe
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -64,10 +66,12 @@ __all__ = ['Templar', 'generate_ansible_template_vars']
 # A regex for checking to see if a variable we're trying to
 # expand is just a single variable name.
 
+JINJA2_OVERRIDE = '#jinja2:'
+J2O_LEN = len(JINJA2_OVERRIDE)
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = (bool, Number)
+T_F = frozenset(["True", "False"])
 
-JINJA2_OVERRIDE = '#jinja2:'
 
 USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
@@ -256,27 +260,8 @@ class AnsibleContext(Context):
         super(AnsibleContext, self).__init__(*args, **kwargs)
         self.unsafe = False
 
-    def _is_unsafe(self, val):
-        '''
-        Our helper function, which will also recursively check dict and
-        list entries due to the fact that they may be repr'd and contain
-        a key or value which contains jinja2 syntax and would otherwise
-        lose the AnsibleUnsafe value.
-        '''
-        if isinstance(val, dict):
-            for key in val.keys():
-                if self._is_unsafe(val[key]):
-                    return True
-        elif isinstance(val, list):
-            for item in val:
-                if self._is_unsafe(item):
-                    return True
-        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
-            return True
-        return False
-
     def _update_unsafe(self, val):
-        if val is not None and not self.unsafe and self._is_unsafe(val):
+        if val is not None and not self.unsafe and is_unsafe(val, recurse=True):
             self.unsafe = True
 
     def resolve(self, key):
@@ -522,8 +507,11 @@ class Templar:
         static_vars = [''] if static_vars is None else static_vars
 
         # Don't template unsafe variables, just return them.
-        if hasattr(variable, '__UNSAFE__'):
-            return variable
+        if is_unsafe(variable):
+            if isinstance(variable, AnsibleVaultEncryptedUnicode):
+                return to_native(variable, nonstring='passthru')  # nusing to_ functions to force decryption
+            else:
+                return variable
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -546,6 +534,9 @@ class Templar:
                             resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
+                            elif is_unsafe(resolved_val) and not isinstance(resolved_val, AnsibleVaultEncryptedUnicode):
+                                # we dont need to template most unsafe values, but do need vault objects as templating unvaults
+                                return wrap_var(resolved_val)
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
@@ -574,20 +565,23 @@ class Templar:
                             disable_lookups=disable_lookups,
                         )
 
-                        if not USE_JINJA2_NATIVE:
-                            unsafe = hasattr(result, '__UNSAFE__')
+                        if not USE_JINJA2_NATIVE and result:
                             if convert_data and not self._no_type_regex.match(variable):
-                                # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                                if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                                        result.startswith("[") or result in ("True", "False"):
-                                    eval_results = safe_eval(result, include_exceptions=True)
+                                if result in T_F:
+                                    result = boolean(result)
+                                elif result[0] in ("{", "[") and not result.startswith(self.environment.variable_start_string):
+                                    unsafe = is_unsafe(result, recurse=True)
+                                    try:
+                                        # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                                        eval_results = safe_eval(result, include_exceptions=True)
+                                    except Exception as e:
+                                        raise AnsibleError("could not safely eval: %s" % to_native(e), orig_exc=e)
                                     if eval_results[1] is None:
                                         result = eval_results[0]
                                         if unsafe:
                                             result = wrap_var(result)
                                     else:
-                                        # FIXME: if the safe_eval raised an error, should we do something with it?
-                                        pass
+                                        display.debug("ignored failed safe eval for %s: %s " % (to_text(variable), to_text(eval_results[1])))
 
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
@@ -784,9 +778,9 @@ class Templar:
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
-            if hasattr(data, 'startswith') and data.startswith(JINJA2_OVERRIDE):
+            if isinstance(data, string_types) and data[:J2O_LEN] == JINJA2_OVERRIDE:
                 eol = data.find('\n')
-                line = data[len(JINJA2_OVERRIDE):eol]
+                line = data[J2O_LEN:eol]
                 data = data[eol + 1:]
                 for pair in line.split(','):
                     (key, val) = pair.split(':')
@@ -831,6 +825,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
+                # not an AnsibleUnsafe object, has it's own unsafe property
                 if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
@@ -840,7 +835,7 @@ class Templar:
                     raise AnsibleUndefinedVariable(errmsg)
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_text(data))
-                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
+                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)), orig_exc=te)
 
             if USE_JINJA2_NATIVE and not isinstance(res, string_types):
                 return res

@@ -55,7 +55,7 @@ __metaclass__ = type
 
 from ansible.module_utils.six import string_types, text_type, binary_type
 from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping, MutableSequence, Set
+from ansible.module_utils.common._collections_compat import Mapping, MutableSequence, Set, Sequence
 
 
 __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var']
@@ -112,3 +112,26 @@ def wrap_var(v):
     elif v is not None and not isinstance(v, AnsibleUnsafe):
         v = UnsafeProxy(v)
     return v
+
+
+def is_unsafe(val, recurse=False):
+    '''
+    Our helper function, which will can recursively check dict and
+    list entries due to the fact that they may be repr'd and contain
+    a key or value which contains jinja2 syntax and would otherwise
+    lose the AnsibleUnsafe value.
+    '''
+    if getattr(val, '__UNSAFE__', False) or isinstance(val, AnsibleUnsafe):
+        return True
+
+    elif recurse and not isinstance(val, string_types):
+        if isinstance(val, Mapping):
+            for key in val.keys():
+                if is_unsafe(key) or is_unsafe(val[key], True):
+                    return True
+        elif isinstance(val, Sequence):
+            for item in val:
+                if is_unsafe(item, True):
+                    return True
+
+    return False

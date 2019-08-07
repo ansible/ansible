@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import yaml
 
+from ansible.utils.unsafe_proxy import AnsibleUnsafe
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_bytes, to_text, to_native
 
@@ -70,8 +71,7 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
 
 # Unicode like object that is not evaluated (decrypted) until it needs to be
 # TODO: is there a reason these objects are subclasses for YAMLObject?
-class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
-    __UNSAFE__ = True
+class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject, AnsibleUnsafe):
     __ENCRYPTED__ = True
     yaml_tag = u'!vault'
 

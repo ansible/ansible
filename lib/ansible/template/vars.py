@@ -23,8 +23,10 @@ from jinja2.utils import missing
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.utils.unsafe_proxy import is_unsafe
 
 
 __all__ = ['AnsibleJ2Vars']
@@ -93,15 +95,18 @@ class AnsibleJ2Vars(Mapping):
             else:
                 raise KeyError("undefined variable: %s" % varname)
 
+        value = None
         variable = self._templar.available_variables[varname]
 
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
-        from ansible.vars.hostvars import HostVars
-        if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
-            return variable
+        from ansible.vars.hostvars import HostVars, HostVarsVars
+        if varname == "vars" and isinstance(variable, Mapping) or is_unsafe(variable) or isinstance(variable, (HostVars, HostVarsVars)):
+            if isinstance(variable, AnsibleVaultEncryptedUnicode):
+                value = to_native(variable, nonstring='passthru')  # using to_ as this forces decryption
+            else:
+                value = variable
         else:
-            value = None
             try:
                 value = self._templar.template(variable)
             except AnsibleUndefinedVariable:
@@ -111,7 +116,7 @@ class AnsibleJ2Vars(Mapping):
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
                                    "Error was a %s, original message: %s" % (to_native(variable), type(e), msg))
 
-            return value
+        return value
 
     def add_locals(self, locals):
         '''
