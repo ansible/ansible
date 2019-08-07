@@ -120,12 +120,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
-            item = str(item).split('\n')
+            item = to_text(item, errors='surrogate_then_replace').split('\n')
         yield item
 
 

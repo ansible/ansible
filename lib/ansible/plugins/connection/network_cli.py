@@ -225,7 +225,6 @@ class Connection(NetworkConnectionBase):
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
-
         self._ssh_shell = None
 
         self._matched_prompt = None
@@ -465,7 +464,7 @@ class Connection(NetworkConnectionBase):
             if sendonly:
                 return
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
-            return to_text(response, errors='surrogate_or_strict')
+            return to_text(response, errors='surrogate_then_replace')
         except (socket.timeout, AttributeError):
             self.queue_message('error', traceback.format_exc())
             raise AnsibleConnectionFailure("timeout value %s seconds reached while trying to send command: %s"
