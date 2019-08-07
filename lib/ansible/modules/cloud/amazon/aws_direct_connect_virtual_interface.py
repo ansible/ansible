@@ -59,12 +59,14 @@ options:
       - A list of route filter prefix CIDRs with which to create the public virtual interface.
   virtual_gateway_id:
     description:
-      - The virtual gateway ID mutually exclusive with the direct_connect_gateway_id for creating a private virtual interface.
-        We must specify either a virtual gateway ID or a direct connect gateway ID.
+      - The virtual gateway ID for creating a private virtual interface.
+      - To create a private virtual interface I(virtual_gateway_id) or I(direct_connect_gateway_id) is required.
+        These options are mutually exclusive.
   direct_connect_gateway_id:
     description:
-      - The direct connect gateway ID mutually exclusive with the virtual_gateway_id for creating a private virtual interface.
-        We must specify either a virtual gateway ID or a direct connect gateway ID.
+      - The direct connect gateway ID for creating a private virtual interface.
+      - To create a private virtual interface I(virtual_gateway_id) or I(direct_connect_gateway_id) is required.
+        These options are mutually exclusive.
     version_added: "2.9"
   virtual_interface_id:
     description:
