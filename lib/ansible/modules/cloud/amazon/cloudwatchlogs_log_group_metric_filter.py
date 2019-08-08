@@ -12,6 +12,7 @@ DOCUMENTATION = '''
 ---
 module: cloudwatchlogs_log_group_metric_filter
 version_added: "2.9"
+author: "Markus Bergholz (@markuman)
 short_description: Manage CloudWatch log group metric filter
 description:
     - Create, modify and delete Cloudwatch log group metric filter.
@@ -19,17 +20,12 @@ description:
 requirements:
     - boto3
     - botocore
-extends_documentation_fragment:
-    - aws
-author:
-    Markus Bergholz (@markuman)
 options:
     state:
         description:
             - Whether the rule is present, absent or get
         choices: ["present", "absent"]
         default: present
-        required: false
     log_group_name:
         description:
             - The name of the log group where the metric filter is applied on.
@@ -41,14 +37,29 @@ options:
     filter_patten:
         description:
             - A filter pattern for extracting metric data out of ingested log events.
+        required: true
     metric_transformation:
         description:
             - A collection of information that defines how metric data gets emitted.
         suboptions:
             metric_name:
+                description: 
+                    - The name of the cloudwatch metric.
+                required: true
             metric_namespace:
+                description:
+                    - The namespace of the cloudwatch metric.
+                required: true
             matric_value:
+                description:
+                    - The value to publish to the cloudwatch metric when a filter pattern matches a log event.
+                required: true
             default_value:
+                description:
+                    - The value to emit when a filter pattern does not match a log event.
+                required: false
+extends_documentation_fragment:
+  - aws
 '''
 
 EXAMPLES = '''
@@ -56,7 +67,7 @@ EXAMPLES = '''
     cloudwatchlogs_log_group_metric_filter:
     log_group_name: /fluentd/testcase
     filter_name: BoxFreeStorage
-    filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
+    filter_pattern: '{($.value = *) && ($.hostname = "box")}'
     state: present
     metric_transformation:
         metric_name: box_free_space
@@ -130,9 +141,9 @@ def main():
         state=dict(choices=['present', 'absent'], default='present'),
         log_group_name=dict(type='str', required=True),
         filter_name=dict(type='str', required=True),
-        filter_pattern=dict(type='str'),
+        filter_pattern=dict(type='str', required=True),
         metric_transformation=dict(
-            type='dict', default=dict()),
+            type='dict', default=dict(), required=True),
     )
 
     module = AnsibleAWSModule(
