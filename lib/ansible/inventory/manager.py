@@ -255,7 +255,7 @@ class InventoryManager(object):
                     parsed = parsed_this_one
         else:
             # preserve inventory in case a plugin modifies inventory and then fails before completion
-            if C.INVENTORY_RESTORE_ENABLED:
+            if C.INVENTORY_SAFE_PROCESSING:
                 save_new_copy = True
             else:
                 save_new_copy = False
@@ -302,7 +302,7 @@ class InventoryManager(object):
                         tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                     finally:
-                        if C.INVENTORY_RESTORE_ENABLED:
+                        if C.INVENTORY_SAFE_PROCESSING:
                             if not parsed and inventory != self._inventory:
                                 display.warning(u'\n restoring inventory because %s was partially parsed by %s' % (source, plugin_name))
                                 save_new_copy = True
