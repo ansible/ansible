@@ -118,21 +118,19 @@ class Lldp_interfaces(ConfigBase):
             if want:
                 for item in want:
                     name = item['name']
-                    obj_in_have = search_obj_in_list(name, have)
-                    commands.extend(self._state_deleted(obj_in_have))
+                    have_item = search_obj_in_list(name, have)
+                    commands.extend(self._state_deleted(have_item))
             else:
                 for have_item in have:
                     commands.extend(self._state_deleted(have_item))
-        elif state == 'merged':
+        else:
             for want_item in want:
                 name = want_item['name']
                 have_item = search_obj_in_list(name, have)
-                commands.extend(self._state_merged(want_item, have_item))
-        elif state == 'replaced':
-            for want_item in want:
-                name = want_item['name']
-                obj_in_have = search_obj_in_list(name, have)
-                commands.extend(self._state_replaced(want_item, obj_in_have))
+                if state == 'merged':
+                    commands.extend(self._state_merged(want_item, have_item))
+                else:
+                    commands.extend(self._state_replaced(want_item, have_item))
         return commands
 
     def _state_replaced(self, want, have):
@@ -254,18 +252,11 @@ class Lldp_interfaces(ConfigBase):
                 commands.append(Lldp_interfaces.set_cmd + name + ' disable')
         return commands
 
-    def _delete_disable(self, want_item):
-        commands = []
-        name = want_item['name']
-        if not want_item['enable']:
-            commands.append('delete service lldp interface ' + name + ' disable')
-        return commands
-
     def _add_location(self, name, want_item, have_item):
         commands = []
         have_dict = {}
         have_ca = {}
-        set_cmd = Lldp_interfaces.set_cmd + name
+        set_cmd = Lldp_interfaces.set_cmd + name + ' location '
         want_location_type = want_item.get('location') or {}
         have_location_type = have_item.get('location') or {}
 
@@ -277,7 +268,7 @@ class Lldp_interfaces(ConfigBase):
             updates = dict_diff(have_dict, want_dict)
             for key, value in iteritems(updates):
                 if value:
-                    commands.append(set_cmd + ' location ' + location_type + ' ' + key + ' ' + str(value))
+                    commands.append(set_cmd + location_type + ' ' + key + ' ' + str(value))
 
         elif want_location_type['civic_based']:
             location_type = 'civic-based'
@@ -288,24 +279,25 @@ class Lldp_interfaces(ConfigBase):
                 have_ca = have_dict.get('ca_info') or []
                 if want_dict['country_code'] != have_dict['country_code']:
                     commands.append(
-                        set_cmd + ' location ' + location_type + ' country-code ' + str(want_dict['country_code']))
+                        set_cmd + location_type + ' country-code ' + str(want_dict['country_code'])
+                    )
             else:
                 commands.append(
-                    set_cmd + ' location ' + location_type + ' country-code ' + str(want_dict['country_code']))
-            commands.extend(Lldp_interfaces.add_civic_address(name, want_ca, have_ca))
+                    set_cmd + location_type + ' country-code ' + str(want_dict['country_code']))
+            commands.extend(self._add_civic_address(name, want_ca, have_ca))
 
         elif want_location_type['elin']:
             location_type = 'elin'
             if is_dict_element_present(have_location_type, 'elin'):
                 if want_location_type.get('elin') != have_location_type.get('elin'):
-                    commands.append(set_cmd + ' location ' + location_type + ' ' + str(want_location_type['elin']))
+                    commands.append(set_cmd + location_type + ' ' + str(want_location_type['elin']))
             else:
-                commands.append(set_cmd + ' location ' + location_type + ' ' + str(want_location_type['elin']))
+                commands.append(set_cmd + location_type + ' ' + str(want_location_type['elin']))
         return commands
 
     def _update_location(self, name, want_item, have_item):
         commands = []
-        del_cmd = 'delete service lldp interface ' + name
+        del_cmd = Lldp_interfaces.del_cmd + name + ' location'
         want_location_type = want_item.get('location') or {}
         have_location_type = have_item.get('location') or {}
 
@@ -317,9 +309,9 @@ class Lldp_interfaces(ConfigBase):
                 for key, value in iteritems(have_dict):
                     only_in_have = key_value_in_dict(key, value, want_dict)
                     if not only_in_have:
-                        commands.append(del_cmd + ' location ' + location_type + ' ' + key + ' ' + str(value))
+                        commands.append(del_cmd + ' ' + location_type + ' ' + key + ' ' + str(value))
             else:
-                commands.append(del_cmd + ' location')
+                commands.append(del_cmd)
 
         elif want_location_type['civic_based']:
             want_dict = want_location_type.get('civic_based') or {}
@@ -329,23 +321,14 @@ class Lldp_interfaces(ConfigBase):
                 have_ca = have_dict.get('ca_info')
                 commands.extend(self._update_civic_address(name, want_ca, have_ca))
             else:
-                commands.append(del_cmd + ' location')
+                commands.append(del_cmd)
 
         else:
             if is_dict_element_present(have_location_type, 'elin'):
                 if want_location_type.get('elin') != have_location_type.get('elin'):
-                    commands.append(del_cmd + ' location')
+                    commands.append(del_cmd)
             else:
-                commands.append(del_cmd + ' location')
-        return commands
-
-    def _delete_location(self, want_item):
-        commands = []
-        name = want_item['name']
-        del_cmd = 'delete service lldp interface ' + name + ' location'
-        want_location_type = want_item.get('location') or {}
-        if want_location_type:
-            commands.append(del_cmd)
+                commands.append(del_cmd)
         return commands
 
     def _add_civic_address(self, name, want, have):

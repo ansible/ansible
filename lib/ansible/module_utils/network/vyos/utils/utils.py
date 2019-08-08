@@ -67,6 +67,7 @@ def diff_list_of_dicts(want, have):
     return diff
 
 
+<<<<<<< HEAD
 def get_lst_diff_for_dicts(want, have, lst):
     """
     This function generates a list containing values
