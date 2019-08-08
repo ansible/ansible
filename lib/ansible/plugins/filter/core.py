@@ -35,6 +35,13 @@ import uuid
 import yaml
 
 import datetime
+
+try:
+    import jsonref
+    HAS_JSONREF = True
+except ImportError:
+    HAS_JSONREF = False
+
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
@@ -76,6 +83,16 @@ def to_nice_yaml(a, indent=4, *args, **kw):
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
     return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
+
+
+def from_json(a, refs=False, *args, **kw):
+    ''' Convert the value from JSON '''
+    if refs and not HAS_JSONREF:
+        raise AnsibleError('You need to install "jsonref" prior to using from_json with refs')
+    elif refs and HAS_JSONREF:
+        return jsonref.loads(a, *args, **kw)
+    else:
+        return json.loads(a, *args, **kw)
 
 
 def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
@@ -593,7 +610,7 @@ class FilterModule(object):
             # json
             'to_json': to_json,
             'to_nice_json': to_nice_json,
-            'from_json': json.loads,
+            'from_json': from_json,
 
             # yaml
             'to_yaml': to_yaml,
