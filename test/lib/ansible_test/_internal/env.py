@@ -247,7 +247,7 @@ def get_ansible_version():  # type: () -> str
     load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
 
     # noinspection PyUnresolvedReferences
-    from ansible_release import __version__ as ansible_version
+    from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
 
     get_ansible_version.version = ansible_version
 
