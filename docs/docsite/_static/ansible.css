@@ -1,0 +1,16 @@
+/* Fix for read the docs theme:
+ * https://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
+ */
+/* override table width restrictions */
+@media screen and (min-width: 767px) {
+
+   .wy-table-responsive table td {
+      /* !important prevents the common CSS stylesheets from overriding
+         this as on RTD they are loaded after this stylesheet */
+      white-space: normal !important;
+   }
+
+   .wy-table-responsive {
+      overflow: visible !important;
+   }
+}

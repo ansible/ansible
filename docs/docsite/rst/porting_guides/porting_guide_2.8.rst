@@ -100,32 +100,32 @@ If you prefer to use the Python interpreter discovery behavior, use
 one of the four new values for ``ansible_python_interpreter`` introduced in
 Ansible 2.8:
 
-+---------------------------+-----------------------------------------------+
-| New value                 | Behavior                                      |
-+===========================+===============================================+
-| | auto                    | | If a Python interpreter is discovered,      |
-| | (future default)        | | Ansible uses the discovered Python, even if |
-| |                         | | :command:`/usr/bin/python` is also present. |
-| |                         | | Warns when using the fallback list.         |
-+---------------------------+-----------------------------------------------+
-| | **auto_legacy**         | | If a Python interpreter is discovered, and  |
-| | (Ansible 2.8 default)   | | :command:`/usr/bin/python` is absent,       |
-| |                         | | Ansible uses the discovered Python. Warns   |
-| |                         | | when using the fallback list.               |
-| |                         | |                                             |
-| |                         | | If a Python interpreter is discovered, and  |
-| |                         | | :command:`/usr/bin/python` is present,      |
-| |                         | | Ansible uses :command:`/usr/bin/python` and |
-| |                         | | prints a deprecation warning about future   |
-| |                         | | default behavior. Warns when using the      |
-| |                         | | fallback list.                              |
-+---------------------------+-----------------------------------------------+
-| | auto_legacy_silent      | | Behaves like ``auto_legacy`` but suppresses |
-| |                         | | the deprecation and fallback-list warnings. |
-+---------------------------+-----------------------------------------------+
-| | auto_silent             | | Behaves like ``auto`` but suppresses the    |
-| |                         | | fallback-list warning.                      |
-+---------------------------+-----------------------------------------------+
++---------------------------+---------------------------------------------+
+| New value                 | Behavior                                    |
++===========================+=============================================+
+| auto |br|                 | If a Python interpreter is discovered,      |
+| (future default)          | Ansible uses the discovered Python, even if |
+|                           | :command:`/usr/bin/python` is also present. |
+|                           | Warns when using the fallback list.         |
++---------------------------+---------------------------------------------+
+| **auto_legacy** |br|      | If a Python interpreter is discovered, and  |
+| (Ansible 2.8 default)     | :command:`/usr/bin/python` is absent,       |
+|                           | Ansible uses the discovered Python. Warns   |
+|                           | when using the fallback list.               |
+|                           |                                             |
+|                           | If a Python interpreter is discovered, and  |
+|                           | :command:`/usr/bin/python` is present,      |
+|                           | Ansible uses :command:`/usr/bin/python` and |
+|                           | prints a deprecation warning about future   |
+|                           | default behavior. Warns when using the      |
+|                           | fallback list.                              |
++---------------------------+---------------------------------------------+
+| auto_legacy_silent        | Behaves like ``auto_legacy`` but suppresses |
+|                           | the deprecation and fallback-list warnings. |
++---------------------------+---------------------------------------------+
+| auto_silent               | Behaves like ``auto`` but suppresses the    |
+|                           | fallback-list warning.                      |
++---------------------------+---------------------------------------------+
 
 
 In Ansible 2.12, Ansible will switch the default from :literal:`auto_legacy` to :literal:`auto`.

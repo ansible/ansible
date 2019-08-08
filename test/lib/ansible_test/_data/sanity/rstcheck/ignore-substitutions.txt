@@ -1,2 +1,5 @@
 version
-versiondev
+release
+today
+br
+_
