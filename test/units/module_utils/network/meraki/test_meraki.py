@@ -24,8 +24,7 @@ import json
 import os
 import pytest
 
-from units.compat import unittest
-from unittest import mock
+from units.compat import unittest, mock
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 from ansible.module_utils.six import PY2, PY3
