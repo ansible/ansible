@@ -328,7 +328,7 @@ groupings:
   - aws
   lambda_event:
   - aws
-  lambda_facts:
+  lambda_info:
   - aws
   lambda_policy:
   - aws

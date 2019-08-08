@@ -21,25 +21,27 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: lambda_facts
-short_description: Gathers AWS Lambda function details as Ansible facts
+module: lambda_info
+short_description: Gathers AWS Lambda function details
 description:
   - Gathers various details related to Lambda functions, including aliases, versions and event source mappings.
     Use module M(lambda) to manage the lambda function itself, M(lambda_alias) to manage function aliases and
     M(lambda_event) to manage lambda event source mappings.
+  - This module was called C(lambda_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(lambda_info) module no longer returns C(ansible_facts)!
 
 version_added: "2.2"
 
 options:
   query:
     description:
-      - Specifies the resource type for which to gather facts.  Leave blank to retrieve all facts.
+      - Specifies the resource type for which to gather information.  Leave blank to retrieve all information.
     required: true
     choices: [ "aliases", "all", "config", "mappings", "policy", "versions" ]
     default: "all"
   function_name:
     description:
-      - The name of the lambda function for which facts are requested.
+      - The name of the lambda function for which information is requested.
     aliases: [ "function", "name"]
   event_source_arn:
     description:
@@ -56,30 +58,31 @@ EXAMPLES = '''
 ---
 # Simple example of listing all info for a function
 - name: List all for a specific function
-  lambda_facts:
+  lambda_info:
     query: all
     function_name: myFunction
   register: my_function_details
 # List all versions of a function
 - name: List function versions
-  lambda_facts:
+  lambda_info:
     query: versions
     function_name: myFunction
   register: my_function_versions
 # List all lambda function versions
 - name: List all function
-  lambda_facts:
+  lambda_info:
     query: all
     max_items: 20
-- name: show Lambda facts
+  register: output
+- name: show Lambda information
   debug:
-    var: lambda_facts
+    var: output.lambda_facts
 '''
 
 RETURN = '''
 ---
 lambda_facts:
-    description: lambda facts
+    description: lambda information
     returned: success
     type: dict
 lambda_facts.function:
@@ -353,6 +356,10 @@ def main():
         mutually_exclusive=[],
         required_together=[]
     )
+    is_old_facts = module._name == 'lambda_facts'
+    if is_old_facts:
+        module.deprecate("The 'lambda_facts' module has been renamed to 'lambda_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     # validate function_name if present
     function_name = module.params['function_name']
@@ -389,7 +396,10 @@ def main():
     this_module_function = getattr(this_module, invocations[module.params['query']])
     all_facts = fix_return(this_module_function(client, module))
 
-    results = dict(ansible_facts={'lambda_facts': {'function': all_facts}}, changed=False)
+    if is_old_facts:
+        results = dict(ansible_facts={'lambda_facts': {'function': all_facts}}, changed=False)
+    else:
+        results = dict(lambda_facts={'function': all_facts}, changed=False)
 
     if module.check_mode:
         results['msg'] = 'Check mode set but ignored for fact gathering only.'
