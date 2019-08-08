@@ -269,10 +269,6 @@ from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_m
 from ansible.module_utils._text import to_native
 
 
-def is_running_service(service_status):
-    return service_status['ActiveState'] in set(['active', 'activating'])
-
-
 def request_was_ignored(out):
     return '=' not in out and 'ignoring request' in out
 
@@ -492,19 +488,37 @@ def main():
             result['state'] = module.params['state']
 
             # What is current service state?
-            if 'ActiveState' in result['status']:
+            service_status = result['status']
+            if 'ActiveState' in service_status:
                 action = None
+                service_state = service_status['ActiveState']
                 if module.params['state'] == 'started':
-                    if not is_running_service(result['status']):
+                    if service_state != 'active':
                         action = 'start'
                 elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']):
+                    if service_state not in set(['inactive', 'failed']):
                         action = 'stop'
-                else:
-                    if not is_running_service(result['status']):
+                    elif service_state == 'failed':
+                        result['state'] = 'failed'
+                elif module.params['state'] == 'reloaded':
+                    # unlike restart, reload won't take effect on services in any state but 'active'
+                    if service_state in set(['inactive', 'deactivating', 'failed']):
                         action = 'start'
+                    elif service_state == 'activating':
+                        # wait for startup, then trigger the reload
+                        if not module.check_mode:
+                            if module.params['no_block']:
+                                module.fail_json(msg="Unable to reload service %s: %s" % (unit, "cannot wait for service startup to complete with --no-block"))
+                            (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, 'start', unit))
+                            if rc != 0:
+                                module.fail_json(msg="Unable to reload service %s: service failed to start" % (unit))
+                        action = 'reload'
                     else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
+                        action = 'reload'
+
+                    result['state'] = 'started'
+                else:
+                    action = module.params['state'][:-2]
                     result['state'] = 'started'
 
                 if action:
