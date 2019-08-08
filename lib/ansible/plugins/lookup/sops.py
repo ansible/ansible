@@ -23,6 +23,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleLookupError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text
 
 from ansible.utils.display import Display
 display = Display()
@@ -41,11 +42,6 @@ DOCUMENTATION = """
         _terms:
             description: path(s) of files to read
             required: True
-        binary:
-            description: determine if sops output should be decoded as text or considered binary
-            type: bool
-            required: False
-            default: False
         print:
             description: print the decrypted content
             type: bool
@@ -124,10 +120,6 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         ret = []
 
-        sops_text_output = True
-        if 'binary' in kwargs:
-            sops_text_output = not kwargs['binary']
-
         print_decrypted = False
         if 'print' in kwargs:
             print_decrypted = kwargs['print']
@@ -141,9 +133,8 @@ class LookupModule(LookupBase):
                 if lookupfile:
                     (output, err, exit_code) = Sops.decrypt(lookupfile)
 
-                    if sops_text_output:
-                        # output is binary, we want UTF-8 string
-                        output = output.decode('UTF-8')
+                    # output is binary, we want UTF-8 string
+                    output = to_text(output, errors='surrogate_or_strict')
 
                     # the process output is the decrypted secret; displaying it
                     # here would easily end in logs, be cautious
