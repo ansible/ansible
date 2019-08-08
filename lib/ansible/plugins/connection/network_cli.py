@@ -247,7 +247,7 @@ class Connection(NetworkConnectionBase):
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
                 self.queue_message('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os)
-                self._sub_plugin.extend([{'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}])
+                self._sub_plugin.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
             else:
                 self.queue_message('vvvv', 'unable to load cliconf for network_os %s' % self._network_os)
         else:
@@ -260,7 +260,7 @@ class Connection(NetworkConnectionBase):
         self._terminal = terminal_loader.get(self._network_os, self)
         if self._terminal:
             self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
-            self._sub_plugin.extend([{'type': 'terminal', 'name': self._network_os, 'obj': self._terminal}])
+            self._sub_plugin.append({'type': 'terminal', 'name': self._network_os, 'obj': self._terminal})
         else:
             raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
