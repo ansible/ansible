@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_route_info
 description:
-- Gather facts for GCP Route
-- This module was previously called gcp_compute_route_facts before Ansible 2.9. The
-  usage has not changed
-short_description: Gather facts for GCP Route
+- Gather info for GCP Route
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Route
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -52,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a route info"
+- name: get info on a route info
   gcp_compute_route_info:
     filters:
     - name = test_object

@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_dns_managed_zone_info
 description:
-- Gather facts for GCP ManagedZone
-- This module was previously called gcp_dns_managed_zone_facts before Ansible 2.9.
-  The usage has not changed
-short_description: Gather facts for GCP ManagedZone
+- Gather info for GCP ManagedZone
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP ManagedZone
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -50,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a managed zone info"
+- name: get info on a managed zone info
   gcp_dns_managed_zone_info:
     dns_name: test.somewild2.example.com.
     project: test_project

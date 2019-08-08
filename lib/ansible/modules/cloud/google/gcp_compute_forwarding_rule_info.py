@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_forwarding_rule_info
 description:
-- Gather facts for GCP ForwardingRule
-- This module was previously called gcp_compute_forwarding_rule_facts before Ansible
-  2.9. The usage has not changed
-short_description: Gather facts for GCP ForwardingRule
+- Gather info for GCP ForwardingRule
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP ForwardingRule
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -58,7 +57,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a forwarding rule info"
+- name: get info on a forwarding rule info
   gcp_compute_forwarding_rule_info:
     region: us-west1
     filters:

@@ -31,8 +31,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_tpu_node_info
 description:
-- Gather facts for GCP Node
-short_description: Gather facts for GCP Node
+- Gather info for GCP Node
+short_description: Gather info for GCP Node
 version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -49,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a node info"
+- name: get info on a node info
   gcp_tpu_node_info:
     zone: us-central1-b
     project: test_project

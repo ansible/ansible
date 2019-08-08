@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_iam_role_info
 description:
-- Gather facts for GCP Role
-- This module was previously called gcp_iam_role_facts before Ansible 2.9. The usage
-  has not changed
-short_description: Gather facts for GCP Role
+- Gather info for GCP Role
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Role
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -46,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a role info"
+- name: get info on a role info
   gcp_iam_role_info:
     project: test_project
     auth_kind: serviceaccount

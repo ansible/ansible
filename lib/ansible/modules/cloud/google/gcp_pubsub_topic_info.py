@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_pubsub_topic_info
 description:
-- Gather facts for GCP Topic
-- This module was previously called gcp_pubsub_topic_facts before Ansible 2.9. The
-  usage has not changed
-short_description: Gather facts for GCP Topic
+- Gather info for GCP Topic
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Topic
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -46,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a topic info"
+- name: get info on a topic info
   gcp_pubsub_topic_info:
     project: test_project
     auth_kind: serviceaccount

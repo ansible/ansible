@@ -31,8 +31,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_appengine_firewall_rule_info
 description:
-- Gather facts for GCP FirewallRule
-short_description: Gather facts for GCP FirewallRule
+- Gather info for GCP FirewallRule
+short_description: Gather info for GCP FirewallRule
 version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -44,7 +44,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a firewall rule info"
+- name: get info on a firewall rule info
   gcp_appengine_firewall_rule_info:
     project: test_project
     auth_kind: serviceaccount

@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_interconnect_attachment_info
 description:
-- Gather facts for GCP InterconnectAttachment
-- This module was previously called gcp_compute_interconnect_attachment_facts before
-  Ansible 2.9. The usage has not changed
-short_description: Gather facts for GCP InterconnectAttachment
+- Gather info for GCP InterconnectAttachment
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP InterconnectAttachment
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -57,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a interconnect attachment info"
+- name: get info on a interconnect attachment info
   gcp_compute_interconnect_attachment_info:
     region: us-central1
     filters:

@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_container_node_pool_info
 description:
-- Gather facts for GCP NodePool
-- This module was previously called gcp_container_node_pool_facts before Ansible 2.9.
-  The usage has not changed
-short_description: Gather facts for GCP NodePool
+- Gather info for GCP NodePool
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP NodePool
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -65,7 +64,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a node pool info"
+- name: get info on a node pool info
   gcp_container_node_pool_info:
     cluster: "{{ cluster }}"
     location: us-central1-a

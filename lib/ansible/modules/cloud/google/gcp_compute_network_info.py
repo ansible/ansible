@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_network_info
 description:
-- Gather facts for GCP Network
-- This module was previously called gcp_compute_network_facts before Ansible 2.9.
-  The usage has not changed
-short_description: Gather facts for GCP Network
+- Gather info for GCP Network
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Network
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -52,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a network info"
+- name: get info on a network info
   gcp_compute_network_info:
     filters:
     - name = test_object

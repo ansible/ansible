@@ -31,8 +31,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_cloudtasks_queue_info
 description:
-- Gather facts for GCP Queue
-short_description: Gather facts for GCP Queue
+- Gather info for GCP Queue
+short_description: Gather info for GCP Queue
 version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -49,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a queue info"
+- name: get info on a queue info
   gcp_cloudtasks_queue_info:
     location: us-central1
     project: test_project

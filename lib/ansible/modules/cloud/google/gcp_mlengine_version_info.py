@@ -31,8 +31,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_mlengine_version_info
 description:
-- Gather facts for GCP Version
-short_description: Gather facts for GCP Version
+- Gather info for GCP Version
+short_description: Gather info for GCP Version
 version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -54,7 +54,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a version info"
+- name: get info on a version info
   gcp_mlengine_version_info:
     model: "{{ model }}"
     project: test_project

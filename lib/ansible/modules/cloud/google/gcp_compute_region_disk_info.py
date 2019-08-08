@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_region_disk_info
 description:
-- Gather facts for GCP RegionDisk
-- This module was previously called gcp_compute_region_disk_facts before Ansible 2.9.
-  The usage has not changed
-short_description: Gather facts for GCP RegionDisk
+- Gather info for GCP RegionDisk
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP RegionDisk
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -57,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a region disk info"
+- name: get info on a region disk info
   gcp_compute_region_disk_info:
     region: us-central1
     filters:

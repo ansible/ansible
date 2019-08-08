@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_target_http_proxy_info
 description:
-- Gather facts for GCP TargetHttpProxy
-- This module was previously called gcp_compute_target_http_proxy_facts before Ansible
-  2.9. The usage has not changed
-short_description: Gather facts for GCP TargetHttpProxy
+- Gather info for GCP TargetHttpProxy
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP TargetHttpProxy
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -52,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a target http proxy info"
+- name: get info on a target http proxy info
   gcp_compute_target_http_proxy_info:
     filters:
     - name = test_object

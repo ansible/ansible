@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_target_ssl_proxy_info
 description:
-- Gather facts for GCP TargetSslProxy
-- This module was previously called gcp_compute_target_ssl_proxy_facts before Ansible
-  2.9. The usage has not changed
-short_description: Gather facts for GCP TargetSslProxy
+- Gather info for GCP TargetSslProxy
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP TargetSslProxy
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -52,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a target ssl proxy info"
+- name: get info on a target ssl proxy info
   gcp_compute_target_ssl_proxy_info:
     filters:
     - name = test_object

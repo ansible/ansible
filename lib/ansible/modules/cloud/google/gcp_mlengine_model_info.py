@@ -31,8 +31,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_mlengine_model_info
 description:
-- Gather facts for GCP Model
-short_description: Gather facts for GCP Model
+- Gather info for GCP Model
+short_description: Gather info for GCP Model
 version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -44,7 +44,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a model info"
+- name: get info on a model info
   gcp_mlengine_model_info:
     project: test_project
     auth_kind: serviceaccount

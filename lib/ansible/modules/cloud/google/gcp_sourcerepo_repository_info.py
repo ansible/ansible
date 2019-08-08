@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_sourcerepo_repository_info
 description:
-- Gather facts for GCP Repository
-- This module was previously called gcp_sourcerepo_repository_facts before Ansible
-  2.9. The usage has not changed
-short_description: Gather facts for GCP Repository
+- Gather info for GCP Repository
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Repository
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -46,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a repository info"
+- name: get info on a repository info
   gcp_sourcerepo_repository_info:
     project: test_project
     auth_kind: serviceaccount

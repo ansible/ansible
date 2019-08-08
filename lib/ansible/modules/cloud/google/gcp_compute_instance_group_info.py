@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_instance_group_info
 description:
-- Gather facts for GCP InstanceGroup
-- This module was previously called gcp_compute_instance_group_facts before Ansible
-  2.9. The usage has not changed
-short_description: Gather facts for GCP InstanceGroup
+- Gather info for GCP InstanceGroup
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP InstanceGroup
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -57,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a instance group info"
+- name: get info on a instance group info
   gcp_compute_instance_group_info:
     zone: us-central1-a
     filters:

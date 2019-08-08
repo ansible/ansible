@@ -31,8 +31,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_cloudscheduler_job_info
 description:
-- Gather facts for GCP Job
-short_description: Gather facts for GCP Job
+- Gather info for GCP Job
+short_description: Gather info for GCP Job
 version_added: 2.9
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -49,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a job info"
+- name: get info on a job info
   gcp_cloudscheduler_job_info:
     region: us-central1
     project: test_project

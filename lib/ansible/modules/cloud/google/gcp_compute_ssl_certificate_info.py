@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_ssl_certificate_info
 description:
-- Gather facts for GCP SslCertificate
-- This module was previously called gcp_compute_ssl_certificate_facts before Ansible
-  2.9. The usage has not changed
-short_description: Gather facts for GCP SslCertificate
+- Gather info for GCP SslCertificate
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP SslCertificate
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -52,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a ssl certificate info"
+- name: get info on a ssl certificate info
   gcp_compute_ssl_certificate_info:
     filters:
     - name = test_object

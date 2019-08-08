@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_subnetwork_info
 description:
-- Gather facts for GCP Subnetwork
-- This module was previously called gcp_compute_subnetwork_facts before Ansible 2.9.
-  The usage has not changed
-short_description: Gather facts for GCP Subnetwork
+- Gather info for GCP Subnetwork
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Subnetwork
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -57,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a subnetwork info"
+- name: get info on a subnetwork info
   gcp_compute_subnetwork_info:
     region: us-west1
     filters:

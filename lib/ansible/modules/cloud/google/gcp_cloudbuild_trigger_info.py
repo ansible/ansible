@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_cloudbuild_trigger_info
 description:
-- Gather facts for GCP Trigger
-- This module was previously called gcp_cloudbuild_trigger_facts before Ansible 2.9.
-  The usage has not changed
-short_description: Gather facts for GCP Trigger
+- Gather info for GCP Trigger
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Trigger
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -46,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a trigger info"
+- name: get info on a trigger info
   gcp_cloudbuild_trigger_info:
     project: test_project
     auth_kind: serviceaccount

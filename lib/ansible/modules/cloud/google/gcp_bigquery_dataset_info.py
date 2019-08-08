@@ -31,10 +31,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_bigquery_dataset_info
 description:
-- Gather facts for GCP Dataset
-- This module was previously called gcp_bigquery_dataset_facts before Ansible 2.9.
-  The usage has not changed
-short_description: Gather facts for GCP Dataset
+- Gather info for GCP Dataset
+- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+short_description: Gather info for GCP Dataset
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
@@ -46,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: " a dataset info"
+- name: get info on a dataset info
   gcp_bigquery_dataset_info:
     project: test_project
     auth_kind: serviceaccount
