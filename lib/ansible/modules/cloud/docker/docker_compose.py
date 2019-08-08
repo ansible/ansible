@@ -28,7 +28,7 @@ description:
   - Configuration can be read from a C(docker-compose.yml) or C(docker-compose.yaml) file or inline using the I(definition) option.
   - See the examples for more details.
   - Supports check mode.
-  - This module was called I(docker_service) before Ansible 2.8. The usage did not change.
+  - This module was called C(docker_service) before Ansible 2.8. The usage did not change.
 
 options:
   project_src:
