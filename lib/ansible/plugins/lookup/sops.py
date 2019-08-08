@@ -121,7 +121,7 @@ class LookupModule(LookupBase):
             try:
                 if lookupfile:
                     # Run sops directly, python module is deprecated
-                    command = ["sops", "--decrypt", encrypted_file]
+                    command = ["sops", "--decrypt", lookupfile]
                     process = Popen(command, stdout=PIPE, stderr=PIPE)
                     (output, err) = process.communicate()
                     exit_code = process.wait()
