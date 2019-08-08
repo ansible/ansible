@@ -46,6 +46,11 @@ DOCUMENTATION = """
             type: bool
             required: False
             default: False
+        print:
+            description: print the decrypted content
+            type: bool
+            required: False
+            default: False
     notes:
         - this lookup does not understand 'globing' - use the fileglob lookup instead.
 """
@@ -123,6 +128,10 @@ class LookupModule(LookupBase):
         if 'binary' in kwargs:
             sops_text_output = not kwargs['binary']
 
+        print_decrypted = False
+        if 'print' in kwargs:
+            print_decrypted = kwargs['print']
+
         for term in terms:
             display.debug("Sops lookup term: %s" % term)
             lookupfile = self.find_file_in_search_path(variables, 'files', term)
@@ -142,8 +151,9 @@ class LookupModule(LookupBase):
 
                     # the process output is the decrypted secret; displaying it
                     # here would easily end in logs, be cautious
-                    # if output:
-                    #     display.vvvv(output)
+                    if print_decrypted and output:
+                        display.display(u"Sops decrypted output:")
+                        display.display(str(output).rstrip())
 
                     # sops logs always to stderr, as stdout is used for
                     # file content
