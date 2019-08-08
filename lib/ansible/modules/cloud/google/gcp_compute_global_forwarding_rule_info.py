@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a global forwarding rule info
+- name: get info on a global forwarding rule
   gcp_compute_global_forwarding_rule_info:
     filters:
     - name = test_object

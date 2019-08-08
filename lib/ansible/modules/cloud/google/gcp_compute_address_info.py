@@ -57,7 +57,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a address info
+- name: get info on a address
   gcp_compute_address_info:
     region: us-west1
     filters:

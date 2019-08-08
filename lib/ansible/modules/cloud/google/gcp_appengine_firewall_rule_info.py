@@ -44,7 +44,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a firewall rule info
+- name: get info on a firewall rule
   gcp_appengine_firewall_rule_info:
     project: test_project
     auth_kind: serviceaccount

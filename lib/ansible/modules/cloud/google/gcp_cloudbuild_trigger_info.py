@@ -45,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a trigger info
+- name: get info on a trigger
   gcp_cloudbuild_trigger_info:
     project: test_project
     auth_kind: serviceaccount

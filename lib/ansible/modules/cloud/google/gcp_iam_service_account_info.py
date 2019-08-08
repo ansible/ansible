@@ -45,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a service account info
+- name: get info on a service account
   gcp_iam_service_account_info:
     project: test_project
     auth_kind: serviceaccount

@@ -57,7 +57,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a forwarding rule info
+- name: get info on a forwarding rule
   gcp_compute_forwarding_rule_info:
     region: us-west1
     filters:

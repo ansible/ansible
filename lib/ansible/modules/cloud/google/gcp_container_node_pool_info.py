@@ -64,7 +64,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a node pool info
+- name: get info on a node pool
   gcp_container_node_pool_info:
     cluster: "{{ cluster }}"
     location: us-central1-a

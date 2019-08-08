@@ -56,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a vpn tunnel info
+- name: get info on a vpn tunnel
   gcp_compute_vpn_tunnel_info:
     region: us-west1
     filters:

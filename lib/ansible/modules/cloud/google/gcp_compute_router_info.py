@@ -56,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a router info
+- name: get info on a router
   gcp_compute_router_info:
     region: us-central1
     filters:

@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a global address info
+- name: get info on a global address
   gcp_compute_global_address_info:
     filters:
     - name = test_object

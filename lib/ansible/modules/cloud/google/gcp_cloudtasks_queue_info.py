@@ -49,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a queue info
+- name: get info on a queue
   gcp_cloudtasks_queue_info:
     location: us-central1
     project: test_project

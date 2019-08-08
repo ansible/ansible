@@ -45,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a dataset info
+- name: get info on a dataset
   gcp_bigquery_dataset_info:
     project: test_project
     auth_kind: serviceaccount

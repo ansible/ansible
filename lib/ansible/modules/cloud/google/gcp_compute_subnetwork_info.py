@@ -56,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a subnetwork info
+- name: get info on a subnetwork
   gcp_compute_subnetwork_info:
     region: us-west1
     filters:

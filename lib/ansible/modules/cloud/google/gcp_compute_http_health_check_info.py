@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a http health check info
+- name: get info on a http health check
   gcp_compute_http_health_check_info:
     filters:
     - name = test_object

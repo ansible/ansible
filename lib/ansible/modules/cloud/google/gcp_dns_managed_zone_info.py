@@ -49,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a managed zone info
+- name: get info on a managed zone
   gcp_dns_managed_zone_info:
     dns_name: test.somewild2.example.com.
     project: test_project

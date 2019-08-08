@@ -44,7 +44,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a model info
+- name: get info on a model
   gcp_mlengine_model_info:
     project: test_project
     auth_kind: serviceaccount

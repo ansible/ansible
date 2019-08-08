@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a network info
+- name: get info on a network
   gcp_compute_network_info:
     filters:
     - name = test_object

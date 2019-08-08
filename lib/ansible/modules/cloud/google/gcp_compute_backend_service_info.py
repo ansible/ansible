@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a backend service info
+- name: get info on a backend service
   gcp_compute_backend_service_info:
     filters:
     - name = test_object

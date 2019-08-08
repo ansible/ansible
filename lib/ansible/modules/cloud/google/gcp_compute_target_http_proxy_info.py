@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a target http proxy info
+- name: get info on a target http proxy
   gcp_compute_target_http_proxy_info:
     filters:
     - name = test_object

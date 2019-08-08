@@ -45,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a role info
+- name: get info on a role
   gcp_iam_role_info:
     project: test_project
     auth_kind: serviceaccount

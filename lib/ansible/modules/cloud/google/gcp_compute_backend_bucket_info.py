@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a backend bucket info
+- name: get info on a backend bucket
   gcp_compute_backend_bucket_info:
     filters:
     - name = test_object

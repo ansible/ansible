@@ -50,7 +50,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a table info
+- name: get info on a table
   gcp_bigquery_table_info:
     dataset: example_dataset
     project: test_project

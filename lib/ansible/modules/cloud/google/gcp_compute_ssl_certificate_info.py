@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a ssl certificate info
+- name: get info on a ssl certificate
   gcp_compute_ssl_certificate_info:
     filters:
     - name = test_object

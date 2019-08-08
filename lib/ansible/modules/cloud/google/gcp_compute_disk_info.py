@@ -56,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a disk info
+- name: get info on a disk
   gcp_compute_disk_info:
     zone: us-central1-a
     filters:

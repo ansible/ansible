@@ -56,7 +56,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a target pool info
+- name: get info on a target pool
   gcp_compute_target_pool_info:
     region: us-west1
     filters:

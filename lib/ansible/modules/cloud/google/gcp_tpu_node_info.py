@@ -49,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a node info
+- name: get info on a node
   gcp_tpu_node_info:
     zone: us-central1-b
     project: test_project

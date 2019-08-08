@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a instance template info
+- name: get info on a instance template
   gcp_compute_instance_template_info:
     filters:
     - name = test_object

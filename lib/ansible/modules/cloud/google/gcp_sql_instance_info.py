@@ -45,7 +45,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a instance info
+- name: get info on a instance
   gcp_sql_instance_info:
     project: test_project
     auth_kind: serviceaccount

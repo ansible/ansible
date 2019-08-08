@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a route info
+- name: get info on a route
   gcp_compute_route_info:
     filters:
     - name = test_object

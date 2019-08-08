@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a firewall info
+- name: get info on a firewall
   gcp_compute_firewall_info:
     filters:
     - name = test_object

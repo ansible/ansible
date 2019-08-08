@@ -50,7 +50,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a database info
+- name: get info on a database
   gcp_sql_database_info:
     instance: "{{ instance }}"
     project: test_project

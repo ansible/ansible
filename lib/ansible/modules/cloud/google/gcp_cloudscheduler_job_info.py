@@ -49,7 +49,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a job info
+- name: get info on a job
   gcp_cloudscheduler_job_info:
     region: us-central1
     project: test_project

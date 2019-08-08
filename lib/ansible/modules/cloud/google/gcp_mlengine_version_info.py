@@ -54,7 +54,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a version info
+- name: get info on a version
   gcp_mlengine_version_info:
     model: "{{ model }}"
     project: test_project

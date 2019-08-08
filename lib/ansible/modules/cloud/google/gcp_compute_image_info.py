@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a image info
+- name: get info on a image
   gcp_compute_image_info:
     filters:
     - name = test_object
