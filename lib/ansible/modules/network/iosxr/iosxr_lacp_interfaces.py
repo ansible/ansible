@@ -42,6 +42,9 @@ version_added: 2.9
 short_description: Manage Link Aggregation Control Protocol (LACP) attributes of interfaces on IOS-XR devices.
 description:
   - This module manages Link Aggregation Control Protocol (LACP) attributes of interfaces on IOS-XR devices.
+notes:
+  - Tested against IOS-XR 6.1.3.
+  - This module works with connection C(network_cli).
 author: Nilashish Chakraborty (@nilashishc)
 options:
   config:
@@ -522,7 +525,9 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=Lacp_interfacesArgs.argument_spec,
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',))]
+    module = AnsibleModule(argument_spec=Lacp_interfacesArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
     result = Lacp_interfaces(module).execute_module()

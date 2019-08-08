@@ -1,0 +1,49 @@
+---
+- debug:
+    msg: "START isoxr_lldp_global round trip integration tests on connection={{ ansible_connection }}"
+
+- block:
+    - include_tasks: _remove_config.yaml
+
+    - name: Apply the provided configuration (base config)
+      iosxr_lldp_global:
+        config:
+          holdtime: 200
+          timer: 500
+        state: merged
+      register: base_config
+        
+    - name: Gather interfaces facts
+      iosxr_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - lldp_global
+
+    - name: Apply the provided configuration (config to be reverted)
+      iosxr_lldp_global:
+        config:
+          holdtime: 200
+          reinit: 4
+          subinterfaces: True
+          timer: 3000
+        state: merged
+      register: result
+      
+    - name: Assert that changes were applied
+      assert:
+        that: "{{ round_trip['after'] == result['after'] }}"
+
+    - name: Revert back to base config using facts round trip
+      iosxr_lldp_global:
+        config: "{{ ansible_facts['network_resources']['lldp_global'] }}"
+        state: replaced
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ base_config['after'] == revert['after'] }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

@@ -42,6 +42,9 @@ version_added: 2.9
 short_description: Manage Global Link Aggregation Control Protocol (LACP) on IOS-XR devices.
 description:
   - This module manages Global Link Aggregation Control Protocol (LACP) on IOS-XR devices.
+notes:
+  - Tested against IOS-XR 6.1.3.
+  - This module works with connection C(network_cli).
 author: Nilashish Chakraborty (@nilashishc)
 options:
   config:
@@ -254,14 +257,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
-  type: list
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
-  type: list
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -284,7 +287,9 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=LacpArgs.argument_spec,
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',))]
+    module = AnsibleModule(argument_spec=LacpArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
     result = Lacp(module).execute_module()
