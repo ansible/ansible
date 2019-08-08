@@ -1817,6 +1817,12 @@ class EntrustCertificate(Certificate):
         super(EntrustCertificate, self).__init__(module, backend)
         self.trackingId = None
         self.notAfter = self.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after')
+
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file {0} does not exist'.format(self.csr_path)
+            )
+
         self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
 
         # ECS API defaults to using the validated organization tied to the account.
@@ -1858,10 +1864,6 @@ class EntrustCertificate(Certificate):
             module.fail_json(msg='Failed to initialize Entrust Provider: {0}'.format(to_native(e.message)))
 
     def generate(self, module):
-        if not os.path.exists(self.csr_path):
-            raise CertificateError(
-                'The certificate signing request file {0} does not exist'.format(self.csr_path)
-            )
 
         if not self.check(module, perms_required=False) or self.force:
             # Read the CSR that was generated for us
@@ -1908,9 +1910,9 @@ class EntrustCertificate(Certificate):
         except RestOperationException as e:
             module.fail_json(msg='Failed to get status of existing certificate from Entrust Certificate Services (ECS): {0}.'.format(to_native(e.message)))
 
-        # Always issue a new certificate if the certificate is suspended or revoked
+        # Always issue a new certificate if the certificate is expired, suspended or revoked
         status = cert_details.get('status', False)
-        if status == 'EXPIRED' or status == "SUSPENDED" or status == "REVOKED":
+        if status == 'EXPIRED' or status == 'SUSPENDED' or status == 'REVOKED':
             return False
 
         # If the requested cert type was specified and it is for a different certificate type than the initial certificate, a new one is needed
