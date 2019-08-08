@@ -55,7 +55,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a autoscaler
+- name: get info on an autoscaler
   gcp_compute_autoscaler_info:
     zone: us-central1-a
     filters:

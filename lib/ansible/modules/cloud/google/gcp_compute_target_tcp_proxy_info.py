@@ -52,7 +52,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a target tcp proxy
+- name: get info on a target TCP proxy
   gcp_compute_target_tcp_proxy_info:
     filters:
     - name = test_object

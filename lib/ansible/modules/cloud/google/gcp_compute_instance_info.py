@@ -57,7 +57,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a instance
+- name: get info on an instance
   gcp_compute_instance_info:
     zone: us-central1-a
     filters:

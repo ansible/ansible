@@ -51,7 +51,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a instance
+- name: get info on an instance
   gcp_redis_instance_info:
     region: us-central1
     project: test_project

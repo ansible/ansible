@@ -57,7 +57,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a interconnect attachment
+- name: get info on an interconnect attachment
   gcp_compute_interconnect_attachment_info:
     region: us-central1
     filters:
