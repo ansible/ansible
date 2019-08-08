@@ -244,10 +244,10 @@ def get_ansible_version():  # type: () -> str
 
     # ansible may not be in our sys.path
     # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
-    load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible.release')
+    load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
 
     # noinspection PyUnresolvedReferences
-    from ansible.release import __version__ as ansible_version
+    from ansible_release import __version__ as ansible_version
 
     get_ansible_version.version = ansible_version
 
