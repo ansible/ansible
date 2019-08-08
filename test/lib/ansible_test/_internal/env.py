@@ -243,6 +243,11 @@ def get_ansible_version(args):
     :type args: CommonConfig
     :rtype: str | None
     """
+    try:
+        return get_ansible_version.version
+    except AttributeError:
+        pass
+
     code = 'from __future__ import (print_function); from ansible.release import __version__; print(__version__)'
     cmd = [sys.executable, '-c', code]
     env = ansible_environment(args)
@@ -253,6 +258,8 @@ def get_ansible_version(args):
     except SubprocessError as ex:
         display.warning('Unable to get Ansible version:\n%s' % ex)
         ansible_version = None
+
+    get_ansible_version.version = ansible_version
 
     return ansible_version
 
