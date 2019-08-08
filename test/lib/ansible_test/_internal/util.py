@@ -62,8 +62,17 @@ except AttributeError:
 COVERAGE_CONFIG_NAME = 'coveragerc'
 COVERAGE_OUTPUT_NAME = 'coverage'
 
-ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-ANSIBLE_TEST_ROOT = os.path.join(ANSIBLE_ROOT, 'test', 'lib', 'ansible_test')
+ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# assume running from install
+ANSIBLE_ROOT = os.path.dirname(ANSIBLE_TEST_ROOT)
+ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'ansible')
+
+if not os.path.exists(ANSIBLE_LIB_ROOT):
+    # running from source
+    ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(ANSIBLE_TEST_ROOT)))
+    ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'lib', 'ansible')
+
 ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
 ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, 'config')
 
