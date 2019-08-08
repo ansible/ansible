@@ -32,7 +32,8 @@ DOCUMENTATION = '''
 module: gcp_pubsub_topic_info
 description:
 - Gather info for GCP Topic
-- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+- This module was called C(gcp_pubsub_topic_facts) before Ansible 2.9. The usage has
+  not changed.
 short_description: Gather info for GCP Topic
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)

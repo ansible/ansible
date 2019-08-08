@@ -32,7 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_target_pool_info
 description:
 - Gather info for GCP TargetPool
-- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+- This module was called C(gcp_compute_target_pool_facts) before Ansible 2.9. The
+  usage has not changed.
 short_description: Gather info for GCP TargetPool
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)

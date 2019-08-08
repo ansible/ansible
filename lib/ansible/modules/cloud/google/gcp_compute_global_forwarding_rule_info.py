@@ -32,7 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_global_forwarding_rule_info
 description:
 - Gather info for GCP GlobalForwardingRule
-- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+- This module was called C(gcp_compute_global_forwarding_rule_facts) before Ansible
+  2.9. The usage has not changed.
 short_description: Gather info for GCP GlobalForwardingRule
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)

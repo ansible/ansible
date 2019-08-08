@@ -32,7 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_http_health_check_info
 description:
 - Gather info for GCP HttpHealthCheck
-- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+- This module was called C(gcp_compute_http_health_check_facts) before Ansible 2.9.
+  The usage has not changed.
 short_description: Gather info for GCP HttpHealthCheck
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)

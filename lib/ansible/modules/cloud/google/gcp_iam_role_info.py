@@ -32,7 +32,8 @@ DOCUMENTATION = '''
 module: gcp_iam_role_info
 description:
 - Gather info for GCP Role
-- This module was called C({{ old_name }}) before Ansible 2.9. The usage has not changed.
+- This module was called C(gcp_iam_role_facts) before Ansible 2.9. The usage has not
+  changed.
 short_description: Gather info for GCP Role
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
