@@ -68,11 +68,15 @@ def is_checkpoint_param(parameter):
 
 
 # build the payload from the parameters which has value (not None), and they are parameter of checkpoint API as well
-def get_payload_from_parameters(module):
+def get_payload_from_parameters(params):
     payload = {}
-    for parameter in module.params:
-        if module.params[parameter] and is_checkpoint_param(parameter):
-            payload[parameter.replace("_", "-")] = module.params[parameter]
+    for parameter in params:
+        parameter_value = params[parameter]
+        if parameter_value and is_checkpoint_param(parameter):
+            if isinstance(parameter_value, dict):
+                payload[parameter.replace("_", "-")] = get_payload_from_parameters(parameter_value)
+            else:
+                payload[parameter.replace("_", "-")] = parameter_value
     return payload
 
 
@@ -131,7 +135,7 @@ def handle_publish(module, connection, version):
 
 # handle a command
 def api_command(module, command):
-    payload = get_payload_from_parameters(module)
+    payload = get_payload_from_parameters(module.params)
     connection = Connection(module._socket_path)
     # if user insert a specific version, we add it to the url
     version = ('v' + module.params['version'] + '/') if module.params.get('version') else ''
@@ -156,7 +160,7 @@ def api_command(module, command):
 
 # handle api call facts
 def api_call_facts(module, api_call_object, api_call_object_plural_version):
-    payload = get_payload_from_parameters(module)
+    payload = get_payload_from_parameters(module.params)
     connection = Connection(module._socket_path)
     # if user insert a specific version, we add it to the url
     version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
@@ -175,7 +179,7 @@ def api_call_facts(module, api_call_object, api_call_object_plural_version):
 
 # handle api call
 def api_call(module, api_call_object):
-    payload = get_payload_from_parameters(module)
+    payload = get_payload_from_parameters(module.params)
     connection = Connection(module._socket_path)
 
     result = {'changed': False, 'checkpoint_session_uid': connection.get_session_uid()}

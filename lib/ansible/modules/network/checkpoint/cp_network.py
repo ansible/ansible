@@ -53,7 +53,7 @@ options:
     type: str
   mask_length:
     description:
-      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields 
+      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields
         explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
     type: int
   mask_length4:
@@ -79,8 +79,8 @@ options:
         type: bool
       ip_address:
         description:
-          - IPv4 or IPv6 address. If both addresses are required use ipv4-address and ipv6-address fields 
-            explicitly. This parameter is not required in case "method" parameter is "hide" and "hide-behind" parameter 
+          - IPv4 or IPv6 address. If both addresses are required use ipv4-address and ipv6-address fields
+            explicitly. This parameter is not required in case "method" parameter is "hide" and "hide-behind" parameter
             is "gateway".
         type: str
       ipv4_address:
@@ -129,7 +129,7 @@ options:
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of 
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of
         the object to a fully detailed representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
@@ -143,7 +143,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was 
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
         omitted - warnings will also be ignored.
     type: bool
   uid:

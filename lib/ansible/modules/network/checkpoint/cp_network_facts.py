@@ -45,7 +45,7 @@ options:
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of 
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of
         the object to a fully detailed representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
@@ -109,7 +109,7 @@ def main():
     api_call_object_plural_version = "networks"
 
     result = api_call_facts(module, api_call_object, api_call_object_plural_version)
-    module.exit_json(**result)
+    module.exit_json(ansible_facts=result)
 
 
 if __name__ == '__main__':
