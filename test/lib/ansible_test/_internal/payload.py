@@ -41,17 +41,13 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
                  f[1].startswith('bin/') or
                  f[1].startswith('lib/') or
                  f[1].startswith('test/lib/') or
-                 f[1].startswith('packaging/requirements/') or
                  f[1] in (
-                     'setup.py',
-                     'README.rst',
-                     'requirements.txt',
-                     # units only
-                     'test/units/ansible.cfg',
-                     # integration only
                      'test/integration/integration.cfg',
                      'test/integration/integration_config.yml',
                      'test/integration/inventory',
+                     'test/integration/network-integration.cfg',
+                     'test/integration/target-prefixes.network',
+                     'test/integration/windows-integration.cfg',
                  )]
 
         if not isinstance(args, (ShellConfig, IntegrationConfig)):
