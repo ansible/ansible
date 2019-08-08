@@ -151,7 +151,7 @@ class NetAppONTAPGatherFacts(object):
         if int(module.params['max_records']) <= 0:
             self.max_records = '1'
         elif int(module.params['max_records']) >= 2**32:
-            self.max_records = str(2**32-1)
+            self.max_records = str(2**32 - 1)
         else:
             self.max_records = module.params['max_records']
 
