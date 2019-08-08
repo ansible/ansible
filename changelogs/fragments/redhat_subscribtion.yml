@@ -1,0 +1,2 @@
+bugfixes:
+  - redhat_subscription - do not ignore consumer_name and other variables if activationkey is specified (https://github.com/ansible/ansible/pull/60266)

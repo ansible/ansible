@@ -414,23 +414,28 @@ class Rhsm(RegistrationBase):
         if server_proxy_password:
             args.extend(['--proxypassword', server_proxy_password])
 
+        if auto_attach:
+            args.append('--auto-attach')
+
+        if consumer_type:
+            args.extend(['--type', consumer_type])
+
+        if consumer_name:
+            args.extend(['--name', consumer_name])
+
+        if consumer_id:
+            args.extend(['--consumerid', consumer_id])
+
+        if environment:
+            args.extend(['--environment', environment])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
         else:
-            if auto_attach:
-                args.append('--auto-attach')
             if username:
                 args.extend(['--username', username])
             if password:
                 args.extend(['--password', password])
-            if consumer_type:
-                args.extend(['--type', consumer_type])
-            if consumer_name:
-                args.extend(['--name', consumer_name])
-            if consumer_id:
-                args.extend(['--consumerid', consumer_id])
-            if environment:
-                args.extend(['--environment', environment])
 
         if release:
             args.extend(['--release', release])
