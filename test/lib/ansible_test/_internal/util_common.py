@@ -15,7 +15,6 @@ from .util import (
     COVERAGE_OUTPUT_NAME,
     display,
     find_python,
-    ANSIBLE_ROOT,
     is_shippable,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,

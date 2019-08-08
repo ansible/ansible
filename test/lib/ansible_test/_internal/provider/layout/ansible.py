@@ -3,13 +3,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
 
 from ... import types as t
-
-from ...util import (
-    ANSIBLE_TEST_ROOT,
-)
 
 from . import (
     ContentLayout,
