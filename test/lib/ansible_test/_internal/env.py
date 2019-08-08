@@ -236,6 +236,7 @@ def show_dict(data, verbose, root_verbosity=0, path=None):
 
 
 def get_ansible_version():  # type: () -> str
+    """Return the Ansible version."""
     try:
         return get_ansible_version.version
     except AttributeError:
