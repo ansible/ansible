@@ -57,7 +57,7 @@ class DataContext:
             content = self.create_content_layout(self.__layout_providers, self.__source_providers, content_path, False)
 
             if content.is_ansible:
-                install = content
+                install = InstallLayout(ANSIBLE_ROOT, content.all_files())
             else:
                 install = None
         elif is_subdir(current_path, ANSIBLE_ROOT):
