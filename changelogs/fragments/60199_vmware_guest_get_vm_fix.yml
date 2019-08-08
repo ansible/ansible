@@ -1,0 +1,2 @@
+bugfixes:
+  - Cross check VM with folder parameter when we have unique VM (https://github.com/ansible/ansible/issues/60199).

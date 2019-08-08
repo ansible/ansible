@@ -1,0 +1,76 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
+- name: Create multiple folders
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "test{{ item }}"
+    folder_type: vm
+    state: present
+  register: all_folder_results
+  with_items:
+    - 0
+    - 1
+    - 2
+    - 3
+
+- name: Create new VM in test0 folder
+  vmware_guest:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    hardware:
+      num_cpus: 4
+      memory_mb: 512
+    disk:
+      - size: 1gb
+        type: thin
+        autoselect_datastore: True
+    state: present
+    folder: test0
+  register: vm
+
+- name: Check if VM already existing.
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "{{ item }}"
+    name: test_vm1
+  register: test
+  failed_when: False
+  delegate_to: localhost
+  loop:
+    - "/test0/"
+    - "/test1/"
+    - "/test2/"
+    - "/test3/"
+
+- name: Check if VM found in test0 only
+  assert:
+    that:
+      - item.instance.hw_folder
+  with_items:
+    - "{{ test.results | json_query(query) }}"
+  vars:
+    query: "[?instance.hw_name=='test_vm1']"
+
+- name: Check if VM not found for other folder except test0
+  assert:
+    that:
+      - not item.instance is defined
+  with_items:
+    - "{{ test.results | json_query(query) }}"
+  vars:
+    query: "[?instance.hw_name!='test_vm1']"

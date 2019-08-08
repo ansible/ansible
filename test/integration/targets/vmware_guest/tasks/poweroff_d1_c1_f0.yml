@@ -9,6 +9,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: "{{ item.name }}"
+    folder: "{{ f0 }}"
     state: poweredoff
   with_items: "{{ virtual_machines }}"
   register: poweroff_d1_c1_f0

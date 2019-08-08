@@ -17,6 +17,7 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     datacenter: '{{ dc1 }}'
   register: disk_facts
 

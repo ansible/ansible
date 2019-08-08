@@ -984,7 +984,12 @@ class PyVmomi(object):
                         break
             elif vms:
                 # Unique virtual machine found.
-                vm_obj = vms[0]
+                if 'folder' in self.params and self.params['folder']:
+                    # Make sure VM found is unique by folder value
+                    # https://github.com/ansible/ansible/issues/60199
+                    actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vms[0])
+                    if actual_vm_folder_path.endswith(self.params['folder']):
+                        vm_obj = vms[0]
         elif 'moid' in self.params and self.params['moid']:
             vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 

@@ -1,6 +1,5 @@
 vmware_guest_test_playbooks:
   - boot_firmware_d1_c1_f0.yml
-  - boot_firmware_d1_c1_f0.yml
   - cdrom_d1_c1_f0.yml
   - check_mode.yml
   - clone_customize_guest_test.yml
@@ -26,6 +25,7 @@ vmware_guest_test_playbooks:
 #  - network_with_portgroup.yml
   - non_existent_vm_ops.yml
   - poweroff_d1_c1_f0.yml
-  - poweroff_d1_c1_f1.yml
+#  - poweroff_d1_c1_f1.yml
 #  - template_d1_c1_f0.yml
   - vapp_d1_c1_f0.yml
+  - multiple_folder.yml

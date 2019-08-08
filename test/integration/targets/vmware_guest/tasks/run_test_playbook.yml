@@ -8,6 +8,7 @@
         password: "{{ vcenter_password }}"
         validate_certs: no
 #        cluster: "{{ ccr1 }}"
+        folder: "{{ f0 }}"
         name: '{{ item }}'
         force: yes
         state: absent

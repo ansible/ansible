@@ -11,5 +11,7 @@ virtual_machines:
 virtual_machines_in_cluster:
   - name: DC0_C0_RP0_VM0
     cluster: '{{ ccr1 }}'
+    folder: /F0/DC0/vm/F0
   - name: DC0_C0_RP0_VM1
     cluster: '{{ ccr1 }}'
+    folder: /F0/DC0/vm/F0
