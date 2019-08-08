@@ -1961,7 +1961,7 @@ def main():
 
         else:
             # absent accounting scheme
-            if not domain_name：
+            if not domain_name:
                 if len(scheme_exist) == 0:
                     pass
                 elif scheme_new not in scheme_exist:
