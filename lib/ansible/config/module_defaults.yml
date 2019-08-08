@@ -264,7 +264,7 @@ groupings:
   - aws
   efs:
   - aws
-  efs_facts:
+  efs_info:
   - aws
   elasticache:
   - aws

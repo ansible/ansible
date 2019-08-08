@@ -903,9 +903,9 @@ lib/ansible/modules/cloud/amazon/ecs_taskdefinition.py validate-modules:E338
 lib/ansible/modules/cloud/amazon/ecs_taskdefinition_info.py validate-modules:E337
 lib/ansible/modules/cloud/amazon/efs.py pylint:blacklisted-name
 lib/ansible/modules/cloud/amazon/efs.py validate-modules:E337
-lib/ansible/modules/cloud/amazon/efs_facts.py pylint:blacklisted-name
-lib/ansible/modules/cloud/amazon/efs_facts.py validate-modules:E337
-lib/ansible/modules/cloud/amazon/efs_facts.py validate-modules:E338
+lib/ansible/modules/cloud/amazon/efs_info.py pylint:blacklisted-name
+lib/ansible/modules/cloud/amazon/efs_info.py validate-modules:E337
+lib/ansible/modules/cloud/amazon/efs_info.py validate-modules:E338
 lib/ansible/modules/cloud/amazon/elasticache.py future-import-boilerplate
 lib/ansible/modules/cloud/amazon/elasticache.py metaclass-boilerplate
 lib/ansible/modules/cloud/amazon/elasticache.py validate-modules:E324
