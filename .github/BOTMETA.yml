@@ -82,7 +82,7 @@ files:
   $modules/cloud/amazon/ecs_cluster.py: willthames
   $modules/cloud/amazon/ecs_ecr.py: willthames
   $modules/cloud/amazon/ecs_service.py: willthames
-  $modules/cloud/amazon/ecs_service_facts.py: willthames
+  $modules/cloud/amazon/ecs_service_info.py: willthames
   $modules/cloud/amazon/ecs_task.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition_info.py: willthames

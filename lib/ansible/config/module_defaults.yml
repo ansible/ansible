@@ -254,7 +254,7 @@ groupings:
   - aws
   ecs_service:
   - aws
-  ecs_service_facts:
+  ecs_service_info:
   - aws
   ecs_task:
   - aws
