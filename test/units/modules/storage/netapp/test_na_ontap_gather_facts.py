@@ -123,8 +123,15 @@ class TestMyModule(unittest.TestCase):
         """
         Helper method to return an na_ontap_gather_facts object
         """
+
+        argument_spec = netapp_utils.na_ontap_host_argument_spec()
+        argument_spec.update(dict(
+            state=dict(default='info', choices=['info']),
+            gather_subset=dict(default=['all'], type='list'),
+            max_records=dict(default='1024', type='int'),
+        ))
         module = basic.AnsibleModule(
-            argument_spec=netapp_utils.na_ontap_host_argument_spec(),
+            argument_spec=argument_spec,
             supports_check_mode=True
         )
         obj = gather_facts_module(module)
