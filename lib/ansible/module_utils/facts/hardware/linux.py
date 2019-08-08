@@ -79,6 +79,9 @@ class LinuxHardware(Hardware):
     # regex used against mtab content to find entries that are bind mounts
     MTAB_BIND_MOUNT_RE = re.compile(r'.*bind.*"')
 
+    # regex used for replacing octal escape sequences
+    OCTAL_ESCAPE_RE = re.compile(r'\\[0-9]{3}')
+
     def populate(self, collected_facts=None):
         hardware_facts = {}
         self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
@@ -460,6 +463,14 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
+    @staticmethod
+    def _replace_octal_escapes_helper(match):
+        # Convert to integer using base8 and then convert to character
+        return chr(int(match.group()[1:], 8))
+
+    def _replace_octal_escapes(self, value):
+        return self.OCTAL_ESCAPE_RE.sub(self._replace_octal_escapes_helper, value)
+
     def get_mount_info(self, mount, device, uuids):
 
         mount_size = get_mount_size(mount)
@@ -485,6 +496,8 @@ class LinuxHardware(Hardware):
         pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
         maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
+            # Transform octal escape sequences
+            fields = [self._replace_octal_escapes(field) for field in fields]
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
 
