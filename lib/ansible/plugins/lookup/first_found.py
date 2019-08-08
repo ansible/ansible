@@ -29,10 +29,6 @@ DOCUMENTATION = """
         type: boolean
         default: False
         description: Return an empty list if no file is found, instead of an error.
-        deprecated:
-            why: A generic that applies to all errors exists for all lookups.
-            version: "2.8"
-            alternative: The generic ``errors=ignore``
 """
 
 EXAMPLES = """
@@ -129,9 +125,6 @@ class LookupModule(LookupBase):
         if anydict:
             for term in terms:
                 if isinstance(term, dict):
-
-                    if 'skip' in term:
-                        self._display.deprecated('Use errors="ignore" instead of skip', version='2.12')
 
                     files = term.get('files', [])
                     paths = term.get('paths', [])
