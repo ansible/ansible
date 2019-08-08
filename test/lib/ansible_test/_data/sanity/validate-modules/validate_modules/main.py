@@ -975,6 +975,7 @@ class ModuleValidator(Validator):
                         tracebk=trace
                     )
                 if not errors and not traces:
+                    missing_fragment = False
                     with CaptureStd():
                         try:
                             get_docstring(self.path, fragment_loader, verbose=True)
@@ -985,6 +986,7 @@ class ModuleValidator(Validator):
                                 code=303,
                                 msg='DOCUMENTATION fragment missing: %s' % fragment
                             )
+                            missing_fragment = True
                         except Exception as e:
                             self.reporter.trace(
                                 path=self.object_path,
@@ -996,7 +998,8 @@ class ModuleValidator(Validator):
                                 msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                             )
 
-                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+                    if not missing_fragment:
+                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
 
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
