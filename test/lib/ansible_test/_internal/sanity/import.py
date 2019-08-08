@@ -26,6 +26,7 @@ from ..util import (
     parse_to_list_of_dict,
     make_dirs,
     is_subdir,
+    ANSIBLE_LIB_ROOT,
 )
 
 from ..util_common import (
@@ -51,7 +52,6 @@ from ..coverage_util import (
 
 from ..data import (
     data_context,
-    ANSIBLE_ROOT,
 )
 
 
@@ -109,7 +109,7 @@ class ImportTest(SanityMultipleVersion):
             with open(ansible_init, 'w'):
                 pass
 
-            os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/module_utils'), ansible_link)
+            os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'module_utils'), ansible_link)
 
             if data_context().content.collection:
                 # inject just enough Ansible code for the collections loader to work on all supported Python versions
@@ -120,8 +120,8 @@ class ImportTest(SanityMultipleVersion):
                 with open(os.path.join(ansible_path, 'utils/__init__.py'), 'w'):
                     pass
 
-                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/collection_loader.py'), os.path.join(ansible_path, 'utils/collection_loader.py'))
-                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/singleton.py'), os.path.join(ansible_path, 'utils/singleton.py'))
+                os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'collection_loader.py'), os.path.join(ansible_path, 'utils', 'collection_loader.py'))
+                os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'singleton.py'), os.path.join(ansible_path, 'utils', 'singleton.py'))
 
                 make_dirs(os.path.join(ansible_path, 'modules'))
                 with open(os.path.join(ansible_path, 'modules/__init__.py'), 'w'):

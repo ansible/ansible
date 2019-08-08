@@ -60,7 +60,7 @@ from .util import (
     get_remote_completion,
     COVERAGE_OUTPUT_NAME,
     cmd_quote,
-    ANSIBLE_ROOT,
+    ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
     get_available_python_versions,
     is_subdir,
@@ -85,6 +85,10 @@ from .docker_util import (
 from .ansible_util import (
     ansible_environment,
     check_pyyaml,
+)
+
+from .env import (
+    get_ansible_version,
 )
 
 from .target import (
@@ -299,13 +303,34 @@ def generate_egg_info(args):
     """
     :type args: EnvironmentConfig
     """
-    if not os.path.exists(os.path.join(ANSIBLE_ROOT, 'setup.py')):
+    if args.explain:
         return
 
-    if os.path.isdir(os.path.join(ANSIBLE_ROOT, 'lib/ansible.egg-info')):
+    egg_info_path = ANSIBLE_LIB_ROOT + '.egg-info'
+
+    if os.path.exists(egg_info_path):
         return
 
-    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], cwd=ANSIBLE_ROOT, capture=args.verbosity < 3)
+    # minimal PKG-INFO stub following the format defined in PEP 241
+    # required for older setuptools versions to avoid a traceback when importing pkg_resources from packages like cryptography
+    # newer setuptools versions are happy with an empty directory
+    # including a stub here means we don't need to locate the existing file or have setup.py generate it when running from source
+    pkg_info = '''
+Metadata-Version: 1.0
+Name: ansible
+Version: %s
+Platform: UNKNOWN
+Summary: Radically simple IT automation
+Author-email: info@ansible.com
+License: GPLv3+
+''' % get_ansible_version()
+
+    os.mkdir(egg_info_path)
+
+    pkg_info_path = os.path.join(egg_info_path, 'PKG-INFO')
+
+    with open(pkg_info_path, 'w') as pkg_info_fd:
+        pkg_info_fd.write(pkg_info.lstrip())
 
 
 def generate_pip_install(pip, command, packages=None):
