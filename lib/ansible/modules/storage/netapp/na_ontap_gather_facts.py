@@ -51,7 +51,7 @@ options:
             - Limits maximum amount of records returned per query.
                 It must be between 1 and 4294967295.
         default: "1024"
-        type: str
+        type: int
         version_added: 2.9
 '''
 
@@ -148,12 +148,12 @@ class NetAppONTAPGatherFacts(object):
         self.netapp_info = dict()
 
         # max-records range [1..2^32-1]
-        if int(module.params['max_records']) <= 0:
+        if int(self.module.params['max_records']) <= 0:
             self.max_records = '1'
-        elif int(module.params['max_records']) >= 2**32:
+        elif int(self.module.params['max_records']) >= 2**32:
             self.max_records = str(2**32 - 1)
         else:
-            self.max_records = module.params['max_records']
+            self.max_records = str(self.module.params['max_records'])
 
         # thanks to coreywan (https://github.com/ansible/ansible/pull/47016)
         # for starting this
@@ -599,7 +599,7 @@ def main():
     argument_spec.update(dict(
         state=dict(default='info', choices=['info']),
         gather_subset=dict(default=['all'], type='list'),
-        max_records=dict(default='1024', type='str'),
+        max_records=dict(default='1024', type='int'),
     ))
 
     module = AnsibleModule(
