@@ -89,7 +89,7 @@ EXAMPLES = '''
     register: lambda_info
   - name: show results
     debug:
-      var: lambda_info.lambda_facts
+      msg: "{{ lambda_info['lambda_facts'] }}"
 
 # The following will set the Dev alias to the latest version ($LATEST) since version is omitted (or = 0)
   - name: "alias 'Dev' for function {{ lambda_info.lambda_facts.FunctionName }} "

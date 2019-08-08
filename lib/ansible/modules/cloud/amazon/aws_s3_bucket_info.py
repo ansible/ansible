@@ -38,7 +38,8 @@ EXAMPLES = '''
   register: result
 
 - name: List buckets
-  debug: var=result.buckets
+  debug:
+    msg: "{{ result['buckets'] }}"
 '''
 
 RETURN = '''

@@ -76,7 +76,7 @@ EXAMPLES = '''
   register: output
 - name: show Lambda information
   debug:
-    var: output.lambda_facts
+    msg: "{{ output['lambda_facts'] }}"
 '''
 
 RETURN = '''

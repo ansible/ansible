@@ -63,7 +63,7 @@ EXAMPLES = '''
   register: result
 
 - debug:
-    var: result.efs
+    msg: "{{ result['efs'] }}"
 '''
 
 RETURN = '''
