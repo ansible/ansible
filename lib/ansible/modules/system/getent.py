@@ -33,6 +33,7 @@ options:
     service:
         description:
             - Override all databases with the specified service
+        version_added: "2.9"
     split:
         description:
             - "Character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database."
@@ -118,7 +119,7 @@ def main():
         cmd = [getent_bin, database, key]
     else:
         cmd = [getent_bin, database]
-    
+
     if service is not None:
         cmd.extend(['-s', service])
 
