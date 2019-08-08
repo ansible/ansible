@@ -1,0 +1,24 @@
+---
+- name: Query current crypto policy
+  system_crypto_policy: {}
+  register: result
+
+- name: Print current policy
+  debug:
+    var: result
+
+- name: Harden system's security
+  system_crypto_policy:
+    policy: FUTURE
+
+- name: Double-check that new policy is set
+  system_crypto_policy: {}
+  register: result_new
+
+- assert:
+    that:
+    - result_new.policy == 'FUTURE'
+
+- name: Revert to system's original policy
+  system_crypto_policy:
+    policy: "{{result.policy}}"
