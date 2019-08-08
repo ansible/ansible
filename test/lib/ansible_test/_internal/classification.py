@@ -681,14 +681,6 @@ class PathMapper:
                             command: self.integration_all_target,
                         }
 
-                if name.startswith('cloud-config-'):
-                    cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
-
-                    if cloud_target in self.integration_targets_by_alias:
-                        return {
-                            'integration': cloud_target,
-                        }
-
             return {
                 'integration': self.integration_all_target,
                 'windows-integration': self.integration_all_target,
@@ -722,6 +714,15 @@ class PathMapper:
                     }
 
                 test_path = os.path.dirname(test_path)
+
+        if path.startswith('test/lib/ansible_test/config/'):
+            if name.startswith('cloud-config-'):
+                cloud_target = 'cloud/%s/' % name.split('-')[2].split('.')[0]
+
+                if cloud_target in self.integration_targets_by_alias:
+                    return {
+                        'integration': cloud_target,
+                    }
 
         if path.startswith('test/lib/ansible_test/_data/completion/'):
             if path == 'test/lib/ansible_test/_data/completion/docker.txt':
