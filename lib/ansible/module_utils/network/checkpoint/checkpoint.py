@@ -154,10 +154,34 @@ def api_command(module, command):
     return result
 
 
+# handle api call facts
+def api_call_facts(module, api_call_object, api_call_object_plural_version):
+    payload = get_payload_from_parameters(module)
+    connection = Connection(module._socket_path)
+    # if user insert a specific version, we add it to the url
+    version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
+
+    # if there is neither name nor uid, the API command will be in plural version (e.g. show-hosts instead of show-host)
+    if payload.get("name") is None and payload.get("uid") is None:
+        api_call_object = api_call_object_plural_version
+
+    code, response = send_request(connection, version, 'show-' + api_call_object, payload)
+    if code != 200:
+        module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
+
+    result = {api_call_object: response}
+    return result
+
+
 # handle api call
 def api_call(module, api_call_object):
     payload = get_payload_from_parameters(module)
     connection = Connection(module._socket_path)
+
+    result = {'changed': False, 'checkpoint_session_uid': connection.get_session_uid()}
+    if module.check_mode:
+        return result
+
     # if user insert a specific version, we add it to the url
     version = ('v' + module.params['version'] + '/') if module.params.get('version') else ''
 
@@ -166,25 +190,11 @@ def api_call(module, api_call_object):
     # if code is 400 (bad request) or 500 (internal error) - fail
     if equals_code == 400 or equals_code == 500:
         module.fail_json(msg=equals_response)
-    result = {'changed': False}
 
     if module.params['state'] == 'present':
-        if not module.check_mode:
-            if equals_code == 200:
-                if not equals_response['equals']:
-                    code, response = send_request(connection, version, 'set-' + api_call_object, payload)
-                    if code != 200:
-                        module.fail_json(msg=response)
-
-                    handle_publish(module, connection, version)
-
-                    result['changed'] = True
-                    result[api_call_object] = response
-                else:
-                    # objects are equals and there is no need for set request
-                    pass
-            elif equals_code == 404:
-                code, response = send_request(connection, version, 'add-' + api_call_object, payload)
+        if equals_code == 200:
+            if not equals_response['equals']:
+                code, response = send_request(connection, version, 'set-' + api_call_object, payload)
                 if code != 200:
                     module.fail_json(msg=response)
 
@@ -192,24 +202,35 @@ def api_call(module, api_call_object):
 
                 result['changed'] = True
                 result[api_call_object] = response
-    elif module.params['state'] == 'absent':
-        if not module.check_mode:
-            if equals_code == 200:
-                code, response = send_request(connection, version, 'delete-' + api_call_object, payload)
-                if code != 200:
-                    module.fail_json(msg=response)
-
-                handle_publish(module, connection, version)
-
-                result['changed'] = True
-            elif equals_code == 404:
-                # no need to delete because object dose not exist
+            else:
+                # objects are equals and there is no need for set request
                 pass
+        elif equals_code == 404:
+            code, response = send_request(connection, version, 'add-' + api_call_object, payload)
+            if code != 200:
+                module.fail_json(msg=response)
 
-    result['checkpoint_session_uid'] = connection.get_session_uid()
+            handle_publish(module, connection, version)
+
+            result['changed'] = True
+            result[api_call_object] = response
+    elif module.params['state'] == 'absent':
+        if equals_code == 200:
+            code, response = send_request(connection, version, 'delete-' + api_call_object, payload)
+            if code != 200:
+                module.fail_json(msg=response)
+
+            handle_publish(module, connection, version)
+
+            result['changed'] = True
+        elif equals_code == 404:
+            # no need to delete because object dose not exist
+            pass
+
     return result
 
 
+# The code from here till EOF will be deprecated when Rikis' modules will be deprecated
 checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=True),
                                 policy_package=dict(type='str', default='standard'),
                                 auto_install_policy=dict(type='bool', default=True),
