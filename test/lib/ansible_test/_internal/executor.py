@@ -332,8 +332,6 @@ License: GPLv3+
     with open(pkg_info_path, 'w') as pkg_info_fd:
         pkg_info_fd.write(pkg_info.lstrip())
 
-    print(pkg_info.strip())
-
 
 def generate_pip_install(pip, command, packages=None):
     """
