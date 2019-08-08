@@ -1016,7 +1016,7 @@ class ModuleValidator(Validator):
                         self._validate_docs_schema(
                             doc,
                             doc_schema(
-                                os.readlink(self.object_path).split('.')[0]),
+                                os.readlink(self.object_path).split('.')[0],
                                 version_added=not bool(self.collection)
                             ),
                             'DOCUMENTATION',
@@ -1027,7 +1027,7 @@ class ModuleValidator(Validator):
                         self._validate_docs_schema(
                             doc,
                             doc_schema(
-                                self.object_name.split('.')[0]),
+                                self.object_name.split('.')[0],
                                 version_added=not bool(self.collection)
                             ),
                             'DOCUMENTATION',
@@ -1748,8 +1748,10 @@ def run():
                         help='Output location, use "-" for stdout. '
                              'Default "%(default)s"')
     parser.add_argument('--collection',
-                        help='Specifies the root path to the collection, when '
-                             'validating files within a collection')
+                        help='Specifies the path to the collection, when '
+                             'validating files within a collection. Ensure '
+                             'that ANSIBLE_COLLECTIONS_PATHS is set so the '
+                             'contents of the collection can be located')
 
     args = parser.parse_args()
 
