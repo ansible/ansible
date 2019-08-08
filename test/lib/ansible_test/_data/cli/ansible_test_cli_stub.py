@@ -8,7 +8,9 @@ __metaclass__ = type
 import os
 import sys
 
-if __name__ == '__main__':
+
+def main():
+    """Main program entry point."""
     ansible_root = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__))))
     source_root = os.path.join(ansible_root, 'test', 'lib')
 
@@ -16,6 +18,10 @@ if __name__ == '__main__':
         # running from source, use that version of ansible-test instead of any version that may already be installed
         sys.path.insert(0, source_root)
 
-    from ansible_test._internal.cli import main
+    from ansible_test._internal.cli import main as cli_main
 
+    cli_main()
+
+
+if __name__ == '__main__':
     main()
