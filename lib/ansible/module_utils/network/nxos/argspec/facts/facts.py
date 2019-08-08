@@ -12,6 +12,7 @@ CHOICES = [
     'lag_interfaces',
     'telemetry',
     'vlans',
+    'lacp',
 ]
 
 
