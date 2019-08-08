@@ -50,7 +50,7 @@ options:
         description:
             - Limits maximum amount of records returned per query.
                 It must be between 1 and 4294967295.
-        default: "1024"
+        default: 1024
         type: int
         version_added: 2.9
 '''
@@ -599,7 +599,7 @@ def main():
     argument_spec.update(dict(
         state=dict(default='info', choices=['info']),
         gather_subset=dict(default=['all'], type='list'),
-        max_records=dict(default='1024', type='int'),
+        max_records=dict(default=1024, type='int'),
     ))
 
     module = AnsibleModule(
