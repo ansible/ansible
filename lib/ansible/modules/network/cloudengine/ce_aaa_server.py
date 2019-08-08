@@ -1797,20 +1797,21 @@ def main():
 
         else:
             # absent authentication scheme
-            if len(scheme_exist) == 0:
-                pass
-            elif scheme_new not in scheme_exist:
-                pass
-            else:
-                cmd = ce_aaa_server.delete_authentication_scheme(
-                    module=module,
-                    authen_scheme_name=authen_scheme_name,
-                    first_authen_mode=first_authen_mode)
-                updates.append(cmd)
-                changed = True
+            if not domain_name:
+                if len(scheme_exist) == 0:
+                    pass
+                elif scheme_new not in scheme_exist:
+                    pass
+                else:
+                    cmd = ce_aaa_server.delete_authentication_scheme(
+                        module=module,
+                        authen_scheme_name=authen_scheme_name,
+                        first_authen_mode=first_authen_mode)
+                    updates.append(cmd)
+                    changed = True
 
             # absent authentication domain
-            if domain_name:
+            else:
                 domain_exist = ce_aaa_server.get_authentication_domain(
                     module=module)
                 domain_new = (domain_name.lower(), authen_scheme_name.lower())
@@ -1878,20 +1879,21 @@ def main():
 
         else:
             # absent authorization scheme
-            if len(scheme_exist) == 0:
-                pass
-            elif scheme_new not in scheme_exist:
-                pass
-            else:
-                cmd = ce_aaa_server.delete_authorization_scheme(
-                    module=module,
-                    author_scheme_name=author_scheme_name,
-                    first_author_mode=first_author_mode)
-                updates.append(cmd)
-                changed = True
+            if not domain_name:
+                if len(scheme_exist) == 0:
+                    pass
+                elif scheme_new not in scheme_exist:
+                    pass
+                else:
+                    cmd = ce_aaa_server.delete_authorization_scheme(
+                        module=module,
+                        author_scheme_name=author_scheme_name,
+                        first_author_mode=first_author_mode)
+                    updates.append(cmd)
+                    changed = True
 
             # absent authorization domain
-            if domain_name:
+            else:
                 domain_exist = ce_aaa_server.get_authorization_domain(
                     module=module)
                 domain_new = (domain_name.lower(), author_scheme_name.lower())
@@ -1959,20 +1961,21 @@ def main():
 
         else:
             # absent accounting scheme
-            if len(scheme_exist) == 0:
-                pass
-            elif scheme_new not in scheme_exist:
-                pass
-            else:
-                cmd = ce_aaa_server.delete_accounting_scheme(
-                    module=module,
-                    acct_scheme_name=acct_scheme_name,
-                    accounting_mode=accounting_mode)
-                updates.append(cmd)
-                changed = True
+            if not domain_name:
+                if len(scheme_exist) == 0:
+                    pass
+                elif scheme_new not in scheme_exist:
+                    pass
+                else:
+                    cmd = ce_aaa_server.delete_accounting_scheme(
+                        module=module,
+                        acct_scheme_name=acct_scheme_name,
+                        accounting_mode=accounting_mode)
+                    updates.append(cmd)
+                    changed = True
 
             # absent accounting domain
-            if domain_name:
+            else:
                 domain_exist = ce_aaa_server.get_accounting_domain(
                     module=module)
                 domain_new = (domain_name.lower(), acct_scheme_name.lower())
