@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 def search_obj_in_list(name, lst, key='name'):
     for item in lst:
         if item[key] == name:
