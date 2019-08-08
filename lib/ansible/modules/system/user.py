@@ -61,7 +61,7 @@ options:
               primary group. (C(~) means C(null) in YAML)
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
             - Mutually exclusive with C(local)
-        type: list
+        type: str
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
