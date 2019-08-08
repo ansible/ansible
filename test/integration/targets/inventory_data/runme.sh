@@ -3,6 +3,8 @@
 set -ux
 set +e
 
+export ANSIBLE_INVENTORY_SAFE_PROCESSING=True
+
 ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=yes ansible-inventory -i bad_source --list
 
 # Failing to parse a source with ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED enabled should be fatal
