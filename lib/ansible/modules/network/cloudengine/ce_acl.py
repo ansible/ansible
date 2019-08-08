@@ -650,7 +650,8 @@ class BaseAcl(object):
                                     find_flag = False
                             if self.src_wild and tmp.get("aclSrcWild") != self.src_wild:
                                 find_flag = False
-                            if self.frag_type and tmp.get("aclFragType") != self.frag_type:
+                            frag_type = "clear_fragment" if tmp.get("aclFragType") is None else tmp.get("aclFragType")
+                            if self.frag_type and frag_type != self.frag_type:
                                 find_flag = False
                             if self.vrf_name and tmp.get("vrfName") != self.vrf_name:
                                 find_flag = False
