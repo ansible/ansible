@@ -103,7 +103,7 @@ vultr_block_storage_info:
       type: str
       sample: active
     attached_to_id:
-      description: Block storage is attach to this server ID.
+      description: Block storage is attached to this server ID.
       returned: success
       type: str
       sample: null
