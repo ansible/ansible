@@ -174,7 +174,7 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import httpapi_loader
-from ansible.plugins.connection import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 
 
 class Connection(NetworkConnectionBase):
@@ -250,6 +250,7 @@ class Connection(NetworkConnectionBase):
 
         super(Connection, self).close()
 
+    @ensure_connect
     def send(self, path, data, **kwargs):
         '''
         Sends the command to the device over api
