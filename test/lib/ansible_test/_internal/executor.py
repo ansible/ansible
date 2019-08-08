@@ -323,7 +323,7 @@ Platform: UNKNOWN
 Summary: Radically simple IT automation
 Author-email: info@ansible.com
 License: GPLv3+
-''' % get_ansible_version(args)
+''' % get_ansible_version()
 
     os.mkdir(egg_info_path)
 
