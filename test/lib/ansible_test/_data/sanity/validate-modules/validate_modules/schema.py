@@ -198,6 +198,9 @@ def doc_schema(module_name, version_added=True):
 
     if version_added:
         doc_schema_dict[Required('version_added')] = Any(float, *string_types)
+    else:
+        # Optional
+        doc_schema_dict['version_added'] = Any(float, *string_types)
 
     if deprecated_module:
         deprecation_required_scheme = {
