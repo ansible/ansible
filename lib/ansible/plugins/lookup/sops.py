@@ -139,11 +139,7 @@ class LookupModule(LookupBase):
 
             try:
                 if lookupfile:
-                    # Run sops directly, python module is deprecated
-                    command = ["sops", "--decrypt", lookupfile]
-                    process = Popen(command, stdout=PIPE, stderr=PIPE)
-                    (output, err) = process.communicate()
-                    exit_code = process.wait()
+                    (output, err, exit_code) = Sops.decrypt(lookupfile)
 
                     if sops_text_output:
                         # output is binary, we want UTF-8 string
