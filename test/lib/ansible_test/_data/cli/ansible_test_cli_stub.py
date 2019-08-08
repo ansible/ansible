@@ -18,6 +18,7 @@ def main():
         # running from source, use that version of ansible-test instead of any version that may already be installed
         sys.path.insert(0, source_root)
 
+    # noinspection PyProtectedMember
     from ansible_test._internal.cli import main as cli_main
 
     cli_main()
