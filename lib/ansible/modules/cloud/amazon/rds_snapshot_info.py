@@ -318,7 +318,7 @@ def common_snapshot_info(module, conn, method, prefix, params):
         try:
             if snapshot['SnapshotType'] != 'shared':
                 snapshot['Tags'] = boto3_tag_list_to_ansible_dict(conn.list_tags_for_resource(ResourceName=snapshot['%sArn' % prefix],
-                                                                                          aws_retry=True)['TagList'])
+                                                                                              aws_retry=True)['TagList'])
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, "Couldn't get tags for snapshot %s" % snapshot['%sIdentifier' % prefix])
 
