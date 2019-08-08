@@ -21,7 +21,6 @@
 #   builder template.
 #
 #############################################
-
 """
 The arg spec for the nxos_lldp_global module
 """
@@ -36,24 +35,75 @@ class Lldp_globalArgs(object):  # pylint: disable=R0903
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'options': {'holdtime': {'type': 'int'},
-                                            'port_id': {'type': 'int'},
-                                            'reinit': {'type': 'int'},
-                                            'timer': {'type': 'int'},
-                                            'tlv_select': {'options': {'dcbxp': {'type': 'bool'},
-                                                                       'management_address': {'options': {'v4': {'type': 'bool'},
-                                                                                                          'v6': {'type': 'bool'}},
-                                                                                              'type': 'dict'},
-                                                                       'port': {'options': {'description': {'type': 'bool'},
-                                                                                            'vlan': {'type': 'bool'}},
-                                                                                'type': 'dict'},
-                                                                       'power_management': {'type': 'bool'},
-                                                                       'system': {'options': {'capabilities': {'type': 'bool'},
-                                                                                              'description': {'type': 'bool'},
-                                                                                              'name': {'type': 'bool'}},
-                                                                                  'type': 'dict'}},
-                                                           'type': 'dict'}},
-                                'type': 'dict'},
-                     'state': {'choices': ['merged', 'replaced', 'deleted'],
-                               'default': 'merged',
-                               'type': 'str'}}
+    argument_spec = {
+        'config': {
+            'options': {
+                'holdtime': {
+                    'type': 'int'
+                },
+                'port_id': {
+                    'choices': [0, 1],
+                    'type': 'int'
+                },
+                'reinit': {
+                    'type': 'int'
+                },
+                'timer': {
+                    'type': 'int'
+                },
+                'tlv_select': {
+                    'options': {
+                        'dcbxp': {
+                            'type': 'bool'
+                        },
+                        'management_address': {
+                            'options': {
+                                'v4': {
+                                    'type': 'bool'
+                                },
+                                'v6': {
+                                    'type': 'bool'
+                                }
+                            },
+                            'type': 'dict'
+                        },
+                        'port': {
+                            'options': {
+                                'description': {
+                                    'type': 'bool'
+                                },
+                                'vlan': {
+                                    'type': 'bool'
+                                }
+                            },
+                            'type': 'dict'
+                        },
+                        'power_management': {
+                            'type': 'bool'
+                        },
+                        'system': {
+                            'options': {
+                                'capabilities': {
+                                    'type': 'bool'
+                                },
+                                'description': {
+                                    'type': 'bool'
+                                },
+                                'name': {
+                                    'type': 'bool'
+                                }
+                            },
+                            'type': 'dict'
+                        }
+                    },
+                    'type': 'dict'
+                }
+            },
+            'type': 'dict'
+        },
+        'state': {
+            'choices': ['merged', 'replaced', 'deleted'],
+            'default': 'merged',
+            'type': 'str'
+        }
+    }

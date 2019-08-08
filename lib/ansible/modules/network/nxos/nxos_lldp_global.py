@@ -55,7 +55,7 @@ options:
         description:
           - This attribute defines if the interface names should be advertised in the long(0) or short(1) form.
         type: int
-        choice: [0,1]
+        choices: [0, 1]
       reinit:
         description:
           - Amount of time to delay the intialization of LLDP on any interface (in seconds)
@@ -208,12 +208,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
