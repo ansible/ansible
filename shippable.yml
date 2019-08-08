@@ -62,6 +62,13 @@ matrix:
     - env: T=windows/2016/6
     - env: T=windows/2019/6
 
+    - env: T=windows/2008/7
+    - env: T=windows/2008-R2/7
+    - env: T=windows/2012/7
+    - env: T=windows/2012-R2/7
+    - env: T=windows/2016/7
+    - env: T=windows/2019/7
+
     - env: T=network
 
     - env: T=osx/10.11/1
