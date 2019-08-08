@@ -285,7 +285,7 @@ options:
       type:
         description:
           - The mount type.
-          - Note that C(npipe) is only supported by Docker for Windows.
+          - Note that C(npipe) is only supported by Docker for Windows. Also note that C(npipe) was added in Ansible 2.9.
         type: str
         default: bind
         choices:
