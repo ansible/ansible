@@ -31,6 +31,12 @@ options:
   comment:
     description:
       - Text field that can be used for any purposed defined by the user.
+  check_type:
+    description:
+      - Variable checked when executing a read only check.
+    choices: ["read_only", "super_read_only", "innodb_read_only"]
+    default: read_only
+    version_added: 2.9
   state:
     description:
       - When C(present) - adds the replication hostgroup, when C(absent) -
@@ -150,6 +156,7 @@ class ProxySQLReplicationHostgroup(object):
         self.writer_hostgroup = module.params["writer_hostgroup"]
         self.reader_hostgroup = module.params["reader_hostgroup"]
         self.comment = module.params["comment"]
+        self.check_type = module.params["check_type"]
 
     def check_repl_group_config(self, cursor, keys):
         query_string = \
@@ -163,8 +170,9 @@ class ProxySQLReplicationHostgroup(object):
              self.reader_hostgroup]
 
         if self.comment and not keys:
-            query_string += "\n  AND comment = %s"
+            query_string += "\n  AND comment = %s AND check_type = %s"
             query_data.append(self.comment)
+            query_data.append(self.check_type)
 
         cursor.execute(query_string, query_data)
         check_count = cursor.fetchone()
@@ -190,13 +198,15 @@ class ProxySQLReplicationHostgroup(object):
             """INSERT INTO mysql_replication_hostgroups (
                writer_hostgroup,
                reader_hostgroup,
-               comment)
-               VALUES (%s, %s, %s)"""
+               comment,
+               check_type)
+               VALUES (%s, %s, %s, %s)"""
 
         query_data = \
             [self.writer_hostgroup,
              self.reader_hostgroup,
-             self.comment or '']
+             self.comment or '',
+             self.check_type]
 
         cursor.execute(query_string, query_data)
         return True
@@ -204,12 +214,13 @@ class ProxySQLReplicationHostgroup(object):
     def update_repl_group_config(self, cursor):
         query_string = \
             """UPDATE mysql_replication_hostgroups
-               SET comment = %s
+               SET comment = %s, check_type = %s
                WHERE writer_hostgroup = %s
                  AND reader_hostgroup = %s"""
 
         query_data = \
             [self.comment,
+             self.check_type,
              self.writer_hostgroup,
              self.reader_hostgroup]
 
@@ -298,6 +309,7 @@ def main():
             writer_hostgroup=dict(required=True, type='int'),
             reader_hostgroup=dict(required=True, type='int'),
             comment=dict(type='str'),
+            check_type=dict(type='str', default="read_only"),
             state=dict(default='present', choices=['present',
                                                    'absent']),
             save_to_disk=dict(default=True, type='bool'),
