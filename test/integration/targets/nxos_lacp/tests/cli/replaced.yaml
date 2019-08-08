@@ -1,0 +1,59 @@
+---
+- debug:
+    msg: "Start nxos_lacp replaced integration tests connection={{ ansible_connection }}"
+
+- name: Enable lacp feature
+  nxos_feature:
+    feature: lacp
+
+- block:
+  - name: Setup
+    cli_config:
+      config: lacp system-priority 11
+
+  - name: Gather lacp facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lacp
+
+  - name: Replaced
+    nxos_lacp: &replaced
+      config:
+        system:
+          mac:
+            address: 00c1.4c00.bd15
+            role: primary
+      state: replaced
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp == result.before"
+        - "result.changed == true"
+        - "'no lacp system-priority' in result.commands"
+        - "'lacp system-mac 00c1.4c00.bd15 role primary' in result.commands"
+        - "result.commands|length == 2"
+
+  - name: Gather lacp interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp == result.after"
+
+  - name: Idempotence - Replaced
+    nxos_lacp: *replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    nxos_feature:
+      feature: lacp
+      state: disabled
