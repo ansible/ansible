@@ -1,11 +1,5 @@
-acapi
-acrn
-ac
-acversion
-acversionshort
-versionshortest
-versiondev
-pubdate
-rhel
+version
+release
+today
 br
 _

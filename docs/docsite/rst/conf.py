@@ -115,15 +115,6 @@ highlight_language = 'YAML+Jinja'
 # |br| is useful for formatting fields inside of tables
 # |_| is a nonbreaking space; similarly useful inside of tables
 rst_epilog = """
-.. |acapi| replace:: *Ansible Core API Guide*
-.. |acrn| replace:: *Ansible Core Release Notes*
-.. |ac| replace:: Ansible Core
-.. |acversion| replace:: Ansible Core Version 2.1
-.. |acversionshort| replace:: Ansible Core 2.1
-.. |versionshortest| replace:: 2.2
-.. |versiondev| replace:: 2.3
-.. |pubdate| replace:: July 19, 2016
-.. |rhel| replace:: Red Hat Enterprise Linux
 .. |br| raw:: html
 
    <br>
