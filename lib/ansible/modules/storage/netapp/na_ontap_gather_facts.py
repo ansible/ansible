@@ -46,6 +46,13 @@ options:
             - use "help" to get a list of supported facts for your system.
         default: "all"
         version_added: 2.8
+    max_records:
+        description:
+            - Limits maximum amount of records returned per query.
+                It must be between 1 and 4294967295.
+        default: "1024"
+        type: str
+        version_added: 2.9
 '''
 
 EXAMPLES = '''
@@ -140,6 +147,14 @@ class NetAppONTAPGatherFacts(object):
         self.module = module
         self.netapp_info = dict()
 
+        # max-records range [1..2^32-1]
+        if int(module.params['max_records']) <= 0:
+            self.max_records = '1'
+        elif int(module.params['max_records']) >= 2**32:
+            self.max_records = str(2**32-1)
+        else:
+            self.max_records = module.params['max_records']
+
         # thanks to coreywan (https://github.com/ansible/ansible/pull/47016)
         # for starting this
         # min_version identifies the ontapi version which supports this ZAPI
@@ -151,7 +166,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'net-dns-get-iter',
                     'attribute': 'net-dns-info',
                     'field': 'vserver-name',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -161,7 +176,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'net-interface-get-iter',
                     'attribute': 'net-interface-info',
                     'field': 'interface-name',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -171,7 +186,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'net-port-get-iter',
                     'attribute': 'net-port-info',
                     'field': ('node', 'port'),
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -181,7 +196,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'cluster-node-get-iter',
                     'attribute': 'cluster-node-info',
                     'field': 'node-name',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -191,7 +206,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'security-login-get-iter',
                     'attribute': 'security-login-account-info',
                     'field': ('vserver', 'user-name', 'application', 'authentication-method'),
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -201,7 +216,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'aggr-get-iter',
                     'attribute': 'aggr-attributes',
                     'field': 'aggregate-name',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -211,7 +226,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'volume-get-iter',
                     'attribute': 'volume-attributes',
                     'field': ('name', 'owning-vserver-name'),
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -221,7 +236,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'lun-get-iter',
                     'attribute': 'lun-info',
                     'field': 'path',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -231,7 +246,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'cf-get-iter',
                     'attribute': 'storage-failover-info',
                     'field': 'node',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -241,7 +256,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'vserver-motd-get-iter',
                     'attribute': 'vserver-motd-info',
                     'field': 'vserver',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -251,7 +266,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'vserver-login-banner-get-iter',
                     'attribute': 'vserver-login-banner-info',
                     'field': 'vserver',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -261,7 +276,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'security-key-manager-key-get-iter',
                     'attribute': 'security-key-manager-key-info',
                     'field': ('node', 'key-id'),
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -271,7 +286,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'vserver-get-iter',
                     'attribute': 'vserver-info',
                     'field': 'vserver-name',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -281,7 +296,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'nfs-service-get-iter',
                     'attribute': 'nfs-info',
                     'field': 'vserver',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -301,7 +316,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'system-node-get-iter',
                     'attribute': 'node-details-info',
                     'field': 'node',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -311,7 +326,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'igroup-get-iter',
                     'attribute': 'initiator-group-info',
                     'field': ('vserver', 'initiator-group-name'),
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -321,7 +336,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'qos-policy-group-get-iter',
                     'attribute': 'qos-policy-group-info',
                     'field': 'policy-group',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '0',
             },
@@ -332,7 +347,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'qos-adaptive-policy-group-get-iter',
                     'attribute': 'qos-adaptive-policy-group-info',
                     'field': 'policy-group',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '130',
             },
@@ -343,7 +358,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'nvme-get-iter',
                     'attribute': 'nvme-target-service-info',
                     'field': 'vserver',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '140',
             },
@@ -353,7 +368,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'nvme-interface-get-iter',
                     'attribute': 'nvme-interface-info',
                     'field': 'vserver',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '140',
             },
@@ -363,7 +378,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'nvme-subsystem-get-iter',
                     'attribute': 'nvme-subsystem-info',
                     'field': 'subsystem',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '140',
             },
@@ -373,7 +388,7 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'nvme-namespace-get-iter',
                     'attribute': 'nvme-namespace-info',
                     'field': 'path',
-                    'query': {'max-records': '1024'},
+                    'query': {'max-records': self.max_records},
                 },
                 'min_version': '140',
             },
@@ -584,6 +599,7 @@ def main():
     argument_spec.update(dict(
         state=dict(default='info', choices=['info']),
         gather_subset=dict(default=['all'], type='list'),
+        max_records=dict(default='1024', type='str'),
     ))
 
     module = AnsibleModule(
