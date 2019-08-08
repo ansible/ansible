@@ -267,9 +267,19 @@ Once you upload a version of a collection, you cannot delete or modify that vers
 uploading. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number)
 will be the version displayed everywhere in Galaxy; however, users will still be able to download older versions.
 
+Migrating Ansible content to a collection
+=========================================
+
+You can experiment with migrating existing modules into a collection using the `content_collector tool <https://github.com/ansible/content_collector>`_. The ``content_collector`` is a playbook that helps you migrate content from an Ansible distribution into a collection.
+
+.. warning::
+
+	This tool is in active development and is provided only for experimentation and feedback at this point.
+
+See the `content_collector README <https://github.com/ansible/content_collector>`_ for full details and usage guidelines.
 
 Installing collections
-----------------------
+======================
 
 You can use the ``ansible-galaxy collection install`` command to install a collection on your system. The collection by default is installed at ``/path/ansible_collections/my_namespace/my_collection``. You can optionally add the ``-p`` option to specify an alternate location.
 
