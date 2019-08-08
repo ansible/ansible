@@ -64,7 +64,7 @@ options:
         description:
             - Specifies a set of zero or more allowed address pairs.
         required: false
-        tpye: list
+        type: list
         suboptions:
             ip_address:
                 description:
