@@ -1,0 +1,5 @@
+---
+proxy_sql_admin_user: admin
+proxy_sql_admin_password: admin
+hostgroup_writer: 0
+hostgroup_reader: 1
