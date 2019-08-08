@@ -38,7 +38,7 @@ class InterfacesArgs(object):
     argument_spec = {
         'config': {
             'options': {
-                'name': {'required': False, 'type': 'str'},
+                'name': {'required': True, 'type': 'str'},
                 'description': {'required': False, 'type': 'str'},
                 'enabled': {'default': True, 'required': False, 'type': 'bool'},
                 'mtu': {'required': False, 'type': 'int'},

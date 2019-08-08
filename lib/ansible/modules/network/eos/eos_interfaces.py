@@ -46,6 +46,11 @@ options:
     description: The provided configuration
     type: list
     suboptions:
+      name:
+        description:
+        - Full name of the interface, e.g. GigabitEthernet1.
+        type: str
+        required: true
       description:
         description:
         - Interface description
@@ -68,10 +73,6 @@ options:
         - MTU for a specific interface. Must be an even number between 576 and 9216.
           Applicable for Ethernet interfaces only.
         type: int
-      name:
-        description:
-        - Full name of the interface, e.g. GigabitEthernet1.
-        type: str
       speed:
         description:
         - Interface link speed. Applicable for Ethernet interfaces only.

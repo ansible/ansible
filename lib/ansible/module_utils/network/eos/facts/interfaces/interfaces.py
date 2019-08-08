@@ -77,7 +77,7 @@ class InterfacesFacts(object):
         config = deepcopy(spec)
 
         # populate the facts from the configuration
-        config['name'] = re.match(r'(\S+)', conf).group(1).replace('"', '')
+        config['name'] = re.match(r'(\S+)', conf).group(1)
         description = utils.parse_conf_arg(conf, 'description')
         if description is not None:
             config['description'] = description.replace('"', '')
