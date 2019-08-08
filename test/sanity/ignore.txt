@@ -5883,8 +5883,6 @@ lib/ansible/modules/storage/netapp/netapp_e_asup.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_auditlog.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_auth.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_auth.py validate-modules:E338
-lib/ansible/modules/storage/netapp/netapp_e_facts.py validate-modules:E337
-lib/ansible/modules/storage/netapp/netapp_e_facts.py validate-modules:E338
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py validate-modules:E322
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py validate-modules:E326
 lib/ansible/modules/storage/netapp/netapp_e_flashcache.py validate-modules:E337
