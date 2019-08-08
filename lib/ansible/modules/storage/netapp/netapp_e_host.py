@@ -439,8 +439,6 @@ class Host(object):
 
         if self.group:
             self.post_body['groupId'] = self.group_id()
-        else:
-            self.post_body['groupId'] = "0000000000000000000000000000000000000000"
 
         self.post_body['hostType'] = dict(index=self.host_type_index)
 
