@@ -15,6 +15,7 @@ from .util import (
     find_python,
     ApplicationError,
     ANSIBLE_ROOT,
+    ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
 )
 
@@ -67,7 +68,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         ANSIBLE_RETRY_FILES_ENABLED='false',
         ANSIBLE_CONFIG=os.path.abspath(ansible_config),
         ANSIBLE_LIBRARY='/dev/null',
-        PYTHONPATH=os.path.join(ANSIBLE_ROOT, 'lib'),
+        PYTHONPATH=os.path.dirname(ANSIBLE_LIB_ROOT),
         PAGER='/bin/cat',
         PATH=path,
     )

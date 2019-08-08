@@ -20,13 +20,10 @@ from .config import (
 from .util import (
     display,
     find_executable,
-    raw_command,
     SubprocessError,
     ApplicationError,
-)
-
-from .ansible_util import (
-    ansible_environment,
+    load_module,
+    ANSIBLE_LIB_ROOT,
 )
 
 from .git import (
@@ -81,7 +78,7 @@ def show_dump_env(args):
 
     data = dict(
         ansible=dict(
-            version=get_ansible_version(args),
+            version=get_ansible_version(),
         ),
         docker=get_docker_details(args),
         environ=os.environ.copy(),
@@ -238,21 +235,21 @@ def show_dict(data, verbose, root_verbosity=0, path=None):
             display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
-def get_ansible_version(args):
-    """
-    :type args: CommonConfig
-    :rtype: str | None
-    """
-    code = 'from __future__ import (print_function); from ansible.release import __version__; print(__version__)'
-    cmd = [sys.executable, '-c', code]
-    env = ansible_environment(args)
-
+def get_ansible_version():  # type: () -> str
+    """Return the Ansible version."""
     try:
-        ansible_version, _dummy = raw_command(cmd, env=env, capture=True)
-        ansible_version = ansible_version.strip()
-    except SubprocessError as ex:
-        display.warning('Unable to get Ansible version:\n%s' % ex)
-        ansible_version = None
+        return get_ansible_version.version
+    except AttributeError:
+        pass
+
+    # ansible may not be in our sys.path
+    # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
+    load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
+
+    # noinspection PyUnresolvedReferences
+    from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
+
+    get_ansible_version.version = ansible_version
 
     return ansible_version
 

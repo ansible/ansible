@@ -24,6 +24,7 @@ def main():
         import imp
 
     try:
+        # noinspection PyCompatibility
         from StringIO import StringIO
     except ImportError:
         from io import StringIO
@@ -34,6 +35,7 @@ def main():
     try:
         from ansible.utils.collection_loader import AnsibleCollectionLoader
     except ImportError:
+        # noinspection PyPep8Naming
         AnsibleCollectionLoader = None
 
     class ImporterAnsibleModuleException(Exception):
@@ -58,6 +60,7 @@ def main():
 
         if AnsibleCollectionLoader:
             # allow importing code from collections
+            # noinspection PyCallingNonCallable
             sys.meta_path.insert(0, AnsibleCollectionLoader())
 
         for path in sys.argv[1:] or sys.stdin.read().splitlines():

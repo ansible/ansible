@@ -238,7 +238,7 @@ class SanityIgnoreParser:
 
     def __init__(self, args):  # type: (SanityConfig) -> None
         if data_context().content.collection:
-            ansible_version = '%s.%s' % tuple(get_ansible_version(args).split('.')[:2])
+            ansible_version = '%s.%s' % tuple(get_ansible_version().split('.')[:2])
 
             ansible_label = 'Ansible %s' % ansible_version
             file_name = 'ignore-%s.txt' % ansible_version
