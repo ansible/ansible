@@ -188,7 +188,7 @@ If you are writing a new collection of integration tests, there are a few VMware
 the standard Ansible :ref:`integration testing<testing_integration>` process.
 
 The test-suite uses a set of common, pre-defined vars located in the :file:`test/integration/targets/prepare_vmware_tests/` role.
-The resources defined there are automatically created by importing that role are the start of your test:
+The resources defined there are automatically created by importing that role at the start of your test:
 
 .. code-block:: yaml
 
