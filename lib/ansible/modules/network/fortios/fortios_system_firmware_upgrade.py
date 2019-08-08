@@ -67,12 +67,22 @@ options:
             - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
     system_firmware:
         description:
             - Perform firmware upgrade with local firmware file.
         default: null
         type: dict
         suboptions:
+            file_content:
+                description:
+                    - "Provided when uploading a file: base64 encoded file data. Must not contain whitespace or other invalid base64 characters. Must be
+                       included in HTTP body."
+                type: var-string
             filename:
                 description:
                     - Name and path of the local firmware file.
@@ -84,8 +94,8 @@ options:
             source:
                 description:
                     - Firmware file data source [upload|usb|fortiguard].
-                type: str
                 required: true
+                type: str
                 choices:
                     - upload
                     - usb
@@ -106,8 +116,9 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
-      https: "False"
+      ssl_verify: "False"
       system_firmware:
+        file_content: "<your_own_value>"
         filename: "<your_own_value>"
         format_partition: "<your_own_value>"
         source: "upload"
@@ -124,7 +135,7 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
-      https: "False"
+      ssl_verify: "False"
       system_firmware:
         filename: "<your_own_value>"
         format_partition: "<your_own_value>"
@@ -142,7 +153,7 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
-      https: "False"
+      ssl_verify: "False"
       system_firmware:
         filename: "<your_own_value>"
         format_partition: "<your_own_value>"
@@ -216,6 +227,7 @@ def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -223,11 +235,12 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password, timeout=300)
+    fos.login(host, username, password, timeout=300, verify=ssl_verify)
 
 
 def filter_system_firmware_data(json):
-    option_list = ['filename', 'format_partition', 'source']
+    option_list = ['file_content', 'filename', 'format_partition',
+                   'source']
     dictionary = {}
 
     for attribute in option_list:
@@ -286,9 +299,11 @@ def main():
         "password": {"required": False, "type": "str", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "system_firmware": {
             "required": True, "type": "dict",
             "options": {
+                "file_content": {"required": False, "type": "var-string"},
                 "filename": {"required": True, "type": "str"},
                 "format_partition": {"required": False, "type": "bool"},
                 "source": {"required": True, "type": "str",
