@@ -11,6 +11,7 @@ from .util import (
     import_plugins,
     ANSIBLE_ROOT,
     is_subdir,
+    ANSIBLE_IS_INSTALLED,
 )
 
 from .provider import (
@@ -129,12 +130,18 @@ def data_init():  # type: () -> DataContext
     try:
         context = DataContext()
     except ProviderNotFoundForPath:
-        raise ApplicationError('''The current working directory must be at or below one of:
+        options = [
+            ' - an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/',
+        ]
 
- - Ansible source: %s/
- - Ansible collection: {...}/ansible_collections/{namespace}/{collection}/
+        if not ANSIBLE_IS_INSTALLED:
+            options.insert(0, ' - the Ansible source: %s/' % ANSIBLE_ROOT)
 
-Current working directory: %s''' % (ANSIBLE_ROOT, os.getcwd()))
+        raise ApplicationError('''The current working directory must be at or below:
+
+%s
+
+Current working directory: %s''' % ('\n'.join(options), os.getcwd()))
 
     return context
 

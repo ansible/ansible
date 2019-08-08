@@ -67,11 +67,13 @@ ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # assume running from install
 ANSIBLE_ROOT = os.path.dirname(ANSIBLE_TEST_ROOT)
 ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'ansible')
+ANSIBLE_IS_INSTALLED = True
 
 if not os.path.exists(ANSIBLE_LIB_ROOT):
     # running from source
     ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(ANSIBLE_TEST_ROOT)))
     ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'lib', 'ansible')
+    ANSIBLE_IS_INSTALLED = False
 
 ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
 ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, 'config')
