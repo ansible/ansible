@@ -200,9 +200,9 @@ options:
   retrieve_all_alternates:
     description:
       - "When set to C(yes), will retrieve all alternate chains offered by the ACME CA.
-         These will not be written to disk, be returned together with the main chain as
-         C(all_chains). See the documentation for the C(all_chains) return value for
-         details."
+         These will not be written to disk, but will be returned together with the main
+         chain as C(all_chains). See the documentation for the C(all_chains) return
+         value for details."
     type: bool
     default: no
     version_added: "2.9"
