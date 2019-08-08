@@ -232,83 +232,15 @@ certificates:
       type: str
 '''
 
-import traceback
-
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, HAS_BOTO3, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.aws.acm_facts import ACMFactsServiceManager
 
 try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
-
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-def list_certificates_with_backoff(client, statuses=None):
-    paginator = client.get_paginator('list_certificates')
-    kwargs = dict()
-    if statuses:
-        kwargs['CertificateStatuses'] = statuses
-    return paginator.paginate(**kwargs).build_full_result()['CertificateSummaryList']
-
-
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-def get_certificate_with_backoff(client, certificate_arn):
-    response = client.get_certificate(CertificateArn=certificate_arn)
-    # strip out response metadata
-    return {'Certificate': response['Certificate'],
-            'CertificateChain': response['CertificateChain']}
-
-
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-def describe_certificate_with_backoff(client, certificate_arn):
-    return client.describe_certificate(CertificateArn=certificate_arn)['Certificate']
-
-
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-def list_certificate_tags_with_backoff(client, certificate_arn):
-    return client.list_tags_for_certificate(CertificateArn=certificate_arn)['Tags']
-
-
-def get_certificates(client, module, domain_name=None, statuses=None):
-    try:
-        all_certificates = list_certificates_with_backoff(client, statuses)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Couldn't obtain certificates",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    if domain_name:
-        certificates = [cert for cert in all_certificates
-                        if cert['DomainName'] == domain_name]
-    else:
-        certificates = all_certificates
-
-    results = []
-    for certificate in certificates:
-        try:
-            cert_data = describe_certificate_with_backoff(client, certificate['CertificateArn'])
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'],
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-        try:
-            cert_data.update(get_certificate_with_backoff(client, certificate['CertificateArn']))
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != "RequestInProgressException":
-                module.fail_json(msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'],
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
-        cert_data = camel_dict_to_snake_dict(cert_data)
-        try:
-            tags = list_certificate_tags_with_backoff(client, certificate['CertificateArn'])
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Couldn't obtain tags for domain %s" % certificate['DomainName'],
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-        cert_data['tags'] = boto3_tag_list_to_ansible_dict(tags)
-        results.append(cert_data)
-    return results
 
 
 def main():
@@ -317,6 +249,8 @@ def main():
           statuses=dict(type='list', choices=['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    acm_facts = ACMFactsServiceManager(module)
+    
     if module._name == 'aws_acm_facts':
         module.deprecate("The 'aws_acm_facts' module has been renamed to 'aws_acm_info'", version='2.13')
 
@@ -324,7 +258,7 @@ def main():
     client = boto3_conn(module, conn_type='client', resource='acm',
                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    certificates = get_certificates(client, module, domain_name=module.params['domain_name'], statuses=module.params['statuses'])
+    certificates = acm_facts.get_certificates(client, module, domain_name=module.params['domain_name'], statuses=module.params['statuses'])
     module.exit_json(certificates=certificates)
 
 
