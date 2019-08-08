@@ -135,8 +135,7 @@ class Lldp_interfaces(ConfigBase):
                 commands.extend(self._state_replaced(want_item, obj_in_have))
         return commands
 
-    @staticmethod
-    def _state_replaced(want, have):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -145,12 +144,11 @@ class Lldp_interfaces(ConfigBase):
         """
         commands = []
         if have:
-            commands.extend(Lldp_interfaces._render_del_commands(want, have))
-        commands.extend(Lldp_interfaces._state_merged(want, have))
+            commands.extend(self._render_del_commands(want, have))
+        commands.extend(self._state_merged(want, have))
         return commands
 
-    @staticmethod
-    def _state_overridden(want, have):
+    def _state_overridden(self, want, have):
         """ The command generator when state is overridden
 
         :rtype: A list
@@ -162,16 +160,15 @@ class Lldp_interfaces(ConfigBase):
             lldp_name = have_item['name']
             lldp_in_want = search_obj_in_list(lldp_name, want)
             if not lldp_in_want:
-                commands.extend(Lldp_interfaces._purge_attribs(have_item))
+                commands.extend(self._purge_attribs(have_item))
 
         for want_item in want:
             name = want_item['name']
             lldp_in_have = search_obj_in_list(name, have)
-            commands.extend(Lldp_interfaces._state_replaced(want_item, lldp_in_have))
+            commands.extend(self._state_replaced(want_item, lldp_in_have))
         return commands
 
-    @staticmethod
-    def _state_merged(want, have):
+    def _state_merged(self, want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -180,13 +177,12 @@ class Lldp_interfaces(ConfigBase):
         """
         commands = []
         if have:
-            commands.extend(Lldp_interfaces._render_updates(want, have))
+            commands.extend(self._render_updates(want, have))
         else:
-            commands.extend(Lldp_interfaces._render_set_commands(want))
+            commands.extend(self._render_set_commands(want))
         return commands
 
-    @staticmethod
-    def _state_deleted(have):
+    def _state_deleted(self, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -199,29 +195,27 @@ class Lldp_interfaces(ConfigBase):
             commands.append(Lldp_interfaces.del_cmd + name)
         return commands
 
-    @staticmethod
-    def _render_updates(want, have):
+    def _render_updates(self, want, have):
         commands = []
         lldp_name = have['name']
-        commands.extend(Lldp_interfaces.configure_status(lldp_name, want, have))
-        commands.extend(Lldp_interfaces.add_location(lldp_name, want, have))
+        commands.extend(self._configure_status(lldp_name, want, have))
+        commands.extend(self._add_location(lldp_name, want, have))
 
         return commands
 
-    @staticmethod
-    def _render_set_commands(want):
+    def _render_set_commands(self, want):
         commands = []
         have = {}
         lldp_name = want['name']
 
         params = Lldp_interfaces.params
 
-        commands.extend(Lldp_interfaces.add_location(lldp_name, want, have))
+        commands.extend(self._add_location(lldp_name, want, have))
         for attrib in params:
             value = want[attrib]
             if value:
                 if attrib == 'location':
-                    commands.extend(Lldp_interfaces.add_location(lldp_name, want, have))
+                    commands.extend(self._add_location(lldp_name, want, have))
                 elif attrib == 'enable':
                     if not value:
                         commands.append(Lldp_interfaces.set_cmd + lldp_name + ' disable ')
@@ -230,15 +224,13 @@ class Lldp_interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _purge_attribs(have):
+    def _purge_attribs(self, have):
         commands = []
         name = have['name']
         commands.append(Lldp_interfaces.del_cmd + ' ' + name)
         return commands
 
-    @staticmethod
-    def _render_del_commands(want, have):
+    def _render_del_commands(self, want, have):
         commands = []
 
         lldp_name = have['name']
@@ -246,11 +238,10 @@ class Lldp_interfaces(ConfigBase):
 
         for attrib in params:
             if attrib == 'location':
-                commands.extend(Lldp_interfaces.update_location(lldp_name, want, have))
+                commands.extend(self._update_location(lldp_name, want, have))
         return commands
 
-    @staticmethod
-    def configure_status(name, want_item, have_item):
+    def _configure_status(self, name, want_item, have_item):
         commands = []
         if is_dict_element_present(have_item, 'enable'):
             temp_have_item = False
@@ -263,16 +254,14 @@ class Lldp_interfaces(ConfigBase):
                 commands.append(Lldp_interfaces.set_cmd + name + ' disable')
         return commands
 
-    @staticmethod
-    def delete_disable(want_item):
+    def _delete_disable(self, want_item):
         commands = []
         name = want_item['name']
         if not want_item['enable']:
             commands.append('delete service lldp interface ' + name + ' disable')
         return commands
 
-    @staticmethod
-    def add_location(name, want_item, have_item):
+    def _add_location(self, name, want_item, have_item):
         commands = []
         have_dict = {}
         have_ca = {}
@@ -314,8 +303,7 @@ class Lldp_interfaces(ConfigBase):
                 commands.append(set_cmd + ' location ' + location_type + ' ' + str(want_location_type['elin']))
         return commands
 
-    @staticmethod
-    def update_location(name, want_item, have_item):
+    def _update_location(self, name, want_item, have_item):
         commands = []
         del_cmd = 'delete service lldp interface ' + name
         want_location_type = want_item.get('location') or {}
@@ -339,7 +327,7 @@ class Lldp_interfaces(ConfigBase):
             if is_dict_element_present(have_location_type, 'civic_based'):
                 have_dict = have_location_type.get('civic_based') or {}
                 have_ca = have_dict.get('ca_info')
-                commands.extend(Lldp_interfaces.update_civic_address(name, want_ca, have_ca))
+                commands.extend(self._update_civic_address(name, want_ca, have_ca))
             else:
                 commands.append(del_cmd + ' location')
 
@@ -351,8 +339,7 @@ class Lldp_interfaces(ConfigBase):
                 commands.append(del_cmd + ' location')
         return commands
 
-    @staticmethod
-    def delete_location(want_item):
+    def _delete_location(self, want_item):
         commands = []
         name = want_item['name']
         del_cmd = 'delete service lldp interface ' + name + ' location'
@@ -361,8 +348,7 @@ class Lldp_interfaces(ConfigBase):
             commands.append(del_cmd)
         return commands
 
-    @staticmethod
-    def add_civic_address(name, want, have):
+    def _add_civic_address(self, name, want, have):
         commands = []
         for item in want:
             ca_type = item['ca_type']
@@ -373,8 +359,7 @@ class Lldp_interfaces(ConfigBase):
                     ca_type) + ' ca-value ' + ca_value)
         return commands
 
-    @staticmethod
-    def update_civic_address(name, want, have):
+    def _update_civic_address(self, name, want, have):
         commands = []
         for item in have:
             ca_type = item['ca_type']
