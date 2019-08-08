@@ -234,10 +234,9 @@ certificates:
 
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, HAS_BOTO3, boto3_tag_list_to_ansible_dict
-
 
 try:
     import botocore
@@ -313,19 +312,13 @@ def get_certificates(client, module, domain_name=None, statuses=None):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            domain_name=dict(aliases=['name']),
-            statuses=dict(type='list', choices=['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']),
-        )
+    argument_spec = dict(
+          domain_name=dict(aliases=['name']),
+          statuses=dict(type='list', choices=['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']),
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'aws_acm_facts':
         module.deprecate("The 'aws_acm_facts' module has been renamed to 'aws_acm_info'", version='2.13')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required by this module')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     client = boto3_conn(module, conn_type='client', resource='acm',
