@@ -187,7 +187,7 @@ EXAMPLES = """
 RETURN = """
 cp_network:
   description: The checkpoint object created or updated.
-  returned: always, except when deleting the object.
+  returned: always, except when deleting the  object.
   type: dict
 """
 
