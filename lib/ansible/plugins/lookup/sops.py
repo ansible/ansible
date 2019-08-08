@@ -41,6 +41,11 @@ DOCUMENTATION = """
         _terms:
             description: path(s) of files to read
             required: True
+        binary:
+            description: determine if sops output should be decoded as text or considered binary
+            type: bool
+            required: False
+            default: False
     notes:
         - this lookup does not understand 'globing' - use the fileglob lookup instead.
 """
@@ -113,6 +118,11 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
         ret = []
+
+        sops_text_output = True
+        if 'binary' in kwargs:
+            sops_text_output = not kwargs['binary']
+
         for term in terms:
             display.debug("Sops lookup term: %s" % term)
             lookupfile = self.find_file_in_search_path(variables, 'files', term)
@@ -125,6 +135,10 @@ class LookupModule(LookupBase):
                     process = Popen(command, stdout=PIPE, stderr=PIPE)
                     (output, err) = process.communicate()
                     exit_code = process.wait()
+
+                    if sops_text_output:
+                        # output is binary, we want UTF-8 string
+                        output = output.decode('UTF-8')
 
                     # the process output is the decrypted secret; displaying it
                     # here would easily end in logs, be cautious
