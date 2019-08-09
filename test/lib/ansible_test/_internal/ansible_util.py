@@ -17,6 +17,7 @@ from .util import (
     ANSIBLE_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_BIN_PATH,
 )
 
 from .util_common import (
@@ -45,10 +46,8 @@ def ansible_environment(args, color=True, ansible_config=None):
     env = common_environment()
     path = env['PATH']
 
-    ansible_path = os.path.join(ANSIBLE_ROOT, 'bin')
-
-    if not path.startswith(ansible_path + os.path.pathsep):
-        path = ansible_path + os.path.pathsep + path
+    if not path.startswith(ANSIBLE_BIN_PATH + os.path.pathsep):
+        path = ANSIBLE_BIN_PATH + os.path.pathsep + path
 
     if ansible_config:
         pass
