@@ -20,8 +20,6 @@ contrib/inventory/consul_io.py future-import-boilerplate
 contrib/inventory/consul_io.py metaclass-boilerplate
 contrib/inventory/digital_ocean.py future-import-boilerplate
 contrib/inventory/digital_ocean.py metaclass-boilerplate
-contrib/inventory/docker.py future-import-boilerplate
-contrib/inventory/docker.py metaclass-boilerplate
 contrib/inventory/ec2.py future-import-boilerplate
 contrib/inventory/ec2.py metaclass-boilerplate
 contrib/inventory/fleet.py future-import-boilerplate
@@ -226,10 +224,6 @@ lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bu
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
-lib/ansible/module_utils/docker/common.py future-import-boilerplate
-lib/ansible/module_utils/docker/common.py metaclass-boilerplate
-lib/ansible/module_utils/docker/swarm.py future-import-boilerplate
-lib/ansible/module_utils/docker/swarm.py metaclass-boilerplate
 lib/ansible/module_utils/ec2.py future-import-boilerplate
 lib/ansible/module_utils/ec2.py metaclass-boilerplate
 lib/ansible/module_utils/exoscale.py future-import-boilerplate
@@ -1438,7 +1432,6 @@ lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:E
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:E337
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:E338
 lib/ansible/modules/cloud/docker/docker_container.py use-argspec-type-path # uses colon-separated paths, can't use type=path
-lib/ansible/modules/cloud/docker/docker_swarm_service.py validate-modules:E326
 lib/ansible/modules/cloud/google/_gcdns_record.py validate-modules:E337
 lib/ansible/modules/cloud/google/_gcdns_zone.py validate-modules:E337
 lib/ansible/modules/cloud/google/_gce.py pylint:blacklisted-name
@@ -6461,8 +6454,6 @@ lib/ansible/plugins/doc_fragments/dimensiondata.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/dimensiondata.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/dimensiondata_wait.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/dimensiondata_wait.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/docker.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/docker.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/ec2.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/ec2.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/emc.py future-import-boilerplate
@@ -6944,8 +6935,6 @@ test/units/module_utils/common/test_dict_transformations.py future-import-boiler
 test/units/module_utils/common/test_dict_transformations.py metaclass-boilerplate
 test/units/module_utils/conftest.py future-import-boilerplate
 test/units/module_utils/conftest.py metaclass-boilerplate
-test/units/module_utils/docker/test_common.py future-import-boilerplate
-test/units/module_utils/docker/test_common.py metaclass-boilerplate
 test/units/module_utils/ec2/test_aws.py future-import-boilerplate
 test/units/module_utils/ec2/test_aws.py metaclass-boilerplate
 test/units/module_utils/facts/base.py future-import-boilerplate
@@ -7053,14 +7042,6 @@ test/units/modules/cloud/amazon/test_s3_bucket_notification.py future-import-boi
 test/units/modules/cloud/amazon/test_s3_bucket_notification.py metaclass-boilerplate
 test/units/modules/cloud/cloudstack/test_cs_traffic_type.py future-import-boilerplate
 test/units/modules/cloud/cloudstack/test_cs_traffic_type.py metaclass-boilerplate
-test/units/modules/cloud/docker/test_docker_container.py future-import-boilerplate
-test/units/modules/cloud/docker/test_docker_container.py metaclass-boilerplate
-test/units/modules/cloud/docker/test_docker_network.py future-import-boilerplate
-test/units/modules/cloud/docker/test_docker_network.py metaclass-boilerplate
-test/units/modules/cloud/docker/test_docker_swarm_service.py future-import-boilerplate
-test/units/modules/cloud/docker/test_docker_swarm_service.py metaclass-boilerplate
-test/units/modules/cloud/docker/test_docker_volume.py future-import-boilerplate
-test/units/modules/cloud/docker/test_docker_volume.py metaclass-boilerplate
 test/units/modules/cloud/google/test_gce_tag.py future-import-boilerplate
 test/units/modules/cloud/google/test_gce_tag.py metaclass-boilerplate
 test/units/modules/cloud/google/test_gcp_forwarding_rule.py future-import-boilerplate
