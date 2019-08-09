@@ -149,7 +149,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a ssl certificate
+- name: create a SSL certificate
   gcp_compute_ssl_certificate:
     name: sslcert-targetsslproxy
     description: A certificate for testing. Do not use this certificate in production
@@ -183,7 +183,7 @@ EXAMPLES = '''
     state: present
   register: sslcert
 
-- name: create a target ssl proxy
+- name: create a target SSL proxy
   gcp_compute_target_ssl_proxy:
     name: test_object
     ssl_certificates:

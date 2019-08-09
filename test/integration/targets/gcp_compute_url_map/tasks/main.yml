@@ -22,7 +22,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: instancegroup
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-urlmap
     healthy_threshold: 10
@@ -47,7 +47,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: backendservice
-- name: delete a url map
+- name: delete a URL map
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -56,7 +56,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: absent
 #----------------------------------------------------------
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -84,7 +84,7 @@
     that:
       - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a url map that already exists
+- name: create a URL map that already exists
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -98,7 +98,7 @@
     that:
       - result.changed == false
 #----------------------------------------------------------
-- name: delete a url map
+- name: delete a URL map
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -126,7 +126,7 @@
     that:
       - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a url map that does not exist
+- name: delete a URL map that does not exist
   gcp_compute_url_map:
     name: "{{ resource_name }}"
     default_service: "{{ backendservice }}"
@@ -156,7 +156,7 @@
     state: absent
   register: backendservice
   ignore_errors: true
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-urlmap
     healthy_threshold: 10
