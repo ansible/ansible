@@ -57,7 +57,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a target VPN gateway
+- name: get info on a target vpn gateway
   gcp_compute_target_vpn_gateway_info:
     region: us-west1
     filters:

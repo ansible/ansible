@@ -129,7 +129,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a target tcp proxy
+- name: create a target TCP proxy
   gcp_compute_target_tcp_proxy:
     name: test_object
     proxy_header: PROXY_V1
