@@ -222,8 +222,16 @@ $tests = [Ordered]@{
             $actual_stat.TokenId.GetType().FullName | Assert-Equals -Expected "Ansible.AccessToken.Luid"
             $actual_stat.AuthenticationId.GetType().FullName | Assert-Equals -Expected "Ansible.AccessToken.Luid"
             $actual_stat.ExpirationTime.GetType().FullName | Assert-Equals -Expected "System.Int64"
+
             $actual_stat.TokenType | Assert-Equals -Expected ([Ansible.AccessToken.TokenType]::Primary)
-            $actual_stat.ImpersonationLevel | Assert-Equals -Expected ([Ansible.AccessToken.SecurityImpersonationLevel]::Anonymous)
+
+            $os_version = [Version](Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion
+            if ($os_version -lt [Version]"6.1") {
+                # While the token is a primary token, Server 2008 reports the SecurityImpersonationLevel for a primary token as Impersonation
+                $actual_stat.ImpersonationLevel | Assert-Equals -Expected ([Ansible.AccessToken.SecurityImpersonationLevel]::Impersonation)
+            } else {
+                $actual_stat.ImpersonationLevel | Assert-Equals -Expected ([Ansible.AccessToken.SecurityImpersonationLevel]::Anonymous)
+            }
             $actual_stat.DynamicCharged.GetType().FullName | Assert-Equals -Expected "System.UInt32"
             $actual_stat.DynamicAvailable.GetType().FullName | Assert-Equals -Expected "System.UInt32"
             $actual_stat.GroupCount.GetType().FullName | Assert-Equals -Expected "System.UInt32"
