@@ -197,6 +197,15 @@ options:
     type: bool
     default: no
     version_added: 2.6
+  retrieve_all_alternates:
+    description:
+      - "When set to C(yes), will retrieve all alternate chains offered by the ACME CA.
+         These will not be written to disk, but will be returned together with the main
+         chain as C(all_chains). See the documentation for the C(all_chains) return
+         value for details."
+    type: bool
+    default: no
+    version_added: "2.9"
 '''
 
 EXAMPLES = r'''
@@ -372,6 +381,26 @@ account_uri:
   returned: changed
   type: str
   version_added: "2.5"
+all_chains:
+  description:
+    - When I(retrieve_all_alternates) is set to C(yes), the module will query the ACME server
+      for alternate chains. This return value will contain a list of all chains returned,
+      the first entry being the main chain returned by the server.
+    - See L(Section 7.4.2 of RFC8555,https://tools.ietf.org/html/rfc8555#section-7.4.2) for details.
+  returned: when certificate was retrieved and I(retrieve_all_alternates) is set to C(yes)
+  type: list
+  contains:
+    chain:
+      description:
+        - The certificate chain, excluding the root, as concatenated PEM certificates.
+      type: str
+      returned: always
+    full_chain:
+      description:
+        - The certificate chain, excluding the root, but including the leaf certificate,
+          as concatenated PEM certificates.
+      type: str
+      returned: always
 '''
 
 from ansible.module_utils.acme import (
@@ -383,6 +412,7 @@ from ansible.module_utils.acme import (
     openssl_get_csr_identifiers,
     cryptography_get_cert_days,
     set_crypto_backend,
+    process_links,
 )
 
 import base64
@@ -392,6 +422,7 @@ import os
 import re
 import textwrap
 import time
+import urllib
 from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
@@ -684,19 +715,23 @@ class ACMEClient(object):
                     chain.append(''.join(current))
                 current = []
 
-        # Process link-up headers if there was no chain in reply
-        if not chain and 'link' in info:
-            link = info['link']
-            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
-            if parsed_link and parsed_link.group(2) == "up":
-                chain_link = parsed_link.group(1)
-                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
-                if chain_info['status'] in [200, 201]:
-                    chain.append(self._der_to_pem(chain_result))
+        alternates = []
+
+        def f(link, relation):
+            if relation == 'up':
+                # Process link-up headers if there was no chain in reply
+                if not chain:
+                    chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
+                    if chain_info['status'] in [200, 201]:
+                        chain.append(self._der_to_pem(chain_result))
+            elif relation == 'alternate':
+                alternates.append(link)
+
+        process_links(info, f)
 
         if cert is None or current:
             raise ModuleFailException("Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
-        return {'cert': cert, 'chain': chain}
+        return {'cert': cert, 'chain': chain, 'alternates': alternates}
 
     def _new_cert_v1(self):
         '''
@@ -712,14 +747,15 @@ class ACMEClient(object):
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
 
         chain = []
-        if 'link' in info:
-            link = info['link']
-            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
-            if parsed_link and parsed_link.group(2) == "up":
-                chain_link = parsed_link.group(1)
-                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
+
+        def f(link, relation):
+            if relation == 'up':
+                chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
                 if chain_info['status'] in [200, 201]:
-                    chain = [self._der_to_pem(chain_result)]
+                    chain.clear()
+                    chain.append(self._der_to_pem(chain_result))
+
+        process_links(info, f)
 
         if info['status'] not in [200, 201]:
             raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
@@ -873,6 +909,30 @@ class ACMEClient(object):
         else:
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
+            if self.module.params['retrieve_all_alternates']:
+                alternate_chains = []
+                for alternate in cert['alternates']:
+                    try:
+                        alt_cert = self._download_cert(alternate)
+                    except ModuleFailException as e:
+                        self.module.warn('Error while downloading alternative certificate {0}: {1}'.format(alternate, e))
+                        continue
+                    alt_chain = alt_cert.get('chain', [])
+                    if alt_chain:
+                        alternate_chains.append(alt_chain)
+                    else:
+                        self.module.warn('Alternative certificate {0} chain is empty'.format(alternate))
+                self.all_chains = []
+
+                def _append_all_chains(chain):
+                    self.all_chains.append(dict(
+                        chain=("\n".join(chain)).encode('utf8'),
+                        full_chain=(cert['cert'] + "\n".join(chain)).encode('utf8'),
+                    ))
+
+                _append_all_chains(cert.get('chain', []))
+                for alt_chain in alternate_chains:
+                    _append_all_chains(alt_chain.get('chain', []))
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
@@ -939,6 +999,7 @@ def main():
             remaining_days=dict(type='int', default=10),
             deactivate_authzs=dict(type='bool', default=False),
             force=dict(type='bool', default=False),
+            retrieve_all_alternates=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
         ),
         required_one_of=(
@@ -979,6 +1040,7 @@ def main():
             else:
                 client = ACMEClient(module)
                 client.cert_days = cert_days
+                other = dict()
                 if client.is_first_step():
                     # First run: start challenges / start new order
                     client.start_challenges()
@@ -987,6 +1049,8 @@ def main():
                     try:
                         client.finish_challenges()
                         client.get_certificate()
+                        if module.params['retrieve_all_alternates']:
+                            other['all_chains'] = client.all_chains
                     finally:
                         if module.params['deactivate_authzs']:
                             client.deactivate_authzs()
@@ -1003,7 +1067,8 @@ def main():
                     account_uri=client.account.uri,
                     challenge_data=data,
                     challenge_data_dns=data_dns,
-                    cert_days=client.cert_days
+                    cert_days=client.cert_days,
+                    **other
                 )
         else:
             module.exit_json(changed=False, cert_days=cert_days)
