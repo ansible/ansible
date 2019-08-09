@@ -42,7 +42,7 @@ from .util import (
     common_environment,
     pass_vars,
     display,
-    ANSIBLE_ROOT,
+    ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
 )
 
@@ -170,7 +170,7 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, None, ANSIBLE_ROOT, data_context().content.root, options, exclude, require)
+        cmd = generate_command(args, None, ANSIBLE_BIN_PATH, data_context().content.root, options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -239,7 +239,7 @@ def delegate_docker(args, exclude, require, integration_targets):
     else:
         content_root = install_root
 
-    cmd = generate_command(args, python_interpreter, install_root, content_root, options, exclude, require)
+    cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -431,7 +431,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             else:
                 content_root = install_root
 
-            cmd = generate_command(args, python_interpreter, install_root, content_root, options, exclude, require)
+            cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
@@ -478,11 +478,11 @@ def delegate_remote(args, exclude, require, integration_targets):
             docker_rm(args, httptester_id)
 
 
-def generate_command(args, python_interpreter, install_root, content_root, options, exclude, require):
+def generate_command(args, python_interpreter, ansible_bin_path, content_root, options, exclude, require):
     """
     :type args: EnvironmentConfig
     :type python_interpreter: str | None
-    :type install_root: str
+    :type ansible_bin_path: str
     :type content_root: str
     :type options: dict[str, int]
     :type exclude: list[str]
@@ -491,7 +491,7 @@ def generate_command(args, python_interpreter, install_root, content_root, optio
     """
     options['--color'] = 1
 
-    cmd = [os.path.join(install_root, 'bin/ansible-test')]
+    cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
 
     if python_interpreter:
         cmd = [python_interpreter] + cmd
