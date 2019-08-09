@@ -15,17 +15,21 @@ from ..util import (
 
 
 try:
-    C = t.TypeVar('C', 'PathProvider', 'PathProvider')
+    TPathProvider = t.TypeVar('TPathProvider', bound='PathProvider')
 except AttributeError:
-    pass
+    TPathProvider = None  # pylint: disable=invalid-name
 
 
-def get_path_provider_classes(provider_type):  # type: (t.Type[C]) -> t.List[t.Type[C]]
+def get_path_provider_classes(provider_type):  # type: (t.Type[TPathProvider]) -> t.List[t.Type[TPathProvider]]
     """Return a list of path provider classes of the given type."""
     return sorted(get_subclasses(provider_type), key=lambda c: (c.priority, c.__name__))
 
 
-def find_path_provider(provider_type, provider_classes, path, walk):  # type: (t.Type[C], t.List[t.Type[C]], str, bool) -> C
+def find_path_provider(provider_type,  # type: t.Type[TPathProvider],
+                       provider_classes,  # type:  t.List[t.Type[TPathProvider]]
+                       path,  # type: str
+                       walk,  # type: bool
+                       ):  # type: (...) -> TPathProvider
     """Return the first found path provider of the given type for the given path."""
     sequences = sorted(set(pc.sequence for pc in provider_classes if pc.sequence > 0))
 
