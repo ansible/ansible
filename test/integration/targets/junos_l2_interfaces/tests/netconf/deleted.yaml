@@ -1,0 +1,81 @@
+---
+- debug:
+    msg: "START junos_l2_interfaces deleted integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_deleted_output:
+      - name: ge-0/0/1
+        unit: 0
+        enhanced_layer: True
+        access:
+          vlan: vlan100
+
+- block:
+    - name: Configure initial state for l2 interface
+      junos_l2_interfaces: &initial
+        config:
+          - name: ge-0/0/1
+            access:
+              vlan: vlan100
+          - name: ge-0/0/2
+            trunk:
+              allowed_vlans:
+                - vlan200
+                - vlan300
+              native_vlan: "400"
+        state: merged
+      register: result
+
+    - name: Delete the provided l2 interface configuration from running configuration
+      junos_l2_interfaces: &deleted
+        config:
+        - name: ge-0/0/2
+        state: deleted
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_deleted_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Delete the provided l2 interface configuration from running configuration (IDEMPOTENT)
+      junos_l2_interfaces: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+    - name: Configure initial state for interface
+      junos_l2_interfaces: *initial
+      register: result
+
+    - name: Delete the all l2 interface configuration from running configuration
+      junos_l2_interfaces:
+        state: deleted
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ result['after'] == [] }}"
+
+    - name: Delete the all l2 interface configuration from running configuration (IDEMPOTENT)
+      junos_l2_interfaces:
+        state: deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_l2_interfaces deleted integration tests on connection={{ ansible_connection }}"
