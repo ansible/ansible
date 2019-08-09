@@ -201,7 +201,7 @@ def main():
 
     if commands:
         commit = not module.check_mode
-        response = load_config(module, commands, commit=commit)
+        load_config(module, commands, commit=commit)
         result['changed'] = True
 
     module.exit_json(**result)
