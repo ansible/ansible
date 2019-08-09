@@ -748,6 +748,21 @@ class PathMapper:
                 'sanity': 'all',  # test infrastructure, run all sanity checks
             }
 
+        if path.startswith('test/lib/ansible_test/_internal/units/'):
+            return {
+                'units': 'all',  # test infrastructure, run all unit tests
+            }
+
+        if path.startswith('test/lib/ansible_test/_data/units/'):
+            return {
+                'units': 'all',  # test infrastructure, run all unit tests
+            }
+
+        if path.startswith('test/lib/ansible_test/_data/pytest/'):
+            return {
+                'units': 'all',  # test infrastructure, run all unit tests
+            }
+
         if path.startswith('test/lib/ansible_test/_data/requirements/'):
             if name in (
                     'integration',
