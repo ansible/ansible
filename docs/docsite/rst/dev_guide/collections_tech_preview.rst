@@ -199,7 +199,7 @@ To build a collection, run ``ansible-galaxy collection build`` from inside the r
 
 .. code-block:: bash
 
-    collection_dir#> ansible-galaxy collection build my_namespace.my_collection
+    collection_dir#> ansible-galaxy collection build
 
 This creates
 a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
