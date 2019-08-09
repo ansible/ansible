@@ -93,7 +93,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.client_secret = None
         self.stack_id = None
         self.api_host = "https://gateway.stackpath.com"
-        self.group_keys = ["stackId", "workloadId", "cityCode", "countryCode", "continent"]
+        self.group_keys = [
+            "stackId", "workloadId", "cityCode",
+            "countryCode", "continent", "target", "name"]
 
     def _set_credentials(self):
         '''
@@ -152,6 +154,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         instance["cityCode"] = instance["location"]["cityCode"]
                         instance["countryCode"] = instance["location"]["countryCode"]
                         instance["continent"] = instance["location"]["continent"]
+                        instance["target"] = instance["metadata"]["labels"]["workload.platform.stackpath.net/target-name"]
                         results.append(instance)
         return results
 
