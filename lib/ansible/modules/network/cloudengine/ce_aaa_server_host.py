@@ -1946,10 +1946,11 @@ class AaaServerHost(object):
         hwtacacs_template = module.params["hwtacacs_template"]
         hwtacacs_server_host_name = module.params["hwtacacs_server_host_name"]
         hwtacacs_server_type = module.params["hwtacacs_server_type"]
-        hwtacacs_is_secondary_server = module.params[
-            "hwtacacs_is_secondary_server"]
+        hwtacacs_is_secondary_server = "true" if module.params[
+            "hwtacacs_is_secondary_server"] is True else "false"
         hwtacacs_vpn_name = module.params["hwtacacs_vpn_name"]
-        hwtacacs_is_public_net = module.params["hwtacacs_is_public_net"]
+        hwtacacs_is_public_net = "true" if module.params[
+            "hwtacacs_is_public_net"] is True else "false"
         state = module.params["state"]
 
         result = dict()
@@ -2048,7 +2049,7 @@ class AaaServerHost(object):
         cmds = []
 
         if hwtacacs_server_type == "Authentication":
-            cmd = "hwtacacs server authentication host host-name %s" % hwtacacs_server_host_name
+            cmd = "hwtacacs server authentication host %s" % hwtacacs_server_host_name
             if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
                 cmd += " vpn-instance %s" % hwtacacs_vpn_name
             if hwtacacs_is_public_net:
@@ -2057,7 +2058,7 @@ class AaaServerHost(object):
                 cmd += " secondary"
 
         elif hwtacacs_server_type == "Authorization":
-            cmd = "hwtacacs server authorization host host-name %s" % hwtacacs_server_host_name
+            cmd = "hwtacacs server authorization host %s" % hwtacacs_server_host_name
             if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
                 cmd += " vpn-instance %s" % hwtacacs_vpn_name
             if hwtacacs_is_public_net:
@@ -2066,7 +2067,7 @@ class AaaServerHost(object):
                 cmd += " secondary"
 
         elif hwtacacs_server_type == "Accounting":
-            cmd = "hwtacacs server accounting host host-name %s" % hwtacacs_server_host_name
+            cmd = "hwtacacs server accounting host %s" % hwtacacs_server_host_name
             if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
                 cmd += " vpn-instance %s" % hwtacacs_vpn_name
             if hwtacacs_is_public_net:
@@ -2112,7 +2113,7 @@ class AaaServerHost(object):
         cmds = []
 
         if hwtacacs_server_type == "Authentication":
-            cmd = "undo hwtacacs server authentication host host-name %s" % hwtacacs_server_host_name
+            cmd = "undo hwtacacs server authentication host %s" % hwtacacs_server_host_name
             if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
                 cmd += " vpn-instance %s" % hwtacacs_vpn_name
             if hwtacacs_is_public_net:
@@ -2121,7 +2122,7 @@ class AaaServerHost(object):
                 cmd += " secondary"
 
         elif hwtacacs_server_type == "Authorization":
-            cmd = "undo hwtacacs server authorization host host-name %s" % hwtacacs_server_host_name
+            cmd = "undo hwtacacs server authorization host %s" % hwtacacs_server_host_name
             if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
                 cmd += " vpn-instance %s" % hwtacacs_vpn_name
             if hwtacacs_is_public_net:
@@ -2130,7 +2131,7 @@ class AaaServerHost(object):
                 cmd += " secondary"
 
         elif hwtacacs_server_type == "Accounting":
-            cmd = "undo hwtacacs server accounting host host-name %s" % hwtacacs_server_host_name
+            cmd = "undo hwtacacs server accounting host %s" % hwtacacs_server_host_name
             if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
                 cmd += " vpn-instance %s" % hwtacacs_vpn_name
             if hwtacacs_is_public_net:
@@ -2139,7 +2140,7 @@ class AaaServerHost(object):
                 cmd += " secondary"
 
         elif hwtacacs_server_type == "Common":
-            cmd = "undo hwtacacs server host host-name %s" % hwtacacs_server_host_name
+            cmd = "undo hwtacacs server host %s" % hwtacacs_server_host_name
             if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
                 cmd += " vpn-instance %s" % hwtacacs_vpn_name
             if hwtacacs_is_public_net:
@@ -2536,9 +2537,10 @@ def main():
             module.fail_json(
                 msg='Error: Please do not set hwtacacs_server_ip and hwtacacs_server_ipv6 at the same time.')
 
-        if hwtacacs_vpn_name and hwtacacs_is_public_net:
-            module.fail_json(
-                msg='Error: Please do not set vpn and public net at the same time.')
+        if hwtacacs_vpn_name and hwtacacs_vpn_name != "_public_":
+            if hwtacacs_is_public_net:
+                module.fail_json(
+                    msg='Error: Please do not set vpn and public net at the same time.')
 
         if hwtacacs_server_ip:
             hwtacacs_server_ipv4_result = ce_aaa_server_host.get_hwtacacs_server_cfg_ipv4(
