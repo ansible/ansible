@@ -51,7 +51,7 @@
     that:
       - result.changed == true
 - name: verify that snapshot was created
-  gcp_compute_snapshot_facts:
+  gcp_compute_snapshot_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -99,7 +99,7 @@
     that:
       - result.changed == true
 - name: verify that snapshot was deleted
-  gcp_compute_snapshot_facts:
+  gcp_compute_snapshot_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

@@ -44,7 +44,7 @@
     that:
       - result.changed == true
 - name: verify that ssl_policy was created
-  gcp_compute_ssl_policy_facts:
+  gcp_compute_ssl_policy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -94,7 +94,7 @@
     that:
       - result.changed == true
 - name: verify that ssl_policy was deleted
-  gcp_compute_ssl_policy_facts:
+  gcp_compute_ssl_policy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
