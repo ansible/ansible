@@ -102,7 +102,7 @@
     that:
       - result.changed == true
 - name: verify that global_forwarding_rule was created
-  gcp_compute_global_forwarding_rule_facts:
+  gcp_compute_global_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -150,7 +150,7 @@
     that:
       - result.changed == true
 - name: verify that global_forwarding_rule was deleted
-  gcp_compute_global_forwarding_rule_facts:
+  gcp_compute_global_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

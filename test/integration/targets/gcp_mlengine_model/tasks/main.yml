@@ -40,7 +40,7 @@
     that:
       - result.changed == true
 - name: verify that model was created
-  gcp_mlengine_model_facts:
+  gcp_mlengine_model_info:
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -84,7 +84,7 @@
     that:
       - result.changed == true
 - name: verify that model was deleted
-  gcp_mlengine_model_facts:
+  gcp_mlengine_model_info:
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

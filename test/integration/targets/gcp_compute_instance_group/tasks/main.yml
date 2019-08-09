@@ -52,7 +52,7 @@
     that:
       - result.changed == true
 - name: verify that instance_group was created
-  gcp_compute_instance_group_facts:
+  gcp_compute_instance_group_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a
@@ -103,7 +103,7 @@
     that:
       - result.changed == true
 - name: verify that instance_group was deleted
-  gcp_compute_instance_group_facts:
+  gcp_compute_instance_group_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a

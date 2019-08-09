@@ -45,7 +45,7 @@
     that:
       - result.changed == true
 - name: verify that image was created
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -87,7 +87,7 @@
     that:
       - result.changed == true
 - name: verify that image was deleted
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

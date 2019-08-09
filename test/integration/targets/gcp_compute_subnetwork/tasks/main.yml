@@ -49,7 +49,7 @@
     that:
       - result.changed == true
 - name: verify that subnetwork was created
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
       filters:
          - name = ansiblenet
       region: us-west1
@@ -96,7 +96,7 @@
     that:
       - result.changed == true
 - name: verify that subnetwork was deleted
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
       filters:
          - name = ansiblenet
       region: us-west1

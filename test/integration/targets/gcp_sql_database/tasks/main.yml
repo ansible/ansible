@@ -53,7 +53,7 @@
     that:
       - result.changed == true
 - name: verify that database was created
-  gcp_sql_database_facts:
+  gcp_sql_database_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -96,7 +96,7 @@
     that:
       - result.changed == true
 - name: verify that database was deleted
-  gcp_sql_database_facts:
+  gcp_sql_database_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

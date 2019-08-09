@@ -42,7 +42,7 @@
     that:
       - result.changed == true
 - name: verify that http_health_check was created
-  gcp_compute_http_health_check_facts:
+  gcp_compute_http_health_check_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -90,7 +90,7 @@
     that:
       - result.changed == true
 - name: verify that http_health_check was deleted
-  gcp_compute_http_health_check_facts:
+  gcp_compute_http_health_check_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

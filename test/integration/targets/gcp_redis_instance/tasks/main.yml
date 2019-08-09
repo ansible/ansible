@@ -62,7 +62,7 @@
     that:
       - result.changed == true
 - name: verify that instance was created
-  gcp_redis_instance_facts:
+  gcp_redis_instance_info:
       region: us-central1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -121,7 +121,7 @@
     that:
       - result.changed == true
 - name: verify that instance was deleted
-  gcp_redis_instance_facts:
+  gcp_redis_instance_info:
       region: us-central1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

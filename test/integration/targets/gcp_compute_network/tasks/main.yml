@@ -36,7 +36,7 @@
     that:
       - result.changed == true
 - name: verify that network was created
-  gcp_compute_network_facts:
+  gcp_compute_network_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -78,7 +78,7 @@
     that:
       - result.changed == true
 - name: verify that network was deleted
-  gcp_compute_network_facts:
+  gcp_compute_network_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

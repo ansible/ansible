@@ -42,7 +42,7 @@
     that:
       - result.changed == true
 - name: verify that node was created
-  gcp_tpu_node_facts:
+  gcp_tpu_node_info:
       zone: us-central1-b
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -89,7 +89,7 @@
     that:
       - result.changed == true
 - name: verify that node was deleted
-  gcp_tpu_node_facts:
+  gcp_tpu_node_info:
       zone: us-central1-b
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

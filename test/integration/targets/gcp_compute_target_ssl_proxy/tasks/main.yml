@@ -111,7 +111,7 @@
     that:
       - result.changed == true
 - name: verify that target_ssl_proxy was created
-  gcp_compute_target_ssl_proxy_facts:
+  gcp_compute_target_ssl_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -157,7 +157,7 @@
     that:
       - result.changed == true
 - name: verify that target_ssl_proxy was deleted
-  gcp_compute_target_ssl_proxy_facts:
+  gcp_compute_target_ssl_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
