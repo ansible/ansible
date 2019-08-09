@@ -1,2 +1,2 @@
 bugfixes:
-  - Add no_log to credentials field to avoid disclosures
+  - Add no_log to credentials field to avoid disclosures (CVE-2019-10217)
