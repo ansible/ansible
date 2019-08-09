@@ -69,7 +69,7 @@ cleanup() {
 # This is required, as otherwise we overwite exit codes of commands we call and the integration
 # test fails prematurely, but reports successful execution
 failure_cleanup() {
-    echo "Previous command faild."
+    echo "Previous command failed."
     cleanup
     exit 1
 }
