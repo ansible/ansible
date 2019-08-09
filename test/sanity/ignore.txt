@@ -2193,7 +2193,6 @@ lib/ansible/modules/commands/command.py validate-modules:E322
 lib/ansible/modules/commands/command.py validate-modules:E323
 lib/ansible/modules/commands/command.py validate-modules:E338
 lib/ansible/modules/commands/expect.py validate-modules:E338
-lib/ansible/modules/crypto/certificate_complete_chain.py use-argspec-type-path # would need something like type=list(path)
 lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:E324
 lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:E337
 lib/ansible/modules/database/influxdb/influxdb_query.py validate-modules:E324

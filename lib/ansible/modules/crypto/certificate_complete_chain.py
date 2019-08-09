@@ -310,12 +310,12 @@ def main():
     # Load intermediate certificates
     intermediates = CertificateSet(module)
     for path in module.params['intermediate_certificates']:
-        intermediates.load(os.path.expanduser(os.path.expandvars(path)))
+        intermediates.load(path)
 
     # Load root certificates
     roots = CertificateSet(module)
     for path in module.params['root_certificates']:
-        roots.load(os.path.expanduser(os.path.expandvars(path)))
+        roots.load(path)
 
     # Try to complete chain
     current = chain[-1]
