@@ -292,6 +292,7 @@ EXAMPLES = '''
 '''
 
 import os
+import re
 import time
 import traceback
 
