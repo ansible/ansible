@@ -61,6 +61,7 @@ from .util import (
     cmd_quote,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_CONFIG_ROOT,
 )
 
 from .util_common import (
@@ -384,6 +385,7 @@ def command_network_integration(args):
     :type args: NetworkIntegrationConfig
     """
     default_filename = 'test/integration/inventory.networking'
+    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(default_filename)) + '.template'
 
     if args.inventory:
         filename = os.path.join('test/integration', args.inventory)
@@ -398,7 +400,7 @@ def command_network_integration(args):
             'Inventory not found: %s\n'
             'Use --inventory to specify the inventory path.\n'
             'Use --platform to provision resources and generate an inventory file.\n'
-            'See also inventory template: %s.template' % (filename, default_filename)
+            'See also inventory template: %s' % (filename, template_path)
         )
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
@@ -562,9 +564,10 @@ def command_windows_integration(args):
     :type args: WindowsIntegrationConfig
     """
     filename = 'test/integration/inventory.winrm'
+    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(filename)) + '.template'
 
     if not args.explain and not args.windows and not os.path.isfile(filename):
-        raise ApplicationError('Use the --windows option or provide an inventory file (see %s.template).' % filename)
+        raise ApplicationError('Use the --windows option or provide an inventory file (see %s).' % template_path)
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
