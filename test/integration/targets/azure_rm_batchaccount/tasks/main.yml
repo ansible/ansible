@@ -65,12 +65,12 @@
   assert:
     that:
       - not output.changed
-      - output.items[0]['id'] != None
-      - output.items[0]['resource_group'] != None
-      - output.items[0]['name'] != None
-      - output.items[0]['location'] != None
-      - output.items[0]['auto_storage_account'] != None
-      - output.items[0]['pool_allocation_mode'] != None
+      - output['items'][0]['id'] != None
+      - output['items'][0]['resource_group'] != None
+      - output['items'][0]['name'] != None
+      - output['items'][0]['location'] != None
+      - output['items'][0]['auto_storage_account'] != None
+      - output['items'][0]['pool_allocation_mode'] != None
 
 - name: List instances of Batch Account
   azure_rm_batchaccount_info:
@@ -81,12 +81,12 @@
   assert:
     that:
       - not output.changed
-      - output.items[0]['id'] != None
-      - output.items[0]['resource_group'] != None
-      - output.items[0]['name'] != None
-      - output.items[0]['location'] != None
-      - output.items[0]['auto_storage_account'] != None
-      - output.items[0]['pool_allocation_mode'] != None
+      - output['items'][0]['id'] != None
+      - output['items'][0]['resource_group'] != None
+      - output['items'][0]['name'] != None
+      - output['items'][0]['location'] != None
+      - output['items'][0]['auto_storage_account'] != None
+      - output['items'][0]['pool_allocation_mode'] != None
 
 - name: Delete Batch Account
   azure_rm_batchaccount:
