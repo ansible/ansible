@@ -32,6 +32,24 @@ def dict_to_set(sample_dict):
     test_dict = {}
     for k, v in iteritems(sample_dict):
         if v is not None:
+            if isinstance(v, list):
+                if isinstance(v[0], dict):
+                    li = []
+                    for each in v:
+                        for key, value in iteritems(each):
+                            if isinstance(value, list):
+                                each[key] = tuple(value)
+                        li.extend(tuple(each.items()))
+                    v = tuple(li)
+                else:
+                    v = tuple(v)
+            elif isinstance(v, dict):
+                li = []
+                for key, value in iteritems(v):
+                    if isinstance(value, list):
+                        v[key] = tuple(value)
+                li.extend(tuple(v.items()))
+                v = tuple(li)
             test_dict.update({k: v})
     return_set = set(tuple(test_dict.items()))
     return return_set
@@ -40,8 +58,15 @@ def dict_to_set(sample_dict):
 def filter_dict_having_none_value(want, have):
     # Generate dict with have dict value which is None in want dict
     test_dict = dict()
+    test_key_dict = dict()
     test_dict['name'] = want.get('name')
     for k, v in iteritems(want):
+        if isinstance(v, dict):
+            for key, value in iteritems(v):
+                if value is None:
+                    dict_val = have.get(k).get(key)
+                    test_key_dict.update({key: dict_val})
+                test_dict.update({k: test_key_dict})
         if v is None:
             val = have.get(k)
             test_dict.update({k: val})
@@ -59,13 +84,6 @@ def remove_duplicate_interface(commands):
             set_cmd.append(each)
 
     return set_cmd
-
-
-def search_obj_in_list(name, lst):
-    for o in lst:
-        if o['name'] == name:
-            return o
-    return None
 
 
 def normalize_interface(name):
