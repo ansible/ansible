@@ -547,7 +547,7 @@ class DockerNetworkManager(object):
             if not self.check_mode:
                 resp = self.client.create_network(self.parameters.name, **params)
                 self.client.report_warnings(resp, ['Warning'])
-                self.existing_network = self.client.get_network(id=resp['Id'])
+                self.existing_network = self.client.get_network(network_id=resp['Id'])
             self.results['actions'].append("Created network %s with driver %s" % (self.parameters.name, self.parameters.driver))
             self.results['changed'] = True
 
