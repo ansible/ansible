@@ -260,30 +260,60 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
             if not exists:
                 return True
 
-    # check internal interfaces
-    if module.params['interfaces']:
-        existing_subnet_ids = []
-        for port in _router_internal_interfaces(cloud, router):
-            if 'fixed_ips' in port:
-                for fixed_ip in port['fixed_ips']:
-                    existing_subnet_ids.append(fixed_ip['subnet_id'])
-
-        for iface in module.params['interfaces']:
-            if isinstance(iface, dict):
-                for p_id in internal_port_ids:
-                    p = cloud.get_port(name_or_id=p_id)
-                    if 'fixed_ips' in p:
-                        for fip in p['fixed_ips']:
-                            internal_subnet_ids.append(fip['subnet_id'])
-
-        if set(internal_subnet_ids) != set(existing_subnet_ids):
-            internal_subnet_ids = []
-            return True
-
     return False
 
 
-def _system_state_change(cloud, module, router, network, internal_ids, internal_portids, filters=None):
+def _handle_internal_ifaces(cloud, module, router, internal_subnet_ids, internal_port_ids, filters):
+    changed = False
+    existing_subnet_ids = []
+    existing_ports_id = []
+    port_subnet_ids = []
+    if not module.params['interfaces']:
+        return False
+    for iface in module.params['interfaces']:
+        if isinstance(iface, dict):
+            for p_id in internal_port_ids:
+                p = cloud.get_port(name_or_id=p_id)
+                if 'fixed_ips' in p:
+                    for fip in p['fixed_ips']:
+                        port_subnet_ids.append(fip['subnet_id'])
+
+    for port in _router_internal_interfaces(cloud, router):
+        if 'fixed_ips' in port:
+            port_subnets = []
+            for fixed_ip in port['fixed_ips']:
+                subnet = fixed_ip['subnet_id']
+                if subnet in internal_subnet_ids:
+                    port_subnets.append(subnet)
+                    continue
+                if subnet in port_subnet_ids:
+                    port_subnets.append(subnet)
+                    continue
+                break
+            else:
+                existing_ports_id.append(port['id'])
+                existing_subnet_ids.extend(port_subnets)
+                continue
+        # At least one subnet could not be found in target config
+        if not module.check_mode:
+            cloud.remove_router_interface(router, port_id=port['id'])
+        changed = True
+    new_subnets = set(internal_subnet_ids).difference(port_subnet_ids, existing_subnet_ids)
+    if not module.check_mode:
+        for subnet in new_subnets:
+            cloud.add_router_interface(router, subnet_id=subnet)
+    if new_subnets:
+        changed = True
+    new_ports = set(internal_port_ids).difference(existing_ports_id)
+    if not module.check_mode:
+        for port in new_ports:
+            cloud.add_router_interface(router, port_id=port)
+    if new_ports:
+        changed = True
+    return changed
+
+
+def _system_state_change(cloud, module, router, network, subnet_internal_ids, internal_portids, filters=None):
     """Check if the system state would be changed."""
     state = module.params['state']
     if state == 'absent' and router:
@@ -291,7 +321,10 @@ def _system_state_change(cloud, module, router, network, internal_ids, internal_
     if state == 'present':
         if not router:
             return True
-        return _needs_update(cloud, module, router, network, internal_ids, internal_portids, filters)
+        if _needs_update(cloud, module, router, network, subnet_internal_ids, internal_portids, filters):
+            return True
+        if _handle_internal_ifaces(cloud, module, router, subnet_internal_ids, internal_portids, filters):
+            return True
     return False
 
 
@@ -428,13 +461,6 @@ def main():
                 if project_id:
                     kwargs['project_id'] = project_id
                 router = cloud.create_router(**kwargs)
-                for int_s_id in subnet_internal_ids:
-                    cloud.add_router_interface(router, subnet_id=int_s_id)
-                changed = True
-                # add interface by port id as well
-                for int_p_id in internal_portids:
-                    cloud.add_router_interface(router, port_id=int_p_id)
-                changed = True
             else:
                 if _needs_update(cloud, module, router, net, subnet_internal_ids, internal_portids, filters):
                     kwargs = _build_kwargs(cloud, module, router, net)
@@ -442,25 +468,12 @@ def main():
 
                     # Protect against update_router() not actually
                     # updating the router.
-                    if not updated_router:
-                        changed = False
-
-                    # On a router update, if any internal interfaces were supplied,
-                    # just detach all existing internal interfaces and attach the new.
-                    if internal_portids or subnet_internal_ids:
+                    if updated_router:
+                        changed = True
                         router = updated_router
-                        ports = _router_internal_interfaces(cloud, router)
-                        for port in ports:
-                            cloud.remove_router_interface(router, port_id=port['id'])
-                    if internal_portids:
-                        external_ids, subnet_internal_ids, internal_portids = _validate_subnets(module, cloud, filters)
-                        for int_p_id in internal_portids:
-                            cloud.add_router_interface(router, port_id=int_p_id)
-                        changed = True
-                    if subnet_internal_ids:
-                        for s_id in subnet_internal_ids:
-                            cloud.add_router_interface(router, subnet_id=s_id)
-                        changed = True
+
+            if _handle_internal_ifaces(cloud, module, router, subnet_internal_ids, internal_portids, filters):
+                changed = True
 
             module.exit_json(changed=changed,
                              router=router,
