@@ -198,7 +198,7 @@ EXAMPLES = '''
     state: present
   register: instancegroup
 
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-urlmap
     healthy_threshold: 10
@@ -225,7 +225,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: test_object
     default_service: "{{ backendservice }}"
