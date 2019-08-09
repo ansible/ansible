@@ -99,9 +99,9 @@ options:
     type: int
   redis_version:
     description:
-    - The version of Redis software. If not provided, latest supported version will
-      be used. Updating the version will perform an upgrade/downgrade to the new version.
-      Currently, the supported values are REDIS_3_2 for Redis 3.2.
+    - 'The version of Redis software. If not provided, latest supported version will
+      be used. Currently, the supported values are: - REDIS_4_0 for Redis 4.0 compatibility
+      - REDIS_3_2 for Redis 3.2 compatibility .'
     required: false
     type: str
   reserved_ip_range:
@@ -236,9 +236,9 @@ port:
   type: int
 redisVersion:
   description:
-  - The version of Redis software. If not provided, latest supported version will
-    be used. Updating the version will perform an upgrade/downgrade to the new version.
-    Currently, the supported values are REDIS_3_2 for Redis 3.2.
+  - 'The version of Redis software. If not provided, latest supported version will
+    be used. Currently, the supported values are: - REDIS_4_0 for Redis 4.0 compatibility
+    - REDIS_3_2 for Redis 3.2 compatibility .'
   returned: success
   type: str
 reservedIpRange:
