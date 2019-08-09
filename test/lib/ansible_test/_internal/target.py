@@ -9,6 +9,8 @@ import errno
 import itertools
 import abc
 
+from . import types as t
+
 from .util import (
     ApplicationError,
     display,
@@ -23,6 +25,16 @@ from .data import (
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
+
+try:
+    TCompletionTarget = t.TypeVar('TCompletionTarget', bound='CompletionTarget')
+except AttributeError:
+    TCompletionTarget = None  # pylint: disable=invalid-name
+
+try:
+    TIntegrationTarget = t.TypeVar('TIntegrationTarget', bound='IntegrationTarget')
+except AttributeError:
+    TIntegrationTarget = None  # pylint: disable=invalid-name
 
 
 def find_target_completion(target_func, prefix):
@@ -75,7 +87,7 @@ def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
     """
     targets = tuple(targets)
 
-    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda t: t.name)
+    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda target: target.name)
 
     if requires:
         require_targets = set(filter_targets(targets, requires, errors=True, directories=False))
@@ -85,18 +97,16 @@ def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
         list(filter_targets(targets, excludes, errors=True, include=False, directories=False))
 
     internal_targets = set(filter_targets(include_targets, excludes, errors=False, include=False, directories=False))
-    return tuple(sorted(internal_targets, key=lambda t: t.name))
+    return tuple(sorted(internal_targets, key=lambda target: target.name))
 
 
-def filter_targets(targets, patterns, include=True, directories=True, errors=True):
-    """
-    :type targets: collections.Iterable[CompletionTarget]
-    :type patterns: list[str]
-    :type include: bool
-    :type directories: bool
-    :type errors: bool
-    :rtype: collections.Iterable[CompletionTarget]
-    """
+def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
+                   patterns,  # type: t.List[str]
+                   include=True,  # type: bool
+                   directories=True,  # type: bool
+                   errors=True,  # type: bool
+                   ):  # type: (...) -> t.Iterable[TCompletionTarget]
+    """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
     compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
 
