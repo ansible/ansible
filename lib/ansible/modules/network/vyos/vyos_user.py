@@ -149,7 +149,6 @@ def validate_level(value, module):
 
 def spec_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
     update_password = module.params['update_password']
 
     def needs_update(want, have, x):

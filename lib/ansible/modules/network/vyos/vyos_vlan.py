@@ -209,7 +209,6 @@ def map_params_to_obj(module):
 
 def map_config_to_obj(module):
     objs = []
-    interfaces = list()
 
     output = run_commands(module, 'show interfaces')
     lines = output[0].strip().splitlines()[3:]
