@@ -19,7 +19,7 @@ module: azure_rm_webapp_facts
 
 version_added: "2.7"
 
-short_description: Get azure web app facts.
+short_description: Get Azure web app facts
 
 description:
     - Get facts for a specific web app or all web app in a resource group, or all web app in current subscription.
@@ -44,7 +44,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu (@yungezz)"
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
@@ -66,13 +66,14 @@ EXAMPLES = '''
 
 RETURN = '''
 webapps:
-    description: List of web apps.
+    description:
+        - List of web apps.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Id of the web app.
+                - ID of the web app.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp
@@ -81,6 +82,7 @@ webapps:
                 - Name of the web app.
             returned: always
             type: str
+            sample: winwebapp1
         resource_group:
             description:
                 - Resource group of the web app.
@@ -92,58 +94,131 @@ webapps:
                 - Location of the web app.
             returned: always
             type: str
+            sample: eastus
         plan:
             description:
-                - Id of app service plan used by the web app.
+                - ID of app service plan used by the web app.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/serverfarms/myAppServicePlan
         app_settings:
             description:
                 - App settings of the application. Only returned when web app has app settings.
-            type: complex
+            returned: always
+            type: dict
+            sample: {
+                    "testkey": "testvalue",
+                    "testkey2": "testvalue2"
+                    }
         frameworks:
             description:
                 - Frameworks of the application. Only returned when web app has frameworks.
-            type: complex
+            returned: always
+            type: list
+            sample: [
+                    {
+                        "name": "net_framework",
+                        "version": "v4.0"
+                    },
+                    {
+                        "name": "java",
+                        "settings": {
+                            "java_container": "tomcat",
+                            "java_container_version": "8.5"
+                        },
+                        "version": "1.7"
+                    },
+                    {
+                        "name": "php",
+                        "version": "5.6"
+                    }
+                    ]
         availability_state:
-            description: Availability of this web app.
+            description:
+                - Availability of this web app.
+            returned: always
             type: str
+            sample: Normal
         default_host_name:
-            description: Host name of the web app.
+            description:
+                - Host name of the web app.
+            returned: always
             type: str
+            sample: vxxisurg397winapp4.azurewebsites.net
         enabled:
-            description: Indicates the web app enabled or not.
+            description:
+                - Indicates the web app enabled or not.
+            returned: always
             type: bool
+            sample: true
         enabled_host_names:
-            description: Enabled host names of the web app.
+            description:
+                - Enabled host names of the web app.
+            returned: always
             type: list
+            sample: [
+                    "vxxisurg397winapp4.azurewebsites.net",
+                    "vxxisurg397winapp4.scm.azurewebsites.net"
+                    ]
         host_name_ssl_states:
-            description: SSL state per host names of the web app.
+            description:
+                - SSL state per host names of the web app.
+            returned: always
             type: list
+            sample: [
+                    {
+                        "hostType": "Standard",
+                        "name": "vxxisurg397winapp4.azurewebsites.net",
+                        "sslState": "Disabled"
+                    },
+                    {
+                        "hostType": "Repository",
+                        "name": "vxxisurg397winapp4.scm.azurewebsites.net",
+                        "sslState": "Disabled"
+                    }
+                    ]
         host_names:
-            description: Host names of the web app.
+            description:
+                - Host names of the web app.
+            returned: always
             type: list
+            sample: [
+                    "vxxisurg397winapp4.azurewebsites.net"
+                    ]
         outbound_ip_addresses:
-            description: Outbound ip address of the web app.
+            description:
+                - Outbound IP address of the web app.
+            returned: always
             type: str
+            sample: "40.71.11.131,40.85.166.200,168.62.166.67,137.135.126.248,137.135.121.45"
         ftp_publish_url:
-            description: Publishing url of the web app when deployment type is FTP.
+            description:
+                - Publishing URL of the web app when deployment type is FTP.
+            returned: always
             type: str
             sample: ftp://xxxx.ftp.azurewebsites.windows.net
         state:
-            description: State of the web app.  eg. running.
+            description:
+                - State of the web app.
+            returned: always
             type: str
+            sample: running
         publishing_username:
-            description: Publishing profile user name.
-            returned: only when I(return_publish_profile) is True.
+            description:
+                - Publishing profile user name.
+            returned: only when I(return_publish_profile=True).
             type: str
+            sample: "$vxxisuRG397winapp4"
         publishing_password:
-            description: Publishing profile password.
-            returned: only when I(return_publish_profile) is True.
+            description:
+                - Publishing profile password.
+            returned: only when I(return_publish_profile=True).
             type: str
+            sample: "uvANsPQpGjWJmrFfm4Ssd5rpBSqGhjMk11pMSgW2vCsQtNx9tcgZ0xN26s9A"
         tags:
-            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            description:
+               - Tags assigned to the resource. Dictionary of string:string pairs.
+            returned: always
             type: dict
             sample: { tag1: abc }
 '''
