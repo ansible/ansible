@@ -9,11 +9,10 @@ from . import types as t
 from .util import (
     ApplicationError,
     import_plugins,
-    ANSIBLE_ROOT,
     is_subdir,
-    ANSIBLE_IS_INSTALLED,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
+    ANSIBLE_SOURCE_ROOT,
 )
 
 from .provider import (
@@ -65,8 +64,8 @@ class DataContext:
 
         if content_path:
             content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
-        elif is_subdir(current_path, ANSIBLE_ROOT):
-            content = self.__create_content_layout(layout_providers, source_providers, ANSIBLE_ROOT, False)
+        elif ANSIBLE_SOURCE_ROOT and is_subdir(current_path, ANSIBLE_SOURCE_ROOT):
+            content = self.__create_content_layout(layout_providers, source_providers, ANSIBLE_SOURCE_ROOT, False)
         else:
             content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
@@ -95,7 +94,7 @@ class DataContext:
 
     def __create_ansible_source(self):
         """Return a tuple of Ansible source files with both absolute and relative paths."""
-        if ANSIBLE_IS_INSTALLED:
+        if not ANSIBLE_SOURCE_ROOT:
             sources = []
 
             source_provider = InstalledSource(ANSIBLE_LIB_ROOT)
@@ -112,9 +111,9 @@ class DataContext:
             return tuple((os.path.join(self.content.root, path), path) for path in self.content.all_files())
 
         try:
-            source_provider = find_path_provider(SourceProvider, self.__source_providers, ANSIBLE_ROOT, False)
+            source_provider = find_path_provider(SourceProvider, self.__source_providers, ANSIBLE_SOURCE_ROOT, False)
         except ProviderNotFoundForPath:
-            source_provider = UnversionedSource(ANSIBLE_ROOT)
+            source_provider = UnversionedSource(ANSIBLE_SOURCE_ROOT)
 
         return tuple((os.path.join(source_provider.root, path), path) for path in source_provider.get_paths(source_provider.root))
 
@@ -148,8 +147,8 @@ def data_init():  # type: () -> DataContext
             ' - an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/',
         ]
 
-        if not ANSIBLE_IS_INSTALLED:
-            options.insert(0, ' - the Ansible source: %s/' % ANSIBLE_ROOT)
+        if ANSIBLE_SOURCE_ROOT:
+            options.insert(0, ' - the Ansible source: %s/' % ANSIBLE_SOURCE_ROOT)
 
         raise ApplicationError('''The current working directory must be at or below:
 
