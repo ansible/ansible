@@ -12,6 +12,8 @@ from .util import (
     ANSIBLE_ROOT,
     is_subdir,
     ANSIBLE_IS_INSTALLED,
+    ANSIBLE_LIB_ROOT,
+    ANSIBLE_TEST_ROOT,
 )
 
 from .provider import (
@@ -28,9 +30,12 @@ from .provider.source.unversioned import (
     UnversionedSource,
 )
 
+from .provider.source.installed import (
+    InstalledSource,
+)
+
 from .provider.layout import (
     ContentLayout,
-    InstallLayout,
     LayoutProvider,
 )
 
@@ -50,33 +55,29 @@ class DataContext:
         content_path = os.environ.get('ANSIBLE_TEST_CONTENT_ROOT')
         current_path = os.getcwd()
 
-        self.__layout_providers = get_path_provider_classes(LayoutProvider)
-        self.__source_providers = get_path_provider_classes(SourceProvider)
+        layout_providers = get_path_provider_classes(LayoutProvider)
+        source_providers = get_path_provider_classes(SourceProvider)
+
+        self.__source_providers = source_providers
+        self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
+
         self.payload_callbacks = []  # type: t.List[t.Callable[t.List[t.Tuple[str, str]], None]]
 
         if content_path:
-            content = self.create_content_layout(self.__layout_providers, self.__source_providers, content_path, False)
-
-            if content.is_ansible:
-                install = InstallLayout(ANSIBLE_ROOT, content.all_files())
-            else:
-                install = None
+            content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
         elif is_subdir(current_path, ANSIBLE_ROOT):
-            content = self.create_content_layout(self.__layout_providers, self.__source_providers, ANSIBLE_ROOT, False)
-            install = InstallLayout(ANSIBLE_ROOT, content.all_files())
+            content = self.__create_content_layout(layout_providers, source_providers, ANSIBLE_ROOT, False)
         else:
-            content = self.create_content_layout(self.__layout_providers, self.__source_providers, current_path, True)
-            install = None
+            content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
-        self.__install = install  # type: t.Optional[InstallLayout]
         self.content = content  # type: ContentLayout
 
     @staticmethod
-    def create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
-                              source_providers,  # type: t.List[t.Type[SourceProvider]]
-                              root,  # type: str
-                              walk,  # type: bool
-                              ):  # type: (...) -> ContentLayout
+    def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
+                                source_providers,  # type: t.List[t.Type[SourceProvider]]
+                                root,  # type: str
+                                walk,  # type: bool
+                                ):  # type: (...) -> ContentLayout
         """Create a content layout using the given providers and root path."""
         layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
 
@@ -92,25 +93,38 @@ class DataContext:
 
         return layout
 
-    @staticmethod
-    def create_install_layout(source_providers):  # type: (t.List[t.Type[SourceProvider]]) -> InstallLayout
-        """Create an install layout using the given source provider."""
+    def __create_ansible_source(self):
+        """Return a tuple of Ansible source files with both absolute and relative paths."""
+        if ANSIBLE_IS_INSTALLED:
+            sources = []
+
+            source_provider = InstalledSource(ANSIBLE_LIB_ROOT)
+            sources.extend((os.path.join(source_provider.root, path), os.path.join('lib', 'ansible', path))
+                           for path in source_provider.get_paths(source_provider.root))
+
+            source_provider = InstalledSource(ANSIBLE_TEST_ROOT)
+            sources.extend((os.path.join(source_provider.root, path), os.path.join('test', 'lib', 'ansible_test', path))
+                           for path in source_provider.get_paths(source_provider.root))
+
+            return tuple(sources)
+
+        if self.content.is_ansible:
+            return tuple((os.path.join(self.content.root, path), path) for path in self.content.all_files())
+
         try:
-            source_provider = find_path_provider(SourceProvider, source_providers, ANSIBLE_ROOT, False)
+            source_provider = find_path_provider(SourceProvider, self.__source_providers, ANSIBLE_ROOT, False)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(ANSIBLE_ROOT)
 
-        paths = source_provider.get_paths(ANSIBLE_ROOT)
-
-        return InstallLayout(ANSIBLE_ROOT, paths)
+        return tuple((os.path.join(source_provider.root, path), path) for path in source_provider.get_paths(source_provider.root))
 
     @property
-    def install(self):  # type: () -> InstallLayout
-        """Return the install context, loaded on demand."""
-        if not self.__install:
-            self.__install = self.create_install_layout(self.__source_providers)
+    def ansible_source(self):  # type: () -> t.Tuple[t.Tuple[str, str], ...]
+        """Return a tuple of Ansible source files with both absolute and relative paths."""
+        if not self.__ansible_source:
+            self.__ansible_source = self.__create_ansible_source()
 
-        return self.__install
+        return self.__ansible_source
 
     def register_payload_callback(self, callback):  # type: (t.Callable[t.List[t.Tuple[str, str]], None]) -> None
         """Register the given payload callback."""
