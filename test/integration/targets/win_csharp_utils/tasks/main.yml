@@ -1,4 +1,15 @@
 ---
+- name: test Ansible.AccessToken.cs
+  ansible_access_token_tests:
+    test_username: '{{ ansible_user }}'
+    test_password: '{{ ansible_password }}'
+  register: ansible_access_token_test
+
+- name: assert test Ansible.AccessToken.cs
+  assert:
+    that:
+    - ansible_access_token_test.data == "success"
+
 - name: test Ansible.Basic.cs
   ansible_basic_tests:
   register: ansible_basic_test
