@@ -678,7 +678,13 @@ class PluginLoader:
 
             if path not in self._module_cache:
                 try:
-                    module = self._load_module_source(name, path)
+                    if self.subdir in ('filter_plugins', 'test_plugins'):
+                        # filter and test plugin files can contain multiple plugins
+                        # they must have a unique python module name to prevent them from shadowing each other
+                        full_name = '{0}_{1}'.format(abs(hash(path)), basename)
+                    else:
+                        full_name = basename
+                    module = self._load_module_source(full_name, path)
                     self._load_config_defs(basename, module, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
