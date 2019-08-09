@@ -42,7 +42,7 @@
     that:
       - result.changed == true
 - name: verify that disk was created
-  gcp_compute_disk_facts:
+  gcp_compute_disk_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a
@@ -91,7 +91,7 @@
     that:
       - result.changed == true
 - name: verify that disk was deleted
-  gcp_compute_disk_facts:
+  gcp_compute_disk_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a

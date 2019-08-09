@@ -79,7 +79,7 @@
     that:
       - result.changed == true
 - name: verify that target_http_proxy was created
-  gcp_compute_target_http_proxy_facts:
+  gcp_compute_target_http_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -121,7 +121,7 @@
     that:
       - result.changed == true
 - name: verify that target_http_proxy was deleted
-  gcp_compute_target_http_proxy_facts:
+  gcp_compute_target_http_proxy_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"

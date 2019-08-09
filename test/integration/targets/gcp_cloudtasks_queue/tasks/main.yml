@@ -36,7 +36,7 @@
     that:
       - result.changed == true
 - name: verify that queue was created
-  gcp_cloudtasks_queue_facts:
+  gcp_cloudtasks_queue_info:
       location: us-central1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -77,7 +77,7 @@
     that:
       - result.changed == true
 - name: verify that queue was deleted
-  gcp_cloudtasks_queue_facts:
+  gcp_cloudtasks_queue_info:
       location: us-central1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

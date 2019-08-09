@@ -62,7 +62,7 @@
     that:
       - result.changed == true
 - name: verify that forwarding_rule was created
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -113,7 +113,7 @@
     that:
       - result.changed == true
 - name: verify that forwarding_rule was deleted
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1

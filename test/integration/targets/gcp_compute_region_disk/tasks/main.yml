@@ -48,7 +48,7 @@
     that:
       - result.changed == true
 - name: verify that region_disk was created
-  gcp_compute_region_disk_facts:
+  gcp_compute_region_disk_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1
@@ -103,7 +103,7 @@
     that:
       - result.changed == true
 - name: verify that region_disk was deleted
-  gcp_compute_region_disk_facts:
+  gcp_compute_region_disk_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1
