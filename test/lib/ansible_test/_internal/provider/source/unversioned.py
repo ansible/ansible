@@ -56,6 +56,7 @@ class UnversionedSource(SourceProvider):
 
         kill_extensions = (
             '.pyc',
+            '.pyo',
             '.retry',
         )
 

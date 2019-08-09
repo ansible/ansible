@@ -64,10 +64,6 @@ class Layout:
         return item[1] if item else []
 
 
-class InstallLayout(Layout):
-    """Information about the current Ansible install."""
-
-
 class ContentLayout(Layout):
     """Information about the current Ansible content being tested."""
     def __init__(self,
