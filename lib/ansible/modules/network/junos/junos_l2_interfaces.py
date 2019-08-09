@@ -61,6 +61,7 @@ options:
       access:
         description:
         - Configure the interface as a Layer 2 access mode.
+        type: dict
         suboptions:
           vlan:
             description:
@@ -69,6 +70,7 @@ options:
       trunk:
         description:
         - Configure the interface as a Layer 2 trunk mode.
+        type: dict
         suboptions:
           allowed_vlans:
             description:
