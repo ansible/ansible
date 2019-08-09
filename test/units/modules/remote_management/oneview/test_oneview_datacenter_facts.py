@@ -3,7 +3,6 @@
 
 import pytest
 
-from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_datacenter_facts import DatacenterFactsModule
 from hpe_test_utils import FactsParamsTest
 
@@ -14,7 +13,6 @@ PARAMS_GET_CONNECTED = dict(
 )
 
 
-@pytest.mark.resource('datacenters')
 class TestDatacenterFactsModule(FactsParamsTest):
     @pytest.fixture(autouse=True)
     def setUp(self, mock_ansible_module, mock_ov_client):
