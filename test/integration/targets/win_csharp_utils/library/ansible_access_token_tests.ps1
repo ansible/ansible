@@ -342,7 +342,8 @@ $tests = [Ordered]@{
             [Ansible.AccessToken.TokenUtil]::LogonUser("fake-user", $null, "fake-pass", "Network", "Default")
         } catch [Ansible.AccessToken.Win32Exception] {
             $failed = $true
-            $_.Exception.Message | Assert-Equals -Expected "Failed to logon fake-user (The user name or password is incorrect, Win32ErrorCode 1326 - 0x0000052E)"
+            $_.Exception.Message.Contains("Failed to logon fake-user") | Assert-Equals -Expected $true
+            $_.Exception.Message.Contains("Win32ErrorCode 1326 - 0x0000052E)") | Assert-Equals -Expected $true
         }
         $failed | Assert-Equals -Expected $true
     }
@@ -353,7 +354,8 @@ $tests = [Ordered]@{
             [Ansible.AccessToken.TokenUtil]::LogonUser("fake-user", "fake-domain", "fake-pass", "Network", "Default")
         } catch [Ansible.AccessToken.Win32Exception] {
             $failed = $true
-            $_.Exception.Message | Assert-Equals -Expected "Failed to logon fake-domain\fake-user (The user name or password is incorrect, Win32ErrorCode 1326 - 0x0000052E)"
+            $_.Exception.Message.Contains("Failed to logon fake-domain\fake-user") | Assert-Equals -Expected $true
+            $_.Exception.Message.Contains("Win32ErrorCode 1326 - 0x0000052E)") | Assert-Equals -Expected $true
         }
         $failed | Assert-Equals -Expected $true
     }
