@@ -495,9 +495,9 @@ CPU_INFO_TEST_SCENARIOS = [
                 '7', 'POWER7 (architected), altivec supported'
             ],
             'processor_cores': 1,
-            'processor_count': 16,
+            'processor_count': 8,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 16
+            'processor_vcpus': 8
         },
     },
     {
@@ -531,9 +531,9 @@ CPU_INFO_TEST_SCENARIOS = [
                 '23', 'POWER8 (architected), altivec supported',
             ],
             'processor_cores': 1,
-            'processor_count': 48,
+            'processor_count': 24,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 48
+            'processor_vcpus': 24
         },
     },
     {
