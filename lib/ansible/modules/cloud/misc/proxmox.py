@@ -482,7 +482,8 @@ def main():
     try:
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
-        global PVE_VERSION = float(re.sub(r'-\d$', '', proxmox.version.get()['version']))
+        global PVE_VERSION
+        PVE_VERSION = float(re.sub(r'-\d$', '', proxmox.version.get()['version']))
         VZ_TYPE = 'openvz' if PVE_VERSION < 4.0 else 'lxc'
 
     except Exception as e:
