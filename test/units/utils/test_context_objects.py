@@ -2,16 +2,10 @@
 # Copyright: (c) 2018, Toshio Kuratomi <tkuratomi@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-try:
-    import argparse
-except ImportError:
-    argparse = None
-
-import optparse
+import argparse
 
 import pytest
 
@@ -62,7 +56,6 @@ def test_cliargs():
     assert frozenset(co.CLIArgs.from_options(options).items()) == expected
 
 
-@pytest.mark.skipIf(argparse is None)
 def test_cliargs_argparse():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -75,17 +68,3 @@ def test_cliargs_argparse():
     expected = frozenset((('accumulate', sum), ('integers', (1, 2))))
 
     assert frozenset(co.CLIArgs.from_options(args).items()) == expected
-
-
-# Can get rid of this test when we port ansible.cli from optparse to argparse
-def test_cliargs_optparse():
-    parser = optparse.OptionParser(description='Process some integers.')
-    parser.add_option('--sum', dest='accumulate', action='store_const',
-                      const=sum, default=max,
-                      help='sum the integers (default: find the max)')
-    opts, args = parser.parse_args([u'--sum', u'1', u'2'])
-    opts.integers = args
-
-    expected = frozenset((('accumulate', sum), ('integers', (u'1', u'2'))))
-
-    assert frozenset(co.CLIArgs.from_options(opts).items()) == expected
