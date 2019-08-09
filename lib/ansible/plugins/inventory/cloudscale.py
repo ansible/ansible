@@ -62,10 +62,22 @@ options:
 '''
 
 EXAMPLES = r'''
-# cloudscale_inventory.yml file in YAML format
-# Example command line: ansible-inventory --list -i cloudscale_inventory.yml
+# cloudscale.yml file in YAML format
+# Example command line: ansible-inventory --list -i cloudscale.yml
 
 plugin: cloudscale
+
+# Example grouping by tag key "project"
+plugin: cloudscale
+keyed_groups:
+  - prefix: project
+    key: cloudscale.tags.project
+
+# Example grouping by key "operating_system" lowercased and prefixed with "os"
+plugin: cloudscale
+keyed_groups:
+  - prefix: os
+    key: cloudscale.image.operating_system | lower
 '''
 
 from collections import defaultdict
