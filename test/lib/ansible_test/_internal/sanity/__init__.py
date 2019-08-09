@@ -765,6 +765,9 @@ class SanityCodeSmellTest(SanityTest):
             stderr = ex.stderr
             status = ex.status
 
+        if args.explain:
+            return SanitySuccess(self.name)
+
         if stdout and not stderr:
             if pattern:
                 matches = parse_to_list_of_dict(pattern, stdout)
