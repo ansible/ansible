@@ -102,6 +102,10 @@ def command_units(args):
             'test/results/junit/python%s-units.xml' % version,
         ]
 
+        if version != '2.6':
+            # added in pytest 4.5.0, which requires python 2.7+
+            cmd.append('--strict-markers')
+
         plugins = []
 
         if args.coverage:
