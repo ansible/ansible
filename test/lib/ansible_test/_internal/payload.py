@@ -18,7 +18,7 @@ from .config import (
 from .util import (
     display,
     ANSIBLE_ROOT,
-    ANSIBLE_IS_INSTALLED,
+    ANSIBLE_SOURCE_ROOT,
     remove_tree,
     is_subdir,
 )
@@ -59,7 +59,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
     files = list(data_context().ansible_source)
 
-    if ANSIBLE_IS_INSTALLED:
+    if not ANSIBLE_SOURCE_ROOT:
         # reconstruct the bin directory which is not available when running from an ansible install
         files.extend(create_temporary_bin_files(args))
 
