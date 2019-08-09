@@ -281,9 +281,15 @@ def _peer_query(v, vtype):
     if vtype == 'address':
         raise errors.AnsibleFilterError("Not a network address")
     elif vtype == 'network':
-        if v.size != 2:
-            raise errors.AnsibleFilterError("Not a point-to-point network")
-        return str(netaddr.IPAddress(int(v.ip) ^ 1))
+        if v.size == 2:
+            return str(netaddr.IPAddress(int(v.ip) ^ 1))
+        if v.size == 4:
+            if int(v.ip) % 4 == 0:
+                raise errors.AnsibleFilterError("Network address of /30 has no peer")
+            if int(v.ip) % 4 == 3:
+                raise errors.AnsibleFilterError("Broadcast address of /30 has no peer")
+            return str(netaddr.IPAddress(int(v.ip) ^ 3))
+        raise errors.AnsibleFilterError("Not a point-to-point network")
 
 
 def _prefix_query(v):

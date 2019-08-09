@@ -438,6 +438,8 @@ To find the peer IP address for a point to point link, use ``peer``::
 
     # {{ '192.168.122.1/31' | ipaddr('peer') }}
     192.168.122.0
+    # {{ '192.168.122.1/30' | ipaddr('peer') }}
+    192.168.122.2
 
 
 IP Math
