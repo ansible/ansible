@@ -36,7 +36,7 @@ except ImportError:
     pass
 
 
-class ACMFactsServiceManager(object):
+class ACMServiceManager(object):
     """Handles ACM Facts Services"""
 
     def __init__(self, module):
@@ -47,7 +47,18 @@ class ACMFactsServiceManager(object):
                                  resource='acm', region=region,
                                  endpoint=ec2_url, **aws_connect_kwargs)
 
-
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    def delete_certificate_with_backoff(self, client, arn):
+        client.delete_certificate(CertificateArn=arn)
+        
+    def delete_certificate(self,client,module,arn):
+        module.debug("Attempting to delete certificate %s" % arn)
+        try:
+            self.delete_certificate_with_backoff(client,arn)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e,msg="Couldn't delete certificate %s" % arn)
+        module.debug("Successfully deleted certificate %s" % arn)
+        
     @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def list_certificates_with_backoff(self, client, statuses=None):
         paginator = client.get_paginator('list_certificates')
@@ -74,42 +85,56 @@ class ACMFactsServiceManager(object):
     def list_certificate_tags_with_backoff(self, client, certificate_arn):
         return client.list_tags_for_certificate(CertificateArn=certificate_arn)['Tags']
     
-    
-    def get_certificates(self, client, module, domain_name=None, statuses=None):
+    # Returns a list of certificates
+    # if domain_name is specified, returns only certificates with that domain
+    # if an ARN is specified, returns only that certificate
+    # only_tags is a dict, e.g. {'key':'value'}. If specified this function will return
+    # only certificates which contain all those tags (key exists, value matches).
+    def get_certificates(self, client, module, domain_name=None, statuses=None, arn=None,only_tags=None):
         try:
             all_certificates = self.list_certificates_with_backoff(client, statuses)
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Couldn't obtain certificates",
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e,msg="Couldn't obtain certificates")
         if domain_name:
             certificates = [cert for cert in all_certificates
                             if cert['DomainName'] == domain_name]
         else:
             certificates = all_certificates
     
+        if arn:
+            # still return a list, not just one item
+            certificates = [c for c in certificates if c['CertificateArn'] == arn]    
+    
+        
+    
         results = []
         for certificate in certificates:
             try:
                 cert_data = self.describe_certificate_with_backoff(client, certificate['CertificateArn'])
             except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'],
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
+                module.fail_json_aws(e,msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'])
             try:
                 cert_data.update(self.get_certificate_with_backoff(client, certificate['CertificateArn']))
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] != "RequestInProgressException":
-                    module.fail_json(msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'],
-                                     exception=traceback.format_exc(),
-                                     **camel_dict_to_snake_dict(e.response))
+                    module.fail_json_aws(e,msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
             cert_data = camel_dict_to_snake_dict(cert_data)
             try:
                 tags = self.list_certificate_tags_with_backoff(client, certificate['CertificateArn'])
             except botocore.exceptions.ClientError as e:
-                module.fail_json(msg="Couldn't obtain tags for domain %s" % certificate['DomainName'],
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
+                module.fail_json_aws(e,msg="Couldn't obtain tags for domain %s" % certificate['DomainName'])
+                
             cert_data['tags'] = boto3_tag_list_to_ansible_dict(tags)
             results.append(cert_data)
+            
+        if only_tags:
+            for tag_key in only_tags:
+                try:
+                    results = [c for c in results if ('tags' in c) and (tag_key in c['tags']) and (c['tags'][tag_key] == only_tags[tag_key])]
+                except (TypeError, AttributeError) as e:
+                    for c in results:
+                        if 'tags' not in c:
+                            module.debug("cert is %s" % str(c))
+                    module.fail_json(msg="ACM tag filtering err",exception=e)
+            
         return results
