@@ -3,13 +3,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
+using Ansible.AccessToken;
 using Ansible.Process;
-using System.Linq;
 
 namespace Ansible.Become
 {
@@ -60,29 +61,10 @@ namespace Ansible.Become
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct LUID
-        {
-            public UInt32 LowPart;
-            public Int32 HighPart;
-
-            public static explicit operator UInt64(LUID l)
-            {
-                return (UInt64)((UInt64)l.HighPart << 32) | (UInt64)l.LowPart;
-            }
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct LUID_AND_ATTRIBUTES
-        {
-            public LUID Luid;
-            public UInt32 Attributes;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
         public struct SECURITY_LOGON_SESSION_DATA
         {
             public UInt32 Size;
-            public LUID LogonId;
+            public Luid LogonId;
             public LSA_UNICODE_STRING UserName;
             public LSA_UNICODE_STRING LogonDomain;
             public LSA_UNICODE_STRING AuthenticationPackage;
@@ -90,54 +72,10 @@ namespace Ansible.Become
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct SID_AND_ATTRIBUTES
-        {
-            public IntPtr Sid;
-            public int Attributes;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct TOKEN_PRIVILEGES
-        {
-            public UInt32 PrivilegeCount;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public LUID_AND_ATTRIBUTES[] Privileges;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
         public struct TOKEN_SOURCE
         {
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)] public char[] SourceName;
-            public LUID SourceIdentifier;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct TOKEN_STATISTICS
-        {
-            public LUID TokenId;
-            public LUID AuthenticationId;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct TOKEN_USER
-        {
-            public SID_AND_ATTRIBUTES User;
-        }
-
-        public enum LogonProvider
-        {
-            LOGON32_PROVIDER_DEFAULT = 0,
-        }
-
-        [Flags]
-        public enum ProcessAccessFlags : uint
-        {
-            PROCESS_QUERY_INFORMATION = 0x00000400,
-        }
-
-        public enum SECURITY_IMPERSONATION_LEVEL
-        {
-            SecurityImpersonation,
+            public Luid SourceIdentifier;
         }
 
         public enum SECURITY_LOGON_TYPE
@@ -156,39 +94,13 @@ namespace Ansible.Become
             CachedRemoteInteractive,
             CachedUnlock
         }
-
-        public enum TOKEN_TYPE
-        {
-            TokenPrimary = 1,
-            TokenImpersonation
-        }
-
-        public enum TokenElevationType
-        {
-            TokenElevationTypeDefault = 1,
-            TokenElevationTypeFull,
-            TokenElevationTypeLimited
-        }
-
-        public enum TokenInformationClass
-        {
-            TokenUser = 1,
-            TokenPrivileges = 3,
-            TokenStatistics = 10,
-            TokenElevationType = 18,
-            TokenLinkedToken = 19,
-        }
     }
 
     internal class NativeMethods
     {
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool AllocateLocallyUniqueId(
-            out NativeHelpers.LUID Luid);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(
-            IntPtr hObject);
+            out Luid Luid);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessWithTokenW(
@@ -197,19 +109,10 @@ namespace Ansible.Become
             [MarshalAs(UnmanagedType.LPWStr)] string lpApplicationName,
             StringBuilder lpCommandLine,
             Process.NativeHelpers.ProcessCreationFlags dwCreationFlags,
-            SafeMemoryBuffer lpEnvironment,
+            Process.SafeMemoryBuffer lpEnvironment,
             [MarshalAs(UnmanagedType.LPWStr)] string lpCurrentDirectory,
             Process.NativeHelpers.STARTUPINFOEX lpStartupInfo,
             out Process.NativeHelpers.PROCESS_INFORMATION lpProcessInformation);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool DuplicateTokenEx(
-            SafeNativeHandle hExistingToken,
-            TokenAccessLevels dwDesiredAccess,
-            IntPtr lpTokenAttributes,
-            NativeHelpers.SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-            NativeHelpers.TOKEN_TYPE TokenType,
-            out SafeNativeHandle phNewToken);
 
         [DllImport("kernel32.dll")]
         public static extern UInt32 GetCurrentThreadId();
@@ -221,42 +124,9 @@ namespace Ansible.Become
         public static extern NoopSafeHandle GetThreadDesktop(
             UInt32 dwThreadId);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool GetTokenInformation(
-            SafeNativeHandle TokenHandle,
-            NativeHelpers.TokenInformationClass TokenInformationClass,
-            SafeMemoryBuffer TokenInformation,
-            UInt32 TokenInformationLength,
-            out UInt32 ReturnLength);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool ImpersonateLoggedOnUser(
-            SafeNativeHandle hToken);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool LogonUserW(
-            string lpszUsername,
-            string lpszDomain,
-            string lpszPassword,
-            LogonType dwLogonType,
-            NativeHelpers.LogonProvider dwLogonProvider,
-            out SafeNativeHandle phToken);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool LookupPrivilegeNameW(
-            string lpSystemName,
-            ref NativeHelpers.LUID lpLuid,
-            StringBuilder lpName,
-            ref UInt32 cchName);
-
         [DllImport("secur32.dll", SetLastError = true)]
         public static extern UInt32 LsaDeregisterLogonProcess(
             IntPtr LsaHandle);
-
-        [DllImport("secur32.dll", SetLastError = true)]
-        public static extern UInt32 LsaEnumerateLogonSessions(
-            out UInt32 LogonSessionCount,
-            out SafeLsaMemoryBuffer LogonSessionList);
 
         [DllImport("secur32.dll", SetLastError = true)]
         public static extern UInt32 LsaFreeReturnBuffer(
@@ -264,7 +134,7 @@ namespace Ansible.Become
 
         [DllImport("secur32.dll", SetLastError = true)]
         public static extern UInt32 LsaGetLogonSessionData(
-            IntPtr LogonId,
+            ref Luid LogonId,
             out SafeLsaMemoryBuffer ppLogonSessionData);
 
         [DllImport("secur32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -279,7 +149,7 @@ namespace Ansible.Become
             NativeHelpers.TOKEN_SOURCE SourceContext,
             out SafeLsaMemoryBuffer ProfileBuffer,
             out UInt32 ProfileBufferLength,
-            out NativeHelpers.LUID LogonId,
+            out Luid LogonId,
             out SafeNativeHandle Token,
             out IntPtr Quotas,
             out UInt32 SubStatus);
@@ -299,21 +169,6 @@ namespace Ansible.Become
             NativeHelpers.LSA_STRING LogonProcessName,
             out SafeLsaHandle LsaHandle,
             out IntPtr SecurityMode);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern SafeNativeHandle OpenProcess(
-            NativeHelpers.ProcessAccessFlags dwDesiredAccess,
-            bool bInheritHandle,
-            UInt32 dwProcessId);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool OpenProcessToken(
-            SafeNativeHandle ProcessHandle,
-            TokenAccessLevels DesiredAccess,
-            out SafeNativeHandle TokenHandle);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool RevertToSelf();
     }
 
     internal class SafeLsaHandle : SafeHandleZeroOrMinusOneIsInvalid
@@ -340,18 +195,6 @@ namespace Ansible.Become
         }
     }
 
-    internal class SafeNativeHandle : SafeHandleZeroOrMinusOneIsInvalid
-    {
-        public SafeNativeHandle() : base(true) { }
-        public SafeNativeHandle(IntPtr handle) : base(true) { this.handle = handle; }
-
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
-        protected override bool ReleaseHandle()
-        {
-            return NativeMethods.CloseHandle(handle);
-        }
-    }
-
     internal class NoopSafeHandle : SafeHandle
     {
         public NoopSafeHandle() : base(IntPtr.Zero, false) { }
@@ -364,19 +207,8 @@ namespace Ansible.Become
     [Flags]
     public enum LogonFlags
     {
-        LOGON_WITH_PROFILE = 0x00000001,
-        LOGON_NETCREDENTIALS_ONLY = 0x00000002
-    }
-
-    public enum LogonType
-    {
-        LOGON32_LOGON_INTERACTIVE = 2,
-        LOGON32_LOGON_NETWORK = 3,
-        LOGON32_LOGON_BATCH = 4,
-        LOGON32_LOGON_SERVICE = 5,
-        LOGON32_LOGON_UNLOCK = 7,
-        LOGON32_LOGON_NETWORK_CLEARTEXT = 8,
-        LOGON32_LOGON_NEW_CREDENTIALS = 9
+        WithProfile = 0x00000001,
+        NetcredentialsOnly = 0x00000002
     }
 
     public class BecomeUtil
@@ -392,7 +224,7 @@ namespace Ansible.Become
 
         public static Result CreateProcessAsUser(string username, string password, string command)
         {
-            return CreateProcessAsUser(username, password, LogonFlags.LOGON_WITH_PROFILE, LogonType.LOGON32_LOGON_INTERACTIVE,
+            return CreateProcessAsUser(username, password, LogonFlags.WithProfile, LogonType.Interactive,
                  null, command, null, null, "");
         }
 
@@ -450,38 +282,25 @@ namespace Ansible.Become
             if (lpCurrentDirectory == "")
                 lpCurrentDirectory = null;
 
-            using (SafeMemoryBuffer lpEnvironment = ProcessUtil.CreateEnvironmentPointer(environment))
+            using (Process.SafeMemoryBuffer lpEnvironment = ProcessUtil.CreateEnvironmentPointer(environment))
+            using (SafeNativeHandle hToken = GetUserToken(username, password, logonType))
             {
-                // A user may have 2 tokens, 1 limited and 1 elevated. GetUserToken will try and get both but we will
-                // only find out if the elevated token is valid when running here.
-                List<SafeNativeHandle> userTokens = GetUserTokens(username, password, logonType);
-
-                bool launchSuccess = false;
                 StringBuilder commandLine = new StringBuilder(lpCommandLine);
-                foreach (SafeNativeHandle token in userTokens)
+                if (!NativeMethods.CreateProcessWithTokenW(hToken, logonFlags, lpApplicationName, commandLine,
+                    creationFlags, lpEnvironment, lpCurrentDirectory, si, out pi))
                 {
-                    if (NativeMethods.CreateProcessWithTokenW(token, logonFlags, lpApplicationName, commandLine,
-                        creationFlags, lpEnvironment, lpCurrentDirectory, si, out pi))
-                    {
-                        launchSuccess = true;
-                        break;
-                    }
+                    throw new Process.Win32Exception("CreateProcessWithTokenW() failed");
                 }
-
-                if (!launchSuccess)
-                    throw new Win32Exception("CreateProcessWithTokenW() failed");
             }
             return ProcessUtil.WaitProcess(stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinStream, stdin, pi.hProcess);
         }
 
-        private static List<SafeNativeHandle> GetUserTokens(string username, string password, LogonType logonType)
+        private static SafeNativeHandle GetUserToken(string username, string password, LogonType logonType)
         {
-            List<SafeNativeHandle> userTokens = new List<SafeNativeHandle>();
-
             SafeNativeHandle systemToken = null;
             bool impersonated = false;
             string becomeSid = username;
-            if (logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+            if (logonType != LogonType.NewCredentials)
             {
                 // If prefixed with .\, we are becoming a local account, strip the prefix
                 if (username.StartsWith(".\\"))
@@ -497,7 +316,14 @@ namespace Ansible.Become
                 // account or have administrative rights on the become access token.
                 systemToken = GetPrimaryTokenForUser(new SecurityIdentifier("S-1-5-18"), new List<string>() { "SeTcbPrivilege" });
                 if (systemToken != null)
-                    impersonated = NativeMethods.ImpersonateLoggedOnUser(systemToken);
+                {
+                    try
+                    {
+                        TokenUtil.ImpersonateToken(systemToken);
+                        impersonated = true;
+                    }
+                    catch (Process.Win32Exception) {}  // We tried, just rely on current user's permissions.
+                }
             }
 
             // We require impersonation if becoming a service sid or becoming a user without a password
@@ -507,25 +333,19 @@ namespace Ansible.Become
             try
             {
                 if (becomeSid == "S-1-5-18")
-                    userTokens.Add(systemToken);
+                    return systemToken;
                 // Cannot use String.IsEmptyOrNull() as an empty string is an account that doesn't have a pass.
                 // We only use S4U if no password was defined or it was null
-                else if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+                else if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
                 {
                     // If no password was specified, try and duplicate an existing token for that user or use S4U to
                     // generate one without network credentials
                     SecurityIdentifier sid = new SecurityIdentifier(becomeSid);
                     SafeNativeHandle becomeToken = GetPrimaryTokenForUser(sid);
                     if (becomeToken != null)
-                    {
-                        userTokens.Add(GetElevatedToken(becomeToken));
-                        userTokens.Add(becomeToken);
-                    }
+                        return GetElevatedToken(becomeToken);
                     else
-                    {
-                        becomeToken = GetS4UTokenForUser(sid, logonType);
-                        userTokens.Add(becomeToken);
-                    }
+                        return GetS4UTokenForUser(sid, logonType);
                 }
                 else
                 {
@@ -533,12 +353,12 @@ namespace Ansible.Become
                     switch (becomeSid)
                     {
                         case "S-1-5-19":
-                            logonType = LogonType.LOGON32_LOGON_SERVICE;
+                            logonType = LogonType.Service;
                             domain = "NT AUTHORITY";
                             username = "LocalService";
                             break;
                         case "S-1-5-20":
-                            logonType = LogonType.LOGON32_LOGON_SERVICE;
+                            logonType = LogonType.Service;
                             domain = "NT AUTHORITY";
                             username = "NetworkService";
                             break;
@@ -555,31 +375,25 @@ namespace Ansible.Become
                             break;
                     }
 
-                    SafeNativeHandle hToken;
-                    if (!NativeMethods.LogonUserW(username, domain, password, logonType,
-                        NativeHelpers.LogonProvider.LOGON32_PROVIDER_DEFAULT, out hToken))
-                    {
-                        throw new Win32Exception("LogonUserW() failed");
-                    }
+                    SafeNativeHandle hToken = TokenUtil.LogonUser(username, domain, password, logonType,
+                        LogonProvider.Default);
 
                     // Get the elevated token for a local/domain accounts only
                     if (!SERVICE_SIDS.Contains(becomeSid))
-                        userTokens.Add(GetElevatedToken(hToken));
-                    userTokens.Add(hToken);
+                        return GetElevatedToken(hToken);
+                    else
+                        return hToken;
                 }
             }
             finally
             {
                 if (impersonated)
-                    NativeMethods.RevertToSelf();
+                    TokenUtil.RevertToSelf();
             }
-
-            return userTokens;
         }
 
         private static SafeNativeHandle GetPrimaryTokenForUser(SecurityIdentifier sid, List<string> requiredPrivileges = null)
         {
-            NativeHelpers.ProcessAccessFlags accessFlags = NativeHelpers.ProcessAccessFlags.PROCESS_QUERY_INFORMATION;
             // According to CreateProcessWithTokenW we require a token with
             //  TOKEN_QUERY, TOKEN_DUPLICATE and TOKEN_ASSIGN_PRIMARY
             // Also add in TOKEN_IMPERSONATE so we can get an impersonated token
@@ -588,51 +402,32 @@ namespace Ansible.Become
                 TokenAccessLevels.AssignPrimary |
                 TokenAccessLevels.Impersonate;
 
-            foreach (System.Diagnostics.Process process in System.Diagnostics.Process.GetProcesses())
+            foreach (SafeNativeHandle hToken in TokenUtil.EnumerateUserTokens(sid, dwAccess))
             {
-                using (process)
+                // Filter out any Network logon tokens, using become with that is useless when S4U
+                // can give us a Batch logon
+                NativeHelpers.SECURITY_LOGON_TYPE tokenLogonType = GetTokenLogonType(hToken);
+                if (tokenLogonType == NativeHelpers.SECURITY_LOGON_TYPE.Network)
+                    continue;
+
+                // Check that the required privileges are on the token
+                if (requiredPrivileges != null)
                 {
-                    using (SafeNativeHandle hProcess = NativeMethods.OpenProcess(accessFlags, false, (UInt32)process.Id))
-                    {
-                        if (hProcess.IsInvalid)
-                            continue;
+                    List<string> actualPrivileges = TokenUtil.GetTokenPrivileges(hToken).Select(x => x.Name).ToList();
+                    int missing = requiredPrivileges.Where(x => !actualPrivileges.Contains(x)).Count();
+                    if (missing > 0)
+                        continue;
+                }
 
-                        SafeNativeHandle hToken;
-                        NativeMethods.OpenProcessToken(hProcess, dwAccess, out hToken);
-                        if (hToken.IsInvalid)
-                            continue;
-
-                        using (hToken)
-                        {
-                            if (!sid.Equals(GetTokenUserSID(hToken)))
-                                continue;
-
-                            // Filter out any Network logon tokens, using become with that is useless when S4U
-                            // can give us a Batch logon
-                            NativeHelpers.SECURITY_LOGON_TYPE tokenLogonType = GetTokenLogonType(hToken);
-                            if (tokenLogonType == NativeHelpers.SECURITY_LOGON_TYPE.Network)
-                                continue;
-
-                            // Check that the required privileges are on the token
-                            if (requiredPrivileges != null)
-                            {
-                                List<string> actualPrivileges = GetTokenPrivileges(hToken);
-                                int missing = requiredPrivileges.Where(x => !actualPrivileges.Contains(x)).Count();
-                                if (missing > 0)
-                                    continue;
-                            }
-
-                            SafeNativeHandle dupToken;
-                            if (!NativeMethods.DuplicateTokenEx(hToken, TokenAccessLevels.MaximumAllowed,
-                                IntPtr.Zero, NativeHelpers.SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                                NativeHelpers.TOKEN_TYPE.TokenPrimary, out dupToken))
-                            {
-                                continue;
-                            }
-
-                            return dupToken;
-                        }
-                    }
+                // Duplicate the token to convert it to a primary token with the access level required.
+                try
+                {
+                    return TokenUtil.DuplicateToken(hToken, TokenAccessLevels.MaximumAllowed, SecurityImpersonationLevel.Anonymous,
+                        TokenType.Primary);
+                }
+                catch (Process.Win32Exception)
+                {
+                    continue;
                 }
             }
 
@@ -652,7 +447,7 @@ namespace Ansible.Become
             IntPtr securityMode;
             UInt32 res = NativeMethods.LsaRegisterLogonProcess(logonProcessName, out lsaHandle, out securityMode);
             if (res != 0)
-                throw new Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res), "LsaRegisterLogonProcess() failed");
+                throw new Process.Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res), "LsaRegisterLogonProcess() failed");
 
             using (lsaHandle)
             {
@@ -660,7 +455,7 @@ namespace Ansible.Become
                 UInt32 authPackage;
                 res = NativeMethods.LsaLookupAuthenticationPackage(lsaHandle, packageName, out authPackage);
                 if (res != 0)
-                    throw new Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res),
+                    throw new Process.Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res),
                         String.Format("LsaLookupAuthenticationPackage({0}) failed", (string)packageName));
 
                 int usernameLength = username.Length * sizeof(char);
@@ -694,9 +489,9 @@ namespace Ansible.Become
                     Marshal.Copy(username.ToCharArray(), 0, usernamePtr, username.Length);
                     Marshal.Copy(domainName.ToCharArray(), 0, domainPtr, domainName.Length);
 
-                    NativeHelpers.LUID sourceLuid;
+                    Luid sourceLuid;
                     if (!NativeMethods.AllocateLocallyUniqueId(out sourceLuid))
-                        throw new Win32Exception("AllocateLocallyUniqueId() failed");
+                        throw new Process.Win32Exception("AllocateLocallyUniqueId() failed");
 
                     NativeHelpers.TOKEN_SOURCE tokenSource = new NativeHelpers.TOKEN_SOURCE
                     {
@@ -705,12 +500,12 @@ namespace Ansible.Become
                     };
 
                     // Only Batch or Network will work with S4U, prefer Batch but use Network if asked
-                    LogonType lsaLogonType = logonType == LogonType.LOGON32_LOGON_NETWORK
-                        ? LogonType.LOGON32_LOGON_NETWORK
-                        : LogonType.LOGON32_LOGON_BATCH;
+                    LogonType lsaLogonType = logonType == LogonType.Network
+                        ? LogonType.Network
+                        : LogonType.Batch;
                     SafeLsaMemoryBuffer profileBuffer;
                     UInt32 profileBufferLength;
-                    NativeHelpers.LUID logonId;
+                    Luid logonId;
                     SafeNativeHandle hToken;
                     IntPtr quotas;
                     UInt32 subStatus;
@@ -719,7 +514,7 @@ namespace Ansible.Become
                         authInfo, (UInt32)authInfoLength, IntPtr.Zero, tokenSource, out profileBuffer, out profileBufferLength,
                         out logonId, out hToken, out quotas, out subStatus);
                     if (res != 0)
-                        throw new Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res),
+                        throw new Process.Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res),
                             String.Format("LsaLogonUser() failed with substatus {0}", subStatus));
 
                     profileBuffer.Dispose();
@@ -734,121 +529,38 @@ namespace Ansible.Become
 
         private static SafeNativeHandle GetElevatedToken(SafeNativeHandle hToken)
         {
-            // First determine if the current token is a limited token
-            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenElevationType))
-            {
-                NativeHelpers.TokenElevationType tet = (NativeHelpers.TokenElevationType)Marshal.ReadInt32(tokenInfo.DangerousGetHandle());
-                // We already have the best token we can get, just use it
-                if (tet != NativeHelpers.TokenElevationType.TokenElevationTypeLimited)
-                    return hToken;
-            }
+            TokenElevationType tet = TokenUtil.GetTokenElevationType(hToken);
+            // We already have the best token we can get, just use it
+            if (tet != TokenElevationType.Limited)
+                return hToken;
 
-            // We have a limited token, get the linked elevated token
-            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenLinkedToken))
-                return new SafeNativeHandle(Marshal.ReadIntPtr(tokenInfo.DangerousGetHandle()));
-        }
+            SafeNativeHandle linkedToken = TokenUtil.GetTokenLinkedToken(hToken);
+            TokenStatistics tokenStats = TokenUtil.GetTokenStatistics(linkedToken);
 
-        private static List<string> GetTokenPrivileges(SafeNativeHandle hToken)
-        {
-            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenPrivileges))
-            {
-                NativeHelpers.TOKEN_PRIVILEGES tokenPrivileges = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(
-                    tokenInfo.DangerousGetHandle(), typeof(NativeHelpers.TOKEN_PRIVILEGES));
-
-                NativeHelpers.LUID_AND_ATTRIBUTES[] luidAndAttributes = new NativeHelpers.LUID_AND_ATTRIBUTES[tokenPrivileges.PrivilegeCount];
-                PtrToStructureArray(luidAndAttributes, IntPtr.Add(tokenInfo.DangerousGetHandle(), Marshal.SizeOf(tokenPrivileges.PrivilegeCount)));
-
-                return luidAndAttributes.Select(x => GetPrivilegeName(x.Luid)).ToList();
-            }
-        }
-
-        private static SecurityIdentifier GetTokenUserSID(SafeNativeHandle hToken)
-        {
-            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenUser))
-            {
-                NativeHelpers.TOKEN_USER tokenUser = (NativeHelpers.TOKEN_USER)Marshal.PtrToStructure(tokenInfo.DangerousGetHandle(),
-                    typeof(NativeHelpers.TOKEN_USER));
-                return new SecurityIdentifier(tokenUser.User.Sid);
-            }
+            // We can only use a token if it's a primary one (we had the SeTcbPrivilege set)
+            if (tokenStats.TokenType == TokenType.Primary)
+                return linkedToken;
+            else
+                return hToken;
         }
 
         private static NativeHelpers.SECURITY_LOGON_TYPE GetTokenLogonType(SafeNativeHandle hToken)
         {
-            UInt64 tokenLuidId;
-            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenStatistics))
-            {
-                NativeHelpers.TOKEN_STATISTICS stats = (NativeHelpers.TOKEN_STATISTICS)Marshal.PtrToStructure(
-                    tokenInfo.DangerousGetHandle(), typeof(NativeHelpers.TOKEN_STATISTICS));
-                tokenLuidId = (UInt64)stats.AuthenticationId;
-            }
+            TokenStatistics stats = TokenUtil.GetTokenStatistics(hToken);
 
-            // Default to Network, if we weren't able to get the actual type treat it as an error and assume
-            // we don't want to run a process with the token
-            NativeHelpers.SECURITY_LOGON_TYPE logonType = NativeHelpers.SECURITY_LOGON_TYPE.Network;
-            UInt32 sessionCount;
-            SafeLsaMemoryBuffer sessionPtr;
-            UInt32 res = NativeMethods.LsaEnumerateLogonSessions(out sessionCount, out sessionPtr);
+            SafeLsaMemoryBuffer sessionDataPtr;
+            UInt32 res = NativeMethods.LsaGetLogonSessionData(ref stats.AuthenticationId, out sessionDataPtr);
             if (res != 0)
-                throw new Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res), "LsaEnumerateLogonSession() failed");
-            using (sessionPtr)
+                // Default to Network, if we weren't able to get the actual type treat it as an error and assume
+                // we don't want to run a process with the token
+                return NativeHelpers.SECURITY_LOGON_TYPE.Network;
+
+            using (sessionDataPtr)
             {
-                for (IntPtr p = sessionPtr.DangerousGetHandle();
-                    p != IntPtr.Add(sessionPtr.DangerousGetHandle(), (int)(Marshal.SizeOf(typeof(NativeHelpers.LUID)) * sessionCount));
-                    p = IntPtr.Add(p, Marshal.SizeOf(typeof(NativeHelpers.LUID))))
-                {
-                    SafeLsaMemoryBuffer sessionDataPtr;
-                    res = NativeMethods.LsaGetLogonSessionData(p, out sessionDataPtr);
-                    if (res != 0)
-                        continue;
-
-                    using (sessionDataPtr)
-                    {
-                        NativeHelpers.SECURITY_LOGON_SESSION_DATA sessionData = (NativeHelpers.SECURITY_LOGON_SESSION_DATA)Marshal.PtrToStructure(
-                            sessionDataPtr.DangerousGetHandle(), typeof(NativeHelpers.SECURITY_LOGON_SESSION_DATA));
-                        UInt64 sessionId = (UInt64)sessionData.LogonId;
-                        if (sessionId == tokenLuidId)
-                        {
-                            logonType = sessionData.LogonType;
-                            break;
-                        }
-                    }
-                }
+                NativeHelpers.SECURITY_LOGON_SESSION_DATA sessionData = (NativeHelpers.SECURITY_LOGON_SESSION_DATA)Marshal.PtrToStructure(
+                    sessionDataPtr.DangerousGetHandle(), typeof(NativeHelpers.SECURITY_LOGON_SESSION_DATA));
+                return sessionData.LogonType;
             }
-
-            return logonType;
-        }
-
-        private static SafeMemoryBuffer GetTokenInformation(SafeNativeHandle hToken, NativeHelpers.TokenInformationClass tokenClass)
-        {
-            UInt32 tokenLength;
-            bool res = NativeMethods.GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength);
-            if (!res && tokenLength == 0)  // res will be false due to insufficient buffer size, we ignore if we got the buffer length
-                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed to get buffer length", tokenClass.ToString()));
-
-            SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength);
-            if (!NativeMethods.GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
-                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed", tokenClass.ToString()));
-
-            return tokenInfo;
-        }
-
-        private static string GetPrivilegeName(NativeHelpers.LUID luid)
-        {
-            UInt32 nameLen = 0;
-            NativeMethods.LookupPrivilegeNameW(null, ref luid, null, ref nameLen);
-
-            StringBuilder name = new StringBuilder((int)(nameLen + 1));
-            if (!NativeMethods.LookupPrivilegeNameW(null, ref luid, name, ref nameLen))
-                throw new Win32Exception("LookupPrivilegeNameW() failed");
-
-            return name.ToString();
-        }
-
-        private static void PtrToStructureArray<T>(T[] array, IntPtr ptr)
-        {
-            IntPtr ptrOffset = ptr;
-            for (int i = 0; i < array.Length; i++, ptrOffset = IntPtr.Add(ptrOffset, Marshal.SizeOf(typeof(T))))
-                array[i] = (T)Marshal.PtrToStructure(ptrOffset, typeof(T));
         }
 
         private static void GrantAccessToWindowStationAndDesktop(IdentityReference account)

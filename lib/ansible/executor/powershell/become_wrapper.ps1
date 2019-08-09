@@ -6,26 +6,29 @@ param(
 )
 
 #Requires -Module Ansible.ModuleUtils.AddType
+#AnsibleRequires -CSharpUtil Ansible.AccessToken
 #AnsibleRequires -CSharpUtil Ansible.Become
 
 $ErrorActionPreference = "Stop"
 
 Write-AnsibleLog "INFO - starting become_wrapper" "become_wrapper"
 
-Function Get-EnumValue($enum, $flag_type, $value, $prefix) {
-    $raw_enum_value = "$prefix$($value.ToUpper())"
+Function Get-EnumValue($enum, $flag_type, $value) {
+    $raw_enum_value = $value.Replace('_', '')
     try {
-        $enum_value = [Enum]::Parse($enum, $raw_enum_value)
+        $enum_value = [Enum]::Parse($enum, $raw_enum_value, $true)
     } catch [System.ArgumentException] {
-        $valid_options = [Enum]::GetNames($enum) | ForEach-Object { $_.Substring($prefix.Length).ToLower() }
+        $valid_options = [Enum]::GetNames($enum) | ForEach-Object -Process {
+            (($_ -creplace "(.)([A-Z][a-z]+)", '$1_$2') -creplace "([a-z0-9])([A-Z])", '$1_$2').ToString().ToLower()
+        }
         throw "become_flags $flag_type value '$value' is not valid, valid values are: $($valid_options -join ", ")"
     }
     return $enum_value
 }
 
 Function Get-BecomeFlags($flags) {
-    $logon_type = [Ansible.Become.LogonType]::LOGON32_LOGON_INTERACTIVE
-    $logon_flags = [Ansible.Become.LogonFlags]::LOGON_WITH_PROFILE
+    $logon_type = [Ansible.AccessToken.LogonType]::Interactive
+    $logon_flags = [Ansible.Become.LogonFlags]::WithProfile
 
     if ($null -eq $flags -or $flags -eq "") {
         $flag_split = @()
@@ -44,10 +47,9 @@ Function Get-BecomeFlags($flags) {
         $flag_value = $split[1]
         if ($flag_key -eq "logon_type") {
             $enum_details = @{
-                enum = [Ansible.Become.LogonType]
+                enum = [Ansible.AccessToken.LogonType]
                 flag_type = $flag_key
                 value = $flag_value
-                prefix = "LOGON32_LOGON_"
             }
             $logon_type = Get-EnumValue @enum_details
         } elseif ($flag_key -eq "logon_flags") {
@@ -61,7 +63,6 @@ Function Get-BecomeFlags($flags) {
                     enum = [Ansible.Become.LogonFlags]
                     flag_type = $flag_key
                     value = $logon_flag_value
-                    prefix = "LOGON_"
                 }
                 $logon_flag = Get-EnumValue @enum_details
                 $logon_flags = $logon_flags -bor $logon_flag
@@ -80,9 +81,10 @@ $add_type = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64S
 New-Module -Name Ansible.ModuleUtils.AddType -ScriptBlock ([ScriptBlock]::Create($add_type)) | Import-Module > $null
 
 $new_tmp = [System.Environment]::ExpandEnvironmentVariables($Payload.module_args["_ansible_remote_tmp"])
+$access_def = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.csharp_utils["Ansible.AccessToken"]))
 $become_def = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.csharp_utils["Ansible.Become"]))
 $process_def = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.csharp_utils["Ansible.Process"]))
-Add-CSharpType -References $become_def, $process_def -TempPath $new_tmp -IncludeDebugInfo
+Add-CSharpType -References $access_def, $become_def, $process_def -TempPath $new_tmp -IncludeDebugInfo
 
 $username = $Payload.become_user
 $password = $Payload.become_password
