@@ -33,7 +33,6 @@ from .executor import (
     command_posix_integration,
     command_network_integration,
     command_windows_integration,
-    command_units,
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
     ApplicationWarning,
@@ -62,6 +61,10 @@ from .sanity import (
     command_sanity,
     sanity_init,
     sanity_get_tests,
+)
+
+from .units import (
+    command_units,
 )
 
 from .target import (
