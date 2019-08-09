@@ -4,7 +4,6 @@ __metaclass__ = type
 
 import json
 import os
-import collections
 import datetime
 import re
 import time
@@ -95,6 +94,7 @@ from .target import (
     walk_posix_integration_targets,
     walk_network_integration_targets,
     walk_windows_integration_targets,
+    TIntegrationTarget,
 )
 
 from .changes import (
@@ -118,6 +118,7 @@ from .config import (
     PosixIntegrationConfig,
     ShellConfig,
     WindowsIntegrationConfig,
+    TIntegrationConfig,
 )
 
 from .metadata import (
@@ -447,11 +448,8 @@ def command_network_integration(args):
                 instance.result.stop()
 
 
-def network_init(args, internal_targets):
-    """
-    :type args: NetworkIntegrationConfig
-    :type internal_targets: tuple[IntegrationTarget]
-    """
+def network_init(args, internal_targets):  # type: (NetworkIntegrationConfig, t.Tuple[IntegrationTarget, ...]) -> None
+    """Initialize platforms for network integration tests."""
     if not args.platform:
         return
 
@@ -778,13 +776,11 @@ def windows_inventory(remotes):
     return inventory
 
 
-def command_integration_filter(args, targets, init_callback=None):
-    """
-    :type args: IntegrationConfig
-    :type targets: collections.Iterable[IntegrationTarget]
-    :type init_callback: (IntegrationConfig, tuple[IntegrationTarget]) -> None
-    :rtype: tuple[IntegrationTarget]
-    """
+def command_integration_filter(args,  # type: TIntegrationConfig
+                               targets,  # type: t.Iterable[TIntegrationTarget]
+                               init_callback=None,  # type: t.Callable[[TIntegrationConfig, t.Tuple[TIntegrationTarget, ...]], None]
+                               ):  # type: (...) -> t.Tuple[TIntegrationTarget, ...]
+    """Filter the given integration test targets."""
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
 
