@@ -6916,7 +6916,6 @@ test/lib/ansible_test/_data/requirements/constraints.txt test-constraints
 test/lib/ansible_test/_data/requirements/integration.cloud.azure.txt test-constraints
 test/lib/ansible_test/_data/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
-test/units/cli/arguments/test_optparse_helpers.py future-import-boilerplate
 test/units/config/manager/test_find_ini_config_file.py future-import-boilerplate
 test/units/contrib/inventory/test_vmware_inventory.py future-import-boilerplate
 test/units/contrib/inventory/test_vmware_inventory.py metaclass-boilerplate
@@ -7445,7 +7444,6 @@ test/units/utils/fixtures/collections/ansible_collections/my_namespace/my_collec
 test/units/utils/kubevirt_fixtures.py future-import-boilerplate
 test/units/utils/kubevirt_fixtures.py metaclass-boilerplate
 test/units/utils/test_cleanup_tmp_file.py future-import-boilerplate
-test/units/utils/test_context_objects.py future-import-boilerplate
 test/units/utils/test_encrypt.py future-import-boilerplate
 test/units/utils/test_encrypt.py metaclass-boilerplate
 test/units/utils/test_helpers.py future-import-boilerplate
