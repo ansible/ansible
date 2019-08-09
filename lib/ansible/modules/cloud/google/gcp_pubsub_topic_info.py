@@ -78,6 +78,23 @@ resources:
       - A set of key/value label pairs to assign to this Topic.
       returned: success
       type: dict
+    messageStoragePolicy:
+      description:
+      - Policy constraining the set of Google Cloud Platform regions where messages
+        published to the topic may be stored. If not present, then no constraints
+        are in effect.
+      returned: success
+      type: complex
+      contains:
+        allowedPersistenceRegions:
+          description:
+          - A list of IDs of GCP regions where messages that are published to the
+            topic may be persisted in storage. Messages published by publishers running
+            in non-allowed GCP regions (or running outside of GCP altogether) will
+            be routed for storage in one of the allowed regions. An empty list means
+            that no regions are allowed, and is not a valid configuration.
+          returned: success
+          type: list
 '''
 
 ################################################################################
