@@ -9,7 +9,7 @@ import os
 from ... import types as t
 
 from ...util import (
-    ANSIBLE_ROOT,
+    ANSIBLE_SOURCE_ROOT,
 )
 
 from .. import (
@@ -82,7 +82,7 @@ class ContentLayout(Layout):
         self.unit_path = unit_path
         self.unit_module_path = unit_module_path
         self.unit_module_utils_path = unit_module_utils_path
-        self.is_ansible = root == ANSIBLE_ROOT
+        self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
     @property
     def prefix(self):  # type: () -> str

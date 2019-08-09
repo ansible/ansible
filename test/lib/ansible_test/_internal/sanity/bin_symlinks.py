@@ -26,6 +26,11 @@ from ..payload import (
     __file__ as symlink_map_full_path,
 )
 
+from ..util import (
+    ANSIBLE_BIN_PATH,
+    ANSIBLE_TEST_DATA_ROOT,
+)
+
 
 class BinSymlinksTest(SanityVersionNeutral):
     """Sanity test for symlinks in the bin directory."""
@@ -48,9 +53,12 @@ class BinSymlinksTest(SanityVersionNeutral):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        bin_root = os.path.join(data_context().content.root, 'bin')
+        bin_root = ANSIBLE_BIN_PATH
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)
+
+        injector_root = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector')
+        injector_names = os.listdir(injector_root)
 
         errors = []  # type: t.List[t.Tuple[str, str]]
 
@@ -85,9 +93,14 @@ class BinSymlinksTest(SanityVersionNeutral):
                 errors.append((bin_path, 'points to non-executable file "%s"' % dest))
                 continue
 
-        for bin_path, dest in ANSIBLE_BIN_SYMLINK_MAP.items():
-            if bin_path not in bin_names:
+        for bin_name, dest in ANSIBLE_BIN_SYMLINK_MAP.items():
+            if bin_name not in bin_names:
+                bin_path = os.path.join(bin_root, bin_name)
                 errors.append((bin_path, 'missing symlink to "%s" defined in ANSIBLE_BIN_SYMLINK_MAP in file "%s"' % (dest, symlink_map_path)))
+
+            if bin_name not in injector_names:
+                injector_path = os.path.join(injector_root, bin_name)
+                errors.append((injector_path, 'missing symlink to "python.py"'))
 
         messages = [SanityMessage(message=message, path=os.path.relpath(path, data_context().content.root), confidence=100) for path, message in errors]
 
