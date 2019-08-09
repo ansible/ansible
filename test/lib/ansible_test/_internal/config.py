@@ -28,6 +28,11 @@ from .data import (
     data_context,
 )
 
+try:
+    TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound='IntegrationConfig')
+except AttributeError:
+    TIntegrationConfig = None  # pylint: disable=invalid-name
+
 
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""

@@ -16,6 +16,7 @@ from pylint.checkers.utils import check_messages
 try:
     from pylint.checkers.utils import parse_format_method_string
 except ImportError:
+    # noinspection PyUnresolvedReferences
     from pylint.checkers.strings import parse_format_method_string
 
 _PY3K = sys.version_info[:2] >= (3, 0)
