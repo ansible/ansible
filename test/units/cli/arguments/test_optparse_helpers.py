@@ -8,7 +8,7 @@ __metaclass__ = type
 from ansible.cli.arguments import option_helpers as opt_help
 
 
-def test_version(self):
+def test_version():
     ver = opt_help.version('ansible-cli-test')
     assert 'ansible-cli-test' in ver
     assert 'python version' in ver
