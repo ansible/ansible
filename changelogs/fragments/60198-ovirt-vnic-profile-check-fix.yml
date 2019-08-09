@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vnic_profile - update qos and pass_through logic (https://bugzilla.redhat.com/show_bug.cgi?id=1597537)
