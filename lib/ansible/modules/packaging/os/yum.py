@@ -1108,7 +1108,7 @@ class YumModule(YumDnf):
             else:
                 res['results'].append('%s is not installed' % pkg)
 
-        if pkgs:
+        if pkgs or self.autoremove:
             if self.module.check_mode:
                 self.module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
             else:
