@@ -68,6 +68,11 @@ options:
           User defined portip is often required when a multiple router need
           to be connected to a single subnet for which the default gateway has
           been already used.
+   routes:
+     version_added: "2.9"
+     description:
+       - List of additional routes to be set on the router. A route element
+         is dict with a key 'destination' and a key 'nexthop'.
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -203,6 +208,7 @@ router:
             description: The extra routes configuration for L3 router.
             type: list
 '''
+from collections import namedtuple
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
@@ -213,6 +219,9 @@ ROUTER_INTERFACE_OWNERS = set([
     'network:router_interface_distributed',
     'network:ha_router_replicated_interface'
 ])
+
+
+Route = namedtuple('Route', ['destination', 'nexthop'])
 
 
 def _router_internal_interfaces(cloud, router):
@@ -259,6 +268,9 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
             # this interface isn't present on the existing router
             if not exists:
                 return True
+
+    if module.params['routes'] is not None and module.params['routes'] != router['routes']:
+        return True
 
     return False
 
@@ -410,7 +422,8 @@ def main():
         network=dict(default=None),
         interfaces=dict(type='list', default=None),
         external_fixed_ips=dict(type='list', default=None),
-        project=dict(default=None)
+        project=dict(default=None),
+        routes=dict(type='list', elements='dict')
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -464,6 +477,12 @@ def main():
             else:
                 if _needs_update(cloud, module, router, net, subnet_internal_ids, internal_portids, filters):
                     kwargs = _build_kwargs(cloud, module, router, net)
+                    if module.params['routes'] is not None:
+                        # Remove uneeded routes on update (to potentially unlock some interfaces for removal),
+                        # keep others. Cannot add new, as new interfaces are not there yet
+                        existing_routes = set(Route(**route) for route in router['routes'])
+                        wanted_routes = set(Route(**route) for route in module.params['routes'])
+                        kwargs['routes'] = [route._asdict() for route in existing_routes.intersection(wanted_routes)]
                     updated_router = cloud.update_router(**kwargs)
 
                     # Protect against update_router() not actually
@@ -474,6 +493,12 @@ def main():
 
             if _handle_internal_ifaces(cloud, module, router, subnet_internal_ids, internal_portids, filters):
                 changed = True
+
+            if module.params['routes'] and module.params['routes'] != router['routes']:
+                updated_router = cloud.update_router(name_or_id=router['id'], routes=module.params['routes'])
+                if updated_router:
+                    changed = True
+                    router = updated_router
 
             module.exit_json(changed=changed,
                              router=router,
