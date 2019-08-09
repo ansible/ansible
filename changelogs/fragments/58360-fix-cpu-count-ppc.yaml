@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - fixed double-counting of CPUs on POWER systems
