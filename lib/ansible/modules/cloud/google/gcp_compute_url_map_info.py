@@ -52,7 +52,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on a URL map
+- name: get info on an URL map
   gcp_compute_url_map_info:
     filters:
     - name = test_object
