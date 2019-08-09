@@ -30,6 +30,7 @@ import traceback
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils.six.moves.urllib.parse import unquote
 
 try:
     import cryptography
@@ -930,3 +931,13 @@ def set_crypto_backend(module):
         module.debug('Using cryptography backend (library version {0})'.format(CRYPTOGRAPHY_VERSION))
     else:
         module.debug('Using OpenSSL binary backend')
+
+
+def process_links(info, callback):
+    '''
+    Process link header, calls callback for every link header with the URL and relation as options.
+    '''
+    if 'link' in info:
+        link = info['link']
+        for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
+            callback(unquote(url), relation)
