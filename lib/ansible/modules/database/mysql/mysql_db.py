@@ -373,6 +373,10 @@ def main():
     else:
         if db == ['all']:
             module.fail_json(msg="name is not allowed to equal 'all' unless state equals import, or dump.")
+
+    if not os.path.exists(config_file):
+        config_file = None
+
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
                                connect_timeout=connect_timeout)
@@ -386,6 +390,49 @@ def main():
     changed = False
     if not os.path.exists(config_file):
         config_file = None
+
+    if db_exists(cursor, db):
+        if state == "absent":
+            if module.check_mode:
+                module.exit_json(changed=True, db=db)
+            else:
+                try:
+                    changed = db_delete(cursor, db)
+                except Exception as e:
+                    module.fail_json(msg="error deleting database: %s" % to_native(e))
+                module.exit_json(changed=changed, db=db)
+
+        elif state == "dump":
+            if module.check_mode:
+                module.exit_json(changed=True, db=db)
+            else:
+                rc, stdout, stderr = db_dump(module, login_host, login_user,
+                                             login_password, db, target, all_databases,
+                                             login_port, config_file, socket, ssl_cert, ssl_key,
+                                             ssl_ca, single_transaction, quick)
+                if rc != 0:
+                    module.fail_json(msg="%s" % stderr)
+                else:
+                    module.exit_json(changed=True, db=db, msg=stdout)
+
+        elif state == "import":
+            if module.check_mode:
+                module.exit_json(changed=True, db=db)
+            else:
+                rc, stdout, stderr = db_import(module, login_host, login_user,
+                                               login_password, db, target,
+                                               all_databases,
+                                               login_port, config_file,
+                                               socket, ssl_cert, ssl_key, ssl_ca)
+                if rc != 0:
+                    module.fail_json(msg="%s" % stderr)
+                else:
+                    module.exit_json(changed=True, db=db, msg=stdout)
+
+        elif state == "present":
+            if module.check_mode:
+                module.exit_json(changed=False, db=db)
+            module.exit_json(changed=False, db=db)
 
     existence_list = []
     non_existence_list = []

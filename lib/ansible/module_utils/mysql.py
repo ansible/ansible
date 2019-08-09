@@ -47,9 +47,6 @@ mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python
 
 
 def _parse_from_mysql_config_file(cnf):
-    if not cnf:
-        return None
-
     cp = configparser.ConfigParser()
     cp.read(cnf)
 
@@ -63,22 +60,21 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
         config['ssl'] = {}
 
-    cp = _parse_from_mysql_config_file(config_file)
-    if cp and cp.has_section('client'):
-        if module.params['login_unix_socket'] is None:
-            module.params['login_unix_socket'] = cp.get('client', 'socket', fallback=module.params['login_unix_socket'])
-        if module.params['login_host'] is None:
-            module.params['login_host'] = cp.get('client', 'host', fallback='localhost')
-        module.params['login_port'] = cp.getint('client', 'port', fallback=module.params['login_port'])
+    if config_file:
+        config['read_default_file'] = config_file
+        cp = _parse_from_mysql_config_file(config_file)
+        if cp and cp.has_section('client'):
+            if module.params['login_unix_socket'] is None:
+                module.params['login_unix_socket'] = cp.get('client', 'socket', fallback=module.params['login_unix_socket'])
+            if module.params['login_host'] is None:
+                module.params['login_host'] = cp.get('client', 'host', fallback='localhost')
+            module.params['login_port'] = cp.getint('client', 'port', fallback=module.params['login_port'])
 
     if module.params['login_unix_socket']:
         config['unix_socket'] = module.params['login_unix_socket']
     else:
         config['host'] = module.params['login_host']
         config['port'] = module.params['login_port']
-
-    if os.path.exists(config_file):
-        config['read_default_file'] = config_file
 
     # If login_user or login_password are given, they should override the
     # config file
