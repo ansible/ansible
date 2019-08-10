@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: _ios_l2_interface
+module: ios_l2_interface
 extends_documentation_fragment: ios
 version_added: "2.5"
 short_description: Manage Layer-2 interface on Cisco IOS devices.
