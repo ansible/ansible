@@ -21,6 +21,7 @@ options:
   name:
     description:
       - Name of the user to create, remove or modify.
+      - If C(state=present) and I(upn) is not given, the samAccountNAme will be the same as the I(name) parameter
     type: str
     required: true
   state:

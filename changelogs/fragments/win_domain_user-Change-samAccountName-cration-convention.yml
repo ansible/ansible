@@ -1,0 +1,2 @@
+bugfixes:
+- "win_domain_user - Change user creation flow to use upn parameter for samAccountName if given (https://github.com/ansible/ansible/issues/59485)"

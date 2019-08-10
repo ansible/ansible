@@ -91,13 +91,25 @@ If ($state -eq 'present') {
     # If the account does not exist, create it
     If (-not $user_obj) {
         If ($null -ne $path){
-            New-ADUser -Name $username -Path $path -WhatIf:$check_mode @extra_args
+            if ($null -ne $upn){
+                New-ADUser -DisplayName $username -name "$upn".Split('@')[0] -Path $path -WhatIf:$check_mode @extra_args
+            }
+            Else
+            {
+                New-ADUser -Name $username -Path $path -WhatIf:$check_mode @extra_args
+            }
         }
-        Else {
-            New-ADUser -Name $username -WhatIf:$check_mode @extra_args
+        Else
+        {
+            if ($null -ne $upn){
+                New-ADUser -DisplayName $username -name "$upn".Split('@')[0] -Path $path -WhatIf:$check_mode @extra_args
+            }
+            Else {
+                New-ADUser -Name $username -WhatIf:$check_mode @extra_args
+            }
         }
         $new_user = $true
-	$result.created = $true
+	    $result.created = $true
         $result.changed = $true
         If ($check_mode) {
             Exit-Json $result
