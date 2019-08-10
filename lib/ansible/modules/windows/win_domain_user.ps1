@@ -88,7 +88,7 @@ if ($null -ne $domain_server) {
 }
 
 try {
-    $user_obj = Get-ADUser -Identity $identity -Properties * @extra_args    
+    $user_obj = Get-ADUser -Identity $identity -Properties * @extra_args
     $identity = $user_obj.ObjectGuid
 }
 catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
