@@ -85,7 +85,7 @@ options:
 
   state:
     description:
-      - C(present) add a net interface on C(filename);
+      - C(present) add/update a net interface on C(filename);
         C(absent) remove a net interface on C(filename).
     choices: [ present, absent ]
     required: true
@@ -1003,6 +1003,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+import copy
 import os.path
 try:
     import yaml
@@ -1361,6 +1362,25 @@ def get_netplan_dict(params):
     return netplan_dict
 
 
+def update_file_dict(module_dict, file_dict):
+    for key in module_dict.keys():
+        if not file_dict.get(key):
+            file_dict[key] = module_dict[key]
+        else:
+            if isinstance(file_dict[key], list):
+                temp_list = file_dict[key]
+                for l in module_dict[key]:
+                    if l not in temp_list:
+                        temp_list.append(l)
+                file_dict[key] = []
+                file_dict[key] = temp_list
+            elif isinstance(file_dict[key], dict):
+                file_dict[key] = update_file_dict(module_dict[key], file_dict[key])
+            else:
+                file_dict[key] = module_dict[key]
+    return file_dict
+
+
 def main():
     argument_spec = {
         'filename': {'required': True},
@@ -1499,16 +1519,11 @@ def main():
             if netplan_file_dict == netplan_module_dict:
                 module.exit_json(changed=False)
             else:
-                if not netplan_file_dict['network'].get(p_type):
-                    netplan_file_dict['network'][p_type] = dict()
-                # Verify if interface exist and if dicts are equal
-                if netplan_file_dict['network'][p_type].get(p_ifid):
-                    if netplan_file_dict['network'][p_type][p_ifid] == netplan_module_dict['network'][p_type][p_ifid]:
-                        module.exit_json(changed=False)
-                netplan_file_dict['network'][p_type][p_ifid] = dict()
-                netplan_file_dict['network'][p_type][p_ifid] = netplan_module_dict['network'][p_type][p_ifid]
+                new_file_dict = update_file_dict(netplan_module_dict, copy.deepcopy(netplan_file_dict))
+                if netplan_file_dict == new_file_dict:
+                    module.exit_json(changed=False)
                 with open(NETPLAN_FILENAME, 'w') as yamlfile:
-                    yaml.dump(netplan_file_dict, yamlfile, default_flow_style=False)
+                    yaml.dump(new_file_dict, yamlfile, default_flow_style=False)
                 module.run_command('netplan apply', check_rc=True)
                 module.exit_json(changed=True)
         # Remove interface
