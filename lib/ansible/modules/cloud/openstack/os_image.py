@@ -78,6 +78,10 @@ options:
      description:
         - Additional properties to be associated with this image
      default: {}
+   tags:
+     version_added: "2.10"
+     description:
+       - Tags to be associated with this image
    state:
      description:
        - Should the resource be present or absent.
@@ -165,6 +169,7 @@ def main():
         kernel=dict(default=None),
         properties=dict(type='dict', default={}),
         volume=dict(default=None),
+        tags=dict(type='list', default=None),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
@@ -213,6 +218,26 @@ def main():
                 ramdisk=module.params['ramdisk'],
                 protected=module.params['protected'],
                 **module.params['properties'])
+            if module.params['tags'] is not None:
+                # NOTE: In theory all what you need - pass `tags` to function above.
+                #       Unfortunately i always got 400 Bad Request with SDK 0.33.0.
+                #       cloud.image.add/remove_tags works, but raise AttributeError
+                #       *after* the successful call is done.
+                existing_tags = set(image.tags)
+                required_tags = set(module.params['tags'])
+                for tag in existing_tags.difference(required_tags):
+                    changed = True
+                    try:
+                        cloud.image.remove_tag(image.id, tag)
+                    except AttributeError:
+                        pass
+
+                for tag in required_tags.difference(existing_tags):
+                    changed = True
+                    try:
+                        cloud.image.add_tag(image.id, tag)
+                    except AttributeError:
+                        pass
             image = cloud.get_image(name_or_id=image.id)
             module.exit_json(changed=changed, image=image, id=image.id)
 
