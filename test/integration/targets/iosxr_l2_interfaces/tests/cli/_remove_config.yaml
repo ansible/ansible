@@ -11,5 +11,6 @@
       no interface GigabitEthernet 0/0/0/3
       no interface GigabitEthernet 0/0/0/4
       no interface GigabitEthernet 0/0/0/5
-      no interface preconfigure GigabitEthernet 0/0/0/3.900
       no interface preconfigure GigabitEthernet 0/0/0/1.2 l2transport
+      no interface preconfigure GigabitEthernet 0/0/0/3.900
+      no interface preconfigure GigabitEthernet 0/0/0/4
