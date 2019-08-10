@@ -105,6 +105,11 @@ options:
       - Defaults to C(domain,private,public) when creating a new rule.
     type: list
     aliases: [ profile ]
+  icmptypecode:
+    description:
+      - The ICMP Types and codes for the rule.
+    type: str
+    version_added: '2.9'
 seealso:
 - module: win_firewall
 author:
