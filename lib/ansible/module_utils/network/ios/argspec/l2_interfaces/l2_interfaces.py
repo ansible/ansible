@@ -22,7 +22,7 @@
 #
 #############################################
 """
-The arg spec for the ios_interfaces module
+The arg spec for the ios_l2_interfaces module
 """
 
 from __future__ import absolute_import, division, print_function

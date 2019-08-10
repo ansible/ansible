@@ -66,7 +66,7 @@ DOCUMENTATION = """
           - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
             Note The encapsulation is always set to dot1q.
           suboptions:
-            allowed_vlan:
+            allowed_vlans:
               description:
               - List of allowed VLANs in a given trunk port. These are the only VLANs that will be
                 configured on the trunk.
@@ -80,7 +80,7 @@ DOCUMENTATION = """
               - Trunking encapsulation when interface is in trunking mode.
               choices: ['dot1q','isl','negotiate']
               type: str
-            pruning_vlan:
+            pruning_vlans:
               description:
               - Pruning VLAN to be configured in trunk port. It's used as the trunk pruning VLAN ID.
               type: list
@@ -116,19 +116,16 @@ EXAMPLES = """
 #  negotiation auto
 
 - name: Merge provided configuration with device configuration
-  ios_interfaces:
+  ios_l2_interfaces:
     config:
       - name: GigabitEthernet0/1
         access:
-        - vlan: 10
+          vlan: 10
       - name: GigabitEthernet0/2
         trunk:
-        - allowed_vlan:
-          - 20
-          - 40
+          allowed_vlan: 10-20, 40
           native_vlan: 20
-          pruning_vlan:
-          - 10
+          pruning_vlan: 10,20
           encapsulation: dot1q
     state: merged
 
@@ -143,10 +140,10 @@ EXAMPLES = """
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
-#  switchport trunk allowed vlan 20,40
+#  switchport trunk allowed vlan 10-20,40
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 20
-#  switchport trunk pruning vlan 10
+#  switchport trunk pruning vlan 10,20
 #  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
@@ -170,16 +167,13 @@ EXAMPLES = """
 #  negotiation auto
 
 - name: Replaces device configuration of listed l2 interfaces with provided configuration
-  ios_interfaces:
+  ios_l2_interfaces:
     config:
       - name: GigabitEthernet0/2
         trunk:
-        - allowed_vlan:
-          - 20
-          - 40
+        - allowed_vlan: 20-25,40
           native_vlan: 20
-          pruning_vlan:
-          - 10
+          pruning_vlan: 10
           encapsulation: isl
     state: replaced
 
@@ -194,7 +188,7 @@ EXAMPLES = """
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
-#  switchport trunk allowed vlan 20,40
+#  switchport trunk allowed vlan 20-25,40
 #  switchport trunk encapsulation isl
 #  switchport trunk native vlan 20
 #  switchport trunk pruning vlan 10
@@ -224,11 +218,11 @@ EXAMPLES = """
 #  negotiation auto
 
 - name: Override device configuration of all l2 interfaces with provided configuration
-  ios_interfaces:
+  ios_l2_interfaces:
     config:
       - name: GigabitEthernet0/2
         access:
-        - vlan: 20
+          vlan: 20
     state: overridden
 
 # After state:
@@ -259,7 +253,7 @@ EXAMPLES = """
 # interface GigabitEthernet0/2
 #  description This is test
 #  switchport access vlan 20
-#  switchport trunk allowed vlan 20,40,60,80
+#  switchport trunk allowed vlan 20-40,60,80
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 10
 #  switchport trunk pruning vlan 10
@@ -268,10 +262,54 @@ EXAMPLES = """
 #  negotiation auto
 
 - name: Delete IOS L2 interfaces as in given arguments
-  ios_interfaces:
+  ios_l2_interfaces:
     config:
       - name: GigabitEthernet0/1
-      - name: GigabitEthernet0/2
+    state: deleted
+
+# After state:
+# -------------
+#
+# viosl2#show running-config | section ^interface
+# interface GigabitEthernet0/1
+#  description Configured by Ansible
+#  negotiation auto
+# interface GigabitEthernet0/2
+#  description This is test
+#  switchport access vlan 20
+#  switchport trunk allowed vlan 20-40,60,80
+#  switchport trunk encapsulation dot1q
+#  switchport trunk native vlan 10
+#  switchport trunk pruning vlan 10
+#  switchport mode trunk
+#  media-type rj45
+#  negotiation auto
+
+
+# Using Deleted without passing any config
+
+# Before state:
+# -------------
+#
+# viosl2#show running-config | section ^interface
+# interface GigabitEthernet0/1
+#  description Configured by Ansible
+#  switchport access vlan 20
+#  switchport mode access
+#  negotiation auto
+# interface GigabitEthernet0/2
+#  description This is test
+#  switchport access vlan 20
+#  switchport trunk allowed vlan 20-40,60,80
+#  switchport trunk encapsulation dot1q
+#  switchport trunk native vlan 10
+#  switchport trunk pruning vlan 10
+#  switchport mode trunk
+#  media-type rj45
+#  negotiation auto
+
+- name: Delete IOS L2 interfaces as in given arguments
+  ios_l2_interfaces:
     state: deleted
 
 # After state:
