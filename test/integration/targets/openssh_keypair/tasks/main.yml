@@ -67,4 +67,16 @@
     force: yes
   register: output_read_only
 
+- name: Generate privatekey7 - standard with comment
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey7'
+    comment: 'test@privatekey7'
+  register: privatekey7_result
+
+- name: Modify privatekey7 comment
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey7'
+    comment: 'test_modified@privatekey7'
+  register: privatekey7_modified_result
+
 - import_tasks: ../tests/validate.yml
