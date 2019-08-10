@@ -28,6 +28,7 @@ options:
       - Guid of the user to create, remove or modify.
       - Required for special attribute changes like samAccountName or if I(name) isn't given.
     type: str
+    version_added: '2.9'
   state:
     description:
       - When C(present), creates or updates the user account.
@@ -376,5 +377,5 @@ guid:
     description: The GUID of the account
     returned: always
     type: str
-    sample: 9d8e26f7-4962-4bb5-a337-75c4b74a74ec 
+    sample: 9d8e26f7-4962-4bb5-a337-75c4b74a74ec
 '''
