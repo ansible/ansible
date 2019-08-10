@@ -1,0 +1,2 @@
+bugfixes:
+- "win_domain_user - Use guid if given to allow for special attribute changes such as samAccountName"

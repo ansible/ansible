@@ -21,8 +21,13 @@ options:
   name:
     description:
       - Name of the user to create, remove or modify.
+      - Required for C(state=present) or if not I(guid) isn't given.
     type: str
-    required: true
+  guid:
+    description:
+      - Guid of the user to create, remove or modify.
+      - Required for special attribute changes like samAccountName or if I(name) isn't given.
+    type: str
   state:
     description:
       - When C(present), creates or updates the user account.
@@ -367,4 +372,9 @@ created:
   returned: always
   type: bool
   sample: true
+guid:
+    description: The GUID of the account
+    returned: always
+    type: str
+    sample: 9d8e26f7-4962-4bb5-a337-75c4b74a74ec 
 '''
