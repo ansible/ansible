@@ -464,7 +464,7 @@
     state: present
     action: allow
     direction: in
-    protocol: icmp
+    protocol: icmpv4
     icmptypecode: '8:*'
   register: add_firewall_rule_with_icmptypecode
 
