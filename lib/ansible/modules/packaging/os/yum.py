@@ -1152,6 +1152,18 @@ class YumModule(YumDnf):
                     self.module.fail_json(**res)
 
             res['changed'] = True
+            if self.autoremove and not pkgs:
+                # bare autoremove invocation
+                candidates = (
+                    # CentOS 7.0-7.6
+                    'No Packages marked for removal',
+                    # Fedora 26-31
+                    'Nothing to do.',
+                )
+                for candidate in candidates:
+                    if candidate in out:
+                        res['changed'] = False
+                        break
 
         return res
 
