@@ -92,7 +92,7 @@ If ($state -eq 'present') {
     If (-not $user_obj) {
         If ($null -ne $path){
             if ($null -ne $upn){
-                New-ADUser -DisplayName $username -name "$upn".Split('@')[0] -Path $path -WhatIf:$check_mode @extra_args
+                New-ADUser -DisplayName $username -name "$upn".Split('@')[0] -UserPrincipalName $upn -Path $path -WhatIf:$check_mode @extra_args
             }
             Else
             {
@@ -102,7 +102,7 @@ If ($state -eq 'present') {
         Else
         {
             if ($null -ne $upn){
-                New-ADUser -DisplayName $username -name "$upn".Split('@')[0] -Path $path -WhatIf:$check_mode @extra_args
+                New-ADUser -DisplayName $username -name "$upn".Split('@')[0] -UserPrincipalName $upn -WhatIf:$check_mode @extra_args
             }
             Else {
                 New-ADUser -Name $username -WhatIf:$check_mode @extra_args
