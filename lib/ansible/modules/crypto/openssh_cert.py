@@ -186,7 +186,7 @@ filename:
     description: path to the certificate
     returned: changed or success
     type: str
-    sample: /tmp/certifivate-cert.pub
+    sample: /tmp/certificate-cert.pub
 info:
     description: Information about the certificate. Output of C(ssh-keygen -L -f).
     returned: change or success
