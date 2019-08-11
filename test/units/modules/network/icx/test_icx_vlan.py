@@ -38,8 +38,10 @@ class TestICXVlanModule(TestICXModule):
             module = args
             for arg in args:
                 if arg.params['check_running_config'] is True:
+                    self.exec_command.return_value = (0, load_fixture('icx_vlan_config').strip(), None)
                     return load_fixture('icx_banner_show_banner.txt').strip()
                 else:
+                    self.exec_command.return_value = (0, ''.strip(), None)
                     return ''
 
         self.get_config.side_effect = load_file
@@ -88,8 +90,8 @@ class TestICXVlanModule(TestICXModule):
             ]
             self.assertEqual(result['commands'], expected_commands)
 
-    def test_icx_vlan_purge_untagged_port(self):
-        set_module_args(dict(vlan_id=3, tagged=dict(name=['ethernet 1/1/40 to 1/1/43', 'lag 44'], purge=True)))
+    def test_icx_vlan_purge_tagged_port(self):
+        set_module_args(dict(vlan_id=3, tagged=dict(name=['ethernet 1/1/40 to 1/1/42', 'lag 44'], purge=True)))
         if not self.ENV_ICX_USE_DIFF:
             result = self.execute_module(changed=True)
             expected_commands = [
@@ -106,7 +108,11 @@ class TestICXVlanModule(TestICXModule):
                 'no tagged ethernet 1/1/9',
                 'no tagged ethernet 1/1/11',
                 'no tagged lag 13',
-                'no tagged ethernet 1/1/10'
+                'no tagged ethernet 1/1/10',
+                'tagged ethernet 1/1/40',
+                'tagged ethernet 1/1/41',
+                'tagged ethernet 1/1/42',
+                'tagged lag 44'
             ]
             self.assertEqual(result['commands'], expected_commands)
 

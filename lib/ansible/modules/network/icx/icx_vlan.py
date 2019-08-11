@@ -725,14 +725,14 @@ def main():
     element_spec = dict(
         vlan_id=dict(type='int'),
         name=dict(),
-        interfaces=dict(type='list', elements='dict', options=inter_spec),
-        tagged=dict(type='list', elements='dict', options=tagged_spec),
+        interfaces=dict(type='dict',options=inter_spec),
+        tagged=dict(type='dict',options=tagged_spec),
         ip_dhcp_snooping=dict(type='bool'),
         ip_arp_inspection=dict(type='bool'),
         associated_interfaces=dict(type='list'),
         associated_tagged=dict(type='list'),
         delay=dict(default=10, type='int'),
-        stp=dict(type='list', elements='dict', options=stp_spec),
+        stp=dict(type='dict',options=stp_spec),
         state=dict(default='present', choices=['present', 'absent']),
         check_running_config=dict(default=True, type='bool', fallback=(env_fallback, ['ANSIBLE_CHECK_ICX_RUNNING_CONFIG']))
     )
