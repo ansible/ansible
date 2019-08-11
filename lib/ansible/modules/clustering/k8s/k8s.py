@@ -146,6 +146,13 @@ options:
     - mutually exclusive with C(merge_type)
     type: bool
     version_added: "2.9"
+  no_overwrite:
+    description:
+    - C(no_overwrite) will not modify existing resources and simply return 'OK' while leaving the k8s object unchanged
+    type: bool
+    default: no
+    version_added: "2.9"
+
 
 requirements:
   - "python >= 2.7"

@@ -84,6 +84,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         argument_spec['validate'] = dict(type='dict', default=None, options=self.validate_spec)
         argument_spec['append_hash'] = dict(type='bool', default=False)
         argument_spec['apply'] = dict(type='bool')
+        argument_spec['no_overwrite'] = dict(type='bool', default=False)
         return argument_spec
 
     def __init__(self, k8s_kind=None, *args, **kwargs):
@@ -103,6 +104,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         self.api_version = self.params.get('api_version')
         self.name = self.params.get('name')
         self.namespace = self.params.get('namespace')
+        self.no_overwrite = self.params.get('no_overwrite')
         resource_definition = self.params.get('resource_definition')
         validate = self.params.get('validate')
         if validate:
@@ -282,6 +284,9 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                             self.fail_json(msg="Resource deletion timed out", **result)
                 return result
         else:
+            if existing and self.no_overwrite:
+                return result
+
             if self.apply:
                 if self.check_mode:
                     k8s_obj = definition

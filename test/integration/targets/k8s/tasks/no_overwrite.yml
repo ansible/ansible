@@ -1,0 +1,42 @@
+---
+- name: Ensure testing1 namespace exists
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: testing1
+
+- name: Create a ConfigMap
+  k8s:
+    api_version: v1
+    kind: ConfigMap
+    resource_definition:
+      metadata:
+        name: test
+        namespace: testing1
+      data:
+        key1: value1
+        key2: value2
+
+- name: Create a new ConfigMap, but only if the first doesn't exist
+  k8s:
+    no_overwrite: yes
+    api_version: v1
+    kind: ConfigMap
+    resource_definition:
+      metadata:
+        name: test
+        namespace: testing1
+      data:
+        key1: valueA
+        key2: valueB
+
+- name: Get the ConfigMap
+  set_fact:
+    test_data: "{{ lookup('k8s', kind='ConfigMap', namespace='testing1', resource_name='test') }}"
+
+- name: Check that the values are from the first ConfigMap
+  assert:
+    that:
+    - test_data['data']['key1'] == 'value1'
+    - test_data['data']['key2'] == 'value2'
+  
