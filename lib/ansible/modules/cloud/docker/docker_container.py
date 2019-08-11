@@ -1861,7 +1861,7 @@ class TaskParameters(DockerBaseClass):
         if self.volumes:
             for v in self.volumes:
                 vs = v.split(':')
-                f(vs[0 if len(v) == 0 else 1], 'volumes')
+                f(vs[0 if len(vs) == 1 else 1], 'volumes')
 
 
 class Container(DockerBaseClass):
