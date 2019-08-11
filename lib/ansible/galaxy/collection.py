@@ -500,14 +500,12 @@ def parse_collections_requirements_file(requirements_file):
             req_name = collection_req.get('name', None)
             if req_name is None:
                 raise AnsibleError("Collections requirement entry should contain the key name.")
-            validate_collection_name(req_name)
 
             req_version = collection_req.get('version', '*')
             req_source = collection_req.get('source', None)
 
             collection_info.append((req_name, req_version, req_source))
         else:
-            validate_collection_name(collection_req)
             collection_info.append((collection_req, '*', None))
 
     return collection_info
@@ -905,6 +903,8 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
         else:
             collection_info = req
     else:
+        validate_collection_name(collection)
+
         display.vvvv("Collection requirement '%s' is the name of a collection" % collection)
         if collection in dep_map:
             collection_info = dep_map[collection]

@@ -63,6 +63,7 @@ class GalaxyCLI(CLI):
                             help='The Galaxy API server URL')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs',
                             default=C.GALAXY_IGNORE_CERTS, help='Ignore SSL certificate validation errors.')
+        opt_help.add_verbosity_options(common)
 
         force = opt_help.argparse.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False,
@@ -218,7 +219,6 @@ class GalaxyCLI(CLI):
 
         args_kwargs = {}
         if galaxy_type == 'collection':
-            args_kwargs['type'] = validate_collection_name
             args_kwargs['help'] = 'The collection(s) name or path/url to a tar.gz collection artifact. This is ' \
                                   'mutually exclusive with --requirements-file.'
             ignore_errors_help = 'Ignore errors during installation and continue with the next specified ' \

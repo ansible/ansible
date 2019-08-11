@@ -461,6 +461,25 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
         self.assertEquals(self.role_skeleton_path, context.CLIARGS['role_skeleton'], msg='Skeleton path was not parsed properly from the command line')
 
 
+@pytest.mark.parametrize('cli_args, expected', [
+    (['ansible-galaxy', 'collection', 'init', 'abc.def'], 0),
+    (['ansible-galaxy', 'collection', 'init', 'abc.def', '-vvv'], 3),
+    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def'], 2),
+    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence
+    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-v'], 1),
+    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-vvvv'], 4),
+])
+def test_verbosity_arguments(cli_args, expected, monkeypatch):
+    # Mock out the functions so we don't actually execute anything
+    for func_name in [f for f in dir(GalaxyCLI) if f.startswith("execute_")]:
+        monkeypatch.setattr(GalaxyCLI, func_name, MagicMock())
+
+    cli = GalaxyCLI(args=cli_args)
+    cli.run()
+
+    assert context.CLIARGS['verbosity'] == expected
+
+
 @pytest.fixture()
 def collection_skeleton(request, tmp_path_factory):
     name, skeleton_path = request.param
@@ -594,18 +613,19 @@ def test_invalid_collection_name_init(name):
         gc.run()
 
 
-@pytest.mark.parametrize("name", [
-    "",
-    "invalid",
-    "invalid:1.0.0",
-    "hypen-ns.collection",
-    "ns.hyphen-collection",
-    "ns.collection.weird",
+@pytest.mark.parametrize("name, expected", [
+    ("", ""),
+    ("invalid", "invalid"),
+    ("invalid:1.0.0", "invalid"),
+    ("hypen-ns.collection", "hypen-ns.collection"),
+    ("ns.hyphen-collection", "ns.hyphen-collection"),
+    ("ns.collection.weird", "ns.collection.weird"),
 ])
-def test_invalid_collection_name_install(name):
-    expected = "Invalid collection name '%s', name must be in the format <namespace>.<collection>" % name
+def test_invalid_collection_name_install(name, expected, tmp_path_factory):
+    install_path = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+    expected = "Invalid collection name '%s', name must be in the format <namespace>.<collection>" % expected
 
-    gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', name, '-p', 'test'])
+    gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', name, '-p', os.path.join(install_path, 'install')])
     with pytest.raises(AnsibleError, match=expected):
         gc.run()
 
