@@ -1,0 +1,2 @@
+minor_changes:
+  - openssh_keypair - add key ``comment`` to return value
