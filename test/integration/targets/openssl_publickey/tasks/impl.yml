@@ -75,7 +75,7 @@
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey5.pem'
     type: ECC
-    curve: secp256k1
+    curve: secp256r1
 
 - name: Generate publickey 5 - PEM format
   openssl_publickey:
