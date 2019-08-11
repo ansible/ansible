@@ -101,6 +101,24 @@
   register: mounts_5
   ignore_errors: yes
 
+- name: mounts (endpoint collision)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /home
+      target: /x
+      type: bind
+    - source: /etc
+      target: /x
+      type: bind
+      read_only: no
+    force_kill: yes
+  register: mounts_6
+  ignore_errors: yes
+
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
@@ -115,6 +133,8 @@
     - mounts_3 is not changed
     - mounts_4 is changed
     - mounts_5 is changed
+    - mounts_6 is failed
+    - "'The mount point \"/x\" appears twice in the mounts option' == mounts_6.msg"
   when: docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
@@ -206,6 +226,7 @@
     - mounts_volumes_2 is not changed
     - mounts_volumes_3 is changed
     - mounts_volumes_4 is failed
+    - "'The mount point \"/tmp\" appears both in the volumes and mounts option' in mounts_volumes_4.msg"
   when: docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
@@ -319,6 +340,19 @@
     force_kill: yes
   register: volumes_5
 
+- name: volumes (collision)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/etc:/tmp"
+    - "/home:/tmp:ro"
+    force_kill: yes
+  register: volumes_6
+  ignore_errors: yes
+
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
@@ -333,6 +367,8 @@
     - volumes_3 is not changed
     - volumes_4 is changed
     - volumes_5 is changed
+    - volumes_6 is failed
+    - "'The mount point \"/tmp\" appears twice in the volumes option' in volumes_6.msg"
 
 ####################################################################
 ## volumes_from ####################################################
