@@ -277,3 +277,59 @@
   stat:
     path: '{{ output_dir }}/privatekey_mode.pem'
   register: privatekey_mode_3_stat
+
+- name: Generate privatekey_fmt_1 - auto format
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_fmt_1.pem'
+    format: auto
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_fmt_1_step_1
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Generate privatekey_fmt_1 - auto format (idempotent)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_fmt_1.pem'
+    format: auto
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_fmt_1_step_2
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Generate privatekey_fmt_1 - PKCS1 format
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_fmt_1.pem'
+    format: pkcs1
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_fmt_1_step_3
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Generate privatekey_fmt_1 - PKCS8 format
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_fmt_1.pem'
+    format: pkcs8
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_fmt_1_step_4
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Generate privatekey_fmt_1 - PKCS8 format (idempotent)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_fmt_1.pem'
+    format: pkcs8
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_fmt_1_step_5
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Generate privatekey_fmt_1 - auto format (ignore)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_fmt_1.pem'
+    format: auto_ignore
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_fmt_1_step_6
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Generate privatekey_fmt_1 - auto format (no ignore)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_fmt_1.pem'
+    format: auto
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_fmt_1_step_7
+  when: 'select_crypto_backend == "cryptography"'

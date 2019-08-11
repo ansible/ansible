@@ -123,6 +123,18 @@ options:
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.8"
+    format:
+        description:
+            - Determines which format the private key is written in. By default, PKCS1 (traditional OpenSSL format)
+              is used for all keys which support it. Please note that not every key can be exported in any format.
+            - The value C(auto) selects a backend depending on the key format. The value C(auto_ignore) does the same,
+              but for existing private key files, it will not force a regenerate when its format is not the automatically
+              selected one for generation.
+            - Only supported by the C(cryptography) backend.
+        type: str
+        default: auto_ignore
+        choices: [ pkcs1, pkcs8, raw, auto, auto_ignore ]
+        version_added: "2.9"
     backup:
         description:
             - Create a backup file including a timestamp so you can get
@@ -293,6 +305,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.cipher = module.params['cipher']
         self.privatekey = None
         self.fingerprint = {}
+        self.format = module.params['format']
 
         self.backup = module.params['backup']
         self.backup_file = None
@@ -336,6 +349,10 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
     def _check_size_and_type(self):
         pass
 
+    @abc.abstractmethod
+    def _check_format(self):
+        pass
+
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
 
@@ -344,7 +361,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         if not state_and_perms or not self._check_passphrase():
             return False
 
-        return self._check_size_and_type()
+        return self._check_format() and self._check_size_and_type()
 
     def dump(self):
         """Serialize the object into a dictionary."""
@@ -411,6 +428,10 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
             raise PrivateKeyError(exc)
 
         return _check_size(privatekey) and _check_type(privatekey)
+
+    def _check_format(self):
+        # Not supported by this backend
+        return True
 
     def dump(self):
         """Serialize the object into a dictionary."""
@@ -489,8 +510,15 @@ class PrivateKeyCryptography(PrivateKeyBase):
         if not CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
             self.module.fail_json(msg='Your cryptography version does not support Ed448')
 
+    def _get_wanted_format(self):
+        if self.format not in ('auto', 'auto_ignore'):
+            return self.format
+        if self.type in ('X25519', 'X448', 'Ed25519', 'Ed448'):
+            return 'pkcs8'
+        else:
+            return 'pkcs1'
+
     def _generate_private_key_data(self):
-        export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
         try:
             if self.type == 'RSA':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
@@ -505,16 +533,12 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 )
             if CRYPTOGRAPHY_HAS_X25519_FULL and self.type == 'X25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
-                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
-                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate()
-                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey.generate()
-                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if self.type == 'ECC' and self.curve in self.curves:
                 if self.curves[self.curve]['deprecated']:
                     self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.curve))
@@ -525,6 +549,19 @@ class PrivateKeyCryptography(PrivateKeyBase):
         except cryptography.exceptions.UnsupportedAlgorithm as dummy:
             self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
+        # Select export format
+        try:
+            export_format = self._get_wanted_format()
+            if export_format == 'pkcs1':
+                # "TraditionalOpenSSL" format is PKCS1
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
+            elif export_format == 'pkcs8':
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+            elif export_format == 'raw':
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.RAW
+        except AttributeError:
+            self.module.fail_json(msg='Cryptography backend does not support the selected output format "{0}"'.format(self.format))
+
         # Select key encryption
         encryption_algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
         if self.cipher and self.passphrase:
@@ -534,11 +571,17 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 self.module.fail_json(msg='Cryptography backend can only use "auto" for cipher option.')
 
         # Serialize key
-        return self.privatekey.private_bytes(
-            encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
-            format=export_format,
-            encryption_algorithm=encryption_algorithm
-        )
+        try:
+            return self.privatekey.private_bytes(
+                encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
+                format=export_format,
+                encryption_algorithm=encryption_algorithm
+            )
+        except Exception as dummy:
+            self.module.fail_json(
+                msg='Cryptography backend cannot serialize the private key in the required format "{0}"'.format(self.format),
+                exception=traceback.format_exc()
+            )
 
     def _load_privatekey(self):
         try:
@@ -598,6 +641,23 @@ class PrivateKeyCryptography(PrivateKeyBase):
 
         return False
 
+    def _check_format(self):
+        if self.format == 'auto_ignore':
+            return True
+        try:
+            with open(self.path, 'rb') as f:
+                content = f.read().decode('utf-8').splitlines(False)
+            format = 'raw'
+            # The PKCS1/PKCS8 detection doesn't work yet!
+            if content[0].startswith('-----'):
+                if 'BEGIN PRIVATE KEY' in content[0]:
+                    format = 'pkcs8'
+                else:
+                    format = 'pkcs1'
+            return format == self._get_wanted_format()
+        except Exception as dummy:
+            return False
+
     def dump(self):
         """Serialize the object into a dictionary."""
         result = super(PrivateKeyCryptography, self).dump()
@@ -627,6 +687,7 @@ def main():
             passphrase=dict(type='str', no_log=True),
             cipher=dict(type='str'),
             backup=dict(type='bool', default=False),
+            format=dict(type='str', default='auto_ignore', choices=['pkcs1', 'pkcs8', 'raw', 'auto', 'auto_ignore']),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
         ),
         supports_check_mode=True,
