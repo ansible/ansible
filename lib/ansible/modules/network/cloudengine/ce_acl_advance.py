@@ -1465,7 +1465,7 @@ class AdvanceAcl(object):
                 if self.syn_flag:
                     cmd += " tcp-flag %s" % self.syn_flag
                 if self.tcp_flag_mask:
-                    cmd += " mask %s" % self.self.tcp_flag_mask
+                    cmd += " mask %s" % self.tcp_flag_mask
                 if self.established:
                     cmd += " established"
             if self.protocol == "igmp":
