@@ -25,7 +25,7 @@ description:
       the C(cryptography) backend has to be used."
 requirements:
     - Either cryptography >= 1.2.3 (older versions might work as well)
-    - Or pyOpenSSL >= 0.13.1 (older versions might work as well)
+    - Or pyOpenSSL >= 16.0.0
     - Needs cryptography >= 1.4 if I(format) is C(OpenSSH)
 author:
     - Yanis Guenane (@Spredzy)
@@ -162,7 +162,7 @@ import os
 import traceback
 from distutils.version import LooseVersion
 
-MINIMAL_PYOPENSSL_VERSION = '0.13.1'
+MINIMAL_PYOPENSSL_VERSION = '16.0.0'
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.2.3'
 MINIMAL_CRYPTOGRAPHY_VERSION_OPENSSH = '1.4'
 
@@ -235,7 +235,10 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     crypto_serialization.PublicFormat.SubjectPublicKeyInfo
                 )
         else:
-            return crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
+            try:
+                return crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
+            except AttributeError as exc:
+                raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
 
     def generate(self, module):
         """Generate the public key."""
@@ -258,8 +261,6 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 raise PublicKeyError(exc)
             except (IOError, OSError) as exc:
                 raise PublicKeyError(exc)
-            except AttributeError as exc:
-                raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
 
         self.fingerprint = crypto_utils.get_fingerprint(
             self.privatekey_path,
