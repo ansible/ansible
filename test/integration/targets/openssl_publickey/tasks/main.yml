@@ -10,8 +10,8 @@
       privatekey_path: '{{ output_dir }}/privatekey_autodetect.pem'
 
   when: |
-    pyopenssl_version.stdout is version('16.0', '>=') or
-    cryptography_version.stdout is version('1.3', '>=')
+    pyopenssl_version.stdout is version('0.13.1', '>=') or
+    cryptography_version.stdout is version('1.2.3', '>=')
 
 - block:
   - name: Running tests with pyOpenSSL backend
@@ -23,7 +23,7 @@
     vars:
       select_crypto_backend: pyopenssl
 
-  when: pyopenssl_version.stdout is version('16.0', '>=')
+  when: pyopenssl_version.stdout is version('0.13.1', '>=')
 
 - name: Remove output directory
   file:
@@ -45,4 +45,4 @@
     vars:
       select_crypto_backend: cryptography
 
-  when: cryptography_version.stdout is version('1.3', '>=')
+  when: cryptography_version.stdout is version('1.2.3', '>=')

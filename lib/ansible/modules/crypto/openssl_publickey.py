@@ -24,8 +24,8 @@ description:
       overridden with the I(select_crypto_backend) option. When I(format) is C(OpenSSH),
       the C(cryptography) backend has to be used."
 requirements:
-    - Either cryptography >= 1.3 (older versions might work as well)
-    - Or pyOpenSSL >= 16.0.0
+    - Either cryptography >= 1.2.3 (older versions might work as well)
+    - Or pyOpenSSL >= 0.13.1 (older versions might work as well)
     - Needs cryptography >= 1.4 if I(format) is C(OpenSSH)
 author:
     - Yanis Guenane (@Spredzy)
@@ -162,8 +162,8 @@ import os
 import traceback
 from distutils.version import LooseVersion
 
-MINIMAL_PYOPENSSL_VERSION = '16.0.0'
-MINIMAL_CRYPTOGRAPHY_VERSION = '1.3'
+MINIMAL_PYOPENSSL_VERSION = '0.13.1'
+MINIMAL_CRYPTOGRAPHY_VERSION = '1.2.3'
 MINIMAL_CRYPTOGRAPHY_VERSION_OPENSSH = '1.4'
 
 PYOPENSSL_IMP_ERR = None
