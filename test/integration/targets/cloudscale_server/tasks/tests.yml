@@ -153,6 +153,40 @@
       - server.tags.stage == 'staging'
       - server.tags.sla == '8-5'
 
+- name: Test delete tags
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags: {}
+  register: server
+- name: Verify delete tags
+  assert:
+    that:
+      - server is changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - not server.tags
+
+- name: Test delete tags idempotence
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
+    tags: {}
+  register: server
+- name: Verify delete tags idempotence
+  assert:
+    that:
+      - server is not changed
+      - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+      - not server.tags
+
 - name: Test update flavor of a running server without force in check mode
   cloudscale_server:
     name: '{{ cloudscale_resource_prefix }}-test'
