@@ -518,30 +518,6 @@ options:
         version_added: "2.5"
         aliases: [ 'sysprep_persist' ]
         default: 'no'
-    kernel_params_persist:
-        description:
-            - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
-               if I(False) it will be used for run once."
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
-        type: bool
-        version_added: "2.8"
-    kernel_path:
-        description:
-            - Path to a kernel image used to boot the virtual machine.
-            - Kernel image must be stored on either the ISO domain or on the host's storage.
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
-        version_added: "2.3"
-    initrd_path:
-        description:
-            - Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option.
-            - Ramdisk image must be stored on either the ISO domain or on the host's storage.
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
-        version_added: "2.3"
-    kernel_params:
-        description:
-            - Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option.
-            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
-        version_added: "2.3"
     instance_type:
         description:
             - Name of virtual machine's hardware configuration.
@@ -1431,12 +1407,9 @@ class VmsModule(BaseModule):
                     devices=[
                         otypes.BootDevice(dev) for dev in self.param('boot_devices')
                     ],
-                ) if self.param('boot_devices') else None,
-                cmdline=self.param('kernel_params') if self.param('kernel_params_persist') else None,
-                initrd=self.param('initrd_path') if self.param('kernel_params_persist') else None,
-                kernel=self.param('kernel_path') if self.param('kernel_params_persist') else None,
+                ) if self.param('boot_devices') else None
             ) if (
-                self.param('operating_system') or self.param('boot_devices') or self.param('kernel_params_persist')
+                self.param('operating_system') or self.param('boot_devices')
             ) else None,
             type=otypes.VmType(
                 self.param('type')
@@ -1559,7 +1532,6 @@ class VmsModule(BaseModule):
             check_host() and
             check_custom_compatibility_version() and
             not self.param('cloud_init_persist') and
-            not self.param('kernel_params_persist') and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
@@ -2354,14 +2326,10 @@ def main():
         cloud_init=dict(type='dict'),
         cloud_init_nics=dict(type='list', default=[]),
         cloud_init_persist=dict(type='bool', default=False, aliases=['sysprep_persist']),
-        kernel_params_persist=dict(type='bool', default=False),
         sysprep=dict(type='dict'),
         host=dict(type='str'),
         clone=dict(type='bool', default=False),
         clone_permissions=dict(type='bool', default=False),
-        kernel_path=dict(type='str'),
-        initrd_path=dict(type='str'),
-        kernel_params=dict(type='str'),
         instance_type=dict(type='str'),
         description=dict(type='str'),
         comment=dict(type='str'),
@@ -2447,11 +2415,6 @@ def main():
             vms_module.post_present(ret['id'])
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
-                def kernel_persist_check():
-                    return (module.params.get('kernel_params') or
-                            module.params.get('initrd_path') or
-                            module.params.get('kernel_path')
-                            and not module.params.get('cloud_init_persist'))
                 initialization = vms_module.get_initialization()
                 ret = vms_module.action(
                     action='start',
@@ -2475,13 +2438,8 @@ def main():
                             hosts=[otypes.Host(name=module.params['host'])]
                         ) if module.params['host'] else None,
                         initialization=initialization,
-                        os=otypes.OperatingSystem(
-                            cmdline=module.params.get('kernel_params'),
-                            initrd=module.params.get('initrd_path'),
-                            kernel=module.params.get('kernel_path'),
-                        ) if (kernel_persist_check()) else None,
+                        os=otypes.OperatingSystem()
                     ) if (
-                        kernel_persist_check() or
                         module.params.get('host') or
                         initialization is not None
                         and not module.params.get('cloud_init_persist')

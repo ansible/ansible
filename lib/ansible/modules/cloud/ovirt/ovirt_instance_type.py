@@ -489,7 +489,6 @@ class InstanceTypeModule(BaseModule):
         cpu_mode = getattr(entity.cpu, 'mode')
         it_display = entity.display
         return (
-            not self.param('kernel_params_persist') and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
