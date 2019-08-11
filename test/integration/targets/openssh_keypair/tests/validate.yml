@@ -97,3 +97,13 @@
   assert:
     that:
       - privatekey7_result.public_key == privatekey7_modified_result.public_key
+
+- name: Validate privatekey7 comment on creation
+  assert:
+    that:
+      - privatekey7_result.comment == 'test@privatekey7'
+
+- name: Validate privatekey7 comment update
+  assert:
+    that:
+      - privatekey7_modified_result.comment == 'test_modified@privatekey7'

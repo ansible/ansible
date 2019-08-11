@@ -113,6 +113,11 @@ public_key:
     returned: changed or success
     type: str
     sample: ssh-rsa AAAAB3Nza(...omitted...)veL4E3Xcw== test_key
+comment:
+    description: The comment of the generated key
+    returned: changed or success
+    type: str
+    sample: test@comment
 '''
 
 import os
@@ -313,6 +318,7 @@ class Keypair(object):
             # On removal this has no value
             'fingerprint': self.fingerprint[1] if self.fingerprint else '',
             'public_key': self.public_key,
+            'comment': self.comment if self.comment else '',
         }
 
         return result
