@@ -48,7 +48,7 @@ class AnsibleCloudscaleBase(object):
 
     def _post_or_patch(self, api_call, method, data):
         # This helps with tags when we have the full API resource href to update.
-        if not API_URL in api_call:
+        if API_URL not in api_call:
             api_call = API_URL + api_call
 
         headers = self._auth_header.copy()
@@ -105,15 +105,19 @@ class AnsibleCloudscaleBase(object):
         if resource and key in resource:
             if param != resource[key]:
                 self._result['changed'] = True
+
                 patch_data = {
                     key: param
                 }
+
                 self._result['diff']['before'].update({key: resource[key]})
                 self._result['diff']['after'].update(patch_data)
+
                 if not self._module.check_mode:
                     href = resource.get('href')
                     if not href:
                         self._module.fail_json(msg='Unable to update %s, no href found.' % key)
+
                     self._patch(href, patch_data)
                     return True
         return False
