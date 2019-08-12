@@ -117,7 +117,7 @@ notes:
 '''
 
 EXAMPLES = '''
-- name: create a https health check
+- name: create a HTTPS health check
   gcp_compute_https_health_check:
     name: test_object
     healthy_threshold: 10
