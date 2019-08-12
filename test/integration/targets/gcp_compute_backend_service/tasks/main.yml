@@ -22,7 +22,7 @@
     service_account_file: "{{ gcp_cred_file }}"
     state: present
   register: instancegroup
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-backendservice
     healthy_threshold: 10
@@ -149,7 +149,7 @@
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-backendservice
     healthy_threshold: 10
