@@ -44,7 +44,7 @@ options:
         description:
           - Purge interfaces not defined in the I(name)
         type: bool
-    type: list
+    type: dict
   tagged:
     description:
       - List of ethernet ports or LAGS to be added as trunk(tagged) ports to the vlan.
@@ -58,7 +58,7 @@ options:
         description:
           - Purge interfaces not defined in the I(name)
         type: bool
-    type: list
+    type: dict
   ip_dhcp_snooping:
     description:
       - Enables DHCP snooping on a VLAN.
@@ -104,7 +104,7 @@ options:
         description:
           - Manage the state(Enable/Disable) of the spanning_tree_802_1w in the current vlan
         type: bool
-    type: list
+    type: dict
   aggregate:
     description:
       - List of VLANs definitions.
@@ -140,7 +140,7 @@ options:
             description:
               - Purge interfaces not defined in the I(name)
             type: bool
-        type: list
+        type: dict
       interfaces:
         description:
           - List of ethernet ports or LAGS to be added as access(untagged) ports to the vlan.
@@ -154,7 +154,7 @@ options:
             description:
               - Purge interfaces not defined in the I(name)
             type: bool
-        type: list
+        type: dict
       delay:
         description:
           - Delay the play should wait to check for declarative intent params values.
@@ -179,7 +179,7 @@ options:
             description:
               - Manage the state(Enable/Disable) of the spanning_tree_802_1w in the current vlan
             type: bool
-        type: list
+        type: dict
       state:
         description:
           - State of the VLAN configuration.
@@ -725,8 +725,8 @@ def main():
     element_spec = dict(
         vlan_id=dict(type='int'),
         name=dict(),
-        interfaces=dict(type='dict',options=inter_spec),
-        tagged=dict(type='dict',options=tagged_spec),
+        interfaces=dict(type='dict', options=inter_spec),
+        tagged=dict(type='dict', options=tagged_spec),
         ip_dhcp_snooping=dict(type='bool'),
         ip_arp_inspection=dict(type='bool'),
         associated_interfaces=dict(type='list'),
