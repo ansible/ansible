@@ -29,6 +29,7 @@ from ..util import (
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
     ANSIBLE_ROOT,
+    ANSIBLE_TEST_DATA_ROOT,
     to_bytes,
 )
 
@@ -46,6 +47,10 @@ from ..cache import (
 
 from ..cloud import (
     CloudEnvironmentConfig,
+)
+
+from ..data import (
+    data_context,
 )
 
 
@@ -135,12 +140,19 @@ def integration_test_environment(args, target, inventory_path):
     """
     vars_file = 'integration_config.yml'
 
+    ansible_config_relative = os.path.join('test', 'integration', '%s.cfg' % args.command)
+    ansible_config_src = os.path.join(data_context().content.root, ansible_config_relative)
+
+    if not os.path.exists(ansible_config_src):
+        # use the default empty configuration unless one has been provided
+        ansible_config_src = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+
     if args.no_temp_workdir or 'no/temp_workdir/' in target.aliases:
         display.warning('Disabling the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
 
         integration_dir = os.path.abspath('test/integration')
         inventory_path = os.path.abspath(inventory_path)
-        ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
+        ansible_config = ansible_config_src
         vars_file = os.path.join(integration_dir, vars_file)
 
         yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
@@ -179,10 +191,10 @@ def integration_test_environment(args, target, inventory_path):
         files_needed = get_files_needed(target_dependencies)
 
         integration_dir = os.path.join(temp_dir, 'test/integration')
-        ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
+        ansible_config = os.path.join(temp_dir, ansible_config_relative)
 
         file_copies = [
-            (os.path.join(ANSIBLE_ROOT, 'test/integration/%s.cfg' % args.command), ansible_config),
+            (ansible_config_src, ansible_config),
             (os.path.join(ANSIBLE_ROOT, 'test/integration/integration_config.yml'), os.path.join(integration_dir, vars_file)),
             (os.path.join(ANSIBLE_ROOT, inventory_path), os.path.join(integration_dir, inventory_name)),
         ]
