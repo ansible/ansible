@@ -187,18 +187,20 @@ options:
             lun:
                 description:
                     - The logical unit number for data disk.
-                default: 0
+                    - This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+                require: true
                 version_added: "2.4"
             disk_size_gb:
                 description:
                     - The initial disk size in GB for blank data disks.
                     - This value cannot be larger than C(1023) GB.
                     - Size can be changed only when the virtual machine is deallocated.
-                    - Not sure when I(managed_disk_id) defined.
+                    - Not used when I(managed_disk_id) defined.
                 version_added: "2.4"
             managed_disk_type:
                 description:
                     - Managed data disk type.
+                    - Only used when OS disk created with managed disk.
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
@@ -221,7 +223,10 @@ options:
             storage_container_name:
                 description:
                     - Name of the container to use within the storage account to store VHD blobs.
-                    - If not specified, a default container will created.
+                    - If no name is specified a default container named 'vhds' will created.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
                 default: vhds
                 version_added: "2.4"
             storage_blob_name:
