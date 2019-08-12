@@ -1,0 +1,84 @@
+---
+- debug:  msg="START common/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Enable single interface
+  exos_lldp:
+    interfaces: "1"
+    state: present
+  register: result
+
+- include_vars:
+    file: single_request.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Enable multiple interface
+  exos_lldp:
+    interfaces: "2,3"
+    state: present
+  register: result
+
+- include_vars:
+    file: multiple_requests.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Test idempotency
+  exos_lldp:
+    interfaces: "1"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.requests == []"
+
+- name: Test invalid interface
+  exos_lldp:
+    interfaces: "35"
+    state: present
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg == 'Invalid interface'"
+
+- name: Disable interface
+  exos_lldp:
+    interfaces: "1"
+    state: absent
+  register: result
+
+- include_vars:
+    file: disable_request.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Test interface range
+  exos_lldp:
+    interfaces: "4-6,9"
+    state: present
+  register: result
+
+- include_vars:
+    file: interface_range.yaml
+    
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+
+- debug: msg="END common/basic.yaml on connection={{ ansible_connection }}"
