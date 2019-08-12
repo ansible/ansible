@@ -95,7 +95,7 @@ notes:
 '''
 
 EXAMPLES = '''
-- name: create a ssl policy
+- name: create a SSL policy
   gcp_compute_ssl_policy:
     name: test_object
     profile: CUSTOM

@@ -123,7 +123,7 @@ EXAMPLES = '''
     state: present
   register: instancegroup
 
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-targethttpsproxy
     healthy_threshold: 10
@@ -150,7 +150,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: urlmap-targethttpsproxy
     default_service: "{{ backendservice }}"
@@ -160,7 +160,7 @@ EXAMPLES = '''
     state: present
   register: urlmap
 
-- name: create a ssl certificate
+- name: create a SSL certificate
   gcp_compute_ssl_certificate:
     name: sslcert-targethttpsproxy
     description: A certificate for testing. Do not use this certificate in production
@@ -194,7 +194,7 @@ EXAMPLES = '''
     state: present
   register: sslcert
 
-- name: create a target https proxy
+- name: create a target HTTPS proxy
   gcp_compute_target_https_proxy:
     name: test_object
     ssl_certificates:
