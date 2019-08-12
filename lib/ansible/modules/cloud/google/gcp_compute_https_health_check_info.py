@@ -52,7 +52,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on an HTTPS health check
+- name: get info on a HTTPS health check
   gcp_compute_https_health_check_info:
     filters:
     - name = test_object

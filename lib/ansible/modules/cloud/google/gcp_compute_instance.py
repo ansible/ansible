@@ -321,7 +321,7 @@ options:
         description:
         - Specifies the title of an existing network. Not setting the network title
           will select the default network interface, which could have SSH already
-          configured.
+          configured .
         - 'This field represents a link to a Network resource in GCP. It can be specified
           in two ways. First, you can place a dictionary with key ''selfLink'' and
           value of your resource''s selfLink Alternatively, you can add `register:
@@ -787,7 +787,8 @@ networkInterfaces:
     network:
       description:
       - Specifies the title of an existing network. Not setting the network title
-        will select the default network interface, which could have SSH already configured.
+        will select the default network interface, which could have SSH already configured
+        .
       returned: success
       type: dict
     networkIP:
