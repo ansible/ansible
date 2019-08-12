@@ -1,0 +1,4 @@
+request_body:
+- data: null
+  method: DELETE
+  path: /rest/restconf/data/openconfig-vlan:vlans/vlan=300
