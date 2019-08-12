@@ -429,7 +429,7 @@ files (changing attributes, moving, and copying). To set, add a comma separated 
 
   # ansible.cfg
   [selinux]
-  special_context_filesystems=nfs,vboxsf,fuse,ramfs
+  special_context_filesystems=nfs,vboxsf,fuse,ramfs,vfat
 
 Most modules can use the built-in ``AnsibleModule`` methods to manipulate
 files. To access in a module that needs to know about these special context filesystems, instantiate an ``AnsibleModule`` and examine the list in
