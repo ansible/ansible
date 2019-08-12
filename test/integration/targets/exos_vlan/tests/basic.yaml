@@ -1,0 +1,129 @@
+---
+- debug:  msg="START common/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Create VLAN
+  exos_vlan:
+    vlan_id: "400"
+    name: "VLAN_400"
+  register: result
+
+- include_vars:
+    file: create_request.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Update VLAN
+  exos_vlan:
+    vlan_id: "400"
+    name: "test_vlan_4"
+    state: "present"
+  register: result
+
+- include_vars:
+    file: update_request.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Create VLAN aggregate
+  exos_vlan:
+    aggregate:
+      - { vlan_id: "200", name: "test_vlan_2" }
+      - { vlan_id: "300", name: "test_vlan_3" }
+    state: "present"
+  register: result
+
+- include_vars:
+    file: aggregate_vlan.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Add interfaces to VLAN
+  exos_vlan:
+    vlan_id: "400"
+    interfaces:
+      - 4
+      - 5
+  register: result
+
+- include_vars:
+    file: add_interfaces.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Test idempotency present
+  exos_vlan:
+    vlan_id: "400"
+    state: "present"
+  register: result
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.requests == []"
+
+- name: Test idempotency absent
+  exos_vlan:
+    vlan_id: "100"
+    state: "absent"
+  register: result
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.requests == []"
+
+
+- name: Test invalid parameter
+  exos_vlan:
+    vlan: "100"
+    name: "Vlan_100"
+    state: "present"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg == 'Unsupported parameters for (exos_vlan) module: vlan Supported parameters include: aggregate, delay, interfaces, name, purge, state, vlan_id'"
+
+- name: Delete VLAN
+  exos_vlan:
+    vlan_id: "200"
+    state: "absent"
+  register: result
+
+- include_vars:
+    file: delete_request.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- name: Test Purge VLAN
+  exos_vlan:
+    aggregate:
+      - { vlan_id: "400", name: "test_vlan_4" }
+    state: "present"
+    purge: true
+  register: result
+
+- include_vars:
+    file: purge_vlan.yaml
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "request_body == result.requests"
+
+- debug: msg="END common/basic.yaml on connection={{ ansible_connection }}"
