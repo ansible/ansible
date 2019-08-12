@@ -52,7 +52,7 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name: get info on an SSL policy
+- name: get info on a SSL policy
   gcp_compute_ssl_policy_info:
     filters:
     - name = test_object
