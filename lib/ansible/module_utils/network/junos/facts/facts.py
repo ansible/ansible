@@ -13,6 +13,7 @@ from ansible.module_utils.network.junos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.junos.facts.legacy.base import Default, Hardware, Config, Interfaces, OFacts, HAS_PYEZ
 from ansible.module_utils.network.junos.facts.interfaces.interfaces import InterfacesFacts
+from ansible.module_utils.network.junos.facts.lacp_interfaces.lacp_interfaces import Lacp_interfacesFacts
 from ansible.module_utils.network.junos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.junos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
 from ansible.module_utils.network.junos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
@@ -27,6 +28,7 @@ FACT_LEGACY_SUBSETS = dict(
 )
 FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
+    lacp_interfaces=Lacp_interfacesFacts,
     lag_interfaces=Lag_interfacesFacts,
     l2_interfaces=L2_interfacesFacts,
     l3_interfaces=L3_interfacesFacts,
