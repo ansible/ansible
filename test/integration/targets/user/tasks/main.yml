@@ -197,6 +197,22 @@
     state: absent
 
 
+# https://github.com/ansible/ansible/issues/60307
+# Make sure we can create a user when the home directory is missing
+- name: Create user with home path that does not exist
+  user:
+    name: ansibulluser3
+    state: present
+    home: "{{ user_home_prefix[ansible_facts.system] }}/nosuchdir"
+    createhome: no
+
+- name: Cleanup test account
+  user:
+    name: ansibulluser3
+    state: absent
+    remove: yes
+
+
 ## user check
 
 - name: run existing user check tests
