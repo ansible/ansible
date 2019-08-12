@@ -100,7 +100,7 @@ state:
   type: str
   sample: present
 tags:
-  description: Tags assosiated with the volume.
+  description: Tags assosiated with the server group.
   returned: success
   type: dict
   sample: { 'project': 'my project' }
@@ -142,8 +142,7 @@ class AnsibleCloudscaleServerGroup(AnsibleCloudscaleBase):
 
         # Refresh if resource was updated in live mode
         if updated and not self._module.check_mode:
-          server_group = self.get_server_group()
-
+            server_group = self.get_server_group()
         return server_group
 
     def get_server_group(self):
