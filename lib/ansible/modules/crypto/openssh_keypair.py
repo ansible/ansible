@@ -62,6 +62,7 @@ options:
         description:
             - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
         type: str
+        version_added: "2.9"
 
 extends_documentation_fragment: files
 '''
