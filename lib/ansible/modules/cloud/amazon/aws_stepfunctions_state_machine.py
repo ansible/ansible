@@ -103,29 +103,6 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 
-def main():
-    module_args = dict(
-        name=dict(type='str', required=True),
-        definition=dict(type='json'),
-        role_arn=dict(type='str'),
-        state=dict(choices=['present', 'absent'], default='present'),
-        tags=dict(default=None, type='dict'),
-    )
-    module = AnsibleAWSModule(
-        argument_spec=module_args,
-        required_if=[('state', 'present', ['role_arn']), ('state', 'present', ['definition'])],
-        supports_check_mode=True
-    )
-
-    sfn_client = module.client('stepfunctions', retry_decorator=AWSRetry.jittered_backoff(retries=5))
-    state = module.params.get('state')
-
-    try:
-        manage_state_machine(state, sfn_client, module)
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg='Failed to manage state machine')
-
-
 def manage_state_machine(state, sfn_client, module):
     state_machine_arn = get_state_machine_arn(sfn_client, module)
 
@@ -218,6 +195,29 @@ def get_state_machine_arn(sfn_client, module):
 def check_mode(module, msg=''):
     if module.check_mode:
         module.exit_json(changed=False, output=msg)
+
+
+def main():
+    module_args = dict(
+        name=dict(type='str', required=True),
+        definition=dict(type='json'),
+        role_arn=dict(type='str'),
+        state=dict(choices=['present', 'absent'], default='present'),
+        tags=dict(default=None, type='dict'),
+    )
+    module = AnsibleAWSModule(
+        argument_spec=module_args,
+        required_if=[('state', 'present', ['role_arn']), ('state', 'present', ['definition'])],
+        supports_check_mode=True
+    )
+
+    sfn_client = module.client('stepfunctions', retry_decorator=AWSRetry.jittered_backoff(retries=5))
+    state = module.params.get('state')
+
+    try:
+        manage_state_machine(state, sfn_client, module)
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to manage state machine')
 
 
 if __name__ == '__main__':
