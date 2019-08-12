@@ -120,7 +120,7 @@ def manage_state_machine(state, sfn_client, module):
 
 
 def create(sfn_client, module):
-    check_mode(module, msg='State machine would be created.')
+    check_mode(module, msg='State machine would be created.', changed=True)
 
     tags = module.params.get('tags')
     sfn_tags = ansible_dict_to_boto3_tag_list(tags, tag_name_key_name='key', tag_value_key_name='value') if tags else []
@@ -135,7 +135,7 @@ def create(sfn_client, module):
 
 
 def remove(state_machine_arn, sfn_client, module):
-    check_mode(module, msg='State machine would be deleted: {0}'.format(state_machine_arn))
+    check_mode(module, msg='State machine would be deleted: {0}'.format(state_machine_arn), changed=True)
 
     sfn_client.delete_state_machine(stateMachineArn=state_machine_arn)
     module.exit_json(changed=True, state_machine_arn=state_machine_arn)
@@ -145,7 +145,7 @@ def update(state_machine_arn, sfn_client, module):
     tags_to_add, tags_to_remove = compare_tags(state_machine_arn, sfn_client, module)
 
     if params_changed(state_machine_arn, sfn_client, module) or tags_to_add or tags_to_remove:
-        check_mode(module, msg='State machine would be updated: {0}'.format(state_machine_arn))
+        check_mode(module, msg='State machine would be updated: {0}'.format(state_machine_arn), changed=True)
 
         sfn_client.update_state_machine(
             stateMachineArn=state_machine_arn,
@@ -192,9 +192,9 @@ def get_state_machine_arn(sfn_client, module):
             return state_machine.get('stateMachineArn')
 
 
-def check_mode(module, msg=''):
+def check_mode(module, msg='', changed=False):
     if module.check_mode:
-        module.exit_json(changed=False, output=msg)
+        module.exit_json(changed=changed, output=msg)
 
 
 def main():

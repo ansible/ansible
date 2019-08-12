@@ -29,6 +29,23 @@
 
     # ==== Tests ===================================================
 
+    - name: Create a new state machine -- check_mode
+      aws_stepfunctions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','state_machine.json') }}"
+        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        tags:
+          project: helloWorld
+        state: present
+        <<: *aws_connection_info
+      register: creation_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - creation_check.changed == True
+          - creation_check.output == 'State machine would be created.'
+
     - name: Create a new state machine
       aws_stepfunctions_state_machine:
         name: "{{ state_machine_name }}"
@@ -48,6 +65,23 @@
       pause:
         seconds: 5
 
+    - name: Idempotent rerun of same state function -- check_mode
+      aws_stepfunctions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','state_machine.json') }}"
+        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        tags:
+          project: helloWorld
+        state: present
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+
+    - assert:
+        that:
+          - result.changed == False
+          - result.output == 'State is up-to-date.'
+
     - name: Idempotent rerun of same state function
       aws_stepfunctions_state_machine:
         name: "{{ state_machine_name }}"
@@ -62,6 +96,23 @@
     - assert:
         that:
           - result.changed == False
+
+    - name: Update an existing state machine -- check_mode
+      aws_stepfunctions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','alternative_state_machine.json') }}"
+        role_arn: "{{ stepfunctions_role.iam_role.arn }}"
+        tags:
+          differentTag: different_tag
+        state: present
+        <<: *aws_connection_info
+      register: update_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - update_check.changed == True
+          - "update_check.output == 'State machine would be updated: {{ creation_output.state_machine_arn }}'"
 
     - name: Update an existing state machine
       aws_stepfunctions_state_machine:
@@ -79,6 +130,19 @@
           - update_output.changed == True
           - update_output.state_machine_arn == creation_output.state_machine_arn
 
+    - name: Remove state machine -- check_mode
+      aws_stepfunctions_state_machine:
+        name: "{{ state_machine_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: deletion_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - deletion_check.changed == True
+          - "deletion_check.output == 'State machine would be deleted: {{ creation_output.state_machine_arn }}'"
+
     - name: Remove state machine
       aws_stepfunctions_state_machine:
         name: "{{ state_machine_name }}"
@@ -91,7 +155,7 @@
           - deletion_output.changed == True
           - deletion_output.state_machine_arn == creation_output.state_machine_arn
 
-    - name: Non-existant state machine is absent
+    - name: Non-existent state machine is absent
       aws_stepfunctions_state_machine:
         name: "non_existing_state_machine"
         state: absent
