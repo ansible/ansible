@@ -178,7 +178,7 @@ EXAMPLES = '''
 
 # When the module is called as cloudfront_facts, return values are published
 # in ansible_facts['cloudfront'][<id>] and can be used as follows.
-# Note that this is deprecated will stop working in Ansible 2.13.
+# Note that this is deprecated and will stop working in Ansible 2.13.
 - cloudfront_facts:
     distribution: true
     distribution_id: my-cloudfront-distribution-id
