@@ -247,7 +247,7 @@ class TestFileVaultSecret(unittest.TestCase):
 
     def test_file_not_found(self):
         tmp_file = tempfile.NamedTemporaryFile()
-        filename = tmp_file.name
+        filename = os.path.realpath(tmp_file.name)
         tmp_file.close()
 
         fake_loader = DictDataLoader({filename: 'sdfadf'})
@@ -390,7 +390,7 @@ class TestGetFileVaultSecret(unittest.TestCase):
 
     def test_file_not_found(self):
         tmp_file = tempfile.NamedTemporaryFile()
-        filename = tmp_file.name
+        filename = os.path.realpath(tmp_file.name)
         tmp_file.close()
 
         fake_loader = DictDataLoader({filename: 'sdfadf'})
