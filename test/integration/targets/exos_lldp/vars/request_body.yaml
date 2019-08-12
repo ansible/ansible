@@ -1,0 +1,60 @@
+single_request:
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "1"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=1/config"
+
+multiple_requests:
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "2"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=2/config"
+
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "3"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=3/config"
+
+interface_range:
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "4"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config"
+
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "5"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config"
+
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "6"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=6/config"
+
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "9"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=9/config"
+
+delete_request:
+  - data:
+      openconfig-lldp:config:
+        enabled: False
+        name: "1"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=1/config"
+    
