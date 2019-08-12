@@ -69,8 +69,8 @@ EXAMPLES = '''
 - debug:
     msg: "{{ output['cloudformation']['my-cloudformation-stack'] }}"
 
-# When the module is called as cloudformation_facts, facts are published in
-# ansible_facts['cloudformation'][<stack_name>] and can be used as follows.
+# When the module is called as cloudformation_facts, return values are published
+# in ansible_facts['cloudformation'][<stack_name>] and can be used as follows.
 # Note that this is deprecated will stop working in Ansible 2.13.
 
 - cloudformation_facts:

@@ -176,8 +176,8 @@ EXAMPLES = '''
 - debug:
     msg: "{{ result_website['cloudfront']['www.my-website.com'] }}"
 
-# When the module is called as cloudfront_facts, facts are published in
-# ansible_facts['cloudfront'][<id>] and can be used as follows.
+# When the module is called as cloudfront_facts, return values are published
+# in ansible_facts['cloudfront'][<id>] and can be used as follows.
 # Note that this is deprecated will stop working in Ansible 2.13.
 - cloudfront_facts:
     distribution: true
