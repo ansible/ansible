@@ -1,0 +1,15 @@
+request_body:
+- data:
+    openconfig-vlan:switched-vlan:
+      config:
+        access-vlan: 400
+        interface-mode: ACCESS
+  method: PATCH
+  path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=4/openconfig--if-ethernet:ethernet/openconfig-vlan:switched-vlan/
+- data:
+    openconfig-vlan:switched-vlan:
+      config:
+        access-vlan: 400
+        interface-mode: ACCESS
+  method: PATCH
+  path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=5/openconfig--if-ethernet:ethernet/openconfig-vlan:switched-vlan/
