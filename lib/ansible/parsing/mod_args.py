@@ -117,6 +117,7 @@ class ModuleArgsParser:
         self._collection_list = collection_list
         from ansible.playbook.handler import Handler  # delayed local import to prevent circular import
         self._task_attrs = set(Handler._valid_attrs.keys())  # store the valid Task/Handler attrs for quick access
+        # HACK: why is this not a FieldAttribute on task with a post-validate to bomb if not include/import?
         self._task_attrs.add('static')
 
     def _split_module_string(self, module_string):
@@ -293,8 +294,9 @@ class ModuleArgsParser:
         non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (k not in self._task_attrs) and (not k.startswith('with_')))
 
         if len(non_task_ds) > 1:
-            raise AnsibleParserError("task includes more than one action: ({0}). This could also "
-                                     "indicate a misspelled task keyword.".format(', '.join(non_task_ds.keys())))
+            raise AnsibleParserError("task uses more than one module/action: ({0}). This could also "
+                                     "indicate a misspelled task keyword, or an indentation issue."
+                                     .format(', '.join(non_task_ds.keys())))
 
         # walk the filtered input dictionary to see we recognize a module name
         for item, value in iteritems(non_task_ds):
@@ -310,8 +312,9 @@ class ModuleArgsParser:
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
             if non_task_ds:  # there was one non-task action, but we couldn't find it
+                bad_action = list(non_task_ds.keys())[0]
                 raise AnsibleParserError("couldn't resolve module/action '{0}'. This often indicates a "
-                                         "misspelling, missing collection, or incorrect module path.".format(list(non_task_ds.keys())[0]),
+                                         "misspelling, missing collection, or incorrect module path.".format(bad_action),
                                          obj=self._task_ds)
             else:
                 raise AnsibleParserError("no module/action detected in task.",
