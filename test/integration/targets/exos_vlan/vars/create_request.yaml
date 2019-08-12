@@ -1,0 +1,68 @@
+create_vlan:
+- data:
+    openconfig-vlan:vlan:
+    - config:
+        name: VLAN_400
+        status: ACTIVE
+        tpid: oc-vlan-types:TPID_0x8100
+        vlan-id: 400
+  method: POST
+  path: /rest/restconf/data/openconfig-vlan:vlans/
+
+add_interface:
+- data:
+    openconfig-vlan:switched-vlan:
+      config:
+        access-vlan: 400
+        interface-mode: ACCESS
+  method: PATCH
+  path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=4/openconfig--if-ethernet:ethernet/openconfig-vlan:switched-vlan/
+- data:
+    openconfig-vlan:switched-vlan:
+      config:
+        access-vlan: 400
+        interface-mode: ACCESS
+  method: PATCH
+  path: /rest/restconf/data/openconfig-interfaces:interfaces/interface=5/openconfig--if-ethernet:ethernet/openconfig-vlan:switched-vlan/
+ 
+update_vlan:
+  - data:
+      openconfig-vlan:vlan:
+      - config:
+          name: test_vlan_4
+          status: ACTIVE
+          tpid: oc-vlan-types:TPID_0x8100
+          vlan-id: 400
+    method: PATCH
+    path: /rest/restconf/data/openconfig-vlan:vlans/vlan=400
+  
+aggregate_vlan:
+- data:
+    openconfig-vlan:vlan:
+    - config:
+        name: test_vlan_2
+        status: ACTIVE
+        tpid: oc-vlan-types:TPID_0x8100
+        vlan-id: 200
+  method: POST
+  path: /rest/restconf/data/openconfig-vlan:vlans/
+- data:
+    openconfig-vlan:vlan:
+    - config:
+        name: test_vlan_3
+        status: ACTIVE
+        tpid: oc-vlan-types:TPID_0x8100
+        vlan-id: 300
+  method: POST
+  path: /rest/restconf/data/openconfig-vlan:vlans/
+
+purge_vlan:
+- data: null
+  method: DELETE
+  path: /rest/restconf/data/openconfig-vlan:vlans/vlan=300
+
+delete_vlan:
+  - data: null
+    method: DELETE
+    path: /rest/restconf/data/openconfig-vlan:vlans/vlan=200
+  
