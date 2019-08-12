@@ -1,0 +1,90 @@
+---
+- debug:
+    msg: "START junos_lacp_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_revert_output:
+      - name: ae1
+        period: slow
+        sync_reset: disable
+        system:
+          priority: 10
+          mac:
+            address: 00:00:00:00:00:03
+      - name: ae2
+        period: fast
+        system:
+          priority: 300
+      - name: ge-0/0/2
+        port_priority: 250
+        force_up: True
+      - name: ge-0/0/4
+        port_priority: 400
+        force_up: True
+
+- block:
+    - name: Apply the provided configuration (base config)
+      junos_lacp_interfaces:
+        config:
+          - name: ae1
+            period: slow
+            sync_reset: disable
+            system:
+              priority: 10
+              mac:
+                address: 00:00:00:00:00:03
+          - name: ge-0/0/2
+            port_priority: 250
+            force_up: False
+          - name: ae2
+            period: fast
+            system:
+              priority: 300
+          - name: ge-0/0/4
+            port_priority: 400
+            force_up: True
+        state: merged
+      register: base_config
+
+    - name: Gather interfaces facts
+      junos_facts:
+        gather_subset:
+          - default
+        gather_network_resources:
+          - lacp_interfaces
+
+    - name: Apply the provided configuration (config to be reverted)
+      junos_lacp_interfaces:
+        config:
+          - name: ae1
+            period: fast
+            sync_reset: enable
+            system:
+              priority: 100
+              mac:
+                address: 00:00:00:00:00:01
+        state: merged
+      register: result
+
+    - name: Assert that changes were applied
+      assert:
+        that: "result['changed'] == true"
+
+    - name: Revert back to base config using facts round trip
+      junos_lacp_interfaces:
+        config: "{{ ansible_facts['network_resources']['lacp_interfaces'] }}"
+        state: overridden
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ expected_revert_output | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_lacp_interfaces round trip integration tests on connection={{ ansible_connection }}"
