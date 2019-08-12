@@ -227,7 +227,7 @@ options:
                     - Only used when OS disk created with virtual hard disk (VHD).
                     - Used when I(managed_disk_type) not defined.
                     - Cannot be updated unless I(lun) updated.
-                default: vhds
+                default: None
                 version_added: "2.4"
             storage_blob_name:
                 description:
@@ -256,6 +256,15 @@ options:
                     - This can only be enabled on Premium_LRS managed disks with no caching and M-Series VMs.
                 version_added: "2.9"
                 type: bool
+            create_option:
+                descriiption:
+                    - Specifies how the virtual machine should be created.
+                choices:
+                    - empty
+                    - attach
+                    - from_image
+                default: empty
+                type: str
     public_ip_allocation_method:
         description:
             - Allocation method for the public IP of the VM.
