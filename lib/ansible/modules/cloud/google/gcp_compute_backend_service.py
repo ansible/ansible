@@ -355,7 +355,7 @@ EXAMPLES = '''
     state: present
   register: instancegroup
 
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-backendservice
     healthy_threshold: 10
