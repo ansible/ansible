@@ -174,7 +174,7 @@ EXAMPLES = '''
     state: present
   register: instancegroup
 
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-globalforwardingrule
     healthy_threshold: 10
@@ -201,7 +201,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: urlmap-globalforwardingrule
     default_service: "{{ backendservice }}"
@@ -211,7 +211,7 @@ EXAMPLES = '''
     state: present
   register: urlmap
 
-- name: create a target http proxy
+- name: create a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: targethttpproxy-globalforwardingrule
     url_map: "{{ urlmap }}"
