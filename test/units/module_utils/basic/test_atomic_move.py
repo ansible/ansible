@@ -55,7 +55,7 @@ def atomic_mocks(mocker, monkeypatch):
     mocks['rename'].return_value = None
 
     # normalize OS specific features
-    monkeypatch.delattr(os, 'chflags')
+    monkeypatch.delattr(os, 'chflags', raising=False)
 
     yield mocks
 

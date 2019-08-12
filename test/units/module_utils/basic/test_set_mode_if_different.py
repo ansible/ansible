@@ -107,7 +107,7 @@ def test_missing_lchmod_is_not_link(am, mock_stats, mocker, monkeypatch, check_m
     am.check_mode = check_mode
     original_hasattr = hasattr
 
-    monkeypatch.delattr(os, 'lchmod')
+    monkeypatch.delattr(os, 'lchmod', raising=False)
 
     mocker.patch('os.lstat', side_effect=[mock_stats['before'], mock_stats['after']])
     mocker.patch('os.path.islink', return_value=False)
@@ -130,7 +130,7 @@ def test_missing_lchmod_is_link(am, mock_stats, mocker, monkeypatch, check_mode)
     am.check_mode = check_mode
     original_hasattr = hasattr
 
-    monkeypatch.delattr(os, 'lchmod')
+    monkeypatch.delattr(os, 'lchmod', raising=False)
 
     mocker.patch('os.lstat', side_effect=[mock_stats['before'], mock_stats['after']])
     mocker.patch('os.path.islink', return_value=True)
