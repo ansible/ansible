@@ -14,7 +14,6 @@ from .util import (
     display,
     find_python,
     ApplicationError,
-    ANSIBLE_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_BIN_PATH,
@@ -25,7 +24,7 @@ from .util_common import (
 )
 
 from .config import (
-    IntegrationConfig,
+    PosixIntegrationConfig,
     EnvironmentConfig,
 )
 
@@ -62,6 +61,9 @@ def ansible_environment(args, color=True, ansible_config=None):
     ansible = dict(
         ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE=str(SOFT_RLIMIT_NOFILE),
         ANSIBLE_FORCE_COLOR='%s' % 'true' if args.color and color else 'false',
+        ANSIBLE_FORCE_HANDLERS='true',  # allow cleanup handlers to run when tests fail
+        ANSIBLE_HOST_PATTERN_MISMATCH='error',  # prevent tests from unintentionally passing when hosts are not found
+        ANSIBLE_INVENTORY='/dev/null',  # force tests to provide inventory
         ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_HOST_KEY_CHECKING='false',
         ANSIBLE_RETRY_FILES_ENABLED='false',
@@ -71,6 +73,11 @@ def ansible_environment(args, color=True, ansible_config=None):
         PAGER='/bin/cat',
         PATH=path,
     )
+
+    if isinstance(args, PosixIntegrationConfig):
+        ansible.update(dict(
+            ANSIBLE_PYTHON_INTERPRETER='/set/ansible_python_interpreter/in/inventory',  # force tests to set ansible_python_interpreter in inventory
+        ))
 
     env.update(ansible)
 
