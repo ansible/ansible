@@ -45,9 +45,6 @@ class Lldp_globalFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if connection:  # just for linting purposes, remove
-            pass
-
         if not data:
             data = connection.get_config()
 
