@@ -404,7 +404,7 @@ def parse_vlan_id(module):
         if 'VLANs Configured :' in line:
             values = line.split(':')[1]
             vlans = [s for s in values.split() if s.isdigit()]
-            s = re.findall(b"(?P<low>\d+)\sto\s(?P<high>\d+)", values)
+            s = re.findall(r"(?P<low>\d+)\sto\s(?P<high>\d+)", values)
             for ranges in s:
                 low = int(ranges[0]) + 1
                 high = int(ranges[1])
