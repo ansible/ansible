@@ -1,0 +1,39 @@
+---
+- debug:
+    msg: "START junos_lacp merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- set_fact:
+    expected_merged_output:
+      - system_priority: 63
+        link_protection: revertive
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      junos_lacp: &merged
+        config:
+          system_priority: 63
+          link_protection: revertive
+        state: merged
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_merged_output | symmetric_difference([result['after']]) |length == 0 }}"
+
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_lacp: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_lacp merged integration tests on connection={{ ansible_connection }}"
