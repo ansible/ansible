@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -111,7 +113,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+data:
     description: Dictionary of the network domain
     returned: success
     type: complex
@@ -243,7 +245,7 @@ def create_network_domain(module, client):
     else:
         return_data['network'].append({'id': new_network_domain_id})
 
-    module.exit_json(changed=True, result=return_data.get('network'))
+    module.exit_json(changed=True, data=return_data.get('network'))
 
 
 def update_network_domain(module, client, existing_network_domain):
@@ -279,7 +281,7 @@ def update_network_domain(module, client, existing_network_domain):
     else:
         return_data['network'] = {'id': existing_network_domain.get('id')}
 
-    module.exit_json(changed=True, result=return_data.get('network'))
+    module.exit_json(changed=True, data=return_data.get('network'))
 
 def compare_network_domain(module, network_domain):
     """

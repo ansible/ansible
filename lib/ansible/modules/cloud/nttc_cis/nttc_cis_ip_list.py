@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -127,7 +129,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+data:
     description: a list of IP Address List objects or strings
     returned: success
     type: complex
@@ -193,7 +195,9 @@ results:
                     type: string
                     sample: "My Child IP Address List"
 '''
+
 import traceback
+import ipaddress
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nttc_cis.nttc_cis_utils import get_credentials, get_nttc_cis_regions, return_object, compare_json
@@ -225,7 +229,7 @@ def create_ip_list(module, client, network_domain_id):
     except NTTCCISAPIException as e:
         module.fail_json(msg='Could not create the IP Address List {0}'.format(e))
 
-    module.exit_json(changed=True, results=return_data['ip_list'])
+    module.exit_json(changed=True, data=return_data['ip_list'])
 
 
 def update_ip_list(module, client, network_domain_id, ip_list):
@@ -254,10 +258,10 @@ def update_ip_list(module, client, network_domain_id, ip_list):
     except (KeyError, IndexError, NTTCCISAPIException) as e:
         module.fail_json(msg='Could not update the IP Address List - {0}'.format(e))
 
-    module.exit_json(changed=True, results=return_data['ip_list'])
+    module.exit_json(changed=True, data=return_data['ip_list'])
 
 
-def compare_ip_list(module, client, network_domain_id, ip_list):
+def compare_ip_list(module, client, network_domain_id, ip_list, return_all=False):
     """
     Compare two IP address lists
 
@@ -265,6 +269,7 @@ def compare_ip_list(module, client, network_domain_id, ip_list):
     :arg client: The CC API client instance
     :arg new_fw_rule: The dict containing the specification for the new rule based on the supplied parameters
     :arg ip_list: The existing IP address list object to be compared
+    :arg return_all: If True returns the full list of changes otherwise just True/False
     :returns: Any differences between the two IP address lists
     """
     # Handle schema differences between the returned API object and the one required to be sent
@@ -292,8 +297,24 @@ def compare_ip_list(module, client, network_domain_id, ip_list):
         new_ip_list['childIpAddressListId'] = []
     if module.params.get('ip_addresses_nil') and not ip_list.get('ipAddress'):
         new_ip_list['ipAddress'] = []
+    # Handle case where no child IP address list is required but the schema still returns an empty list
+    if not ip_list.get('childIpAddressListId') and not module.params.get('child_ip_lists'):
+        ip_list.pop('childIpAddressListId')
+    # Handle differences in IPv6 address formatting between Cloud Control and everything else
+    if ip_list.get('ipVersion') == 'IPV6':
+        if ip_list.get('ipAddress') and new_ip_list.get('ipAddress'):
+            for num, ipv6 in enumerate(ip_list.get('ipAddress'), start=0):
+                ip_list.get('ipAddress')[num]['begin'] = str(ipaddress.ip_address(unicode(ipv6.get('begin'))).exploded)
+                if ipv6.get('end'):
+                    ip_list.get('ipAddress')[num]['end'] = str(ipaddress.ip_address(unicode(ipv6.get('end'))).exploded)
+            for num, ipv6 in enumerate(new_ip_list.get('ipAddress'), start=0):
+                new_ip_list.get('ipAddress')[num]['begin'] = str(ipaddress.ip_address(unicode(ipv6.get('begin'))).exploded)
+                if ipv6.get('end'):
+                    new_ip_list.get('ipAddress')[num]['end'] = str(ipaddress.ip_address(unicode(ipv6.get('end'))).exploded)
 
     compare_result = compare_json(new_ip_list, ip_list, None)
+    if return_all:
+        return compare_result
     return compare_result['changes']
 
 
@@ -335,7 +356,8 @@ def main():
             child_ip_lists_nil=dict(required=False, default=False, type='bool'),
             network_domain=dict(required=True, type='str'),
             state=dict(default='present', choices=['present', 'absent'])
-        )
+        ),
+        supports_check_mode=True
     )
 
     credentials = get_credentials()
@@ -354,10 +376,8 @@ def main():
     try:
         network = client.get_network_domain_by_name(name=network_domain_name, datacenter=datacenter)
         network_domain_id = network.get('id')
-    except NTTCCISAPIException as e:
-        module.fail_json(msg='Failed to get a list of Cloud Network Domains - {0}'.format(e.message), exception=traceback.format_exc())
-    if not network:
-        module.fail_json(msg='Failed to find the Cloud Network Domain Check the network_domain value')
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
+        module.fail_json(msg='Could not find the Cloud Network Domain: {0}'.format(network_domain_name))
 
     # Get a list of existing VLANs and check if the new name already exists
     try:
@@ -367,14 +387,23 @@ def main():
 
     if state == 'present':
         if not ip_list:
+            # Implement check_mode
+            if module.check_mode:
+                module.exit_json(msg='This IP address list will be created', data=module.params)
             create_ip_list(module, client, network_domain_id)
         else:
+            # Implement check_mode
+            if module.check_mode:
+                module.exit_json(diff=compare_ip_list(module, client, network_domain_id, deepcopy(ip_list), True))
             if compare_ip_list(module, client, network_domain_id, deepcopy(ip_list)):
                 update_ip_list(module, client, network_domain_id, ip_list)
-            module.exit_json(result=ip_list)
+            module.exit_json(data=ip_list)
     elif state == 'absent':
         if not ip_list:
             module.exit_json(msg='IP Address List {0} was not found'.format(name))
+        # Implement check_mode
+        if module.check_mode:
+            module.exit_json(msg='This IP address list will be removed', data=ip_list)
         delete_ip_list(module, client, ip_list)
 
 

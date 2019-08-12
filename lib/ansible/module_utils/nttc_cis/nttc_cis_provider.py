@@ -21,6 +21,8 @@
 #
 # NTTC CIS Cloud API Provider (MCP 2.0)
 
+from __future__ import (absolute_import, division, print_function)
+
 import traceback
 try:
     import requests as REQ
@@ -28,8 +30,9 @@ except ImportError:
     raise Exception('The Requests module is required for NTTC-CIS-CLOUD. Use "pip install requests".')
 import struct
 import socket
+from ipaddress import (ip_address as ip_addr, AddressValueError)
 from ansible.module_utils.nttc_cis.nttc_cis_config import (HTTP_HEADERS, API_VERSION, API_ENDPOINTS, DEFAULT_REGION)
-from ansible.module_utils.nttc_cis.nttc_cis_utils import get_ip_version
+from ansible.module_utils.nttc_cis.nttc_cis_utils import get_ip_version, IP_TO_INT, INT_TO_IP
 
 class NTTCCISAPIException(Exception):
     """
@@ -160,7 +163,7 @@ class NTTCCISClient():
         try:
             return network_exists[0]
         except IndexError as e:
-            return False
+            return None
 
 
     def create_network_domain(self, datacenter=None, name=None, network_type=None, description=None):
@@ -321,7 +324,7 @@ class NTTCCISClient():
         try:
             return vlan_exists[0]
         except IndexError as e:
-            return False
+            return None
 
 
     def create_vlan(self,
@@ -539,7 +542,7 @@ class NTTCCISClient():
 
     def shutdown_server(self, server_id=None):
         """
-        Power off a VM
+        Shutdown a VM
         """
         params = {}
         if server_id is not None:
@@ -565,6 +568,37 @@ class NTTCCISClient():
                                           'accepted')
         else:
             raise NTTCCISAPIException('No response from the API')
+
+
+    def poweroff_server(self, server_id=None):
+        """
+        Hard power off a VM
+        """
+        params = {}
+        if server_id is not None:
+            params['id'] = server_id
+        else:
+            raise NTTCCISAPIException('No server ID supplied')
+
+        url = self.base_url + 'server/powerOffServer'
+        response = self.api_post_call(url, params)
+        if response != None:
+            if 'requestId' in response.json():
+                return response.json()
+            elif 'responseCode' in response.json():
+                if response.json()['responseCode'] == 'SERVER_STOPPED':
+                    return {}
+                else:
+                    raise NTTCCISAPIException('Could not confirm that the '
+                                              'poweroff server request was '
+                                              'accepted')
+            else:
+                raise NTTCCISAPIException('Could not confirm that the '
+                                          'poweroff server request was '
+                                          'accepted')
+        else:
+            raise NTTCCISAPIException('No response from the API')
+
 
     def start_server(self, server_id=None):
         """
@@ -643,20 +677,42 @@ class NTTCCISClient():
             raise NTTCCISAPIException('No response from the API')
 
 
+    def change_iops(self, disk_id=None, disk_iops=None):
+        """
+        Change the IOPS count for a disk
+        """
+        params = {}
+        if not disk_id:
+            raise NTTCCISAPIException('No disk ID supplied')
+        if not disk_iops:
+            raise NTTCCISAPIException('No disk IOPS count supplied')
+
+        params['id'] = disk_id
+        params['iops'] = disk_iops
+
+        url = self.base_url + 'server/changeDiskIops'
+
+        response = self.api_post_call(url, params)
+        if response != None:
+            return response.json()
+        else:
+            raise NTTCCISAPIException('No response from the API')
+
+
     def expand_disk(self, server_id=None, disk_id=None, disk_size=None):
         """
         Expand an existing disk size
         """
         params = {}
-        if server_id is not None:
+        if server_id:
             params['id'] = server_id
         else:
             raise NTTCCISAPIException('No server ID supplied')
-        if disk_id is not None:
+        if disk_id:
             params['id'] = disk_id
         else:
             raise NTTCCISAPIException('No disk ID supplied')
-        if disk_size is not None:
+        if disk_size:
             params['newSizeGb'] = disk_size
         else:
             raise NTTCCISAPIException('No disk size supplied')
@@ -1054,7 +1110,7 @@ class NTTCCISClient():
         Create a static route
         """
         params = {}
-        if all([network_domain_id, name, version, network, prefix, next_hop]):
+        if not all([network_domain_id, name, version, network, prefix, next_hop]):
             raise NTTCCISAPIException('A valid value is required for network_domain, name, version, network, prefix and next_hop')
 
         params['networkDomainId'] = network_domain_id
@@ -1356,7 +1412,7 @@ class NTTCCISClient():
 
         :arg network_domain_id: Cloud Network Domain UUID
         :arg public_ipv4: A public IPv4 address
-        :returns: UUID of the public IPv4 block
+        :returns: The public IPv4 block dict
         """
         ip_list = []
         ip_to_int = lambda ip_address: struct.unpack('!I', socket.inet_aton(ip_address))[0]
@@ -1446,6 +1502,28 @@ class NTTCCISClient():
             raise NTTCCISAPIException('Could not confirm that the remove public ipv4 block request was accepted')
 
 
+    def check_public_block_in_use(self, network_domain_id, base_public_ipv4):
+        """
+        Check if a public ipv4 block is in use
+
+        :arg network_domain_id: The UUID of the CND
+        :arg base_public_ipv4: The base IPv4 address of the public block
+        :returns: True or False
+        """
+        nat_public_ip_list = []
+        ip1 = base_public_ipv4
+        ip2 = INT_TO_IP(IP_TO_INT(ip1) + 1)
+        try:
+            nats = self.list_nat_rule(network_domain_id)
+            for nat in nats:
+                nat_public_ip_list.append(nat.get('externalIp'))
+            if ip1 not in nat_public_ip_list and ip2 not in nat_public_ip_list:
+                return False
+            return True
+        except (KeyError, IndexError, NTTCCISAPIException) as e:
+            raise NTTCCISAPIException('{0}'.format(e))
+
+
     def list_reserved_ip(self, vlan_id=None, datacenter_id=None, version=4):
         """
         Return an array of reserved IPv4 or IPv6 addresses
@@ -1478,8 +1556,9 @@ class NTTCCISClient():
                 return response.json()['reservedIpv6Address']
             else:
                 raise NTTCCISAPIException('Invalid IP version')
-        except KeyError:
-            return []
+        except (KeyError, NTTCCISAPIException) as e:
+            raise NTTCCISAPIException(e)
+            #return []
 
 
     def reserve_ip(self, vlan_id=None, ip_address=None, description=None, version=4):
@@ -1508,11 +1587,11 @@ class NTTCCISClient():
 
         response = self.api_post_call(url, params)
         try:
-            if response.json()['info'][0]['value'] == ip_address:
-                return response.json()['info'][0]['value']
+            if ip_addr(unicode(response.json().get('info')[0].get('value'))) == ip_addr(unicode(ip_address)):
+                return response.json().get('info')[0].get('value')
             else:
-                raise NTTCCISAPIException('Could not reserve the private IPv{0} address'.format(version))
-        except (KeyError, IndexError):
+                raise NTTCCISAPIException('Could not reserve the private IPv{0} address: {1}'.format(version, response))
+        except (KeyError, IndexError, AttributeError):
             raise NTTCCISAPIException('Could not confirm that the reserve private ipv{0} address request was accepted'.format(version))
 
 
@@ -1614,13 +1693,31 @@ class NTTCCISClient():
         """
         Return a specific NAT rule based on the private IPv4 address
 
-        :arg nat_rule_id: NAT rule UUID
+        :arg network_domain_id: The UUID of the CND:
+        :arg private_ip: The private IPv4 address to search by
         :returns: The NAT rule object
         """
         try:
             nat_rules = self.list_nat_rule(network_domain_id)
             for nat_rule  in nat_rules:
                 if nat_rule['internalIp'] == private_ip:
+                    return nat_rule
+            return None
+        except Exception as e:
+            raise NTTCCISAPIException('{0}'.format(e))
+
+    def get_nat_by_public_ip(self, network_domain_id, public_ip):
+        """
+        Return a specific NAT rule based on the public IPv4 address
+
+        :arg network_domain_id: The UUID of the CND:
+        :arg public_ip: The public IPv4 address to search by
+        :returns: The NAT rule object
+        """
+        try:
+            nat_rules = self.list_nat_rule(network_domain_id)
+            for nat_rule  in nat_rules:
+                if nat_rule['externalIp'] == public_ip:
                     return nat_rule
             return None
         except Exception as e:
@@ -1699,7 +1796,6 @@ class NTTCCISClient():
             return port_list[0]
         except (KeyError, IndexError):
             return None
-
 
     def create_port_list(self, network_domain_id, name, description, ports, child_port_lists):
         """
@@ -2161,7 +2257,9 @@ class NTTCCISClient():
         """
         Convert a list of firewall rule arguments to a dict
 
-        :arg id: UUID of the firewall rule
+        :arg create: Boolean as to whether or not to create an ACL
+        :arg fw_rule_id: UUID of the firewall rule
+        :arg network_domain_id: The UUID of the CND
         :arg action: [ACCEPT_DECISIVELY, DROP]
         :arg protocol: [IP, ICMP, TCP, UDP]
         :arg src_ip: (string) IPv4 or IPv6 address

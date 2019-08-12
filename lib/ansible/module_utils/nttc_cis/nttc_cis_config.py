@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 # Author: Ken Sinfield (@kensinfield)
+
+from __future__ import (absolute_import, division, print_function)
+
 """
 Module configuration parameters
 """
@@ -258,6 +261,9 @@ SERVER_STATES = ['NORMAL', 'PENDING_ADD', 'PENDING_CHANGE', 'PENDING_DELETE',
 # Disk speeds that support variable IOPS
 VARIABLE_IOPS = ['PROVISIONEDIOPS']
 
+# The multiplier used to figure out the minimum valid IOPS for a disk. Multiplied by disk size
+IOPS_MULTIPLIER = 3
+
 # Valid disk speeds
 DISK_SPEEDS = ['STANDARD', 'HIGHPERFORMANCE', 'ECONOMY', 'PROVISIONEDIOPS']
 
@@ -266,6 +272,9 @@ DEFAULT_REGION = 'na'
 
 # SCSI Adapter Types
 SCSI_ADAPTER_TYPES = ['LSI_LOGIC_PARALLEL', 'LSI_LOGIC_SAS', 'VMWARE_PARAVIRTUAL', 'BUS_LOGIC']
+
+# Disk Controller Types
+DISK_CONTROLLER_TYPES = ['ideController', 'sataController', 'scsiController']
 
 # NIC Adapter Types
 NIC_ADAPTER_TYPES = ['E1000', 'VMXNET3']

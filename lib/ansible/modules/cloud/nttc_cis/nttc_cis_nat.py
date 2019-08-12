@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -92,65 +94,69 @@ EXAMPLES = '''
       region: na
       datacenter: NA9
       network_domain: "xxxx"
-      id: "ffffffff-fff-ffff-ffff-ffffffffffff"
+      internal_ip: "x.x.x.x"
       state: absent
 '''
 
 RETURN = '''
-count:
-    description: The number of objects returned
-    returned: success
-    type: int
-    sample: 1
-nat:
-    description: a single or list of IP address objects or strs
+data:
+    description: Server objects
     returned: success
     type: complex
     contains:
-        id:
-            description: The UUID of the NAT entry
-            type: str
-            returned: when state == present
-            sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
-        datacenterId:
-            description: Datacenter id/location
-            type: str
-            returned: when state == present
-            sample: NA3
-        createTime:
-            description: The creation date of the image
-            type: str
-            returned: when state == present
-            sample: "2019-01-14T11:12:31.000Z"
-        externalIp:
-            description: The public IPv4 address of the NAT
-            type: str
-            returned: when state == present
-            sample: x.x.x.x
-        externalIpAddressability:
-            description: Internal Use
-            type: str
-            returned: when state == present
-            sample: PUBLIC_IP_BLOCK
-        internalIp:
-            description: The internal IPv4 address of a host
-            type: str
-            returned: when state == present
-            sample: 10.0.0.10
-        networkDomainId:
-            description: Network Domain ID
-            type: str
-            returned: when state == present
-            sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
-        state:
-            state:
-            description: Status of the VLAN
-            type: str
-            returned: when state == present
-            sample: NORMAL
+        count:
+            description: The number of objects returned
+            returned: success
+            type: int
+            sample: 1
+        nat:
+            description: a single or list of IP address objects or strs
+            returned: success
+            type: complex
+            contains:
+                id:
+                    description: The UUID of the NAT entry
+                    type: str
+                    returned: when state == present
+                    sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
+                datacenterId:
+                    description: Datacenter id/location
+                    type: str
+                    returned: when state == present
+                    sample: NA3
+                createTime:
+                    description: The creation date of the image
+                    type: str
+                    returned: when state == present
+                    sample: "2019-01-14T11:12:31.000Z"
+                externalIp:
+                    description: The public IPv4 address of the NAT
+                    type: str
+                    returned: when state == present
+                    sample: x.x.x.x
+                externalIpAddressability:
+                    description: Internal Use
+                    type: str
+                    returned: when state == present
+                    sample: PUBLIC_IP_BLOCK
+                internalIp:
+                    description: The internal IPv4 address of a host
+                    type: str
+                    returned: when state == present
+                    sample: 10.0.0.10
+                networkDomainId:
+                    description: Network Domain ID
+                    type: str
+                    returned: when state == present
+                    sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
+                state:
+                    state:
+                    description: Status of the VLAN
+                    type: str
+                    returned: when state == present
+                    sample: NORMAL
 '''
 
-import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nttc_cis.nttc_cis_utils import get_credentials, get_nttc_cis_regions, return_object
 from ansible.module_utils.nttc_cis.nttc_cis_provider import NTTCCISClient, NTTCCISAPIException
@@ -171,25 +177,45 @@ def create_nat_rule(module, client, network_domain_id, internal_ip, external_ip)
     if internal_ip is None or external_ip is None:
         module.fail_json(msg='Valid internal_ip and external_ip values are required')
 
-    # Check if a NAT rule already exists for this private IP and delete it if it exists
+    # Check if a NAT rule already exists for this private & public IP and delete it if it exists
     # Only a single NAT rule can exist for any given private IP address
     try:
         nat_rule = client.get_nat_by_private_ip(network_domain_id, internal_ip)
-        if nat_rule is not None:
+        nat_rule_public = client.get_nat_by_public_ip(network_domain_id, external_ip)
+        if nat_rule:
+            if nat_rule.get('internalIp') == internal_ip and nat_rule.get('externalIp') == external_ip:
+                module.exit_json(data=nat_rule)
+            # Check conflicts on the public IP
+            if nat_rule_public:
+                return_data['nat'].append(nat_rule_public)
+                return_data['nat'].append(nat_rule)
+            # Implement Check Mode
+            if module.check_mode:
+                module.exit_json(msg='The following NAT rules will be affected', data=return_data.get('nat'))
             client.remove_nat_rule(nat_rule.get('id'))
+        if nat_rule_public:
+            return_data['nat'].append(nat_rule_public)
+            # Implement Check Mode
+            if module.check_mode:
+                module.exit_json(msg='The following NAT rules will be affected', data=return_data.get('nat'))
+            client.remove_nat_rule(nat_rule_public.get('id'))
     except (KeyError, NTTCCISAPIException) as e:
-        module.fail_json(msg='Could not create the NAT rule - {0}'.format(e.message), exception=traceback.format_exc())
+        module.fail_json(msg='Could not create the NAT rule - {0}'.format(e.message))
 
     try:
+        # Implement Check Mode
+        if module.check_mode:
+            module.exit_json(msg='The NAT rule with external IP {0} and internal IP {1}'
+                             ' will be created'.format(external_ip, internal_ip))
         client.create_nat_rule(network_domain_id, internal_ip, external_ip)
         return_data['nat'] = client.get_nat_by_private_ip(network_domain_id, internal_ip)
     except (KeyError, NTTCCISAPIException) as e:
-        module.fail_json(msg='Could not create the NAT rule - {0}'.format(e.message), exception=traceback.format_exc())
+        module.fail_json(msg='Could not create the NAT rule - {0}'.format(e.message))
 
-    module.exit_json(changed=True, results=return_data['nat'])
+    module.exit_json(changed=True, data=return_data.get('nat'))
 
 
-def delete_nat_rule(module, client, nat_rule_id):
+def delete_nat_rule(module, client, network_domain_id, internal_ip, external_ip):
     """
     Delete a NAT rule
 
@@ -198,12 +224,22 @@ def delete_nat_rule(module, client, nat_rule_id):
     :arg nat_rule_id: The UUID of the existing NAT rule to delete
     :returns: A message
     """
-    if nat_rule_id is None:
-        module.fail_json(msg='A value for id is required')
+    nat_rule_id = None
     try:
+        nat_rule = client.get_nat_by_private_ip(network_domain_id, internal_ip)
+        nat_rule_public = client.get_nat_by_public_ip(network_domain_id, external_ip)
+        if nat_rule:
+            nat_rule_id = nat_rule.get('id')
+        elif nat_rule_public:
+            nat_rule_id = nat_rule_public.get('id')
+        else:
+            module.exit_json(msg='Could not find a valid NAT rule')
+        # Implement Check Mode
+        if module.check_mode:
+            module.exit_json(msg='NAT with ID {0} will be removed'.format(nat_rule_id))
         client.remove_nat_rule(nat_rule_id)
-    except NTTCCISAPIException as e:
-        module.fail_json(msg='Could not delete the NAT rule - {0}'.format(e.message), exception=traceback.format_exc())
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
+        module.fail_json(msg='Could not delete the NAT rule - {0}'.format(e.message))
 
     module.exit_json(changed=True, msg='Successfully deleted the NAT rule')
 
@@ -224,34 +260,34 @@ def main():
             external_ip=dict(required=False, default=None, type='str'),
             id=dict(default=None, type='str'),
             state=dict(default='present', choices=['present', 'absent'])
-        )
+        ),
+        supports_check_mode=True
     )
     credentials = get_credentials()
-    object_id = module.params['id']
-    network_domain_name = module.params['network_domain']
-    datacenter = module.params['datacenter']
-    state = module.params['state']
-    internal_ip = module.params['internal_ip']
-    external_ip = module.params['external_ip']
+    network_domain_name = module.params.get('network_domain')
+    datacenter = module.params.get('datacenter')
+    state = module.params.get('state')
+    internal_ip = module.params.get('internal_ip')
+    external_ip = module.params.get('external_ip')
 
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTCCISClient((credentials[0], credentials[1]), module.params['region'])
+    client = NTTCCISClient((credentials[0], credentials[1]), module.params.get('region'))
 
     # Get a list of existing CNDs and check if the name already exists
     try:
         network = client.get_network_domain_by_name(name=network_domain_name, datacenter=datacenter)
         network_domain_id = network.get('id')
-    except (KeyError, NTTCCISAPIException) as e:
-        module.fail_json(msg='Failed to get a list of Cloud Network Domains - {0}'.format(e.message), exception=traceback.format_exc())
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
+        module.fail_json(msg='Failed to get a list of Cloud Network Domains - {0}'.format(e.message))
     if not network:
         module.fail_json(msg='Failed to find the Cloud Network Domain Check the network_domain value')
 
     if state == 'present':
         create_nat_rule(module, client, network_domain_id, internal_ip, external_ip)
     elif state == 'absent':
-        delete_nat_rule(module, client, object_id)
+        delete_nat_rule(module, client, network_domain_id, internal_ip, external_ip)
 
 
 if __name__ == '__main__':

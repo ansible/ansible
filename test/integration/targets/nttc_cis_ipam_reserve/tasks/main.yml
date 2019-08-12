@@ -1,0 +1,88 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Reserve and IPv4 address
+    nttc_cis_ipam_reserve:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      vlan: myVLAN
+      ip_address: 10.1.77.100
+      state: present
+    register: ipam
+    tags:
+      - reserve_ipv4
+
+  - debug:
+      var: ipam
+    tags:
+      - reserve_ipv4
+
+  - name: Reserve and IPv6 address
+    nttc_cis_ipam_reserve:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      vlan: myVLAN
+      ip_address: 2607:f480:211:1277:0:0:0:100
+      state: present
+    register: ipam
+    tags:
+      - reserve_ipv6
+
+  - debug:
+      var: ipam
+    tags:
+      - reserve_ipv6
+
+  - name: Reserve and IPv4 address - invalid IPv4 address
+    nttc_cis_ipam_reserve:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      vlan: myVLAN
+      ip_address: 10.1.78.100
+      state: present
+    register: ipam
+    tags:
+      - reserve_ipv4_invalid
+
+  - debug:
+      var: ipam
+    tags:
+      - reserve_ipv4_invalid
+
+  - name: Unreserve and IPv4 address
+    nttc_cis_ipam_reserve:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      vlan: myVLAN
+      ip_address: 10.1.77.100
+      state: absent
+    register: ipam
+    tags:
+      - unreserve_ipv4
+
+  - debug:
+      var: ipam
+    tags:
+      - unreserve_ipv4
+
+  - name: Unreserve and IPv6 address
+    nttc_cis_ipam_reserve:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      vlan: myVLAN
+      ip_address: 2607:f480:211:1277:0:0:0:100
+      state: absent
+    register: ipam
+    tags:
+      - unreserve_ipv6
+
+  - debug:
+      var: ipam
+    tags:
+      - unreserve_ipv6

@@ -1,0 +1,44 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - nttc_cis_port_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+    register: port
+    tags:
+      - list
+
+  - debug:
+      var: port
+    tags:
+      - list
+
+  - nttc_cis_port_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList"
+    register: port
+    tags:
+      - get
+
+  - debug:
+      var: port
+    tags:
+      - get
+
+  - nttc_cis_port_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "xyz"
+    register: port
+    tags:
+      - get_noexist
+
+  - debug:
+      var: port
+    tags:
+      - get_noexist

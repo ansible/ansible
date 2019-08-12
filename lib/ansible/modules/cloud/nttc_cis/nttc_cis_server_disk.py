@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -88,6 +90,9 @@ options:
         description:
             - The IOPS for the disk as an integer
             - Only used for PROVISIONEDIOPS
+            - If no value is provided and the current IOPS is less than 3 x
+            - the new disk size a new IOPS count of 3 x the new disk size will be
+            - applied.
         required: false
     stop:
         description:
@@ -132,7 +137,7 @@ EXAMPLES = '''
     controller_number: 0
     speed: STANDARD
     state: present
-# Update a Server
+# Update a disk
 - name: Update a disk on a server
   nttc_cis_server_disk:
     region: na
@@ -152,12 +157,13 @@ EXAMPLES = '''
     network_domain: "my_network_domain"
     name: "server01"
     controller_number: 0
+    disk_number: 1
     wait: True
     state: absent
 '''
 
 RETURN = '''
-results:
+data:
     description: Server objects
     returned: success
     type: complex
@@ -518,7 +524,7 @@ from time import sleep
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nttc_cis.nttc_cis_utils import get_credentials, get_nttc_cis_regions, compare_json
-from ansible.module_utils.nttc_cis.nttc_cis_config import DISK_SPEEDS
+from ansible.module_utils.nttc_cis.nttc_cis_config import DISK_SPEEDS, IOPS_MULTIPLIER, DISK_CONTROLLER_TYPES
 from ansible.module_utils.nttc_cis.nttc_cis_provider import NTTCCISClient, NTTCCISAPIException
 
 
@@ -544,6 +550,14 @@ def add_disk(module, client, network_domain_id, server):
     module.params.get('wait')
     wait_poll_interval = module.params.get('wait_poll_interval')
 
+    # Check IOPS count is within minimum spec
+    disk = {
+        'sizeGb': disk_size,
+        'speed': disk_speed,
+        'iops': disk_iops
+    }
+    disk_iops = validate_disk_iops(disk, disk_size, disk_iops)
+
     if disk_type == 'SCSI':
         controller_name = 'scsiController'
     elif disk_type == 'SATA':
@@ -554,7 +568,7 @@ def add_disk(module, client, network_domain_id, server):
         module.fail_json(msg='Invalid disk type.')
 
     try:
-        device_number = len(server.get(controller_name))
+        device_number = len(server.get(controller_name)[controller_number].get('disk'))
         controller_id = server.get(controller_name)[controller_number].get('id')
         client.add_disk(controller_id, controller_name, device_number, disk_size, disk_speed, disk_iops)
         if module.params.get('wait'):
@@ -582,12 +596,28 @@ def update_disk(module, client, network_domain_id, server, disk):
     disk_size = module.params.get('size')
     module.params.get('wait')
     wait_poll_interval = module.params.get('wait_poll_interval')
+    upgrade_to_provisioned_iops = False
+
+    # Check IOPS count is within minimum spec
+    if disk.get('speed') == 'PROVISIONEDIOPS':
+        disk_iops = validate_disk_iops(disk, disk_size, disk_iops)
+        if disk_iops != disk.get('iops'):
+            try:
+                client.change_iops(disk_id, disk_iops)
+                check_iops(module, client, server, disk_id, disk_iops)
+            except NTTCCISAPIException as e:
+                module.fail_json(msg='Could not update the disk IOPS as required: {0}'.format(e))
+    elif disk_speed == 'PROVISIONEDIOPS':
+        # In this case the disk is obviously being modified to PROVISIONEDIOPS and must be handled differently
+        disk_iops = validate_disk_iops(disk, disk_size, disk_iops)
+        upgrade_to_provisioned_iops = True
+
     try:
         if disk_speed is not None and disk_speed != disk.get('speed'):
             client.update_disk_speed(disk_id, disk_speed, disk_iops)
             if module.params.get('wait'):
                 wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, wait_poll_interval)
-        if disk_iops is not None and disk_iops != disk.get('iops'):
+        if disk_iops is not None and disk_iops != disk.get('iops') and not upgrade_to_provisioned_iops:
             client.update_disk_iops(disk_id, disk_iops)
             if module.params.get('wait'):
                 wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, wait_poll_interval)
@@ -597,6 +627,62 @@ def update_disk(module, client, network_domain_id, server, disk):
                 wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, wait_poll_interval)
     except (KeyError, IndexError, NTTCCISAPIException) as e:
         module.fail_json(msg='Could not update the disk {0} - {1}'.format(disk.get('id'), e))
+
+
+def check_iops(module, client, server, disk_id, disk_iops):
+    '''
+    Wait for the disk IOPS count to be reflected after a change
+
+    :arg module: The Ansible module
+    :arg client: The Cloud Control API client instance
+    :arg server: The server object
+    :arg disk_id: The UUID of the disk
+    :arg disk_iops: The IOPS count to check for
+    :returns: True/False
+    '''
+    name = server.get('name')
+    datacenter = module.params.get('datacenterId')
+    network_domain_id = server.get('networkInfo').get('networkDomainId')
+    time = 0
+    wait_time = module.params.get('wait_time')
+    wait_poll_interval = 10
+    disk = {}
+
+    while not disk_iops != disk.get('iops') and time < wait_time:
+        try:
+            server = client.get_server_by_name(datacenter=datacenter,
+                                               network_domain_id=network_domain_id,
+                                               name=name)
+            disk = get_disk_by_id(server, disk_id)
+        except NTTCCISAPIException as e:
+            module.fail_json(msg='Failed to get a list of servers - {0}'.format(e.message))
+
+        sleep(wait_poll_interval)
+        time = time + wait_poll_interval
+
+    if time >= wait_time:
+        return None
+    return True
+
+
+def get_disk_by_id(server, disk_id):
+    '''
+    Get a disk object by the UUID
+
+    :arg module: The Ansible module instance
+    :arg server: The existing server object
+    :arg disk_id: The UUID of the disk
+    :returns: The located disk object or None
+    '''
+    for controller in DISK_CONTROLLER_TYPES:
+        try:
+            for controller_instance in server.get(controller):
+                for disk in controller_instance.get('disk'):
+                    if disk_id == disk.get('id'):
+                        return disk
+        except (IndexError, KeyError, AttributeError):
+            pass
+    return None
 
 
 def compare_disk(module, existing_disk):
@@ -622,7 +708,33 @@ def compare_disk(module, existing_disk):
         new_disk['iops'] = disk_iops
 
     compare_result = compare_json(new_disk, existing_disk, None)
-    return compare_result['changes']
+    # Implement Check Mode
+    if module.check_mode:
+        module.exit_json(data=compare_result)
+    return compare_result.get('changes')
+
+
+def validate_disk_iops(disk, disk_size, disk_iops):
+    '''
+    Validate the IOPS count is correct for the specified disk and disk size
+
+    :arg disk: The disk object
+    :arg disk_size: The new disk size in GB
+    :arg disk_iops: The new disk IOPS as specified in the argument spec
+    :returns: The specified IOPS count if valid or the minimum valid count
+    '''
+    if disk.get('speed') == 'PROVISIONEDIOPS':
+        existing_disk_iops = disk.get('iops')
+        if disk_iops:
+            if not disk_iops > (disk_size * IOPS_MULTIPLIER):
+                disk_iops = disk_size * IOPS_MULTIPLIER
+        else:
+            if not existing_disk_iops > (disk_size * IOPS_MULTIPLIER):
+                disk_iops = disk_size * IOPS_MULTIPLIER
+    else:
+        if not disk_iops > (disk_size * IOPS_MULTIPLIER):
+            disk_iops = disk_size * IOPS_MULTIPLIER
+    return disk_iops
 
 
 def get_disk(module, server):
@@ -801,7 +913,7 @@ def main():
             server=dict(required=True, type='str'),
             id=dict(default=None, required=False, type='str'),
             type=dict(default='SCSI', required=False, choices=['SCSI', 'SATA', 'IDE']),
-            controller_number=dict(default=None, required=False, type='int'),
+            controller_number=dict(default=0, required=False, type='int'),
             disk_number=dict(default=None, required=False, type='int'),
             size=dict(required=False, type='int'),
             speed=dict(default='STANDARD', required=False, choices=DISK_SPEEDS),
@@ -812,7 +924,8 @@ def main():
             wait=dict(required=False, default=True, type='bool'),
             wait_time=dict(required=False, default=1200, type='int'),
             wait_poll_interval=dict(required=False, default=30, type='int')
-        )
+        ),
+        supports_check_mode=True
     )
 
     credentials = get_credentials()
@@ -825,7 +938,6 @@ def main():
     start_after_update = module.params.get('start_after_update')
     server = {}
 
-
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
@@ -837,7 +949,7 @@ def main():
             module.fail_json(msg='No network_domain or network_info.network_domain was provided')
         network = client.get_network_domain_by_name(datacenter=datacenter, name=network_domain_name)
         network_domain_id = network.get('id')
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
         module.fail_json(msg='Failed to find the Cloud Network Domain: {0}'.format(network_domain_name))
 
     # Check if the Server exists based on the supplied name
@@ -847,12 +959,18 @@ def main():
             server_running = server.get('started')
         else:
             module.fail_json(msg='Failed to find the server - {0}'.format(name))
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
     if state == 'present':
         disk = get_disk(module, server)
         if not disk:
+            # Implement Check Mode
+            if module.check_mode:
+                module.exit_json(msg='A new {0} disk of size {1} will be added to the server {2}'.format(
+                    module.params.get('type'),
+                    module.params.get('size'),
+                    server.get('name')))
             if server_running and stop_server:
                 server_command(module, client, server, 'stop')
                 server_running = False
@@ -862,7 +980,7 @@ def main():
             if start_after_update and not server_running:
                 server_command(module, client, server, 'start')
             server = client.get_server_by_name(datacenter, network_domain_id, None, name)
-            module.exit_json(changed=True, results=server)
+            module.exit_json(changed=True, data=server)
         else:
             try:
                 if compare_disk(module, disk):
@@ -873,28 +991,35 @@ def main():
                         module.fail_json(msg='Server disks cannot be added while the server is running')
                     update_disk(module, client, network_domain_id, server, disk)
                 else:
-                    module.exit_json(changed=False, results=server)
+                    module.exit_json(changed=False, data=server)
                 if start_after_update and not server_running:
                     server_command(module, client, server, 'start')
                 server = client.get_server_by_name(datacenter, network_domain_id, None, name)
-                module.exit_json(changed=True, results=server)
+                module.exit_json(changed=True, data=server)
             except NTTCCISAPIException as e:
                 module.fail_json(msg='Failed to update the disk - {0}'.format(e))
     elif state == 'absent':
         try:
             disk = get_disk(module, server)
+            if not disk:
+                module.fail_json(msg='Controller {0} has no disk {1}'.format(module.params.get('controller_number'), module.params.get('disk_number')))
+            # Implement Check Mode
+            if module.check_mode:
+                module.exit_json(msg='The disk with ID {0} will be removed from the server {1}'.format(
+                    disk.get('id'),
+                    server.get('name')))
             if server_running and stop_server:
                 server_command(module, client, server, 'stop')
                 server_running = False
             elif server_running and not stop_server:
                 module.fail_json(msg='Disks cannot be removed while the server is running')
-            if not disk:
-                module.fail_json(msg='Controller {0} has no disk {1}'.format(module.params.get('controller_number'), module.params.get('disk_number')))
             remove_disk(module, client, network_domain_id, server, disk)
+            # Introduce a pause to allow the API to catch up in more remote MCP locations
+            sleep(10)
             if start_after_update and not server_running:
                 server_command(module, client, server, 'start')
             server = client.get_server_by_name(datacenter, network_domain_id, None, name)
-            module.exit_json(changed=True, results=server)
+            module.exit_json(changed=True, data=server)
         except (KeyError, IndexError, NTTCCISAPIException) as e:
             module.fail_json(msg='Could not delete the disk - {0}'.format(e))
 

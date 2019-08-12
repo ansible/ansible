@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -123,7 +125,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+data:
     description: Array of Port List objects
     returned: success
     type: complex
@@ -204,7 +206,7 @@ def create_port_list(module, client, network_domain_id):
     child_port_lists = module.params.get('child_port_lists')
     if name is None:
         module.fail_json(msg='A valid name is required')
-    if not ports == 0 and not child_port_lists:
+    if not ports and not child_port_lists:
         module.fail_json(msg='ports or child_ports_list must have at least one valid entry')
     try:
         client.create_port_list(network_domain_id, name, description, ports, child_port_lists)
@@ -212,7 +214,7 @@ def create_port_list(module, client, network_domain_id):
     except (KeyError, IndexError, NTTCCISAPIException) as e:
         module.fail_json(msg='Could not create the Port List {0}'.format(e))
 
-    module.exit_json(changed=True, results=return_data.get('port_list'))
+    module.exit_json(changed=True, data=return_data.get('port_list'))
 
 
 def update_port_list(module, client, network_domain_id, port_list):
@@ -241,10 +243,10 @@ def update_port_list(module, client, network_domain_id, port_list):
     except (KeyError, IndexError, NTTCCISAPIException) as e:
         module.fail_json(msg='Could not update the Port List - {0}'.format(e))
 
-    module.exit_json(changed=True, results=return_data['port_list'])
+    module.exit_json(changed=True, data=return_data['port_list'])
 
 
-def compare_port_list(module, client, network_domain_id, port_list):
+def compare_port_list(module, client, network_domain_id, port_list, return_all=False):
     """
     Compare two port lists
 
@@ -252,6 +254,7 @@ def compare_port_list(module, client, network_domain_id, port_list):
     :arg client: The CC API client instance
     :arg network_domain_id: The UUID of a Cloud Network Domain
     :arg port_list: The dict of the existing port list to be compared to
+    :arg return_all: If True returns the full list of changes otherwise just True/False
     :returns: Any differences between the two port lists
     """
     # Handle schema differences between the returned API object and the one required to be sent
@@ -277,6 +280,8 @@ def compare_port_list(module, client, network_domain_id, port_list):
     if module.params.get('ports_nil') and not port_list.get('ports'):
         new_port_list['ports'] = []
     compare_result = compare_json(new_port_list, port_list, None)
+    if return_all:
+        return compare_result
     return compare_result.get('changes')
 
 
@@ -316,7 +321,8 @@ def main():
             child_port_lists_nil=dict(required=False, default=False, type='bool'),
             network_domain=dict(required=True, type='str'),
             state=dict(default='present', choices=['present', 'absent'])
-        )
+        ),
+        supports_check_mode=True
     )
     credentials = get_credentials()
     name = module.params.get('name')
@@ -333,27 +339,31 @@ def main():
     try:
         network = client.get_network_domain_by_name(name=network_domain_name, datacenter=datacenter)
         network_domain_id = network.get('id')
-    except NTTCCISAPIException as e:
-        module.fail_json(msg='Failed to get a list of Cloud Network Domains - {0}'.format(e.message), exception=traceback.format_exc())
-    if not network:
-        module.fail_json(msg='Failed to find the Cloud Network Domain Check the network_domain value')
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
+        module.fail_json(msg='Could not find the Cloud Network Domain: {0}'.format(network_domain_name))
 
-    # Get a list of existing VLANs and check if the new name already exists
+    # Get a list of existing port lists
     try:
         port_list = client.get_port_list_by_name(name=name, network_domain_id=network_domain_id)
     except NTTCCISAPIException as e:
         module.fail_json(msg='Failed to get a list of Port Lists - {0}'.format(e.message), exception=traceback.format_exc())
 
     if state == 'present':
+        # Implement check_mode
+        if module.check_mode:
+            module.exit_json(diff=compare_port_list(module, client, network_domain_id, deepcopy(port_list), True))
         if not port_list:
             create_port_list(module, client, network_domain_id)
         else:
-            if compare_port_list(module, client, network_domain_id, deepcopy(port_list)):
+            if compare_port_list(module, client, network_domain_id, deepcopy(port_list), False):
                 update_port_list(module, client, network_domain_id, port_list)
-            module.exit_json(result=port_list)
+            module.exit_json(data=port_list)
     elif state == 'absent':
         if not port_list:
             module.exit_json(msg='Port List {0} was not found'.format(name))
+        # Implement check_mode
+        if module.check_mode:
+            module.exit_json(msg='This port list will be removed', data=port_list)
         delete_port_list(module, client, port_list)
 
 

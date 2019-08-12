@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -63,18 +65,29 @@ options:
         description:
             - The description of the VLAN
         required: false
-    image_id:
+    image:
         description:
-            - The UUID of the Image to use whend creating a new server
+            - The name of the Image to use whend creating a new server
             - Use nttc_cis_infrastructure -> state=get_image to get a list
             - of that available images
         required: false
     cpu:
         description:
             - CPU object with the following attributes
-            - (speed)  STANADRD, HIGHPERFORMANCE
-            - (coresPerSocket) int
         required: false
+        suboptions:
+            speed:
+                description:
+                    - STANDARD, HIGHPERFORMANCE
+                required: false
+            count:
+                description:
+                    - The number of CPU sockets as an Integer
+                required: false
+            coresPerSocket:
+                description:
+                    - The number of cores per CPU socket as an Integer
+                required: false
     memory_gb:
         description:
             - Integer value for the server memory size
@@ -108,17 +121,36 @@ options:
     disks:
         description:
             - List of disk objects containing
-            - (id) UUID of the Image disk (use get_image)
-            - (speed) STANDARD,HIGHPERFORMANCE,ECONOMY,PROVISIONEDIOPS
-            - (iops) int
         required: false
+        suboptions:
+            id:
+                description:
+                    - The UUID of the disk
+                required: false
+            speed:
+                description:
+                    - STANDARD,HIGHPERFORMANCE,ECONOMY,PROVISIONEDIOPS
+                required: false
+            iops:
+                description:
+                    - The number of required IOPS as an Integer
+                    - IOPS are only applicable for PROVISIONEDIOPS disk speeds
+                    - Ensure IOPS is within the range for a disk size
+                required: false
     disk_id:
         description:
             - the disk UUID when expanding or modifying disks
         required: false
     disk_size:
         description:
-            - The disk size when expanding a disk
+            - The disk size when expanding a disk in GB
+        required: false
+    disk_iops:
+        description:
+            - The new required IOPS as an Integer when re-sizing a disk
+            - If no value is provided and the current IOPS is less than 3 x
+            - the new disk size a new IOPS count of 3 x the new disk size will be
+            - applied.
         required: false
     admin_password:
         description:
@@ -140,7 +172,7 @@ options:
             - The action to be performed
         required: true
         default: create
-        choices: [create,delete,update,get,start,stop,expand_disk,reboot]
+        choices: [create,delete,update,get,start,stop,hard_stop,expand_disk,reboot]
     start_after_update:
         description:
             - Should the server be booted post update
@@ -154,10 +186,10 @@ options:
         default: true
         choices: [true, false]
     wait_time:
-        description: The maximum time the Ansible should wait for the task
-                     to complete in seconds
+        description:
+            - The maximum time the Ansible should wait for the task to complete in seconds
         required: false
-        default: 600
+        default: 1800
     wait_poll_interval:
         description:
             - The time in between checking the status of the task in seconds
@@ -174,12 +206,12 @@ EXAMPLES = '''
     region: na
     datacenter: NA9
     name: "APITEST"
-    image_id: "44f27606-8787-45be-8ab5-a0a1b7fd009a"
+    image: "CentOS 7 64-bit 2 CPU"
     disks:
       - id: "xxxx"
         speed: "STD"
       - id: "zzzz"
-        speed: "PIOPS"
+        speed: PROVISIONEDIOPS
         iops: 50
     cpu:
       speed: "STANDARD"
@@ -194,7 +226,7 @@ EXAMPLES = '''
           vlan: "abc"
           privateIpv4: "10.0.0.20"
   start: True
-  state: create
+  state: present
 # Update a Server
 - name: Update a server
   nttc_cis_server:
@@ -207,7 +239,7 @@ EXAMPLES = '''
       count: 2
       coresPerSocket: 2
     wait: True
-    state: update
+    state: present
 # Delete a Server
 - name: Delete a server
   nttc_cis_server:
@@ -215,7 +247,7 @@ EXAMPLES = '''
     datacenter: NA9
     name: "APITEST"
     wait: True
-    state: delete
+    state: absent
 # Send a server a Start/Stop/Reboot command
 - name: Command a server
   nttc_cis_server:
@@ -228,7 +260,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+data:
     description: Server objects
     returned: success
     type: complex
@@ -591,9 +623,10 @@ results:
 
 import traceback
 from time import sleep
+from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.nttc_cis.nttc_cis_utils import get_credentials, get_nttc_cis_regions, return_object, generate_password, compare_json
-from ansible.module_utils.nttc_cis.nttc_cis_config import (SERVER_STATES, VARIABLE_IOPS)
+from ansible.module_utils.nttc_cis.nttc_cis_config import (SERVER_STATES, VARIABLE_IOPS, IOPS_MULTIPLIER, DISK_CONTROLLER_TYPES)
 from ansible.module_utils.nttc_cis.nttc_cis_provider import NTTCCISClient, NTTCCISAPIException
 
 
@@ -625,15 +658,15 @@ def create_server(module, client):
     # Check disk configurations
     if disks:
         params['disk'] = []
-    for disk in disks:
-        if 'id' in disk:
-            if 'speed' not in disk:
-                module.fail_json(msg='Disk speed is required.')
-            elif ('iops' in disk and disk['speed'] not in VARIABLE_IOPS):
-                module.fail_json(msg='Disk IOPS are required when disk_speed is: {0}.'.format(disk['speed']))
-            params['disk'].append(disk)
-        else:
-            module.fail_json(msg='Disks IDs are required.')
+        for disk in disks:
+            if 'id' in disk:
+                if 'speed' not in disk:
+                    module.fail_json(msg='Disk speed is required.')
+                elif ('iops' in disk and disk['speed'] not in VARIABLE_IOPS):
+                    module.fail_json(msg='Disk IOPS are required when disk_speed is: {0}.'.format(disk['speed']))
+                params['disk'].append(disk)
+            else:
+                module.fail_json(msg='Disks IDs are required.')
 
     # Check and load the network configuration for the server
     params['networkInfo'] = {}
@@ -708,14 +741,14 @@ def create_server(module, client):
     try:
         result = client.create_server(ngoc, params)
         new_server_id = result['info'][0]['value']
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
         module.fail_json(msg='Could not create the server - {0}'.format(e.message), exception=traceback.format_exc())
 
     if wait:
-        wait_result = wait_for_server(module, client, params['name'], datacenter, network_domain_id, 'NORMAL', module.params['start'], None)
+        wait_result = wait_for_server(module, client, params.get('name'), datacenter, network_domain_id, 'NORMAL', module.params.get('start'), None)
         if wait_result is None:
-            module.fail_json(msg='Could not verify the server creation. Password: {0}'.format(params['administratorPassword']))
-        wait_result['password'] = params['administratorPassword']
+            module.fail_json(msg='Timeout. Could not verify the server creation. Password: {0}'.format(params.get('administratorPassword')))
+        wait_result['password'] = params.get('administratorPassword')
         return_data['server'] = wait_result
     else:
         return_data['server'] = {'id': new_server_id}
@@ -725,7 +758,7 @@ def create_server(module, client):
     else:
         msg = 'Server {0} has been successfully created with the password: {1}'.format(params['name'], params['administratorPassword'])
 
-    module.exit_json(changed=True, msg=msg, results=return_data['server'])
+    module.exit_json(changed=True, msg=msg, data=return_data['server'])
 
 
 def update_server(module, client, server):
@@ -766,15 +799,15 @@ def update_server(module, client, server):
     if module.params['wait']:
         wait_result = wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, None)
         if wait_result is None:
-            module.fail_json(msg='Could not verify the server update was successful. Check manually')
+            module.fail_json(msg='Timeout. Could not verify the server update was successful. Check manually')
         return_data['server'] = wait_result
     else:
         return_data['server'] = {'id': server['id']}
 
     if start_after_update:
-        server_command(module, client, server, 'start')
+        server_command(module, client, server, 'start', True)
 
-    module.exit_json(changed=True, result=return_data['server'])
+    module.exit_json(changed=True, data=return_data['server'])
 
 
 def compare_server(module, server):
@@ -786,21 +819,22 @@ def compare_server(module, server):
     :returns: Any differences between the two Cloud Network Domains
     """
     params = {}
-
-    if module.params['cpu'] is not None:
-        cpu = module.params['cpu']
-        # Account for the fact that the attribute names for listing a server don't match those for updating
-        if 'count' in cpu:
-            params['count'] = cpu['count']
-        if 'coresPerSocket' in cpu:
-            params['coresPerSocket'] = cpu['coresPerSocket']
-        if 'speed' in cpu:
-            params['speed'] = cpu['speed']
+    existing_server = {}
+    existing_server['cpu'] = server.get('cpu')
+    existing_server['memoryGb'] = server.get('memoryGb')
+    params['cpu'] = deepcopy(server.get('cpu'))
+    params['memoryGb'] = server.get('memoryGb')
+    if module.params.get('cpu'):
+        params['cpu']['speed'] = module.params.get('cpu').get('speed', server.get('cpu').get('speed'))
+        params['cpu']['count'] = module.params.get('cpu').get('count', server.get('cpu').get('count'))
+        params['cpu']['coresPerSocket'] = module.params.get('cpu').get('coresPerSocket', server.get('cpu').get('coresPerSocket'))
     if module.params['memory_gb'] is not None:
-        params['memoryGb'] = module.params['memory_gb']
+        params['memoryGb'] = module.params.get('memory_gb')
 
-    compare_result = compare_json(params, server['cpu'], None)
-    return compare_result['changes']
+    compare_result = compare_json(params, existing_server, None)
+    if module.check_mode:
+        module.exit_json(data=compare_result)
+    return compare_result.get('changes')
 
 
 def expand_disk(module, client, server):
@@ -812,25 +846,42 @@ def expand_disk(module, client, server):
     :arg server: The dict containing the server to be updated
     :returns: The updated server
     """
-    disk_id = module.params['disk_id']
-    disk_size = module.params['disk_size']
+    disk_id = module.params.get('disk_id')
+    disk_size = module.params.get('disk_size')
+    disk_iops = module.params.get('disk_iops')
     if disk_id is None:
         module.fail_json(changed=False, msg='No disk id provided.')
     if disk_size is None:
         module.fail_json(msg='No size provided. A value larger than 10 is required for disk_size.')
-    name = server['name']
-    server_id = server['id']
-    network_domain_id = server['networkInfo']['networkDomainId']
+    name = server.get('name')
+    server_id = server.get('id')
+    network_domain_id = server.get('networkInfo').get('networkDomainId')
     datacenter = server.get('datacenterId')
     wait_poll_interval = module.params.get('wait_poll_interval')
+
+    # Check the disk ID provided is valid
+    disk = get_disk_by_id(server, module.params.get('disk_id'))
+    if not disk:
+        module.fail_json(msg='Could not locate the disk {0}'.format(disk_id))
+
+    # Check IOPS count is within minimum spec
+    disk_iops = validate_disk_iops(disk, disk_size, disk_iops)
+    if disk_iops != disk.get('iops'):
+        try:
+            client.change_iops(disk_id, disk_iops)
+            check_iops(module, client, server, disk_id, disk_iops)
+        except NTTCCISAPIException as e:
+            module.fail_json(msg='Could not update the disk IOPS as required: {0}'.format(e))
 
     try:
         client.expand_disk(server_id=server_id, disk_id=disk_id, disk_size=disk_size)
     except NTTCCISAPIException as e:
         module.fail_json(msg='Could not expand the disk - {0}'.format(e))
 
-    if module.params['wait']:
-        wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, wait_poll_interval)
+    if module.params.get('wait'):
+        wait_result = wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, wait_poll_interval)
+        if wait_result is None:
+            module.fail_json(msg='Timeout. Could not verify the server update was successful. Check manually')
 
     msg = 'Server disk has been successfully been expanded to {0}GB'.format(str(disk_size))
 
@@ -844,19 +895,97 @@ def expand_disk(module, client, server):
         server = server_exists[0]
     else:
         server = []
-    module.exit_json(changed=True, msg=msg, server=server)
+    module.exit_json(changed=True, msg=msg, data=server)
 
 
-def server_command(module, client, server, command):
+def validate_disk_iops(disk, disk_size, disk_iops):
+    '''
+    Validate the IOPS count is correct for the specified disk and disk size
+
+    :arg disk: The disk object
+    :arg disk_size: The new disk size in GB
+    :arg disk_iops: The new disk IOPS as specified in the argument spec
+    :returns: The specified IOPS count if valid or the minimum valid count
+    '''
+    if disk.get('speed') == 'PROVISIONEDIOPS':
+        existing_disk_iops = disk.get('iops')
+        if disk_iops:
+            if not disk_iops > (disk_size * IOPS_MULTIPLIER):
+                disk_iops = disk_size * IOPS_MULTIPLIER
+        else:
+            if not existing_disk_iops > (disk_size * IOPS_MULTIPLIER):
+                disk_iops = disk_size * IOPS_MULTIPLIER
+    return disk_iops
+
+
+def check_iops(module, client, server, disk_id, disk_iops):
+    '''
+    Wait for the disk IOPS count to be reflected after a change
+
+    :arg module: The Ansible module
+    :arg client: The Cloud Control API client instance
+    :arg server: The server object
+    :arg disk_id: The UUID of the disk
+    :arg disk_iops: The IOPS count to check for
+    :returns: True/False
+    '''
+    name = server.get('name')
+    datacenter = module.params.get('datacenterId')
+    network_domain_id = server.get('networkInfo').get('networkDomainId')
+    time = 0
+    wait_time = module.params.get('wait_time')
+    wait_poll_interval = 10
+    disk = {}
+
+    while not disk_iops != disk.get('iops') and time < wait_time:
+        try:
+            server = client.get_server_by_name(datacenter=datacenter,
+                                               network_domain_id=network_domain_id,
+                                               name=name)
+            disk = get_disk_by_id(server, disk_id)
+        except NTTCCISAPIException as e:
+            module.fail_json(msg='Failed to get a list of servers - {0}'.format(e.message))
+
+        sleep(wait_poll_interval)
+        time = time + wait_poll_interval
+
+    if time >= wait_time:
+        return None
+    return True
+
+
+def get_disk_by_id(server, disk_id):
+    '''
+    Get a disk object by the UUID
+
+    :arg module: The Ansible module instance
+    :arg server: The existing server object
+    :arg disk_id: The UUID of the disk
+    :returns: The located disk object or None
+    '''
+    for controller in DISK_CONTROLLER_TYPES:
+        try:
+            for controller_instance in server.get(controller):
+                for disk in controller_instance.get('disk'):
+                    if disk_id == disk.get('id'):
+                        return disk
+        except (IndexError, KeyError, AttributeError):
+            pass
+    return None
+
+def server_command(module, client, server, command, should_return_data):
     """
     Send a command to a server
 
     :arg module: The Ansible module instance
     :arg client: The CC API client instance
-    :arg network_domain_id: The UUID of the network domain
     :arg server: The dict containing the server to be updated
+    :arg command: The server command
+    :arg should_return_data: True/False should the server object be returned
     :returns: The updated server
     """
+    return_data = return_object('server')
+    return_data['server'] = {}
     name = server['name']
     datacenter = server['datacenterId']
     network_domain_id = server['networkInfo']['networkDomainId']
@@ -879,13 +1008,22 @@ def server_command(module, client, server, command):
             command_result = client.shutdown_server(server_id=server['id'])
             check_for_start = False
             check_for_stop = True
+        elif command == "hard_stop":
+            command_result = client.poweroff_server(server_id=server['id'])
+            check_for_start = False
+            check_for_stop = True
         if wait:
-            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', check_for_start, check_for_stop, wait_poll_interval)
+            wait_result = wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', check_for_start, check_for_stop, wait_poll_interval)
+            if wait_result is None:
+                module.fail_json(msg='Timeout. Could not verify the server command was successful. Check manually')
             msg = 'Command {0} successfully completed on server {1}'.format(command, name)
         else:
             msg = command_result
     except NTTCCISAPIException as e:
         module.fail_json(msg='Could not {0} the server - {1}'.format(command, e))
+    if should_return_data:
+        return_data['server'] = wait_result
+        module.exit_json(changed=True, msg=msg, data=return_data)
     module.exit_json(changed=True, msg=msg)
 
 
@@ -911,7 +1049,9 @@ def delete_server(module, client, server):
     if server['started']:
         try:
             client.shutdown_server(server_id=server['id'])
-            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, True, wait_poll_interval)
+            wait_result = wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, True, wait_poll_interval)
+            if wait_result is None:
+                module.fail_json(msg='Timeout. Could not verify the server deletion. Check manually')
         except NTTCCISAPIException as e:
             module.fail_json(msg='Could not shutdown the server - {0}'.format(e), exception=traceback.format_exc())
 
@@ -922,7 +1062,7 @@ def delete_server(module, client, server):
     if wait:
         while server_exists and time < wait_time:
             servers = client.list_servers(datacenter=datacenter, network_domain_id=network_domain_id)
-            server_exists = [x for x in servers if x['id'] == server['id']]
+            server_exists = [x for x in servers if x.get('id') == server.get('id')]
             sleep(wait_poll_interval)
             time = time + wait_poll_interval
 
@@ -973,7 +1113,8 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
             set_state = True
 
     if server and time >= wait_time:
-        module.fail_json(msg='Timeout waiting for the server to be created')
+        return None
+        #module.fail_json(msg='Timeout waiting for the server to be created')
 
     return server[0]
 
@@ -1004,18 +1145,20 @@ def main():
             disks=dict(required=False, type='list'),
             disk_id=dict(required=False, type='str'),
             disk_size=dict(required=False, type='int'),
+            disk_iops=dict(required=False, type='int'),
             admin_password=dict(required=False, type='str'),
             ngoc=dict(required=False, default=False, type='bool'),
             start=dict(default=True, type='bool'),
             server_state=dict(default='NORMAL', choices=SERVER_STATES),
             started=dict(required=False, default=True, type='bool'),
             new_name=dict(required=False, default=None, type='str'),
-            state=dict(default='present', choices=['present', 'absent', 'start', 'stop', 'reboot', 'expand_disk']),
+            state=dict(default='present', choices=['present', 'absent', 'start', 'stop', 'hard_stop', 'reboot', 'expand_disk']),
             start_after_update=dict(default=True, type='bool'),
             wait=dict(required=False, default=True, type='bool'),
-            wait_time=dict(required=False, default=1200, type='int'),
+            wait_time=dict(required=False, default=1800, type='int'),
             wait_poll_interval=dict(required=False, default=30, type='int')
-        )
+        ),
+        supports_check_mode=True
     )
 
     credentials = get_credentials()
@@ -1046,7 +1189,7 @@ def main():
             module.fail_json(msg='No network_domain or network_info.network_domain was provided')
         network = client.get_network_domain_by_name(datacenter=datacenter, name=network_domain_name)
         network_domain_id = network.get('id')
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
         module.fail_json(msg='Failed to find the Cloud Network Domain: {0}'.format(network_domain_name))
 
     # Get the VLAN object based on the supplied name
@@ -1062,20 +1205,23 @@ def main():
                 module.fail_json(msg='No vlan or network_info.vlan was provided')
             vlan = client.get_vlan_by_name(datacenter=datacenter, network_domain_id=network_domain_id, name=vlan_name)
             vlan_id = vlan.get('id')
-        except (KeyError, IndexError, NTTCCISAPIException) as e:
-            module.fail_json(msg='Failed to find the VLAN - {0}'.format(e))
+        except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
+            module.fail_json(msg='Failed to find the VLAN - {0}'.format(vlan_name))
 
     # Check if the Server exists based on the supplied name
     try:
         server = client.get_server_by_name(datacenter, network_domain_id, vlan_id, name)
         if server:
             server_running = server.get('started')
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
     # Create the Server
     if state == 'present':
         if not server:
+            # Implement check_mode
+            if module.check_mode:
+                module.exit_json(msg='This server will be created', data=module.params)
             create_server(module, client)
         else:
             try:
@@ -1084,15 +1230,18 @@ def main():
                         module.fail_json(msg='Server cannot be updated while the it is running')
                     update_server(module, client, server)
                 if start_after_update and not server_running:
-                    server_command(module, client, server, 'start')
+                    server_command(module, client, server, 'start', False)
                 server = client.get_server_by_name(datacenter, network_domain_id, vlan_id, name)
-                module.exit_json(changed=False, results=server)
+                module.exit_json(changed=False, data=server)
             except NTTCCISAPIException as e:
                 module.fail_json(msg='Failed to update the server - {0}'.format(e))
     # Delete the Server
     elif state == 'absent':
         if not server:
             module.exit_json(msg='Server not found')
+        # Implement check_mode
+        if module.check_mode:
+            module.exit_json(msg='Th server {0} with ID {1} will be removed'.format(server.get('name'), server.get('id')))
         delete_server(module, client, server)
     # Expand the disk on a Server
     elif state == 'expand_disk':
@@ -1100,6 +1249,17 @@ def main():
             module.fail_json(msg='Server not found')
         elif server_running:
             module.fail_json(msg='Disk cannot be expanded while the server is running')
+        # Implement check_mode
+        if module.check_mode:
+            if not get_disk_by_id(server, module.params.get('disk_id')):
+                module.fail_json(msg='The server {0} has no disk with ID {1}'.format(
+                    server.get('name'),
+                    module.params.get('disk_id')))
+            module.exit_json(msg='The server {0} with ID {1} will have disk {2} expanded to {3}GB'.format(
+                server.get('name'),
+                server.get('id'),
+                module.params.get('disk_id'),
+                module.params.get('disk_size')))
         expand_disk(module, client, server)
     # Start a Server
     elif state == 'start':
@@ -1107,19 +1267,28 @@ def main():
             module.fail_json(msg='Server not found')
         elif server_running:
             module.exit_json(msg='Server is already running')
-        server_command(module, client, server, state)
+        # Implement check_mode
+        if module.check_mode:
+            module.exit_json(msg='The server {0} is ok to be started'.format(server.get('name')))
+        server_command(module, client, server, state, False)
     # Stop a Server
-    elif state == 'stop':
+    elif state == 'stop' or state == 'hard_stop':
         if not server:
             module.fail_json(msg='Server not found')
         elif not server_running:
             module.exit_json(msg='Server is already stopped')
-        server_command(module, client, server, state)
+        # Implement check_mode
+        if module.check_mode:
+            module.exit_json(msg='The server {0} is ok to be stopped'.format(server.get('name')))
+        server_command(module, client, server, state, False)
     # Reboot a Server
     elif state == 'reboot':
         if not server:
             module.fail_json(msg='Server not found')
-        server_command(module, client, server, state)
+        # Implement check_mode
+        if module.check_mode:
+            module.exit_json(msg='The server {0} is ok to be rebooted'.format(server.get('name')))
+        server_command(module, client, server, state, False)
 
 
 if __name__ == '__main__':

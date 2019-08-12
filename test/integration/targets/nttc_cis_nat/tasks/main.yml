@@ -1,0 +1,50 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - nttc_cis_nat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      internal_ip: 10.1.77.6
+      external_ip: 168.128.31.150
+      state: present
+    register: nat
+    tags:
+      - create
+
+  - debug:
+      var: nat
+    tags:
+      - create
+
+  - nttc_cis_nat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      internal_ip: 10.1.77.6
+      external_ip: 168.128.31.151
+      state: present
+    register: nat
+    tags:
+      - update
+
+  - debug:
+      var: nat
+    tags:
+      - update
+
+  - nttc_cis_nat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      internal_ip: 10.1.77.6
+      state: absent
+    register: nat
+    tags:
+      - delete
+
+  - debug:
+      var: nat
+    tags:
+      - delete

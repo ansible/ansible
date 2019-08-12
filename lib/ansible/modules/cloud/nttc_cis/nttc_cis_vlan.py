@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -147,7 +149,7 @@ nttc_cis_vlan:
 '''
 
 RETURN = '''
-results:
+data:
     description: Dictionary of the vlan
     returned: success
     type: complex
@@ -280,7 +282,7 @@ def create_vlan(module, client, network_domain_id):
         if not module.params.get('attached_vlan_gw'):
             module.fail_json(msg='An attached_vlan_gw value [LOW/HIGH] is required for a new Attached VLAN.')
     elif vlan_type == 'detachedVlan':
-        if module.params.get('detached_vlan_gw'):
+        if not module.params.get('detached_vlan_gw'):
             module.fail_json(msg='A detached_vlan_gw value (e.g. 10.0.0.1) is reuiqred for a new Detached VLAN.')
 
     try:
@@ -317,7 +319,7 @@ def create_vlan(module, client, network_domain_id):
     else:
         return_data['vlan'] = {'id': new_vlan_id}
 
-    module.exit_json(changed=True, result=return_data['vlan'])
+    module.exit_json(changed=True, data=return_data['vlan'])
 
 
 def update_vlan(module, client, vlan):
@@ -356,7 +358,7 @@ def update_vlan(module, client, vlan):
     else:
         return_data['vlan'] = {'id': vlan['id']}
 
-    module.exit_json(changed=True, result=return_data['vlan'])
+    module.exit_json(changed=True, data=return_data['vlan'])
 
 
 def compare_vlan(module, vlan):
@@ -496,7 +498,7 @@ def main():
     try:
         network = client.get_network_domain_by_name(name=network_domain_name, datacenter=datacenter)
         network_domain_id = network.get('id')
-    except (KeyError, IndexError, NTTCCISAPIException):
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
         module.fail_json(msg='Could not find the Cloud Network Domain: {0}'.format(network_domain_name))
 
     # Get a list of existing VLANs and check if the new name already exists

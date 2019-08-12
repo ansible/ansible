@@ -1,0 +1,58 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - nttc_cis_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+    register: ip
+    tags:
+      - list
+
+  - debug:
+      var: ip
+    tags:
+      - list
+
+  - nttc_cis_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      version: IPV6
+    register: ip
+    tags:
+      - get_by_version
+
+  - debug:
+      var: ip
+    tags:
+      - get_by_version
+
+  - nttc_cis_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: myIpAddressList
+    register: ip
+    tags:
+      - get_by_name
+
+  - debug:
+      var: ip
+    tags:
+      - get_by_name
+
+  - nttc_cis_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: xyz
+    register: ip
+    tags:
+      - get_noexist
+
+  - debug:
+      var: ip
+    tags:
+      - get_noexist

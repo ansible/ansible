@@ -1,0 +1,66 @@
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - name: Get a list of Operating Systems
+    nttc_cis_os_info:
+      region: na
+    register: os
+    tags:
+      - list
+
+  - debug:
+      var: os
+    tags:
+      - list
+
+  - name: Get a list of Windows Operating Systems
+    nttc_cis_os_info:
+      region: na
+      family: WINDOWS
+    register: os
+    tags:
+      - list_by_family
+
+  - debug:
+      var: os
+    tags:
+      - list_by_family
+
+  - name: Get a list of all CENTOS Operating Systems using wildcard
+    nttc_cis_os_info:
+      region: na
+      name: "*Centos*"
+    register: os
+    tags:
+      - list_by_wildcard
+
+  - debug:
+      var: os
+    tags:
+      - list_by_wildcard
+
+  - name: Get a specific OS
+    nttc_cis_os_info:
+      region: na
+      id: "CENTOSX32"
+    register: os
+    tags:
+      - get
+
+  - debug:
+      var: os
+    tags:
+      - get
+
+  - name: Get a specific OS
+    nttc_cis_os_info:
+      region: na
+      id: "XYZ"
+    register: os
+    tags:
+      - get_noexist
+
+  - debug:
+      var: os
+    tags:
+      - get_noexist

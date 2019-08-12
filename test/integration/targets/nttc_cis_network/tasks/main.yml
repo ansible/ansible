@@ -1,0 +1,67 @@
+# Designed to be run in this order.
+#   create, update, delete, delete_noexist
+#
+# If you decide to run the delete before the update you will need to change the CND name to myCND on the delete task
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - nttc_cis_network:
+      region: na
+      datacenter: NA12
+      name: "myCND2"
+      description: "My CND"
+      network_type: ENTERPRISE
+      state: present
+    register: cnd
+    tags:
+      - create
+
+  - debug:
+      var: cnd
+    tags:
+      - create
+
+  - nttc_cis_network:
+      region: na
+      datacenter: NA12
+      name: myCND
+      description: My CND 2"
+      network_type: ADVANCED
+      new_name: myCND2
+      state: present
+    register: cnd
+    tags:
+      - update
+
+  - debug:
+      var: cnd
+    tags:
+      - update
+
+  - nttc_cis_network:
+      region: na
+      datacenter: NA12
+      name: myCND2
+      state: absent
+    register: cnd
+    tags:
+      - delete
+
+  - debug:
+      var: cnd
+    tags:
+      - delete
+
+  - nttc_cis_network:
+      region: na
+      datacenter: NA12
+      name: myCND2
+      state: absent
+    register: cnd
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: cnd
+    tags:
+      - delete_noexist

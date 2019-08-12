@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -63,7 +65,7 @@ options:
         choices: ['SCSI']
     controller_number:
         description:
-            - The controller number on the controller as an integer
+            - The bus number on the controller as an integer
         required: false
         default: None
     adapter_type:
@@ -132,7 +134,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+data:
     description: Server objects
     returned: success
     type: complex
@@ -510,7 +512,6 @@ def add_controller(module, client, network_domain_id, server):
     datacenter = server.get('datacenterId')
     controller_type = module.params.get('type')
     adapter_type = module.params.get('adapter_type')
-    controller_number = module.params.get('controller_number')
     wait = module.params.get('wait')
     wait_poll_interval = module.params.get('wait_poll_interval')
 
@@ -555,6 +556,8 @@ def get_controller(module, server):
 
     try:
         return server.get(controller_name)[controller_number]
+    except IndexError:
+        return None
     except NTTCCISAPIException as e:
         module.fail_json(msg='Could not locate any matching controller - {0}'.format(e))
     return None
@@ -687,7 +690,8 @@ def main():
             wait=dict(required=False, default=True, type='bool'),
             wait_time=dict(required=False, default=1200, type='int'),
             wait_poll_interval=dict(required=False, default=30, type='int')
-        )
+        ),
+        supports_check_mode=True
     )
 
     credentials = get_credentials()
@@ -711,7 +715,7 @@ def main():
             module.fail_json(msg='No network_domain or network_info.network_domain was provided')
         network = client.get_network_domain_by_name(datacenter=datacenter, name=network_domain_name)
         network_domain_id = network.get('id')
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
         module.fail_json(msg='Failed to find the Cloud Network Domain: {0}'.format(network_domain_name))
 
     # Check if the Server exists based on the supplied name
@@ -721,12 +725,18 @@ def main():
             server_running = server.get('started')
         else:
             module.fail_json(msg='Failed to find the server - {0}'.format(name))
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
     if state == 'present':
         controller = get_controller(module, server)
         if not controller:
+            # Implement Check Mode
+            if module.check_mode:
+                module.exit_json(msg='A new {0} controller of type {1} will be added to the server {2}'.format(
+                    module.params.get('type'),
+                    module.params.get('adapter_type'),
+                    server.get('name')))
             if server_running and stop_server:
                 server_command(module, client, server, 'stop')
                 server_running = False
@@ -736,24 +746,36 @@ def main():
             if start_after_update and not server_running:
                 server_command(module, client, server, 'start')
             server = client.get_server_by_name(datacenter, network_domain_id, None, name)
-            module.exit_json(changed=True, results=server)
+            module.exit_json(changed=True, data=server)
         else:
-            module.exit_json(changed=False, results=server)
+            module.exit_json(changed=False, data=server)
     elif state == 'absent':
         try:
             controller = get_controller(module, server)
+            if not controller:
+                module.fail_json(msg='Server {0} has no {1} controller {2}'.format(
+                    server.get('name'),
+                    module.params.get('type'),
+                    module.params.get('controller_number')))
+            # Implement Check Mode
+            if module.check_mode:
+                module.exit_json(msg='The {0} controller of type {1} with ID {2} will be removed to the server {3}'.format(
+                    module.params.get('type'),
+                    controller.get('adapter_type'),
+                    controller.get('id'),
+                    server.get('name')))
             if server_running and stop_server:
                 server_command(module, client, server, 'stop')
                 server_running = False
             elif server_running and not stop_server:
                 module.fail_json(msg='Controllers cannot be removed while the server is running')
-            if not controller:
-                module.fail_json(msg='Server {0} has no controller {1}'.format(module.params.get('name'), module.params.get('controller_number')))
             remove_controller(module, client, network_domain_id, server, controller)
+            # Introduce a pause to allow the API to catch up in more remote MCP locations
+            sleep(10)
             if start_after_update and not server_running:
                 server_command(module, client, server, 'start')
             server = client.get_server_by_name(datacenter, network_domain_id, None, name)
-            module.exit_json(changed=True, results=server)
+            module.exit_json(changed=True, data=server)
         except (KeyError, IndexError, NTTCCISAPIException) as e:
             module.fail_json(msg='Could not delete the controller - {0}'.format(e))
 

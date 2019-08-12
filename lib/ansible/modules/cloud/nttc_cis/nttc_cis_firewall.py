@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -187,7 +189,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+data:
     description: Dictonary of the firewall rule
     returned: state == present and wait == True
     type: complex
@@ -212,6 +214,26 @@ results:
             description: The destination object for the rule, can be a single IP address or IP address list
             type: complex
             contains:
+                ip:
+                    description: The destination IP address object
+                    type: complex
+                    contains:
+                        address:
+                            description: The destination IP address
+                            type: str
+                            sample: "10.0.0.1"
+                port:
+                    description: The destination port object
+                    type: complex
+                    contains:
+                        begin:
+                            description: The starting port number
+                            type: int
+                            sample: 443
+                        end:
+                            description: The ending port number
+                            type: int
+                            sample: 444
                 ipAddressList:
                     description: The IP address list object
                     type: complex
@@ -251,6 +273,26 @@ results:
             description: The source object for the rule, can be a single IP address or IP address list
             type: complex
             contains:
+                ip:
+                    description: The source IP address object
+                    type: complex
+                    contains:
+                        address:
+                            description: The source IP address
+                            type: str
+                            sample: "10.0.0.1"
+                port:
+                    description: The source port object
+                    type: complex
+                    contains:
+                        begin:
+                            description: The starting port number
+                            type: int
+                            sample: 443
+                        end:
+                            description: The ending port number
+                            type: int
+                            sample: 444
                 ipAddressList:
                     description: The IP address list object
                     type: complex
@@ -331,7 +373,7 @@ def create_fw_rule(module, client, network_domain_id):
     except (KeyError, IndexError) as e:
         module.fail_json(changed=False, msg='Invalid data - {0}'.format(e.message), exception=traceback.format_exc())
 
-    module.exit_json(changed=True, results=return_data['acl'])
+    module.exit_json(changed=True, data=return_data['acl'])
 
 
 def update_fw_rule(module, client, network_domain_id, existing_fw_rule):
@@ -347,37 +389,40 @@ def update_fw_rule(module, client, network_domain_id, existing_fw_rule):
     return_data = return_object('acl')
     return_data['acl'] = {}
     args = module.params
-    fw_rule_id = existing_fw_rule['id']
+    fw_rule_id = existing_fw_rule.get('id')
 
     # Build the parameter list to compare to the existing object in prepartion for update
     try:
         if args['src_ip_list'] is not None:
-            args['src_ip_list'] = client.get_ip_list_by_name(network_domain_id, args['src_ip_list'], args['version'])['id']
+            args['src_ip_list'] = client.get_ip_list_by_name(network_domain_id, args.get('src_ip_list'), args.get('version')).get('id')
         if args['dst_ip_list'] is not None:
-            args['dst_ip_list'] = client.get_ip_list_by_name(network_domain_id, args['dst_ip_list'], args['version'])['id']
+            args['dst_ip_list'] = client.get_ip_list_by_name(network_domain_id, args.get('dst_ip_list'), args.get('version')).get('id')
         if args['src_port_list'] is not None:
-            args['src_port_list'] = client.get_port_list_by_name(network_domain_id, args['src_port_list'])['id']
+            args['src_port_list'] = client.get_port_list_by_name(network_domain_id, args.get('src_port_list')).get('id')
         if args['dst_port_list'] is not None:
-            args['dst_port_list'] = client.get_port_list_by_name(network_domain_id, args['dst_port_list'])['id']
+            args['dst_port_list'] = client.get_port_list_by_name(network_domain_id, args.get('dst_port_list')).get('id')
     except (KeyError, IndexError, NTTCCISAPIException) as e:
         module.fail_json(msg='Could not determine IP address and port lists - {0}'.format(e.message), exception=traceback.format_exc())
 
-    fw_rule = client.fw_args_to_dict(False, fw_rule_id, network_domain_id, args['name'], args['action'], args['version'],
-                                     args['protocol'], args['src_ip'],
-                                     args['src_ip_prefix'],
-                                     args['src_ip_list'], args['dst_ip'],
-                                     args['dst_ip_prefix'],
-                                     args['dst_ip_list'],
-                                     args['src_port_start'],
-                                     args['src_port_end'],
-                                     args['src_port_list'],
-                                     args['dst_port_start'],
-                                     args['dst_port_end'],
-                                     args['dst_port_list'], args['enabled'],
-                                     args['position'], args['position_to']
+    fw_rule = client.fw_args_to_dict(False, fw_rule_id, network_domain_id, args.get('name'), args.get('action'), args.get('version'),
+                                     args.get('protocol'), args.get('src_ip'),
+                                     args.get('src_ip_prefix'),
+                                     args.get('src_ip_list'), args.get('dst_ip'),
+                                     args.get('dst_ip_prefix'),
+                                     args.get('dst_ip_list'),
+                                     args.get('src_port_start'),
+                                     args.get('src_port_end'),
+                                     args.get('src_port_list'),
+                                     args.get('dst_port_start'),
+                                     args.get('dst_port_end'),
+                                     args.get('dst_port_list'), args.get('enabled'),
+                                     args.get('position'), args.get('position_to')
                                     )
     # Check for any state changes in the fw rule and update if required
-    compare_result = compare_fw_rule(fw_rule, deepcopy(existing_fw_rule))
+    compare_result = compare_fw_rule(fw_rule, deepcopy(existing_fw_rule))\
+    # Implement check_mode
+    if module.check_mode:
+        module.exit_json(data=compare_result)
     if compare_result:
         try:
             if compare_result['changes']:
@@ -386,7 +431,7 @@ def update_fw_rule(module, client, network_domain_id, existing_fw_rule):
                 module.exit_json(changed=True, reuslts=return_data['acl'])
         except (KeyError, IndexError, NTTCCISAPIException) as e:
             module.fail_json(msg='Could not update the firewall rule - {0}'.format(e.message), exception=traceback.format_exc())
-    module.exit_json(changed=False, results=existing_fw_rule)
+    module.exit_json(changed=False, data=existing_fw_rule)
 
 
 def delete_fw_rule(module, client, network_domain_id, name):
@@ -501,7 +546,8 @@ def main():
             position=dict(default='LAST', choices=['FIRST', 'LAST', 'BEFORE', 'AFTER']),
             position_to=dict(required=False, default=None, type='str'),
             state=dict(default='present', choices=['present', 'absent'])
-        )
+        ),
+        supports_check_mode=True
     )
     fw_rule_exists = None
     credentials = get_credentials()
@@ -519,7 +565,7 @@ def main():
     try:
         network = client.get_network_domain_by_name(datacenter=datacenter, name=network_domain_name)
         network_domain_id = network.get('id')
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
         module.fail_json(msg='Failed to find the Cloud Network Domains - {0}'.format(e.message), exception=traceback.format_exc())
 
     # If a firewall rule name is provided try and locate the rule
@@ -534,12 +580,17 @@ def main():
             if fw_rule_exists is not None:
                 update_fw_rule(module, client, network_domain_id, fw_rule_exists)
             else:
+                # Implement check_mode
+                if module.check_mode:
+                    module.exit_json(msg='This firewall rule will be created', data=module.params)
                 create_fw_rule(module, client, network_domain_id)
         elif state == 'absent':
-            if fw_rule_exists is not None:
-                delete_fw_rule(module, client, network_domain_id, name)
-            else:
-                module.fail_json(msg='No rule found to delete')
+            if not fw_rule_exists:
+                module.exit_json(msg='The firewall rule {0} was not found'.format(name))
+            # Implement check_mode
+            if module.check_mode:
+                module.exit_json(msg='This firewall rule will be removed', data=fw_rule_exists)
+            delete_fw_rule(module, client, network_domain_id, name)
     except NTTCCISAPIException as e:
         module.fail_json(msg='Could not operate on the firewall rule - {0}'.format(e.message), exception=traceback.format_exc())
 

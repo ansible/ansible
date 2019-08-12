@@ -21,6 +21,9 @@
 #   - get_credentials from Aimon Bustardo <aimon.bustardo@dimensiondata.com>
 #
 # Common methods to be used by versious module components
+
+from __future__ import (absolute_import, division, print_function)
+
 import configparser
 import string
 import random

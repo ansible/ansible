@@ -1,0 +1,71 @@
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - name: Get a list of Operating Systems in NA9
+    nttc_cis_image_info:
+      region: na
+      datacenter: NA9
+    register: image
+    tags:
+      - list
+
+  - debug:
+      var: image
+    tags:
+      - list
+
+  - name: Get a list of Operating Systems in NA9 by wildcard name
+    nttc_cis_image_info:
+      region: na
+      datacenter: NA9
+      name: "*UBUNTU*"
+    register: image
+    tags:
+      - list_by_wildcard
+
+  - debug:
+      var: image
+    tags:
+      - list_by_wildcard
+
+  - name: Get a list of Windows Operating Systems in NA9 by wildcard name
+    nttc_cis_image_info:
+      region: na
+      datacenter: NA9
+      name: "*WINDOWS*"
+    register: image
+    tags:
+      - list_windows_by_wildcard
+
+  - debug:
+      var: image
+    tags:
+      - list_windows_by_wildcard
+
+  - name: Get a specific image in NA12 by ID
+    nttc_cis_image_info:
+      region: na
+      datacenter: NA12
+      id: f8d0597e-9ceb-49d0-adb8-1a07a2b69eb0
+    register: image
+    tags:
+      - get_by_id
+
+  - debug:
+      var: image
+    tags:
+      - get_by_id
+
+  - name: Get a specific image in NA9 by name that doesn't exist
+    nttc_cis_image_info:
+      region: na
+      datacenter: NA9
+      name: "xyz"
+    register: image
+    tags:
+      - get_noexist
+
+  - debug:
+      var: image
+    tags:
+      - get_noexist

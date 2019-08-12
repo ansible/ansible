@@ -1,0 +1,134 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - nttc_cis_port_list:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList"
+      description: "API Testing"
+      ports:
+        - port_begin: 80
+        - port_begin: 443
+          port_end: 444
+      state: present
+    register: port
+    tags:
+      - check_mode
+
+  - debug:
+      var: port
+    tags:
+      - check_mode
+
+  - nttc_cis_port_list:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList"
+      description: "API Testing"
+      ports:
+        - port_begin: 80
+        - port_begin: 443
+          port_end: 444
+      state: present
+    register: port
+    tags:
+      - create
+
+  - debug:
+      var: port
+    tags:
+      - create
+
+  - nttc_cis_port_list:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList_invalid"
+      description: "API Testing Invalid Data"
+      state: present
+    register: port
+    tags:
+      - create_invalid
+
+  - debug:
+      var: port
+    tags:
+      - create_invalid
+
+  - nttc_cis_port_list:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList2"
+      description: "API Testing2"
+      ports:
+        - port_begin: 1077
+        - port_begin: 1177
+          port_end: 1277
+      child_port_lists:
+        - myPortList
+      state: present
+    register: port
+    tags:
+      - create
+
+  - debug:
+      var: port
+    tags:
+      - create
+
+  - nttc_cis_port_list:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList2"
+      description: "API Testing2_new"
+      ports:
+        - port_begin: 1200
+        - port_begin: 1177
+          port_end: 1500
+      child_port_lists_nil: True
+      state: present
+    register: port
+    tags:
+      - update
+
+  - debug:
+      var: port
+    tags:
+      - update
+
+  - nttc_cis_port_list:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList2"
+      state: absent
+    register: port
+    tags:
+      - delete
+      - delete_all
+
+  - debug:
+      var: port
+    tags:
+      - delete
+      - delete_all
+
+  - nttc_cis_port_list:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "myPortList"
+      state: absent
+    register: port
+    tags:
+      - delete_all
+
+  - debug:
+      var: port
+    tags:
+      - delete_all

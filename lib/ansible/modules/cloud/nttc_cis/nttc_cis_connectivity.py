@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -63,6 +65,12 @@ options:
             - The root password for the host
         required: false
         default: None
+    image:
+        description:
+            - The name of the Image to use whend creating a new server
+            - Use nttc_cis_infrastructure -> state=get_image to get a list
+            - of that available images
+        required: false
     ipv4:
         description:
             - The IPv4 address of the host
@@ -101,6 +109,7 @@ options:
         choices: [present, absent]
 
 notes:
+    - Must have sshpass installed for playbooks to use this module
 '''
 EXAMPLES = '''
 # Create a Bastion Host with minimal settings
@@ -123,7 +132,7 @@ EXAMPLES = '''
       state: present
 '''
 RETURN = '''
-results:
+data:
     description: Object with the Bastion Host details
     type: complex
     returned: when state == present
@@ -149,7 +158,6 @@ results:
             type: str
             sample: "x.x.x.x"
 '''
-
 
 import traceback
 from time import sleep
@@ -178,28 +186,34 @@ def create_server(module, client, network_domain_id, vlan_id):
     params['networkInfo']['networkDomainId'] = network_domain_id
     params['networkInfo']['primaryNic']['vlanId'] = vlan_id
     if module.params['ipv4'] is not None:
-        params['networkInfo']['primaryNic']['privateIpv4'] = module.params['ipv4']
+        params['networkInfo']['primaryNic']['privateIpv4'] = module.params.get('ipv4')
 
-    params['imageId'] = 'a51a1500-e7d5-4453-9591-8115b1c48202'
-    params['name'] = module.params['name']
+    image_name = module.params.get('image')
+    params['name'] = module.params.get('name')
     params['start'] = True
     ngoc = False
 
-    if module.params['password'] is not None:
-        params['administratorPassword'] = module.params['password']
+    if module.params.get('password') is not None:
+        params['administratorPassword'] = module.params.get('password')
     else:
         params['administratorPassword'] = generate_password()
+
+    try:
+        image = client.list_image(datacenter_id=datacenter, image_name=image_name)
+        params['imageId'] = image.get('osImage')[0].get('id')
+    except (KeyError, IndexError, NTTCCISAPIException) as e:
+        module.fail_json(msg='Failed to find the  Image {0} - {1}'.format(image_name, e))
 
     try:
         client.create_server(ngoc, params)
     except (KeyError, IndexError, NTTCCISAPIException) as exc:
         module.fail_json(msg='Could not create the server - {0}'.format(exc.message), exception=traceback.format_exc())
 
-    wait_result = wait_for_server(module, client, params['name'], datacenter, network_domain_id, 'NORMAL', True, False, None)
+    wait_result = wait_for_server(module, client, params.get('name'), datacenter, network_domain_id, 'NORMAL', True, False, None)
     if wait_result is None:
-        module.fail_json(msg='Could not verify the server creation. Password: {0}'.format(params['administratorPassword']))
+        module.fail_json(msg='Could not verify the server creation. Password: {0}'.format(params.get('administratorPassword')))
 
-    wait_result['password'] = params['administratorPassword']
+    wait_result['password'] = params.get('administratorPassword')
     return wait_result
 
 
@@ -254,37 +268,41 @@ def create_fw_rule(module, client, network_domain_id, public_ipv4):
     src_ip = module.params['src_ip']
     src_prefix = module.params['src_prefix']
     try:
-        return client.create_fw_rule(network_domain_id,
-                                     ACL_RULE_NAME,
-                                     'ACCEPT_DECISIVELY',
-                                     'IPV4',
-                                     'TCP',
-                                     src_ip,
-                                     src_prefix,
-                                     None,
-                                     public_ipv4,
-                                     None,
-                                     None,
-                                     'ANY',
-                                     None,
-                                     None,
-                                     '22',
-                                     None,
-                                     None,
-                                     True,
-                                     'FIRST',
-                                     None)
+        fw_rule = client.fw_args_to_dict(True,
+                                         None,
+                                         network_domain_id,
+                                         ACL_RULE_NAME,
+                                         'ACCEPT_DECISIVELY',
+                                         'IPV4',
+                                         'TCP',
+                                         src_ip,
+                                         src_prefix,
+                                         None,
+                                         public_ipv4,
+                                         None,
+                                         None,
+                                         'ANY',
+                                         None,
+                                         None,
+                                         '22',
+                                         None,
+                                         None,
+                                         True,
+                                         'FIRST',
+                                         None)
+        return client.create_fw_rule(fw_rule)
     except NTTCCISAPIException as exc:
         module.fail_json(msg='Could not create the firewall rule - {0}'.format(exc.message), exception=traceback.format_exc())
 
 
-def update_fw_rule(module, client, fw_rule, public_ipv4):
+def update_fw_rule(module, client, fw_rule, network_domain_id, public_ipv4):
     """
     Update the firewall rule for the Bastion Host
 
     :arg module: The Ansible module instance
     :arg client: The CC API client instance
     :arg fw_rule: The existing firewall rule
+    :arg network_domain_id: The UUID of the CND
     :arg public_ipv4: The public IPv4 address to use
     """
     fw_rule_id = fw_rule.get('id')
@@ -292,12 +310,141 @@ def update_fw_rule(module, client, fw_rule, public_ipv4):
     src_prefix = module.params.get('src_prefix')
 
     try:
-        client.update_fw_rule(fw_rule_id, 'ACCEPT_DECISIVELY', 'TCP', src_ip, src_prefix, None, public_ipv4, None, None,
-                              'ANY', None, None, '22', None, None, True, 'FIRST', None)
+        new_fw_rule = client.fw_args_to_dict(False,
+                                             fw_rule_id,
+                                             network_domain_id,
+                                             fw_rule.get('name'),
+                                             'ACCEPT_DECISIVELY',
+                                             'IPV4',
+                                             'TCP',
+                                             src_ip,
+                                             src_prefix,
+                                             None,
+                                             public_ipv4,
+                                             None,
+                                             None,
+                                             'ANY',
+                                             None,
+                                             None,
+                                             '22',
+                                             None,
+                                             None,
+                                             True,
+                                             'FIRST',
+                                             None)
+        client.update_fw_rule(new_fw_rule)
     except NTTCCISAPIException as exc:
         module.fail_json(msg='Could not update the firewall rule - {0}'.format(exc.message), exception=traceback.format_exc())
     except KeyError as exc:
         module.fail_json(changed=False, msg='Invalid data - {0}'.format(exc.message), exception=traceback.format_exc())
+
+
+def delete_server(module, client, server):
+    """
+    Delete a server
+
+    :arg module: The Ansible module instance
+    :arg client: The CC API client instance
+    :arg network_domain: The server dict
+    :returns: A message
+    """
+    server_exists = True
+    name = server.get('name')
+    datacenter = server.get('datacenterId')
+    network_domain_id = server.get('networkInfo').get('networkDomainId')
+    time = 0
+    wait_time = module.params.get('wait_time')
+    wait_poll_interval = module.params.get('wait_poll_interval')
+    wait = module.params.get('wait')
+
+    # Check if the server is running and shut it down
+    if server['started']:
+        try:
+            client.shutdown_server(server_id=server['id'])
+            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, True, wait_poll_interval)
+        except NTTCCISAPIException as e:
+            module.fail_json(msg='Could not shutdown the server - {0}'.format(e), exception=traceback.format_exc())
+
+    try:
+        client.delete_server(server['id'])
+    except NTTCCISAPIException as e:
+        module.fail_json(msg='Could not delete the server - {0}'.format(e), exception=traceback.format_exc())
+    if wait:
+        while server_exists and time < wait_time:
+            servers = client.list_servers(datacenter=datacenter, network_domain_id=network_domain_id)
+            server_exists = [x for x in servers if x['id'] == server['id']]
+            sleep(wait_poll_interval)
+            time = time + wait_poll_interval
+
+        if server_exists and time >= wait_time:
+            module.fail_json(msg='Timeout waiting for the server to be deleted')
+
+    return True
+
+
+def delete_fw_rule(module, client, network_domain_id, name):
+    """
+    Delete a firewall rule
+
+    :arg module: The Ansible module instance
+    :arg client: The CC API client instance
+    :arg network_domain_id: The UUID of the network domain
+    :arg name: The name of the firewall rule to be removed
+    :returns: A message
+    """
+    try:
+        fw_rule = client.get_fw_rule_by_name(network_domain_id, name)
+    except NTTCCISAPIException as e:
+        module.fail_json(msg='Could not retrieve a list of firewall rules - {0}'.format(e.message), exception=traceback.format_exc())
+    except KeyError:
+        module.fail_json(msg='Network Domain is invalid')
+
+    try:
+        client.remove_fw_rule(fw_rule['id'])
+    except NTTCCISAPIException as e:
+        module.fail_json(msg='Could not delete the firewall rule - {0}'.format(e.message), exception=traceback.format_exc())
+    except KeyError:
+        module.fail_json(msg='Could not find the firewall rule - {0}'.format(e.message), exception=traceback.format_exc())
+
+    return True
+
+
+def delete_nat_rule(module, client, nat_rule_id):
+    """
+    Delete a NAT rule
+
+    :arg module: The Ansible module instance
+    :arg client: The CC API client instance
+    :arg nat_rule_id: The UUID of the existing NAT rule to delete
+    :returns: A message
+    """
+    if nat_rule_id is None:
+        module.fail_json(msg='A value for id is required')
+    try:
+        client.remove_nat_rule(nat_rule_id)
+    except NTTCCISAPIException as e:
+        module.fail_json(msg='Could not delete the NAT rule - {0}'.format(e.message), exception=traceback.format_exc())
+
+    return True
+
+
+def delete_public_ipv4(module, client, public_ipv4_block_id):
+    """
+    Delete a /31 public IP address block
+
+    :arg module: The Ansible module instance
+    :arg client: The CC API client instance
+    :arg public_ipv4_block_id: The UUID of the public IPv4 address block
+    :returns: A message
+    """
+    if public_ipv4_block_id is None:
+        module.fail_json(msg='A value for id is required')
+    try:
+        client.remove_public_ipv4(public_ipv4_block_id)
+    except NTTCCISAPIException as e:
+        module.fail_json(msg='Could not delete the public IPv4 block - {0}'.format(e.message), exception=traceback.format_exc())
+
+    return True
 
 
 def wait_for_server(module, client, name, datacenter, network_domain_id, state, check_for_start=False,
@@ -318,22 +465,22 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
     actual_state = ''
     start_state = ''
     time = 0
-    wait_time = module.params['wait_time']
+    wait_time = module.params.get('wait_time')
     if wait_poll_interval is None:
-        wait_poll_interval = module.params['wait_poll_interval']
+        wait_poll_interval = module.params.get('wait_poll_interval')
     server = []
     while not set_state and time < wait_time:
+        sleep(wait_poll_interval)
         try:
             server = client.get_server_by_name(datacenter=datacenter, network_domain_id=network_domain_id, name=name)
         except NTTCCISAPIException as exc:
             module.fail_json(msg='Failed to get a list of servers - {0}'.format(exc.message), exception=traceback.format_exc())
         try:
-            actual_state = server[0]['state']
-            start_state = server[0]['started']
+            actual_state = server.get('state')
+            start_state = server.get('started')
         except (KeyError, IndexError):
             module.fail_json(msg='Failed to find the server - {0}'.format(name))
         if actual_state != state or (check_for_start and not start_state) or (check_for_stop and start_state):
-            sleep(wait_poll_interval)
             time = time + wait_poll_interval
         else:
             set_state = True
@@ -341,7 +488,7 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
     if server and time >= wait_time:
         module.fail_json(msg='Timeout waiting for the server to be created')
 
-    return server[0]
+    return server
 
 
 def main():
@@ -358,6 +505,7 @@ def main():
             vlan=dict(required=True, type='str'),
             name=dict(required=False, default='ansbile_gw', type='str'),
             password=dict(default=None, required=False, type='str'),
+            image=dict(required=False, type='str'),
             ipv4=dict(default=None, required=False, type='str'),
             src_ip=dict(default='ANY', required=False, type='str'),
             src_prefix=dict(default=None, required=False, type='str'),
@@ -376,6 +524,7 @@ def main():
     vlan_name = module.params.get('vlan')
     vlan_id = None
     return_data = {}
+    changed = False
 
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
@@ -385,71 +534,121 @@ def main():
     # Get the CND object based on the supplied name
     try:
         network = client.get_network_domain_by_name(datacenter=datacenter, name=network_domain_name)
-        network_domain_id = network['id']
-    except (KeyError, IndexError, NTTCCISAPIException) as exc:
-        module.fail_json(msg='Failed to find the Cloud Network Domains - {0}'.format(exc.message))
+        network_domain_id = network.get('id')
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as exc:
+        module.fail_json(msg='Failed to find the Cloud Network Domain - {0}'.format(exc.message))
 
     # Get the VLAN object based on the supplied name
     try:
         vlan = client.get_vlan_by_name(datacenter=datacenter, network_domain_id=network_domain_id, name=vlan_name)
         vlan_id = vlan.get('id')
-    except (KeyError, IndexError, NTTCCISAPIException) as exc:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as exc:
         module.fail_json(msg='Failed to get a list of VLANs - {0}'.format(exc.message), exception=traceback.format_exc())
 
     # Check if the server exists based on the supplied name
     try:
-        server = client.get_server_by_name(datacenter, network_domain_id, vlan_id, name)
-    except (KeyError, IndexError, NTTCCISAPIException) as exc:
+        ansible_gw = client.get_server_by_name(datacenter, network_domain_id, vlan_id, name)
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as exc:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(exc))
 
-    # Hanldle the case where the gateway already exists. This could mean a playbook re-run
+    # Handle the case where the gateway already exists. This could mean a playbook re-run
     # If the server exists then we need to check:
     #   a public IP is allocated and if not get the next one
     #   the NAT rule is present and correct and if not update/create it
     #   the Firewall rule is present and correct and if not update/create it
-    if server:
+    if state == 'present' and ansible_gw:
         try:
-            ansible_gw = server[0]
-            ansible_gw_private_ipv4 = ansible_gw['networkInfo']['primaryNic']['privateIpv4']
+            ansible_gw_private_ipv4 = ansible_gw.get('networkInfo').get('primaryNic').get('privateIpv4')
             # Check if the NAT rule exists and if not create it
-            nat_result = client.get_nat_by_private_ip(network_domain_id, ansible_gw['networkInfo']['primaryNic']['privateIpv4'])
+            nat_result = client.get_nat_by_private_ip(network_domain_id, ansible_gw.get('networkInfo').get('primaryNic').get('privateIpv4'))
             if nat_result:
-                public_ipv4 = nat_result['externalIp']
+                public_ipv4 = nat_result.get('externalIp')
             else:
-                public_ipv4 = client.get_next_public_ipv4(network_domain_id)['ipAddress']
+                public_ipv4 = client.get_next_public_ipv4(network_domain_id).get('ipAddress')
                 create_nat_rule(module, client, network_domain_id, ansible_gw_private_ipv4, public_ipv4)
+                changed = True
             # Check if the Firewall rule exists and if not create it
             fw_result = client.get_fw_rule_by_name(network_domain_id, ACL_RULE_NAME)
             if fw_result:
-                update_fw_rule(module, client, fw_result, public_ipv4)
+                update_fw_rule(module, client, fw_result, network_domain_id, public_ipv4)
             else:
                 create_fw_rule(module, client, network_domain_id, public_ipv4)
+                changed = True
             return_data['server_id'] = ansible_gw.get('id')
             return_data['password'] = ansible_gw.get('password', None)
             return_data['internal_ipv4'] = ansible_gw.get('networkInfo').get('primaryNic').get('privateIpv4')
             return_data['ipv6'] = ansible_gw.get('networkInfo').get('primaryNic').get('ipv6')
-            return_data['public_ipv4'] = public_ipv4.get('ipAddress')
-            module.exit_json(changed=True, results=return_data)
-        except (KeyError, IndexError):
-            module.fail_json(msg='Could not ascertain the current server state')
-
-    if state == 'present' and not server:
+            return_data['public_ipv4'] = public_ipv4
+            module.exit_json(changed=changed, data=return_data)
+        except (KeyError, IndexError) as e:
+            module.fail_json(msg='Could not ascertain the current server state: {0}'.format(e.message))
+    elif state == 'present' and not ansible_gw:
         try:
             ansible_gw = create_server(module, client, network_domain_id, vlan_id)
-            ansible_gw_private_ipv4 = ansible_gw['networkInfo']['primaryNic']['privateIpv4']
-            public_ipv4 = client.get_next_public_ipv4(network_domain_id)['ipAddress']
+            changed = True
+            ansible_gw_private_ipv4 = ansible_gw.get('networkInfo').get('primaryNic').get('privateIpv4')
+            # Check if the NAT rule exists and if not create it
+            nat_result = client.get_nat_by_private_ip(network_domain_id, ansible_gw_private_ipv4)
+            if nat_result:
+                public_ipv4 = nat_result.get('externalIp')
+            else:
+                public_ipv4 = client.get_next_public_ipv4(network_domain_id).get('ipAddress')
+                create_nat_rule(module, client, network_domain_id, ansible_gw_private_ipv4, public_ipv4)
+                changed = True
+            # Check if the Firewall rule exists and if not create it
+            fw_result = client.get_fw_rule_by_name(network_domain_id, ACL_RULE_NAME)
+            if fw_result:
+                update_fw_rule(module, client, fw_result, network_domain_id, public_ipv4)
+            else:
+                create_fw_rule(module, client, network_domain_id, public_ipv4)
+                changed = True
+            #public_ipv4 = client.get_next_public_ipv4(network_domain_id).get('ipAddress')
             return_data['server_id'] = ansible_gw.get('id')
             return_data['password'] = ansible_gw.get('password')
-            return_data['internal_ipv4'] = ansible_gw.get('networkInfo').get('primaryNic').get('privateIpv4')
+            return_data['internal_ipv4'] = ansible_gw_private_ipv4
             return_data['ipv6'] = ansible_gw.get('networkInfo').get('primaryNic').get('ipv6')
-            return_data['public_ipv4'] = public_ipv4.get('ipAddress')
-            create_nat_rule(module, client, network_domain_id, ansible_gw_private_ipv4, public_ipv4)
-            create_fw_rule(module, client, network_domain_id, public_ipv4.get('ipAddress'))
+            return_data['public_ipv4'] = public_ipv4
+            #create_nat_rule(module, client, network_domain_id, ansible_gw_private_ipv4, public_ipv4)
+            #create_fw_rule(module, client, network_domain_id, public_ipv4)
             # Sleep for 10 seconds to allow the CC API to implement the ACL before returning
             sleep(10)
-            module.exit_json(changed=True, results=return_data)
+            module.exit_json(changed=changed, data=return_data)
         except (KeyError, IndexError, NTTCCISAPIException) as exc:
-            module.fail_json(msg='Failed to create/update the Ansible gateway - {0}'.format(exc.message), exception=traceback.format_exc())
+            module.fail_json(changed=changed, msg='Failed to create/update the Ansible gateway - {0}'.format(exc), exception=traceback.format_exc())
+    elif state == 'absent':
+        try:
+            # Check if the server exists and remove it
+            if ansible_gw:
+                delete_server(module, client, ansible_gw)
+            # Check if the Firewall rule exists and if not create it
+            fw_result = client.get_fw_rule_by_name(network_domain_id, ACL_RULE_NAME)
+            if fw_result:
+                delete_fw_rule(module, client, network_domain_id, fw_result.get('name'))
+            # Cases may exist where the only either the NAT private or public address maybe know so
+            # two ensure we've checked all possible options we will search by both
+            # The private address can be found from the server/ansible_gw object but the public address
+            # can only be determined by the firewall rule desintation value
+            if ansible_gw:
+                ansible_gw_private_ipv4 = ansible_gw.get('networkInfo').get('primaryNic').get('privateIpv4')
+                nat_result = client.get_nat_by_private_ip(network_domain_id, ansible_gw_private_ipv4)
+                public_ipv4 = nat_result.get('externalIp')
+            elif fw_result:
+                public_ipv4 = fw_result.get('destination').get('ip').get('address')
+                nat_result = client.get_nat_by_public_ip(network_domain_id, public_ipv4)
+
+            if nat_result:
+                delete_nat_rule(module, client, nat_result.get('id'))
+            if public_ipv4:
+                public_ip_block = client.get_public_ipv4_by_ip(network_domain_id, public_ipv4)
+                if public_ip_block:
+                    if not client.check_public_block_in_use(network_domain_id, public_ip_block.get('baseIp')):
+                        delete_public_ipv4(module, client, public_ip_block.get('id'))
+        except (KeyError, IndexError, NTTCCISAPIException) as e:
+            module.fail_json(changed=changed, msg='Failed to remove the Ansible gateway configuration - {0}'.format(e))
+
+        module.exit_json(changed=True, msg='The Ansible gateway and associated NAT and firewall rules have been removed')
+    else:
+        module.exit_json(changed=False, msg='Nothing to remove')
 
 
 if __name__ == '__main__':

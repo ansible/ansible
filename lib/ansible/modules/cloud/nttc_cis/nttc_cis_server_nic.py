@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -149,12 +151,12 @@ nttc_cis_server_nic:
   datacenter: NA9
   network_domain: "my_network_domain"
   server: "server01"
-  ipv4_address: 172.16.1.6
+  vlan: "my_vlan"
   state: absent
 '''
 
 RETURN = '''
-results:
+data:
     description: Server objects
     returned: success
     type: complex
@@ -551,13 +553,13 @@ def get_nic(module, server, vlan, ipv4_address):
 
     :arg module: The Ansible module instance
     :arg server: The dict containing the server
+    :arg vlan: The dict containing the NIC VLAN
     :arg ipv4_address: The IPv4 address of the NIC to be returned
     :returns: The controller(s)
     """
     nic_id = module.params.get('id')
     primary_nic = server.get('networkInfo').get('primaryNic')
     additional_nics = server.get('networkInfo').get('additionalNic')
-    #module.exit_json(vlan=vlan, primary=primary_nic, add=additional_nics)
     if vlan:
         vlan_id = vlan.get('id')
     else:
@@ -646,6 +648,7 @@ def exchange_nic(module, client, network_domain_id, server, nic_1, nic_2):
     except NTTCCISAPIException as e:
         module.fail_json(msg='Could not remove the NICs {0} {1} - {2}'.format(nic_1.get('id'), nic_2.get('id'), e))
 
+
 def check_and_stop_server(module, client, server, server_running):
     """
     Check and stop a running server
@@ -688,11 +691,15 @@ def server_command(module, client, server, command):
         wait_poll_interval = 15
 
     try:
-        if command == "start":
+        if command == 'start':
             client.start_server(server_id=server.get('id'))
-        elif command == "reboot":
+        elif command == 'reboot':
             client.reboot_server(server_id=server.get('id'))
-        elif command == "stop":
+        elif command == 'stop' and not server.get('guest').get('osCustomization'):
+            client.poweroff_server(server_id=server.get('id'))
+            check_for_start = False
+            check_for_stop = True
+        elif command == 'stop':
             client.shutdown_server(server_id=server.get('id'))
             check_for_start = False
             check_for_stop = True
@@ -774,7 +781,8 @@ def main():
             wait=dict(required=False, default=True, type='bool'),
             wait_time=dict(required=False, default=1200, type='int'),
             wait_poll_interval=dict(required=False, default=30, type='int')
-        )
+        ),
+        supports_check_mode=True
     )
 
     credentials = get_credentials()
@@ -791,7 +799,6 @@ def main():
     start_after_update = module.params.get('start_after_update')
     server = {}
 
-
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
@@ -803,9 +810,8 @@ def main():
             module.fail_json(msg='No network_domain or network_info.network_domain was provided')
         network = client.get_network_domain_by_name(datacenter=datacenter, name=network_domain_name)
         network_domain_id = network.get('id')
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException):
         module.fail_json(msg='Failed to find the Cloud Network Domain: {0}'.format(network_domain_name))
-
 
     # Get a list of existing VLANs
     if vlan_name is not None:
@@ -838,18 +844,30 @@ def main():
             server_running = server.get('started')
         else:
             module.fail_json(msg='Failed to find the server - {0}'.format(name))
-    except (KeyError, IndexError, NTTCCISAPIException) as e:
+    except (KeyError, IndexError, AttributeError, NTTCCISAPIException) as e:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
     if state == 'present':
         try:
             nic = get_nic(module, server, vlan, ipv4_address)
             if not nic:
+                # Implement Check Mode
+                if module.check_mode:
+                    module.exit_json(msg='A new NIC in VLAN {0} will be added to the server {1}'.format(
+                        vlan.get('name'),
+                        server.get('name')))
                 server_running = check_and_stop_server(module, client, server, server_running)
                 add_nic(module, client, network_domain_id, server, vlan)
                 changed = True
             else:
                 if nic.get('networkAdapter') != module.params.get('type'):
+                    # Implement Check Mode
+                    if module.check_mode:
+                        module.exit_json(msg='NIC with the IP {0} in VLAN {1} will be changed from {2} to {3}'.format(
+                            nic.get('privateIpv4'),
+                            nic.get('vlanName'),
+                            nic.get('networkAdapter'),
+                            module.params.get('type')))
                     server_running = check_and_stop_server(module, client, server, server_running)
                     change_nic_type(module, client, network_domain_id, server, nic.get('id'), module.params.get('type'))
                     changed = True
@@ -859,6 +877,11 @@ def main():
         try:
             nic = get_nic(module, server, vlan, ipv4_address)
             if nic:
+                # Implement Check Mode
+                if module.check_mode:
+                    module.exit_json(msg='The NIC with IP {0} in VLAN {1} will be removed'.format(
+                        nic.get('privateIpv4'),
+                        nic.get('vlanName')))
                 server_running = check_and_stop_server(module, client, server, server_running)
                 remove_nic(module, client, network_domain_id, server, nic)
                 changed = True
@@ -871,6 +894,13 @@ def main():
             nic_1 = get_nic(module, server, vlan, ipv4_address)
             nic_2 = get_nic(module, server, vlan_2, ipv4_address_2)
             if nic_1 and nic_2:
+                # Implement Check Mode
+                if module.check_mode:
+                    module.exit_json(msg='The NIC with IP {0} in VLAN {1} will be exchanged with the NIC with IP {2} in VLAN {3}'.format(
+                        nic_1.get('privateIpv4'),
+                        nic_1.get('vlanName'),
+                        nic_2.get('privateIpv4'),
+                        nic_2.get('vlanName'),))
                 server_running = check_and_stop_server(module, client, server, server_running)
                 exchange_nic(module, client, network_domain_id, server, nic_1, nic_2)
                 changed = True
@@ -878,13 +908,16 @@ def main():
                 module.fail_json(msg='Server {0} has no matching NICs'.format(module.params.get('server')))
         except NTTCCISAPIException as e:
             module.fail_json(msg='Could not exchange the server {0} has no matching NICs - {1}'.format(module.params.get('name'), e))
+
+    # Introduce a pause to allow the API to catch up in more remote MCP locations
+    sleep(10)
     try:
         if start_after_update and not server_running:
             server_command(module, client, server, 'start')
         server = client.get_server_by_name(datacenter, network_domain_id, None, name)
-        module.exit_json(changed=changed, results=server)
+        module.exit_json(changed=changed, data=server)
     except NTTCCISAPIException as e:
-        module.exit_json(changed=changed, msg='Could not verify the server status - {0}'.format(e))
+        module.fail_json(changed=changed, msg='Could not verify the server status - {0}'.format(e))
 
 
 if __name__ == '__main__':

@@ -21,6 +21,7 @@
 #
 # Object Helper functions to keep modules clean
 
+from __future__ import (absolute_import, division, print_function)
 
 from ansible.module_utils.nttc_cis.nttc_cis_utils import compare_json
 
