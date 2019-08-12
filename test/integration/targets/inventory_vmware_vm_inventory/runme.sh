@@ -63,7 +63,8 @@ ansible-inventory -i ${VMWARE_CONFIG} --list --yaml
 
 # Install TOML for --toml
 ${PYTHON} -m pip freeze | grep toml > /dev/null 2>&1
-if [ $? -ne 0 ]; then
+TOML_TEST_RESULT=$?
+if [ $TOML_TEST_RESULT -ne 0 ]; then
     echo "Installing TOML package"
     ${PYTHON} -m pip install toml
 else
@@ -72,7 +73,8 @@ fi
 
 # Get inventory using TOML
 ansible-inventory -i ${VMWARE_CONFIG} --list --toml
-if [ $? -ne 0 ]; then
+TOML_INVENTORY_LIST_RESULT=$?
+if [ $TOML_INVENTORY_LIST_RESULT -ne 0 ]; then
     echo "Inventory plugin failed to list inventory host using --toml, please debug"
     exit 1
 fi
