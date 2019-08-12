@@ -62,7 +62,8 @@ class MixinForMocks(object):
 
         self.mock_block = MagicMock(name='MockBlock')
 
-        self.fake_role_loader = DictDataLoader({"/etc/ansible/roles/bogus_role/tasks/main.yml": """
+        # On macOS /etc is actually /private/etc, tests fail when performing literal /etc checks
+        self.fake_role_loader = DictDataLoader({os.path.join(os.path.realpath("/etc"), "ansible/roles/bogus_role/tasks/main.yml"): """
                                                 - shell: echo 'hello world'
                                                 """})
 
