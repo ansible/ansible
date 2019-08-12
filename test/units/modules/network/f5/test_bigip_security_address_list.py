@@ -18,7 +18,6 @@ if sys.version_info < (2, 7):
 
 from units.compat import unittest
 from units.compat.mock import Mock
-from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -26,8 +25,6 @@ try:
     from library.modules.bigip_security_address_list import ModuleParameters
     from library.modules.bigip_security_address_list import ModuleManager
     from library.modules.bigip_security_address_list import ArgumentSpec
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
@@ -35,8 +32,6 @@ except ImportError:
         from ansible.modules.network.f5.bigip_security_address_list import ModuleParameters
         from ansible.modules.network.f5.bigip_security_address_list import ModuleManager
         from ansible.modules.network.f5.bigip_security_address_list import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
         pytestmark.append(pytest.mark.skip("F5 Ansible modules require the f5-sdk Python library"))
