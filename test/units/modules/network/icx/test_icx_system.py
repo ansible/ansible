@@ -130,7 +130,6 @@ class TestICXSystemModule(TestICXModule):
                 acct_type='accounting-only',
                 auth_key='radius',
                 auth_key_type=[
-                    'dot1x',
                     'mac-auth']),
             dict(
                 type='radius',
@@ -148,7 +147,7 @@ class TestICXSystemModule(TestICXModule):
             commands = [
                 'hostname ruckus',
                 'radius-server host 172.16.10.24 auth-port 2001 acct-port 5000 authentication-only key radius-server',
-                'radius-server host ipv6 2001:db8::1 auth-port 1821 acct-port 1321 accounting-only key radius mac-auth dot1x',
+                'radius-server host ipv6 2001:db8::1 auth-port 1821 acct-port 1321 accounting-only key radius mac-auth',
                 'tacacs-server host ansible.com'
             ]
             self.execute_module(changed=True, commands=commands)
@@ -159,7 +158,7 @@ class TestICXSystemModule(TestICXModule):
                 'no radius-server host 172.16.20.14',
                 'no tacacs-server host 182.16.10.20',
                 'radius-server host 172.16.10.24 auth-port 2001 acct-port 5000 authentication-only key radius-server',
-                'radius-server host ipv6 2001:db8::1 auth-port 1821 acct-port 1321 accounting-only key radius mac-auth dot1x',
+                'radius-server host ipv6 2001:db8::1 auth-port 1821 acct-port 1321 accounting-only key radius mac-auth',
                 'tacacs-server host ansible.com'
             ]
             self.execute_module(changed=True, commands=commands)
