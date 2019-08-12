@@ -106,9 +106,9 @@ class TestMyModule(unittest.TestCase):
     def set_default_args(vsim=False):
         ''' populate hostname/username/password '''
         if vsim:
-            hostname = '10.193.78.219'
+            hostname = '10.10.10.10'
             username = 'admin'
-            password = 'netapp1!'
+            password = 'admin'
         else:
             hostname = 'hostname'
             username = 'username'
