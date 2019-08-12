@@ -29,7 +29,7 @@ options:
   strategy:
     description:
       - This option controls how the module queres the package managers on the system.
-        C(first) means it will return only informatino for the first supported package manager available.
+        C(first) means it will return only information for the first supported package manager available.
         C(all) will return information for all supported and available package managers on the system.
     choices: ['first', 'all']
     default: 'first'
