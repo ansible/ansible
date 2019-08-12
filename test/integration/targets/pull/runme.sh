@@ -35,12 +35,12 @@ function pass_tests {
 	fi
 
 	# test for https://github.com/ansible/ansible/issues/13681
-	if egrep '127\.0\.0\.1.*ok' "${temp_log}"; then
+	if grep -E '127\.0\.0\.1.*ok' "${temp_log}"; then
 	    echo "Found host 127.0.0.1 in output. Only localhost should be present."
 	    exit 1
 	fi
 	# make sure one host was run
-	if ! egrep 'localhost.*ok' "${temp_log}"; then
+	if ! grep -E 'localhost.*ok' "${temp_log}"; then
 	    echo "Did not find host localhost in output."
 	    exit 1
 	fi
