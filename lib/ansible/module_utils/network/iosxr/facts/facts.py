@@ -17,6 +17,7 @@ from ansible.module_utils.network.iosxr.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.iosxr.facts.lacp.lacp import LacpFacts
 from ansible.module_utils.network.iosxr.facts.lacp_interfaces.lacp_interfaces import Lacp_interfacesFacts
+from ansible.module_utils.network.iosxr.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.iosxr.facts.legacy.\
     base import Default, Hardware, Interfaces, Config
 
@@ -29,7 +30,8 @@ FACT_LEGACY_SUBSETS = dict(
 )
 FACT_RESOURCE_SUBSETS = dict(
     lacp=LacpFacts,
-    lacp_interfaces=Lacp_interfacesFacts
+    lacp_interfaces=Lacp_interfacesFacts,
+    lldp_global=Lldp_globalFacts
 )
 
 
