@@ -179,7 +179,7 @@ class FileLock:
                     total_wait += wait_interval
                     continue
             os.close(self.lock_file)
-            raise LockTimeout('Waited {0} seconds for lock on {1}'.format(total_wait, path))
+            raise LockTimeout('Waited {0} seconds for lock on {1}'.format(total_wait, self.path))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """ Remove lock
