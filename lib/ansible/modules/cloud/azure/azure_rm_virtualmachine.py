@@ -188,14 +188,14 @@ options:
                 description:
                     - The logical unit number for data disk.
                     - This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
-                require: true
+                required: true
                 version_added: "2.4"
             disk_size_gb:
                 description:
                     - The initial disk size in GB for blank data disks.
                     - This value cannot be larger than C(1023) GB.
                     - Size can be changed only when the virtual machine is deallocated.
-                    - Not used when I(managed_disk_id) defined.
+                    - Not sure when I(managed_disk_id) defined.
                 version_added: "2.4"
             managed_disk_type:
                 description:
