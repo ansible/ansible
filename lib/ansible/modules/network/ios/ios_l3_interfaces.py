@@ -84,7 +84,7 @@ DOCUMENTATION = """
                 DHCP ip. Note, This option shall work only when dhcp is
                 configured as IP.
               type: str
-       ipv6:
+        ipv6:
          description:
          - IPv6 address to be set for the Layer-3 interface mentioned in
            I(name) option.
@@ -312,7 +312,7 @@ EXAMPLES = """
 #  encapsulation dot1Q 20
 #  ip address 192.168.0.2 255.255.255.0
 
-- name: Delete attributes of given interfaces (NOTE: This won't delete the interface itself)
+- name: "Delete attributes of given interfaces (NOTE: This won't delete the interface itself)"
   ios_l3_interfaces:
     config:
       - name: GigabitEthernet0/2
