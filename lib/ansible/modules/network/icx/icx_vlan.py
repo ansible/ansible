@@ -732,7 +732,7 @@ def main():
         associated_interfaces=dict(type='list'),
         associated_tagged=dict(type='list'),
         delay=dict(default=10, type='int'),
-        stp=dict(type='dict',options=stp_spec),
+        stp=dict(type='dict', options=stp_spec),
         state=dict(default='present', choices=['present', 'absent']),
         check_running_config=dict(default=True, type='bool', fallback=(env_fallback, ['ANSIBLE_CHECK_ICX_RUNNING_CONFIG']))
     )
