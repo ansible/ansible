@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = """
@@ -21,6 +21,10 @@ short_description: Manage Layer-3 interfaces on Cisco IOS network devices.
 description:
   - This module provides declarative management of Layer-3 interfaces
     on IOS network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: ios_l3_interfaces
+  why: Newer and updated modules released with more functionality in Ansible 2.9
 notes:
   - Tested against IOS 15.2
 options:
@@ -55,34 +59,28 @@ EXAMPLES = """
   ios_l3_interface:
     name: GigabitEthernet0/3
     state: absent
-
 - name: Set GigabitEthernet0/3 IPv4 address
   ios_l3_interface:
     name: GigabitEthernet0/3
     ipv4: 192.168.0.1/24
-
 - name: Set GigabitEthernet0/3 IPv6 address
   ios_l3_interface:
     name: GigabitEthernet0/3
     ipv6: "fd5d:12c9:2201:1::1/64"
-
 - name: Set GigabitEthernet0/3 in dhcp
   ios_l3_interface:
     name: GigabitEthernet0/3
     ipv4: dhcp
     ipv6: dhcp
-
 - name: Set interface Vlan1 (SVI) IPv4 address
   ios_l3_interface:
     name: Vlan1
     ipv4: 192.168.0.5/24
-
 - name: Set IP addresses on aggregate
   ios_l3_interface:
     aggregate:
       - { name: GigabitEthernet0/3, ipv4: 192.168.2.10/24 }
       - { name: GigabitEthernet0/3, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
-
 - name: Remove IP addresses on aggregate
   ios_l3_interface:
     aggregate:
