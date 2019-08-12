@@ -2901,7 +2901,7 @@ def main():
             # that do not exist.
             path_needs_parents = False
             if user.home:
-                parent = os.path.basename(user.home)
+                parent = os.path.dirname(user.home)
                 if not os.path.isdir(parent):
                     path_needs_parents = True
 
