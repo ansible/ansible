@@ -52,6 +52,7 @@ class BecomeBase(AnsiblePlugin):
         try:
             cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
         except AttributeError:
+            # TODO: This should probably become some more robust functionlity used to detect incompat
             raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
         exe = getattr(shell, 'executable', None)
         if exe and not noexe:
