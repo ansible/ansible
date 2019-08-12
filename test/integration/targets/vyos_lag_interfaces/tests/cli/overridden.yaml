@@ -8,45 +8,47 @@
 
 - include_tasks: _populate.yaml
 
-- name: Overrides all device configuration with provided configuration
-  vyos_lag_interfaces: &overridden
-      config:
-          - name: bond1
-            mode: "active-backup"
-            members:
-                - member: eth2
-            primary: eth2
-            hash_policy: layer2
-      state: overridden
-  register: result
+- block:
+  - name: Overrides all device configuration with provided configuration
+    vyos_lag_interfaces: &overridden
+        config:
+            - name: bond1
+              mode: "active-backup"
+              members:
+                  - member: eth2
+              primary: eth2
+              hash_policy: layer2
+        state: overridden
+    register: result
 
-- name: Assert that before dicts were correctly generated
-  assert:
-      that:
-          - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
+  - name: Assert that before dicts were correctly generated
+    assert:
+        that:
+            - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
 
-- name: Assert that correct commands were generated
-  assert:
-      that:
-          - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+  - name: Assert that correct commands were generated
+    assert:
+        that:
+            - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
 
-- name: Assert that after dicts were correctly generated
-  assert:
-      that:
-          - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
+  - name: Assert that after dicts were correctly generated
+    assert:
+        that:
+            - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
 
-- name: Overrides all device configuration with provided configurations (IDEMPOTENT)
-  vyos_lag_interfaces: *overridden
-  register: result
+  - name: Overrides all device configuration with provided configurations (IDEMPOTENT)
+    vyos_lag_interfaces: *overridden
+    register: result
 
-- name: Assert that the previous task was idempotent
-  assert:
-      that:
-          - "result['changed'] == false"
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
 
-- name: Assert that before dicts were correctly generated
-  assert:
-      that:
-          - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  - name: Assert that before dicts were correctly generated
+    assert:
+        that:
+            - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
 
-- include_tasks: _remove_config.yaml
+  always:
+  - include_tasks: _remove_config.yaml
