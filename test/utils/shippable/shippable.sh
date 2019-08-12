@@ -103,17 +103,17 @@ function cleanup
                 flags="${flags//=/,}"
                 flags="${flags//[^a-zA-Z0-9_,]/_}"
 
-                #bash <(curl -s https://codecov.io/bash) \
-                #    -f "${file}" \
-                #    -F "${flags}" \
-                #    -n "${test}" \
-                #    -t 83cd8957-dc76-488c-9ada-210dcea51633 \
-                #    -X coveragepy \
-                #    -X gcov \
-                #    -X fix \
-                #    -X search \
-                #    -X xcode \
-                #|| echo "Failed to upload code coverage report to codecov.io: ${file}"
+                bash <(curl -s https://codecov.io/bash) \
+                    -f "${file}" \
+                    -F "${flags}" \
+                    -n "${test}" \
+                    -t 83cd8957-dc76-488c-9ada-210dcea51633 \
+                    -X coveragepy \
+                    -X gcov \
+                    -X fix \
+                    -X search \
+                    -X xcode \
+                || echo "Failed to upload code coverage report to codecov.io: ${file}"
             done
         fi
     fi
