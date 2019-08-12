@@ -20,7 +20,6 @@ from ansible.module_utils.six import iteritems
 try:
     from library.modules.bigip_device_info import Parameters
     from library.modules.bigip_device_info import VirtualAddressesFactManager
-    from library.modules.bigip_device_info import VirtualAddressesParameters
     from library.modules.bigip_device_info import ArgumentSpec
     from library.modules.bigip_device_info import ModuleManager
 
@@ -33,7 +32,6 @@ try:
 except ImportError:
     from ansible.modules.network.f5.bigip_device_info import Parameters
     from ansible.modules.network.f5.bigip_device_info import VirtualAddressesFactManager
-    from ansible.modules.network.f5.bigip_device_info import VirtualAddressesParameters
     from ansible.modules.network.f5.bigip_device_info import ArgumentSpec
     from ansible.modules.network.f5.bigip_device_info import ModuleManager
 
