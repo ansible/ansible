@@ -81,22 +81,22 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
 * The ``aws_s3_bucket_facts`` module was renamed to :ref:`aws_s3_bucket_info <aws_s3_bucket_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, `register a variable <registered_variables>`.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``cloudformation_facts`` module was renamed to :ref:`cloudformation_info <cloudformation_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, `register a variable <registered_variables>`.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``cloudfront_facts`` module was renamed to :ref:`cloudfront_info <cloudfront_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, `register a variable <registered_variables>`.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``ecs_service_facts`` module was renamed to :ref:`ecs_service_info <ecs_service_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, `register a variable <registered_variables>`.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``efs_facts`` module was renamed to :ref:`efs_info <efs_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, `register a variable <registered_variables>`.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``lambda_facts`` module was renamed to :ref:`lambda_info <lambda_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, `register a variable <registered_variables>`.
+  To access return values, :ref:`register a variable <registered_variables>`.
 
 
 Noteworthy module changes
