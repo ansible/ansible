@@ -210,6 +210,7 @@ import tempfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common.file import FileLock
 
 
 def write_changes(module, b_lines, dest):
@@ -512,26 +513,27 @@ def main():
     if os.path.isdir(b_path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
-    if params['state'] == 'present':
-        if backrefs and regexp is None:
-            module.fail_json(msg='regexp is required with backrefs=true')
+    with FileLock(path, check_mode=module.check_mode):
+        if params['state'] == 'present':
+            if backrefs and regexp is None:
+                module.fail_json(msg='regexp is required with backrefs=true')
 
-        if line is None:
-            module.fail_json(msg='line is required with state=present')
+            if line is None:
+                module.fail_json(msg='line is required with state=present')
 
-        # Deal with the insertafter default value manually, to avoid errors
-        # because of the mutually_exclusive mechanism.
-        ins_bef, ins_aft = params['insertbefore'], params['insertafter']
-        if ins_bef is None and ins_aft is None:
-            ins_aft = 'EOF'
+            # Deal with the insertafter default value manually, to avoid errors
+            # because of the mutually_exclusive mechanism.
+            ins_bef, ins_aft = params['insertbefore'], params['insertafter']
+            if ins_bef is None and ins_aft is None:
+                ins_aft = 'EOF'
 
-        present(module, path, regexp, line,
-                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
-    else:
-        if regexp is None and line is None:
-            module.fail_json(msg='one of line or regexp is required with state=absent')
+            present(module, path, regexp, line,
+                    ins_aft, ins_bef, create, backup, backrefs, firstmatch)
+        else:
+            if regexp is None and line is None:
+                module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        absent(module, path, regexp, line, backup)
+            absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':

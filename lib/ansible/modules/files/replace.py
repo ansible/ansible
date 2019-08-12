@@ -175,6 +175,7 @@ import tempfile
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import FileLock
 
 
 def write_changes(module, contents, path):
@@ -240,59 +241,60 @@ def main():
     if os.path.isdir(path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
-    if not os.path.exists(path):
-        module.fail_json(rc=257, msg='Path %s does not exist !' % path)
-    else:
-        f = open(path, 'rb')
-        contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
-        f.close()
-
-    pattern = u''
-    if params['after'] and params['before']:
-        pattern = u'%s(?P<subsection>.*?)%s' % (params['after'], params['before'])
-    elif params['after']:
-        pattern = u'%s(?P<subsection>.*)' % params['after']
-    elif params['before']:
-        pattern = u'(?P<subsection>.*)%s' % params['before']
-
-    if pattern:
-        section_re = re.compile(pattern, re.DOTALL)
-        match = re.search(section_re, contents)
-        if match:
-            section = match.group('subsection')
-            indices = [match.start('subsection'), match.end('subsection')]
+    with FileLock(path, check_mode=module.check_mode):
+        if not os.path.exists(path):
+            module.fail_json(rc=257, msg='Path %s does not exist !' % path)
         else:
-            res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
-            res_args['changed'] = False
-            module.exit_json(**res_args)
-    else:
-        section = contents
+            f = open(path, 'rb')
+            contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
+            f.close()
 
-    mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], section, 0)
+        pattern = u''
+        if params['after'] and params['before']:
+            pattern = u'%s(?P<subsection>.*?)%s' % (params['after'], params['before'])
+        elif params['after']:
+            pattern = u'%s(?P<subsection>.*)' % params['after']
+        elif params['before']:
+            pattern = u'(?P<subsection>.*)%s' % params['before']
 
-    if result[1] > 0 and section != result[0]:
         if pattern:
-            result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
-        msg = '%s replacements made' % result[1]
-        changed = True
-        if module._diff:
-            res_args['diff'] = {
-                'before_header': path,
-                'before': contents,
-                'after_header': path,
-                'after': result[0],
-            }
-    else:
-        msg = ''
-        changed = False
+            section_re = re.compile(pattern, re.DOTALL)
+            match = re.search(section_re, contents)
+            if match:
+                section = match.group('subsection')
+                indices = [match.start('subsection'), match.end('subsection')]
+            else:
+                res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
+                res_args['changed'] = False
+                module.exit_json(**res_args)
+        else:
+            section = contents
 
-    if changed and not module.check_mode:
-        if params['backup'] and os.path.exists(path):
-            res_args['backup_file'] = module.backup_local(path)
-        # We should always follow symlinks so that we change the real file
-        path = os.path.realpath(path)
-        write_changes(module, to_bytes(result[0], encoding=encoding), path)
+        mre = re.compile(params['regexp'], re.MULTILINE)
+        result = re.subn(mre, params['replace'], section, 0)
+
+        if result[1] > 0 and section != result[0]:
+            if pattern:
+                result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
+            msg = '%s replacements made' % result[1]
+            changed = True
+            if module._diff:
+                res_args['diff'] = {
+                    'before_header': path,
+                    'before': contents,
+                    'after_header': path,
+                    'after': result[0],
+                }
+        else:
+            msg = ''
+            changed = False
+
+        if changed and not module.check_mode:
+            if params['backup'] and os.path.exists(path):
+                res_args['backup_file'] = module.backup_local(path)
+            # We should always follow symlinks so that we change the real file
+            path = os.path.realpath(path)
+            write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)

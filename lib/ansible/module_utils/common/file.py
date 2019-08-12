@@ -15,6 +15,8 @@ import shutil
 import traceback
 import fcntl
 import sys
+import hashlib
+import tempfile
 
 from contextlib import contextmanager
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -115,88 +117,82 @@ class LockTimeout(Exception):
 
 
 class FileLock:
-    '''
-    Currently FileLock is implemented via fcntl.flock on a lock file, however this
-    behaviour may change in the future. Avoid mixing lock types fcntl.flock,
-    fcntl.lockf and module_utils.common.file.FileLock as it will certainly cause
-    unwanted and/or unexpected behaviour
-    '''
-    def __init__(self):
-        self.lockfd = None
+    """ Class for file locking, to avoid race conditions between multiple ansible processes.
+        Keep in mind this is advisory locking only (ansible's internal agreement). Any other process that doesn't
+        respect or know about our locking strategy can still read/write/remove original file.
+        In Python fcntl.lockf function should be used, which actually calls fcntl system API.
+        You can read more at https://apenwarr.ca/log/20101213
+    """
+    def __init__(self, path, lock_timeout=15, check_mode=False):
+        self.lock_directory = None
+        self.lock_file = None
+        self.path = path
+        self.lock_timeout = lock_timeout
+        self.check_mode = check_mode
 
-    @contextmanager
-    def lock_file(self, path, tmpdir, lock_timeout=None):
-        '''
-        Context for lock acquisition
-        '''
-        try:
-            self.set_lock(path, tmpdir, lock_timeout)
-            yield
-        finally:
-            self.unlock()
-
-    def set_lock(self, path, tmpdir, lock_timeout=None):
-        '''
-        Create a lock file based on path with flock to prevent other processes
-        using given path.
-        Please note that currently file locking only works when it's executed by
-        the same user, I.E single user scenarios
-
-        :kw path: Path (file) to lock
-        :kw tmpdir: Path where to place the temporary .lock file
-        :kw lock_timeout:
-            Wait n seconds for lock acquisition, fail if timeout is reached.
-            0 = Do not wait, fail if lock cannot be acquired immediately,
-            Default is None, wait indefinitely until lock is released.
-        :returns: True
-        '''
-        lock_path = os.path.join(tmpdir, 'ansible-{0}.lock'.format(os.path.basename(path)))
-        l_wait = 0.1
-        r_exception = IOError
-        if sys.version_info[0] == 3:
-            r_exception = BlockingIOError
-
-        self.lockfd = open(lock_path, 'w')
-
-        if lock_timeout <= 0:
-            fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
+    def __enter__(self):
+        """" Set lock
+             We are setting lock on separate .lock file. Cannot lock original file, as ansible modules usually use
+             atomic_move function that changes inode, on which lock actually relies.
+         """
+        if self.check_mode:
             return True
+        else:
+            # The default umask is 0o22 which turns off write permission of group and others
+            os.umask(0)
 
-        if lock_timeout:
-            e_secs = 0
-            while e_secs < lock_timeout:
+            # Assure directory for .lock files
+            # On linux this is /tmp/
+            # On macos /var/folders/**/***/T/ which only has current user permissions (multi-user locking won't work)
+            sys_temp = tempfile.gettempdir()
+            self.lock_directory = os.path.join(sys_temp, 'ansible-locks')
+            try:
+                os.mkdir(self.lock_directory, 0o777)
+            except OSError as exc:
+                if exc.errno == errno.EEXIST and os.path.isdir(self.lock_directory):
+                    pass
+                else:
+                    raise
+
+            # Generate .lock filename based on 'path', as we cannot rely on inode
+            lock_file_name = hashlib.sha256(self.path.encode('utf-8')).hexdigest()[:10]
+            lock_file_path = os.path.join(self.lock_directory, '{0}.lock'.format(lock_file_name))
+
+            # Open fd with low-level call, so we can set permission bits to allow multi-user functionality
+            # Modify/change timestamp also has to update, so systemd-tempfiles service doesn't delete it
+            self.lock_file = os.open(lock_file_path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o666)
+
+            # Try to acquire lock (immediately)
+            if self.lock_timeout <= 0:  # Also catches None
+                fcntl.flock(self.lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return True
+
+            # Try until timeout is reached
+            wait_interval = 0.1
+            total_wait = 0
+            while total_wait <= self.lock_timeout:
                 try:
-                    fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
+                    fcntl.flock(self.lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     return True
-                except r_exception:
-                    time.sleep(l_wait)
-                    e_secs += l_wait
+                except (IOError, OSError):
+                    time.sleep(wait_interval)
+                    total_wait += wait_interval
                     continue
+            os.close(self.lock_file)
+            raise LockTimeout('Waited {0} seconds for lock on {1}'.format(total_wait, path))
 
-            self.lockfd.close()
-            raise LockTimeout('{0} sec'.format(lock_timeout))
-
-        fcntl.flock(self.lockfd, fcntl.LOCK_EX)
-        os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
-
-        return True
-
-    def unlock(self):
-        '''
-        Make sure lock file is available for everyone and Unlock the file descriptor
-        locked by set_lock
-
-        :returns: True
-        '''
-        if not self.lockfd:
-            return True
-
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """ Remove lock
+            Fcntl releases lock automatically when file descriptor is closed. So even if process crashes or is killed,
+            we are sure deadlock is avoided. As a good programming practice, we still unlock and close on exit if
+            everything goes well.
+            We should not remove .lock file, as second process might opened it already and has file handler in memory.
+            In that moment third process will see that file doesn't exist, create it and lock it. Both second and third
+            process will gain exclusive lock (although on files with different inodes).
+        """
         try:
-            fcntl.flock(self.lockfd, fcntl.LOCK_UN)
-            self.lockfd.close()
-        except ValueError:  # file wasn't opened, let context manager fail gracefully
+            fcntl.lockf(self.lock_file, fcntl.LOCK_UN)
+            self.lock_file.close()
+        except (TypeError, AttributeError):
+            # Lock file wasn't opened in check_mode
             pass
-
-        return True
