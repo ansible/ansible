@@ -242,6 +242,14 @@ options:
     default: 'no'
     type: bool
     version_added: '2.4'
+  instant_clone:
+    description:
+    - Whether to create an instant linked clone from the running VM specified by name in the C(template) parameter.
+    - The template VM must be a VM and not a template and must be running.
+    - Requires vSphere 6.7 to function.
+    - For best results place the VM into a frozen state.
+    default: 'no'
+    type: bool
   force:
     description:
     - Ignore warnings and complete the actions.
@@ -368,6 +376,15 @@ options:
     - Specify convert disk type while cloning template or virtual machine.
     choices: [ thin, thick, eagerzeroedthick ]
     version_added: '2.8'
+  instant_clone:
+    description:
+    - Used to perform an instant clone of a running VM specified in the C(template) parameter. Requires a vSphere instance and cannot be used with a standalone ESXi installation.
+    - When this parameter is used only the C(hostname), C(username), C(password), C(validate_certs), C(datacenter), C(name), C(template), and C(customvalues) parameters are honored.
+    - A VM name or UUID can be used to specify the source VM to clone from in the C(template) parameter.
+    - For best results it's recommeneded to place the VM into a frozen state. U(https://vdc-repo.vmware.com/vmwb-repository/dcr-public/cdbbd51c-4824-4a1b-ad43-45df55a76a76/8cb3ed93-cac2-46aa-b329-db5a096af5bc/doc/GUID-73AA07B6-BD83-4BB6-ACD0-F56ECB800607.html)
+    default: 'no'
+    type: bool
+    version_added: '2.9'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -565,6 +582,21 @@ EXAMPLES = r'''
       memory_mb: 512
       num_cpus: 2
       scsi: paravirtual
+  delegate_to: localhost
+
+- name: Create an instant clone from a running or frozen source VM
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcetner_password }}"
+    validate_certs: no
+    datacenter: "{{ vm_datacenter }}"
+    name: "{{ new_clone_vm_name }}"
+    template: "{{ instantclone_source_vm_uuid_or_name }}"
+    instant_clone: yes
+    customvalues:
+      - key: foo.bar.test
+        value: "Can anyone hear me?"
   delegate_to: localhost
 '''
 
@@ -2102,11 +2134,103 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg='Unable to find resource pool, need esxi_hostname, resource_pool, or cluster')
         return resource_pool
 
+    def deploy_instantclone(self):
+        # Ensure required param is given
+        if self.params['template'] == 'FOOBAR':
+            self.module.fail_json(msg='In order to create an instant clone the base VM name or UUID must be specified in the template parameter.')
+        # Gather needed facts from the base VM for the instant clone
+        vm = self.cache.find_obj(self.content, [vim.VirtualMachine], self.params['template'])
+        if vm is None:
+            self.module.fail_json(msg="Failed to find the vm %s" % self.params['template'])
+        vm_state = self.gather_facts(vm)
+        # An instant clone requires the base VM to be running, fail if it is not
+        if vm_state['hw_power_status'] != 'poweredOn':
+            self.module.fail_json(msg='Unable to instant clone a VM in a "%s" state. It must be powered on.' % vm_state['hw_power_status'])
+        if vm_state['instant_clone_frozen'] is None:
+            self.module.fail_json(msg='Unable to determine if VM is frozen. Is vSphere running 6.7 or later?')
+
+        config = []
+        if len(self.params['customvalues']) != 0:
+            for kv in self.params['customvalues']:
+                if 'key' not in kv or 'value' not in kv:
+                    self.module.exit_json(msg="The parameter customvalues items required both 'key' and 'value' fields.")
+                ov = vim.OptionValue()
+                ov.key = kv['key']
+                ov.value = kv['value']
+                config.append(ov)
+
+        instantclone_spec = vim.VirtualMachineInstantCloneSpec()
+        location_spec = vim.VirtualMachineRelocateSpec()
+        if vm_state['instant_clone_frozen'] is False:
+            # VM is not frozen, need to do prep work for instant clone
+            vm_network_adapters = []
+            devices = vm.config.hardware.device
+            for device in devices:
+                if isinstance(device, vim.VirtualEthernetCard):
+                    vm_network_adapters.append(device)
+
+            for vm_network_adapter in vm_network_adapters:
+                # Standard network
+                if isinstance(vm_network_adapter.backing, vim.VirtualEthernetCardNetworkBackingInfo):
+                    network_id = vm_network_adapter.backing.network
+                    device_spec = vim.VirtualDeviceConfigSpec()
+                    device_spec.operation = 'edit'
+                    device_spec.device = vm_network_adapter
+                    device_spec.device.backing = vim.VirtualEthernetCardNetworkBackingInfo()
+                    device_spec.device.backing.deviceName = network_id
+                    connectable = vim.VirtualDeviceConnectInfo()
+                    connectable.migrateConnect = 'disconnect'
+                    device_spec.device.connectable = connectable
+                    location_spec.deviceChange.append(device_spec)
+                # Distributed network switch
+                elif isinstance(vm_network_adapter.backing, vim.VirtualEthernetCardDistributedVirtualPortBackingInfo):
+                    network_id = vm_network_adapter.backing.port
+                    # If the port key isn't cleared the VM clone will fail as the port is in use by the running source VM.
+                    network_id.portKey = None
+                    device_spec = vim.VirtualDeviceConfigSpec()
+                    device_spec.operation = 'edit'
+                    device_spec.device = vm_network_adapter
+                    device_spec.device.backing = vim.VirtualEthernetCardDistributedVirtualPortBackingInfo()
+                    device_spec.device.backing.port = network_id
+                    connectable = vim.VirtualDeviceConnectInfo()
+                    connectable.migrateConnect = 'disconnect'
+                    device_spec.device.connectable = connectable
+                    location_spec.deviceChange.append(device_spec)
+                else:
+                    self.module.exit_json(msg='Unknown network backing type of "%s" only Virtual Distributed switches and Standard swtiches are supported.'
+                                          % vm_network_adapter.__class__.__name__.split('.')[-1])
+
+            instantclone_spec.config = config
+            instantclone_spec.location = location_spec
+            instantclone_spec.name = self.params['name']
+
+        else:
+            # VM is frozen, can clone without prep work
+            instantclone_spec.config = config
+            instantclone_spec.location = location_spec
+            instantclone_spec.name = self.params['name']
+
+        task = vm.InstantClone_Task(instantclone_spec)
+        wait_for_task(task)
+        if task.info.state == 'error':
+            kwargs = {
+                'changed': self.change_applied,
+                'failed': True,
+                'msg': task.info.error.msg,
+                'clone_method': 'InstantClone_Task'
+            }
+            return kwargs
+
+        vm = task.info.result
+        vm_facts = self.gather_facts(vm)
+        return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
+
     def deploy_vm(self):
         # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/clone_vm.py
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.CloneSpec.html
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.vm.ConfigSpec.html
         # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
+        # https://vdc-download.vmware.com/vmwb-repository/dcr-public/da47f910-60ac-438b-8b9b-6122f4d14524/16b7274a-bf8b-4b4c-a05e-746f2aa93c8c/doc/vim.vm.InstantCloneSpec.html
 
         # FIXME:
         #   - static IPs
@@ -2152,8 +2276,7 @@ class PyVmomiHelper(PyVmomi):
                 'folder': self.folder,
                 'full_search_path': fullpath,
             }
-            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.folder, fullpath),
-                                  details=details)
+            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.folder, fullpath), details=details)
 
         destfolder = f_obj
 
@@ -2242,8 +2365,7 @@ class PyVmomiHelper(PyVmomi):
                     if snapshot_src is not None:
                         self.relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
                     else:
-                        self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are"
-                                                  " required together for linked clone operation.")
+                        self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are required together for linked clone operation.")
 
                 clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=self.relospec)
                 if self.customspec:
@@ -2252,11 +2374,9 @@ class PyVmomiHelper(PyVmomi):
                 if snapshot_src is not None:
                     if vm_obj.snapshot is None:
                         self.module.fail_json(msg="No snapshots present for virtual machine or template [%(template)s]" % self.params)
-                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
-                                                                      snapname=snapshot_src)
+                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList, snapname=snapshot_src)
                     if len(snapshot) != 1:
-                        self.module.fail_json(msg='virtual machine "%(template)s" does not contain'
-                                                  ' snapshot named "%(snapshot_src)s"' % self.params)
+                        self.module.fail_json(msg='virtual machine "%(template)s" does not contain snapshot named "%(snapshot_src)s"' % self.params)
 
                     clonespec.snapshot = snapshot[0].snapshot
 
@@ -2265,10 +2385,9 @@ class PyVmomiHelper(PyVmomi):
                 try:
                     task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
                 except vim.fault.NoPermission as e:
-                    self.module.fail_json(msg="Failed to clone virtual machine %s to folder %s "
-                                              "due to permission issue: %s" % (self.params['name'],
-                                                                               destfolder,
-                                                                               to_native(e.msg)))
+                    self.module.fail_json(
+                        msg="Failed to clone virtual machine %s to folder %s due to permission issue: %s" %
+                            (self.params['name'], destfolder, to_native(e.msg)))
                 self.change_detected = True
             else:
                 # ConfigSpec require name for VM creation
@@ -2282,11 +2401,9 @@ class PyVmomiHelper(PyVmomi):
                 try:
                     task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
                 except vmodl.fault.InvalidRequest as e:
-                    self.module.fail_json(msg="Failed to create virtual machine due to invalid configuration "
-                                              "parameter %s" % to_native(e.msg))
+                    self.module.fail_json(msg="Failed to create virtual machine due to invalid configuration parameter %s" % to_native(e.msg))
                 except vim.fault.RestrictedVersion as e:
-                    self.module.fail_json(msg="Failed to create virtual machine due to "
-                                              "product versioning restrictions: %s" % to_native(e.msg))
+                    self.module.fail_json(msg="Failed to create virtual machine due to product versioning restrictions: %s" % to_native(e.msg))
                 self.change_detected = True
             self.wait_for_task(task)
         except TypeError as e:
@@ -2588,6 +2705,7 @@ def main():
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
+        instant_clone=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -2661,7 +2779,18 @@ def main():
             raise AssertionError()
     # VM doesn't exist
     else:
-        if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
+        if module.params['instant_clone']:
+            if module.check_mode:
+                result.update(
+                    change=True,
+                    desired_operation='deploy_instantclone',
+                )
+                module.exit_json(**result)
+            result = pyv.deploy_instantclone()
+            if result['failed']:
+                module.fail_json(msg='Failed to create an instant clone machine: "%s"' % result['msg'])
+
+        elif module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
             if module.check_mode:
                 result.update(
                     changed=True,
