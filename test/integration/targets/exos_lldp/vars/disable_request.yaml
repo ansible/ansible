@@ -1,0 +1,7 @@
+request_body:
+  - data:
+      openconfig-lldp:config:
+        enabled: False
+        name: "1"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=1/config"
