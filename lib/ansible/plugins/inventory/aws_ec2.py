@@ -138,6 +138,10 @@ keyed_groups:
   # Create a group per region e.g. aws_region_us_east_2
   - key: placement.region
     prefix: aws_region
+  # Create a group (or groups) based on the value of a custom tag "Role" and add them to a metagroup called "project"
+  - key: tags['Role']
+    prefix: foo
+    parent_group: "project"
 # Set individual variables with compose
 compose:
   # Use the private IP address to connect to the host
