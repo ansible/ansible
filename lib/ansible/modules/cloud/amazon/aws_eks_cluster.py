@@ -246,7 +246,7 @@ def get_cluster(client, module):
     except botocore.exceptions.EndpointConnectionError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg="Region %s is not supported by EKS" % client.meta.region_name)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
-        module.fail_json(e, msg="Couldn't get cluster %s" % name)
+        module.fail_json_aws(e, msg="Couldn't get cluster %s" % name)
 
 
 def wait_until(client, module, waiter_name='cluster_active'):
