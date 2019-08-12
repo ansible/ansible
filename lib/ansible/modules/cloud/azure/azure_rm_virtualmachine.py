@@ -227,7 +227,7 @@ options:
                     - Only used when OS disk created with virtual hard disk (VHD).
                     - Used when I(managed_disk_type) not defined.
                     - Cannot be updated unless I(lun) updated.
-                default: None
+                default: vhds
                 version_added: "2.4"
             storage_blob_name:
                 description:
