@@ -66,6 +66,17 @@ def diff_list_of_dicts(want, have):
     return diff
 
 
+def get_lst_diff_for_dicts(want, have, lst):
+    if not have:
+        diff = want.get(lst) or []
+
+    else:
+        want_elements = want.get(lst) or {}
+        have_elements = have.get(lst) or {}
+        diff = list_diff_want_only(want_elements, have_elements)
+    return diff
+
+
 def list_diff_have_only(want_list, have_list):
     if have_list and not want_list:
         diff = have_list
@@ -85,13 +96,3 @@ def list_diff_want_only(want_list, have_list):
         diff = [i for i in have_list + want_list if i in want_list and i not in have_list]
     return diff
 
-
-def get_lst_diff_for_dicts(want, have, lst):
-    if not have:
-        diff = want.get(lst) or []
-
-    else:
-        want_elements = want.get(lst) or {}
-        have_elements = have.get(lst) or {}
-        diff = list_diff_want_only(want_elements, have_elements)
-    return diff

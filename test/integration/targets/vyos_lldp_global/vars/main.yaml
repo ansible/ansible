@@ -8,7 +8,7 @@ merged:
 
   commands:
     - "set service lldp management-address '198.50.100.50'"
-    - "set service lldp legacy-protocols fdp"
+    - "set service lldp legacy-protocols 'fdp'"
 
   after:
     address: '198.50.100.50'
@@ -25,8 +25,8 @@ populate:
 
 replaced:
   commands:
-    - "set service lldp legacy-protocols edp"
-    - "set service lldp legacy-protocols sonmp"
+    - "set service lldp legacy-protocols 'edp'"
+    - "set service lldp legacy-protocols 'sonmp'"
     - "set service lldp management-address '198.50.100.55'"
 
   after:

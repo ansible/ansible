@@ -22,7 +22,7 @@
 - name: Assert that correct set of commands were generated
   assert:
       that:
-          - "{{ merged['commands'] == result['commands'] }}"
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
 
 - name: Assert that after dicts was correctly generated
   assert:

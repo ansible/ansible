@@ -11,7 +11,8 @@ based on the configuration.
 """
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-from re import findall, search, M
+
+from re import findall, M
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
@@ -66,9 +67,11 @@ class Lldp_globalFacts(object):
             objs.update(lldp_obj)
 
         facts = {}
-        if objs:
-            facts['lldp_global'] = objs
+        params = utils.validate_config(self.argument_spec, {'config': objs})
+        facts['lldp_global'] = utils.remove_empties(params['config'])
+
         ansible_facts['ansible_network_resources'].update(facts)
+
         return ansible_facts
 
     def render_config(self, conf):

@@ -18,7 +18,7 @@
 - name: Assert that the correct set of commands were generated
   assert:
     that:
-      - "{{ deleted['commands'] == result['commands'] }}"
+      - "{{ deleted['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
 
 - name: Assert that the after dicts were correctly generated
   assert:

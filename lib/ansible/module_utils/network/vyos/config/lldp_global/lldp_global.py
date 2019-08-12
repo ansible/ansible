@@ -14,8 +14,7 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff
 from ansible.module_utils.network.vyos.facts.facts import Facts
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.vyos.utils.utils import add_lldp_protocols, \
-    update_lldp_protocols
+from ansible.module_utils.network.vyos.utils.utils import get_lst_diff_for_dicts, list_diff_have_only
 
 
 class Lldp_global(ConfigBase):
@@ -33,8 +32,6 @@ class Lldp_global(ConfigBase):
     ]
 
     params = ['enable', 'address', 'snmp', 'legacy_protocols']
-    set_cmd = 'set service lldp '
-    del_cmd = 'delete service lldp '
 
     def __init__(self, module):
         super(Lldp_global, self).__init__(module)
@@ -104,15 +101,14 @@ class Lldp_global(ConfigBase):
         commands = []
         state = self._module.params['state']
         if state == 'deleted':
-            commands.extend(self._state_deleted(have_lldp=have))
+            commands.extend(self._state_deleted(have))
         elif state == 'merged':
-            commands.extend(self._state_merged(want_lldp=want, have_lldp=have))
+            commands.extend(self._state_merged(want, have))
         elif state == 'replaced':
-            commands.extend(self._state_replaced(want_lldp=want, have_lldp=have))
+            commands.extend(self._state_replaced(want, have))
         return commands
 
-    @staticmethod
-    def _state_replaced(**kwargs):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -120,26 +116,12 @@ class Lldp_global(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        want_lldp = kwargs['want_lldp']
-        have_lldp = kwargs['have_lldp']
-
-        if have_lldp:
-            commands.extend(
-                Lldp_global._render_del_commands(
-                    want_element={'lldp_global': want_lldp},
-                    have_element={'lldp_global': have_lldp}
-                )
-            )
-        commands.extend(
-            Lldp_global._state_merged(
-                want_lldp=want_lldp,
-                have_lldp=have_lldp
-            )
-        )
+        if have:
+            commands.extend(self._render_del_commands(want, have))
+        commands.extend(self._state_merged(want, have))
         return commands
 
-    @staticmethod
-    def _state_merged(**kwargs):
+    def _state_merged(self, want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -147,19 +129,10 @@ class Lldp_global(ConfigBase):
                   the current configuration
         """
         commands = []
-        want_lldp = kwargs['want_lldp']
-        have_lldp = kwargs['have_lldp']
-
-        commands.extend(
-            Lldp_global._render_updates(
-                want_element={'lldp_global': want_lldp},
-                have_element={'lldp_global': have_lldp}
-            )
-        )
+        commands.extend(self._render_updates(want, have))
         return commands
 
-    @staticmethod
-    def _state_deleted(**kwargs):
+    def _state_deleted(self, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -167,67 +140,105 @@ class Lldp_global(ConfigBase):
                   of the provided objects
         """
         commands = []
-        have_lldp = kwargs['have_lldp']
-
-        if have_lldp:
-            commands.extend(Lldp_global._purge_attribs(lldp_global=have_lldp))
+        if have:
+            for item in Lldp_global.params:
+                if have.get(item):
+                    if item == 'legacy_protocols':
+                        commands.append(
+                            self._compute_command('legacy-protocols', set_flag=False)
+                        )
+                    elif item == 'address':
+                        commands.append(
+                            self._compute_command('management-address', set_flag=False)
+                        )
+                    elif item == 'snmp':
+                        commands.append(
+                            self._compute_command(item, set_flag=False)
+                        )
         return commands
 
-    @staticmethod
-    def _render_updates(**kwargs):
+    def _render_updates(self, want, have):
         commands = []
-        want_element = kwargs['want_element']
-        have_element = kwargs['have_element']
+        try:
+            if have:
+                temp_have_legacy_protos = have.pop('legacy_protocols', None)
+            else:
+                have = {}
+            temp_want_legacy_protos = want.pop('legacy_protocols', None)
+        except BaseException:
+            pass
 
-        have_item = have_element['lldp_global'] or {}
-        want_item = want_element['lldp_global'] or {}
+        updates = dict_diff(have, want)
 
-        updates = dict_diff(have_item, want_item)
+        if have and temp_have_legacy_protos:
+            have['legacy_protocols'] = temp_have_legacy_protos
+        if temp_want_legacy_protos:
+            want['legacy_protocols'] = temp_want_legacy_protos
+
+        commands.extend(self._add_lldp_protocols(want, have))
 
         if updates:
             for key, value in iteritems(updates):
                 if value:
-                    if key == 'legacy_protocols':
-                        commands.extend(add_lldp_protocols(want_item, have_item))
-                    elif key == 'enable':
-                        commands.append(Lldp_global.set_cmd)
+                    if key == 'enable':
+                        commands.append(
+                            self._compute_command()
+                        )
                     elif key == 'address':
                         commands.append(
-                            Lldp_global.set_cmd + 'management-address' + " '" + str(value) + "'"
+                            self._compute_command('management-address', str(value))
                         )
                     elif key == 'snmp':
                         if value == 'disable':
-                            commands.append(Lldp_global.del_cmd + key)
+                            commands.append(
+                                self._compute_command(key, set_flag=False)
+                            )
                         else:
-                            commands.append(Lldp_global.set_cmd + key + ' ' + str(value))
+                            commands.append(
+                                self._compute_command(key, str(value))
+                            )
         return commands
 
-    @staticmethod
-    def _purge_attribs(**kwargs):
+    def _render_del_commands(self, want, have):
         commands = []
-        lldp = kwargs['lldp_global']
-        for item in Lldp_global.params:
-            if lldp.get(item):
-                if item == 'legacy_protocols':
-                    commands.append(Lldp_global.del_cmd + 'legacy-protocols')
-                elif item == 'address':
-                    commands.append(Lldp_global.del_cmd + 'management-address')
-                elif item == 'snmp':
-                    commands.append(Lldp_global.del_cmd + item)
-        return commands
-
-    @staticmethod
-    def _render_del_commands(**kwargs):
-        commands = []
-        want_element = kwargs['want_element']
-        have_element = kwargs['have_element']
-
         params = Lldp_global.params
-        have_item = have_element['lldp_global']
-        want_item = want_element['lldp_global']
         for attrib in params:
             if attrib == 'legacy_protocols':
-                commands.extend(update_lldp_protocols(want_item, have_item))
-            elif have_item.get(attrib) and not want_item.get(attrib) and attrib != 'enable':
+                commands.extend(self._update_lldp_protocols(want, have))
+            elif have.get(attrib) and not want.get(attrib) and attrib != 'enable':
                 commands.append(Lldp_global.del_cmd + attrib)
         return commands
+
+    def _add_lldp_protocols(self, want, have):
+        commands = []
+        diff_members = get_lst_diff_for_dicts(want, have, 'legacy_protocols')
+        for key in diff_members:
+            commands.append(
+                self._compute_command('legacy-protocols', key)
+            )
+        return commands
+
+    def _update_lldp_protocols(self, want_item, have_item):
+        commands = []
+        want_protocols = want_item.get('legacy_protocols') or []
+        have_protocols = have_item.get('legacy_protocols') or []
+
+        members_diff = list_diff_have_only(want_protocols, have_protocols)
+        if members_diff:
+            for member in members_diff:
+                commands.append(
+                    self._compute_command('legacy-protocols', member, False)
+                )
+        return commands
+
+    def _compute_command(self, attrib=None, value=None, set_flag=True):
+        if set_flag:
+            cmd = 'set service lldp'
+        else:
+            cmd = 'delete service lldp'
+        if attrib:
+            cmd += (' ' + attrib)
+
+        if value:
+            cmd += (" '" + value + "'")
+        return cmd

@@ -78,7 +78,6 @@ options:
     - replaced
     - deleted
     default: merged
-
 """
 EXAMPLES = """
 # Using merged
@@ -96,7 +95,7 @@ EXAMPLES = """
         - 'fdp'
         - 'cdp'
       snmp: 'enable'
-      address: 11.11.11.11
+      address: 192.0.2.11
     state: merged
 #
 #
@@ -110,7 +109,7 @@ EXAMPLES = """
 #        "set service lldp legacy-protocols fdp",
 #        "set service lldp legacy-protocols cdp",
 #        "set service lldp snmp enable",
-#        "set service lldp management-address '11.11.11.11'"
+#        "set service lldp management-address '192.0.2.11'"
 #    ]
 #
 # "after": [
@@ -118,7 +117,7 @@ EXAMPLES = """
 #            "snmp": "enable"
 #        },
 #        {
-#            "address": "11.11.11.11"
+#            "address": "192.0.2.11"
 #        },
 #        {
 #            "legacy_protocols": [
@@ -136,7 +135,7 @@ EXAMPLES = """
 #
 # set service lldp legacy-protocols cdp
 # set service lldp legacy-protocols fdp
-# set service lldp management-address '11.11.11.11'
+# set service lldp management-address '192.0.2.11'
 # set service lldp snmp enable
 
 
@@ -148,7 +147,7 @@ EXAMPLES = """
 # vyos@vyos:~$ show configuration commands | grep lldp
 # set service lldp legacy-protocols cdp
 # set service lldp legacy-protocols fdp
-# set service lldp management-address '11.11.11.11'
+# set service lldp management-address '192.0.2.11'
 # set service lldp snmp enable
 #
 - name: Replace device configurations with provided configurations
@@ -158,7 +157,7 @@ EXAMPLES = """
         - 'edp'
         - 'sonmp'
         - 'cdp'
-      address: 172.16.113.104
+      address: 192.0.2.14
     state: replaced
 #
 #
@@ -172,7 +171,7 @@ EXAMPLES = """
 #            "snmp": "enable"
 #        },
 #        {
-#            "address": "11.11.11.11"
+#            "address": "192.0.2.11"
 #        },
 #        {
 #            "legacy_protocols": [
@@ -187,14 +186,14 @@ EXAMPLES = """
 # "commands": [
 #        "delete service lldp snmp",
 #        "delete service lldp legacy-protocols fdp",
-#        "set service lldp management-address '172.16.113.104'",
+#        "set service lldp management-address '192.0.2.14'",
 #        "set service lldp legacy-protocols edp",
 #        "set service lldp legacy-protocols sonmp"
 #    ]
 #
 # "after": [
 #        {
-#            "address": "172.16.113.104"
+#            "address": "192.0.2.14"
 #        },
 #        {
 #            "legacy_protocols": [
@@ -215,7 +214,7 @@ EXAMPLES = """
 # set service lldp legacy-protocols cdp
 # set service lldp legacy-protocols edp
 # set service lldp legacy-protocols sonmp
-# set service lldp management-address '172.16.113.104'
+# set service lldp management-address '192.0.2.14'
 
 
 # Using deleted
@@ -226,7 +225,7 @@ EXAMPLES = """
 # set service lldp legacy-protocols cdp
 # set service lldp legacy-protocols edp
 # set service lldp legacy-protocols sonmp
-# set service lldp management-address '172.16.113.104'
+# set service lldp management-address '192.0.2.14'
 #
 - name: Delete attributes of given lldp service (This won't delete the LLDP service itself)
   vyos_lldp_global:
@@ -240,7 +239,7 @@ EXAMPLES = """
 #
 # "before": [
 #        {
-#            "address": "172.16.113.104"
+#            "address": "192.0.2.14"
 #        },
 #        {
 #            "legacy_protocols": [
@@ -291,7 +290,9 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample:
+    - set service lldp legacy-protocols sonmp
+    - set service lldp management-address '192.0.2.14'
 """
 
 
