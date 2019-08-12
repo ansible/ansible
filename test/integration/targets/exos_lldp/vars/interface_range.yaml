@@ -1,0 +1,28 @@
+request_body:
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "4"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=4/config"
+
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "5"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=5/config"
+
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "6"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=6/config"
+
+  - data:
+      openconfig-lldp:config:
+        enabled: True
+        name: "9"
+    method: "PATCH"
+    path: "/rest/restconf/data/openconfig-lldp:lldp/interfaces/interface=9/config"
