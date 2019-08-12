@@ -16,5 +16,5 @@ DISTRO="$*"
 if [[ "$DISTRO" == "MacOSX" ]]; then
     dscl localhost -list /Local/Default/Users
 else
-    egrep -v ^\# /etc/passwd | cut -d: -f1
+    grep -E -v ^\# /etc/passwd | cut -d: -f1
 fi
