@@ -49,7 +49,10 @@ class BecomeBase(AnsiblePlugin):
         if not all((cmd, shell, self.success)):
             return cmd
 
-        cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+        try:
+            cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+        except AttributeError:
+            raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
         exe = getattr(shell, 'executable', None)
         if exe and not noexe:
             cmd = '%s -c %s' % (exe, cmd)
