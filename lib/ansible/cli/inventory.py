@@ -14,10 +14,13 @@ from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
+from ansible.inventory.helpers import sort_groups
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.loader import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
+from ansible.utils.color import stringc
 
 display = Display()
 
@@ -77,6 +80,10 @@ class InventoryCLI(CLI):
                                   help='create inventory graph, if supplying pattern it must be a valid group name')
         self.parser.add_argument_group(action_group)
 
+        # host
+        self.parser.add_argument("--unmerge", action="store_true", default=False,
+                                 help='Show all vars before merging, ignored unless used with --host')
+
         # graph
         self.parser.add_argument("-y", "--yaml", action="store_true", default=False, dest='yaml',
                                  help='Use YAML format instead of default JSON, ignored for --graph')
@@ -130,11 +137,16 @@ class InventoryCLI(CLI):
             hosts = self.inventory.get_hosts(context.CLIARGS['host'])
             if len(hosts) != 1:
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
+            
+            if context.CLIARGS['unmerge']:
+                myvars, max_width = self._get_host_variables_unmerged(host=hosts[0])
 
-            myvars = self._get_host_variables(host=hosts[0])
+                results = self._format_unmerged_variables(myvars, max_width)
+            else:
+                myvars = self._get_host_variables(host=hosts[0])
 
-            # FIXME: should we template first?
-            results = self.dump(myvars)
+                # FIXME: should we template first?
+                results = self.dump(myvars)
 
         elif context.CLIARGS['graph']:
             results = self.inventory_graph()
@@ -225,9 +237,9 @@ class InventoryCLI(CLI):
 
         return self._remove_internal(res)
 
-    def _get_host_variables(self, host):
+    def _get_host_variables(self, host, only=False):
 
-        if context.CLIARGS['export']:
+        if context.CLIARGS['export'] or only:
             # only get vars defined directly host
             hostvars = host.get_vars()
 
@@ -239,6 +251,51 @@ class InventoryCLI(CLI):
             hostvars = self.vm.get_vars(host=host, include_hostvars=False)
 
         return self._remove_internal(hostvars)
+
+    def _get_host_variables_unmerged(self, host):
+        #results = {}
+        #results['interfaces.ethernet1.name'] = [(1, 'tata'), (2, 'titi')]
+        #results['interfaces.ethernet1.mtu'] = [(1, 1500), (2, 9000)]
+        #results['interfaces.ethernet2.name'] = [(1, 'toto')]
+        #results['interfaces.ethernet2.vlans'] = [(1, ['TRUC', 'MUCHE', 'BLAH'])]
+        
+        results = {}
+        if C.DEFAULT_HASH_BEHAVIOUR != "merge":
+            raise AnsibleOptionsError("--unmerged is only supported when 'hash_behaviour' is set to 'merge'")
+
+        host_groups = sort_groups(host.get_groups())
+        for group in host_groups:
+            self._combine_vars_unmerged(results, self._get_group_variables(group), group, [])
+        self._combine_vars_unmerged(results, self._get_host_variables(host, only=True), host, [])
+        max_width = len(str(max(host_groups + [host], key=lambda v: len(str(v))))) - 1
+        return results, max_width 
+
+    @staticmethod
+    def _combine_vars_unmerged(results, hash_to_integrate, group, path): 
+        for key, value in hash_to_integrate.items(): 
+            new_path = path + [key] 
+            flattened_path = '.'.join(new_path) 
+            if isinstance(value, MutableMapping): 
+                if flattened_path in results: del results[flattened_path]
+                InventoryCLI._combine_vars_unmerged(results, value, group, new_path) 
+            else: 
+                if flattened_path in results: 
+                    results[flattened_path].insert(0, (group, value)) 
+                else: 
+                    results[flattened_path] = [(group, value)] 
+
+    @staticmethod
+    def _format_unmerged_variables(unmerged_vars, max_width):
+        print(max_width)
+        for key, values in sorted(unmerged_vars.items()):
+            if len(values)==1:  # There was no override
+                print('[{0:>{x}}] {1} : {2}'.format(str(values[0][0]), key, values[0][1], x=max_width))
+            else: 
+                print('[{0:>{x}}] {1} : {2}'.format('-', key, values[0][1], x=max_width)) 
+                local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))
+                for priority, value in values:
+                    print('    [{0:>{x}}] : {1}'.format(str(priority), value, x=local_max_width)) 
+
 
     def _get_group(self, gname):
         group = self.inventory.groups.get(gname)
