@@ -252,7 +252,12 @@ def list_hosted_zones(client, module):
     if module.params.get('delegation_set_id'):
         params['DelegationSetId'] = module.params.get('delegation_set_id')
 
-    return client.list_hosted_zones(**params)
+    paginator = client.get_paginator('list_hosted_zones')
+    zones = paginator.paginate(**params).build_full_result()['HostedZones']
+    return {
+        "HostedZones": zones,
+        "list": zones,
+    }
 
 
 def list_hosted_zones_by_name(client, module):
@@ -338,7 +343,12 @@ def list_health_checks(client, module):
     if module.params.get('next_marker'):
         params['Marker'] = module.params.get('next_marker')
 
-    return client.list_health_checks(**params)
+    paginator = client.get_paginator('list_health_checks')
+    health_checks = paginator.paginate(**params).build_full_result()['HealthChecks']
+    return {
+        "HealthChecks": health_checks,
+        "list": health_checks,
+    }
 
 
 def record_sets_details(client, module):
@@ -360,7 +370,12 @@ def record_sets_details(client, module):
     elif module.params.get('type'):
         params['StartRecordType'] = module.params.get('type')
 
-    return client.list_resource_record_sets(**params)
+    paginator = client.get_paginator('list_resource_record_sets')
+    record_sets = paginator.paginate(**params).build_full_result()['ResourceRecordSets']
+    return {
+        "ResourceRecordSets": record_sets,
+        "list": record_sets,
+    }
 
 
 def health_check_details(client, module):
