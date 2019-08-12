@@ -141,6 +141,8 @@ class ActionModule(ActionBase):
 
                 if self._play_context.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
+                    if diff.get('failed'):
+                        raise AnsibleActionFail(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(path), dest, to_text(diff.get('msg', ''))))
 
                 remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
                 xfered = self._transfer_file(path, remote_path)
