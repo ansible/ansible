@@ -1,0 +1,10 @@
+request_body:
+  - data:
+      openconfig-vlan:vlan:
+      - config:
+          name: test_vlan_4
+          status: ACTIVE
+          tpid: oc-vlan-types:TPID_0x8100
+          vlan-id: 400
+    method: PATCH
+    path: /rest/restconf/data/openconfig-vlan:vlans/vlan=400
