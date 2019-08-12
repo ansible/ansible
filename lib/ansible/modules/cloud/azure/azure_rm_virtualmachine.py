@@ -257,7 +257,7 @@ options:
                 version_added: "2.9"
                 type: bool
             create_option:
-                descriiption:
+                description:
                     - Specifies how the virtual machine should be created.
                 choices:
                     - empty
