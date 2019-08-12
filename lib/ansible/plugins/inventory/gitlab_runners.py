@@ -27,7 +27,8 @@ DOCUMENTATION = '''
             description: The name of this plugin, it should always be set to 'gitlab_runners' for this plugin to recognize it as it's own.
             type: str
             required: true
-            choices: gitlab_runners
+            choices:
+              - gitlab_runners
         server_url:
             description: The URL of the Gitlab server, with protocol (i.e. http or https).
             type: str
