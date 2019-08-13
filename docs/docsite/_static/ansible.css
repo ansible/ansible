@@ -38,16 +38,27 @@
  * required is given the class .value-required
  */
 
+/* The extra .rst-content is so this will override rtd theme */
+.rst-content table.documentation-table td {
+    vertical-align: top;
+}
+
 table.documentation-table td:first-child {
     white-space: nowrap;
     vertical-align: top;
 }
 
+table.documentation-table td:first-child p:first-child {
+    font-weight: bold;
+    display: inline;
+}
+/* This is now redundant with above position-based styling */
+/*
 table.documentation-table .value-name {
     font-weight: bold;
     display: inline;
 }
-
+*/
 table.documentation-table .value-type {
     font-size: x-small;
     color: purple;
