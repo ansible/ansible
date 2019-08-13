@@ -55,7 +55,7 @@ __metaclass__ = type
 
 from collections import Mapping, MutableSequence, Set
 
-from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six import string_types, text_type, binary_type
 from ansible.module_utils._text import to_text
 
 
@@ -70,15 +70,24 @@ class AnsibleUnsafeText(text_type, AnsibleUnsafe):
     pass
 
 
+class AnsibleUnsafeBytes(binary_type, AnsibleUnsafe):
+    pass
+
+
 class UnsafeProxy(object):
     def __new__(cls, obj, *args, **kwargs):
+        if isinstance(obj, AnsibleUnsafe):
+            # Already marked unsafe
+            return obj
+
         # In our usage we should only receive unicode strings.
         # This conditional and conversion exists to sanity check the values
         # we're given but we may want to take it out for testing and sanitize
         # our input instead.
+        # Note that this does the wrong thing if we're *intentionall* passing a byte string to this
+        # function.
         if isinstance(obj, string_types):
-            obj = to_text(obj, errors='surrogate_or_strict')
-            return AnsibleUnsafeText(obj)
+            obj = AnsibleUnsafeText(to_text(obj, errors='surrogate_or_strict'))
         return obj
 
 
