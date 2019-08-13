@@ -127,6 +127,9 @@ if (-not $forest) {
         if ($_.Exception.ExitCode -eq 15) {
             $result.reboot_required = $true
         } else {
+            if ($_.Exception.Message.Contains("A reboot is required.")) {
+                $result.reboot_required = $true
+            }
             Fail-Json -obj $result -message "Failed to install ADDSForest with DCPromo: $($_.Exception.Message)"
         }
     }
