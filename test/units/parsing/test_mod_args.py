@@ -118,17 +118,17 @@ class TestModArgsDwim:
 
         assert err.value.args[0] == msg
 
-    def test_bogus_action(self):
+    def test_multiple_actions(self):
         args_dict = {'ping': 'data=hi', 'shell': 'echo hi'}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0].startswith("task uses more than one module/action: ")
-        actions = set(re.search(r'\((\w+), (\w+)\)', err.value.args[0]).groups())
+        assert err.value.args[0].startswith("conflicting action statements: ")
+        actions = set(re.search(r'(\w+), (\w+)', err.value.args[0]).groups())
         assert actions == set(['ping', 'shell'])
 
-    def test_multiple_actions(self):
+    def test_bogus_action(self):
         args_dict = {'bogusaction': {}}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:

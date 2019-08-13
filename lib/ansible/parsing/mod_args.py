@@ -115,10 +115,15 @@ class ModuleArgsParser:
             raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
         self._collection_list = collection_list
-        from ansible.playbook.handler import Handler  # delayed local import to prevent circular import
-        self._task_attrs = set(Handler._valid_attrs.keys())  # store the valid Task/Handler attrs for quick access
-        # HACK: why is this not a FieldAttribute on task with a post-validate to bomb if not include/import?
+        # delayed local imports to prevent circular import
+        from ansible.playbook.task import Task
+        from ansible.playbook.handler import Handler
+        # store the valid Task/Handler attrs for quick access
+        self._task_attrs = set(Task._valid_attrs.keys())
+        self._task_attrs.update(set(Handler._valid_attrs.keys()))
+        # HACK: why is static not a FieldAttribute on task with a post-validate to bomb if not include/import?
         self._task_attrs.add('static')
+        self._task_attrs = frozenset(self._task_attrs)
 
     def _split_module_string(self, module_string):
         '''
@@ -293,12 +298,7 @@ class ModuleArgsParser:
         # filter out task attributes so we're only querying unrecognized keys as actions/modules
         non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (k not in self._task_attrs) and (not k.startswith('with_')))
 
-        if len(non_task_ds) > 1:
-            raise AnsibleParserError("task uses more than one module/action: ({0}). This could also "
-                                     "indicate a misspelled task keyword, or an indentation issue."
-                                     .format(', '.join(non_task_ds.keys())))
-
-        # walk the filtered input dictionary to see we recognize a module name
+        # walk the filtered input dictionary to see if we recognize a module name
         for item, value in iteritems(non_task_ds):
             if item in BUILTIN_TASKS or action_loader.has_plugin(item, collection_list=self._collection_list) or \
                     module_loader.has_plugin(item, collection_list=self._collection_list):
