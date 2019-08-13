@@ -73,7 +73,8 @@ options:
         type: bool
     force:
         description:
-            - "If True host will be forcibly moved to desired state."
+            - "Indicates that the host should be removed even if it is non-responsive,
+               or if it is part of a Gluster Storage cluster and has volume bricks on it."
         default: False
         type: bool
     override_display:
