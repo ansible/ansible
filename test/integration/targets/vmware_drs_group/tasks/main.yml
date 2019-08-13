@@ -7,31 +7,7 @@
   vars:
     setup_attach_host: true
     setup_datastore: true
-
-- name: Create VMs
-  vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ dc1 }}"
-    validate_certs: no
-    folder: '{{ f0 }}'
-    name: test_vm1
-    state: poweredoff
-    guest_id: debian8_64Guest
-    disk:
-    - size_gb: 1
-      type: thin
-      datastore: '{{ ds2 }}'
-    hardware:
-      memory_mb: 128
-      num_cpus: 1
-      scsi: paravirtual
-    cdrom:
-      type: iso
-      iso_path: "[{{ ds1 }}] fedora.iso"
-    networks:
-    - name: VM Network
+    setup_virtualmachines: true
 
 - name: Create DRS VM group
   vmware_drs_group:
