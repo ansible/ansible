@@ -256,7 +256,6 @@ options:
                 description:
                     - Configure DLP options.
                 type: str
-                choices:
             replacemsg_group:
                 description:
                     - Replacement message group used by this DLP sensor. Source system.replacemsg-group.name.
@@ -532,8 +531,7 @@ def main():
                 "nac_quar_log": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
                 "name": {"required": True, "type": "str"},
-                "options": {"required": False, "type": "str",
-                            "choices": []},
+                "options": {"required": False, "type": "str"},
                 "replacemsg_group": {"required": False, "type": "str"},
                 "summary_proto": {"required": False, "type": "str",
                                   "choices": ["smtp", "pop3", "imap",
