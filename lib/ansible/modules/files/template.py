@@ -39,6 +39,7 @@ author:
 - Ansible Core Team
 - Michael DeHaan
 extends_documentation_fragment:
+- backup
 - files
 - template_common
 - validate
