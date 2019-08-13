@@ -49,7 +49,7 @@ options:
     type:
         description:
           - The type of the monitor.
-        choices: ['metric alert', 'service check', 'event alert']
+        choices: ['metric alert', 'service check', 'event alert', 'query alert']
         type: str
     query:
         description:
@@ -105,13 +105,13 @@ options:
     thresholds:
         description:
           - A dictionary of thresholds by status.
-          - Only available for service checks and metric alerts.
+          - Only available for service checks, metric alerts, and query alerts.
           - Because each of them can have multiple thresholds, we do not define them directly in the query.
         default: {'ok': 1, 'critical': 1, 'warning': 1}
     threshold_windows:
         description:
           - A dictionary of threshold windows by status
-          - These options only apply to anomaly monitors; Use elsewhere will be ignored.
+          - These options only apply to anomaly monitors which are of the "query alert" type; Use elsewhere will be ignored.
           - recovery_window: Describes how long an anomalous metric must be normal before the alert recovers
           - trigger_window: Describes how long a metric must be anomalous before an alert triggers
         type: dict
@@ -201,7 +201,7 @@ def main():
             api_key=dict(required=True, no_log=True),
             app_key=dict(required=True, no_log=True),
             state=dict(required=True, choices=['present', 'absent', 'mute', 'unmute']),
-            type=dict(required=False, choices=['metric alert', 'service check', 'event alert']),
+            type=dict(required=False, choices=['metric alert', 'service check', 'event alert', 'query alert']),
             name=dict(required=True),
             query=dict(required=False),
             message=dict(required=False, default=None),
@@ -336,7 +336,7 @@ def install_monitor(module):
         options["thresholds"] = module.params['thresholds'] or {'ok': 1, 'critical': 1, 'warning': 1}
     if module.params['type'] == "metric alert" and module.params['thresholds'] is not None:
         options["thresholds"] = module.params['thresholds']
-    if module.params['type'] == "metric alert" and module.params['threshold_windows'] is not None:
+    if module.params['type'] == "query alert" and module.params['threshold_windows'] is not None:
         options['threshold_windows'] = module.params['threshold_windows']
 
     monitor = _get_monitor(module)
