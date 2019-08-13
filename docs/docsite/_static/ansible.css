@@ -4,13 +4,63 @@
 /* override table width restrictions */
 @media screen and (min-width: 767px) {
 
+  /* If we ever publish to read the docs, we need to use !important for these
+   * two styles as read the docs itself loads their theme in a way that we
+   * can't otherwise override it.
+   */
    .wy-table-responsive table td {
-      /* !important prevents the common CSS stylesheets from overriding
-         this as on RTD they are loaded after this stylesheet */
-      white-space: normal !important;
+      white-space: normal;
    }
 
    .wy-table-responsive {
-      overflow: visible !important;
+      overflow: visible;
    }
+}
+
+/*
+ * We use the class documentation-table for attribute tables where the first
+ * column is the name of an attribute and the second column is the description.
+ */
+
+/* These tables look like this:
+ * 
+ *  Attribute Name     Description
+ *  --------------     -----------
+ *  **NAME**           This is a multi-line description
+ *  str/required       that can span multiple lines
+ *
+ *                     With multiple paragraphs
+ *  --------------     -----------
+ *
+ * **NAME** is given the class .value-name
+ * str is given the class .value-type
+ * / is given the class .value-separator
+ * required is given the class .value-required
+ */
+
+table.documentation-table td:first-child {
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+table.documentation-table .value-name {
+    font-weight: bold;
+    display: inline;
+}
+
+table.documentation-table .value-type {
+    font-size: x-small;
+    color: purple;
+    display: inline;
+}
+
+table.documentation-table .value-separator {
+    font-size: x-small;
+    display: inline;
+}
+
+table.documentation-table .value-required {
+    font-size: x-small;
+    color: red;
+    display: inline;
 }

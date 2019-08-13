@@ -50,13 +50,9 @@ Synopsis
 --------
 {% if description -%}
 
-{%   if description is string -%}
-- @{ description | rst_ify }@
-{%   else %}
-{%     for desc in description %}
+{%   for desc in description %}
 - @{ desc | rst_ify }@
-{%     endfor %}
-{%   endif %}
+{%   endfor %}
 
 {% endif %}
 
@@ -183,13 +179,9 @@ Parameters
                 {% endif %}
                 {# description #}
                 <td>
-                    {% if value.description is string %}
-                        <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
-                    {% else %}
-                        {% for desc in value.description %}
-                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-                        {% endfor %}
-                    {% endif %}
+                    {% for desc in value.description %}
+                        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endfor %}
                     {% if 'aliases' in value and value.aliases %}
                         <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
                     {% endif %}
