@@ -40,7 +40,7 @@ DOCUMENTATION = """
   description: This module manages the interface attributes on Cisco IOS-XR network devices.
   author: Sumit Jaiswal (@justjais)
   notes:
-  - Tested against Cisco IOSv Version 15.2 on VIRL.
+  - Tested against Cisco IOS-XRv Version 6.1.3 on VIRL.
   - This module works with connection C(network_cli).
   options:
     config:

@@ -11,6 +11,13 @@ __metaclass__ = type
 from ansible.module_utils.six import iteritems
 
 
+def search_obj_in_list(name, lst, key='name'):
+    for item in lst:
+        if item[key] == name:
+            return item
+    return None
+
+
 def remove_command_from_config_list(interface, cmd, commands):
     # To delete the passed config
     if interface not in commands:
