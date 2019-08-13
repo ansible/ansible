@@ -62,6 +62,8 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
+* lambda_facts use :ref:`lambda_info <lambda_info_module>` instead.
+
 * nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
 
 * vyos_interface use :ref:`vyos_interfaces <vyos_interfaces_module>` instead.
@@ -71,6 +73,29 @@ The following modules will be removed in Ansible 2.13. Please update update your
 The following functionality will be removed in Ansible 2.12. Please update update your playbooks accordingly.
 
 * ``vmware_cluster`` DRS, HA and VSAN configuration; use `vmware_cluster_drs <vmware_cluster_drs_module>`, `vmware_cluster_ha <vmware_cluster_ha_module>` and `vmware_cluster_vsan <vmware_cluster_vsan_module>` instead.
+
+
+Renamed modules
+^^^^^^^^^^^^^^^
+
+The following modules have been renamed. The old name is deprecated and will
+be removed in Ansible 2.13. Please update update your playbooks accordingly.
+
+* The ``aws_s3_bucket_facts`` module was renamed to :ref:`aws_s3_bucket_info <aws_s3_bucket_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``cloudformation_facts`` module was renamed to :ref:`cloudformation_info <cloudformation_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``cloudfront_facts`` module was renamed to :ref:`cloudfront_info <cloudfront_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ecs_service_facts`` module was renamed to :ref:`ecs_service_info <ecs_service_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``efs_facts`` module was renamed to :ref:`efs_info <efs_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 
 
 Noteworthy module changes

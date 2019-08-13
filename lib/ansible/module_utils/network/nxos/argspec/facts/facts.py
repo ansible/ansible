@@ -13,6 +13,7 @@ CHOICES = [
     'telemetry',
     'vlans',
     'lacp',
+    'lacp_interfaces',
 ]
 
 

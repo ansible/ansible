@@ -1,0 +1,2 @@
+minor_changes:
+- changed task module/action parsing to report more helpful errors

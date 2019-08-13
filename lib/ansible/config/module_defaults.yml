@@ -58,7 +58,7 @@ groupings:
   - aws
   aws_s3:
   - aws
-  aws_s3_bucket_facts:
+  aws_s3_bucket_info:
   - aws
   aws_s3_cors:
   - aws
@@ -84,13 +84,13 @@ groupings:
   - aws
   cloudformation:
   - aws
-  cloudformation_facts:
+  cloudformation_info:
   - aws
   cloudformation_stack_set:
   - aws
   cloudfront_distribution:
   - aws
-  cloudfront_facts:
+  cloudfront_info:
   - aws
   cloudfront_invalidation:
   - aws
@@ -254,7 +254,7 @@ groupings:
   - aws
   ecs_service:
   - aws
-  ecs_service_facts:
+  ecs_service_info:
   - aws
   ecs_task:
   - aws
@@ -264,7 +264,7 @@ groupings:
   - aws
   efs:
   - aws
-  efs_facts:
+  efs_info:
   - aws
   elasticache:
   - aws
@@ -328,7 +328,7 @@ groupings:
   - aws
   lambda_event:
   - aws
-  lambda_facts:
+  lambda_info:
   - aws
   lambda_policy:
   - aws
