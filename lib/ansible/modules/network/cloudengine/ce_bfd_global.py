@@ -284,7 +284,8 @@ class BfdGlobal(object):
         glb = root.find("bfd/bfdSchGlobal")
         if glb:
             for attr in glb:
-                bfd_dict["global"][attr.tag] = attr.text
+                if attr.text is not None:
+                    bfd_dict["global"][attr.tag] = attr.text
 
         return bfd_dict
 
