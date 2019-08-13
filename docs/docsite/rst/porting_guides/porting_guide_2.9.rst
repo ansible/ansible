@@ -62,6 +62,8 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
+* lambda_facts use :ref:`lambda_info <lambda_info_module>` instead.
+
 * nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
 
 * vyos_interface use :ref:`vyos_interfaces <vyos_interfaces_module>` instead.
@@ -92,9 +94,6 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
 * The ``efs_facts`` module was renamed to :ref:`efs_info <efs_info_module>`.
-  When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, :ref:`register a variable <registered_variables>`.
-* The ``lambda_facts`` module was renamed to :ref:`lambda_info <lambda_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
 

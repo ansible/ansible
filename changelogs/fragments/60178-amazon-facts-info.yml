@@ -9,5 +9,4 @@ minor_changes:
   When called with the new name, the module no longer returns ``ansible_facts``.
 - The ``efs_facts`` module has been renamed to ``efs_info``.
   When called with the new name, the module no longer returns ``ansible_facts``.
-- The ``lambda_facts`` module has been renamed to ``lambda_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.
+- The ``lambda_facts`` module has been deprecated. Use ``lambda_info`` instead.

@@ -27,10 +27,8 @@ description:
   - Gathers various details related to Lambda functions, including aliases, versions and event source mappings.
     Use module M(lambda) to manage the lambda function itself, M(lambda_alias) to manage function aliases and
     M(lambda_event) to manage lambda event source mappings.
-  - This module was called C(lambda_facts) before Ansible 2.9, returning C(ansible_facts).
-    Note that the M(lambda_info) module no longer returns C(ansible_facts)!
 
-version_added: "2.2"
+version_added: "2.9"
 
 options:
   query:
@@ -76,20 +74,16 @@ EXAMPLES = '''
   register: output
 - name: show Lambda information
   debug:
-    msg: "{{ output['lambda_facts'] }}"
+    msg: "{{ output['function'] }}"
 '''
 
 RETURN = '''
 ---
-lambda_facts:
-    description: lambda information
-    returned: success
-    type: dict
-lambda_facts.function:
+function:
     description: lambda function list
     returned: success
     type: dict
-lambda_facts.function.TheName:
+function.TheName:
     description: lambda function information, including event, mapping, and version information
     returned: success
     type: dict
@@ -141,7 +135,7 @@ def alias_details(client, module):
     :return dict:
     """
 
-    lambda_facts = dict()
+    lambda_info = dict()
 
     function_name = module.params.get('function_name')
     if function_name:
@@ -152,16 +146,16 @@ def alias_details(client, module):
         if module.params.get('next_marker'):
             params['Marker'] = module.params.get('next_marker')
         try:
-            lambda_facts.update(aliases=client.list_aliases(FunctionName=function_name, **params)['Aliases'])
+            lambda_info.update(aliases=client.list_aliases(FunctionName=function_name, **params)['Aliases'])
         except ClientError as e:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
-                lambda_facts.update(aliases=[])
+                lambda_info.update(aliases=[])
             else:
                 module.fail_json_aws(e, msg="Trying to get aliases")
     else:
         module.fail_json(msg='Parameter function_name required for query=aliases.')
 
-    return {function_name: camel_dict_to_snake_dict(lambda_facts)}
+    return {function_name: camel_dict_to_snake_dict(lambda_info)}
 
 
 def all_details(client, module):
@@ -176,20 +170,20 @@ def all_details(client, module):
     if module.params.get('max_items') or module.params.get('next_marker'):
         module.fail_json(msg='Cannot specify max_items nor next_marker for query=all.')
 
-    lambda_facts = dict()
+    lambda_info = dict()
 
     function_name = module.params.get('function_name')
     if function_name:
-        lambda_facts[function_name] = {}
-        lambda_facts[function_name].update(config_details(client, module)[function_name])
-        lambda_facts[function_name].update(alias_details(client, module)[function_name])
-        lambda_facts[function_name].update(policy_details(client, module)[function_name])
-        lambda_facts[function_name].update(version_details(client, module)[function_name])
-        lambda_facts[function_name].update(mapping_details(client, module)[function_name])
+        lambda_info[function_name] = {}
+        lambda_info[function_name].update(config_details(client, module)[function_name])
+        lambda_info[function_name].update(alias_details(client, module)[function_name])
+        lambda_info[function_name].update(policy_details(client, module)[function_name])
+        lambda_info[function_name].update(version_details(client, module)[function_name])
+        lambda_info[function_name].update(mapping_details(client, module)[function_name])
     else:
-        lambda_facts.update(config_details(client, module))
+        lambda_info.update(config_details(client, module))
 
-    return lambda_facts
+    return lambda_info
 
 
 def config_details(client, module):
@@ -201,15 +195,15 @@ def config_details(client, module):
     :return dict:
     """
 
-    lambda_facts = dict()
+    lambda_info = dict()
 
     function_name = module.params.get('function_name')
     if function_name:
         try:
-            lambda_facts.update(client.get_function_configuration(FunctionName=function_name))
+            lambda_info.update(client.get_function_configuration(FunctionName=function_name))
         except ClientError as e:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
-                lambda_facts.update(function={})
+                lambda_info.update(function={})
             else:
                 module.fail_json_aws(e, msg="Trying to get {0} configuration".format(function_name))
     else:
@@ -221,19 +215,19 @@ def config_details(client, module):
             params['Marker'] = module.params.get('next_marker')
 
         try:
-            lambda_facts.update(function_list=client.list_functions(**params)['Functions'])
+            lambda_info.update(function_list=client.list_functions(**params)['Functions'])
         except ClientError as e:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
-                lambda_facts.update(function_list=[])
+                lambda_info.update(function_list=[])
             else:
                 module.fail_json_aws(e, msg="Trying to get function list")
 
         functions = dict()
-        for func in lambda_facts.pop('function_list', []):
+        for func in lambda_info.pop('function_list', []):
             functions[func['FunctionName']] = camel_dict_to_snake_dict(func)
         return functions
 
-    return {function_name: camel_dict_to_snake_dict(lambda_facts)}
+    return {function_name: camel_dict_to_snake_dict(lambda_info)}
 
 
 def mapping_details(client, module):
@@ -245,7 +239,7 @@ def mapping_details(client, module):
     :return dict:
     """
 
-    lambda_facts = dict()
+    lambda_info = dict()
     params = dict()
     function_name = module.params.get('function_name')
 
@@ -262,17 +256,17 @@ def mapping_details(client, module):
         params['Marker'] = module.params.get('next_marker')
 
     try:
-        lambda_facts.update(mappings=client.list_event_source_mappings(**params)['EventSourceMappings'])
+        lambda_info.update(mappings=client.list_event_source_mappings(**params)['EventSourceMappings'])
     except ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
-            lambda_facts.update(mappings=[])
+            lambda_info.update(mappings=[])
         else:
             module.fail_json_aws(e, msg="Trying to get source event mappings")
 
     if function_name:
-        return {function_name: camel_dict_to_snake_dict(lambda_facts)}
+        return {function_name: camel_dict_to_snake_dict(lambda_info)}
 
-    return camel_dict_to_snake_dict(lambda_facts)
+    return camel_dict_to_snake_dict(lambda_info)
 
 
 def policy_details(client, module):
@@ -287,22 +281,22 @@ def policy_details(client, module):
     if module.params.get('max_items') or module.params.get('next_marker'):
         module.fail_json(msg='Cannot specify max_items nor next_marker for query=policy.')
 
-    lambda_facts = dict()
+    lambda_info = dict()
 
     function_name = module.params.get('function_name')
     if function_name:
         try:
             # get_policy returns a JSON string so must convert to dict before reassigning to its key
-            lambda_facts.update(policy=json.loads(client.get_policy(FunctionName=function_name)['Policy']))
+            lambda_info.update(policy=json.loads(client.get_policy(FunctionName=function_name)['Policy']))
         except ClientError as e:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
-                lambda_facts.update(policy={})
+                lambda_info.update(policy={})
             else:
                 module.fail_json_aws(e, msg="Trying to get {0} policy".format(function_name))
     else:
         module.fail_json(msg='Parameter function_name required for query=policy.')
 
-    return {function_name: camel_dict_to_snake_dict(lambda_facts)}
+    return {function_name: camel_dict_to_snake_dict(lambda_info)}
 
 
 def version_details(client, module):
@@ -314,7 +308,7 @@ def version_details(client, module):
     :return dict:
     """
 
-    lambda_facts = dict()
+    lambda_info = dict()
 
     function_name = module.params.get('function_name')
     if function_name:
@@ -326,16 +320,16 @@ def version_details(client, module):
             params['Marker'] = module.params.get('next_marker')
 
         try:
-            lambda_facts.update(versions=client.list_versions_by_function(FunctionName=function_name, **params)['Versions'])
+            lambda_info.update(versions=client.list_versions_by_function(FunctionName=function_name, **params)['Versions'])
         except ClientError as e:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
-                lambda_facts.update(versions=[])
+                lambda_info.update(versions=[])
             else:
                 module.fail_json_aws(e, msg="Trying to get {0} versions".format(function_name))
     else:
         module.fail_json(msg='Parameter function_name required for query=versions.')
 
-    return {function_name: camel_dict_to_snake_dict(lambda_facts)}
+    return {function_name: camel_dict_to_snake_dict(lambda_info)}
 
 
 def main():
@@ -356,10 +350,6 @@ def main():
         mutually_exclusive=[],
         required_together=[]
     )
-    is_old_facts = module._name == 'lambda_facts'
-    if is_old_facts:
-        module.deprecate("The 'lambda_facts' module has been renamed to 'lambda_info', "
-                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     # validate function_name if present
     function_name = module.params['function_name']
@@ -396,10 +386,7 @@ def main():
     this_module_function = getattr(this_module, invocations[module.params['query']])
     all_facts = fix_return(this_module_function(client, module))
 
-    if is_old_facts:
-        results = dict(ansible_facts={'lambda_facts': {'function': all_facts}}, changed=False)
-    else:
-        results = dict(lambda_facts={'function': all_facts}, changed=False)
+    results = dict(function=all_facts, changed=False)
 
     if module.check_mode:
         results['msg'] = 'Check mode set but ignored for fact gathering only.'
