@@ -1,0 +1,41 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: Ethernet1
+        duplex: auto
+        enabled: true
+      - name: Ethernet2
+        duplex: auto
+        description: 'Configured by Ansible'
+        enabled: false
+      - name: Management1
+        enabled: true
+
+- eos_facts:
+    gather_network_resources: interfaces
+  become: yes
+
+- name: Overrides device configuration of all interfaces with provided configuration
+  eos_interfaces:
+    config: "{{ config }}"
+    state: overridden
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
+
+- eos_facts:
+    gather_network_resources: interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.interfaces|symmetric_difference(result.after)|length == 0"
+
+- assert:
+    that:
+      - "config|difference(ansible_facts.network_resources.interfaces)|length == 0"
