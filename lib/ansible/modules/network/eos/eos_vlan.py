@@ -121,7 +121,6 @@ commands:
     - vlan 20
     - name test-vlan
 """
-import re
 import time
 
 from copy import deepcopy
@@ -145,9 +144,7 @@ def map_obj_to_commands(updates, module):
 
     for w in want:
         vlan_id = w['vlan_id']
-        name = w['name']
         state = w['state']
-        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(vlan_id, have)
 
