@@ -231,6 +231,9 @@ class LoginManager(DockerBaseClass):
         else:
             self.client.module.warn('Unable to determine whether logout was successful.')
 
+        # Adding output to actions, so that user can inspect what was actually returned
+        self.results['actions'].append(to_text(out))
+
     def config_file_exists(self, path):
         if os.path.exists(path):
             self.log("Configuration file %s exists" % (path))
