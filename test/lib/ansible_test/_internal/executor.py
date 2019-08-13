@@ -766,7 +766,7 @@ def windows_inventory(remotes):
     windows
 
     # support winrm binary module tests (temporary solution)
-    [testhost_binary_modules:children]
+    [testhost:children]
     windows
     """
 
