@@ -3,8 +3,7 @@
 
 ''' unit test template for ONTAP Ansible module '''
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import print_function
 import json
 import pytest
 
@@ -81,10 +80,10 @@ class MockONTAPConnection(object):
                 'ndmp-vserver-attributes-info': {
                     'ignore_ctime_enabled': ndmp_details['ignore_ctime_enabled'],
                     'backup_log_enable': ndmp_details['backup_log_enable'],
-                    'authtype': [
-                        {'ndmpd-authtypes': 'plaintext'},
-                        {'ndmpd-authtypes': 'challenge'}
-                    ]
+                    'authtype': {
+                        'ndmpd-authtypes': 'plaintext',
+                        'ndmpd-authtypes': 'challenge'
+                    }
                 }
             }
         }
@@ -139,8 +138,8 @@ class TestMyModule(unittest.TestCase):
         data = self.mock_args()
         set_module_args(data)
         current = {
-            'ignore_ctime_enabled': 'false',
-            'backup_log_enable': 'true'
+            'ignore_ctime_enabled': False,
+            'backup_log_enable': True
         }
         ger_ndmp.side_effect = [
             current
@@ -155,8 +154,8 @@ class TestMyModule(unittest.TestCase):
         data = self.mock_args()
         set_module_args(data)
         current = {
-            'ignore_ctime_enabled': 'false',
-            'backup_log_enable': 'true'
+            'ignore_ctime_enabled': False,
+            'backup_log_enable': True
         }
         ger_ndmp.side_effect = [
             current
