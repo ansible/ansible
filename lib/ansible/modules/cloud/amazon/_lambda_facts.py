@@ -15,13 +15,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
 ---
 module: lambda_facts
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favour of C(_info) module.
+  alternative: Use M(lambda_info) instead.
 short_description: Gathers AWS Lambda function details as Ansible facts
 description:
   - Gathers various details related to Lambda functions, including aliases, versions and event source mappings.

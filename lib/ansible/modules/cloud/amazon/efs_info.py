@@ -13,10 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: efs_facts
+module: efs_info
 short_description: Get information about Amazon EFS file systems
 description:
     - This module can be used to search Amazon EFS file systems.
+    - This module was called C(efs_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(efs_info) module no longer returns C(ansible_facts)!
 version_added: "2.2"
 requirements: [ boto3 ]
 author:
@@ -43,20 +45,25 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Find all existing efs
-  efs_facts:
+  efs_info:
   register: result
 
 - name: Find efs using id
-  efs_facts:
+  efs_info:
     id: fs-1234abcd
+  register: result
 
 - name: Searching all EFS instances with tag Name = 'myTestNameTag', in subnet 'subnet-1a2b3c4d' and with security group 'sg-4d3c2b1a'
-  efs_facts:
+  efs_info:
     tags:
         name: myTestNameTag
     targets:
         - subnet-1a2b3c4d
         - sg-4d3c2b1a
+  register: result
+
+- debug:
+    msg: "{{ result['efs'] }}"
 '''
 
 RETURN = '''
@@ -358,6 +365,10 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
+    is_old_facts = module._name == 'efs_facts'
+    if is_old_facts:
+        module.deprecate("The 'efs_facts' module has been renamed to 'efs_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     region, _, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EFSConnection(module, region, **aws_connect_params)
@@ -379,7 +390,10 @@ def main():
         targets = [(item, prefix_to_attr(item)) for item in targets]
         file_systems_info = [item for item in file_systems_info if has_targets(item['mount_targets'], targets)]
 
-    module.exit_json(changed=False, ansible_facts={'efs': file_systems_info})
+    if is_old_facts:
+        module.exit_json(changed=False, ansible_facts={'efs': file_systems_info})
+    else:
+        module.exit_json(changed=False, efs=file_systems_info)
 
 
 if __name__ == '__main__':

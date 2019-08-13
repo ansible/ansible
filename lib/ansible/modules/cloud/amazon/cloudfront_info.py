@@ -21,10 +21,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cloudfront_facts
+module: cloudfront_info
 short_description: Obtain facts about an AWS CloudFront distribution
 description:
   - Gets information about an AWS CloudFront distribution
+  - This module was called C(cloudfront_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(cloudfront_info) module no longer returns C(ansible_facts)!
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
@@ -154,23 +156,38 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Get a summary of distributions
-- cloudfront_facts:
+- cloudfront_info:
     summary: true
+  register: result
 
 # Get information about a distribution
+- cloudfront_info:
+    distribution: true
+    distribution_id: my-cloudfront-distribution-id
+  register: result_did
+- debug:
+    msg: "{{ result_did['cloudfront']['my-cloudfront-distribution-id'] }}"
+
+# Get information about a distribution using the CNAME of the cloudfront distribution.
+- cloudfront_info:
+    distribution: true
+    domain_name_alias: www.my-website.com
+  register: result_website
+- debug:
+    msg: "{{ result_website['cloudfront']['www.my-website.com'] }}"
+
+# When the module is called as cloudfront_facts, return values are published
+# in ansible_facts['cloudfront'][<id>] and can be used as follows.
+# Note that this is deprecated and will stop working in Ansible 2.13.
 - cloudfront_facts:
     distribution: true
     distribution_id: my-cloudfront-distribution-id
-
-# Get information about a distribution using the CNAME of the cloudfront distribution.
-- cloudfront_facts:
-    distribution: true
-    domain_name_alias: www.my-website.com
-
-# Facts are published in ansible_facts['cloudfront'][<distribution_name>]
 - debug:
     msg: "{{ ansible_facts['cloudfront']['my-cloudfront-distribution-id'] }}"
 
+- cloudfront_facts:
+    distribution: true
+    domain_name_alias: www.my-website.com
 - debug:
     msg: "{{ ansible_facts['cloudfront']['www.my-website.com'] }}"
 
@@ -584,6 +601,10 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    is_old_facts = module._name == 'cloudfront_facts'
+    if is_old_facts:
+        module.deprecate("The 'cloudfront_facts' module has been renamed to 'cloudfront_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -696,7 +717,10 @@ def main():
 
     result['changed'] = False
     result['cloudfront'].update(facts)
-    module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
+    if is_old_facts:
+        module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
+    else:
+        module.exit_json(msg="Retrieved cloudfront info.", **result)
 
 
 if __name__ == '__main__':

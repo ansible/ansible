@@ -12,13 +12,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: aws_s3_bucket_facts
+module: aws_s3_bucket_info
 short_description: Lists S3 buckets in AWS
 requirements:
   - boto3 >= 1.4.4
   - python >= 2.6
 description:
     - Lists S3 buckets in AWS
+    - This module was called C(aws_s3_bucket_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(aws_s3_bucket_info) module no longer returns C(ansible_facts)!
 version_added: "2.4"
 author: "Gerben Geijteman (@hyperized)"
 extends_documentation_fragment:
@@ -32,7 +34,12 @@ EXAMPLES = '''
 # Note: Only AWS S3 is currently supported
 
 # Lists all s3 buckets
-- aws_s3_bucket_facts:
+- aws_s3_bucket_info:
+  register: result
+
+- name: List buckets
+  debug:
+    msg: "{{ result['buckets'] }}"
 '''
 
 RETURN = '''
@@ -84,6 +91,10 @@ def main():
 
     # Including ec2 argument spec
     module = AnsibleModule(argument_spec=ec2_argument_spec(), supports_check_mode=True)
+    is_old_facts = module._name == 'aws_s3_bucket_facts'
+    if is_old_facts:
+        module.deprecate("The 'aws_s3_bucket_facts' module has been renamed to 'aws_s3_bucket_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     # Verify Boto3 is used
     if not HAS_BOTO3:
@@ -98,7 +109,10 @@ def main():
     result['buckets'] = get_bucket_list(module, connection)
 
     # Send exit
-    module.exit_json(msg="Retrieved s3 facts.", ansible_facts=result)
+    if is_old_facts:
+        module.exit_json(msg="Retrieved s3 facts.", ansible_facts=result)
+    else:
+        module.exit_json(msg="Retrieved s3 info.", **result)
 
 
 if __name__ == '__main__':
