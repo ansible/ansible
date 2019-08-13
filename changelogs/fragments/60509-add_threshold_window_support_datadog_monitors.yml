@@ -1,0 +1,2 @@
+minor_changes:
+  - datadog_monitor module - Add support for threshold_windows, utilized by Anomaly Detection monitors.
