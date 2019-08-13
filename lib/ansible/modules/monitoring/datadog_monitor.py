@@ -108,6 +108,12 @@ options:
           - Only available for service checks and metric alerts.
           - Because each of them can have multiple thresholds, we do not define them directly in the query.
         default: {'ok': 1, 'critical': 1, 'warning': 1}
+    threshold_windows:
+        description:
+            - A dictionary of threshold windows by status
+            - These options only apply to anomaly monitors; Use elsewhere will be ignored.
+            - `recovery_window` describes how long an anomalous metric must be normal before the alert recovers
+            - `trigger_window` describes how long a metric must be anomalous before an alert triggers
     locked:
         description:
           - Whether changes to this monitor should be restricted to the creator or admins.
@@ -206,6 +212,7 @@ def main():
             escalation_message=dict(required=False, default=None),
             notify_audit=dict(required=False, default=False, type='bool'),
             thresholds=dict(required=False, type='dict', default=None),
+            threshold_windows=dict(required=False, type='dict', default=None),
             tags=dict(required=False, type='list', default=None),
             locked=dict(required=False, default=False, type='bool'),
             require_full_window=dict(required=False, default=None, type='bool'),
@@ -328,6 +335,8 @@ def install_monitor(module):
         options["thresholds"] = module.params['thresholds'] or {'ok': 1, 'critical': 1, 'warning': 1}
     if module.params['type'] == "metric alert" and module.params['thresholds'] is not None:
         options["thresholds"] = module.params['thresholds']
+    if module.params['type'] == "metric alert" and module.params['threshold_windows'] is not None:
+        options['threshold_windows'] = module.params['threshold_windows']
 
     monitor = _get_monitor(module)
     if not monitor:
