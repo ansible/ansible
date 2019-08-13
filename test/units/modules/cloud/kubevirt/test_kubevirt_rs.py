@@ -6,7 +6,6 @@ from units.modules.utils import set_module_args
 from units.utils.kubevirt_fixtures import base_fixture, RESOURCE_DEFAULT_ARGS, AnsibleExitJson
 
 from ansible.module_utils.k8s.raw import KubernetesRawModule
-from ansible.module_utils.kubevirt import KubeVirtRawModule
 from ansible.modules.cloud.kubevirt import kubevirt_rs as mymodule
 
 KIND = 'VirtualMachineInstanceReplicaSet'
