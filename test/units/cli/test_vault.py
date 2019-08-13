@@ -193,7 +193,8 @@ class TestVaultCli(unittest.TestCase):
     (['ansible-vault', 'view', 'vault.txt'], 0),
     (['ansible-vault', 'view', 'vault.txt', '-vvv'], 3),
     (['ansible-vault', '-vv', 'view', 'vault.txt'], 2),
-    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence
+    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
+    # deprecated and tests should be removed when the code that handles it is removed
     (['ansible-vault', '-vv', 'view', 'vault.txt', '-v'], 1),
     (['ansible-vault', '-vv', 'view', 'vault.txt', '-vvvv'], 4),
 ])

@@ -465,7 +465,8 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
     (['ansible-galaxy', 'collection', 'init', 'abc.def'], 0),
     (['ansible-galaxy', 'collection', 'init', 'abc.def', '-vvv'], 3),
     (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def'], 2),
-    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence
+    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
+    # deprecated and tests should be removed when the code that handles it is removed
     (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-v'], 1),
     (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-vvvv'], 4),
 ])
