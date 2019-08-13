@@ -109,6 +109,8 @@ import re
 import sys
 import tempfile
 import copy
+import random
+import time
 
 try:
     import apt
@@ -556,13 +558,23 @@ def main():
             sourceslist.save()
             if update_cache:
                 err = ''
-                for retry in range(3):
+                max_fail_count = 5
+                max_fail_sleep = 12
+                randint = random.randint(0, 1000) / 1000
+
+                for retry in range(max_fail_count):
                     try:
                         cache = apt.Cache()
                         cache.update()
                         break
                     except apt.cache.FetchFailedException as e:
                         err = to_native(e)
+
+                    # Use exponential backoff with a max fail count, plus a little bit of randomness
+                    fail_sleep = 2 ** retry + randint
+                    if fail_sleep > max_fail_sleep:
+                        fail_sleep = max_fail_sleep + randint
+                    time.sleep(fail_sleep)
                 else:
                     revert_sources_list(sources_before, sources_after, sourceslist_before)
                     module.fail_json(msg='Failed to update apt cache: %s' % err)
