@@ -1,0 +1,2 @@
+bugfixes:
+- ce_bfd_global - update to fix some bugs - When BFD is unavailable, tosExp and other parameters are sent down to report errors; this error is corrected and the query results are processed again. (https://github.com/ansible/ansible/pull/60412)
