@@ -1,0 +1,2 @@
+minor_changes:
+  - ovirt_host - update force parameter documentation (https://bugzilla.redhat.com/show_bug.cgi?id=1719271#c11)
