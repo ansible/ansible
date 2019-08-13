@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage Interface on Arista EOS network devices
 description:
   - This module provides declarative management of Interfaces
     on Arista EOS network devices.
+deprecated:
+  removed_in: "2.13"
+  alternative: eos_interfaces
+  why: Updated modules released with more functionality
 notes:
     - Tested against EOS 4.15
 options:
@@ -29,10 +33,12 @@ options:
     description:
       - Name of the Interface to be configured on remote device. The name of interface
         should be in expanded format and not abbreviated.
+    type: str
     required: true
   description:
     description:
       - Description of Interface upto 240 characters.
+    type: str
   enabled:
     description:
       - Interface link status. If the value is I(True) the interface state will be
@@ -43,24 +49,29 @@ options:
     description:
       - This option configures autoneg and speed/duplex/flowcontrol for the interface
         given in C(name) option.
+    type: str
   mtu:
     description:
       - Set maximum transmission unit size in bytes of transmit packet for the interface given
         in C(name) option.
+    type: str
   tx_rate:
     description:
       - Transmit rate in bits per second (bps) for the interface given in C(name) option.
       - This is state check parameter only.
       - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
+    type: str
   rx_rate:
     description:
       - Receiver rate in bits per second (bps) for the interface given in C(name) option.
       - This is state check parameter only.
       - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
+    type: str
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
       - The following suboptions are available.
+    type: list
     suboptions:
         host:
           description:
@@ -72,17 +83,20 @@ options:
     description:
       - List of Interfaces definitions. Each of the entry in aggregate list should
         define name of interface C(name) and other options as required.
+    type: list
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
         device. This wait is applicable for operational state argument which are
         I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
     default: 10
+    type: int
   state:
     description:
       - State of the Interface configuration, C(up) means present and
         operationally up and C(down) means present and operationally C(down)
     default: present
+    type: str
     choices: ['present', 'absent', 'up', 'down']
 extends_documentation_fragment: eos
 """
