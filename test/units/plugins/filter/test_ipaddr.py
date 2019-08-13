@@ -22,7 +22,7 @@ import pytest
 
 from units.compat import unittest
 from ansible.errors import AnsibleFilterError
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
+from ansible.plugins.filter.ipaddr import (ipaddr, next_nth_usable, ipsubnet,
                                            previous_nth_usable, network_in_usable, network_in_network,
                                            cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')

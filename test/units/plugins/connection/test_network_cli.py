@@ -23,8 +23,6 @@ __metaclass__ = type
 import re
 import json
 
-from io import StringIO
-
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
