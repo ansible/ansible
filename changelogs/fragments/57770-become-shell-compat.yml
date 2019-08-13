@@ -1,0 +1,3 @@
+bugfixes:
+- become - Provide nice error when the shell plugin is incompatible with the configured become plugin
+  (https://github.com/ansible/ansible/issues/57770)
