@@ -80,6 +80,7 @@ options:
         choices:
             - present
             - absent
+        version_added: 2.9
     application_group:
         description:
             - Configure firewall application groups.

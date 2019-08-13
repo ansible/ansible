@@ -80,6 +80,7 @@ options:
         choices:
             - present
             - absent
+        version_added: 2.9
     dlp_filepattern:
         description:
             - Configure file patterns used by DLP blocking.

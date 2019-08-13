@@ -81,6 +81,7 @@ options:
         choices:
             - present
             - absent
+        version_added: 2.9
     dlp_fp_sensitivity:
         description:
             - Create self-explanatory DLP sensitivity levels to be used when setting sensitivity under config fp-doc-source.

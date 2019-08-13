@@ -80,6 +80,7 @@ options:
         choices:
             - present
             - absent
+        version_added: 2.9
     dnsfilter_profile:
         description:
             - Configure DNS domain filter profiles.

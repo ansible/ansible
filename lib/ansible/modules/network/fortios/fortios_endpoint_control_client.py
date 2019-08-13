@@ -80,6 +80,7 @@ options:
         choices:
             - present
             - absent
+        version_added: 2.9
     endpoint_control_client:
         description:
             - Configure endpoint control client lists.

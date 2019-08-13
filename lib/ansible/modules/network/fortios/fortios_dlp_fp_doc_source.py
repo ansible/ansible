@@ -81,6 +81,7 @@ options:
         choices:
             - present
             - absent
+        version_added: 2.9
     dlp_fp_doc_source:
         description:
             - Create a DLP fingerprint database by allowing the FortiGate to access a file server containing files from which to create fingerprints.

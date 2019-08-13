@@ -80,6 +80,7 @@ options:
         choices:
             - present
             - absent
+        version_added: 2.9
     authentication_rule:
         description:
             - Configure Authentication Rules.
