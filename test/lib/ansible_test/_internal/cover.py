@@ -35,8 +35,6 @@ from .data import (
     data_context,
 )
 
-COVERAGE_DIR = 'test/results/coverage'
-COVERAGE_FILE = os.path.join(COVERAGE_DIR, 'coverage')
 COVERAGE_GROUPS = ('command', 'target', 'environment', 'version')
 COVERAGE_CONFIG_PATH = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coveragerc')
 
@@ -50,7 +48,8 @@ def command_coverage_combine(args):
 
     modules = dict((t.module, t.path) for t in list(walk_module_targets()) if t.path.endswith('.py'))
 
-    coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
+    coverage_dir = os.path.join(data_context().results, 'coverage')
+    coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir) if '=coverage.' in f]
 
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = data_context().content.root + '/'
@@ -183,6 +182,8 @@ def command_coverage_combine(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
+    coverage_file = os.path.join(data_context().results, 'coverage', 'coverage')
+
     for group in sorted(groups):
         arc_data = groups[group]
 
@@ -208,7 +209,7 @@ def command_coverage_combine(args):
             updated.add_arcs(dict((source, []) for source in sources))
 
         if not args.explain:
-            output_file = COVERAGE_FILE + group
+            output_file = coverage_file + group
             updated.write_file(output_file)
             output_files.append(output_file)
 
@@ -251,7 +252,7 @@ def command_coverage_html(args):
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
-        dir_name = 'test/results/reports/%s' % os.path.basename(output_file)
+        dir_name = os.path.join(data_context().results, 'reports', os.path.basename(output_file))
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
         run_command(args, env=env, cmd=['coverage', 'html', '--rcfile', COVERAGE_CONFIG_PATH, '-i', '-d', dir_name])
@@ -264,7 +265,7 @@ def command_coverage_xml(args):
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
-        xml_name = 'test/results/reports/%s.xml' % os.path.basename(output_file)
+        xml_name = os.path.join(data_context().results, 'reports', '%s.xml' % os.path.basename(output_file))
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
         run_command(args, env=env, cmd=['coverage', 'xml', '--rcfile', COVERAGE_CONFIG_PATH, '-i', '-o', xml_name])
@@ -276,11 +277,13 @@ def command_coverage_erase(args):
     """
     initialize_coverage(args)
 
-    for name in os.listdir(COVERAGE_DIR):
+    coverage_dir = os.path.join(data_context().results, 'coverage')
+
+    for name in os.listdir(coverage_dir):
         if not name.startswith('coverage') and '=coverage.' not in name:
             continue
 
-        path = os.path.join(COVERAGE_DIR, name)
+        path = os.path.join(coverage_dir, name)
 
         if not args.explain:
             os.remove(path)

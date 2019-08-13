@@ -18,6 +18,10 @@ from .config import (
     TestConfig,
 )
 
+from .data import (
+    data_context,
+)
+
 
 def calculate_best_confidence(choices, metadata):
     """
@@ -120,7 +124,7 @@ class TestResult:
         :type extension: str
         :rtype: str
         """
-        path = 'test/results/%s/ansible-test-%s' % (directory, self.command)
+        path = os.path.join(data_context().results, directory, 'ansible-test-%s' % self.command)
 
         if self.test:
             path += '-%s' % self.test
