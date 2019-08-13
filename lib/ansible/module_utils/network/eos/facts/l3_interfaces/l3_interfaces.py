@@ -9,20 +9,39 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
-import re
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from copy import deepcopy
-from ansible.module_utils.network.eos.facts.base import FactsBase
+import re
+
+from ansible.module_utils.network.common import utils
+from ansible.module_utils.network.eos.argspec.l3_interfaces.l3_interfaces import L3_interfacesArgs
 
 
-class L3_interfacesFacts(FactsBase):
+class L3_interfacesFacts(object):
     """ The eos l3_interfaces fact class
     """
 
-    def populate_facts(self, module, connection, data=None):
+    def __init__(self, module, subspec='config', options='options'):
+        self._module = module
+        self.argument_spec = InterfacesArgs.argument_spec
+        spec = deepcopy(self.argument_spec)
+        if subspec:
+            if options:
+                facts_argument_spec = spec[subspec][options]
+            else:
+                facts_argument_spec = spec[subspec]
+        else:
+            facts_argument_spec = spec
+
+        self.generated_spec = utils.generate_dict(facts_argument_spec)
+
+    def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for l3_interfaces
-        :param module: the module instance
         :param connection: the device connection
-        :param data: previously collected conf
+        :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
         """
@@ -43,9 +62,12 @@ class L3_interfacesFacts(FactsBase):
                     objs.append(obj)
         facts = {}
         if objs:
-            facts['l3_interfaces'] = objs
-        self.ansible_facts['ansible_network_resources'].update(facts)
-        return self.ansible_facts
+            facts['l3_interfaces'] = []
+            params = utils.validate_config(self.argument_spec, {'config': objs})
+            for cfg in params['config']:
+                facts['interfaces'].append(utils.remove_empties(cfg))
+        ansible_facts['ansible_network_resources'].update(facts)
+        return ansible_facts
 
     def render_config(self, spec, conf):
         """
@@ -79,4 +101,4 @@ class L3_interfacesFacts(FactsBase):
                 ipv6 = {"address": address}
                 config['ipv6'].append(ipv6)
 
-        return self.generate_final_config(config)
+        return utils.remove_empties(config)
