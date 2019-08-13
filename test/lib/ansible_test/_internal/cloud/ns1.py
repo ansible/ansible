@@ -4,9 +4,16 @@ __metaclass__ = type
 
 from os.path import isfile
 
-from lib.cloud import CloudProvider, CloudEnvironment, CloudEnvironmentConfig
+from ..util import (
+    display,
+    ConfigParser,
+)
 
-from lib.util import ConfigParser, display
+from . import (
+    CloudProvider,
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+)
 
 
 class NS1CloudProvider(CloudProvider):
