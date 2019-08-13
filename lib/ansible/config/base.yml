@@ -1527,7 +1527,8 @@ INVENTORY_SAFE_PROCESSING:
   env: [{name: ANSIBLE_INVENTORY_SAFE_PROCESSING}]
   ini:
   - {key: safe_processing, section: inventory}
-  type: bool
+  type: boolean
+  version_added: "2.9"
 INVENTORY_UNPARSED_IS_FAILED:
   name: Unparsed Inventory failure
   default: False
