@@ -211,7 +211,7 @@ class APT(LibMgr):
     def list_installed(self):
         # Store the cache to avoid running pkg_cache() for each item in the comprehension, which is very slow
         cache = self.pkg_cache
-        return [pk for pk in self.pkg_cache.keys() if cache[pk].is_installed]
+        return [pk for pk in cache.keys() if cache[pk].is_installed]
 
     def get_package_details(self, package):
         ac_pkg = self.pkg_cache[package].installed
