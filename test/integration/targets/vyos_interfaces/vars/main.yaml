@@ -12,9 +12,6 @@ merged:
     - name: "eth2"
       enabled: true
 
-    - name: "lo"
-      enabled: true
-
   commands:
     - "set interfaces ethernet eth1 description 'Configured by Ansible - Interface 1'"
     - "set interfaces ethernet eth1 mtu '1500'"
@@ -28,9 +25,6 @@ merged:
     - "set interfaces ethernet eth2 disable"
 
   after:
-    - name: "lo"
-      enabled: true
-
     - name: "eth0"
       enabled: true
       duplex: "auto"
@@ -85,9 +79,6 @@ populate:
     duplex: "auto"
     speed: "auto"
 
-  - name: "lo"
-    enabled: true
-
 replaced:
   commands:
     - "delete interfaces ethernet eth1 mtu"
@@ -103,9 +94,6 @@ replaced:
     - "set interfaces ethernet eth2 mtu '1400'"
 
   after:
-    - name: "lo"
-      enabled: true
-
     - name: "eth1"
       description: "Replaced by Ansible"
       enabled: true
@@ -144,9 +132,6 @@ overridden:
     - "set interfaces ethernet eth2 mtu '1200'"
 
   after:
-    - name: "lo"
-      enabled: true
-
     - name: "eth0"
       enabled: true
       speed: "auto"
@@ -180,9 +165,6 @@ deleted:
     - "delete interfaces ethernet eth2 vif 200 description"
 
   after:
-    - name: "lo"
-      enabled: true
-
     - name: "eth0"
       enabled: true
       speed: "auto"
@@ -202,9 +184,6 @@ deleted:
 
 round_trip:
   after:
-    - name: "lo"
-      enabled: true
-
     - name: "eth0"
       enabled: true
       speed: "auto"
