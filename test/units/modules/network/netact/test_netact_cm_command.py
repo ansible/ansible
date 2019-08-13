@@ -29,7 +29,6 @@ __metaclass__ = type
 
 from units.compat import unittest
 from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 from ansible.modules.network.netact import netact_cm_command
 from units.compat.mock import patch
 
