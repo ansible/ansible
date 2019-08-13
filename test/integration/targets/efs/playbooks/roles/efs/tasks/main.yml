@@ -71,17 +71,17 @@
 
     # ============================================================
     - name: Get all EFS Facts
-      efs_facts:
+      efs_info:
         <<: *aws_connection_info
       register: efs_result
 
     - assert:
         that:
-          - (efs_result.ansible_facts.efs | length) >= 1
+          - (efs_result.efs | length) >= 1
 
     # ============================================================
     - name: Get EFS by creation token
-      efs_facts:
+      efs_info:
         name: "{{ resource_prefix }}-test-efs"
         <<: *aws_connection_info
       register: efs_result
@@ -89,27 +89,27 @@
     - set_fact:
         efs_result_assertions:
           - efs_result is not changed
-          - (efs_result.ansible_facts.efs | length) == 1
-          - efs_result.ansible_facts.efs[0].creation_token == "{{ resource_prefix }}-test-efs"
-          - efs_result.ansible_facts.efs[0].file_system_id == created_efs.efs.file_system_id
-          - efs_result.ansible_facts.efs[0].number_of_mount_targets == 2
-          - (efs_result.ansible_facts.efs[0].mount_targets | length) == 2
-          - efs_result.ansible_facts.efs[0].name == "{{ resource_prefix }}-test-tag"
-          - efs_result.ansible_facts.efs[0].tags.Name == "{{ resource_prefix }}-test-tag"
-          - efs_result.ansible_facts.efs[0].tags.Purpose == "file-storage"
-          - efs_result.ansible_facts.efs[0].encrypted == false
-          - efs_result.ansible_facts.efs[0].life_cycle_state == "available"
-          - efs_result.ansible_facts.efs[0].performance_mode == "generalPurpose"
-          - efs_result.ansible_facts.efs[0].throughput_mode  == "bursting"
-          - efs_result.ansible_facts.efs[0].mount_targets[0].security_groups[0] == vpc_default_sg_id
-          - efs_result.ansible_facts.efs[0].mount_targets[1].security_groups[0] == vpc_default_sg_id
+          - (efs_result.efs | length) == 1
+          - efs_result.efs[0].creation_token == "{{ resource_prefix }}-test-efs"
+          - efs_result.efs[0].file_system_id == created_efs.efs.file_system_id
+          - efs_result.efs[0].number_of_mount_targets == 2
+          - (efs_result.efs[0].mount_targets | length) == 2
+          - efs_result.efs[0].name == "{{ resource_prefix }}-test-tag"
+          - efs_result.efs[0].tags.Name == "{{ resource_prefix }}-test-tag"
+          - efs_result.efs[0].tags.Purpose == "file-storage"
+          - efs_result.efs[0].encrypted == false
+          - efs_result.efs[0].life_cycle_state == "available"
+          - efs_result.efs[0].performance_mode == "generalPurpose"
+          - efs_result.efs[0].throughput_mode  == "bursting"
+          - efs_result.efs[0].mount_targets[0].security_groups[0] == vpc_default_sg_id
+          - efs_result.efs[0].mount_targets[1].security_groups[0] == vpc_default_sg_id
 
     - assert:
         that: "{{efs_result_assertions}}"
 
     # ============================================================
     - name: Get EFS by id
-      efs_facts:
+      efs_info:
         id: "{{created_efs.efs.file_system_id}}"
         <<: *aws_connection_info
       register: efs_result
@@ -119,7 +119,7 @@
 
     # ============================================================
     - name: Get EFS by tag
-      efs_facts:
+      efs_info:
         tags:
           Name: "{{ resource_prefix }}-test-tag"
         <<: *aws_connection_info
@@ -130,7 +130,7 @@
 
     # ============================================================
     - name: Get EFS by target (subnet_id)
-      efs_facts:
+      efs_info:
         targets:
           - "{{testing_subnet_a.subnet.id}}"
         <<: *aws_connection_info
@@ -141,7 +141,7 @@
 
     # ============================================================
     - name: Get EFS by target (security_group_id)
-      efs_facts:
+      efs_info:
         targets:
           - "{{vpc_default_sg_id}}"
         <<: *aws_connection_info
@@ -152,7 +152,7 @@
 
     # ============================================================
     - name: Get EFS by tag and target
-      efs_facts:
+      efs_info:
         tags:
           Name: "{{ resource_prefix }}-test-tag"
         targets:
@@ -230,7 +230,7 @@
 
     # ============================================================
     - name: Check new facts with provisioned mode
-      efs_facts:
+      efs_info:
         name: "{{ resource_prefix }}-test-efs"
         <<: *aws_connection_info
       register: efs_result
@@ -238,18 +238,18 @@
     - set_fact:
         efs_result_assertions:
           - efs_result is not changed
-          - efs_result.ansible_facts.efs[0].throughput_mode  == "provisioned"
-          - efs_result.ansible_facts.efs[0].provisioned_throughput_in_mibps == 8.0
-          - (efs_result.ansible_facts.efs | length) == 1
-          - efs_result.ansible_facts.efs[0].creation_token == "{{ resource_prefix }}-test-efs"
-          - efs_result.ansible_facts.efs[0].file_system_id == created_efs.efs.file_system_id
+          - efs_result.efs[0].throughput_mode  == "provisioned"
+          - efs_result.efs[0].provisioned_throughput_in_mibps == 8.0
+          - (efs_result.efs | length) == 1
+          - efs_result.efs[0].creation_token == "{{ resource_prefix }}-test-efs"
+          - efs_result.efs[0].file_system_id == created_efs.efs.file_system_id
 
     - assert:
         that: "{{efs_result_assertions}}"
 
     # ============================================================
     - name: Query unknown EFS by tag
-      efs_facts:
+      efs_info:
         tags:
           Name: "{{ resource_prefix }}-unknown"
         <<: *aws_connection_info
@@ -258,10 +258,10 @@
     - assert:
         that:
           - efs_result is not changed
-          - (efs_result.ansible_facts.efs | length) == 0
+          - (efs_result.efs | length) == 0
 
     - name: Query unknown EFS by target
-      efs_facts:
+      efs_info:
         targets:
           - sg-00000000000
         <<: *aws_connection_info
@@ -270,7 +270,7 @@
     - assert:
         that:
           - efs_result is not changed
-          - (efs_result.ansible_facts.efs | length) == 0
+          - (efs_result.efs | length) == 0
 
   # ============================================================
   always:

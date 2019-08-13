@@ -93,7 +93,7 @@
       region: us-east-1
       aws_secret_key: foobar
   block:
-    - aws_s3_bucket_facts:
+    - aws_s3_bucket_info:
       ignore_errors: true
       register: s3
     - assert:
@@ -106,7 +106,7 @@
       aws_secret_key: foobar
       aws_access_key: foobar
   block:
-    - aws_s3_bucket_facts:
+    - aws_s3_bucket_info:
       ignore_errors: true
       register: s3
     - assert:
