@@ -272,6 +272,8 @@ import re
 import sys
 import tempfile
 import time
+import random
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
@@ -1086,16 +1088,27 @@ def main():
             now = datetime.datetime.now()
             tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
             if not mtimestamp + tdelta >= now:
-                # Retry to update the cache up to 3 times
+                # Retry to update the cache up to 5 times with exponential backoff
                 err = ''
-                for retry in range(3):
+                max_fail_count = 5
+                max_fail_sleep = 12
+                randint = random.randint(0, 1000) / 1000
+
+                for retry in range(max_fail_count):
                     try:
                         cache.update()
                         break
                     except apt.cache.FetchFailedException as e:
                         err = to_native(e)
+
+                    # Use exponential backoff plus a little bit of randomness
+                    fail_sleep = 2 ** retry + randint
+                    if fail_sleep > max_fail_sleep:
+                        fail_sleep = max_fail_sleep + randint
+                    time.sleep(fail_sleep)
                 else:
                     module.fail_json(msg='Failed to update apt cache: %s' % err)
+
                 cache.open(progress=None)
                 mtimestamp, post_cache_update_time = get_updated_cache_time()
                 if updated_cache_time != post_cache_update_time:
