@@ -141,7 +141,7 @@ class InventoryCLI(CLI):
             if context.CLIARGS['unmerge']:
                 myvars, max_width = self._get_host_variables_unmerged(host=hosts[0])
 
-                results = self._format_unmerged_variables(myvars, max_width)
+                results = self._format_unmerged_variables(myvars, max_width, hosts[0])
             else:
                 myvars = self._get_host_variables(host=hosts[0])
 
@@ -296,19 +296,32 @@ class InventoryCLI(CLI):
                     results[flattened_path] = [(group, value)]  # First time we find a leaf here
 
     @staticmethod
-    def _format_unmerged_variables(unmerged_vars, max_width):
-        ''' Display the unmerged vars in a human readable way '''
+    def _format_unmerged_variables(unmerged_vars, max_width, host):
+        ''' Display the unmerged vars in a human readable way.'''
 
         result = []
         for key, values in sorted(unmerged_vars.items()):
             if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
-                result.append('[{0:>{x}}] {1} : {2}'.format(str(values[0][0]), key, values[0][1], x=max_width))
+                result.append('[{}] {} : {}'.format(InventoryCLI._colorize_entity(values[0][0], host, max_width), key, values[0][1]))
             else:  # There was several candidates, display the winning one first, and all others in order (starting with the winning one) along with their source
-                result.append('[{0:>{x}}] {1} : {2}'.format('-', key, values[0][1], x=max_width))
+                result.append('[{}] {} : {}'.format('-' * max_width, key, values[0][1]))
                 local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
-                for priority, value in values:
-                    result.append('    [{0:>{x}}] : {1}'.format(str(priority), value, x=local_max_width))
+                for entity, value in values:
+                    result.append('    [{}] : {}'.format(InventoryCLI._colorize_entity(entity, host, max_width), value))
         return '\n'.join(result)
+
+    @staticmethod
+    def _colorize_entity(entity, host, max_width):
+        ''' Colorize a Host or Group object in a deterministic way. Returns a colorized string (or not colorized, this is handled in ansible.utils.color) '''
+        host_groups = sort_groups(host.get_groups())  # A group's or host's position in this list will determine its color
+        host_groups.append(host)
+        host_groups.reverse()  # More specific first
+
+        colors = ['blue', 'green', 'cyan', 'red', 'purple', 'yellow', 'magenta']  # Colors from ansible.utils.color.codeCodes
+        color_index = host_groups.index(entity) % len(colors)
+
+        padding = max_width - len(str(entity))
+        return ' ' * padding + stringc(str(entity), colors[color_index])
 
     def _get_group(self, gname):
         group = self.inventory.groups.get(gname)
