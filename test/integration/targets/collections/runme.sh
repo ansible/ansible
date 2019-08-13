@@ -11,12 +11,6 @@ export ANSIBLE_HOST_PATTERN_MISMATCH=error
 ipath=../../$(basename "${INVENTORY_PATH}")
 export INVENTORY_PATH="$ipath"
 
-# temporary hack to keep this test from running on Python 2.6 in CI
-if ansible-playbook pythoncheck.yml | grep UNSUPPORTEDPYTHON; then
-  echo skipping test for unsupported Python version...
-  exit 0
-fi
-
 # test callback
 ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
 
