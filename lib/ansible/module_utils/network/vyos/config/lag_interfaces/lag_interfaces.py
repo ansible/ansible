@@ -190,11 +190,8 @@ class Lag_interfaces(ConfigBase):
     def _render_updates(self, want, have):
         commands = []
 
-        try:
-            temp_have_members = have.pop('members', None)
-            temp_want_members = want.pop('members', None)
-        except BaseException:
-            pass
+        temp_have_members = have.pop('members', None)
+        temp_want_members = want.pop('members', None)
 
         updates = dict_diff(have, want)
 
@@ -249,7 +246,7 @@ class Lag_interfaces(ConfigBase):
                     )
                 elif item != 'name':
                     commands.append(
-                        self._compute_command(have['name'], attrib=item, set_flag=False)
+                        self._compute_command(have['name'], attrib=item, remove=True)
                     )
         return commands
 
@@ -268,7 +265,7 @@ class Lag_interfaces(ConfigBase):
                 )
             elif have.get(attrib) and not want.get(attrib):
                 commands.append(
-                    self._compute_command(have['name'], attrib, set_flag=False)
+                    self._compute_command(have['name'], attrib, remove=True)
                 )
         return commands
 
@@ -303,7 +300,7 @@ class Lag_interfaces(ConfigBase):
         for member in have['members']:
             commands.append(
                 self._compute_command(
-                    member['member'], 'bond-group', have['name'], False, 'ethernet'
+                    member['member'], 'bond-group', have['name'], remove=True, type='ethernet'
                 )
             )
         return commands
@@ -365,12 +362,12 @@ class Lag_interfaces(ConfigBase):
             diff = list_diff_want_only(want_arp_target, have_arp_target)
         return diff
 
-    def _compute_command(self, name, attrib, value=None, set_flag=True, type='bonding'):
-        if set_flag:
-            cmd = 'set interfaces ' + type
-        else:
+    def _compute_command(self, key, attrib, value=None, remove=False, type='bonding'):
+        if remove:
             cmd = 'delete interfaces ' + type
-        cmd += (' ' + name)
+        else:
+            cmd = 'set interfaces ' + type
+        cmd += (' ' + key)
         if attrib == 'arp_monitor':
             attrib = 'arp-monitor'
         elif attrib == 'hash_policy':

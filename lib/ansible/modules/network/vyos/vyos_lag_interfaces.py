@@ -41,6 +41,9 @@ module: vyos_lag_interfaces
 version_added: 2.9
 short_description: Manages attributes of link aggregation groups on VyOS network devices.
 description: This module manages attributes of link aggregation groups on VyOS network devices.
+notes:
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli).
 author: Rohit Thakur (@rohitthakur2590)
 options:
   config:
@@ -544,7 +547,10 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=Lag_interfacesArgs.argument_spec,
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'overridden', ('config',))]
+    module = AnsibleModule(argument_spec=Lag_interfacesArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
     result = Lag_interfaces(module).execute_module()
