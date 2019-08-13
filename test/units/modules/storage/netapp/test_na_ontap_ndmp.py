@@ -3,7 +3,8 @@
 
 ''' unit test template for ONTAP Ansible module '''
 
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 import json
 import pytest
 
@@ -80,10 +81,10 @@ class MockONTAPConnection(object):
                 'ndmp-vserver-attributes-info': {
                     'ignore_ctime_enabled': ndmp_details['ignore_ctime_enabled'],
                     'backup_log_enable': ndmp_details['backup_log_enable'],
-                    'authtype': {
+                    'authtype': [{
                         'ndmpd-authtypes': 'plaintext',
                         'ndmpd-authtypes': 'challenge'
-                    }
+                    }]
                 }
             }
         }
