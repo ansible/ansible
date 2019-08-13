@@ -17,6 +17,7 @@ from ansible.module_utils.network.junos.facts.lacp.lacp import LacpFacts
 from ansible.module_utils.network.junos.facts.lacp_interfaces.lacp_interfaces import Lacp_interfacesFacts
 from ansible.module_utils.network.junos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.junos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
+from ansible.module_utils.network.junos.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.junos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.junos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.junos.facts.l2_interfaces.l2_interfaces import L2_interfacesFacts
@@ -34,6 +35,7 @@ FACT_RESOURCE_SUBSETS = dict(
     lag_interfaces=Lag_interfacesFacts,
     l2_interfaces=L2_interfacesFacts,
     l3_interfaces=L3_interfacesFacts,
+    lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_interfacesFacts,
     vlans=VlansFacts,
 )
