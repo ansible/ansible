@@ -99,7 +99,7 @@ class LookupModule(LookupBase):
                 vars.update(lookup_template_vars)
 
                 # do the templating
-                with self._templar.set_temporary_config(variable_start_string, variable_end_string, vars, searchpath):
+                with self._templar.set_temporary_context(variable_start_string, variable_end_string, vars, searchpath):
                     res = self._templar.template(template_data, preserve_trailing_newlines=True,
                                                  convert_data=convert_data_p, escape_backslashes=False)
 

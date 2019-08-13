@@ -514,7 +514,10 @@ class Templar:
         self.available_variables = variables
 
     @contextmanager
-    def set_temporary_config(self, start_string=None, end_string=None, variables=None, searchpath=None):
+    def set_temporary_context(self, start_string=None, end_string=None, variables=None, searchpath=None):
+        """Context manager used to set temporary templating context, without having to worry about resetting
+        original values afterward
+        """
         o_start = self.environment.variable_start_string
         o_end = self.environment.variable_end_string
         o_vars = self.available_variables
