@@ -1,0 +1,56 @@
+---
+- debug:
+    msg: "Start nxos_lacp_interfaces deleted integration tests connection={{ ansible_connection }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      no interface port-channel5
+      no interface port-channel10
+      no feature lacp
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        feature lacp
+        interface port-channel5
+        lacp min-links 5
+        interface port-channel10
+        lacp mode delay
+
+  - name: Gather lacp_interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lacp_interfaces
+
+  - name: deleted
+    nxos_lacp_interfaces: &deleted
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp_interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.after|length == 0"
+        - "result.changed == true"
+        - "'interface port-channel5' in result.commands"
+        - "'no lacp min-links' in result.commands"
+        - "'interface port-channel10' in result.commands"
+        - "'no lacp mode delay' in result.commands"
+        - "result.commands|length == 4"
+
+  - name: Idempotence - deleted
+    nxos_lacp_interfaces: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup
