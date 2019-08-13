@@ -554,7 +554,7 @@ def main():
             mirror_hostgroup=dict(type='int'),
             error_msg=dict(type='str'),
             OK_msg=dict(type='str'),
-            multiplex=dict(choices=[0, 1, 2]),
+            multiplex=dict(type='int', choices=[0, 1, 2]),
             log=dict(type='bool'),
             apply=dict(type='bool'),
             comment=dict(type='str'),
