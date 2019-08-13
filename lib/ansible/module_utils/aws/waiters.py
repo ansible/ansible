@@ -206,13 +206,13 @@ eks_data = {
             "operation": "DescribeCluster",
             "acceptors": [
                 {
-                    "state": "success",
+                    "state": "retry",
                     "matcher": "path",
-                    "argument": "cluster.status",
-                    "expected": "DELETED"
+                    "argument": "cluster.status != 'DELETED'",
+                    "expected": True
                 },
                 {
-                    "state": "retry",
+                    "state": "success",
                     "matcher": "error",
                     "expected": "ResourceNotFoundException"
                 }
