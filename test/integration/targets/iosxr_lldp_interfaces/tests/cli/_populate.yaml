@@ -1,0 +1,12 @@
+---
+- name: Setup GigE1
+  iosxr_config:
+    lines:
+      - lldp receive disable
+    parents: interface GigabitEthernet0/0/0/1
+
+- name: Setup GigE0
+  iosxr_config:
+    lines:
+      - lldp transmit disable
+    parents: interface GigabitEthernet0/0/0/0

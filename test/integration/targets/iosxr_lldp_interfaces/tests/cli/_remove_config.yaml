@@ -1,0 +1,24 @@
+---
+- name: Remove LLDP interface config
+  iosxr_config:
+    lines: 
+      - no lldp
+      - shutdown
+    parents: "interface GigabitEthernet{{ item }}"
+  loop:
+    - 0/0/0/0
+    - 0/0/0/1
+  ignore_errors: yes
+
+# To make sure our assertions are not affected by
+# spill overs from previous tests
+- name: Remove unwanted interfaces from config
+  iosxr_config:
+    lines:
+      - "no interface GigabitEthernet{{ item }}"
+  loop:
+    - 0/0/0/2
+    - 0/0/0/3
+    - 0/0/0/4
+    - 0/0/0/5
+  ignore_errors: yes
