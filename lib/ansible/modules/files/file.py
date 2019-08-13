@@ -33,7 +33,8 @@ options:
   state:
     description:
     - If C(absent), directories will be recursively deleted, and files or symlinks will
-      be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does
+      be unlinked. In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed
+      under C(path_contents). Note that C(absent) will not cause C(file) to fail if the C(path) does
       not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
@@ -377,7 +378,7 @@ def initial_diff(path, state, prev_state):
     if prev_state != state:
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
-        if state == 'absent':
+        if state == 'absent' and prev_state == 'directory':
             walklist = {
                 'directories': [],
                 'files': [],
