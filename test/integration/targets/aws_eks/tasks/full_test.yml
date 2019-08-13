@@ -2,9 +2,7 @@
 # tasks file for aws_eks modules
 
 - block:
-    # FIXME: ap-south-1 only has two AZs, ap-south-1a and ap-south-1b
-    # That makes it my best guess as to it being among the last to support EKS
-    # If it does become supported, change this test to use an unsupported region
+    # If us-west-1 does become supported, change this test to use an unsupported region
     # or if all regions are supported, delete this test
     - name: attempt to use eks in unsupported region
       aws_eks_cluster:
@@ -13,7 +11,7 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
-        region: ap-south-1
+        region: us-west-1
       register: aws_eks_unsupported_region
       ignore_errors: yes
 
@@ -142,14 +140,43 @@
           - eks_create is not changed
           - eks_create.name == eks_cluster_name
 
-    - name: remove EKS cluster
+    - name: remove EKS cluster, waiting until complete
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        state: absent
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_delete
+
+    - name: check that EKS cluster was removed
+      assert:
+        that:
+          - eks_delete is changed
+
+    - name: create EKS cluster with same details but wait for it to become active
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ eks_security_groups | json_query('[].name') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: check that EKS cluster was created
+      assert:
+        that:
+          - eks_create is changed
+          - eks_create.name == eks_cluster_name
+
+    - name: remove EKS cluster, without waiting this time
       aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
         <<: *aws_connection_info
       register: eks_delete
 
-    - name: check that EKS cluster was created
+    - name: check that EKS cluster remove has started
       assert:
         that:
           - eks_delete is changed
@@ -163,12 +190,10 @@
       aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
+        wait: yes
         <<: *aws_connection_info
       register: eks_delete
       ignore_errors: yes
-
-    - pause:
-        minutes: 5
 
     - debug:
         msg: "{{ eks_security_groups|reverse|list }}"
@@ -190,6 +215,7 @@
         vpc_id: '{{ setup_vpc.vpc.id }}'
         <<: *aws_connection_info
       with_items: "{{ eks_security_groups }}"
+      ignore_errors: yes
 
     - name: remove security groups
       ec2_group:
