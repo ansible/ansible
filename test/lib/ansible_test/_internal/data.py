@@ -70,6 +70,7 @@ class DataContext:
             content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
         self.content = content  # type: ContentLayout
+        self.results = os.path.join(self.content.root, 'test', 'results')
 
     @staticmethod
     def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]

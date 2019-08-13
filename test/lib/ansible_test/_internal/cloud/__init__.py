@@ -158,7 +158,8 @@ def cloud_init(args, targets):
         )
 
     if not args.explain and results:
-        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+        results_path = os.path.join(data_context().results, 'data', '%s-%s.json' % (
+            args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0)))))
 
         data = dict(
             clouds=results,
