@@ -253,49 +253,60 @@ class InventoryCLI(CLI):
         return self._remove_internal(hostvars)
 
     def _get_host_variables_unmerged(self, host):
-        #results = {}
-        #results['interfaces.ethernet1.name'] = [(1, 'tata'), (2, 'titi')]
-        #results['interfaces.ethernet1.mtu'] = [(1, 1500), (2, 9000)]
-        #results['interfaces.ethernet2.name'] = [(1, 'toto')]
-        #results['interfaces.ethernet2.vlans'] = [(1, ['TRUC', 'MUCHE', 'BLAH'])]
-        
+        ''' Build a dict of all variables where :
+            - keys are the "flattened paths" of the variables (similar to the dotted format used in jinja templates)
+            - values are lists of 2 elements tuples where :
+                - first element of the tuple is the "source" (group name or host name)
+                - second element of the tuple is the candidate value
+                - first item of the list is the one that would "win" the merging process
+            "Unmerged" because, contrary to 'combine_vars()', we keep values that would be overwritten.
+        '''
+
         results = {}
         if C.DEFAULT_HASH_BEHAVIOUR != "merge":
             raise AnsibleOptionsError("--unmerged is only supported when 'hash_behaviour' is set to 'merge'")
 
-        host_groups = sort_groups(host.get_groups())
+        # The following is a simplified version of Ansible's variables precedence system, using only group vars and host vars
+        host_groups = sort_groups(host.get_groups())  # Groups are sorted from less specific ('all') to more specific
         for group in host_groups:
-            self._combine_vars_unmerged(results, self._get_group_variables(group), group, [])
-        self._combine_vars_unmerged(results, self._get_host_variables(host, only=True), host, [])
-        max_width = len(str(max(host_groups + [host], key=lambda v: len(str(v))))) - 1
-        return results, max_width 
+            self._combine_vars_unmerged(results, self._get_group_variables(group), group, [])  # Update 'results' with the group's variables
+        self._combine_vars_unmerged(results, self._get_host_variables(host, only=True), host, [])  # Lastly, update 'results' with hosts variables
+        max_width = len(str(max(host_groups + [host], key=lambda v: len(str(v))))) - 1  # The maximum string length of all group names (and the hostname), for display purposes
+        return results, max_width
 
     @staticmethod
-    def _combine_vars_unmerged(results, hash_to_integrate, group, path): 
-        for key, value in hash_to_integrate.items(): 
-            new_path = path + [key] 
-            flattened_path = '.'.join(new_path) 
-            if isinstance(value, MutableMapping): 
-                if flattened_path in results: del results[flattened_path]
-                InventoryCLI._combine_vars_unmerged(results, value, group, new_path) 
-            else: 
-                if flattened_path in results: 
-                    results[flattened_path].insert(0, (group, value)) 
-                else: 
-                    results[flattened_path] = [(group, value)] 
+    def _combine_vars_unmerged(results, hash_to_integrate, group, path):
+        ''' Recursive function that browses a recursive dict ('hash_to_integrate') to update the 'results' dict.
+            For each leaf encountered (i.e. anything that is not another dict) it creates an entry in 'results' with the path (in a dotted format) as key and a list as value.
+            This list contain the leaf's value, along with the "source" (group name most of the time, or host name) of 'hash_to_integrate'.
+            If the key already exists, the list is simply prepended. The first item of said list is considered to be the "winning" value.
+        '''
+
+        for key, value in hash_to_integrate.items():
+            new_path = path + [key]
+            flattened_path = '.'.join(new_path)
+            if isinstance(value, MutableMapping):  # We are not at a leaf
+                if flattened_path in results: del results[flattened_path]  # If there was a leaf here previously, delete it as it would have been overwritten by combine_vars
+                                                                           # We should maybe find a way to display that...
+                InventoryCLI._combine_vars_unmerged(results, value, group, new_path)  # We need to go deeper !
+            else:
+                if flattened_path in results:
+                    results[flattened_path].insert(0, (group, value))  # New value, with higher priority
+                else:
+                    results[flattened_path] = [(group, value)]  # First time we find a leaf here
 
     @staticmethod
     def _format_unmerged_variables(unmerged_vars, max_width):
-        print(max_width)
-        for key, values in sorted(unmerged_vars.items()):
-            if len(values)==1:  # There was no override
-                print('[{0:>{x}}] {1} : {2}'.format(str(values[0][0]), key, values[0][1], x=max_width))
-            else: 
-                print('[{0:>{x}}] {1} : {2}'.format('-', key, values[0][1], x=max_width)) 
-                local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))
-                for priority, value in values:
-                    print('    [{0:>{x}}] : {1}'.format(str(priority), value, x=local_max_width)) 
+        ''' Display the unmerged vars in a human readable way '''
 
+        for key, values in sorted(unmerged_vars.items()):
+            if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
+                print('[{0:>{x}}] {1} : {2}'.format(str(values[0][0]), key, values[0][1], x=max_width))
+            else:  # There was several candidates, display the winning one first, and all others in order (starting with the winning one) along with their source
+                print('[{0:>{x}}] {1} : {2}'.format('-', key, values[0][1], x=max_width))
+                local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
+                for priority, value in values:
+                    print('    [{0:>{x}}] : {1}'.format(str(priority), value, x=local_max_width))
 
     def _get_group(self, gname):
         group = self.inventory.groups.get(gname)
