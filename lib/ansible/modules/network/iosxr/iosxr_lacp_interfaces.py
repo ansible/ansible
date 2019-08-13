@@ -526,7 +526,8 @@ def main():
     :returns: the result form module invocation
     """
     required_if = [('state', 'merged', ('config',)),
-                   ('state', 'replaced', ('config',))]
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'overridden', ('config',))]
     module = AnsibleModule(argument_spec=Lacp_interfacesArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
