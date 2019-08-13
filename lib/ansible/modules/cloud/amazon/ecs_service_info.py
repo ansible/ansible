@@ -237,18 +237,18 @@ def main():
             services = module.params['service']
         else:
             services = task_mgr.list_services(module.params['cluster'])['services']
-        ecs_facts = dict(services=[], services_not_running=[])
+        ecs_info = dict(services=[], services_not_running=[])
         for chunk in chunks(services, 10):
             running_services, services_not_running = task_mgr.describe_services(module.params['cluster'], chunk)
-            ecs_facts['services'].extend(running_services)
-            ecs_facts['services_not_running'].extend(services_not_running)
+            ecs_info['services'].extend(running_services)
+            ecs_info['services_not_running'].extend(services_not_running)
     else:
-        ecs_facts = task_mgr.list_services(module.params['cluster'])
+        ecs_info = task_mgr.list_services(module.params['cluster'])
 
     if is_old_facts:
-        module.exit_json(changed=False, ansible_facts=ecs_facts, **ecs_facts)
+        module.exit_json(changed=False, ansible_facts=ecs_info, **ecs_info)
     else:
-        module.exit_json(changed=False, **ecs_facts)
+        module.exit_json(changed=False, **ecs_info)
 
 
 if __name__ == '__main__':
