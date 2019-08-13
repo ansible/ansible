@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ecs_service_facts
+module: ecs_service_info
 short_description: list or describe services in ecs
 description:
     - Lists or describes services in ecs.
+    - This module was called C(ecs_service_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(ecs_service_info) module no longer returns C(ansible_facts)!
 version_added: "2.1"
 author:
     - "Mark Chance (@Java1Guy)"
@@ -53,14 +55,16 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Basic listing example
-- ecs_service_facts:
+- ecs_service_info:
     cluster: test-cluster
     service: console-test-service
     details: true
+  register: output
 
 # Basic listing example
-- ecs_service_facts:
+- ecs_service_info:
     cluster: test-cluster
+  register: output
 '''
 
 RETURN = '''
@@ -220,6 +224,10 @@ def main():
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    is_old_facts = module._name == 'ecs_service_facts'
+    if is_old_facts:
+        module.deprecate("The 'ecs_service_facts' module has been renamed to 'ecs_service_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     show_details = module.params.get('details')
 
@@ -229,15 +237,18 @@ def main():
             services = module.params['service']
         else:
             services = task_mgr.list_services(module.params['cluster'])['services']
-        ecs_facts = dict(services=[], services_not_running=[])
+        ecs_info = dict(services=[], services_not_running=[])
         for chunk in chunks(services, 10):
             running_services, services_not_running = task_mgr.describe_services(module.params['cluster'], chunk)
-            ecs_facts['services'].extend(running_services)
-            ecs_facts['services_not_running'].extend(services_not_running)
+            ecs_info['services'].extend(running_services)
+            ecs_info['services_not_running'].extend(services_not_running)
     else:
-        ecs_facts = task_mgr.list_services(module.params['cluster'])
+        ecs_info = task_mgr.list_services(module.params['cluster'])
 
-    module.exit_json(changed=False, ansible_facts=ecs_facts, **ecs_facts)
+    if is_old_facts:
+        module.exit_json(changed=False, ansible_facts=ecs_info, **ecs_info)
+    else:
+        module.exit_json(changed=False, **ecs_info)
 
 
 if __name__ == '__main__':

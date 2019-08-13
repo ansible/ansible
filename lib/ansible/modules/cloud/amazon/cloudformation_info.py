@@ -13,10 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cloudformation_facts
-short_description: Obtain facts about an AWS CloudFormation stack
+module: cloudformation_info
+short_description: Obtain information about an AWS CloudFormation stack
 description:
   - Gets information about an AWS CloudFormation stack
+  - This module was called C(cloudformation_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(cloudformation_info) module no longer returns C(ansible_facts)!
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
@@ -25,7 +27,7 @@ author: Justin Menga (@jmenga)
 options:
     stack_name:
         description:
-          - The name or id of the CloudFormation stack. Gathers facts for all stacks by default.
+          - The name or id of the CloudFormation stack. Gathers information on all stacks by default.
     all_facts:
         description:
             - Get all stack information for the stack
@@ -60,10 +62,20 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Get summary information about a stack
+- cloudformation_info:
+    stack_name: my-cloudformation-stack
+  register: output
+
+- debug:
+    msg: "{{ output['cloudformation']['my-cloudformation-stack'] }}"
+
+# When the module is called as cloudformation_facts, return values are published
+# in ansible_facts['cloudformation'][<stack_name>] and can be used as follows.
+# Note that this is deprecated and will stop working in Ansible 2.13.
+
 - cloudformation_facts:
     stack_name: my-cloudformation-stack
 
-# Facts are published in ansible_facts['cloudformation'][<stack_name>]
 - debug:
     msg: "{{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}"
 
@@ -71,27 +83,27 @@ EXAMPLES = '''
 - set_fact:
     stack_name: my-awesome-stack
 
-- cloudformation_facts:
+- cloudformation_info:
     stack_name: "{{ stack_name }}"
   register: my_stack
 
 - debug:
-    msg: "{{ my_stack.ansible_facts.cloudformation[stack_name].stack_outputs }}"
+    msg: "{{ my_stack.cloudformation[stack_name].stack_outputs }}"
 
 # Get all stack information about a stack
-- cloudformation_facts:
+- cloudformation_info:
     stack_name: my-cloudformation-stack
     all_facts: true
 
 # Get stack resource and stack policy information about a stack
-- cloudformation_facts:
+- cloudformation_info:
     stack_name: my-cloudformation-stack
     stack_resources: true
     stack_policy: true
 
 # Fail if the stack doesn't exist
 - name: try to get facts about a stack but fail if it doesn't exist
-  cloudformation_facts:
+  cloudformation_info:
     stack_name: nonexistent-stack
     all_facts: yes
   failed_when: cloudformation['nonexistent-stack'] is undefined
@@ -273,6 +285,10 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    is_old_facts = module._name == 'cloudformation_facts'
+    if is_old_facts:
+        module.deprecate("The 'cloudformation_facts' module has been renamed to 'cloudformation_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -306,7 +322,10 @@ def main():
         if all_facts or module.params.get('stack_events'):
             facts['stack_events'] = service_mgr.describe_stack_events(stack_name)
 
-        result['ansible_facts']['cloudformation'][stack_name] = facts
+        if is_old_facts:
+            result['ansible_facts']['cloudformation'][stack_name] = facts
+        else:
+            result['cloudformation'][stack_name] = facts
 
     result['changed'] = False
     module.exit_json(**result)
