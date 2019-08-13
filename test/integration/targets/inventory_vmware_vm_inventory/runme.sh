@@ -50,7 +50,7 @@ curl "http://${VCENTER_HOST}:5000/govc_find"
 ansible-inventory -i ${VMWARE_CONFIG} --list
 
 echo "Check if cache is working for inventory plugin"
-if [ ! -n "$(find "${inventory_cache}" -maxdepth 1 -name 'vmware_vm_inventory_*' -print -quit)" ]; then
+if [ ! -n "$(find "$(pwd)/inventory_cache" -maxdepth 1 -name 'vmware_vm_inventory_*' -print -quit)" ]; then
     echo "Cache directory not found. Please debug"
     exit 1
 fi
