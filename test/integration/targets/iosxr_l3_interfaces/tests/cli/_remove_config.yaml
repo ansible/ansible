@@ -1,0 +1,13 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      no interface loopback 888
+      no interface loopback 999
+      no interface GigabitEthernet 0/0/0/1
+      no interface GigabitEthernet 0/0/0/2
+      no interface GigabitEthernet 0/0/0/3
+      no interface preconfigure GigabitEthernet0/0/0/3.100
+      no interface GigabitEthernet 0/0/0/4
