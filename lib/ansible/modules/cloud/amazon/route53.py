@@ -458,6 +458,37 @@ def invoke_with_throttling_retries(function_ref, *argv, **kwargs):
         retries += 1
 
 
+def decode_name(name):
+    # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
+    # tripping of things like * and @.
+    return name.encode().decode('unicode_escape')
+
+
+def to_dict(rset, zone_in, zone_id):
+    record = dict()
+    record['zone'] = zone_in
+    record['type'] = rset.type
+    record['record'] = decode_name(rset.name)
+    record['ttl'] = str(rset.ttl)
+    record['identifier'] = rset.identifier
+    record['weight'] = rset.weight
+    record['region'] = rset.region
+    record['failover'] = rset.failover
+    record['health_check'] = rset.health_check
+    record['hosted_zone_id'] = zone_id
+    if rset.alias_dns_name:
+        record['alias'] = True
+        record['value'] = rset.alias_dns_name
+        record['values'] = [rset.alias_dns_name]
+        record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
+        record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
+    else:
+        record['alias'] = False
+        record['value'] = ','.join(sorted(rset.resource_records))
+        record['values'] = sorted(rset.resource_records)
+    return record
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -601,41 +632,18 @@ def main():
             rset = invoke_with_throttling_retries(next, sets_iter)
         except StopIteration:
             break
-        # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
-        # tripping of things like * and @.
-        decoded_name = rset.name.replace(r'\052', '*')
-        decoded_name = decoded_name.replace(r'\100', '@')
         # Need to save this changes in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
-        rset.name = decoded_name
+        rset.name = decode_name(rset.name)
 
         if identifier_in is not None:
             identifier_in = str(identifier_in)
 
-        if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
+        if rset.type == type_in and rset.name.lower() == record_in.lower() and rset.identifier == identifier_in:
             if need_to_sort_records:
                 # Sort records
                 rset.resource_records = sorted(rset.resource_records)
             found_record = True
-            record['zone'] = zone_in
-            record['type'] = rset.type
-            record['record'] = decoded_name
-            record['ttl'] = rset.ttl
-            record['identifier'] = rset.identifier
-            record['weight'] = rset.weight
-            record['region'] = rset.region
-            record['failover'] = rset.failover
-            record['health_check'] = rset.health_check
-            record['hosted_zone_id'] = zone_id
-            if rset.alias_dns_name:
-                record['alias'] = True
-                record['value'] = rset.alias_dns_name
-                record['values'] = [rset.alias_dns_name]
-                record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
-                record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
-            else:
-                record['alias'] = False
-                record['value'] = ','.join(sorted(rset.resource_records))
-                record['values'] = sorted(rset.resource_records)
+            record = to_dict(rset, zone_in, zone_id)
             if command_in == 'create' and rset.to_xml() == wanted_rset.to_xml():
                 module.exit_json(changed=False)
 
