@@ -349,6 +349,7 @@ class VMwareCluster(PyVmomi):
                     das_vm_config.restartPriority = self.params.get('ha_restart_priority')
                     das_vm_config.isolationResponse = self.host_isolation_response
                     das_vm_config.vmToolsMonitoringSettings = vm_tool_spec
+                    cluster_config_spec.dasConfig.defaultVmSettings = das_vm_config
 
                 cluster_config_spec.dasConfig.admissionControlEnabled = self.ha_admission_control
 
@@ -375,7 +376,6 @@ class VMwareCluster(PyVmomi):
 
                 cluster_config_spec.dasConfig.hostMonitoring = self.params.get('ha_host_monitoring')
                 cluster_config_spec.dasConfig.vmMonitoring = self.params.get('ha_vm_monitoring')
-                cluster_config_spec.dasConfig.defaultVmSettings = das_vm_config
 
                 try:
                     task = self.cluster.ReconfigureComputeResource_Task(cluster_config_spec, True)
