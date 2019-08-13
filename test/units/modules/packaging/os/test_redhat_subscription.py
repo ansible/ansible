@@ -12,9 +12,6 @@ from ansible.modules.packaging.os import redhat_subscription
 
 import pytest
 
-import os
-import tempfile
-
 TESTED_MODULE = redhat_subscription.__name__
 
 

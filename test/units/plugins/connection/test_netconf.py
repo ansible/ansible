@@ -23,11 +23,8 @@ __metaclass__ = type
 import sys
 import pytest
 
-from io import StringIO
-
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock, PropertyMock
-from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 
 pytest.importorskip("ncclient")

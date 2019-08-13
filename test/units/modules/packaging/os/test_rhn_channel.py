@@ -2,7 +2,6 @@
 # Copyright (c) 2017 Pierre-Louis Bonicoli <pierre-louis@libregerbil.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from itertools import product
 import json
 
 from ansible.modules.packaging.os import rhn_channel

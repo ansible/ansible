@@ -23,9 +23,7 @@ from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleParserError
-from ansible.playbook.block import Block
 from ansible.playbook.play import Play
-from ansible.playbook.role import Role
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop

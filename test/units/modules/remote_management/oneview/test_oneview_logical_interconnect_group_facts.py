@@ -2,7 +2,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from units.compat import unittest
-from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_logical_interconnect_group_facts import LogicalInterconnectGroupFactsModule
 from hpe_test_utils import FactsParamsTestCase
 

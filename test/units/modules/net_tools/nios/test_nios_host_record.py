@@ -20,7 +20,6 @@ __metaclass__ = type
 
 from ansible.modules.net_tools.nios import nios_host_record
 from ansible.module_utils.net_tools.nios import api
-from units.modules.utils import set_module_args
 from units.compat.mock import patch, MagicMock, Mock
 from .test_nios_module import TestNiosModule, load_fixture
 

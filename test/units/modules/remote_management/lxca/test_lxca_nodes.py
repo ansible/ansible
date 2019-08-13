@@ -2,8 +2,6 @@ import json
 
 import pytest
 from units.compat import mock
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 from ansible.modules.remote_management.lxca import lxca_nodes
 from ansible.module_utils.remote_management.lxca.common import setup_conn
 from ansible.module_utils.remote_management.lxca.common import close_conn
