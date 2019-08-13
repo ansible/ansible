@@ -34,6 +34,17 @@ options:
         - The port to connect to
       type: int
       required: true
+    proxy_host:
+      description:
+        - Proxy host used when get a certificate.
+      type: str
+      version_added: 2.9
+    proxy_port:
+      description:
+        - Proxy port used when get a certificate.
+      type: int
+      default: 8080
+      version_added: 2.9
     timeout:
       description:
         - The timeout in seconds
@@ -44,6 +55,7 @@ notes:
   - When using ca_cert on OS X it has been reported that in some conditions the validate will always succeed.
 
 requirements:
+  - "python >= 2.7 when using C(proxy_host)"
   - "pyOpenSSL >= 0.15"
 '''
 
@@ -119,8 +131,18 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 from os.path import isfile
-from ssl import get_server_certificate
-from socket import setdefaulttimeout
+from ssl import get_server_certificate, DER_cert_to_PEM_cert, CERT_NONE, CERT_OPTIONAL
+from socket import setdefaulttimeout, socket
+import atexit
+
+CREATE_DEFAULT_CONTEXT_IMP_ERR = None
+try:
+    from ssl import create_default_context
+except ImportError:
+    CREATE_DEFAULT_CONTEXT_IMP_ERR = traceback.format_exc()
+    HAS_CREATE_DEFAULT_CONTEXT = False
+else:
+    HAS_CREATE_DEFAULT_CONTEXT = True
 
 PYOPENSSL_IMP_ERR = None
 try:
@@ -138,6 +160,8 @@ def main():
             ca_cert=dict(type='path'),
             host=dict(type='str', required=True),
             port=dict(type='int', required=True),
+            proxy_host=dict(type='str'),
+            proxy_port=dict(type='int', default=8080),
             timeout=dict(type='int', default=10),
         ),
     )
@@ -145,6 +169,8 @@ def main():
     ca_cert = module.params.get('ca_cert')
     host = module.params.get('host')
     port = module.params.get('port')
+    proxy_host = module.params.get('proxy_host')
+    proxy_port = module.params.get('proxy_port')
     timeout = module.params.get('timeout')
 
     result = dict(
@@ -161,11 +187,39 @@ def main():
         if not isfile(ca_cert):
             module.fail_json(msg="ca_cert file does not exist")
 
-    try:
-        cert = get_server_certificate((host, port), ca_certs=ca_cert)
-        x509 = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
-    except Exception as e:
-        module.fail_json(msg="Failed to get cert from port with error: {0}".format(e))
+    if proxy_host:
+        if not HAS_CREATE_DEFAULT_CONTEXT:
+            module.fail_json(msg='To use proxy_host, you must run the get_certificate module with Python 2.7 or newer.',
+                             exception=CREATE_DEFAULT_CONTEXT_IMP_ERR)
+
+        try:
+            connect = "CONNECT %s:%s HTTP/1.0\r\n\r\n" % (host, port)
+            sock = socket()
+            atexit.register(sock.close)
+            sock.connect((proxy_host, proxy_port))
+            sock.send(connect.encode())
+            sock.recv(8192)
+
+            ctx = create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = CERT_NONE
+
+            if ca_cert:
+                ctx.verify_mode = CERT_OPTIONAL
+                ctx.load_verify_locations(cafile=ca_cert)
+
+            cert = ctx.wrap_socket(sock, server_hostname=host).getpeercert(True)
+            cert = DER_cert_to_PEM_cert(cert)
+            x509 = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
+        except Exception as e:
+            module.fail_json(msg="Failed to get cert from port with error: {0}".format(e))
+
+    else:
+        try:
+            cert = get_server_certificate((host, port), ca_certs=ca_cert)
+            x509 = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
+        except Exception as e:
+            module.fail_json(msg="Failed to get cert from port with error: {0}".format(e))
 
     result['cert'] = cert
     result['subject'] = {}
