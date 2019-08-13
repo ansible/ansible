@@ -6,18 +6,15 @@
       - name: Ethernet1
         ipv6:
           - address: 2001:db8:feed::1/96
-    other_config:
       - name: Ethernet2
         ipv6:
           - address: 2001:db8::1/64
       - name: Management1
         ipv4:
           - address: dhcp
-        ipv6:
-          - address: auto-config
 
 - eos_facts:
-    gather_subset: net_configuration_l3_interfaces
+    gather_network_resources: l3_interfaces
   become: yes
 
 - name: Override device configuration of all L3 interfaces on device with provided configuration.
@@ -32,7 +29,8 @@
       - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.before) == []"
 
 - eos_facts:
-    gather_subset: net_configuration_l3_interfaces
+    gather_network_resources: l3_interfaces
+  become: yes
 
 - assert:
     that:
@@ -40,7 +38,7 @@
   become: yes
 
 - set_fact:
-    expected_config: "{{ config }} + {{ other_config }}"
+    expected_config: "{{ config }}"
 
 - assert:
     that:

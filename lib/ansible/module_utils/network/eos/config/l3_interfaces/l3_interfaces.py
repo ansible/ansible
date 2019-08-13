@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -11,14 +10,16 @@ necessary to bring the current configuration to it's desired end-state is
 created
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils.network.common.utils import to_list
 
-from ansible.module_utils.network.eos.argspec.l3_interfaces.l3_interfaces import L3_interfacesArgs
-from ansible.module_utils.network.eos.config.base import ConfigBase
+from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
-class L3_interfaces(ConfigBase, L3_interfacesArgs):
+class L3_interfaces(ConfigBase):
     """
     The eos_l3_interfaces class
     """
@@ -38,10 +39,7 @@ class L3_interfaces(ConfigBase, L3_interfacesArgs):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts().get_facts(self._module,
-                                             self._connection,
-                                             self.gather_subset,
-                                             self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         l3_interfaces_facts = facts['ansible_network_resources'].get('l3_interfaces')
         if not l3_interfaces_facts:
             return []
@@ -116,12 +114,12 @@ class L3_interfaces(ConfigBase, L3_interfacesArgs):
                   to the desired configuration
         """
         commands = []
-        for extant in have:
-            for interface in want:
+        for interface in want:
+            for extant in have:
                 if interface["name"] == extant["name"]:
                     break
             else:
-                interface = dict(name=extant["name"])
+                extant = dict(name=interface["name"])
 
             intf_commands = set_interface(interface, extant)
             intf_commands.extend(clear_interface(interface, extant))
@@ -141,12 +139,16 @@ class L3_interfaces(ConfigBase, L3_interfacesArgs):
                   to the desired configuration
         """
         commands = []
-        for interface in want:
-            for extant in have:
+        for extant in have:
+            for interface in want:
                 if extant["name"] == interface["name"]:
                     break
             else:
-                extant = dict(name=interface["name"])
+                interface = dict(name=extant["name"])
+            if interface.get("ipv4"):
+                for ipv4 in interface["ipv4"]:
+                    if ipv4["secondary"] is None:
+                        del ipv4["secondary"]
 
             intf_commands = set_interface(interface, extant)
             intf_commands.extend(clear_interface(interface, extant))
@@ -220,7 +222,7 @@ def set_interface(want, have):
             if tuple(address.items()) in have_ipv4:
                 continue
 
-        address_cmd = "ip address {}".format(address["address"])
+        address_cmd = "ip address {0}".format(address["address"])
         if address.get("secondary"):
             address_cmd += " secondary"
         commands.append(address_cmd)
@@ -229,7 +231,7 @@ def set_interface(want, have):
     have_ipv6 = set(tuple(address.items()) for address in have.get("ipv6") or [])
     for address in want_ipv6 - have_ipv6:
         address = dict(address)
-        commands.append("ipv6 address {}".format(address["address"]))
+        commands.append("ipv6 address {0}".format(address["address"]))
 
     return commands
 
@@ -239,26 +241,29 @@ def clear_interface(want, have):
 
     want_ipv4 = set(tuple(address.items()) for address in want.get("ipv4") or [])
     have_ipv4 = set(tuple(address.items()) for address in have.get("ipv4") or [])
-    for address in have_ipv4 - want_ipv4:
-        address = dict(address)
-        if "secondary" not in address:
-            address["secondary"] = False
-            if tuple(address.items()) in want_ipv4:
-                continue
+    if not want_ipv4:
+        commands.append("no ip address")
+    else:
+        for address in (have_ipv4 - want_ipv4):
+            address = dict(address)
+            if "secondary" not in address:
+                address["secondary"] = False
+                if tuple(address.items()) in want_ipv4:
+                    continue
 
-        address_cmd = "no ip address"
-        if address.get("secondary"):
-            address_cmd += " {} secondary".format(address["address"])
-        commands.append(address_cmd)
+            address_cmd = "no ip address"
+            if address.get("secondary"):
+                address_cmd += " {0} secondary".format(address["address"])
+            commands.append(address_cmd)
 
-        if "secondary" not in address:
-            # Removing non-secondary removes all other interfaces
-            break
+            if "secondary" not in address:
+                # Removing non-secondary removes all other interfaces
+                break
 
     want_ipv6 = set(tuple(address.items()) for address in want.get("ipv6") or [])
     have_ipv6 = set(tuple(address.items()) for address in have.get("ipv6") or [])
     for address in have_ipv6 - want_ipv6:
         address = dict(address)
-        commands.append("no ipv6 address {}".format(address["address"]))
+        commands.append("no ipv6 address {0}".format(address["address"]))
 
     return commands

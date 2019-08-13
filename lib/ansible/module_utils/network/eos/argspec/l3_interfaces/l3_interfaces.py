@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -26,24 +25,29 @@
 The arg spec for the eos_l3_interfaces module
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-class L3_interfacesArgs(object):  # pylint: disable=R0903
+
+class L3_interfacesArgs(object):
     """The arg spec for the eos_l3_interfaces module
     """
 
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'elements': 'dict',
-            'options': {'ipv4': {'elements': 'dict',
-                                 'options': {'address': {'type': 'str'},
-                                             'secondary': {'type': 'bool', 'default': False}},
-                                 'type': 'list'},
-                        'ipv6': {'elements': 'dict',
-                                 'options': {'address': {'type': 'str'}},
-                                 'type': 'list'},
-                        'name': {'required': True, 'type': 'str'}},
+    argument_spec = {
+        'config': {
+            'elements': 'dict',
+            'options': {
+                'name': {'required': True, 'type': 'str'},
+                'ipv4': {'elements': 'dict',
+                         'options': {'address': {'type': 'str'}, 'secondary': {'type': 'bool'}},
+                         'type': 'list'},
+                'ipv6': {'elements': 'dict',
+                         'options': {'address': {'type': 'str'}},
+                         'type': 'list'},
+            },
             'type': 'list'},
- 'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+        'state': {'default': 'merged', 'choices': ['merged', 'replaced', 'overridden', 'deleted'], 'type': 'str'}
+    }

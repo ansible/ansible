@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -26,7 +25,7 @@ class L3_interfacesFacts(object):
 
     def __init__(self, module, subspec='config', options='options'):
         self._module = module
-        self.argument_spec = InterfacesArgs.argument_spec
+        self.argument_spec = L3_interfacesArgs.argument_spec
         spec = deepcopy(self.argument_spec)
         if subspec:
             if options:
@@ -65,7 +64,7 @@ class L3_interfacesFacts(object):
             facts['l3_interfaces'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
             for cfg in params['config']:
-                facts['interfaces'].append(utils.remove_empties(cfg))
+                facts['l3_interfaces'].append(utils.remove_empties(cfg))
         ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
 
@@ -81,7 +80,7 @@ class L3_interfacesFacts(object):
         """
         config = deepcopy(spec)
 
-        config['name'] = self.parse_conf_arg(conf, 'interface')
+        config['name'] = utils.parse_conf_arg(conf, 'interface')
 
         matches = re.findall(r'.*ip address (.+)$', conf, re.MULTILINE)
         if matches:

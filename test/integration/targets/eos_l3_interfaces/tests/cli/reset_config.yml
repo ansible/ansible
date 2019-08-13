@@ -9,6 +9,9 @@
       interface Ethernet2
          no ip address
          ipv6 address 2001:db8::1/64
+      interface Management1
+         ip address dhcp
+         no ipv6 address
   become: yes
 
 - eos_facts:
@@ -28,8 +31,6 @@
       - name: Management1
         ipv4:
           - address: dhcp
-        ipv6:
-          - address: auto-config
 
 - assert:
     that:

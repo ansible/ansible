@@ -262,12 +262,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -275,11 +277,12 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['interface Ethernet2', 'ip address 192.0.2.12/24']
 """
 
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.eos.argspec.l3_interfaces.l3_interfaces import L3_interfacesArgs
 from ansible.module_utils.network.eos.config.l3_interfaces.l3_interfaces import L3_interfaces
 
 
@@ -289,7 +292,7 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=L3_interfaces.argument_spec,
+    module = AnsibleModule(argument_spec=L3_interfacesArgs.argument_spec,
                            supports_check_mode=True)
 
     result = L3_interfaces(module).execute_module()
