@@ -299,14 +299,16 @@ class InventoryCLI(CLI):
     def _format_unmerged_variables(unmerged_vars, max_width):
         ''' Display the unmerged vars in a human readable way '''
 
+        result = []
         for key, values in sorted(unmerged_vars.items()):
             if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
-                print('[{0:>{x}}] {1} : {2}'.format(str(values[0][0]), key, values[0][1], x=max_width))
+                result.append('[{0:>{x}}] {1} : {2}'.format(str(values[0][0]), key, values[0][1], x=max_width))
             else:  # There was several candidates, display the winning one first, and all others in order (starting with the winning one) along with their source
-                print('[{0:>{x}}] {1} : {2}'.format('-', key, values[0][1], x=max_width))
+                result.append('[{0:>{x}}] {1} : {2}'.format('-', key, values[0][1], x=max_width))
                 local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
                 for priority, value in values:
-                    print('    [{0:>{x}}] : {1}'.format(str(priority), value, x=local_max_width))
+                    result.append('    [{0:>{x}}] : {1}'.format(str(priority), value, x=local_max_width))
+        return '\n'.join(result)
 
     def _get_group(self, gname):
         group = self.inventory.groups.get(gname)
