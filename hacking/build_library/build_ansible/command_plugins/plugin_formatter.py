@@ -386,8 +386,17 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
             if field in doc and doc[field] in (None, ''):
                 print("%s: WARNING: MODULE field '%s' DOCUMENTATION is null/empty value=%s" % (fname, field, doc[field]))
 
+        if 'description' in doc:
+            if isinstance(doc['description'], string_types):
+                doc['description'] = [doc['description']]
+            elif not isinstance(doc['description'], (list, tuple)):
+                raise AnsibleError("Description must be a string or list of strings.  Got %s"
+                                   % type(doc['description']))
+        else:
+            doc['description'] = []
+
         if 'version_added' not in doc:
-            display.error("*** ERROR: missing version_added in: %s ***\n" % module)
+            raise AnsibleError("*** ERROR: missing version_added in: %s ***\n" % module)
 
         #
         # The present template gets everything from doc so we spend most of this
@@ -416,6 +425,14 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
                 if 'description' not in doc['options'][k]:
                     raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
 
+                # Make sure description is a list of lines for later formatting
+                if isinstance(doc['options'][k]['description'], string_types):
+                    doc['options'][k]['description'] = [doc['options'][k]['description']]
+                elif not isinstance(doc['options'][k]['description'], (list, tuple)):
+                    raise AnsibleError("Invalid type for options['%s']['description']."
+                                       " Must be string or list of strings.  Got %s" %
+                                       (k, type(doc['options'][k]['description'])))
+
                 # Error out if required isn't a boolean (people have been putting
                 # information on when something is required in here.  Those need
                 # to go in the description instead).
@@ -426,10 +443,6 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
                 # Strip old version_added information for options
                 if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
                     del doc['options'][k]['version_added']
-
-                # Make sure description is a list of lines for later formatting
-                if not isinstance(doc['options'][k]['description'], list):
-                    doc['options'][k]['description'] = [doc['options'][k]['description']]
 
                 option_names.append(k)
 
