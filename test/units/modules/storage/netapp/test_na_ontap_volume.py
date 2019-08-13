@@ -121,6 +121,13 @@ class MockONTAPConnection(object):
                         'volume-security-unix-attributes': {
                             'permissions': vol_details['unix_permissions']
                         }
+                    },
+                    'volume-vserver-dr-protection-attributes': {
+                        'vserver-dr-protection': vol_details['vserver_dr_protection'],
+                    },
+                    'volume-qos-attributes': {
+                        'policy-group-name': vol_details['qos_policy_group'],
+                        'adaptive-policy-group-name': vol_details['qos_adaptive_policy_group']
                     }
                 }
             }
@@ -248,8 +255,11 @@ class TestMyModule(unittest.TestCase):
             'size': 20971520,
             'unix_permissions': '755',
             'snapshot_policy': 'default',
+            'qos_policy_group': 'performance',
+            'qos_adaptive_policy_group': 'performance',
             'percent_snapshot_space': 60,
-            'language': 'en'
+            'language': 'en',
+            'vserver_dr_protection': 'unprotected'
         }
 
     def mock_args(self, tag=None):
@@ -265,6 +275,8 @@ class TestMyModule(unittest.TestCase):
             'is_online': True,
             'unix_permissions': '---rwxr-xr-x',
             'snapshot_policy': 'default',
+            'qos_policy_group': 'performance',
+            'qos_adaptive_policy_group': 'performance',
             'size': 20,
             'size_unit': 'mb',
             'junction_path': '/test',
@@ -451,9 +463,27 @@ class TestMyModule(unittest.TestCase):
         assert exc.value.args[0]['changed']
 
     def test_successful_modify_percent_snapshot_space(self):
-        ''' Test successful modify snapshot_policy '''
+        ''' Test successful modify percent_snapshot_space '''
         data = self.mock_args()
         data['percent_snapshot_space'] = '90'
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_volume_mock_object('volume').apply()
+        assert exc.value.args[0]['changed']
+
+    def test_successful_modify_qos_policy_group(self):
+        ''' Test successful modify qos_policy_group '''
+        data = self.mock_args()
+        data['qos_policy_group'] = 'extreme'
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_volume_mock_object('volume').apply()
+        assert exc.value.args[0]['changed']
+
+    def test_successful_modify_qos_adaptive_policy_group(self):
+        ''' Test successful modify qos_adaptive_policy_group '''
+        data = self.mock_args()
+        data['qos_adaptive_policy_group'] = 'extreme'
         set_module_args(data)
         with pytest.raises(AnsibleExitJson) as exc:
             self.get_volume_mock_object('volume').apply()
@@ -674,7 +704,7 @@ class TestMyModule(unittest.TestCase):
 
     @patch('ansible.modules.storage.netapp.na_ontap_volume.NetAppOntapVolume.get_volume')
     def test_successful_delete_flex_group(self, get_volume):
-        ''' Test successful delete felxGroup '''
+        ''' Test successful delete flexGroup '''
         data = self.mock_args('flexGroup_manual')
         data['state'] = 'absent'
         set_module_args(data)
@@ -921,6 +951,15 @@ class TestMyModule(unittest.TestCase):
         ''' Test successful modify tiering policy '''
         data = self.mock_args()
         data['tiering_policy'] = 'auto'
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_volume_mock_object('volume').apply()
+        assert exc.value.args[0]['changed']
+
+    def test_successful_modify_vserver_dr_protection(self):
+        ''' Test successful modify vserver_dr_protection '''
+        data = self.mock_args()
+        data['vserver_dr_protection'] = 'protected'
         set_module_args(data)
         with pytest.raises(AnsibleExitJson) as exc:
             self.get_volume_mock_object('volume').apply()
