@@ -230,6 +230,10 @@ class NetworkConfig(object):
             if not text or ignore_line(text, comment_tokens):
                 continue
 
+            # comment with escape sequence
+            if text.startswith("\\"):
+                cfg.text = cfg.text.strip("\\")
+
             # handle top level commands
             if toplevel.match(line):
                 ancestors = [cfg]
