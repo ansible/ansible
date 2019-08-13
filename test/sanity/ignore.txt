@@ -1011,6 +1011,9 @@ lib/ansible/modules/cloud/amazon/lambda_alias.py validate-modules:E338
 lib/ansible/modules/cloud/amazon/lambda_event.py validate-modules:E317
 lib/ansible/modules/cloud/amazon/lambda_event.py validate-modules:E337
 lib/ansible/modules/cloud/amazon/lambda_event.py validate-modules:E338
+lib/ansible/modules/cloud/amazon/_lambda_facts.py future-import-boilerplate
+lib/ansible/modules/cloud/amazon/_lambda_facts.py metaclass-boilerplate
+lib/ansible/modules/cloud/amazon/_lambda_facts.py validate-modules:E338
 lib/ansible/modules/cloud/amazon/lambda_info.py future-import-boilerplate
 lib/ansible/modules/cloud/amazon/lambda_info.py metaclass-boilerplate
 lib/ansible/modules/cloud/amazon/lambda_info.py validate-modules:E338
