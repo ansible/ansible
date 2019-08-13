@@ -37,6 +37,10 @@ from ..util import (
     display,
 )
 
+from ..data import (
+    data_context,
+)
+
 
 class IntegrationAliasesTest(SanityVersionNeutral):
     """Sanity test to evaluate integration test aliases."""
@@ -176,7 +180,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
 
         self.check_changes(args, results)
 
-        with open('test/results/bot/data-sanity-ci.json', 'w') as results_fd:
+        with open(os.path.join(data_context().results, 'bot', 'data-sanity-ci.json'), 'w') as results_fd:
             json.dump(results, results_fd, sort_keys=True, indent=4)
 
         messages = []
