@@ -72,7 +72,7 @@ options:
         With C(CASELESS) the match is case insensitive. With C(GLOBAL) the replace
         is global (replaces all matches and not just the first).
         For backward compatibility, only C(CASELESS) is the enabled by default.
-    version_added: "2.8"
+    version_added: "2.9"
   flagOUT:
     description:
       - Used in combination with I(flagIN) and apply to create chains of rules.
@@ -112,7 +112,7 @@ options:
   next_query_flagIN:
     description:
       - When is set, its value will become the I(flagIN) value for the next queries.
-    version_added: "2.8"
+    version_added: "2.9"
   mirror_flagOUT:
     description:
       - Enables query mirroring. If set I(mirror_flagOUT) can be used to
@@ -128,7 +128,7 @@ options:
   OK_msg:
     description:
       - The specified message will be returned for a query that uses the defined rule.
-    version_added: "2.8"
+    version_added: "2.9"
   multiplex:
     description:
       - If C(0), multiplex will be disabled. If C(1), multiplex could be re-enabled if
@@ -137,7 +137,7 @@ options:
         Default is NULL, thus not modifying multiplexing policies.
         See U(https://github.com/sysown/proxysql/wiki/Multiplexing#ad-hoc-enabledisable-of-multiplexing)
     choices: [ 0, 1, 2 ]
-    version_added: "2.8"
+    version_added: "2.9"
   log:
     description:
       - Query will be logged.
