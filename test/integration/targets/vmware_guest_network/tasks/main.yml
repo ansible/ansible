@@ -73,26 +73,27 @@
         - "del_netadapter.changed == true"
         - "{{ del_netadapter.network_data | length | int }} == {{ netadapter_num | int + 1 }}"
 
-  - name: disconnect one specified network adapter
-    vmware_guest_network:
-      validate_certs: False
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
-      networks:
-        - state: present
-          mac: "00:50:56:58:59:61"
-          connected: false
-    register: disc_netadapter
-
-  - debug: var=disc_netadapter
-
-  - name: assert the network adapter was disconnected
-    assert:
-      that:
-        - "disc_netadapter.changed == true"
-        - "{{ disc_netadapter.network_data[netadapter_num]['connected'] }} == false"
+# Disabled, see: https://github.com/ansible/ansible/issues/60479
+#  - name: disconnect one specified network adapter
+#    vmware_guest_network:
+#      validate_certs: False
+#      hostname: "{{ vcenter_hostname }}"
+#      username: "{{ vcenter_username }}"
+#      password: "{{ vcenter_password }}"
+#      name: "{{ virtual_machines[0].name }}"
+#      networks:
+#        - state: present
+#          mac: "00:50:56:58:59:61"
+#          connected: false
+#    register: disc_netadapter
+#
+#  - debug: var=disc_netadapter
+#
+#  - name: assert the network adapter was disconnected
+#    assert:
+#      that:
+#        - "disc_netadapter.changed == true"
+#        - "{{ disc_netadapter.network_data[netadapter_num]['connected'] }} == false"
 
   - name: Check if network does not exists
     vmware_guest_network:
