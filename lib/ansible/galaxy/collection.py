@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
+from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
 from ansible.module_utils.urls import open_url
@@ -512,6 +513,20 @@ def parse_collections_requirements_file(requirements_file):
     return collection_info
 
 
+def validate_collection_name(name):
+    """
+    Validates the collection name as an input from the user or a requirements file fit the requirements.
+
+    :param name: The input name with optional range specifier split by ':'.
+    :return: The input value, required for argparse validation.
+    """
+    collection, dummy, dummy = name.partition(':')
+    if is_collection_ref('ansible_collections.{0}'.format(collection)):
+        return name
+
+    raise AnsibleError("Invalid collection name '%s', name must be in the format <namespace>.<collection>." % name)
+
+
 @contextmanager
 def _tempdir():
     b_temp_path = tempfile.mkdtemp(dir=to_bytes(C.DEFAULT_LOCAL_TMP, errors='surrogate_or_strict'))
@@ -890,6 +905,8 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
         else:
             collection_info = req
     else:
+        validate_collection_name(collection)
+
         display.vvvv("Collection requirement '%s' is the name of a collection" % collection)
         if collection in dep_map:
             collection_info = dep_map[collection]
