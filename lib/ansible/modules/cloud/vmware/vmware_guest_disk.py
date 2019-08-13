@@ -94,7 +94,6 @@ options:
      - '     - C(persistent) Changes are immediately and permanently written to the virtual disk. This is default.'
      - '     - C(independent_persistent) Same as persistent, but not affected by snapshots.'
      - '     - C(independent_nonpersistent) Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
-     - '     Default: C(thick) thick disk, no eagerzero.'
      - ' - C(datastore) (string): Name of datastore or datastore cluster to be used for the disk.'
      - ' - C(autoselect_datastore) (bool): Select the less used datastore. Specify only if C(datastore) is not specified.'
      - ' - C(scsi_controller) (integer): SCSI controller number. Valid value range from 0 to 3.'
