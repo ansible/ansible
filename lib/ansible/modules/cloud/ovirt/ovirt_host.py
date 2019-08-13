@@ -73,8 +73,8 @@ options:
         type: bool
     force:
         description:
-            - "Indicates that the host should be removed even if it is non-responsive,\
-                or if it is part of a Gluster Storage cluster and has volume bricks on it."
+            - "Indicates that the host should be removed even if it is non-responsive,
+               or if it is part of a Gluster Storage cluster and has volume bricks on it."
         default: False
         type: bool
     override_display:
