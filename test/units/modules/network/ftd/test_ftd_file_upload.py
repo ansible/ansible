@@ -30,7 +30,7 @@ class TestFtdFileUpload(object):
         with pytest.raises(AnsibleFailJson) as ex:
             self.module.main()
 
-        assert 'missing required arguments: %s' % missing_arg in str(ex)
+        assert 'missing required arguments: %s' % missing_arg in str(ex.value)
 
     def test_module_should_fail_when_no_operation_spec_found(self, connection_mock):
         connection_mock.get_operation_spec.return_value = None
