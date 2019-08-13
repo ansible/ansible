@@ -24,6 +24,8 @@ __metaclass__ = type
 
 import json
 
+from functools import wraps
+
 from ansible import context
 import ansible.constants as C
 from ansible.errors import AnsibleError
@@ -36,6 +38,16 @@ from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 
 display = Display()
+
+
+def requires_token(func):
+    ''' wrapper to laziliy initialize token file '''
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if self.token is None:
+            self.token = GalaxyToken()
+        return func(self, *args, **kwargs)
+    return wrapped
 
 
 def g_connect(method):
@@ -62,7 +74,7 @@ class GalaxyAPI(object):
 
     def __init__(self, galaxy):
         self.galaxy = galaxy
-        self.token = GalaxyToken()
+        self.token = None
         self._api_server = C.GALAXY_SERVER
         self._validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
@@ -75,6 +87,7 @@ class GalaxyAPI(object):
         if context.CLIARGS['api_server'] != C.GALAXY_SERVER:
             self._api_server = context.CLIARGS['api_server']
 
+    @requires_token
     def __auth_header(self):
         token = self.token.get()
         if token is None:
