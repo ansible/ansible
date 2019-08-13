@@ -72,6 +72,12 @@ options:
      default: no
      type: bool
      version_added: '2.8'
+   delay:
+     description:
+     - Number of seconds to wait before starting to poll.
+     default: 0
+     type: int
+     version_added: '2.9'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -170,6 +176,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         name_match=dict(type='str', default='first', choices=['first', 'last']),
+        delay=dict(type='int', default=0),
         folder=dict(type='str'),
         uuid=dict(type='str'),
         moid=dict(type='str'),
@@ -197,6 +204,8 @@ def main():
 
     result = dict(changed=False)
     try:
+        if module.params['delay']:
+            time.sleep(module.params['delay'])
         result = pyv.wait_for_tools(vm)
     except Exception as e:
         module.fail_json(msg="Waiting for VMware tools failed with"
