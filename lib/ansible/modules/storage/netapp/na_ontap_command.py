@@ -35,7 +35,7 @@ options:
         description:
         - returns a parsesable dictonary instead of raw XML output
         choices: ['true', 'false']
-        default: true
+        default: false
         version_added: "2.9"
 '''
 
