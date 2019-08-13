@@ -81,12 +81,9 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
     # these files need to be migrated to the ansible-test data directory
     hack_files_to_keep = (
-        'test/integration/integration.cfg',
         'test/integration/integration_config.yml',
         'test/integration/inventory',
-        'test/integration/network-integration.cfg',
         'test/integration/target-prefixes.network',
-        'test/integration/windows-integration.cfg',
     )
 
     # temporary solution to include files not yet present in the ansible-test data directory
