@@ -1,0 +1,2 @@
+bugfixes:
+- ce_aaa_server_host - update to fix some bugs - module CMD update in ansible is inconsistent with switch; when parameter is bool type, it is impossible to judge the value of expensive parameter. (https://github.com/ansible/ansible/pull/60272)
