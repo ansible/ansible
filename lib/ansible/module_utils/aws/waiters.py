@@ -199,6 +199,24 @@ eks_data = {
                     "expected": "ResourceNotFoundException"
                 }
             ]
+        },
+        "ClusterDeleted": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "DescribeCluster",
+            "acceptors": [
+                {
+                    "state": "retry",
+                    "matcher": "path",
+                    "argument": "cluster.status != 'DELETED'",
+                    "expected": True
+                },
+                {
+                    "state": "success",
+                    "matcher": "error",
+                    "expected": "ResourceNotFoundException"
+                }
+            ]
         }
     }
 }
@@ -314,6 +332,12 @@ waiters_by_name = {
     ('EKS', 'cluster_active'): lambda eks: core_waiter.Waiter(
         'cluster_active',
         eks_model('ClusterActive'),
+        core_waiter.NormalizedOperationMethod(
+            eks.describe_cluster
+        )),
+    ('EKS', 'cluster_deleted'): lambda eks: core_waiter.Waiter(
+        'cluster_deleted',
+        eks_model('ClusterDeleted'),
         core_waiter.NormalizedOperationMethod(
             eks.describe_cluster
         )),
