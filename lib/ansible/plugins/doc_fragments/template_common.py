@@ -39,13 +39,6 @@ options:
     - Location to render the template to on the remote machine.
     type: path
     required: yes
-  backup:
-    description:
-    - Determine whether a backup should be created.
-    - When set to C(yes), create a backup file including the timestamp information
-      so you can get the original file back if you somehow clobbered it incorrectly.
-    type: bool
-    default: no
   newline_sequence:
     description:
     - Specify the newline sequence to use for templating files.
