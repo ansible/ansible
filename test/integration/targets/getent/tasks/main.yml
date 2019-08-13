@@ -27,6 +27,7 @@
       getent:
           database: passwd
           key: root
+          service: files
       register: getent_test0
     - debug: var=getent_test0
     - name: validate results
