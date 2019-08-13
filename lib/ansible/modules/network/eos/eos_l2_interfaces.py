@@ -273,11 +273,12 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['interface Ethernet2', 'switchport access vlan 20']
 """
 
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.eos.argspec.l2_interfaces.l2_interfaces import L2_interfacesArgs
 from ansible.module_utils.network.eos.config.l2_interfaces.l2_interfaces import L2_interfaces
 
 
@@ -287,7 +288,7 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=L2_interfaces.argument_spec,
+    module = AnsibleModule(argument_spec=L2_interfacesArgs.argument_spec,
                            supports_check_mode=True)
 
     result = L2_interfaces(module).execute_module()
