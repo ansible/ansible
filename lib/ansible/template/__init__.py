@@ -27,6 +27,7 @@ import pwd
 import re
 import time
 
+from contextlib import contextmanager
 from numbers import Number
 
 try:
@@ -511,6 +512,28 @@ class Templar:
             version='2.13'
         )
         self.available_variables = variables
+
+    @contextmanager
+    def set_temporary_config(self, start_string=None, end_string=None, variables=None, searchpath=None):
+        o_start = self.environment.variable_start_string
+        o_end = self.environment.variable_end_string
+        o_vars = self.available_variables
+        o_searchpath = self.environment.loader.searchpath
+        if start_string is not None:
+            self.environment.variable_start_string = start_string
+        if end_string is not None:
+            self.environment.variable_end_string = end_string
+        if variables is not None:
+            self.available_variables = variables
+        if searchpath is not None:
+            self.environment.loader.searchpath = searchpath
+
+        yield
+
+        self.environment.variable_start_string = o_start
+        self.environment.variable_end_string = o_end
+        self.available_variables = o_vars
+        self.environment.loader.searchpath = o_searchpath
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
                  convert_data=True, static_vars=None, cache=True, disable_lookups=False):
