@@ -2258,10 +2258,10 @@ def import_vm(module, connection):
 
 def check_deprecated_params(module, connection):
     if engine_supported(connection, '4.4') and \
-            (module.params.get('kernel_params_persist') or
-             module.params.get('kernel_path') or
-             module.params.get('initrd_path') or
-             module.params.get('kernel_params')):
+            (module.params.get('kernel_params_persist') is not None or
+             module.params.get('kernel_path') is not None or
+             module.params.get('initrd_path') is not None or
+             module.params.get('kernel_params') is not None):
         module.warn('Parameters \'kernel_params_persist\', \'kernel_path\', \'initrd_path\', \'kernel_params\' are not supported with ovrit engine 4.4.')
 
 
