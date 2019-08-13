@@ -66,6 +66,15 @@ options:
       type: str
       choices: ['vmAndAppMonitoring', 'vmMonitoringOnly', 'vmMonitoringDisabled']
       default: 'vmMonitoringDisabled'
+    host_isolation_response:
+      description:
+      - Indicates whether or VMs should be powered off if a host determines that it is isolated from the rest of the compute resource.
+      - If set to C(none), do not power off VMs in the event of a host network isolation.
+      - If set to C(powerOff), power off VMs in the event of a host network isolation.
+      - If set to C(shutdown), shut down VMs guest operating system in the event of a host network isolation.
+      type: str
+      choices: ['none', 'powerOff', 'shutdown']
+      default: 'none'
     slot_based_admission_control:
       description:
       - Configure slot based admission control policy.
@@ -229,6 +238,7 @@ class VMwareCluster(PyVmomi):
         self.enable_ha = module.params['enable_ha']
         self.datacenter = None
         self.cluster = None
+        self.host_isolation_response = getattr(vim.cluster.DasVmSettings.IsolationResponse, self.params.get('host_isolation_response'))
 
         if self.enable_ha and (
                 self.params.get('slot_based_admission_control') or
@@ -270,16 +280,20 @@ class VMwareCluster(PyVmomi):
 
         """
         das_config = self.cluster.configurationEx.dasConfig
-        if das_config.enabled != self.enable_ha or \
-                das_config.vmMonitoring != self.params.get('ha_vm_monitoring') or \
-                das_config.hostMonitoring != self.params.get('ha_host_monitoring') or \
-                das_config.admissionControlEnabled != self.ha_admission_control or \
-                das_config.defaultVmSettings.restartPriority != self.params.get('ha_restart_priority') or \
-                das_config.defaultVmSettings.vmToolsMonitoringSettings.vmMonitoring != self.params.get('ha_vm_monitoring') or \
-                das_config.defaultVmSettings.vmToolsMonitoringSettings.failureInterval != self.params.get('ha_vm_failure_interval') or \
-                das_config.defaultVmSettings.vmToolsMonitoringSettings.minUpTime != self.params.get('ha_vm_min_up_time') or \
-                das_config.defaultVmSettings.vmToolsMonitoringSettings.maxFailures != self.params.get('ha_vm_max_failures') or \
-                das_config.defaultVmSettings.vmToolsMonitoringSettings.maxFailureWindow != self.params.get('ha_vm_max_failure_window'):
+        if das_config.enabled != self.enable_ha:
+            return True
+
+        if self.enable_ha and (
+                das_config.vmMonitoring != self.params.get('ha_vm_monitoring') or
+                das_config.hostMonitoring != self.params.get('ha_host_monitoring') or
+                das_config.admissionControlEnabled != self.ha_admission_control or
+                das_config.defaultVmSettings.restartPriority != self.params.get('ha_restart_priority') or
+                das_config.defaultVmSettings.isolationResponse != self.host_isolation_response or
+                das_config.defaultVmSettings.vmToolsMonitoringSettings.vmMonitoring != self.params.get('ha_vm_monitoring') or
+                das_config.defaultVmSettings.vmToolsMonitoringSettings.failureInterval != self.params.get('ha_vm_failure_interval') or
+                das_config.defaultVmSettings.vmToolsMonitoringSettings.minUpTime != self.params.get('ha_vm_min_up_time') or
+                das_config.defaultVmSettings.vmToolsMonitoringSettings.maxFailures != self.params.get('ha_vm_max_failures') or
+                das_config.defaultVmSettings.vmToolsMonitoringSettings.maxFailureWindow != self.params.get('ha_vm_max_failure_window')):
             return True
 
         if self.ha_admission_control:
@@ -322,12 +336,10 @@ class VMwareCluster(PyVmomi):
                 cluster_config_spec.dasConfig = vim.cluster.DasConfigInfo()
                 cluster_config_spec.dasConfig.enabled = self.enable_ha
 
-                ha_vm_monitoring = self.params.get('ha_vm_monitoring')
-                das_vm_config = None
-                if ha_vm_monitoring in ['vmMonitoringOnly', 'vmAndAppMonitoring']:
+                if self.enable_ha:
                     vm_tool_spec = vim.cluster.VmToolsMonitoringSettings()
                     vm_tool_spec.enabled = True
-                    vm_tool_spec.vmMonitoring = ha_vm_monitoring
+                    vm_tool_spec.vmMonitoring = self.params.get('ha_vm_monitoring')
                     vm_tool_spec.failureInterval = self.params.get('ha_vm_failure_interval')
                     vm_tool_spec.minUpTime = self.params.get('ha_vm_min_up_time')
                     vm_tool_spec.maxFailures = self.params.get('ha_vm_max_failures')
@@ -335,7 +347,7 @@ class VMwareCluster(PyVmomi):
 
                     das_vm_config = vim.cluster.DasVmSettings()
                     das_vm_config.restartPriority = self.params.get('ha_restart_priority')
-                    das_vm_config.isolationResponse = None
+                    das_vm_config.isolationResponse = self.host_isolation_response
                     das_vm_config.vmToolsMonitoringSettings = vm_tool_spec
 
                 cluster_config_spec.dasConfig.admissionControlEnabled = self.ha_admission_control
@@ -362,7 +374,7 @@ class VMwareCluster(PyVmomi):
                         cluster_config_spec.dasConfig.admissionControlPolicy.failoverHosts = self.get_failover_hosts()
 
                 cluster_config_spec.dasConfig.hostMonitoring = self.params.get('ha_host_monitoring')
-                cluster_config_spec.dasConfig.vmMonitoring = ha_vm_monitoring
+                cluster_config_spec.dasConfig.vmMonitoring = self.params.get('ha_vm_monitoring')
                 cluster_config_spec.dasConfig.defaultVmSettings = das_vm_config
 
                 try:
@@ -393,6 +405,9 @@ def main():
         ha_host_monitoring=dict(type='str',
                                 default='enabled',
                                 choices=['enabled', 'disabled']),
+        host_isolation_response=dict(type='str',
+                                     default='none',
+                                     choices=['none', 'powerOff', 'shutdown']),
         # HA VM Monitoring related parameters
         ha_vm_monitoring=dict(type='str',
                               choices=['vmAndAppMonitoring', 'vmMonitoringOnly', 'vmMonitoringDisabled'],
