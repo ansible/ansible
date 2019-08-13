@@ -785,12 +785,10 @@ class PyVmomiCache(object):
             if hasattr(objects, 'items'):
                 # resource pools come back as a dictionary
                 # make a copy
-                tmpobjs = objects.copy()
-                for k, v in objects.items():
+                for k, v in tuple(objects.items()):
                     parent_dc = self.get_parent_datacenter(k)
                     if parent_dc.name != self.dc_name:
-                        tmpobjs.pop(k, None)
-                objects = tmpobjs
+                        del objects[k]
             else:
                 # everything else should be a list
                 objects = [x for x in objects if self.get_parent_datacenter(x).name == self.dc_name]
