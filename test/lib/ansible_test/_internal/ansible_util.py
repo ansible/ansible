@@ -81,7 +81,7 @@ def ansible_environment(args, color=True, ansible_config=None):
     if args.debug:
         env.update(dict(
             ANSIBLE_DEBUG='true',
-            ANSIBLE_LOG_PATH=os.path.abspath('test/results/logs/debug.log'),
+            ANSIBLE_LOG_PATH=os.path.join(data_context().results, 'logs', 'debug.log'),
         ))
 
     if data_context().content.collection:

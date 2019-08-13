@@ -98,8 +98,7 @@ def command_units(args):
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
-            '--junit-xml',
-            'test/results/junit/python%s-units.xml' % version,
+            '--junit-xml', os.path.join(data_context().results, 'junit', 'python%s-units.xml' % version),
         ]
 
         if version != '2.6':

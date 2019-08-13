@@ -47,6 +47,10 @@ from .test import (
     TestTimeout,
 )
 
+from .data import (
+    data_context,
+)
+
 
 class EnvConfig(CommonConfig):
     """Configuration for the tools command."""
@@ -105,7 +109,7 @@ def show_dump_env(args):
         show_dict(data, verbose)
 
     if args.dump and not args.explain:
-        with open('test/results/bot/data-environment.json', 'w') as results_fd:
+        with open(os.path.join(data_context().results, 'bot', 'data-environment.json'), 'w') as results_fd:
             results_fd.write(json.dumps(data, sort_keys=True))
 
 
