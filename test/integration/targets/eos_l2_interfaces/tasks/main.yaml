@@ -14,3 +14,6 @@
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
+
+- name: Clean up test state
+  include: "{{ role_path }}/tests/cli/cleanup.yml ansible_connection=network_cli"
