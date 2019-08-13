@@ -22,7 +22,7 @@ extends_documentation_fragment: openstack
 description:
    - Add or Remove a floating IP to an instance
 notes:
-   - The floating IP will only be available as feedback when attaching if 
+   - The floating IP will only be available as feedback when attaching if
      C(wait) is set to true.
 options:
    server:
