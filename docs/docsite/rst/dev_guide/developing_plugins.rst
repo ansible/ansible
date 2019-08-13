@@ -331,7 +331,7 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
   __metaclass__ = type
 
   DOCUMENTATION = """
-        lookup: file
+          lookup: file
           author: Daniel Hokka Zakrisson <daniel@hozac.com>
           version_added: "0.9"
           short_description: read file contents
