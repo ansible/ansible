@@ -1,2 +1,2 @@
 minor_changes:
-  - Added proxy option to get_certificate. When using the proxy option, python 2.7 or higher is required.
+  - get_certificate - added ``proxy_*`` options.
