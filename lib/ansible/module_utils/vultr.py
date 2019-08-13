@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import os
 import time
+import random
 import urllib
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_native
@@ -159,7 +160,10 @@ class Vultr:
             except AttributeError:
                 data = urllib.parse.urlencode(data_encoded) + data_list
 
-        for s in range(0, self.api_config['api_retries']):
+        max_fail_sleep = 12
+        randint = random.randint(0, 1000) / 1000
+
+        for retry in range(0, self.api_config['api_retries']):
             response, info = fetch_url(
                 module=self.module,
                 url=url,
@@ -173,7 +177,11 @@ class Vultr:
                 break
 
             # Vultr has a rate limiting requests per second, try to be polite
-            time.sleep(1)
+            # Use exponential backoff plus a little bit of randomness
+            fail_sleep = 2 ** retry + randint
+            if fail_sleep > max_fail_sleep:
+                fail_sleep = max_fail_sleep + randint
+            time.sleep(fail_sleep)
 
         else:
             self.fail_json(msg="Reached API retries limit %s for URL %s, method %s with data %s. Returned %s, with body: %s %s" % (
