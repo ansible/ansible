@@ -8,6 +8,12 @@
     # ============================================================
     #   PREPARATION
     #
+    # Get some information about who we are before starting our tests
+    # we'll need this as soon as we start working on the policies
+    - name: get ARN of calling user
+      aws_caller_info:
+      register: aws_caller_info
+
     # IAM Roles completes before the Role is fully instantiated, create it here
     # to ensure it exists when we need it for updating the policies
     - name: create an IAM role that can do nothing
@@ -49,6 +55,27 @@
         that:
           - new_key["keys"]|length == 1
 
+    - name: Update Policy on key to match AWS Console generate policy
+      aws_kms:
+        key_alias: "alias/{{ resource_prefix }}-kms"
+        policy: "{{ lookup('template', 'console-policy.j2') | to_json }}"
+      register: kms_policy_changed
+
+    - name: Policy should have been changed
+      assert:
+        that:
+          - kms_policy_changed is changed
+
+    - name: Attempt to re-assert the same policy
+      aws_kms:
+        key_alias: "alias/{{ resource_prefix }}-kms"
+        policy: "{{ lookup('template', 'console-policy.j2') | to_json }}"
+      register: kms_policy_changed
+
+    - name: Policy should not have changed since it was last set
+      assert:
+        that:
+          - kms_policy_changed is succeeded
 
     - name: grant user-style access to production secrets
       aws_kms:
@@ -74,10 +101,6 @@
         filters:
           alias: "{{ resource_prefix }}-kms"
       register: new_key
-
-    - name: get ARN of calling user
-      aws_caller_info:
-      register: aws_caller_info
 
     - name: Allow the IAM role to use a specific Encryption Context
       aws_kms:
