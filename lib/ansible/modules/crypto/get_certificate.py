@@ -69,7 +69,7 @@ notes:
 
 requirements:
   - "python >= 2.7 when using C(proxy_host)"
-  - "Either cryptography >= 1.2.3 (older versions might work as well)"
+  - "Either cryptography >= 1.6"
   - "or pyOpenSSL >= 0.15"
 '''
 
@@ -155,7 +155,7 @@ import datetime
 import traceback
 
 MINIMAL_PYOPENSSL_VERSION = '0.15'
-MINIMAL_CRYPTOGRAPHY_VERSION = '1.2.3'
+MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 
 CREATE_DEFAULT_CONTEXT_IMP_ERR = None
 try:
@@ -341,11 +341,7 @@ def main():
         result['not_after'] = x509.not_valid_after.strftime('%Y%m%d%H%M%SZ')
         result['not_before'] = x509.not_valid_before.strftime('%Y%m%d%H%M%SZ')
 
-        try:
-            result['serial_number'] = x509.serial_number
-        except AttributeError:
-            # In older versions of cryptography, the attribute is called serial
-            result['serial_number'] = x509.serial
+        result['serial_number'] = x509.serial_number
         result['signature_algorithm'] = crypto_utils.cryptography_oid_to_name(x509.signature_algorithm_oid)
 
         # We need the -1 offset to get the same values as pyOpenSSL
