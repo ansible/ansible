@@ -35,42 +35,52 @@ options:
       - key_arn
   policy_mode:
     description:
-    - Grant or deny access.
+    - (deprecated) Grant or deny access.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     default: grant
     choices: [ grant, deny ]
-    aliases: mode
+    aliases:
+    - mode
   policy_role_name:
     description:
-    - Role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - (deprecated) Role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     required: false
-    aliases: role_name
+    aliases:
+    - role_name
   policy_role_arn:
     description:
-    - ARN of role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - (deprecated) ARN of role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     required: false
-    aliases: role_arn
+    aliases:
+    - role_arn
   policy_grant_types:
     description:
-    - List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin". Required when C(policy_mode=grant).
+    - (deprecated) List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin". Required when C(policy_mode=grant).
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     required: false
-    aliases: grant_types
+    aliases:
+    - grant_types
   policy_clean_invalid_entries:
     description:
-    - If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
+    - (deprecated) If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
     - Only cleans if changes are being made.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     type: bool
     default: true
-    aliases: clean_invalid_entries
+    aliases:
+    - clean_invalid_entries
   state:
     description: Whether a key should be present or absent. Note that making an
       existing key absent only schedules a key for deletion.  Passing a key that
@@ -133,6 +143,8 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
+# Managing the KMS IAM Policy via policy_mode and policy_grant_types is fragile
+# and has been deprecated in favour of the policy option.
 - name: grant user-style access to production secrets
   aws_kms:
   args:
@@ -882,6 +894,8 @@ def main():
     iam = module.client('iam')
 
     if module.params.get('policy_grant_types') or mode == 'deny':
+        module.deprecate('Managing the KMS IAM Policy via policy_mode and policy_grant_types is fragile'
+                         ' and has been deprecated in favour of the policy option.', version='2.13')
         if module.params.get('policy_role_name') and not module.params.get('policy_role_arn'):
             module.params['policy_role_arn'] = get_arn_from_role_name(iam, module.params['policy_role_name'])
         if not module.params.get('policy_role_arn'):
@@ -894,12 +908,12 @@ def main():
                     module.fail_json(msg='{0} is an unknown grant type.'.format(g))
 
         ret = do_policy_grant(kms,
-                       module.params['policy_key_arn'],
-                       module.params['policy_role_arn'],
-                       module.params['policy_grant_types'],
-                       mode=mode,
-                       dry_run=module.check_mode,
-                       clean_invalid_entries=module.params['policy_clean_invalid_entries'])
+                              module.params['policy_key_arn'],
+                              module.params['policy_role_arn'],
+                              module.params['policy_grant_types'],
+                              mode=mode,
+                              dry_run=module.check_mode,
+                              clean_invalid_entries=module.params['policy_clean_invalid_entries'])
         result.update(ret)
 
         module.exit_json(**result)
