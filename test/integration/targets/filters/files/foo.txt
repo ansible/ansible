@@ -44,7 +44,7 @@ quoted = quoted
 
 The fileglob module returns the list of things matching a pattern.
 
-fileglob = []
+fileglob = one.txt, two.txt
 
 There are also various string operations that work on paths.  These do not require
 files to exist and are passthrus to the python os.path functions

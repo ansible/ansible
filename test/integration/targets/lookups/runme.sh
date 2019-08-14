@@ -8,6 +8,6 @@ source virtualenv.sh
 # because plugins and requirements are loaded before the task runs
 pip install passlib
 
-ANSIBLE_ROLES_PATH=../ ansible-playbook lookups.yml -i ../../inventory -e @../../integration_config.yml "$@"
+ANSIBLE_ROLES_PATH=../ ansible-playbook lookups.yml "$@"
 
-ansible-playbook template_lookup_vaulted.yml -i ../../inventory -e @../../integration_config.yml --vault-password-file test_vault_pass "$@"
+ansible-playbook template_lookup_vaulted.yml --vault-password-file test_vault_pass "$@"
