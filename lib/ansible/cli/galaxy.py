@@ -428,7 +428,6 @@ class GalaxyCLI(CLI):
         Creates the skeleton framework of a role or collection that complies with the Galaxy metadata format.
         Requires a role or collection name. The collection name must be in the format ``<namespace>.<collection>``.
         """
-        raise Exception("abc")
 
         galaxy_type = context.CLIARGS['type']
         init_path = context.CLIARGS['init_path']
