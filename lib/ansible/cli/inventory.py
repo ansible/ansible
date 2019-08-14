@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import argparse
 from operator import attrgetter
+from pprint import pformat
 
 from ansible import constants as C
 from ansible import context
@@ -305,12 +306,25 @@ class InventoryCLI(CLI):
         for key, values in sorted(unmerged_vars.items()):
             if context.CLIARGS['filter'] is None or context.CLIARGS['filter'] in key:  # Apply filter if provided
                 if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
-                    result.append('[{}] {} : {}'.format(InventoryCLI._colorize_entity(values[0][0], host, max_width), key, values[0][1]))
-                else:  # There was several candidates, display the winning one first, and all others in order (starting with the winning one) along with their source
-                    result.append('[{}] {} : {}'.format('-' * max_width, key, values[0][1]))
+                    prefix = '[{}] {} : '.format(InventoryCLI._colorize_entity(values[0][0], host, max_width), key)
+                    value_pretty = pformat(values[0][1]).split('\n')
+
+                    # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : in that case, indent the remaining ones.
+                    result.extend([prefix + line if index == 0 else " " * len(prefix) + line for index, line in enumerate(value_pretty)])
+
+                else:  # There was several candidates, display the winning one first, and then all of them in order (starting with the winning one) along with their source
+                    prefix = '[{}] {} : '.format('+' * max_width, key)
+                    value_pretty = pformat(values[0][1]).split('\n')
+
+                    # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : in that case, indent the remaining ones.
+                    result.extend([prefix + line if index == 0 else " " * len(prefix) + line for index, line in enumerate(value_pretty)])
+
                     local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
                     for entity, value in values:
-                        result.append('    [{}] : {}'.format(InventoryCLI._colorize_entity(entity, host, max_width), value))
+                        prefix = '----[{}] : '.format(InventoryCLI._colorize_entity(entity, host, max_width))
+                        value_pretty = pformat(value).split('\n')
+
+                        result.extend([prefix + line if index == 0 else " " * len(prefix) + line for index, line in enumerate(value_pretty)])
         return '\n'.join(result)
 
     @staticmethod
