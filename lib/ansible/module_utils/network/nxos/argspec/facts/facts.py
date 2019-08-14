@@ -14,6 +14,7 @@ CHOICES = [
     'vlans',
     'lacp',
     'lacp_interfaces',
+    'interfaces',
 ]
 
 
