@@ -11,13 +11,24 @@
       setup_datastore: true
       setup_virtualmachines: true
 
+  - name: set state to poweroff on all VMs
+    vmware_guest:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines_in_cluster[0].name }}"
+      state: poweredon
+
   - name: take screenshot of virtual machine's console
     vmware_guest_screenshot:
       validate_certs: False
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines_in_cluster[0].name }}"
+      # Note: set the datacenter key because of https://github.com/ansible/ansible/issues/60565
+      datacenter: "{{ dc1 }}"
     register: take_screenshot
   - debug: var=take_screenshot
   - name: assert the screenshot captured
@@ -31,8 +42,10 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines_in_cluster[0].name }}"
       local_path: "/tmp/screenshot_test.png"
+      # Note: set the datacenter key because of https://github.com/ansible/ansible/issues/60565
+      datacenter: "{{ dc1 }}"
     register: take_screenshot
   - debug: var=take_screenshot
   - name: assert the screenshot captured
