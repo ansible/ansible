@@ -70,6 +70,7 @@ options:
         type: str
   vrf:
     description:
+    version_added: '2.9'
     - The VRF associated to this ANP.
     type: dict
     suboptions:
