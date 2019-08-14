@@ -7,5 +7,4 @@
       set interfaces ethernet eth0 address dhcp
       set interfaces ethernet eth1
       set interfaces ethernet eth2
-      delete interfaces loopback lo
-  ignore_errors: yes
+      set interfaces loopback lo
