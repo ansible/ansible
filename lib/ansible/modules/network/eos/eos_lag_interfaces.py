@@ -27,7 +27,8 @@ The module file for eos_lag_interfaces
 """
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type  # pylint: disable=C0103
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -43,7 +44,7 @@ short_description: Manages link aggregation groups on Arista EOS devices
 description: This module manages attributes of link aggregation groups on Arista EOS devices.
 author: Nathaniel Case (@Qalthos)
 notes:
-  - 'Tested against vEOS v4.20.x' 
+  - 'Tested against vEOS v4.20.x'
 options:
   config:
     description: A list of link aggregation group configurations.
@@ -83,14 +84,17 @@ options:
     - overridden
     - deleted
     default: merged
-    
 """
+
 EXAMPLES = """
+---
+
 # Using merged
 
 # Before state:
 # -------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 #   channel group 5 mode on
 # interface Ethernet2
@@ -107,6 +111,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 #   channel group 5 mode on
 # interface Ethernet2
@@ -118,6 +123,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 #   channel group 5 mode on
 # interface Ethernet2
@@ -134,6 +140,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 # interface Ethernet2
 #   channel group 5 mode on
@@ -144,6 +151,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 #   channel group 5 mode on
 # interface Ethernet2
@@ -160,6 +168,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 # interface Ethernet2
 #   channel group 10 mode on
@@ -170,6 +179,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 #   channel group 5 mode on
 # interface Ethernet2
@@ -180,28 +190,32 @@ EXAMPLES = """
     config:
       - name: 5
         members:
-	  - member: Ethernet1
+          - member: Ethernet1
     state: deleted
 
 # After state:
 # ------------
 #
+# veos#show running-config | section interface
 # interface Ethernet1
 # interface Ethernet2
 #   channel group 5 mode on
 
 
 """
+
 RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -213,11 +227,9 @@ commands:
 """
 
 
-# pylint: disable=C0413
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network. \
-    eos.config.lag_interfaces.lag_interfaces import Lag_interfaces
-# pylint: enable=C0413
+from ansible.module_utils.network.eos.argspec.lag_interfaces.lag_interfaces import Lag_interfacesArgs
+from ansible.module_utils.network.eos.config.lag_interfaces.lag_interfaces import Lag_interfaces
 
 
 def main():
@@ -226,7 +238,7 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=Lag_interfaces.argument_spec,
+    module = AnsibleModule(argument_spec=Lag_interfacesArgs.argument_spec,
                            supports_check_mode=True)
 
     result = Lag_interfaces(module).execute_module()

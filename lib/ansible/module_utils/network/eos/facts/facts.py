@@ -27,6 +27,7 @@ FACT_LEGACY_SUBSETS = dict(
 FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
     l2_interfaces=L2_interfacesFacts,
+    lag_interfaces=Lag_interfacesFacts,
     vlans=VlansFacts,
 )
 

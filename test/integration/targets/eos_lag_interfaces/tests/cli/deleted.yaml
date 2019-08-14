@@ -7,11 +7,13 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - name: Delete EOS L3 interfaces as in given arguments.
   eos_lag_interfaces:
     config: "{{ config }}"
     state: deleted
+  become: yes
   register: result
 
 - assert:
@@ -20,6 +22,7 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - assert:
     that:

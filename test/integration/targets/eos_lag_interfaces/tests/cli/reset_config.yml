@@ -7,9 +7,11 @@
       interface Ethernet2
          no channel-group
       no interface Port-Channel10
+  become: yes
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - set_fact:
     expected_config:

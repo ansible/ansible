@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -11,14 +10,16 @@ necessary to bring the current configuration to it's desired end-state is
 created
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils.network.common.utils import to_list, dict_diff
 
-from ansible.module_utils.network.eos.argspec.lag_interfaces.lag_interfaces import Lag_interfacesArgs
-from ansible.module_utils.network.eos.config.base import ConfigBase
+from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
-class Lag_interfaces(ConfigBase, Lag_interfacesArgs):
+class Lag_interfaces(ConfigBase):
     """
     The eos_lag_interfaces class
     """
@@ -38,10 +39,7 @@ class Lag_interfaces(ConfigBase, Lag_interfacesArgs):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts().get_facts(self._module,
-                                             self._connection,
-                                             self.gather_subset,
-                                             self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         lag_interfaces_facts = facts['ansible_network_resources'].get('lag_interfaces')
         if not lag_interfaces_facts:
             return []
@@ -200,8 +198,8 @@ def set_config(want, have):
     for member in to_set.get("members", []):
         channel_id = want["name"][12:]
         commands.extend([
-            "interface {}".format(member["member"]),
-            "channel-group {} mode {}".format(channel_id, member["mode"]),
+            "interface {0}".format(member["member"]),
+            "channel-group {0} mode {1}".format(channel_id, member["mode"]),
         ])
 
     return commands
@@ -210,12 +208,12 @@ def set_config(want, have):
 def remove_config(want, have):
     commands = []
     if not want.get("members"):
-        return ["no interface {}".format(want["name"])]
+        return ["no interface {0}".format(want["name"])]
 
     to_remove = dict_diff(want, have)
     for member in to_remove.get("members", []):
         commands.extend([
-            "interface {}".format(member["member"]),
+            "interface {0}".format(member["member"]),
             "no channel-group",
         ])
 

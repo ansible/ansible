@@ -10,11 +10,13 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - name: Merge provided configuration with device configuration.
   eos_lag_interfaces:
     config: "{{ config }}"
     state: merged
+  become: yes
   register: result
 
 - assert:
@@ -23,6 +25,7 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - assert:
     that:

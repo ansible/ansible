@@ -15,11 +15,13 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - name: Replace device configuration of specified LAGs with provided configuration.
   eos_lag_interfaces:
     config: "{{ config }}"
     state: replaced
+  become: yes
   register: result
 
 - assert:
@@ -28,6 +30,7 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - assert:
     that:

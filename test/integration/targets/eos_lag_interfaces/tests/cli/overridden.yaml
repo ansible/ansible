@@ -10,11 +10,13 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - name: Override device configuration of all LAGs on device with provided configuration.
   eos_lag_interfaces:
     config: "{{ config }}"
     state: overridden
+  become: yes
   register: result
 
 - assert:
@@ -23,6 +25,7 @@
 
 - eos_facts:
     gather_network_resources: lag_interfaces
+  become: yes
 
 - assert:
     that:

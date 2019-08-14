@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -26,24 +25,31 @@
 The arg spec for the eos_lag_interfaces module
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-class Lag_interfacesArgs(object):  # pylint: disable=R0903
+
+class Lag_interfacesArgs(object):
     """The arg spec for the eos_lag_interfaces module
     """
 
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'elements': 'dict',
-            'options': {'members': {'elements': 'dict',
-                                    'options': {'member': {'type': 'str'},
-                                                'mode': {'choices': ['active',
-                                                                     'on',
-                                                                     'passive'],
-                                                         'type': 'str'}},
-                                    'type': 'list'},
-                        'name': {'required': True, 'type': 'str'}},
+    argument_spec = {
+        'config': {
+            'elements': 'dict',
+            'options': {
+                'name': {'required': True, 'type': 'str'},
+                'members': {
+                    'elements': 'dict',
+                    'options': {
+                        'member': {'type': 'str'},
+                        'mode': {'choices': ['active', 'on', 'passive'], 'type': 'str'},
+                    },
+                    'type': 'list',
+                },
+            },
             'type': 'list'},
- 'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+        'state': {'default': 'merged', 'choices': ['merged', 'replaced', 'overridden', 'deleted'], 'type': 'str'}
+    }
