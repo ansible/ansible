@@ -37,67 +37,67 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-  module: ios_l2_interfaces
-  version_added: 2.9
-  short_description: Manage Layer-2 interface on Cisco IOS devices.
-  description: This module provides declarative management of Layer-2 interface on Cisco IOS devices.
-  author: Sumit Jaiswal (@justjais)
-  notes:
-  - Tested against Cisco IOSv Version 15.2 on VIRL
-  - This module works with connection C(network_cli).
-    See L(IOS Platform Options,../network/user_guide/platform_ios.html).
-  options:
-    config:
-      description: A dictionary of Layer-2 interface options
-      type: list
-      elements: dict
-      suboptions:
-        name:
-          description:
-          - Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
-          type: str
-          required: True
-        access:
-          description:
-          - Switchport mode access command to configure the interface as a layer 2 access.
-          suboptions:
-            vlan:
-              description:
-              - Configure given VLAN in access port. It's used as the access VLAN ID.
+module: ios_l2_interfaces
+version_added: 2.9
+short_description: Manage Layer-2 interface on Cisco IOS devices.
+description: This module provides declarative management of Layer-2 interface on Cisco IOS devices.
+author: Sumit Jaiswal (@justjais)
+notes:
+- Tested against Cisco IOSv Version 15.2 on VIRL
+- This module works with connection C(network_cli).
+See L(IOS Platform Options,../network/user_guide/platform_ios.html).
+options:
+  config:
+    description: A dictionary of Layer-2 interface options
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description:
+        - Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
+        type: str
+        required: True
+      access:
+        description:
+        - Switchport mode access command to configure the interface as a layer 2 access.
+        suboptions:
+          vlan:
+            description:
+            - Configure given VLAN in access port. It's used as the access VLAN ID.
+          type: int
+      trunk:
+        description:
+        - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
+          Note The encapsulation is always set to dot1q.
+        suboptions:
+          allowed_vlans:
+            description:
+            - List of allowed VLANs in a given trunk port. These are the only VLANs that will be
+              configured on the trunk.
+            type: list
+          native_vlan:
+            description:
+            - Native VLAN to be configured in trunk port. It's used as the trunk native VLAN ID.
+            type: int
+          encapsulation:
+            description:
+            - Trunking encapsulation when interface is in trunking mode.
+            choices: ['dot1q','isl','negotiate']
             type: str
-        trunk:
-          description:
-          - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
-            Note The encapsulation is always set to dot1q.
-          suboptions:
-            allowed_vlans:
-              description:
-              - List of allowed VLANs in a given trunk port. These are the only VLANs that will be
-                configured on the trunk.
-              type: list
-            native_vlan:
-              description:
-              - Native VLAN to be configured in trunk port. It's used as the trunk native VLAN ID.
-              type: str
-            encapsulation:
-              description:
-              - Trunking encapsulation when interface is in trunking mode.
-              choices: ['dot1q','isl','negotiate']
-              type: str
-            pruning_vlans:
-              description:
-              - Pruning VLAN to be configured in trunk port. It's used as the trunk pruning VLAN ID.
-              type: list
-    state:
-      choices:
-      - merged
-      - replaced
-      - overridden
-      - deleted
-      default: merged
-      description:
-      - The state the configuration should be left in
-      type: str
+          pruning_vlans:
+            description:
+            - Pruning VLAN to be configured in trunk port. It's used as the trunk pruning VLAN ID.
+            type: list
+  state:
+    choices:
+    - merged
+    - replaced
+    - overridden
+    - deleted
+    default: merged
+    description:
+    - The state the configuration should be left in
+    type: str
 """
 
 EXAMPLES = """
@@ -115,7 +115,6 @@ EXAMPLES = """
 # interface GigabitEthernet0/2
 #  description This is test
 #  switchport access vlan 20
-#  switchport mode access
 #  media-type rj45
 #  negotiation auto
 
@@ -140,7 +139,6 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 10
-#  switchport mode access
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -148,7 +146,6 @@ EXAMPLES = """
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 20
 #  switchport trunk pruning vlan 10,20
-#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 
@@ -161,12 +158,10 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 20
-#  switchport mode access
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
 #  switchport access vlan 20
-#  switchport mode access
 #  media-type rj45
 #  negotiation auto
 
@@ -188,7 +183,6 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 20
-#  switchport mode access
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -196,7 +190,6 @@ EXAMPLES = """
 #  switchport trunk encapsulation isl
 #  switchport trunk native vlan 20
 #  switchport trunk pruning vlan 10
-#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 
@@ -210,14 +203,12 @@ EXAMPLES = """
 #  description Configured by Ansible
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 20
-#  switchport mode trunk
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
 #  switchport access vlan 20
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 20
-#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 
@@ -239,7 +230,6 @@ EXAMPLES = """
 # interface GigabitEthernet0/2
 #  description This is test
 #  switchport access vlan 20
-#  switchport mode access
 #  media-type rj45
 #  negotiation auto
 
@@ -252,7 +242,6 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 20
-#  switchport mode access
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -261,7 +250,6 @@ EXAMPLES = """
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 10
 #  switchport trunk pruning vlan 10
-#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 
@@ -285,12 +273,12 @@ EXAMPLES = """
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 10
 #  switchport trunk pruning vlan 10
-#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 
 
-# Using Deleted without passing any config
+# Using Deleted without any config passed
+#"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
 
 # Before state:
 # -------------
@@ -299,7 +287,6 @@ EXAMPLES = """
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
 #  switchport access vlan 20
-#  switchport mode access
 #  negotiation auto
 # interface GigabitEthernet0/2
 #  description This is test
@@ -308,7 +295,6 @@ EXAMPLES = """
 #  switchport trunk encapsulation dot1q
 #  switchport trunk native vlan 10
 #  switchport trunk pruning vlan 10
-#  switchport mode trunk
 #  media-type rj45
 #  negotiation auto
 
@@ -334,16 +320,18 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation
   returned: always
+  type: list
   sample: The configuration returned will alwys be in the same format of the paramters above.
 after:
   description: The resulting configuration model invocation
   returned: when changed
+  type: list
   sample: The configuration returned will alwys be in the same format of the paramters above.
 commands:
   description: The set of commands pushed to the remote device
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['interface GigabitEthernet0/1', 'switchport access vlan 20']
 """
 
 
