@@ -3693,6 +3693,8 @@ lib/ansible/modules/network/fortios/fortios_address.py validate-modules:E324
 lib/ansible/modules/network/fortios/fortios_address.py validate-modules:E338
 lib/ansible/modules/network/fortios/fortios_antivirus_quarantine.py validate-modules:E326
 lib/ansible/modules/network/fortios/fortios_config.py validate-modules:E337
+lib/ansible/modules/network/fortios/fortios_firewall_DoS_policy.py validate-modules:E336
+lib/ansible/modules/network/fortios/fortios_firewall_DoS_policy6.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_firewall_internet_service_group.py validate-modules:E337
 lib/ansible/modules/network/fortios/fortios_firewall_ip_translation.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_firewall_ip_translation.py validate-modules:E337
