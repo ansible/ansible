@@ -1,19 +1,19 @@
 ---
 - name: 'Create disk image'
   command: >
-    dd if=/dev/zero of={{ ansible_user_dir }}/ansible_testing/img-uquota bs=1M count=20
+    dd if=/dev/zero of={{ remote_tmp_dir }}/img-uquota bs=1M count=20
 
 - name: 'Create XFS filesystem'
   filesystem:
-    dev: '{{ ansible_user_dir }}/ansible_testing/img-uquota'
+    dev: '{{ remote_tmp_dir }}/img-uquota'
     fstype: xfs
 
 - block:
     - name: 'Mount filesystem'
       mount:
-        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
-        src: '{{ ansible_user_dir }}/ansible_testing/img-uquota'
-        path: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        src: '{{ remote_tmp_dir }}/img-uquota'
+        path: '{{ remote_tmp_dir }}/uquota'
         fstype: xfs
         opts: uquota
         state: mounted
@@ -25,7 +25,7 @@
         bhard: '{{ uquota_default_bhard }}'
         isoft: '{{ uquota_default_isoft }}'
         ihard: '{{ uquota_default_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
         rtbsoft: '{{ uquota_default_rtbsoft }}'
         rtbhard: '{{ uquota_default_rtbhard }}'
         type: user
@@ -49,7 +49,7 @@
         bhard: '{{ uquota_user_bhard }}'
         isoft: '{{ uquota_user_isoft }}'
         ihard: '{{ uquota_user_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
         name: xfsquotauser
         rtbsoft: '{{ uquota_user_rtbsoft }}'
         rtbhard: '{{ uquota_user_rtbhard }}'
@@ -74,7 +74,7 @@
         bhard: '{{ uquota_default_bhard }}'
         isoft: '{{ uquota_default_isoft }}'
         ihard: '{{ uquota_default_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
         rtbsoft: '{{ uquota_default_rtbsoft }}'
         rtbhard: '{{ uquota_default_rtbhard }}'
         type: user
@@ -92,7 +92,7 @@
         bhard: '{{ uquota_user_bhard }}'
         isoft: '{{ uquota_user_isoft }}'
         ihard: '{{ uquota_user_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
         name: xfsquotauser
         rtbsoft: '{{ uquota_user_rtbsoft }}'
         rtbhard: '{{ uquota_user_rtbhard }}'
@@ -107,7 +107,7 @@
 
     - name: 'Reset default user limits'
       xfs_quota:
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
         state: absent
         type: user
       become: True
@@ -126,7 +126,7 @@
 
     - name: 'Reset user limits for xfsquotauser'
       xfs_quota:
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
         name: xfsquotauser
         state: absent
         type: user
@@ -147,12 +147,12 @@
   always:
     - name: 'Unmount filesystem'
       mount:
-        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
-        path: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        path: '{{ remote_tmp_dir }}/uquota'
         state: unmounted
       become: True
 
     - name: Remove disk image
       file:
-        path: '{{ ansible_user_dir }}/ansible_testing/img-uquota'
+        path: '{{ remote_tmp_dir }}/img-uquota'
         state: absent
