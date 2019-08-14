@@ -45,7 +45,7 @@ author: Sumit Jaiswal (@justjais)
 notes:
 - Tested against Cisco IOSv Version 15.2 on VIRL
 - This module works with connection C(network_cli).
-See L(IOS Platform Options,../network/user_guide/platform_ios.html).
+  See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
   config:
     description: A dictionary of Layer-2 interface options
