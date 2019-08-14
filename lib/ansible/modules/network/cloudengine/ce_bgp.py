@@ -1544,7 +1544,7 @@ class Bgp(object):
         if suppress_interval:
             conf_str += "<suppressInterval>60</suppressInterval>"
 
-            cmd = "nexthop recursive-lookup restrain suppress-interval hold-interval clear-interval"
+            cmd = "undo nexthop recursive-lookup restrain suppress-interval hold-interval clear-interval"
             cmds.append(cmd)
 
         if hold_interval:
