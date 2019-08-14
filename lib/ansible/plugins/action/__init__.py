@@ -1111,7 +1111,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
 
         if peek_result.get('failed', False):
-            raise AnsibleError(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(source), destination, to_text(peek_result.get(u'msg', u''))))
+            display.warning(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(source), destination, to_text(peek_result.get(u'msg', u''))))
+            return diff
 
         if peek_result.get('rc', 0) == 0:
 
