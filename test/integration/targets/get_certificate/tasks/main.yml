@@ -22,4 +22,7 @@
     vars:
       select_crypto_backend: cryptography
 
-  when: cryptography_version.stdout is version('0.5', '>=')
+  # The module doesn't work with CentOS 6. Since the pyOpenSSL installed there is too old,
+  # we never noticed before. This becomes a problem with the new cryptography backend,
+  # since there is a new enough cryptography version...
+  when: cryptography_version.stdout is version('1.2.3', '>=') and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)
