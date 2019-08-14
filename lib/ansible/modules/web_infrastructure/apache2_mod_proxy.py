@@ -354,7 +354,9 @@ def main():
             member_host=dict(type='str'),
             state=dict(type='str'),
             tls=dict(default=False, type='bool'),
-            validate_certs=dict(default=True, type='bool')
+            validate_certs=dict(default=True, type='bool'),
+            url_username=dict(type='str'),
+            url_password=dict(type='str')
         ),
         supports_check_mode=True
     )
@@ -385,11 +387,9 @@ def main():
         for member in mybalancer.members:
             json_output_list.append({
                 "host": member.host,
-                "status": member.status,
                 "protocol": member.protocol,
                 "port": member.port,
                 "path": member.path,
-                "attributes": member.attributes,
                 "management_url": member.management_url,
                 "balancer_url": member.balancer_url
             })
