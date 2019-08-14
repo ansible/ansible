@@ -4,10 +4,6 @@
 
 - include_tasks: _remove_config.yaml
 
-#- name: Get the IOS version
-#  ios_facts:
-#    gather_subset: all
-
 - block:
     - name: Merge provided configuration with device configuration
       ios_l2_interfaces: &merged

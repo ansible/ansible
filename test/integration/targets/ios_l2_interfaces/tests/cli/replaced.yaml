@@ -6,10 +6,6 @@
 
 - include_tasks: _populate_config.yaml
 
-- name: Get the IOS version
-  ios_facts:
-    gather_subset: all
-
 - block:
     - name: Replaces device L2 configuration from listed interfaces with provided configuration
       ios_l2_interfaces: &replaced
