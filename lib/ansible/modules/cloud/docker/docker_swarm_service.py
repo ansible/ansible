@@ -2028,19 +2028,16 @@ class DockerService(DockerBaseClass):
     def build_endpoint_spec(self):
         endpoint_spec_args = {}
         if self.publish is not None:
-            ports = {}
+            ports = []
             for port in self.publish:
+                port_spec = {
+                  'Protocol' : port['protocol'],
+                  'PublishedPort' : port['published_port'],
+                  'TargetPort' : port['target_port']
+                }
                 if port.get('mode'):
-                    ports[port['published_port']] = (
-                        port['target_port'],
-                        port['protocol'],
-                        port['mode'],
-                    )
-                else:
-                    ports[port['published_port']] = (
-                        port['target_port'],
-                        port['protocol'],
-                    )
+                    port_spec['PublishMode'] = port['mode']
+                ports.append(port_spec)
             endpoint_spec_args['ports'] = ports
         if self.endpoint_mode is not None:
             endpoint_spec_args['mode'] = self.endpoint_mode
