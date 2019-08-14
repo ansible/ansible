@@ -57,6 +57,12 @@ options:
       - Validate ssl/tls certificates.
     type: bool
     default: 'yes'
+  url_username:
+    description:
+      - Username for Apache auth
+  url_password:
+    description:
+      - Password for Apache auth
 '''
 
 EXAMPLES = '''
