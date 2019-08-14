@@ -12,6 +12,6 @@
 
 - name: Remove device files
   file:
-    path: "{{ ansible_user_dir }}/ansible_testing/img{{ item }}"
+    path: "{{ remote_tmp_dir }}/img{{ item }}"
     state: absent
   with_sequence: 'count={{ loop_devices.results|length }}'

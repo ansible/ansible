@@ -15,7 +15,7 @@
 
 - include_tasks: create_device.yml
   vars:
-    image_file: '{{ ansible_user_dir }}/ansible_testing/img'
+    image_file: '{{ remote_tmp_dir }}/img'
     fstype: '{{ item.0.key }}'
     fssize: '{{ item.0.value.fssize }}'
     grow: '{{ item.0.value.grow }}'
