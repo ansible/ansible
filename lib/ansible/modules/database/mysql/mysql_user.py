@@ -34,15 +34,15 @@ options:
   plugin:
     description:
       - Set the user's plugin used to authenticate C(CREATE USER user IDENTIFIED WITH plugin).
-    version_added: "2.8"
+    version_added: "2.9"
   plugin_hash_string:
     description:
       - Set the user's plugin hash string C(CREATE USER user IDENTIFIED WITH plugin AS plugin_hash_string).
-    version_added: "2.8"
+    version_added: "2.9"
   plugin_auth_string:
     description:
       - Set the user's plugin auth_string C(CREATE USER user IDENTIFIED WITH plugin BY plugin_auth_string).
-    version_added: "2.8"
+    version_added: "2.9"
   encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash.
