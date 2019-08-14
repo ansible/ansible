@@ -129,6 +129,7 @@ from .integration import (
     integration_test_environment,
     integration_test_config_file,
     setup_common_temp_dir,
+    VARS_FILE_RELATIVE,
 )
 
 from .data import (
@@ -817,6 +818,23 @@ def command_integration_filter(args,  # type: TIntegrationConfig
 
     cloud_init(args, internal_targets)
 
+    vars_file_src = os.path.join(data_context().content.root, VARS_FILE_RELATIVE)
+
+    if os.path.exists(vars_file_src):
+        def integration_config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            """
+            Add the integration config vars file to the payload file list.
+            This will preserve the file during delegation even if the file is ignored by source control.
+            """
+            if data_context().content.collection:
+                working_path = data_context().content.collection.directory
+            else:
+                working_path = ''
+
+            files.append((vars_file_src, os.path.join(working_path, VARS_FILE_RELATIVE)))
+
+        data_context().register_payload_callback(integration_config_callback)
+
     if args.delegate:
         raise Delegate(require=require, exclude=exclude, integration_targets=internal_targets)
 
@@ -1273,9 +1291,17 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
     env_config = None
 
+    vars_files = []
+    variables = dict(
+        output_dir=test_dir,
+    )
+
     if isinstance(args, WindowsIntegrationConfig):
         hosts = 'windows'
         gather_facts = False
+        variables.update(dict(
+            win_output_dir=r'C:\ansible_testing',
+        ))
     elif isinstance(args, NetworkIntegrationConfig):
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
@@ -1289,12 +1315,14 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             env_config = cloud_environment.get_environment_config()
 
     with integration_test_environment(args, target, inventory_path) as test_env:
+        if os.path.exists(test_env.vars_file):
+            vars_files.append(os.path.relpath(test_env.vars_file, test_env.integration_dir))
+
         play = dict(
             hosts=hosts,
             gather_facts=gather_facts,
-            vars_files=[
-                os.path.relpath(test_env.vars_file, test_env.integration_dir),
-            ],
+            vars_files=vars_files,
+            vars=variables,
             roles=[
                 target.name,
             ],
