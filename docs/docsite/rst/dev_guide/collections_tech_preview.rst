@@ -385,7 +385,7 @@ This works for roles or any type of plugin distributed within the collection:
      - hosts: all
        tasks:
          - import_role:
-	         name: my_namespace.my_collection.role1
+             name: my_namespace.my_collection.role1
 
          - my_namespace.mycollection.mymodule:
              option1: value
