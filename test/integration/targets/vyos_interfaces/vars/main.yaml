@@ -1,11 +1,6 @@
 ---
 merged:
   before:
-    - name: "eth0"
-      enabled: true
-      speed: "auto"
-      duplex: "auto"
-
     - name: "eth1"
       enabled: true
 
@@ -30,11 +25,6 @@ merged:
   after:
     - name: "lo"
       enabled: true
-
-    - name: "eth0"
-      enabled: true
-      duplex: "auto"
-      speed: "auto"
 
     - name: "eth1"
       description: "Configured by Ansible - Interface 1"
@@ -80,11 +70,6 @@ populate:
         enabled: true
         description: "VIF - 200"
 
-  - name: "eth0"
-    enabled: true
-    duplex: "auto"
-    speed: "auto"
-
   - name: "lo"
     enabled: true
 
@@ -125,11 +110,6 @@ replaced:
         - vlan_id: 200
           enabled: true
 
-    - name: "eth0"
-      enabled: true
-      duplex: "auto"
-      speed: "auto"
-
 overridden:
   commands:
     - "delete interfaces ethernet eth1 description"
@@ -146,11 +126,6 @@ overridden:
   after:
     - name: "lo"
       enabled: true
-
-    - name: "eth0"
-      enabled: true
-      speed: "auto"
-      duplex: "auto"
 
     - name: "eth1"
       enabled: true
@@ -183,11 +158,6 @@ deleted:
     - name: "lo"
       enabled: true
 
-    - name: "eth0"
-      enabled: true
-      speed: "auto"
-      duplex: "auto"
-
     - name: "eth1"
       enabled: true
       vifs:
@@ -204,11 +174,6 @@ round_trip:
   after:
     - name: "lo"
       enabled: true
-
-    - name: "eth0"
-      enabled: true
-      speed: "auto"
-      duplex: "auto"
 
     - name: "eth1"
       description: "Interface 1 - Description (WILL BE REVERTED)"
