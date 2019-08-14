@@ -15,6 +15,7 @@ from ansible.module_utils.network.vyos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.vyos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.vyos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
+from ansible.module_utils.network.vyos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.vyos.facts.legacy.base import Default, Neighbors, Config
 
 
@@ -25,7 +26,8 @@ FACT_LEGACY_SUBSETS = dict(
 )
 FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
-    l3_interfaces=L3_interfacesFacts
+    l3_interfaces=L3_interfacesFacts,
+    lag_interfaces=Lag_interfacesFacts
 )
 
 
