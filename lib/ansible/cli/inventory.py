@@ -15,6 +15,7 @@ from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
+from ansible.inventory.group import Group
 from ansible.inventory.helpers import sort_groups
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import MutableMapping
@@ -142,9 +143,9 @@ class InventoryCLI(CLI):
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
             
             if context.CLIARGS['unmerge']:
-                myvars, max_width = self._get_host_variables_unmerged(host=hosts[0])
+                myvars = self._get_host_variables_unmerged(host=hosts[0])
 
-                results = self._format_unmerged_variables(myvars, max_width, hosts[0])
+                results = self._format_unmerged_variables(myvars)
             else:
                 myvars = self._get_host_variables(host=hosts[0])
 
@@ -274,8 +275,7 @@ class InventoryCLI(CLI):
         for group in host_groups:
             self._combine_vars_unmerged(results, self._get_group_variables(group), group, [])  # Update 'results' with the group's variables
         self._combine_vars_unmerged(results, self._get_host_variables(host, only=True), host, [])  # Lastly, update 'results' with hosts variables
-        max_width = len(str(max(host_groups + [host], key=lambda v: len(str(v))))) - 1  # The maximum string length of all group names (and the hostname), for display purposes
-        return results, max_width
+        return results
 
     @staticmethod
     def _combine_vars_unmerged(results, hash_to_integrate, group, path):
@@ -299,14 +299,27 @@ class InventoryCLI(CLI):
                     results[flattened_path] = [(group, value)]  # First time we find a leaf here
 
     @staticmethod
-    def _format_unmerged_variables(unmerged_vars, max_width, host):
+    def _format_unmerged_variables(unmerged_vars):
         ''' Display the unmerged vars in a human readable way.'''
+        source_entities = set()  # A set of all groups where we found vars (and the host if we have hostvars)
+        host = None
+        for path, values in unmerged_vars.items():
+            for source, value in values:
+                if isinstance(source, Host) and host is None:
+                    host = source
+                elif isinstance(source, Group):
+                    source_entities.add(source)  # set.add() only adds if item is not present already
+        source_entities = sort_groups(source_entities)  # This is now a list of groups with the less specific ('all' for instance) first
+        if host is not None: source_entities.append(host)
+        source_entities.reverse()  # We're done, we have a list of all place where we found variables, from more specific to less specific
+
+        max_width = len(str(max(source_entities, key=lambda v: len(str(v)))))  # The maximum string length of all group names (and the hostname), for display purposes
 
         result = []
         for key, values in sorted(unmerged_vars.items()):
             if context.CLIARGS['filter'] is None or context.CLIARGS['filter'] in key:  # Apply filter if provided
                 if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
-                    prefix = '[{}] {} : '.format(InventoryCLI._colorize_entity(values[0][0], host, max_width), key)
+                    prefix = '[{}] {} : '.format(InventoryCLI._colorize_entity(values[0][0], source_entities, max_width), key)
                     value_pretty = pformat(values[0][1]).split('\n')
 
                     # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : in that case, indent the remaining ones.
@@ -321,21 +334,17 @@ class InventoryCLI(CLI):
 
                     local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
                     for entity, value in values:
-                        prefix = '----[{}] : '.format(InventoryCLI._colorize_entity(entity, host, max_width))
+                        prefix = '----[{}] : '.format(InventoryCLI._colorize_entity(entity, source_entities, local_max_width))
                         value_pretty = pformat(value).split('\n')
 
                         result.extend([prefix + line if index == 0 else " " * len(prefix) + line for index, line in enumerate(value_pretty)])
         return '\n'.join(result)
 
     @staticmethod
-    def _colorize_entity(entity, host, max_width):
+    def _colorize_entity(entity, all_entities, max_width):
         ''' Colorize a Host or Group object in a deterministic way. Returns a colorized string (or not colorized, this is handled in ansible.utils.color) '''
-        host_groups = sort_groups(host.get_groups())  # A group's or host's position in this list will determine its color
-        host_groups.append(host)
-        host_groups.reverse()  # More specific first
-
         colors = ['blue', 'green', 'cyan', 'red', 'purple', 'yellow', 'magenta']  # Colors from ansible.utils.color.codeCodes
-        color_index = host_groups.index(entity) % len(colors)
+        color_index = all_entities.index(entity) % len(colors)
 
         padding = max_width - len(str(entity))
         return ' ' * padding + stringc(str(entity), colors[color_index])
