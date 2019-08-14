@@ -341,7 +341,11 @@ def main():
         result['not_after'] = x509.not_valid_after.strftime('%Y%m%d%H%M%SZ')
         result['not_before'] = x509.not_valid_before.strftime('%Y%m%d%H%M%SZ')
 
-        result['serial_number'] = x509.serial_number
+        try:
+            result['serial_number'] = x509.serial_number
+        except AttributeError:
+            # In older versions of cryptography, the attribute is called serial
+            result['serial_number'] = x509.serial
         result['signature_algorithm'] = crypto_utils.cryptography_oid_to_name(x509.signature_algorithm_oid)
 
         # We need the -1 offset to get the same values as pyOpenSSL
