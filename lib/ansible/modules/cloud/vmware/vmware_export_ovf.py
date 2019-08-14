@@ -112,7 +112,7 @@ from time import sleep
 from threading import Thread
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
 try:
     from pyVmomi import vim
@@ -303,7 +303,7 @@ class VMwareExportVmOvf(PyVmomi):
                 with open(self.mf_file, 'a') as mf_handle:
                     with open(ovf_descriptor_path, 'w') as handle:
                         handle.write(vm_descriptor)
-                        sha256_hash.update(vm_descriptor.encode('utf-8'))
+                        sha256_hash.update(to_bytes(vm_descriptor))
                     mf_handle.write('SHA256(' + os.path.basename(ovf_descriptor_path) + ')= ' + sha256_hash.hexdigest() + '\n')
                 http_nfc_lease.HttpNfcLeaseProgress(100)
                 # self.facts = http_nfc_lease.HttpNfcLeaseGetManifest()
