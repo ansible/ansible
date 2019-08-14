@@ -1,0 +1,8 @@
+---
+- name: Remove Bond
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      delete interfaces bonding bond0 
+      delete interfaces bonding bond1 

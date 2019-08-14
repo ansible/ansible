@@ -1,0 +1,8 @@
+---
+- name: Add Bond
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      set interfaces bonding bond0 
+      set interfaces bonding bond1 

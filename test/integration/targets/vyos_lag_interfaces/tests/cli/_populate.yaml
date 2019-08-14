@@ -1,0 +1,16 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      set interfaces bonding bond0
+      set interfaces bonding bond0 hash-policy 'layer2'
+      set interfaces bonding bond0 mode 'active-backup'
+      set interfaces ethernet eth1 bond-group bond0
+      set interfaces bonding bond1
+      set interfaces bonding bond0 primary 'eth1'
+      set interfaces bonding bond1 hash-policy 'layer2+3'
+      set interfaces bonding bond1 mode 'active-backup'
+      set interfaces ethernet eth2 bond-group bond1
+      set interfaces bonding bond1 primary 'eth2'

@@ -74,6 +74,8 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * nxos_interface use :ref:`nxos_interfaces <nxos_interfaces_module>` instead.
 
+* vyos_linkagg use :ref:`vyos_lag_interfaces <vyos_lag_interfaces_module>` instead.
+
 The following functionality will be removed in Ansible 2.12. Please update update your playbooks accordingly.
 
 * ``vmware_cluster`` DRS, HA and VSAN configuration; use `vmware_cluster_drs <vmware_cluster_drs_module>`, `vmware_cluster_ha <vmware_cluster_ha_module>` and `vmware_cluster_vsan <vmware_cluster_vsan_module>` instead.

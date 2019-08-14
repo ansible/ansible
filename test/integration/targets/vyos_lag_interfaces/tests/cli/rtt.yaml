@@ -1,0 +1,69 @@
+---
+- debug:
+    msg: "START vyos_lag_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _remove_bond.yaml
+
+- block:
+  - name: Apply the provided configuration (base config)
+    vyos_lag_interfaces:
+      config:
+        - name: bond0
+          hash_policy: "layer2"
+          mode: "active-backup"
+          members:
+            - member: eth1
+          primary: eth1
+
+        - name: bond1
+          hash_policy: "layer2+3"
+          mode: "active-backup"
+          members:
+            - member: eth2
+          primary: eth2
+
+      state: merged
+    register: base_config
+
+  - name: Gather lag_interfaces facts
+    vyos_facts:
+      gather_subset:
+        - default
+      gather_network_resources:
+        - lag_interfaces
+
+  - name: Apply the provided configuration (config to be reverted)
+    vyos_lag_interfaces:
+      config:
+        - name: bond0
+          hash_policy: "layer2+3"
+          mode: "802.3ad"
+          members:
+            - member: eth1
+
+        - name: bond1
+          hash_policy: "layer2"
+          mode: "xor-hash"
+          members:
+            - member: eth2
+      state: merged
+    register: result
+
+  - name: Assert that changes were applied
+    assert:
+      that: "{{ round_trip['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Revert back to base config using facts round trip
+    vyos_lag_interfaces:
+      config: "{{ ansible_facts['network_resources']['lag_interfaces'] }}"
+      state: overridden
+    register: revert
+
+  - name: Assert that config was reverted
+    assert:
+      that: "{{ base_config['after'] | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+  - include_tasks: _remove_config.yaml
