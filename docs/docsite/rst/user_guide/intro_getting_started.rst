@@ -3,14 +3,15 @@
 Getting Started
 ===============
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 .. _gs_about:
 
 Foreword
 ````````
 
-Now that you've read the :ref:`installation guide<installation_guide>` and installed Ansible, it's time to get
+Now that you've read the :ref:`installation guide<installation_guide>` and installed Ansible, you can get
 started with some ad-hoc commands.
 
 What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
@@ -23,14 +24,14 @@ This section is about how to initially get Ansible running.  Once you understand
 Remote Connection Information
 `````````````````````````````
 
-Before we get started, it's important to understand how Ansible communicates with remote
+Before we get started, it is important to understand how Ansible communicates with remote
 machines over the `SSH protocol <https://www.ssh.com/ssh/protocol/>`_.
 
 By default, Ansible will try to use native
 OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
 OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, macOS, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
 
-Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :ref:`intro_configuration`.
+Occasionally you will encounter a device that does not support SFTP. This is rare, but should it occur, you can switch to SCP mode in :ref:`intro_configuration`.
 
 When speaking with remote machines, Ansible by default assumes you are using SSH keys.  SSH keys are encouraged but password authentication can also be used where needed by supplying the option ``--ask-pass``.  If using sudo features and when sudo requires a password, also supply ``--ask-become-pass`` (previously ``--ask-sudo-pass`` which has been deprecated).
 
@@ -38,14 +39,14 @@ When speaking with remote machines, Ansible by default assumes you are using SSH
 
 While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud.  In most cases this will work better than on the open Internet.
 
-As an advanced topic, Ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
+Ansible is not limited to remote connections over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
 
 .. _your_first_commands:
 
 Your first commands
 ```````````````````
 
-Now that you've installed Ansible, it's time to get started with some basics.
+Now that you've installed Ansible, try some basics.
 
 Edit (or create) ``/etc/ansible/hosts`` and put one or more remote systems in it. Your
 public SSH key should be located in ``authorized_keys`` on those systems::
@@ -57,7 +58,7 @@ public SSH key should be located in ``authorized_keys`` on those systems::
 
 This is an inventory file, which is also explained in greater depth here:  :ref:`intro_inventory`.
 
-We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
+We assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
 do:
 
 .. code-block:: bash
@@ -78,8 +79,8 @@ Now ping all your nodes:
 
    $ ansible all -m ping
 
-Ansible will attempt to remote connect to the machines using your current
-user name, just like SSH would.  To override the remote user name, just use the '-u' parameter.
+Ansible will attempt to remote connect to the machines using your current user name, just like SSH would.
+You can override the default remote user name in several ways, including passing the ``-u`` parameter at the command line, setting user information in your inventory file, setting user information in your configuration file, and setting environment variables. See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information.
 
 If you would like to access sudo mode, there are also flags to do that:
 
@@ -92,7 +93,7 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --become --become-user batman
 
-The sudo implementation (and other methods of changing the current user) can be modified in Ansible's configuration
+The sudo implementation (and other methods of changing the current user) can be modified in Ansible configuration
 if you happen to want to use a sudo replacement. Flags passed to sudo (like -H) can also be set.
 
 Now run a live command on all of your nodes:
@@ -101,12 +102,11 @@ Now run a live command on all of your nodes:
 
    $ ansible all -a "/bin/echo hello"
 
-Congratulations!  You've just contacted your nodes with Ansible.  It's
-soon going to be time to: read about some more real-world cases in :ref:`intro_adhoc`,
-explore what you can do with different modules, and to learn about the Ansible
+Congratulations!  You have contacted your nodes with Ansible. You have a fully working infrastructure.
+Next you can read about more real-world cases in :ref:`intro_adhoc`,
+explore what you can do with different modules, or read about the Ansible
 :ref:`working_with_playbooks` language.  Ansible is not just about running commands, it
-also has powerful configuration management and deployment features.  There's more to
-explore, but you already have a fully working infrastructure!
+also has powerful configuration management and deployment features.
 
 Tips
 
