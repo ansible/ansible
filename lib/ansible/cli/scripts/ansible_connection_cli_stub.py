@@ -101,12 +101,9 @@ class ConnectionProcess(object):
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options(var_options=variables)
 
-            self.connection._connect()
-
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
             messages.extend([('vvvv', msg) for msg in sys.stdout.getvalue().splitlines()])
-            messages.append(('vvvv', 'connection to remote device started successfully'))
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.bind(self.socket_path)
@@ -123,7 +120,7 @@ class ConnectionProcess(object):
 
     def run(self):
         try:
-            while self.connection.connected:
+            while True:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(self.connection.get_option('persistent_connect_timeout'))
