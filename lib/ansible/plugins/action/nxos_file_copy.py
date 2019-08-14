@@ -191,7 +191,7 @@ class ActionModule(ActionBase):
         return True
 
     def transfer_file_to_device(self, remote_file):
-        to = self.socket_timeout
+        timeout = self.socket_timeout
         local_file = self.playvals['local_file']
         file_system = self.playvals['file_system']
         file_size = os.path.getsize(local_file)
@@ -203,7 +203,7 @@ class ActionModule(ActionBase):
         frp = '{0}{1}'.format(file_system, remote_file)
         flp = os.path.join(os.path.abspath(local_file))
         try:
-            self.conn.copy_file(source=flp, destination=frp, proto='scp', timeout=to)
+            self.conn.copy_file(source=flp, destination=frp, proto='scp', timeout=timeout)
         except Exception as exc:
             self.results['failed'] = True
             self.results['msg'] = ('Exception received : %s' % exc)
@@ -301,7 +301,7 @@ class ActionModule(ActionBase):
             elif index == 3:
                 raise AnsibleError('Timeout occured, please increase "file_pull_timeout" and try again!')
         except pexpect.ExceptionPexpect as e:
-            raise AnsibleError(msg='%s' % to_native(e), exception=traceback.format_exc())
+            raise AnsibleError('%s' % to_native(e))
 
         child.close()
 
