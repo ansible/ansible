@@ -29,6 +29,12 @@ options:
     required: false
     default: present
     choices: ["present", "absent"]
+  dynamicupdate:
+    description: Apply dynamic update to zone
+    required: false
+    default: "false"
+    choices: ["false", "true"]
+    version_added: "2.9"
 extends_documentation_fragment: ipa.documentation
 version_added: "2.5"
 '''
@@ -40,6 +46,14 @@ EXAMPLES = '''
     ipa_pass: Passw0rd!
     state: present
     zone_name: example.com
+
+# Ensure dns zone is present and is dynamic update
+- ipa_dnszone:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: example.com
+    dynamicupdate: true
 
 # Ensure that dns zone is removed
 - ipa_dnszone:
@@ -66,18 +80,26 @@ class DNSZoneIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(DNSZoneIPAClient, self).__init__(module, host, port, protocol)
 
-    def dnszone_find(self, zone_name):
+    def dnszone_find(self, zone_name, details=None):
+        itens = {'idnsname': zone_name}
+        if details is not None:
+            itens.update(details)
+
         return self._post_json(
             method='dnszone_find',
             name=zone_name,
-            item={'idnsname': zone_name}
+            item=itens
         )
 
     def dnszone_add(self, zone_name=None, details=None):
+        itens = {}
+        if details is not None:
+            itens.update(details)
+
         return self._post_json(
             method='dnszone_add',
             name=zone_name,
-            item={}
+            item=itens
         )
 
     def dnszone_del(self, zone_name=None, record_name=None, details=None):
@@ -88,6 +110,7 @@ class DNSZoneIPAClient(IPAClient):
 def ensure(module, client):
     zone_name = module.params['zone_name']
     state = module.params['state']
+    dynamicupdate = module.params['dynamicupdate']
 
     ipa_dnszone = client.dnszone_find(zone_name)
 
@@ -96,7 +119,7 @@ def ensure(module, client):
         if not ipa_dnszone:
             changed = True
             if not module.check_mode:
-                client.dnszone_add(zone_name=zone_name)
+                client.dnszone_add(zone_name=zone_name, details={'idnsallowdynupdate': dynamicupdate})
         else:
             changed = False
     else:
@@ -112,6 +135,7 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(zone_name=dict(type='str', required=True),
                          state=dict(type='str', default='present', choices=['present', 'absent']),
+                         dynamicupdate=dict(type='str', required=False, default='false', choices=['true', 'false']),
                          )
 
     module = AnsibleModule(argument_spec=argument_spec,
