@@ -321,21 +321,22 @@ def main():
         x509 = cryptography.x509.load_pem_x509_certificate(to_bytes(cert), cryptography_backend())
         result['subject'] = {}
         for attribute in x509.subject:
-            result['subject'][crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
+            result['subject'][crypto_utils.cryptography_oid_to_name(attribute.oid, short=True)] = attribute.value
 
         result['expired'] = x509.not_valid_after < datetime.datetime.utcnow()
 
         result['extensions'] = []
-        for oid, entry in crypto_utils.cryptography_get_extensions_from_cert(x509).items():
+        for dotted_number, entry in crypto_utils.cryptography_get_extensions_from_cert(x509).items():
+            oid = cryptography.x509.oid.ObjectIdentifier(dotted_number)
             result['extensions'].append({
                 'critical': entry['critical'],
                 'asn1_data': base64.b64decode(entry['value']),
-                'name': crypto_utils.cryptography_oid_to_name(cryptography.x509.oid.ObjectIdentifier(oid)),
+                'name': crypto_utils.cryptography_oid_to_name(oid, short=True),
             })
 
         result['issuer'] = {}
         for attribute in x509.issuer:
-            result['issuer'][crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
+            result['issuer'][crypto_utils.cryptography_oid_to_name(attribute.oid, short=True)] = attribute.value
 
         result['not_after'] = x509.not_valid_after.strftime('%Y%m%d%H%M%SZ')
         result['not_before'] = x509.not_valid_before.strftime('%Y%m%d%H%M%SZ')

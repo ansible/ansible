@@ -1504,6 +1504,7 @@ _OID_MAP = {
 
 _OID_LOOKUP = dict()
 _NORMALIZE_NAMES = dict()
+_NORMALIZE_NAMES_SHORT = dict()
 
 for dotted, names in _OID_MAP.items():
     for name in names:
@@ -1513,6 +1514,7 @@ for dotted, names in _OID_MAP.items():
                 .format(name, dotted, _OID_LOOKUP[name])
             )
         _NORMALIZE_NAMES[name] = names[0]
+        _NORMALIZE_NAMES_SHORT[name] = names[-1]
         _OID_LOOKUP[name] = dotted
 for alias, original in [('userID', 'userId')]:
     if alias in _NORMALIZE_NAMES:
@@ -1521,15 +1523,19 @@ for alias, original in [('userID', 'userId')]:
             .format(alias, original, _OID_LOOKUP[alias])
         )
     _NORMALIZE_NAMES[alias] = original
+    _NORMALIZE_NAMES_SHORT[alias] = _NORMALIZE_NAMES_SHORT[original]
     _OID_LOOKUP[alias] = _OID_LOOKUP[original]
 
 
-def pyopenssl_normalize_name(name):
+def pyopenssl_normalize_name(name, short=False):
     nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(name))
     if nid != 0:
         b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
         name = to_text(OpenSSL._util.ffi.string(b_name))
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 # #####################################################################################
@@ -1695,11 +1701,14 @@ def cryptography_name_to_oid(name):
     return x509.oid.ObjectIdentifier(dotted)
 
 
-def cryptography_oid_to_name(oid):
+def cryptography_oid_to_name(oid, short=False):
     dotted_string = oid.dotted_string
     names = _OID_MAP.get(dotted_string)
     name = names[0] if names else oid._name
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 def cryptography_get_name(name):
