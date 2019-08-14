@@ -257,13 +257,15 @@ class InventoryCLI(CLI):
         return self._remove_internal(hostvars)
 
     def _get_host_variables_unmerged(self, host):
-        ''' Build a dict of all variables where :
+        ''' Build a dict of all host and group variables where :
             - keys are the "flattened paths" of the variables (similar to the dotted format used in jinja templates)
             - values are lists of 2 elements tuples where :
-                - first element of the tuple is the "source" (group name or host name)
-                - second element of the tuple is the candidate value
+                - first element of the tuple is the "source" (group or host object) where the variable value was found
+                - second element of the tuple is the value we found
                 - first item of the list is the one that would "win" the merging process
-            "Unmerged" because, contrary to 'combine_vars()', we keep values that would be overwritten.
+            "Unmerged" because, contrary to 'combine_vars()', we keep values that would have been overwritten.
+            The result is something like this :
+            {'path.to.variable': [(Host, 123), (Group1, 456), (Group2, 789)]}
         '''
 
         results = {}
