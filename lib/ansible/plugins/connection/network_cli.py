@@ -209,7 +209,7 @@ from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.connection import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
 
 
@@ -326,8 +326,8 @@ class Connection(NetworkConnectionBase):
             self.paramiko_conn.force_persistence = self.force_persistence
             ssh = self.paramiko_conn._connect()
 
-            host = self.get_option('host')
             self.queue_message('vvvv', 'ssh connection done, setting terminal')
+            self._connected = True
 
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
@@ -338,8 +338,11 @@ class Connection(NetworkConnectionBase):
 
             self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
 
-            self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
-                         newline=self._terminal.terminal_inital_prompt_newline)
+            self.receive(
+                prompts=self._terminal.terminal_initial_prompt,
+                answer=self._terminal.terminal_initial_answer,
+                newline=self._terminal.terminal_inital_prompt_newline
+            )
 
             self.queue_message('vvvv', 'firing event: on_open_shell()')
             self._terminal.on_open_shell()
@@ -350,7 +353,6 @@ class Connection(NetworkConnectionBase):
                 self._terminal.on_become(passwd=auth_pass)
 
             self.queue_message('vvvv', 'ssh connection has completed successfully')
-            self._connected = True
 
         return self
 
@@ -450,6 +452,7 @@ class Connection(NetworkConnectionBase):
                 else:
                     command_prompt_matched = True
 
+    @ensure_connect
     def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False, check_all=False):
         '''
         Sends the command to the device in the opened shell
@@ -587,3 +590,17 @@ class Connection(NetworkConnectionBase):
     def _validate_timeout_value(self, timeout, timer_name):
         if timeout < 0:
             raise AnsibleConnectionFailure("'%s' timer value '%s' is invalid, value should be greater than or equal to zero." % (timer_name, timeout))
+
+    def transport_test(self, connect_timeout):
+        """This method enables wait_for_connection to work.
+
+        As it is used by wait_for_connection, it is called by that module's action plugin,
+        which is on the controller process, which means that nothing done on this instance
+        should impact the actual persistent connection... this check is for informational
+        purposes only and should be properly cleaned up.
+        """
+
+        # Force a fresh connect if for some reason we have connected before.
+        self.close()
+        self._connect()
+        self.close()
