@@ -288,7 +288,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         else:
             if self.apply:
                 if self.check_mode:
-                    k8s_obj = definition
+                    k8s_obj = dict_merge(existing.to_dict(), definition)
                 else:
                     try:
                         k8s_obj = resource.apply(definition, namespace=namespace).to_dict()
