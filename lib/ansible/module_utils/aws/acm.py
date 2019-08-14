@@ -28,7 +28,8 @@ Common Amazon Certificate Manager facts shared between modules
 """
 import traceback
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, HAS_BOTO3, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, HAS_BOTO3, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
+from ansible.module_utils._text import to_bytes
 
 try:
     import botocore
@@ -90,9 +91,9 @@ class ACMServiceManager(object):
     # if an ARN is specified, returns only that certificate
     # only_tags is a dict, e.g. {'key':'value'}. If specified this function will return
     # only certificates which contain all those tags (key exists, value matches).
-    def get_certificates(self, client, module, domain_name=None, statuses=None, arn=None,only_tags=None):
+    def get_certificates(self, client, module, domain_name=None, statuses=None, arn=None, only_tags=None):
         try:
-            all_certificates = self.list_certificates_with_backoff(client, statuses)
+            all_certificates = self.list_certificates_with_backoff(client=client, statuses=statuses)
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e,msg="Couldn't obtain certificates")
         if domain_name:
@@ -138,3 +139,74 @@ class ACMServiceManager(object):
                     module.fail_json(msg="ACM tag filtering err",exception=e)
             
         return results
+
+    # returns the domain name of a certificate (encoded in the public cert)
+    # for a given ARN
+    # A cert with that ARN must already exist
+    def get_domain_of_cert(self,client, module, arn):
+        if arn == None:
+            module.fail(msg="Internal error with ACM domain fetching" % arn)
+        try:
+            cert_data = self.describe_certificate_with_backoff(client=client, certificate_arn=arn)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e,msg="Couldn't obtain certificate data for arn %s" % arn)
+        return(cert_data['DomainName'])
+
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    def import_certificate_with_backoff(self, client, certificate, private_key, certificate_chain, arn):
+        if certificate_chain:
+            if arn:
+                ret = client.import_certificate(Certificate=to_bytes(certificate),
+                                                PrivateKey=to_bytes(private_key),
+                                                CertificateChain=to_bytes(certificate_chain),
+                                                CertificateArn=arn)
+            else:
+                ret = client.import_certificate(Certificate=to_bytes(certificate),
+                                                PrivateKey=to_bytes(private_key),
+                                                CertificateChain=to_bytes(certificate_chain))
+        else:
+            if arn:
+                ret = client.import_certificate(Certificate=to_bytes(certificate),
+                                                PrivateKey=to_bytes(private_key),
+                                                CertificateArn=arn)
+            else:
+                ret = client.import_certificate(Certificate=to_bytes(certificate),
+                                                PrivateKey=to_bytes(private_key))
+        return(ret['CertificateArn'])
+    
+    # Tags are a normal Ansible style dict
+    # {'Key':'Value'}
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    def tag_certificate_with_backoff(self,client, arn, tags):
+        aws_tags = ansible_dict_to_boto3_tag_list(tags)
+        client.add_tags_to_certificate(CertificateArn=arn,Tags=aws_tags)
+
+    def import_certificate(self,client,module,certificate, private_key, arn=None, certificate_chain=None, tags=None):
+        
+        original_arn = arn
+        
+        # upload cert
+        try:
+            arn = self.import_certificate_with_backoff(client, certificate, private_key, certificate_chain, arn)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e,msg="Couldn't upload new certificate")
+            
+        if original_arn and (arn != original_arn):
+            # I'm not sure whether the API guarentees that the ARN will not change
+            # I'm failing just in case.
+            # If I'm wrong, I'll catch it in the integration tests.
+            module.fail_json(msg="ARN changed with ACM update, from %s to %s" % (original_arn,arn))
+            
+        # tag that cert
+        try:
+            self.tag_certificate_with_backoff(client, arn, tags)
+        except botocore.exceptions.ClientError as e:
+            module.debug("Attempting to delete the cert we just created, arn=%s" % arn)
+            try:
+                self.delete_certificate_with_backoff(client,arn)
+            except Exception as f:
+                module.warn("Certificate %s exists, and is not tagged. So Ansible will not see it on the next run.")
+                module.fail_json_aws(e,msg="Couldn't tag certificate %s, couldn't delete it either" % arn)
+            module.fail_json_aws(e,msg="Couldn't tag certificate %s" % arn)
+            
+        return(arn)

@@ -195,6 +195,22 @@
                 "arn:aws:iam::{{ aws_account }}:user/ansible-test*",
                 "arn:aws:iam::{{ aws_account }}:group/ansible-test*"
             ]
+        },
+        {
+            "Sid": "AllowAccessToACM",
+            "Effect": "Allow",
+            "Action": [
+                "acm:ListCertificates",
+                "acm:ImportCertificate",
+                "acm:DescribeCertificate",
+                "acm:GetCertificate",
+                "acm:ListTagsForCertificate",
+                "acm:AddTagsToCertificate",
+                "acm:DeleteCertificate"
+            ],
+            "Resource": [
+                "*"
+            ]
         }
     ]
 }
