@@ -1,21 +1,17 @@
-- block:
-
-    # ============================================================
-    - name: See whether key exists and its current state
-      aws_kms_info:
+- module_defaults:
+    group/aws:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
+        security_token: "{{ security_token | default(omit) }}"
+  block:
+    - name: See whether key exists and its current state
+      aws_kms_info:
         filters:
           alias: "{{ resource_prefix }}-kms"
 
     - name: create a key
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         tags:
           Hello: World
@@ -31,10 +27,6 @@
 
     - name: find facts about the key
       aws_kms_info:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         filters:
           alias: "{{ resource_prefix }}-kms"
       register: new_key
@@ -49,9 +41,6 @@
         name: "{{ resource_prefix }}-kms-role"
         state: present
         assume_role_policy_document: '{"Version": "2012-10-17", "Statement": {"Action": "sts:AssumeRole", "Principal": {"Service": "ec2.amazonaws.com"}, "Effect": "Deny"} }'
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
       register: iam_role_result
 
     - name: grant user-style access to production secrets
@@ -60,17 +49,9 @@
         key_alias: "alias/{{ resource_prefix }}-kms"
         role_name: "{{ resource_prefix }}-kms-role"
         grant_types: "role,role grant"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
 
     - name: find facts about the key
       aws_kms_info:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         filters:
           alias: "{{ resource_prefix }}-kms"
       register: new_key
@@ -80,44 +61,19 @@
         mode: deny
         key_alias: "alias/{{ resource_prefix }}-kms"
         role_arn: "{{ iam_role_result.iam_role.arn }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-        region: "{{ aws_region }}"
 
     - name: find facts about the key
       aws_kms_info:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         filters:
           alias: "{{ resource_prefix }}-kms"
       register: new_key
 
-    - name: set aws environment base fact
-      set_fact:
-        aws_environment_base:
-          AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-          AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-      no_log: True
-
-    - name: set aws environment fact
-      set_fact:
-        aws_environment: "{{ aws_environment_base|combine(security_token|ternary({'AWS_SECURITY_TOKEN': security_token}, {})) }}"
-      no_log: True
-
     - name: get ARN of calling user
       aws_caller_info:
-      environment: "{{ aws_environment }}"
       register: aws_caller_info
 
     - name: Allow the IAM role to use a specific Encryption Context
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         purge_grants: yes
@@ -143,10 +99,6 @@
 
     - name: Add a second grant
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         grants:
@@ -170,10 +122,6 @@
 
     - name: Add a second grant again
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         grants:
@@ -197,10 +145,6 @@
 
     - name: Update the grants with purge_grants set
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         purge_grants: yes
@@ -225,10 +169,6 @@
 
     - name: update third grant to change encryption context equals to subset
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         grants:
@@ -254,10 +194,6 @@
 
     - name: tag encryption key
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         tags:
@@ -275,10 +211,6 @@
 
     - name: add, replace, remove tags
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         purge_tags: yes
@@ -298,10 +230,6 @@
 
     - name: make no real tag change
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
       register: tag_kms_no_update
@@ -317,10 +245,6 @@
 
     - name: update the key's description and disable it
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         description: test key for testing
@@ -336,10 +260,6 @@
 
     - name: delete the key
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: absent
       register: delete_kms
@@ -352,10 +272,6 @@
 
     - name: undelete and enable the key
       aws_kms:
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
         state: present
         enabled: yes
@@ -373,10 +289,6 @@
     - name: finish off by deleting key
       aws_kms:
         state: absent
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
         alias: "{{ resource_prefix }}-kms"
       register: destroy_result
 
@@ -384,7 +296,4 @@
       iam_role:
         name: "{{ resource_prefix }}-kms-role"
         state: absent
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
       register: iam_role_result
