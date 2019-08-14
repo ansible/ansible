@@ -69,8 +69,7 @@ notes:
 
 requirements:
   - "python >= 2.7 when using C(proxy_host)"
-  - "Either cryptography >= 1.6"
-  - "or pyOpenSSL >= 0.15"
+  - "cryptography >= 1.6 or pyOpenSSL >= 0.15"
 '''
 
 RETURN = '''
