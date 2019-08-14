@@ -163,7 +163,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- code_build:
+- aws_codebuild:
     name: my_project
     description: My nice little project
     service_role: "arn:aws:iam::123123:role/service-role/code-build-service-role"
