@@ -44,6 +44,11 @@ options:
     choices: [ present, absent ]
     default: present
     type: str
+  tags:
+    description:
+      - Tags assosiated with the server groups. Set this to C({}) to clear any tags.
+    type: dict
+    version_added: '2.9'
 extends_documentation_fragment: cloudscale
 '''
 
@@ -94,6 +99,12 @@ state:
   returned: always
   type: str
   sample: present
+tags:
+  description: Tags assosiated with the server group.
+  returned: success
+  type: dict
+  sample: { 'project': 'my project' }
+  version_added: '2.9'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -119,21 +130,19 @@ class AnsibleCloudscaleServerGroup(AnsibleCloudscaleBase):
         data = {
             'name': self._module.params.get('name'),
             'type': self._module.params.get('type'),
+            'tags': self._module.params.get('tags'),
         }
         if not self._module.check_mode:
             server_group = self._post('server-groups', data)
         return server_group
 
     def _update_server_group(self, server_group):
-        data = {
-            'name': self._module.params.get('name'),
-        }
-        if server_group['name'] != data['name']:
-            self._result['changed'] = True
+        updated = self._param_updated('name', server_group)
+        updated = self._param_updated('tags', server_group) or updated
 
-            if not self._module.check_mode:
-                self._patch('server-groups/%s' % server_group['uuid'], data)
-                server_group = self.get_server_group()
+        # Refresh if resource was updated in live mode
+        if updated and not self._module.check_mode:
+            server_group = self.get_server_group()
         return server_group
 
     def get_server_group(self):
@@ -184,6 +193,7 @@ def main():
         name=dict(),
         uuid=dict(),
         type=dict(default='anti-affinity'),
+        tags=dict(type='dict'),
         state=dict(default='present', choices=['absent', 'present']),
     ))
 
