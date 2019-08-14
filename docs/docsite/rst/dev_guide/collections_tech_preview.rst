@@ -384,14 +384,14 @@ This works for roles or any type of plugin distributed within the collection:
 
      - hosts: all
        tasks:
+         - import_role:
+	         name: my_namespace.my_collection.role1
+
          - my_namespace.mycollection.mymodule:
              option1: value
 
          - debug:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
-
-       roles:
-         - my_namespace.my_collection.role1
 
 
 To avoid a lot of typing, you can use the ``collections`` keyword added in Ansible 2.8:
@@ -403,14 +403,14 @@ To avoid a lot of typing, you can use the ``collections`` keyword added in Ansib
        collections:
         - my_namespace.my_collection
        tasks:
+         - import_role:
+             name: role1
+
          - mymodule:
              option1: value
 
          - debug:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
-
-       roles:
-         - role1
 
 This keyword creates a 'search path' for non namespaced plugin references. It does not import roles or anything else.
 Notice that you still need the FQCN for non-action or module plugins.
