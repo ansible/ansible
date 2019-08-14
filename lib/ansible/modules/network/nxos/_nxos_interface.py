@@ -3,8 +3,11 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = """
@@ -15,6 +18,10 @@ version_added: "2.1"
 short_description: Manages physical attributes of interfaces.
 description:
   - Manages physical attributes of interfaces of NX-OS switches.
+deprecated:
+  removed_in: '2.13'
+  alternative: nxos_interfaces
+  why: Updated modules released with more functionality
 author:
   - Jason Edelman (@jedelman8)
   - Trishna Guha (@trishnaguha)
