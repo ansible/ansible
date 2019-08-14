@@ -38,7 +38,7 @@ options:
   grafana_repo:
     description:
       - URL to the Grafana plugin repository.
-      - If omitted, grafana-cli will use the default value: L(https://grafana.com/api/plugins).
+      - "If omitted, grafana-cli will use the default value: L(https://grafana.com/api/plugins)."
   grafana_plugin_url:
     description:
       - Full URL to the plugin zip file instead of downloading the file from L(https://grafana.com/api/plugins).
