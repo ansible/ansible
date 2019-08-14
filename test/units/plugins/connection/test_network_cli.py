@@ -111,7 +111,8 @@ class TestConnectionClass(unittest.TestCase):
         self.assertEqual(out, b'command response')
         mock_send.assert_called_with(command=b'command')
 
-    def test_network_cli_send(self):
+    @patch("ansible.plugins.connection.network_cli.Connection._connect")
+    def test_network_cli_send(self, mocked_connect):
         pc = PlayContext()
         pc.network_os = 'ios'
         conn = connection_loader.get('network_cli', pc, '/dev/null')
@@ -131,7 +132,7 @@ class TestConnectionClass(unittest.TestCase):
         """
 
         mock__shell.recv.side_effect = [response, None]
-        output = conn.send(b'command', None, None, None)
+        output = conn.send(b'command')
 
         mock__shell.sendall.assert_called_with(b'command\r')
         self.assertEqual(to_text(conn._command_response), 'command response')
@@ -140,5 +141,5 @@ class TestConnectionClass(unittest.TestCase):
         mock__shell.recv.side_effect = [b"ERROR: error message device#"]
 
         with self.assertRaises(AnsibleConnectionFailure) as exc:
-            conn.send(b'command', None, None, None)
+            conn.send(b'command')
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')
