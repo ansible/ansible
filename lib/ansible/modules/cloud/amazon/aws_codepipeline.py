@@ -72,7 +72,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Example for creating a pipeline for continuous deploy of Github code to an ECS cluster (container)
-- code_pipeline:
+- aws_codepipeline:
     name: my_deploy_pipeline
     role_arn: arn:aws:iam::123456:role/AWS-CodePipeline-Service
     artifact_store:
