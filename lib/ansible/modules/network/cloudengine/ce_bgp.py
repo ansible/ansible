@@ -1683,7 +1683,6 @@ class Bgp(object):
 
         return cmds
 
-
     def create_bgp_instance(self, **kwargs):
         """ create_bgp_instance """
 
