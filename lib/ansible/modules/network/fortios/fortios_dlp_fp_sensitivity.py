@@ -45,12 +45,12 @@ options:
         description:
             - FortiOS or FortiGate IP address.
         type: str
-        required: true
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
         type: str
-        required: true
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
