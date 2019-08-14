@@ -37,7 +37,7 @@ class GalaxyToken(object):
     ''' Class to storing and retrieving local galaxy token '''
 
     def __init__(self):
-        self.b_file = os.path.expanduser(os.path.expandvars(to_bytes(C.GALAXY_TOKEN_PATH)))
+        self.b_file = to_bytes(C.GALAXY_TOKEN_PATH)
         self.config = yaml.safe_load(self.__open_config_for_read())
         if not self.config:
             self.config = {}
