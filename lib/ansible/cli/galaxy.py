@@ -361,7 +361,7 @@ class GalaxyCLI(CLI):
             - namespace.collection
             - name: namespace.collection
               version: version identifier, multiple identifiers are separated by ','
-              source: the URL or prededefined source name in ~/.ansible_galaxy to pull the collection from
+              source: the URL or a predefined source name that relates to C.GALAXY_SERVER_LIST
 
         :param requirements_file: The path to the requirements file.
         :param allow_old_format: Will fail if a v1 requirements file is found and this is set to False.
