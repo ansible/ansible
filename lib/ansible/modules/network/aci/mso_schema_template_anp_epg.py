@@ -19,7 +19,7 @@ description:
 - Manage EPGs in schema templates on Cisco ACI Multi-Site.
 author:
 - Dag Wieers (@dagwieers)
-version_added: '2.9'
+version_added: '2.8'
 options:
   schema:
     description:
