@@ -148,7 +148,7 @@ instance:
             "LocalDS_0"
         ],
         "hw_esxi_host": "DC0_H0",
-        "Network adapter 1": {
+        "network_adapter_1": {
             "addresstype": "generated",
             "ipaddresses": null,
             "label": "ethernet-0",
@@ -164,7 +164,7 @@ instance:
         "hw_guest_ha_state": null,
         "hw_guest_id": "otherGuest",
         "hw_interfaces": [
-            "Network adapter 1"
+            "network_adapter_1"
         ],
         "hw_is_template": false,
         "hw_memtotal_mb": 32,

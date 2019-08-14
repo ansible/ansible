@@ -396,7 +396,7 @@ def gather_vm_facts(content, vm):
             port_group_key = None
             port_key = None
 
-        factname = entry.deviceInfo.label
+        factname = entry.deviceInfo.label.replace(" ", "_").lower()
         facts[factname] = {
             'addresstype': entry.addressType,
             'label': entry.deviceInfo.label,

@@ -132,7 +132,7 @@ What to expect
                 "ds_215"
             ],
             "hw_esxi_host": "192.0.2.44",
-            "Network adapter 1": {
+            "network_adapter_1": {
                 "addresstype": "assigned",
                 "ipaddresses": null,
                 "label": "Network adapter 1",
