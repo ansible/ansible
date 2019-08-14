@@ -224,6 +224,15 @@ class LoginManager(DockerBaseClass):
         (rc, out, err) = self.client.module.run_command(cmd)
         if rc != 0:
             self.fail("Could not log out: %s" % err)
+        if b'Not logged in to ' in out:
+            self.results['changed'] = False
+        elif b'Removing login credentials for ' in out:
+            self.results['changed'] = True
+        else:
+            self.client.module.warn('Unable to determine whether logout was successful.')
+
+        # Adding output to actions, so that user can inspect what was actually returned
+        self.results['actions'].append(to_text(out))
 
     def config_file_exists(self, path):
         if os.path.exists(path):
