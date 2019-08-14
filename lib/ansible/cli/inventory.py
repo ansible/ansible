@@ -83,6 +83,8 @@ class InventoryCLI(CLI):
         # host
         self.parser.add_argument("--unmerge", action="store_true", default=False,
                                  help='Show all vars before merging, ignored unless used with --host')
+        self.parser.add_argument("--filter", action="store",
+                                 help='Show only vars whose path contains FILTER, ignored unless used with --unmerge')
 
         # graph
         self.parser.add_argument("-y", "--yaml", action="store_true", default=False, dest='yaml',
@@ -301,13 +303,14 @@ class InventoryCLI(CLI):
 
         result = []
         for key, values in sorted(unmerged_vars.items()):
-            if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
-                result.append('[{}] {} : {}'.format(InventoryCLI._colorize_entity(values[0][0], host, max_width), key, values[0][1]))
-            else:  # There was several candidates, display the winning one first, and all others in order (starting with the winning one) along with their source
-                result.append('[{}] {} : {}'.format('-' * max_width, key, values[0][1]))
-                local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
-                for entity, value in values:
-                    result.append('    [{}] : {}'.format(InventoryCLI._colorize_entity(entity, host, max_width), value))
+            if context.CLIARGS['filter'] is None or context.CLIARGS['filter'] in key:  # Apply filter if provided
+                if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
+                    result.append('[{}] {} : {}'.format(InventoryCLI._colorize_entity(values[0][0], host, max_width), key, values[0][1]))
+                else:  # There was several candidates, display the winning one first, and all others in order (starting with the winning one) along with their source
+                    result.append('[{}] {} : {}'.format('-' * max_width, key, values[0][1]))
+                    local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
+                    for entity, value in values:
+                        result.append('    [{}] : {}'.format(InventoryCLI._colorize_entity(entity, host, max_width), value))
         return '\n'.join(result)
 
     @staticmethod
