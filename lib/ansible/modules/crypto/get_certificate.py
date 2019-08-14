@@ -344,10 +344,11 @@ def main():
         result['serial_number'] = x509.serial_number
         result['signature_algorithm'] = crypto_utils.cryptography_oid_to_name(x509.signature_algorithm_oid)
 
+        # We need the -1 offset to get the same values as pyOpenSSL
         if x509.version == cryptography.x509.Version.v1:
-            result['version'] = 1
+            result['version'] = 1 - 1
         elif x509.version == cryptography.x509.Version.v3:
-            result['version'] = 3
+            result['version'] = 3 - 1
         else:
             result['version'] = "unknown"
 
