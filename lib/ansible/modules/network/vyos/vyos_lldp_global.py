@@ -41,6 +41,9 @@ module: vyos_lldp_global
 version_added: 2.9
 short_description: Manage link layer discovery protocol (LLDP) attributes on VyOS devices..
 description: This module manages link layer discovery protocol (LLDP) attributes on VyOS devices.
+notes:
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli).
 author:
    - Rohit Thakur (@rohitthakur2590)
 options:
@@ -307,7 +310,9 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=Lldp_globalArgs.argument_spec,
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',))]
+    module = AnsibleModule(argument_spec=Lldp_globalArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
     result = Lldp_global(module).execute_module()

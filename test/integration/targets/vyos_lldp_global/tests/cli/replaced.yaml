@@ -14,7 +14,7 @@
                 - 'edp'
                 - 'sonmp'
                 - 'cdp'
-            address: 198.50.100.55
+            address: 192.0.2.14
         state: replaced
     register: result
 

@@ -1,24 +1,24 @@
 ---
 merged:
   before:
-    address: '198.50.100.60'
+    address: '192.0.2.17'
     enable: true
     legacy_protocols:
         - 'cdp'
 
   commands:
-    - "set service lldp management-address '198.50.100.50'"
+    - "set service lldp management-address '192.0.2.11'"
     - "set service lldp legacy-protocols 'fdp'"
 
   after:
-    address: '198.50.100.50'
+    address: '192.0.2.11'
     enable: true
     legacy_protocols:
       - 'cdp'
       - 'fdp'
 
 populate:
-  address: '198.50.100.60'
+  address: '192.0.2.17'
   enable: true
   legacy_protocols:
     - 'cdp'
@@ -27,10 +27,10 @@ replaced:
   commands:
     - "set service lldp legacy-protocols 'edp'"
     - "set service lldp legacy-protocols 'sonmp'"
-    - "set service lldp management-address '198.50.100.55'"
+    - "set service lldp management-address '192.0.2.14'"
 
   after:
-    address: '198.50.100.55'
+    address: '192.0.2.14'
     enable: true
     legacy_protocols:
       - 'cdp'
@@ -47,7 +47,7 @@ deleted:
 
 round_trip:
   after:
-    address: '198.50.100.55'
+    address: '192.0.2.14'
     enable: true
     legacy_protocols:
       - 'cdp'

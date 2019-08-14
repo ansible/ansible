@@ -13,7 +13,7 @@
             legacy_protocols:
                 - 'fdp'
                 - 'cdp'
-            address: 198.50.100.50
+            address: 192.0.2.11
         state: merged
     register: result
 

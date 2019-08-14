@@ -6,4 +6,4 @@
     lines: |
       set service lldp
       set service lldp legacy-protocols 'cdp'
-      set service lldp management-address '198.50.100.60'
+      set service lldp management-address '192.0.2.17'
