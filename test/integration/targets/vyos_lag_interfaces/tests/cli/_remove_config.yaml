@@ -1,0 +1,14 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      delete interfaces bonding bond0 hash-policy
+      delete interfaces ethernet eth1 bond-group bond0
+      delete interfaces bonding bond0 mode
+      delete interfaces bonding bond0 primary
+      delete interfaces bonding bond1 hash-policy
+      delete interfaces ethernet eth2 bond-group bond1
+      delete interfaces bonding bond1 mode
+      delete interfaces bonding bond1 primary

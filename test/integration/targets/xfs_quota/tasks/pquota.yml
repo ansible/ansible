@@ -1,11 +1,11 @@
 ---
 - name: 'Create disk image'
   command: >
-    dd if=/dev/zero of={{ ansible_user_dir }}/ansible_testing/img-pquota bs=1M count=20
+    dd if=/dev/zero of={{ remote_tmp_dir }}/img-pquota bs=1M count=20
 
 - name: 'Create XFS filesystem'
   filesystem:
-    dev: '{{ ansible_user_dir }}/ansible_testing/img-pquota'
+    dev: '{{ remote_tmp_dir }}/img-pquota'
     fstype: xfs
 
 - name: Create xfs related files
@@ -27,16 +27,16 @@
 - name: 'Add test xfs quota project path'
   lineinfile:
     path: /etc/projects
-    line: '99999:{{ ansible_user_dir }}/ansible_testing/pquota/test'
+    line: '99999:{{ remote_tmp_dir }}/pquota/test'
     state: present
   become: True
 
 - block:
     - name: 'Mount filesystem'
       mount:
-        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
-        src: '{{ ansible_user_dir }}/ansible_testing/img-pquota'
-        path: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        src: '{{ remote_tmp_dir }}/img-pquota'
+        path: '{{ remote_tmp_dir }}/pquota'
         fstype: xfs
         opts: pquota
         state: mounted
@@ -44,7 +44,7 @@
 
     - name: 'Create test directory'
       file:
-        path: '{{ ansible_user_dir }}/ansible_testing/pquota/test'
+        path: '{{ remote_tmp_dir }}/pquota/test'
         state: directory
       become: True
 
@@ -55,7 +55,7 @@
         bhard: '{{ pquota_default_bhard }}'
         isoft: '{{ pquota_default_isoft }}'
         ihard: '{{ pquota_default_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
         rtbsoft: '{{ pquota_default_rtbsoft }}'
         rtbhard: '{{ pquota_default_rtbhard }}'
         type: project 
@@ -79,7 +79,7 @@
         bhard: '{{ pquota_project_bhard }}'
         isoft: '{{ pquota_project_isoft }}'
         ihard: '{{ pquota_project_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
         name: xft_quotaval
         rtbsoft: '{{ pquota_project_rtbsoft }}'
         rtbhard: '{{ pquota_project_rtbhard }}'
@@ -104,7 +104,7 @@
         bhard: '{{ pquota_default_bhard }}'
         isoft: '{{ pquota_default_isoft }}'
         ihard: '{{ pquota_default_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
         rtbsoft: '{{ pquota_default_rtbsoft }}'
         rtbhard: '{{ pquota_default_rtbhard }}'
         type: project
@@ -122,7 +122,7 @@
         bhard: '{{ pquota_project_bhard }}'
         isoft: '{{ pquota_project_isoft }}'
         ihard: '{{ pquota_project_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
         name: xft_quotaval
         rtbsoft: '{{ pquota_project_rtbsoft }}'
         rtbhard: '{{ pquota_project_rtbhard }}'
@@ -137,7 +137,7 @@
 
     - name: 'Reset default project limits'
       xfs_quota:
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
         state: absent
         type: project
       become: True
@@ -156,7 +156,7 @@
 
     - name: 'Reset project limits for xft_quotaval'
       xfs_quota:
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
         name: xft_quotaval
         state: absent
         type: project
@@ -177,14 +177,14 @@
   always:
     - name: 'Unmount filesystem'
       mount:
-        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
-        path: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        path: '{{ remote_tmp_dir }}/pquota'
         state: unmounted
       become: True
 
     - name: Remove disk image
       file:
-        path: '{{ ansible_user_dir }}/ansible_testing/img-pquota'
+        path: '{{ remote_tmp_dir }}/img-pquota'
         state: absent
 
     - name: Remove xfs quota project id

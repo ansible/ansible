@@ -56,7 +56,8 @@ def enable_ph(module, array):
     changed = False
     if array.get_phonehome()['phonehome'] != 'enabled':
         try:
-            array.enable_phonehome()
+            if not module.check_mode:
+                array.enable_phonehome()
             changed = True
         except Exception:
             module.fail_json(msg='Enabling Phonehome failed')
@@ -68,7 +69,8 @@ def disable_ph(module, array):
     changed = False
     if array.get_phonehome()['phonehome'] == 'enabled':
         try:
-            array.disable_phonehome()
+            if not module.check_mode:
+                array.disable_phonehome()
             changed = True
         except Exception:
             module.fail_json(msg='Disabling Remote Assist failed')
@@ -82,7 +84,7 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec,
-                           supports_check_mode=False)
+                           supports_check_mode=True)
 
     array = get_system(module)
 

@@ -194,8 +194,8 @@ def install_command_requirements(args, python_version=None):
     :type python_version: str | None
     """
     if not args.explain:
-        make_dirs('test/results/coverage')
-        make_dirs('test/results/data')
+        make_dirs(os.path.join(data_context().results, 'coverage'))
+        make_dirs(os.path.join(data_context().results, 'data'))
 
     if isinstance(args, ShellConfig):
         if args.raw:
@@ -1001,14 +1001,15 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
         if not args.explain:
             if args.coverage:
                 coverage_temp_path = os.path.join(common_temp_path, COVERAGE_OUTPUT_NAME)
-                coverage_save_path = 'test/results/coverage'
+                coverage_save_path = os.path.join(data_context().results, 'coverage')
 
                 for filename in os.listdir(coverage_temp_path):
                     shutil.copy(os.path.join(coverage_temp_path, filename), os.path.join(coverage_save_path, filename))
 
             remove_tree(common_temp_path)
 
-            results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+            results_path = os.path.join(data_context().results, 'data', '%s-%s.json' % (
+                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0)))))
 
             data = dict(
                 targets=results,
@@ -1199,7 +1200,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
 
     integration = dict(
-        JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
+        JUNIT_OUTPUT_DIR=os.path.join(data_context().results, 'junit'),
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),

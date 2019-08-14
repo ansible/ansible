@@ -31,7 +31,7 @@ import json
 import os
 import time
 
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
@@ -599,9 +599,12 @@ def is_json(cmd):
 
 
 def is_local_eapi(module):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    return 'eapi' in (transport, provider_transport)
+    transports = []
+    transports.append(module.params.get('transport', ""))
+    provider = module.params.get('provider')
+    if provider:
+        transports.append(provider.get('transport', ""))
+    return 'eapi' in transports
 
 
 def to_command(module, commands):

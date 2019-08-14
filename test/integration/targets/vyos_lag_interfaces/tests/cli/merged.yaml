@@ -1,0 +1,60 @@
+---
+- debug:
+      msg: "START vyos_lag_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _remove_bond.yaml
+
+- include_tasks: _add_bond.yaml
+
+- block:
+  - name: Merge the provided configuration with the exisiting running configuration
+    vyos_lag_interfaces: &merged
+        config:
+            - name: bond0
+              hash_policy: "layer2"
+              mode: "active-backup"
+              members:
+                  - member: eth1
+              primary: eth1
+
+            - name: bond1
+              hash_policy: "layer2+3"
+              mode: "active-backup"
+              members:
+                  - member: eth2
+              primary: eth2
+        state: merged
+    register: result
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
+
+  - name: Assert that correct set of commands were generated
+    assert:
+        that:
+            - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Assert that after dicts was correctly generated
+    assert:
+        that:
+            - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+    vyos_lag_interfaces: *merged
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+        that:
+            - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+  always:
+  - include_tasks: _remove_config.yaml

@@ -24,6 +24,10 @@ from .util import (
     ANSIBLE_TEST_DATA_ROOT,
 )
 
+from .data import (
+    data_context,
+)
+
 
 class CommonConfig:
     """Configuration common to all commands."""
@@ -159,7 +163,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
         # config is in a temporary directory
         # results are in the source tree
         coverage_config_base_path = args.coverage_config_base_path
-        coverage_output_base_path = os.path.abspath(os.path.join('test/results'))
+        coverage_output_base_path = data_context().results
     else:
         raise Exception('No temp path and no coverage config base path. Check for missing coverage_context usage.')
 

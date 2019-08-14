@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import os
-
 from units.compat import unittest
 from units.compat.mock import Mock, patch
 

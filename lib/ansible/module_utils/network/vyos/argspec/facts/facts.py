@@ -4,8 +4,6 @@
 """
 The arg spec for the vyos facts module.
 """
-
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -22,7 +20,9 @@ class FactsArgs(object):  # pylint: disable=R0903
         'interfaces',
         '!interfaces',
         'l3_interfaces',
-        '!l3_interfaces'
+        '!l3_interfaces',
+        'lag_interfaces',
+        '!lag_interfaces'
     ]
 
     argument_spec = {

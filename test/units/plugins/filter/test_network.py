@@ -26,8 +26,6 @@ from units.compat import unittest
 from ansible.plugins.filter.network import (HAS_PASSLIB, parse_xml, type5_pw, hash_salt,
                                             comp_type5, vlan_parser)
 
-from ansible.errors import AnsibleFilterError
-
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'network')
 
 with open(os.path.join(fixture_path, 'show_vlans_xml_output.txt')) as f:

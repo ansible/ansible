@@ -53,7 +53,7 @@ files:
   $modules/cloud/amazon/cloudformation.py:
     maintainers: ryansb
     ignored: tedder
-  $modules/cloud/amazon/cloudfront_facts.py: willthames
+  $modules/cloud/amazon/cloudfront_info.py: willthames
   $modules/cloud/amazon/cloudtrail.py: $team_ansible
   $modules/cloud/amazon/ec2.py:
     maintainers: $team_ansible
@@ -82,7 +82,7 @@ files:
   $modules/cloud/amazon/ecs_cluster.py: willthames
   $modules/cloud/amazon/ecs_ecr.py: willthames
   $modules/cloud/amazon/ecs_service.py: willthames
-  $modules/cloud/amazon/ecs_service_facts.py: willthames
+  $modules/cloud/amazon/ecs_service_info.py: willthames
   $modules/cloud/amazon/ecs_task.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition_info.py: willthames

@@ -9,7 +9,6 @@ __metaclass__ = type
 
 import pytest
 
-from .FakeAnsibleModule import FailJsonException
 from .common import testcase_bad_xenapi_refs
 
 

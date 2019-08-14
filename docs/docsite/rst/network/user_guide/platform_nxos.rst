@@ -11,29 +11,38 @@ Cisco NXOS supports multiple connections. This page offers details on how each c
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-|..                         | CLI                                           | NX-API                                  |
-+===========================+===============================================+=========================================+
-| **Protocol**              |  SSH                                          | HTTP(S)                                 |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        | | uses HTTPS certificates if present    |
-| |                         | | accepts ``-u myuser -k`` if using password  | |                                       |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                         |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         | | * ``ansible_connection: httpapi``     |
-| |                         | |                                             | | OR                                    |
-| |                         | |                                             | |                                       |
-| |                         | |                                             | | * ``ansible_connection: local``       |
-| |                         | |                                             | |    with ``transport: nxapi``          |
-| |                         | |                                             | |    in the ``provider`` dictionary     |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | not supported by NX-API               |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | |                                       |
-| | supported as of 2.5.3   | | and ``ansible_become_password:``            | |                                       |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
+.. table::
+    :widths: auto
+    :class: documentation-table
+
+    ====================  ==========================================  =========================
+    ..                    CLI                                         NX-API
+    ====================  ==========================================  =========================
+    Protocol              SSH                                         HTTP(S)
+
+    Credentials           uses SSH keys / SSH-agent if present        uses HTTPS certificates if
+                                                                      present
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)                   via a web proxy
+
+    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: httpapi``
+
+                                                                      OR
+
+                                                                      ``ansible_connection: local``
+                                                                      with ``transport: nxapi``
+                                                                      in the ``provider`` dictionary
+
+    |enable_mode|         supported: use ``ansible_become: yes``      not supported by NX-API
+                          with ``ansible_become_method: enable``
+                          and ``ansible_become_password:``
+
+    Returned Data Format  ``stdout[0].``                              ``stdout[0].messages[0].``
+    ====================  ==========================================  =========================
+
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation) |br| supported as of 2.5.3
+
 
 For legacy playbooks, NXOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` as soon as possible.
 

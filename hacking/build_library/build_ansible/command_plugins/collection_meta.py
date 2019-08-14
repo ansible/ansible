@@ -12,16 +12,24 @@ import pathlib
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
 
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
-from ..jinja2.filters import documented_type, html_ify  # pylint: disable=relative-beyond-top-level
+from ..jinja2.filters import documented_type, rst_ify  # pylint: disable=relative-beyond-top-level
 
 
 DEFAULT_TEMPLATE_FILE = 'collections_galaxy_meta.rst.j2'
 DEFAULT_TEMPLATE_DIR = pathlib.Path(__file__).parents[4] / 'docs/templates'
+
+
+def normalize_options(options):
+    """Normalize the options to make for easy templating"""
+    for opt in options:
+        if isinstance(opt['description'], string_types):
+            opt['description'] = [opt['description']]
 
 
 class DocumentCollectionMeta(Command):
@@ -51,12 +59,14 @@ class DocumentCollectionMeta(Command):
         with open(args.collection_defs) as f:
             options = yaml.safe_load(f)
 
+        normalize_options(options)
+
         env = Environment(loader=FileSystemLoader(template_dir),
                           variable_start_string="@{",
                           variable_end_string="}@",
                           trim_blocks=True)
         env.filters['documented_type'] = documented_type
-        env.filters['html_ify'] = html_ify
+        env.filters['rst_ify'] = rst_ify
 
         template = env.get_template(template_file)
         output_name = os.path.join(output_dir, template_file.replace('.j2', ''))

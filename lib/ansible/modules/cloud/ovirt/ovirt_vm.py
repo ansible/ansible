@@ -522,21 +522,25 @@ options:
         description:
             - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
                if I(False) it will be used for run once."
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         type: bool
         version_added: "2.8"
     kernel_path:
         description:
             - Path to a kernel image used to boot the virtual machine.
             - Kernel image must be stored on either the ISO domain or on the host's storage.
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     initrd_path:
         description:
             - Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option.
             - Ramdisk image must be stored on either the ISO domain or on the host's storage.
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     kernel_params:
         description:
             - Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option.
+            - Usable with oVirt 4.3 and lower; removed in oVirt 4.4.
         version_added: "2.3"
     instance_type:
         description:
@@ -830,11 +834,6 @@ options:
             - "Source VM to clone VM from."
             - "VM should have snapshot specified by C(snapshot)."
             - "If C(snapshot_name) specified C(snapshot_vm) is required."
-        version_added: "2.9"
-    template_cluster:
-        description:
-            - "Template cluster name. When not defined C(cluster) is used."
-            - "Allows you to create virtual machine in diffrent cluster than template cluster name."
         version_added: "2.9"
 
 notes:
@@ -1251,6 +1250,7 @@ from ansible.module_utils.ovirt import (
     search_by_attributes,
     search_by_name,
     wait,
+    engine_supported,
 )
 
 
@@ -1270,14 +1270,12 @@ class VmsModule(BaseModule):
         template = None
         templates_service = self._connection.system_service().templates_service()
         if self.param('template'):
-            cluster = self.param('template_cluster') if self.param('template_cluster') else self.param('cluster')
+            clusters_service = self._connection.system_service().clusters_service()
+            cluster = search_by_name(clusters_service, self.param('cluster'))
+            data_center = self._connection.follow_link(cluster.data_center)
             templates = templates_service.list(
-                search='name=%s and cluster=%s' % (self.param('template'), cluster)
+                search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
             )
-            if not templates:
-                templates = templates_service.list(
-                    search='name=%s' % self.param('template')
-                )
             if self.param('template_version'):
                 templates = [
                     t for t in templates
@@ -1285,10 +1283,10 @@ class VmsModule(BaseModule):
                 ]
             if not templates:
                 raise ValueError(
-                    "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
+                    "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
                         self.param('template'),
                         self.param('template_version'),
-                        cluster
+                        data_center.name
                     )
                 )
             template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
@@ -2258,6 +2256,15 @@ def import_vm(module, connection):
     return True
 
 
+def check_deprecated_params(module, connection):
+    if engine_supported(connection, '4.4') and \
+            (module.params.get('kernel_params_persist') is not None or
+             module.params.get('kernel_path') is not None or
+             module.params.get('initrd_path') is not None or
+             module.params.get('kernel_params') is not None):
+        module.warn("Parameters 'kernel_params_persist', 'kernel_path', 'initrd_path', 'kernel_params' are not supported since oVirt 4.4.")
+
+
 def control_state(vm, vms_service, module):
     if vm is None:
         return
@@ -2308,7 +2315,6 @@ def main():
         cluster=dict(type='str'),
         allow_partial_import=dict(type='bool'),
         template=dict(type='str'),
-        template_cluster=dict(type='str'),
         template_version=dict(type='int'),
         use_latest_template_version=dict(type='bool'),
         storage_domain=dict(type='str'),
@@ -2407,6 +2413,7 @@ def main():
         state = module.params['state']
         auth = module.params.pop('auth')
         connection = create_connection(auth)
+        check_deprecated_params(module, connection)
         vms_service = connection.system_service().vms_service()
         vms_module = VmsModule(
             connection=connection,

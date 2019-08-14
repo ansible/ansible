@@ -284,6 +284,13 @@ options:
     - To get out of this situation, the admin needs to manually clear the 'in-nvfailed-state' on the volume's constituents.
     type: bool
     version_added: '2.9'
+
+  vserver_dr_protection:
+    description:
+    - Specifies the protection type for the volume in a Vserver DR setup.
+    choices: ['protected', 'unprotected']
+    type: str
+    version_added: '2.9'
 '''
 
 EXAMPLES = """
@@ -387,6 +394,16 @@ EXAMPLES = """
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
+    - name: Modify volume dr protection (vserver of the volume must be in a snapmirror relationship)
+      na_ontap_volume:
+        state: present
+        name: ansibleVolume
+        vserver_dr_protection: protected
+        vserver: "{{ vserver }}"
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        https: False
 
 """
 
@@ -462,7 +479,8 @@ class NetAppOntapVolume(object):
             nvfail_enabled=dict(type='bool', required=False),
             space_slo=dict(type='str', required=False, choices=['none', 'thick', 'semi-thick']),
             tiering_policy=dict(type='str', required=False, choices=['snapshot-only', 'auto',
-                                                                     'backup', 'none'])
+                                                                     'backup', 'none']),
+            vserver_dr_protection=dict(type='str', required=False, choices=['protected', 'unprotected'])
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -598,6 +616,12 @@ class NetAppOntapVolume(object):
             else:
                 return_value['qos_policy_group'] = None
                 return_value['qos_adaptive_policy_group'] = None
+            if volume_attributes.get_child_by_name('volume-vserver-dr-protection-attributes'):
+                volume_vserver_dr_protection_attributes = volume_attributes['volume-vserver-dr-protection-attributes']
+                if volume_vserver_dr_protection_attributes.get_child_by_name('vserver-dr-protection'):
+                    return_value['vserver_dr_protection'] = volume_vserver_dr_protection_attributes['vserver-dr-protection']
+                else:
+                    return_value['vserver_dr_protection'] = None
 
         return return_value
 
@@ -702,6 +726,8 @@ class NetAppOntapVolume(object):
             options['tiering-policy'] = self.parameters['tiering_policy']
         if self.parameters.get('encrypt'):
             options['encrypt'] = str(self.parameters['encrypt'])
+        if self.parameters.get('vserver_dr_protection'):
+            options['vserver-dr-protection'] = self.parameters['vserver_dr_protection']
         return options
 
     def delete_volume(self):
@@ -877,10 +903,10 @@ class NetAppOntapVolume(object):
                                          'is-atime-update-enabled', self.parameters['atime_update'])
         # volume-qos-attributes
         if self.parameters.get('qos_policy_group'):
-            self.create_volume_attribute(vol_mod_attributes, 'volumes-qos-attributes',
+            self.create_volume_attribute(vol_mod_attributes, 'volume-qos-attributes',
                                          'policy-group-name', self.parameters['qos_policy_group'])
         if self.parameters.get('qos_adaptive_policy_group'):
-            self.create_volume_attribute(vol_mod_attributes, 'volumes-qos-attributes',
+            self.create_volume_attribute(vol_mod_attributes, 'volume-qos-attributes',
                                          'adaptive-policy-group-name', self.parameters['qos_adaptive_policy_group'])
         # volume-comp-aggr-attributes
         if params and params.get('tiering_policy'):
@@ -889,6 +915,10 @@ class NetAppOntapVolume(object):
         # volume-state-attributes
         if self.parameters.get('nvfail_enabled') is not None:
             self.create_volume_attribute(vol_mod_attributes, 'volume-state-attributes', 'is-nvfail-enabled', str(self.parameters['nvfail_enabled']))
+        # volume-dr-protection-attributes
+        if self.parameters.get('vserver_dr_protection') is not None:
+            self.create_volume_attribute(vol_mod_attributes, 'volume-vserver-dr-protection-attributes',
+                                         'vserver-dr-protection', self.parameters['vserver_dr_protection'])
         # End of Volume-attributes sub attributes
         attributes.add_child_elem(vol_mod_attributes)
         query = netapp_utils.zapi.NaElement('query')
@@ -977,7 +1007,7 @@ class NetAppOntapVolume(object):
                 self.move_volume()
             if attribute in ['space_guarantee', 'policy', 'unix_permissions', 'tiering_policy',
                              'snapshot_policy', 'percent_snapshot_space', 'snapdir_access', 'atime_update',
-                             'nvfail_enabled', 'space_slo', 'qos_policy_group', 'qos_adaptive_policy_group']:
+                             'nvfail_enabled', 'space_slo', 'qos_policy_group', 'qos_adaptive_policy_group', 'vserver_dr_protection']:
                 self.volume_modify_attributes(modify)
             if attribute == 'junction_path':
                 if modify.get('junction_path') == '':
