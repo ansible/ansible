@@ -1,5 +1,25 @@
 - block:
 
-    - include_tasks: ../tests/validate.yml
+  - include_tasks: ../tests/validate.yml
+    vars:
+      select_crypto_backend: pyopenssl
 
   when: pyopenssl_version.stdout is version('0.15', '>=')
+
+- name: Remove output directory
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+
+- name: Re-create output directory
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+
+- block:
+
+  - include_tasks: ../tests/validate.yml
+    vars:
+      select_crypto_backend: cryptography
+
+  when: cryptography_version.stdout is version('0.5', '>=')
