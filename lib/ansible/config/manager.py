@@ -38,6 +38,8 @@ Setting = namedtuple('Setting', 'name value origin type')
 
 INTERNAL_DEFS = {'lookup': ('_terms',)}
 
+CHECK_TEMPLATING = ('inventory',)
+
 
 def _get_entry(plugin_type, plugin_name, config):
     ''' construct entry for requested config '''
@@ -51,7 +53,7 @@ def _get_entry(plugin_type, plugin_name, config):
 
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
-def ensure_type(value, value_type, origin=None):
+def ensure_type(value, value_type, origin=None, templar=None):
     ''' return a configuration variable with casting
     :arg value: The value to ensure correct typing of
     :kwarg value_type: The type of the value.  This can be any of the following strings:
@@ -84,6 +86,13 @@ def ensure_type(value, value_type, origin=None):
 
     if value_type:
         value_type = value_type.lower()
+
+    if templar is not None and templar.is_template(value):
+        value = templar.template(value)
+
+    if getattr(value, '__ENCRYPTED__', False):
+        # trigger decryption via __unicode__ or __str__
+        value = to_text(value)
 
     if value is not None:
         if value_type in ('boolean', 'bool'):
@@ -340,12 +349,15 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
-    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
+    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None, templar=None):
 
         options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
+
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
+            options[option] = self.get_config_value(
+                option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct, templar=templar
+            )
 
         return options
 
@@ -401,19 +413,19 @@ class ConfigManager(object):
 
         return value, origin
 
-    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
+    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, templar=None):
         ''' wrapper '''
 
         try:
             value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
-                                                            keys=keys, variables=variables, direct=direct)
+                                                            keys=keys, variables=variables, direct=direct, templar=templar)
         except AnsibleError:
             raise
         except Exception as e:
             raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, templar=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
         if cfile is None:
             # use default config
@@ -489,14 +501,17 @@ class ConfigManager(object):
                         if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
                             return value, origin
 
+            if plugin_type not in CHECK_TEMPLATING or not templar or not defs[config].get('template_supported', True):
+                templar = None
+
             # ensure correct type, can raise exceptions on mismatched types
             try:
-                value = ensure_type(value, defs[config].get('type'), origin=origin)
+                value = ensure_type(value, defs[config].get('type'), origin=origin, templar=templar)
             except ValueError as e:
                 if origin.startswith('env:') and value == '':
                     # this is empty env var for non string so we can set to default
                     origin = 'default'
-                    value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
+                    value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin, templar=templar)
                 else:
                     raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
                                               (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))

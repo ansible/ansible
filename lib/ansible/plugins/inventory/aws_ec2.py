@@ -258,6 +258,7 @@ instance_data_filter_to_boto_attr = {
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'aws_ec2'
+    TEMPLATE_OPTIONS = True
 
     def __init__(self):
         super(InventoryModule, self).__init__()

@@ -149,6 +149,7 @@ def get_cache_plugin(plugin_name, **kwargs):
 class BaseInventoryPlugin(AnsiblePlugin):
     """ Parses an Inventory Source"""
 
+    TEMPLATE_OPTIONS = False
     TYPE = 'generator'
     _sanitize_group_name = staticmethod(to_safe_group_name)
 
@@ -161,21 +162,8 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.display = display
         self.templar = None
 
-    def get_option(self, option):
-
-        value = super(BaseInventoryPlugin, self).get_option(option)
-
-        if self.templar.is_template(value):
-            value = self.templar.template(value)
-
-        if getattr(value, '__ENCRYPTED__', False):
-            # trigger decryption via __str__
-            value = to_text(value, nonstring='passthru')
-
-        return value
-
     def set_templating_variables(self, variables):
-        self.template.available_variables = variables
+        self.templar.available_variables = variables
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates inventory from the given data. Raises an error on any parse failure

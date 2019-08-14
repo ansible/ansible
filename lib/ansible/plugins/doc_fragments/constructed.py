@@ -19,12 +19,15 @@ options:
     description: Create vars from jinja2 expressions.
     type: dict
     default: {}
+    template_supported: False
   groups:
     description: Add hosts to group based on Jinja2 conditionals.
     type: dict
     default: {}
+    template_supported: False
   keyed_groups:
     description: Add hosts to group based on the values of a variable.
     type: list
     default: []
+    template_supported: False
 '''
