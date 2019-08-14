@@ -69,8 +69,8 @@ options:
         - The template that defines the referenced BD.
         type: str
   vrf:
-    description:
     version_added: '2.9'
+    description:
     - The VRF associated to this ANP.
     type: dict
     suboptions:
