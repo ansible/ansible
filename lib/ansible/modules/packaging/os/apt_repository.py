@@ -61,6 +61,10 @@ options:
             - Override the distribution codename to use for PPA repositories.
               Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
         version_added: '2.3'
+    apt_key_options:
+        description:
+            - additional options for apt-key adv
+        version_added: '2.9'
 author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
@@ -100,6 +104,13 @@ EXAMPLES = '''
 - apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
+
+# Add ppa repo with http-proxy
+- apt_repository:
+    repo: 'ppa:nginx/stable'
+    apt_key_options:
+        - --keyserver-options
+        - http-proxy=http://localhost:3128
 '''
 
 import glob
@@ -164,6 +175,7 @@ class InvalidSource(Exception):
 # Simple version of aptsources.sourceslist.SourcesList.
 # No advanced logic and no backups inside.
 class SourcesList(object):
+
     def __init__(self, module):
         self.module = module
         self.files = {}  # group sources by file
@@ -431,7 +443,10 @@ class UbuntuSourcesList(SourcesList):
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
                 if not self._key_already_exists(info['signing_key_fingerprint']):
-                    command = ['apt-key', 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
+                    command = ['apt-key', 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80']
+                    apt_key_options = self.module.params.get('apt_key_options', [])
+                    command += apt_key_options
+                    command.append(info['signing_key_fingerprint'])
                     self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
@@ -490,6 +505,7 @@ def main():
             install_python_apt=dict(type='bool', default=True),
             validate_certs=dict(type='bool', default=True),
             codename=dict(type='str'),
+            apt_key_options=dict(type='list'),
         ),
         supports_check_mode=True,
     )
