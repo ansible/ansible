@@ -87,7 +87,16 @@ This test also accepts a 3rd parameter, ``strict`` which defines if strict versi
 
     {{ sample_version_var is version('1.0', operator='lt', strict=True) }}
 
+Use the bare variable names in a when statement to prevent warnings on included jinja2:
 
+    vars:
+        my_version: 1.2.3
+
+    tasks:
+        - debug:
+            msg: "my_version is higher than 1.0.0"
+          when: my_version is version('1.0.0', '>')
+ 
 .. _math_tests:
 
 Set theory tests
