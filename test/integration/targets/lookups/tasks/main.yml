@@ -4,6 +4,9 @@
 
 # FILE LOOKUP
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: make a new file to read
   copy: dest={{output_dir}}/foo.txt mode=0644 content="bar"
 

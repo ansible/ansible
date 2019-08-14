@@ -1,2 +1,1 @@
-output_dir: .
 etest: 'from -e'
