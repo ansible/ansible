@@ -39,6 +39,7 @@ options:
     description:
       - Object name.
     type: str
+    required: True
   subnet:
     description:
       - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
@@ -146,10 +147,6 @@ options:
       - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
         omitted - warnings will also be ignored.
     type: bool
-  uid:
-    description:
-      - Object unique identifier.
-    type: str
   new_name:
     description:
       - New name of the object.
@@ -200,7 +197,7 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
-        name=dict(type='str'),
+        name=dict(type='str', required=True),
         subnet=dict(type='str'),
         subnet4=dict(type='str'),
         subnet6=dict(type='str'),
@@ -231,14 +228,11 @@ def main():
         groups=dict(type='list'),
         ignore_warnings=dict(type='bool'),
         ignore_errors=dict(type='bool'),
-        uid=dict(type='str'),
         new_name=dict(type='str')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
-                           mutually_exclusive=[['name', 'uid']],
-                           supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
     api_call_object = 'network'
 
     result = api_call(module, api_call_object)
