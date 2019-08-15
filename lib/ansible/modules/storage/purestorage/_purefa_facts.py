@@ -8,13 +8,17 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: purefa_facts
 version_added: '2.6'
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favor of C(_info) module.
+  alternative: Use M(purefa_info) instead.
 short_description: Collect facts from Pure Storage FlashArray
 description:
   - Collect facts information from a Pure Storage Flasharray running the
