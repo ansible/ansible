@@ -25,6 +25,7 @@ options:
       - If a certificate with this ARN exists in a different region, this task will fail
     aliases:
      - arn
+    version_added: '2.9'
   domain_name:
     description:
       - The domain name of an ACM certificate to limit the search to
@@ -41,6 +42,7 @@ options:
     description:
       - Filter results to show only certificates with tags that match all the tags specified here.
     type: dict
+    version_added: '2.9'
 requirements:
   - boto3
 author:
@@ -260,6 +262,7 @@ certificates:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.aws.acm import ACMServiceManager
+
 
 def main():
     argument_spec = dict(
