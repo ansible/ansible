@@ -249,7 +249,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_platform(self, host):
         try:
-            return [self.platforms_lookup[host["platform"]["id"]]] if !self.use_slugs else [self.platforms_slug_lookup[host["platform"]["id"]]]
+            return [self.platforms_slug_lookup[host["platform"]["id"]]] if self.use_slugs else [self.platforms_lookup[host["platform"]["id"]]]
         except Exception:
             return
 
@@ -267,7 +267,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_site(self, host):
         try:
-            return [self.sites_lookup[host["site"]["id"]]] if !self.use_slugs else [self.sites_slug_lookup[host["site"]["id"]]]
+            return [self.sites_slug_lookup[host["site"]["id"]]] if self.use_slugs else [self.sites_lookup[host["site"]["id"]]]
         except Exception:
             return
 
@@ -280,9 +280,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_device_role(self, host):
         try:
             if 'device_role' in host:
-                return [self.device_roles_lookup[host["device_role"]["id"]]] if !self.use_slugs else [self.device_roles_slug_lookup[host["device_role"]["id"]]]
+                return [self.device_roles_slug_lookup[host["device_role"]["id"]]] if self.use_slugs else [self.device_roles_lookup[host["device_role"]["id"]]]
             elif 'role' in host:
-                return [self.device_roles_lookup[host["role"]["id"]]] if !self.use_slugs else [self.device_roles_slug_lookup[host["role"]["id"]]]
+                return [self.device_roles_slug_lookup[host["role"]["id"]]] if self.use_slugs else [self.device_roles_lookup[host["role"]["id"]]]
         except Exception:
             return
 
@@ -315,13 +315,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_manufacturer(self, host):
         try:
-            return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]] if !self.use_slugs else [self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]]
+            return [self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]] if self.use_slugs else [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
 
     def extract_region(self, host):
         try:
-            return [self.sites_region_lookup[host["site"]["id"]]] if !self.use_slugs else [self.sites_region_slug_lookup[host["site"]["id"]]]
+            return [self.sites_region_slug_lookup[host["site"]["id"]]] if self.use_slugs else [self.sites_region_lookup[host["site"]["id"]]]
         except Exception:
             return
 
