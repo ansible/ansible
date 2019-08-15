@@ -144,7 +144,6 @@ def map_obj_to_commands(updates, module):
         name = w['name']
         address = w['address']
         state = w['state']
-        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(vlan_id, have)
 
