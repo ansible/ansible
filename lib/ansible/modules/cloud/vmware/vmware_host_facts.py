@@ -192,7 +192,7 @@ class VMwareHostFactManager(PyVmomi):
         if self.params.get('show_tag'):
             ansible_facts.update(self.get_tag_facts())
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
-
+    
     def get_cluster_facts(self):
         cluster_facts = {'cluster': None}
         if self.host.parent and isinstance(self.host.parent, vim.ClusterComputeResource):
@@ -262,6 +262,7 @@ class VMwareHostFactManager(PyVmomi):
         return facts
 
     def get_system_facts(self):
+        
         sn = 'NA'
         for info in self.host.hardware.systemInfo.otherIdentifyingInfo:
             if info.identifierType.key == 'ServiceTag':
@@ -277,6 +278,7 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_product_serial': sn,
             'ansible_bios_date': self.host.hardware.biosInfo.releaseDate,
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
+            'ansible_uptime': self.host.summary.quickStats.uptime,
             'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
         }
         return facts
