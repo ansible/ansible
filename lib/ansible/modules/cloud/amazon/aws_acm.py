@@ -300,7 +300,7 @@ def main():
             if 'certificate' not in old_cert:
                 # shouldn't happen
                 module.fail_json(msg="Internal error, unsure what the existing cert in ACM is", certificate=old_cert)
-    
+
             # Are the existing certificate in ACM and the local certificate the same?
             same = True
             same &= pem_compare(old_cert['certificate'], module.params['certificate'])
@@ -312,14 +312,14 @@ def main():
                 # When there is no chain with a cert
                 # it seems Amazon returns the cert itself as the chain
                 same &= pem_compare(old_cert['certificate_chain'], module.params['certificate'])
-    
+
             if same:
                 module.debug("Existing certificate in ACM is the same, doing nothing")
                 domain = acm.get_domain_of_cert(client=client, module=module, arn=old_cert['certificate_arn'])
                 module.exit_json(certificate=dict(domain_name=domain, arn=old_cert['certificate_arn']), changed=False)
             else:
                 module.debug("Existing certificate in ACM is different, overwriting")
-    
+
                 # update cert in ACM
                 arn = acm.import_certificate(client, module,
                                              certificate=module.params['certificate'],
@@ -338,7 +338,7 @@ def main():
                                          certificate_chain=module.params['certificate_chain'],
                                          tags=tags)
             domain = acm.get_domain_of_cert(client=client, module=module, arn=arn)
-    
+
             module.exit_json(certificate=dict(domain_name=domain, arn=arn), changed=True)
 
     else:  # state == absent
