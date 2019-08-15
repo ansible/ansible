@@ -100,6 +100,14 @@ The following functionality will be removed in Ansible 2.12. Please update updat
 
 * ``vmware_cluster`` DRS, HA and VSAN configuration; use `vmware_cluster_drs <vmware_cluster_drs_module>`, `vmware_cluster_ha <vmware_cluster_ha_module>` and `vmware_cluster_vsan <vmware_cluster_vsan_module>` instead.
 
+The following functionality will be removed in Ansible 2.13. Please update update your playbooks accordingly.
+
+* ``openssl_certificate`` deprecates the ``assertonly`` provider.
+  Please see the :ref:`openssl_certificate <openssl_certificate_module>` documentation examples on how to
+  replace the provider with the :ref:`openssl_certificate <openssl_certificate_info_module>`,
+  :ref:`openssl_csr_info <openssl_csr_info_module>`, :ref:`openssl_privatekey_info <openssl_privatekey_info_module>`
+  and :ref:`assert <assert_module>` modules.
+
 
 Renamed modules
 ^^^^^^^^^^^^^^^
