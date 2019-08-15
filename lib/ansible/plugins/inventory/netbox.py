@@ -484,9 +484,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             group_name = "_".join(["sites"[:self.substr], str(self.sites_slug_lookup[site_id])])
             self.inventory.add_group(group=group_name)
             self.inventory.set_variable(group_name, "vlans", vlans_short)
-            if "regions" in self.sgroup_by:
-                region_name = "_".join(["regions"[:self.substr], str(self.sites_region_slug_lookup[site_id])])
-                self.inventory.add_group(group_name, region_name)
         except Exception as e:
             print(e)
             return
@@ -518,6 +515,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             for region_id in self.regions_slug_lookup:
                 region_name = "_".join(["regions"[:self.substr], str(self.regions_slug_lookup[region_id])])
                 self.inventory.add_group(group=region_name)
+            for site_id in self.sites_slug_lookup:
+                region_name = "_".join(["regions"[:self.substr], str(self.sites_region_slug_lookup[site_id])])
+                site_name = "_".join(["sites"[:self.substr], str(self.sites_slug_lookup[site_id])])
+                self.inventory.add_group(group=site_name)
+                self.inventory.add_child(region_name, site_name)
 
         if self.vlans:
             for site in self.sites_slug_lookup:
