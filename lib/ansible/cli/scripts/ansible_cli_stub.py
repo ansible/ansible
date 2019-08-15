@@ -101,7 +101,7 @@ if __name__ == '__main__':
             else:
                 raise
 
-        b_ansible_dir = os.path.expanduser(os.path.expandvars(b"~/.ansible/fake"))
+        b_ansible_dir = os.path.expanduser(os.path.expandvars(b"~/.ansible"))
         try:
             os.mkdir(b_ansible_dir, mode=0o700)
         except OSError as exc:
