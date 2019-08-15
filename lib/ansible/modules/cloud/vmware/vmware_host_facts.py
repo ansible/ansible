@@ -277,6 +277,7 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_product_serial': sn,
             'ansible_bios_date': self.host.hardware.biosInfo.releaseDate,
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
+            'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
         }
         return facts
 
