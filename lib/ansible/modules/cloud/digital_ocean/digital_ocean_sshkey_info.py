@@ -83,7 +83,7 @@ def core(module):
 def main():
     module = AnsibleModule(
         argument_spec=DigitalOceanHelper.digital_ocean_argument_spec(),
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     core(module)
