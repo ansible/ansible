@@ -1792,3 +1792,64 @@ releases:
     - yum-handle-stale-lock-file.yaml
     - yum-sane-default-lockfile-timeout.yml
     release_date: '2019-07-25'
+  2.8.4:
+    codename: How Many More Times
+    fragments:
+    - 46332-aws-improve-etag-handling.yml
+    - 49568-type-checking.yaml
+    - 49754-default-become-user-pbrun-become-plugin.yaml
+    - 55716-ec2_instance_int_volume_size.yml
+    - 56392-consul_session-improve_doc_and_add_integration_tests.yaml
+    - 56844-glusterfs_volume-fix_compare.yml
+    - 57579-add-pipelining-to-podman-connection-plugin.yaml
+    - 57935-ovirt-host-event-log.yml
+    - 57993-openssh_keypair-add-public-key-and-key-comment-validation.yml
+    - 58360-fix-cpu-count-ppc.yaml
+    - 58876-do-not-reuse-remote_user-from-prev-loop.yaml
+    - 59106-fix-ipv6-truncating-in-ec2_group.yml
+    - 59335-developing_modules_general-update_docs.yaml
+    - 59437-update-ce_ntp_auth-to-fix-a-bug.yml
+    - 59445-ce_rollback_shouldnt_load_xml_configure_via_network_cli.yml
+    - 59456-find-return-values.yaml
+    - 59497_postgresql-modules-remove-unused-imports.yml
+    - 59503-fix-recursive-csharp-logging.yml
+    - 59515-ce_mtu-update-to-fix-bugs.yml
+    - 59520-ce_startup-update-to-fix-a-bug.yml
+    - 59548-import-playbook-plugin-dirs.yml
+    - 59677-ce_vrrp-to-fix-bugs.yml
+    - 59678-ce_bgp_af-to-fix-bugs.yml
+    - 59684-ce_mlag_config-to-fix-bugs.yml
+    - 59685-ce_stp-to-fix-bugs.yml
+    - 59715-docker_container-ipv6-port-bind.yml
+    - 59728-ce_config-to-fix-bugs.yml
+    - 59769-fix_ansible_issue_58469_regression.yaml
+    - 59786-ce_netstream_global-to-fix-bugs.yml
+    - 59862-ovirt-vnic-profile-qos-update-fix.yml
+    - 60033-ce_netstream_template-to-fix-bugs.yml
+    - 60084-ce_ce_rollback_set_mmi-mode-enable.yaml
+    - 60085-ce_config _set_mmi-mode.yml
+    - 60105-postgresql_turn_off_db_default_warnings.yml
+    - 60198-ovirt-vnic-profile-check-fix.yml
+    - 60202-ovirt-host-update-force-docs.yml
+    - 60270-ce_aaa_server-to-fix-bugs.yml
+    - 60272-ce_aaa_server_host-to-fix-bugs.yml
+    - 60274-ce_acl-to-fix-bugs.yml
+    - adhoc-command-async-output.yaml
+    - aws_s3-etags.yaml
+    - dont_template_passwords_from_prompt.yml
+    - fix_iosxr_facts.yaml
+    - fix_strategy_inv_up.yml
+    - gcp-session-merge_dict.yml
+    - gcp_fixes.yml
+    - group-chars-ignore-doc.yaml
+    - netconf_command_timeout.yaml
+    - os_subnet-subnetpool-id-allowed.yaml
+    - podman_image-build-output-format.yaml
+    - sysctl-check-file-and-system.yaml
+    - user-local-warning-fix.yaml
+    - v2.8.4_summary.yaml
+    - vmware_datastore_facts_dict_iter.yml
+    - win_domain_group_membership-Fix-missing-vars-for-Get-command.yml
+    - win_dsc-datetime.yaml
+    - win_user-logon-err.yaml
+    release_date: '2019-08-15'
