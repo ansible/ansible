@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.2',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -165,6 +165,7 @@ options:
         advertised networks and force only the requested advertised networks
         or you can choose to leave other networks untouched.
     type: bool
+    version_added: "2.9"
   next_hop_route_map:
     description:
       - Configure a route-map for valid nexthops. Valid values are a
