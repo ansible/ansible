@@ -345,7 +345,7 @@ def main():
         for cert in certificates:
             acm.delete_certificate(client, module, cert['certificate_arn'])
         module.exit_json(arns=[cert['certificate_arn'] for cert in certificates],
-                         changed=(len(certificates) > 0)) 
+                         changed=(len(certificates) > 0))
 
 
 if __name__ == '__main__':
