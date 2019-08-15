@@ -1627,10 +1627,9 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
             extension = self.cert.get_extension(extension_idx)
             if extension.get_short_name() == b'keyUsage':
                 found = True
-                key_usage = [crypto_utils.pyopenssl_normalize_name(to_text(usage, errors='surrogate_or_strict'))
-                             for usage in self.key_usage]
-                current_ku = [crypto_utils.pyopenssl_normalize_name(usage.strip()) for usage in
-                              to_text(extension, errors='surrogate_or_strict').split(',')]
+                expected_extension = crypto.X509Extension(b"keyUsage", False, b', '.join(self.key_usage))
+                key_usage = [usage.strip() for usage in to_text(expected_extension, errors='surrogate_or_strict').split(',')]
+                current_ku = [usage.strip() for usage in to_text(extension, errors='surrogate_or_strict').split(',')]
                 if not compare_sets(key_usage, current_ku, self.key_usage_strict):
                     return self.key_usage, str(extension).split(', ')
         if not found:
