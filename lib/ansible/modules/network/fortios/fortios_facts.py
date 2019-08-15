@@ -27,11 +27,11 @@ module: fortios_facts
 version_added: "2.9"
 short_description: Get facts about fortios devices.
 description:
-  - Collects facts from network devices running the fortios operating
-    system. This module places the facts gathered in the fact tree keyed by the
-    respective resource name.  The facts module will always collect a
-    base set of facts from the device and can enable or disable
-    collection of additional facts.
+    - Collects facts from network devices running the fortios operating
+      system. This module places the facts gathered in the fact tree keyed by the
+      respective resource name.  The facts module will always collect a
+      base set of facts from the device and can enable or disable
+      collection of additional facts.
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
     - Nicolas Thomas (@thomnico)
@@ -81,14 +81,13 @@ options:
     gather_subset:
         description:
             - When supplied, this argument will restrict the facts collected
-            to a given subset.  Possible values for this argument include
-            all, hardware, config, and interfaces.  Can specify a list of
-            values to include a larger subset.
+              to a given subset.  Possible values for this argument include
+              all, hardware, config, and interfaces.  Can specify a list of
+              values to include a larger subset.
       type: list
       default:
           - "system_status_select"
       required: false
-
 '''
 
 EXAMPLES = '''
@@ -98,8 +97,6 @@ EXAMPLES = '''
     username: "admin"
     password: ""
     vdom: "root"
-    ssl_verify: "False"
-
   tasks:
   - name: gather system status and system interface facts
     fortios_facts:
@@ -111,7 +108,7 @@ EXAMPLES = '''
       gather_subset:
         - "system_status_select"
         - "system_interface_select"
-  '''
+'''
 
 RETURN = '''
 build:
@@ -163,7 +160,6 @@ ansible_facts:
   description: The list of fact subsets collected from the device
   returned: always
   type: list
-# system
 fortios_system_status:
   description: The fortios basic system status information running on the remote device
   returned: always
