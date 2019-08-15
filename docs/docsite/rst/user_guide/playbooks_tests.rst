@@ -87,7 +87,7 @@ This test also accepts a 3rd parameter, ``strict`` which defines if strict versi
 
     {{ sample_version_var is version('1.0', operator='lt', strict=True) }}
 
-Use the bare variable names in a when statement to prevent warnings on included jinja2:
+Use the bare variable names in a 'when' statement to prevent warnings on included jinja2::
 
     vars:
         my_version: 1.2.3
