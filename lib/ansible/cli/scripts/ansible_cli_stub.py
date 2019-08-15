@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
         b_ansible_dir = os.path.expanduser(os.path.expandvars(b"~/.ansible"))
         try:
-            os.mkdir(b_ansible_dir, mode=0o700)
+            os.mkdir(b_ansible_dir, 0o700)
         except OSError as exc:
             if exc.errno != errno.EEXIST:
                 display.warning("Failed to create the directory '%s': %s"
