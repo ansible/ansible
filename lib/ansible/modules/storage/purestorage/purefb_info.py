@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2018, Simon Dodsley (simon@purestorage.com)
+# (c) 2019, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -14,21 +14,21 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: purefb_facts
-version_added: '2.7'
-short_description: Collect facts from Pure Storage FlashBlade
+module: purefb_info
+version_added: '2.9'
+short_description: Collect information from Pure Storage FlashBlade
 description:
-  - Collect facts information from a Pure Storage FlashBlade running the
+  - Collect information from a Pure Storage FlashBlade running the
     Purity//FB operating system. By default, the module will collect basic
-    fact information including hosts, host groups, protection
-    groups and volume counts. Additional fact information can be collected
+    information including hosts, host groups, protection
+    groups and volume counts. Additional information can be collected
     based on the configured set of arguements.
 author:
   - Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   gather_subset:
     description:
-      - When supplied, this argument will define the facts to be collected.
+      - When supplied, this argument will define the information to be collected.
         Possible values for this include all, minimum, config, performance,
         capacity, network, subnets, lags, filesystems and snapshots.
     required: false
@@ -39,30 +39,41 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: collect default set of facts
-  purefb_facts:
+- name: collect default set of info
+  purefb_info:
     fb_url: 10.10.10.2
     api_token: T-55a68eb5-c785-4720-a2ca-8b03903bf641
+  register: blade_info
+- name: show default information
+  debug:
+    msg: "{{ blade_info['purefb_info']['default'] }}"
 
-- name: collect configuration and capacity facts
-  purefb_facts:
+- name: collect configuration and capacity info
+  purefb_info:
     gather_subset:
       - config
-      - capacity
     fb_url: 10.10.10.2
     api_token: T-55a68eb5-c785-4720-a2ca-8b03903bf641
+  register: blade_info
+- name: show config information
+  debug:
+    msg: "{{ blade_info['purefb_info']['config'] }}"
 
-- name: collect all facts
-  purefb_facts:
+- name: collect all info
+  purefb_info:
     gather_subset:
       - all
     fb_url: 10.10.10.2
     api_token: T-55a68eb5-c785-4720-a2ca-8b03903bf641
+  register: blade_info
+- name: show all information
+  debug:
+    msg: "{{ blade_info['purefb_info'] }}"
 '''
 
 RETURN = r'''
-ansible_facts:
-  description: Returns the facts collected from the FlashBlade
+purefb_info:
+  description: Returns the information collected from the FlashBlade
   returned: always
   type: complex
   contains:
@@ -372,32 +383,32 @@ HARD_LIMIT_API_VERSION = '1.4'
 
 
 def generate_default_dict(blade):
-    default_facts = {}
+    default_info = {}
     defaults = blade.arrays.list_arrays().items[0]
-    default_facts['flashblade_name'] = defaults.name
-    default_facts['purity_version'] = defaults.version
-    default_facts['filesystems'] = \
+    default_info['flashblade_name'] = defaults.name
+    default_info['purity_version'] = defaults.version
+    default_info['filesystems'] = \
         len(blade.file_systems.list_file_systems().items)
-    default_facts['snapshots'] = \
+    default_info['snapshots'] = \
         len(blade.file_system_snapshots.list_file_system_snapshots().items)
-    default_facts['buckets'] = len(blade.buckets.list_buckets().items)
-    default_facts['object_store_users'] = \
+    default_info['buckets'] = len(blade.buckets.list_buckets().items)
+    default_info['object_store_users'] = \
         len(blade.object_store_users.list_object_store_users().items)
-    default_facts['object_store_accounts'] = \
+    default_info['object_store_accounts'] = \
         len(blade.object_store_accounts.list_object_store_accounts().items)
-    default_facts['blades'] = len(blade.blade.list_blades().items)
-    default_facts['total_capacity'] = \
+    default_info['blades'] = len(blade.blade.list_blades().items)
+    default_info['total_capacity'] = \
         blade.arrays.list_arrays_space().items[0].capacity
-    return default_facts
+    return default_info
 
 
 def generate_perf_dict(blade):
-    perf_facts = {}
+    perf_info = {}
     total_perf = blade.arrays.list_arrays_performance()
     http_perf = blade.arrays.list_arrays_performance(protocol='http')
     s3_perf = blade.arrays.list_arrays_performance(protocol='s3')
     nfs_perf = blade.arrays.list_arrays_performance(protocol='nfs')
-    perf_facts['aggregate'] = {
+    perf_info['aggregate'] = {
         'bytes_per_op': total_perf.items[0].bytes_per_op,
         'bytes_per_read': total_perf.items[0].bytes_per_read,
         'bytes_per_write': total_perf.items[0].bytes_per_write,
@@ -409,7 +420,7 @@ def generate_perf_dict(blade):
         'write_bytes_per_sec': total_perf.items[0].write_bytes_per_sec,
         'writes_per_sec': total_perf.items[0].writes_per_sec,
     }
-    perf_facts['http'] = {
+    perf_info['http'] = {
         'bytes_per_op': http_perf.items[0].bytes_per_op,
         'bytes_per_read': http_perf.items[0].bytes_per_read,
         'bytes_per_write': http_perf.items[0].bytes_per_write,
@@ -421,7 +432,7 @@ def generate_perf_dict(blade):
         'write_bytes_per_sec': http_perf.items[0].write_bytes_per_sec,
         'writes_per_sec': http_perf.items[0].writes_per_sec,
     }
-    perf_facts['s3'] = {
+    perf_info['s3'] = {
         'bytes_per_op': s3_perf.items[0].bytes_per_op,
         'bytes_per_read': s3_perf.items[0].bytes_per_read,
         'bytes_per_write': s3_perf.items[0].bytes_per_write,
@@ -433,7 +444,7 @@ def generate_perf_dict(blade):
         'write_bytes_per_sec': s3_perf.items[0].write_bytes_per_sec,
         'writes_per_sec': s3_perf.items[0].writes_per_sec,
     }
-    perf_facts['nfs'] = {
+    perf_info['nfs'] = {
         'bytes_per_op': nfs_perf.items[0].bytes_per_op,
         'bytes_per_read': nfs_perf.items[0].bytes_per_read,
         'bytes_per_write': nfs_perf.items[0].bytes_per_write,
@@ -446,80 +457,80 @@ def generate_perf_dict(blade):
         'writes_per_sec': nfs_perf.items[0].writes_per_sec,
     }
 
-    return perf_facts
+    return perf_info
 
 
 def generate_config_dict(blade):
-    config_facts = {}
-    config_facts['dns'] = blade.dns.list_dns().items[0].to_dict()
-    config_facts['smtp'] = blade.smtp.list_smtp().items[0].to_dict()
-    config_facts['alert_watchers'] = \
+    config_info = {}
+    config_info['dns'] = blade.dns.list_dns().items[0].to_dict()
+    config_info['smtp'] = blade.smtp.list_smtp().items[0].to_dict()
+    config_info['alert_watchers'] = \
         blade.alert_watchers.list_alert_watchers().items[0].to_dict()
     api_version = blade.api_version.list_versions().versions
     if HARD_LIMIT_API_VERSION in api_version:
-        config_facts['array_management'] = \
+        config_info['array_management'] = \
             blade.directory_services.list_directory_services(names=['management']).items[0].to_dict()
-        config_facts['directory_service_roles'] = {}
+        config_info['directory_service_roles'] = {}
         roles = blade.directory_services.list_directory_services_roles()
         for role in range(0, len(roles.items)):
             role_name = roles.items[role].name
-            config_facts['directory_service_roles'][role_name] = {
+            config_info['directory_service_roles'][role_name] = {
                 'group': roles.items[role].group,
                 'group_base': roles.items[role].group_base
             }
-    config_facts['nfs_directory_service'] = \
+    config_info['nfs_directory_service'] = \
         blade.directory_services.list_directory_services(names=['nfs']).items[0].to_dict()
-    config_facts['smb_directory_service'] = \
+    config_info['smb_directory_service'] = \
         blade.directory_services.list_directory_services(names=['smb']).items[0].to_dict()
-    config_facts['ntp'] = blade.arrays.list_arrays().items[0].ntp_servers
-    config_facts['ssl_certs'] = \
+    config_info['ntp'] = blade.arrays.list_arrays().items[0].ntp_servers
+    config_info['ssl_certs'] = \
         blade.certificates.list_certificates().items[0].to_dict()
-    return config_facts
+    return config_info
 
 
 def generate_subnet_dict(blade):
-    sub_facts = {}
+    sub_info = {}
     subnets = blade.subnets.list_subnets()
     for sub in range(0, len(subnets.items)):
         sub_name = subnets.items[sub].name
         if subnets.items[sub].enabled:
-            sub_facts[sub_name] = {
+            sub_info[sub_name] = {
                 'gateway': subnets.items[sub].gateway,
                 'mtu': subnets.items[sub].mtu,
                 'vlan': subnets.items[sub].vlan,
                 'prefix': subnets.items[sub].prefix,
                 'services': subnets.items[sub].services,
             }
-            sub_facts[sub_name]['lag'] = subnets.items[sub].link_aggregation_group.name
-            sub_facts[sub_name]['interfaces'] = []
+            sub_info[sub_name]['lag'] = subnets.items[sub].link_aggregation_group.name
+            sub_info[sub_name]['interfaces'] = []
             for iface in range(0, len(subnets.items[sub].interfaces)):
-                sub_facts[sub_name]['interfaces'].append({'name': subnets.items[sub].interfaces[iface].name})
-    return sub_facts
+                sub_info[sub_name]['interfaces'].append({'name': subnets.items[sub].interfaces[iface].name})
+    return sub_info
 
 
 def generate_lag_dict(blade):
-    lag_facts = {}
+    lag_info = {}
     groups = blade.link_aggregation_groups.list_link_aggregation_groups()
     for groupcnt in range(0, len(groups.items)):
         lag_name = groups.items[groupcnt].name
-        lag_facts[lag_name] = {
+        lag_info[lag_name] = {
             'lag_speed': groups.items[groupcnt].lag_speed,
             'port_speed': groups.items[groupcnt].port_speed,
             'status': groups.items[groupcnt].status,
         }
-        lag_facts[lag_name]['ports'] = []
+        lag_info[lag_name]['ports'] = []
         for port in range(0, len(groups.items[groupcnt].ports)):
-            lag_facts[lag_name]['ports'].append({'name': groups.items[groupcnt].ports[port].name})
-    return lag_facts
+            lag_info[lag_name]['ports'].append({'name': groups.items[groupcnt].ports[port].name})
+    return lag_info
 
 
 def generate_network_dict(blade):
-    net_facts = {}
+    net_info = {}
     ports = blade.network_interfaces.list_network_interfaces()
     for portcnt in range(0, len(ports.items)):
         int_name = ports.items[portcnt].name
         if ports.items[portcnt].enabled:
-            net_facts[int_name] = {
+            net_info[int_name] = {
                 'type': ports.items[portcnt].type,
                 'mtu': ports.items[portcnt].mtu,
                 'vlan': ports.items[portcnt].vlan,
@@ -528,30 +539,30 @@ def generate_network_dict(blade):
                 'gateway': ports.items[portcnt].gateway,
                 'netmask': ports.items[portcnt].netmask,
             }
-    return net_facts
+    return net_info
 
 
 def generate_capacity_dict(blade):
-    capacity_facts = {}
+    capacity_info = {}
     total_cap = blade.arrays.list_arrays_space()
     file_cap = blade.arrays.list_arrays_space(type='file-system')
     object_cap = blade.arrays.list_arrays_space(type='object-store')
-    capacity_facts['total'] = total_cap.items[0].capacity
-    capacity_facts['aggregate'] = {
+    capacity_info['total'] = total_cap.items[0].capacity
+    capacity_info['aggregate'] = {
         'data_reduction': total_cap.items[0].space.data_reduction,
         'snapshots': total_cap.items[0].space.snapshots,
         'total_physical': total_cap.items[0].space.total_physical,
         'unique': total_cap.items[0].space.unique,
         'virtual': total_cap.items[0].space.virtual,
     }
-    capacity_facts['file-system'] = {
+    capacity_info['file-system'] = {
         'data_reduction': file_cap.items[0].space.data_reduction,
         'snapshots': file_cap.items[0].space.snapshots,
         'total_physical': file_cap.items[0].space.total_physical,
         'unique': file_cap.items[0].space.unique,
         'virtual': file_cap.items[0].space.virtual,
     }
-    capacity_facts['object-store'] = {
+    capacity_info['object-store'] = {
         'data_reduction': object_cap.items[0].space.data_reduction,
         'snapshots': object_cap.items[0].space.snapshots,
         'total_physical': object_cap.items[0].space.total_physical,
@@ -559,45 +570,45 @@ def generate_capacity_dict(blade):
         'virtual': file_cap.items[0].space.virtual,
     }
 
-    return capacity_facts
+    return capacity_info
 
 
 def generate_snap_dict(blade):
-    snap_facts = {}
+    snap_info = {}
     snaps = blade.file_system_snapshots.list_file_system_snapshots()
     for snap in range(0, len(snaps.items)):
         snapshot = snaps.items[snap].name
-        snap_facts[snapshot] = {
+        snap_info[snapshot] = {
             'destroyed': snaps.items[snap].destroyed,
             'source': snaps.items[snap].source,
             'suffix': snaps.items[snap].suffix,
             'source_destroyed': snaps.items[snap].source_destroyed,
         }
-    return snap_facts
+    return snap_info
 
 
 def generate_fs_dict(blade):
-    fs_facts = {}
+    fs_info = {}
     fsys = blade.file_systems.list_file_systems()
     for fsystem in range(0, len(fsys.items)):
         share = fsys.items[fsystem].name
-        fs_facts[share] = {
+        fs_info[share] = {
             'fast_remove': fsys.items[fsystem].fast_remove_directory_enabled,
             'snapshot_enabled': fsys.items[fsystem].snapshot_directory_enabled,
             'provisioned': fsys.items[fsystem].provisioned,
             'destroyed': fsys.items[fsystem].destroyed,
         }
         if fsys.items[fsystem].http.enabled:
-            fs_facts[share]['http'] = fsys.items[fsystem].http.enabled
+            fs_info[share]['http'] = fsys.items[fsystem].http.enabled
         if fsys.items[fsystem].smb.enabled:
-            fs_facts[share]['smb_mode'] = fsys.items[fsystem].smb.acl_mode
+            fs_info[share]['smb_mode'] = fsys.items[fsystem].smb.acl_mode
         if fsys.items[fsystem].nfs.enabled:
-            fs_facts[share]['nfs_rules'] = fsys.items[fsystem].nfs.rules
+            fs_info[share]['nfs_rules'] = fsys.items[fsystem].nfs.rules
         api_version = blade.api_version.list_versions().versions
         if HARD_LIMIT_API_VERSION in api_version:
-            fs_facts[share]['hard_limit'] = fsys.items[fsystem].hard_limit_enabled
+            fs_info[share]['hard_limit'] = fsys.items[fsystem].hard_limit_enabled
 
-    return fs_facts
+    return fs_info
 
 
 def main():
@@ -623,28 +634,28 @@ def main():
         module.fail_json(msg="value must gather_subset must be one or more of: %s, got: %s"
                          % (",".join(valid_subsets), ",".join(subset)))
 
-    facts = {}
+    info = {}
 
     if 'minimum' in subset or 'all' in subset:
-        facts['default'] = generate_default_dict(blade)
+        info['default'] = generate_default_dict(blade)
     if 'performance' in subset or 'all' in subset:
-        facts['performance'] = generate_perf_dict(blade)
+        info['performance'] = generate_perf_dict(blade)
     if 'config' in subset or 'all' in subset:
-        facts['config'] = generate_config_dict(blade)
+        info['config'] = generate_config_dict(blade)
     if 'capacity' in subset or 'all' in subset:
-        facts['capacity'] = generate_capacity_dict(blade)
+        info['capacity'] = generate_capacity_dict(blade)
     if 'lags' in subset or 'all' in subset:
-        facts['lag'] = generate_lag_dict(blade)
+        info['lag'] = generate_lag_dict(blade)
     if 'network' in subset or 'all' in subset:
-        facts['network'] = generate_network_dict(blade)
+        info['network'] = generate_network_dict(blade)
     if 'subnets' in subset or 'all' in subset:
-        facts['subnet'] = generate_subnet_dict(blade)
+        info['subnet'] = generate_subnet_dict(blade)
     if 'filesystems' in subset or 'all' in subset:
-        facts['filesystems'] = generate_fs_dict(blade)
+        info['filesystems'] = generate_fs_dict(blade)
     if 'snapshots' in subset or 'all' in subset:
-        facts['snapshots'] = generate_snap_dict(blade)
+        info['snapshots'] = generate_snap_dict(blade)
 
-    module.exit_json(ansible_facts={'ansible_purefb_facts': facts})
+    module.exit_json(changed=False, purefb_info=info)
 
 
 if __name__ == '__main__':
