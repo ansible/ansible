@@ -1,0 +1,24 @@
+---
+- name: Reset initial config
+  cli_config:
+    config: |
+      vlan 10
+         name ten
+      vlan 20
+         name twenty
+  become: yes
+
+- eos_facts:
+    gather_network_resources: vlans
+  become: yes
+
+- set_fact:
+    expected_config:
+      - vlan_id: 10
+        name: ten
+      - vlan_id: 20
+        name: twenty
+
+- assert:
+    that:
+      - "expected_config|difference(ansible_facts.network_resources.vlans) == []"

@@ -45,23 +45,11 @@ class VlansFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if connection:  # just for linting purposes, remove
-            pass
-
         if not data:
-            # typically data is populated from the current device configuration
-            # data = connection.get('show running-config | section ^interface')
-            # using mock data instead
-            data = ("resource rsrc_a\n"
-                    "  a_bool true\n"
-                    "  a_string choice_a\n"
-                    "  resource here\n"
-                    "resource rscrc_b\n"
-                    "  key is property01 value is value end\n"
-                    "  an_int 10\n")
+            data = connection.get('show running-config | section ^vlan')
 
         # split the config into instances of the resource
-        resource_delim = 'resource'
+        resource_delim = 'vlan'
         find_pattern = r'(?:^|\n)%s.*?(?=(?:^|\n)%s|$)' % (resource_delim,
                                                            resource_delim)
         resources = [p.strip() for p in re.findall(find_pattern,
@@ -79,6 +67,8 @@ class VlansFacts(object):
         facts = {}
         if objs:
             params = utils.validate_config(self.argument_spec, {'config': objs})
+            # I don't know why it keeps insisting that state needs to be present
+            params['config'] = [utils.remove_empties(obj) for obj in params['config']]
             facts['vlans'] = params['config']
 
         ansible_facts['ansible_network_resources'].update(facts)
@@ -95,24 +85,11 @@ class VlansFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        config['name'] = utils.parse_conf_arg(conf, 'resource')
-        config['some_string'] = utils.parse_conf_arg(conf, 'a_string')
+        config['vlan_id'] = utils.parse_conf_arg(conf, 'vlan')
+        config['name'] = utils.parse_conf_arg(conf, 'name')
 
-        match = re.match(r'.*key is property01 (\S+)',
-                         conf, re.MULTILINE | re.DOTALL)
-        if match:
-            config['some_dict']['property_01'] = match.groups()[0]
+        is_suspend = utils.parse_conf_arg(conf, 'suspend')
+        if is_suspend == 'true':
+            config['state'] = "suspend"
 
-        a_bool = utils.parse_conf_arg(conf, 'a_bool')
-        if a_bool == 'true':
-            config['some_bool'] = True
-        elif a_bool == 'false':
-            config['some_bool'] = False
-        else:
-            config['some_bool'] = None
-
-        try:
-            config['some_int'] = int(utils.parse_conf_arg(conf, 'an_int'))
-        except TypeError:
-            config['some_int'] = None
         return utils.remove_empties(config)
