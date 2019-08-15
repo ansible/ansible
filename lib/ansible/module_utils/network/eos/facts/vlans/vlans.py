@@ -87,9 +87,6 @@ class VlansFacts(object):
         config = deepcopy(spec)
         config['vlan_id'] = utils.parse_conf_arg(conf, 'vlan')
         config['name'] = utils.parse_conf_arg(conf, 'name')
-
-        is_suspend = utils.parse_conf_arg(conf, 'suspend')
-        if is_suspend == 'true':
-            config['state'] = "suspend"
+        config['state'] = utils.parse_conf_arg(conf, 'state')
 
         return utils.remove_empties(config)

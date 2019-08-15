@@ -4,8 +4,10 @@
     config: |
       vlan 10
          name ten
+         state active
       vlan 20
          name twenty
+         state active
   become: yes
 
 - eos_facts:

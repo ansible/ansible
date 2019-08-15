@@ -14,7 +14,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import to_list, dict_diff, param_list_to_dict
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
@@ -94,22 +94,20 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
+        want = param_list_to_dict(want, "vlan_id", False)
+        have = param_list_to_dict(have, "vlan_id", False)
         if state == 'overridden':
-            kwargs = {}
-            commands = self._state_overridden(**kwargs)
+            commands = self._state_overridden(want, have)
         elif state == 'deleted':
-            kwargs = {}
-            commands = self._state_deleted(**kwargs)
+            commands = self._state_deleted(want, have)
         elif state == 'merged':
-            kwargs = {}
-            commands = self._state_merged(**kwargs)
+            commands = self._state_merged(want, have)
         elif state == 'replaced':
-            kwargs = {}
-            commands = self._state_replaced(**kwargs)
+            commands = self._state_replaced(want, have)
         return commands
 
     @staticmethod
-    def _state_replaced(**kwargs):
+    def _state_replaced(want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -117,10 +115,21 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        for key, desired in want.items():
+            if key in have:
+                extant = have[key]
+            else:
+                extant = dict(vlan_id=key)
+
+            add_config = dict_diff(extant, desired)
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, add_config, del_config))
+
         return commands
 
     @staticmethod
-    def _state_overridden(**kwargs):
+    def _state_overridden(want, have):
         """ The command generator when state is overridden
 
         :rtype: A list
@@ -128,10 +137,21 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        for key, extant in have.items():
+            if key in want:
+                desired = want[key]
+            else:
+                desired = dict(vlan_id=key)
+
+            add_config = dict_diff(extant, desired)
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, add_config, del_config))
+
         return commands
 
     @staticmethod
-    def _state_merged(**kwargs):
+    def _state_merged(want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -139,10 +159,20 @@ class Vlans(ConfigBase):
                   the current configuration
         """
         commands = []
+        for key, desired in want.items():
+            if key in have:
+                extant = have[key]
+            else:
+                extant = dict(vlan_id=key)
+
+            add_config = dict_diff(extant, desired)
+
+            commands.extend(generate_commands(key, add_config, {}))
+
         return commands
 
     @staticmethod
-    def _state_deleted(**kwargs):
+    def _state_deleted(want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -150,4 +180,29 @@ class Vlans(ConfigBase):
                   of the provided objects
         """
         commands = []
+        for key in want.keys():
+            desired = dict(vlan_id=key)
+            if key in have:
+                extant = have[key]
+            else:
+                extant = dict(vlan_id=key)
+
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, {}, del_config))
+
         return commands
+
+
+def generate_commands(vlan_id, to_set, to_remove):
+    commands = []
+    for key, value in to_set.items():
+        commands.append("{0} {1}".format(key, value))
+
+    for key in to_remove.keys():
+        commands.append("no {0}".format(key))
+
+    if commands:
+        commands.insert(0, "vlan {0}".format(vlan_id))
+
+    return commands
