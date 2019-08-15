@@ -469,6 +469,8 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
     # deprecated and tests should be removed when the code that handles it is removed
     (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-v'], 1),
     (['ansible-galaxy', '-vv', 'collection', 'init', 'abc.def', '-vvvv'], 4),
+    (['ansible-galaxy', '-vvv', 'init', 'name'], 3),
+    (['ansible-galaxy', '-vvvvv', 'init', '-v', 'name'], 1),
 ])
 def test_verbosity_arguments(cli_args, expected, monkeypatch):
     # Mock out the functions so we don't actually execute anything
