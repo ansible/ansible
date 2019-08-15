@@ -603,7 +603,11 @@ class Certificate(crypto_utils.OpenSSLObject):
     def get_relative_time_option(self, input_string, input_name):
         """Return an ASN1 formatted string if a relative timespec
            or an ASN1 formatted string is provided."""
-        result = input_string
+        result = to_native(input_string)
+        if result is None:
+            raise CertificateError(
+                'The timespec "%s" for %s is not valid' %
+                input_string, input_name)
         if result.startswith("+") or result.startswith("-"):
             result_datetime = crypto_utils.convert_relative_to_datetime(
                 result)
@@ -611,24 +615,18 @@ class Certificate(crypto_utils.OpenSSLObject):
                 return result_datetime.strftime("%Y%m%d%H%M%SZ")
             elif self.backend == 'cryptography':
                 return result_datetime
-        if result is None:
-            raise CertificateError(
-                'The timespec "%s" for %s is not valid' %
-                input_string, input_name)
         if self.backend == 'cryptography':
             for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
                 try:
-                    result = datetime.datetime.strptime(input_string, date_fmt)
-                    break
+                    return datetime.datetime.strptime(result, date_fmt)
                 except ValueError:
                     pass
 
-            if not isinstance(result, datetime.datetime):
-                raise CertificateError(
-                    'The time spec "%s" for %s is invalid' %
-                    (input_string, input_name)
-                )
-        return result
+            raise CertificateError(
+                'The time spec "%s" for %s is invalid' %
+                (input_string, input_name)
+            )
+        return input_string
 
     def _validate_privatekey(self):
         if self.backend == 'pyopenssl':
