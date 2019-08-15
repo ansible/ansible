@@ -104,6 +104,14 @@ options:
       - "To delete all tags, set a empty list e.g. I(tags: [])."
     type: list
     aliases: [ tag ]
+  network:
+    description:
+      - Name of the network.
+    type: str
+  vpc:
+    description:
+      - Name of the VPC.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
@@ -282,6 +290,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
                 'cidrlist': self.module.params.get('cidr'),
                 'description': self.module.params.get('description'),
                 'protocol': self.module.params.get('protocol'),
+                'networkid': self.get_network(key='id'),
             })
             res = self.query_api('createLoadBalancerRule', **args)
 
@@ -338,6 +347,8 @@ def main():
         zone=dict(),
         domain=dict(),
         account=dict(),
+        vpc=dict(),
+        network=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 
