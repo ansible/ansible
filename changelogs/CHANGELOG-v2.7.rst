@@ -5,6 +5,21 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.13
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-08-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- resolves CVE-2019-10206, by avoiding templating passwords from prompt as it is probable they have special characters.
+
 v2.7.12
 =======
 

@@ -650,6 +650,12 @@ releases:
     - fix_safe_eval.yml
     - v2.7.12_summary.yaml
     release_date: '2019-07-03'
+  2.7.13:
+    codename: In the Light
+    fragments:
+    - dont_template_passwords_from_prompt.yml
+    - v2.7.13_summary.yaml
+    release_date: '2019-08-15'
   2.7.2:
     codename: In the Light
     fragments:
