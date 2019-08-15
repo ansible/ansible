@@ -47,12 +47,6 @@ class GalaxyToken(object):
         f = None
         action = 'Opened'
         if not os.path.isfile(self.b_file):
-            b_parent_dir = os.path.dirname(self.b_file)
-            if not os.path.exists(b_parent_dir):
-                display.vvv("Parent directory for Galaxy token file doesn't exist, creating '%s'"
-                            % to_text(b_parent_dir))
-                os.makedirs(b_parent_dir, 0o700)
-
             # token file not found, create and chomd u+rw
             f = open(self.b_file, 'w')
             f.close()

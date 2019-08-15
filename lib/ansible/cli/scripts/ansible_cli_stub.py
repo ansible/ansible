@@ -100,6 +100,11 @@ if __name__ == '__main__':
             else:
                 raise
 
+        b_ansible_dir = os.path.expanduser(os.path.expandvars(b"~/.ansible"))
+        if not os.path.exists(b_ansible_dir):
+            display.debug("Creating the ~/.ansible directory")
+            os.mkdir(b_ansible_dir, mode=0o700)
+
         try:
             args = [to_text(a, errors='surrogate_or_strict') for a in sys.argv]
         except UnicodeError:
