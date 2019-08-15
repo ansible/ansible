@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
 
@@ -17,6 +17,10 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: digital_ocean_sshkey_facts
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favour of C(_info) module.
+  alternative: Use M(digital_ocean_sshkey_info) instead.
 short_description: DigitalOcean SSH keys facts
 description:
      - Fetch DigitalOcean SSH keys facts.
@@ -90,6 +94,8 @@ def main():
         argument_spec=DigitalOceanHelper.digital_ocean_argument_spec(),
         supports_check_mode=False,
     )
+
+    module.deprecate("The 'digital_ocean_sshkey_facts' module has been deprecated, use the new 'digital_ocean_sshkey_info' module", version='2.13')
 
     core(module)
 
