@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# GNU Generaål Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -47,7 +47,7 @@ requirements:
 author:
     - John McDonough (@movinalot)
     - CiscoUcs (@CiscoUcs)
-version_added: "2.8"
+version_added: "2.9"
 '''
 
 EXAMPLES = r'''
@@ -84,10 +84,8 @@ EXAMPLES = r'''
     delegate_to: localhost
 '''
 
-RETURN = '''
-objects:
-    description: results JSON encodded
-    type: dict
+RETURN = r'''
+#
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -166,6 +164,7 @@ def main():
     if err:
         module.fail_json(**ucs.result)
 
+    ucs.result['changed'] = False
     module.exit_json(**ucs.result)
 
 
