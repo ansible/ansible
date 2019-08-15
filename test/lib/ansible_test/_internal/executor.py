@@ -1329,8 +1329,10 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
         )
 
         if env_config:
+            if env_config.ansible_vars:
+                variables.update(env_config.ansible_vars)
+
             play.update(dict(
-                vars=env_config.ansible_vars,
                 environment=env_config.env_vars,
                 module_defaults=env_config.module_defaults,
             ))
