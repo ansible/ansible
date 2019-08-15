@@ -2,6 +2,21 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.19
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-08-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- resolves CVE-2019-10206, by avoiding templating passwords from prompt as it is probable they have special characters.
+
 v2.6.18
 =======
 

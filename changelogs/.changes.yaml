@@ -449,6 +449,12 @@ releases:
     - fix_safe_eval.yml
     - v2.6.18_summary.yaml
     release_date: '2019-07-03'
+  2.6.19:
+    codename: Heartbreaker
+    fragments:
+    - dont_template_passwords_from_prompt.yml
+    - v2.6.19_summary.yaml
+    release_date: '2019-08-15'
   2.6.2:
     codename: Heartbreaker
     fragments:
