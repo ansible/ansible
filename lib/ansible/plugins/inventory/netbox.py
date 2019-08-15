@@ -129,7 +129,7 @@ compose:
   foo: last_updated
   bar: display_name
   nested_variable: rack.display_name
-  
+
 substr_group: 4
 use_slugs: True
 '''
