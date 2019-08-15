@@ -47,9 +47,7 @@ class ACMServiceManager(object):
         self.module = module
 
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        self.client = boto3_conn(module, conn_type='client',
-                                 resource='acm', region=region,
-                                 endpoint=ec2_url, **aws_connect_kwargs)
+        self.client = module.client('acm')
 
     @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def delete_certificate_with_backoff(self, client, arn):
