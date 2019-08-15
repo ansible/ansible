@@ -21,7 +21,7 @@ short_description: Gather information about DigitalOcean SSH keys
 description:
   - This module can be used to gather information about DigitalOcean SSH keys.
   - This module replaces the C(digital_ocean_sshkey_facts) module.
-version_added: "2.5"
+version_added: "2.9"
 author: "Patrick Marques (@pmarques)"
 extends_documentation_fragment: digital_ocean.documentation
 notes:
