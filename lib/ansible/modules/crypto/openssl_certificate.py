@@ -1363,7 +1363,7 @@ class AssertOnlyCertificateBase(Certificate):
 
         if self.invalid_at is not None:
             not_before, invalid_at, not_after = self._validate_invalid_at()
-            if (invalid_at <= not_before) or (invalid_at >= not_after):
+            if not_before <= invalid_at <= not_after:
                 messages.append(
                     'Certificate is not invalid for the specified date (%s) - not_before: %s - not_after: %s' %
                     (self.invalid_at, not_before, not_after)
