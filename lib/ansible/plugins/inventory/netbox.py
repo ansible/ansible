@@ -391,11 +391,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
         self.manufacturers_slug_lookup = dict((manufacturer["id"], manufacturer["slug"]) for manufacturer in manufacturers)
 
-    def refresh_vlans_lookup(self):
-        url = self.api_endpoint + "/api/ipam/vlans/?limit=0"
-        vlans = self.get_resource_list(api_url=url)
-        self.vlans_lookup = dict((vlan["id"], vlan["vid"]) for vlan in vlans["results"])
-
     def refresh_lookups(self):
         lookup_processes = (
             self.refresh_sites_lookup,
@@ -406,7 +401,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.refresh_platforms_lookup,
             self.refresh_device_types_lookup,
             self.refresh_manufacturers_lookup,
-            #self.refresh_vlans_lookup,
         )
 
         thread_list = []
@@ -481,15 +475,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def _fill_sites_vlans_group_variables(self, group):
         try:
-            url = self.api_endpoint + "/api/ipam/vlans/?site_id=" + str(group.keys()[0])
+            url = self.api_endpoint + "/api/ipam/vlans/?site=" + str(group)
             vlans_lookup = self._fetch_information(url)
             wanted_keys = ['description', 'group', 'name', 'role', 'status', 'vid', 'tenant', 'tags']
-            vlans_shorts = []
+            vlans_short = []
             for vlan_lookup in vlans_lookup['results']:
                 vlans_short.append(dict((k, vlan_lookup[k]) for k in wanted_keys if k in vlan_lookup))
-            group_name = "_".join("sites"[:self.substr], str(group.values()[0]))
+            group_name = "_".join(["sites"[:self.substr], str(group)])
             self.inventory.set_variable(group_name, "vlans", vlans_short)
-        except Exception:
+        except Exception as e:
+            print(e)
             return
 
     def main(self):
@@ -516,7 +511,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         if self.vlans:
             for site in self.sites_slug_lookup:
-                self._fill_sites_vlans_group_variables(group=site)
+                self._fill_sites_vlans_group_variables(group=self.sites_slug_lookup[site])
 
 
     def parse(self, inventory, loader, path, cache=True):
