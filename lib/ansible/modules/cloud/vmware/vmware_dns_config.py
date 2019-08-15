@@ -43,7 +43,6 @@ options:
         version_added: 2.9
         type: str
         required: False
-        version_added: 2.9
     change_hostname_to:
         description:
             - The hostname that an ESXi host should be changed to.
@@ -64,12 +63,16 @@ options:
             - Where to look for hosts
         type: list
         required: False
+        version_added: 2.9
     dhcp:
         description:
             - Obtain DNS server address via DHCP (true or false)
         type: str
         required: False
         version_added: 2.9
+        choices:
+            - true
+            - false
 extends_documentation_fragment: vmware.documentation
 '''
 
