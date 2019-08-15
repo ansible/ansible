@@ -62,6 +62,20 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
+* junos_interface use :ref:`junos_interfaces <junos_interfaces_module>` instead.
+
+* junos_l2_interface use :ref:`junos_l2_interfaces <junos_l2_interfaces_module>` instead.
+
+* junos_l3_interface use :ref:`junos_l3_interfaces <junos_l3_interfaces_module>` instead.
+
+* junos_linkagg use :ref:`junos_lag_interfaces <junos_lag_interfaces_module>` instead.
+
+* junos_lldp use :ref:`junos_lldp_global <junos_lldp_global_module>` instead.
+
+* junos_lldp_interface use :ref:`junos_lldp_interfaces <junos_lldp_interfaces_module>` instead.
+
+* junos_vlan use :ref:`junos_vlans <junos_vlans_module>` instead.
+
 * lambda_facts use :ref:`lambda_info <lambda_info_module>` instead.
 
 * nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
