@@ -39,6 +39,14 @@ DOCUMENTATION = '''
                   region, site, role, platform, and/or tenant. Please check official netbox docs for more info.
             default: False
             type: boolean
+        vlans:
+            description: Get vlans in site group vars
+            type: boolean
+            default: False
+        interfaces:
+            description: Get interfaces of the device in host vars
+            type: boolean
+            default: False
         token:
             required: True
             description: NetBox token.
@@ -79,7 +87,7 @@ DOCUMENTATION = '''
         use_slugs:
             description: Use slug instead of name for group name suffix
             type: boolean
-            default: false
+            default: False
 '''
 
 EXAMPLES = '''
@@ -90,6 +98,8 @@ plugin: netbox
 api_endpoint: http://localhost:8000
 validate_certs: True
 config_context: False
+vlans: True
+interfaces: True
 group_by:
   - device_roles
 query_filters:
@@ -222,6 +232,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
             "config_context": self.extract_config_context,
+            "vlans": self.extract_vlans,
+            "interfaces": self.extract_interfaces,
             "manufacturers": self.extract_manufacturer,
             "regions": self.extract_region
         }
@@ -283,12 +295,30 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         except Exception:
             return
 
+    def extract_vlans(self, host):
+        try:
+            if self.vlans:
+                url = self.api_endpoint + "/api/ipam/vlans/?site_id=" + str(host["site"]["id"])
+                vlans_lookup = self._fetch_information(url)
+                return [vlans_lookup["results"]]
+        except Exception:
+            return
+
+    def extract_interfaces(self, host):
+        try:
+            if self.interfaces:
+                url = self.api_endpoint + "/api/dcim/interfaces/?device_id=" + str(host["id"])
+                interfaces_lookup = self._fetch_information(url)
+                return [interfaces_lookup["results"]]
+        except Exception:
+            return
+
     def extract_manufacturer(self, host):
         try:
             return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]] if !self.use_slugs else [self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
-        
+
     def extract_region(self, host):
         try:
             return [self.sites_region_lookup[host["site"]["id"]]] if !self.use_slugs else [self.sites_region_slug_lookup[host["site"]["id"]]]
@@ -367,6 +397,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
         self.manufacturers_slug_lookup = dict((manufacturer["id"], manufacturer["slug"]) for manufacturer in manufacturers)
 
+    def refresh_vlans_lookup(self):
+        url = self.api_endpoint + "/api/ipam/vlans/?limit=0"
+        vlans = self.get_resource_list(api_url=url)
+        self.vlans_lookup = dict((vlan["id"], vlan["vid"]) for vlan in vlans)
+
+    def refresh_interfaces_lookup(self):
+        url = self.api_endpoint + "/api/dcim/interfaces/?limit=0"
+        interfaces = self.get_resource_list(api_url=url)
+        self.interfaces_lookup = dict((interface["id"], interface["name"]) for interface in interfaces)
+
     def refresh_lookups(self):
         lookup_processes = (
             self.refresh_sites_lookup,
@@ -377,6 +417,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.refresh_platforms_lookup,
             self.refresh_device_types_lookup,
             self.refresh_manufacturers_lookup,
+            self.refresh_vlans_lookup,
+            self.refresh_interfaces_lookup,
         )
 
         thread_list = []
@@ -485,6 +527,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.timeout = self.get_option("timeout")
         self.validate_certs = self.get_option("validate_certs")
         self.config_context = self.get_option("config_context")
+        self.vlans = self.get_option("vlans")
+        self.interfaces = self.get_option("interfaces")
         self.headers = {
             'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
@@ -495,5 +539,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.group_by = self.get_option("group_by")
         self.query_filters = self.get_option("query_filters")
         self.substr = self.get_option("substr_group")
-        self.slugify = self.get_option("use_slugs")
+        self.use_slugs = self.get_option("use_slugs")
         self.main()
