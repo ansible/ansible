@@ -62,7 +62,7 @@ EXAMPLES = '''
   aws_acm_info:
     statuses:
     - PENDING_VALIDATION
-    
+
 - name: obtain all certificates with tag Name=foo and myTag=bar
   aws_acm_info:
     tags:
@@ -74,7 +74,7 @@ EXAMPLES = '''
 - name: obtain information about a certificate with a particular ARN
   aws_acm_info:
     certificate_arn:  "arn:aws:acm:ap-southeast-2:123456789876:certificate/abcdeabc-abcd-1234-4321-abcdeabcde12"
-      
+
 '''
 
 RETURN = '''
@@ -263,14 +263,14 @@ from ansible.module_utils.aws.acm import ACMServiceManager
 
 def main():
     argument_spec = dict(
-          certificate_arn=dict(aliases=['arn']),
-          domain_name=dict(aliases=['name']),
-          statuses=dict(type='list', choices=['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']),
-          tags=dict(type='dict'),
+        certificate_arn=dict(aliases=['arn']),
+        domain_name=dict(aliases=['name']),
+        statuses=dict(type='list', choices=['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']),
+        tags=dict(type='dict'),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     acm_facts = ACMServiceManager(module)
-    
+
     if module._name == 'aws_acm_facts':
         module.deprecate("The 'aws_acm_facts' module has been renamed to 'aws_acm_info'", version='2.13')
 
@@ -278,15 +278,15 @@ def main():
     client = boto3_conn(module, conn_type='client', resource='acm',
                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    certificates = acm_facts.get_certificates(client, module, 
-                                              domain_name=module.params['domain_name'], 
+    certificates = acm_facts.get_certificates(client, module,
+                                              domain_name=module.params['domain_name'],
                                               statuses=module.params['statuses'],
                                               arn=module.params['certificate_arn'],
                                               only_tags=module.params['tags'])
-                                              
+
     if module.params['certificate_arn'] and len(certificates) != 1:
-      module.fail("No certificate exists in this region with ARN %s" % module.params['certificate_arn'])
-                                              
+        module.fail_json(msg="No certificate exists in this region with ARN %s" % module.params['certificate_arn'])
+
     module.exit_json(certificates=certificates)
 
 

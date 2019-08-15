@@ -17,13 +17,15 @@
 
 # (c) 2017 Red Hat Inc.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 from ansible.modules.cloud.amazon.aws_acm import pem_compare
 
 
 # TODO: hook this into the test framework
 def test_pem_compare():
-  
-    #original
+
+    # original
     a = """
 -----BEGIN CERTIFICATE REQUEST-----
 ABC123
@@ -46,12 +48,13 @@ ABC
 
 """
 
+    # Different header
     d = """
 -----OTHER HEADER-----
 ABC123
 -----OTHER HEADER-----
 """
-  
+
     # different number of dashes
     e = """
 ---BEGIN CERTIFICATE REQUEST---
@@ -60,20 +63,19 @@ ABC
 ---END CERTIFICATE REQUEST---
 """
 
-    assert(pem_compare(a,b))
-    
-    assert(pem_compare(a,c))
-    assert(pem_compare(b,c))
-    
-    assert(not pem_compare(a,d))
-    assert(not pem_compare(b,d))
-    assert(not pem_compare(c,d))
-    
-    assert(pem_compare(a,e))
-    assert(pem_compare(b,e))
-    assert(not pem_compare(d,e))
-    assert(pem_compare(c,e))
-    
-    assert(pem_compare(None,None))
-    assert(not pem_compare(None,a))
-   
+    assert(pem_compare(a, b))
+
+    assert(pem_compare(a, c))
+    assert(pem_compare(b, c))
+
+    assert(not pem_compare(a, d))
+    assert(not pem_compare(b, d))
+    assert(not pem_compare(c, d))
+
+    assert(pem_compare(a, e))
+    assert(pem_compare(b, e))
+    assert(not pem_compare(d, e))
+    assert(pem_compare(c, e))
+
+    assert(pem_compare(None, None))
+    assert(not pem_compare(None, a))
