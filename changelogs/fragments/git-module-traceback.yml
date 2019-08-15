@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed a traceback in the ``git`` module when using an absolute path for the ``repo`` parameter.
