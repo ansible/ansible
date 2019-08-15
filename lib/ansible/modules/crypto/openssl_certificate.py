@@ -2275,7 +2275,9 @@ def main():
 
             provider = module.params['provider']
             if provider == 'assertonly':
-                module.deprecate("The 'assertonly' provider is deprecated; please see the examples of the 'openssl_certificate' module on how to replace it with other modules", version='2.13')
+                module.deprecate("The 'assertonly' provider is deprecated; please see the examples of "
+                                 "the 'openssl_certificate' module on how to replace it with other modules",
+                                 version='2.13')
 
             backend = module.params['select_crypto_backend']
             if backend == 'auto':
