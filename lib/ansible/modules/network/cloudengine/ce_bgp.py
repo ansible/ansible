@@ -1693,7 +1693,7 @@ class Bgp(object):
 
         vrf_name = module.params['vrf_name']
         if vrf_name:
-            if vrfName == "_public_":
+            if vrf_name == "_public_":
                 return cmds
             conf_str += "<vrfName>%s</vrfName>" % vrf_name
 
