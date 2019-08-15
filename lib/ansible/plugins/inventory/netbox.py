@@ -291,7 +291,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if self.config_context:
                 url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
                 device_lookup = self._fetch_information(url)
-                return [device_lookup["config_context"]]
+                return device_lookup["config_context"]
         except Exception:
             return
 
@@ -300,7 +300,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if self.vlans:
                 url = self.api_endpoint + "/api/ipam/vlans/?site_id=" + str(host["site"]["id"])
                 vlans_lookup = self._fetch_information(url)
-                return [vlans_lookup["results"]]
+                wanted_keys = ['description', 'group', 'name', 'role', 'status', 'vid', 'tenant', 'tags']
+                vlans_shorts = []
+                for vlan_lookup in vlans_lookup['results']:
+                    vlans_short.append(dict((k, vlan_lookup[k]) for k in wanted_keys if k in vlan_lookup))
+                return vlans_short
         except Exception:
             return
 
@@ -309,7 +313,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if self.interfaces:
                 url = self.api_endpoint + "/api/dcim/interfaces/?device_id=" + str(host["id"])
                 interfaces_lookup = self._fetch_information(url)
-                return [interfaces_lookup["results"]]
+                wanted_keys = ['description', 'enabled', 'lag', 'name', 'mode', 'tagged_vlans', 'untagged_vlan', 'tags']
+                interfaces_short = []
+                for interface_lookup in interfaces_lookup['results']:
+                    interfaces_short.append(dict((k, interface_lookup[k]) for k in wanted_keys if k in interface_lookup))
+                return interfaces_short
         except Exception:
             return
 
@@ -473,7 +481,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
             for sub_group in sub_groups:
                 if self.substr != 15:
-                    group_name = "_".join([group[:substr], sub_group])
+                    group_name = "_".join([group[:self.substr], sub_group])
                 else:
                     group_name = "_".join([group, sub_group])
                 self.inventory.add_group(group=group_name)
