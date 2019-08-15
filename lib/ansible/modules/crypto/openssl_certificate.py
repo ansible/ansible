@@ -1525,7 +1525,7 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
         return self.cert.not_valid_before, rt, self.cert.not_valid_after
 
     def _validate_invalid_at(self):
-        rt = self.get_relative_time_option(self.valid_at, 'valid_at')
+        rt = self.get_relative_time_option(self.invalid_at, 'invalid_at')
         return self.cert.not_valid_before, rt, self.cert.not_valid_after
 
     def _validate_valid_in(self):
@@ -1689,7 +1689,7 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
         return self.cert.get_notBefore(), self.valid_at, self.cert.get_notAfter()
 
     def _validate_invalid_at(self):
-        return self.cert.get_notBefore(), self.valid_at, self.cert.get_notAfter()
+        return self.cert.get_notBefore(), self.invalid_at, self.cert.get_notAfter()
 
     def _validate_valid_in(self):
         valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
