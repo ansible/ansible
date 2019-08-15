@@ -1483,7 +1483,7 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
 
             key_usages = crypto_utils.cryptography_parse_key_usage_params(self.key_usage)
             if not compare_dicts(key_usages, test_key_usage, self.key_usage_strict):
-                return self.key_usage, [x for x in test_key_usage if x is True]
+                return self.key_usage, [k for k, v in test_key_usage.items() if v is True]
 
         except cryptography.x509.ExtensionNotFound:
             # This is only bad if the user specified a non-empty list
