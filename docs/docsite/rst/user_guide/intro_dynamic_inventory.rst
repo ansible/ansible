@@ -2,10 +2,10 @@
 .. _dynamic_inventory:
 
 ******************************
-Working With Dynamic Inventory
+Working With dynamic inventory
 ******************************
 
-.. contents:: Topics
+.. contents::
    :local:
 
 If your Ansible inventory fluctuates over time, with hosts spinning up and shutting down in response to business demands, the static inventory solutions described in :ref:`inventory` will not serve your needs. You may need to track hosts from multiple sources: cloud providers, LDAP, `Cobbler <https://cobbler.github.io>`_, and/or enterprise CMDB systems.
@@ -20,7 +20,7 @@ If you'd like a GUI for handling dynamic inventory, the :ref:`ansible_tower` inv
 
 .. _cobbler_example:
 
-Inventory Script Example: Cobbler
+Inventory script example: Cobbler
 =================================
 
 Ansible integrates seamlessly with `Cobbler <https://cobbler.github.io>`_, a Linux installation server originally written by Michael DeHaan and now led by James Cammarata, who works for Ansible.
@@ -95,7 +95,7 @@ So in other words, you can use those variables in arguments/actions as well.
 
 .. _aws_example:
 
-Inventory Script Example: AWS EC2
+Inventory script example: AWS EC2
 =================================
 
 If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
@@ -238,7 +238,7 @@ explicitly clear the cache, you can run the ec2.py script with the ``--refresh-c
 
 .. _openstack_example:
 
-Inventory Script Example: OpenStack
+Inventory script example: OpenStack
 ===================================
 
 If you use an OpenStack-based cloud, instead of manually maintaining your own inventory file, you can use the ``openstack_inventory.py`` dynamic inventory to pull information about your compute instances directly from OpenStack.
@@ -319,7 +319,7 @@ You can find all included inventory scripts in the `contrib/inventory directory 
 
 .. _using_multiple_sources:
 
-Using Inventory Directories and Multiple Inventory Sources
+Using inventory directories and multiple inventory sources
 ==========================================================
 
 If the location given to ``-i`` in Ansible is a directory (or as so configured in ``ansible.cfg``), Ansible can use multiple inventory sources
@@ -336,7 +336,7 @@ Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory wi
 
 .. _static_groups_of_dynamic:
 
-Static Groups of Dynamic Groups
+Static groups of dynamic groups
 ===============================
 
 When defining groups of groups in the static inventory file, the child groups
