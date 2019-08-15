@@ -27,26 +27,49 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
+    cluster_name:
+        description:
+            - Name of the cluster.
+            - DNS settings are applied to every ESXi host system in the given cluster.
+            - If C(esxi_hostname) is not given, this parameter is required.
+        version_added: 2.9
+        type: str
+        required: False
+    esxi_hostname:
+        description:
+            - ESXi hostname.
+            - DNS settings are applied to this ESXi host system.
+            - If C(cluster_name) is not given, this parameter is required.
+        version_added: 2.9
+        type: str
+        required: False
+        version_added: 2.9
     change_hostname_to:
         description:
             - The hostname that an ESXi host should be changed to.
+        type: str
         required: False
     domainname:
         description:
             - The domain the ESXi host should be apart of.
+        type: str
         required: False
     dns_servers:
         description:
             - The DNS servers that the host should be configured to use.
+        type: list
         required: False
     search_domain:
         description:
             - Where to look for hosts
+        type: list
         required: False
     dhcp:
         description:
             - Obtain DNS server address via DHCP (true or false)
+        type: str
         required: False
+        version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
