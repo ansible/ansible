@@ -67,12 +67,9 @@ options:
     dhcp:
         description:
             - Obtain DNS server address via DHCP (true or false)
-        type: str
+        type: bool
         required: False
         version_added: 2.9
-        choices:
-            - true
-            - false
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -297,7 +294,7 @@ def main():
         cluster_name=dict(type='str'),
         esxi_hostname=dict(type='str'),
         change_hostname_to=dict(type='str'),
-        dhcp=dict(type='str', choices=['true', 'false']),
+        dhcp=dict(type='bool'),
         domainname=dict(type='str'),
         dns_servers=dict(type='list'),
         search_domain=dict(type='list')
