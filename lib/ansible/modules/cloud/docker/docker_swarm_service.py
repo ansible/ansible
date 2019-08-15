@@ -2031,9 +2031,9 @@ class DockerService(DockerBaseClass):
             ports = []
             for port in self.publish:
                 port_spec = {
-                  'Protocol' : port['protocol'],
-                  'PublishedPort' : port['published_port'],
-                  'TargetPort' : port['target_port']
+                    'Protocol': port['protocol'],
+                    'PublishedPort': port['published_port'],
+                    'TargetPort': port['target_port']
                 }
                 if port.get('mode'):
                     port_spec['PublishMode'] = port['mode']
