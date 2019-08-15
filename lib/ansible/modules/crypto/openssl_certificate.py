@@ -604,7 +604,7 @@ EXAMPLES = r'''
     subject_alt_name_strict: yes
     not_before: 20190331202428Z
     not_after: 20190413202428Z
-    valid_at: "+1d+10h"
+    valid_at: "+1d10h"
     invalid_at: 20200331202428Z
     valid_in: 10  # in ten seconds
 
@@ -612,7 +612,7 @@ EXAMPLES = r'''
     path: /etc/ssl/crt/ansible.com.crt
     # for valid_at, invalid_at and valid_in
     valid_at:
-      one_day_ten_hours: "+1d+10h"
+      one_day_ten_hours: "+1d10h"
       fixed_timestamp: 20200331202428Z
       ten_seconds: "+10"
   register: result
