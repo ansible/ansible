@@ -9,13 +9,15 @@ matrix:
     - env: T=none
   include:
     - env: T=linux/centos6/1
+    - env: T=linux/centos6/2
+    - env: T=linux/opensuse15py2/2
+    - env: T=linux/ubuntu1604/2
 
-    - env: T=linux/centos7/2
-
+    - env: T=linux/centos7/3
     - env: T=linux/opensuse15/3
-    - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1804/3
 
+    - env: T=linux/opensuse15/4
     - env: T=linux/ubuntu1604/4
     - env: T=linux/ubuntu1804/4
 branches:
