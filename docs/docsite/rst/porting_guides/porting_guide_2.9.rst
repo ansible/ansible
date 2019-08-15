@@ -78,15 +78,19 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * lambda_facts use :ref:`lambda_info <lambda_info_module>` instead.
 
+* nxos_interface use :ref:`nxos_interfaces <nxos_interfaces_module>` instead.
+
 * nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
+
+* nxos_vlan use :ref:`nxos_vlans <nxos_vlans_module>` instead.
+
+* purefa_facts use :ref:`purefa_info <purefa_info_module>` instead.
+
+* purefb_facts use :ref:`purefb_info <purefb_info_module>` instead.
 
 * vyos_interface use :ref:`vyos_interfaces <vyos_interfaces_module>` instead.
  
 * vyos_l3_interface use :ref:`vyos_l3_interfaces <vyos_l3_interfaces_module>` instead.
-
-* nxos_vlan use :ref:`nxos_vlans <nxos_vlans_module>` instead.
-
-* nxos_interface use :ref:`nxos_interfaces <nxos_interfaces_module>` instead.
 
 * vyos_linkagg use :ref:`vyos_lag_interfaces <vyos_lag_interfaces_module>` instead.
 
