@@ -1,4 +1,3 @@
 cloud/aws
 shippable/aws/group2
 aws_acm_info
-aws_acm_facts
