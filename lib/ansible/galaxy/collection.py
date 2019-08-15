@@ -882,7 +882,9 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     b_file_path = tempfile.NamedTemporaryFile(dir=b_path, prefix=b_file_name, suffix=b_file_ext, delete=False).name
 
     display.vvv("Downloading %s to %s" % (url, to_text(b_path)))
-    resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs, headers=headers)
+    # Galaxy redirs downloads to S3 which reject the request if an Authorization header is attached so don't redir that
+    resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs, headers=headers,
+                    unredirected_headers=['Authorization'])
 
     with open(b_file_path, 'wb') as download_file:
         data = resp.read(bufsize)

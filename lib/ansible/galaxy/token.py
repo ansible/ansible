@@ -33,6 +33,12 @@ from ansible.utils.display import Display
 display = Display()
 
 
+class NoTokenSentinel(object):
+    """ Represents an ansible.cfg server with not token defined (will ignore cmdline and GALAXY_TOKEN_PATH. """
+    def __new__(cls, *args, **kwargs):
+        return cls
+
+
 class GalaxyToken(object):
     ''' Class to storing and retrieving local galaxy token '''
 
@@ -49,7 +55,7 @@ class GalaxyToken(object):
 
         # Prioritise the token passed into the constructor
         if self._token:
-            self._config['token'] = self._token
+            self._config['token'] = None if self._token is NoTokenSentinel else self._token
 
         return self._config
 

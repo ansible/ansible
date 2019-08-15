@@ -189,7 +189,7 @@ class GalaxyAPI(object):
         except Exception:
             raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
-        url = _urljoin(self.baseurl, "roles", "?owner__username=%s&name=%s" % (user_name, role_name))
+        url = _urljoin(self.baseurl, "roles", "?owner__username=%s&name=%s" % (user_name, role_name))[:-1]
         data = self.__call_galaxy(url)
         if len(data["results"]) != 0:
             return data["results"][0]
@@ -204,7 +204,7 @@ class GalaxyAPI(object):
 
         results = []
         try:
-            url = _urljoin(self.baseurl, "roles", role_id, related, "?page_size=50")
+            url = _urljoin(self.baseurl, "roles", role_id, related, "?page_size=50")[:-1]
             data = self.__call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
@@ -223,7 +223,7 @@ class GalaxyAPI(object):
         Fetch the list of items specified.
         """
         try:
-            url = _urljoin(self.baseurl, what, "?page_size")
+            url = _urljoin(self.baseurl, what, "?page_size")[:-1]
             data = self.__call_galaxy(url)
             if "results" in data:
                 results = data['results']
@@ -244,7 +244,7 @@ class GalaxyAPI(object):
     @g_connect
     def search_roles(self, search, **kwargs):
 
-        search_url = _urljoin(self.baseurl, "search", "roles", "?")
+        search_url = _urljoin(self.baseurl, "search", "roles", "?")[:-1]
 
         if search:
             search_url += '&autocomplete=' + to_text(urlquote(to_bytes(search)))
@@ -297,6 +297,6 @@ class GalaxyAPI(object):
 
     @g_connect
     def delete_role(self, github_user, github_repo):
-        url = _urljoin(self.baseurl, "removerole", "?github_user=%s&github_repo=%s" % (github_user, github_repo))
+        url = _urljoin(self.baseurl, "removerole", "?github_user=%s&github_repo=%s" % (github_user, github_repo))[:-1]
         data = self.__call_galaxy(url, headers=self._auth_header(), method='DELETE')
         return data

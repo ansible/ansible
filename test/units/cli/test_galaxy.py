@@ -32,6 +32,7 @@ import yaml
 import ansible.constants as C
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
+from ansible.galaxy.api import GalaxyAPI
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
@@ -1095,3 +1096,87 @@ def test_parse_requirements_with_extra_info(requirements_cli, requirements_file)
     assert actual['collections'][0][2].validate_certs is True
 
     assert actual['collections'][1] == ('namespace.collection2', '*', None)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+roles:
+- username.role_name
+- src: username2.role_name2
+- src: ssh://github.com/user/repo
+  scm: git
+
+collections:
+- namespace.collection2
+'''], indirect=True)
+def test_parse_requirements_with_roles_and_collections(requirements_cli, requirements_file):
+    actual = requirements_cli._parse_requirements_file(requirements_file)
+
+    assert len(actual['roles']) == 3
+    assert actual['roles'][0].name == 'username.role_name'
+    assert actual['roles'][1].name == 'username2.role_name2'
+    assert actual['roles'][2].name == 'repo'
+    assert actual['roles'][2].src == 'ssh://github.com/user/repo'
+
+    assert len(actual['collections']) == 1
+    assert actual['collections'][0] == ('namespace.collection2', '*', None)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- name: namespace.collection
+- name: namespace2.collection2
+  source: https://galaxy-dev.ansible.com/
+- name: namespace3.collection3
+  source: server
+'''], indirect=True)
+def test_parse_requirements_with_collection_source(requirements_cli, requirements_file):
+    galaxy_api = GalaxyAPI(requirements_cli.api, 'server', 'https://config-server')
+    requirements_cli.api_servers.append(galaxy_api)
+
+    actual = requirements_cli._parse_requirements_file(requirements_file)
+
+    assert actual['roles'] == []
+    assert len(actual['collections']) == 3
+    assert actual['collections'][0] == ('namespace.collection', '*', None)
+
+    assert actual['collections'][1][0] == 'namespace2.collection2'
+    assert actual['collections'][1][1] == '*'
+    assert actual['collections'][1][2].api_server == 'https://galaxy-dev.ansible.com/'
+    assert actual['collections'][1][2].name == 'explicit_requirement_namespace2.collection2'
+    assert actual['collections'][1][2].token is None
+
+    assert actual['collections'][2] == ('namespace3.collection3', '*', galaxy_api)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+- username.included_role
+- src: https://github.com/user/repo
+'''], indirect=True)
+def test_parse_requirements_roles_with_include(requirements_cli, requirements_file):
+    reqs = [
+        'ansible.role',
+        {'include': requirements_file},
+    ]
+    parent_requirements = os.path.join(os.path.dirname(requirements_file), 'parent.yaml')
+    with open(to_bytes(parent_requirements), 'wb') as req_fd:
+        req_fd.write(to_bytes(yaml.safe_dump(reqs)))
+
+    actual = requirements_cli._parse_requirements_file(parent_requirements)
+
+    assert len(actual['roles']) == 3
+    assert actual['collections'] == []
+    assert actual['roles'][0].name == 'ansible.role'
+    assert actual['roles'][1].name == 'username.included_role'
+    assert actual['roles'][2].name == 'repo'
+    assert actual['roles'][2].src == 'https://github.com/user/repo'
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+- username.role
+- include: missing.yml
+'''], indirect=True)
+def test_parse_requirements_roles_with_include_missing(requirements_cli, requirements_file):
+    expected = "Failed to find include requirements file 'missing.yml' in '%s'" % to_native(requirements_file)
+
+    with pytest.raises(AnsibleError, match=expected):
+        requirements_cli._parse_requirements_file(requirements_file)

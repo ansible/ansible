@@ -26,7 +26,7 @@ from ansible.galaxy.collection import build_collection, install_collections, pub
     validate_collection_name
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
-from ansible.galaxy.token import GalaxyToken
+from ansible.galaxy.token import GalaxyToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -67,7 +67,7 @@ class GalaxyCLI(CLI):
         common.add_argument('--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences. You can also use ansible-galaxy login to '
-                                 'retrieve this key.')
+                                 'retrieve this key or set the token for the GALAXY_SERVER_LIST entry.')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs',
                             default=C.GALAXY_IGNORE_CERTS, help='Ignore SSL certificate validation errors.')
         opt_help.add_verbosity_options(common)
@@ -327,7 +327,8 @@ class GalaxyCLI(CLI):
                 C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
                 server_options = C.config.get_plugin_options('galaxy_server', server_key)
-                server_options['token'] = GalaxyToken(token=server_options['token'])
+                token_val = server_options['token'] or NoTokenSentinel
+                server_options['token'] = GalaxyToken(token=token_val)
                 self.api_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 
         # Default to C.GALAXY_SERVER if no servers were defined
@@ -396,7 +397,12 @@ class GalaxyCLI(CLI):
                     raise AnsibleError("Must specify name or src for role")
                 return [GalaxyRole(self.galaxy, **role)]
             else:
-                with open(to_bytes(requirements["include"], errors='surrogate_or_strict'), 'rb') as f_include:
+                b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
+                if not os.path.isfile(b_include_path):
+                    raise AnsibleError("Failed to find include requirements file '%s' in '%s'"
+                                       % (to_native(b_include_path), to_native(requirements_file)))
+
+                with open(b_include_path, 'rb') as f_include:
                     try:
                         return [GalaxyRole(self.galaxy, **r) for r in
                                 (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))]
