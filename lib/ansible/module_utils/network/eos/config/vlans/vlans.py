@@ -107,6 +107,7 @@ class Vlans(ConfigBase):
             kwargs = {}
             commands = self._state_replaced(**kwargs)
         return commands
+
     @staticmethod
     def _state_replaced(**kwargs):
         """ The command generator when state is replaced
