@@ -499,7 +499,7 @@ def get_network_command(existing, key, value, networks_purge):
                 command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
             if command:
                 commands.append(command)
-    if (networks_purge == True):
+    if (networks_purge):
         for enet in existing_networks:
             if (enet[0] not in value):
                 if len(enet) == 1:
