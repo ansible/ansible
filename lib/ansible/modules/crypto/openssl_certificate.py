@@ -573,6 +573,96 @@ EXAMPLES = r'''
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-key.crt
     entrust_api_specification_path: /etc/ssl/entrust/api-docs/cms-api-2.1.0.yaml
 
+# The following example shows one assertonly usage using all existing options for
+# assertonly, and shows how to emulate the behavior with the openssl_certificate_info,
+# openssl_csr_info, openssl_privatekey_info and assert modules:
+
+- openssl_certificate:
+    provider: assertonly
+    path: /etc/ssl/crt/ansible.com.crt
+    csr_path: /etc/ssl/csr/ansible.com.csr
+    privatekey_path: /etc/ssl/csr/ansible.com.key
+    signature_algorithms:
+      - sha256WithRSAEncryption
+      - sha512WithRSAEncryption
+    subject:
+      commonName: ansible.com
+    subject_strict: yes
+    issuer:
+      commonName: ansible.com
+    issuer_strict: yes
+    has_expired: no
+    version: 3
+    key_usage:
+      - Data Encipherment
+    key_usage_strict: yes
+    extended_key_usage:
+      - DVCS
+    extended_key_usage_strict: yes
+    subject_alt_name:
+      - dns:ansible.com
+    subject_alt_name_strict: yes
+    not_before: 20190331202428Z
+    not_after: 20190413202428Z
+    valid_at: "+1d+10h"
+    invalid_at: 20200331202428Z
+    valid_in: 10  # in ten seconds
+
+- openssl_certificate_info:
+    path: /etc/ssl/crt/ansible.com.crt
+    # for valid_at, invalid_at and valid_in
+    valid_at:
+      one_day_ten_hours: "+1d+10h"
+      fixed_timestamp: 20200331202428Z
+      ten_seconds: "+10"
+  register: result
+
+- openssl_csr_info:
+    # Verifies that the CSR signature is valid; module will fail if not
+    path: /etc/ssl/csr/ansible.com.csr
+  register: result_csr
+
+- openssl_privatekey_info:
+    path: /etc/ssl/csr/ansible.com.key
+  register: result_privatekey
+
+- assert:
+    that:
+      # When private key is specified for assertonly, this will be checked:
+      - result.public_key == result_privatekey.public_key
+      # When CSR is specified for assertonly, this will be checked:
+      - result.public_key == result_csr.public_key
+      - result.subject == result_csr.subject
+      - result.extensions_by_oid == result_csr.extensions_by_oid
+      # signature_algorithms check
+      - "result.signature_algorithm == 'sha256WithRSAEncryption' or result.signature_algorithm == 'sha512WithRSAEncryption'"
+      # subject and subject_strict
+      - "result.subject.commonName == 'ansible.com'"
+      - "result.subject | len == 1"  # the number must be the number of entries you check for
+      # issuer and issuer_strict
+      - "result.issuer.commonName == 'ansible.com'"
+      - "result.issuer | len == 1"  # the number must be the number of entries you check for
+      # has_expired
+      - not result.expired
+      # version
+      - result.version == 3
+      # key_usage and key_usage_strict
+      - "'Data Encipherment' in result.key_usage"
+      - "result.key_usage | len == 1"  # the number must be the number of entries you check for
+      # extended_key_usage and extended_key_usage_strict
+      - "'DVCS' in result.extended_key_usage"
+      - "result.extended_key_usage | len == 1"  # the number must be the number of entries you check for
+      # subject_alt_name and subject_alt_name_strict
+      - "'dns:ansible.com' in result.subject_alt_name"
+      - "result.subject_alt_name | len == 1"  # the number must be the number of entries you check for
+      # not_before and not_after
+      - "result.not_before == '20190331202428Z'"
+      - "result.not_after == '20190413202428Z'"
+      # valid_at, invalid_at and valid_in
+      - "result.valid_at.one_day_ten_hours"  # for valid_at
+      - "not result.valid_at.fixed_timestamp"  # for invalid_at
+      - "result.valid_at.ten_seconds"  # for valid_in
+
 # Examples for some checks one could use the assertonly provider for:
 # (Please note that assertonly has been deprecated!)
 
