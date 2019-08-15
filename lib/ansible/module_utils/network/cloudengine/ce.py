@@ -35,7 +35,7 @@ import traceback
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import exec_command, ConnectionError
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.netconf import NetconfConnection
@@ -341,6 +341,28 @@ def set_nc_config(module, xml_str):
         # conn.unlock(target = 'candidate')
         pass
     return to_string(to_xml(out))
+
+
+def get_nc_next(module, xml_str):
+    """ get_nc_next for exchange capability """
+
+    conn = get_nc_connection(module)
+    result = None
+    if xml_str is not None:
+        response = conn.get(xml_str, if_rpc_reply=True)
+        result = response.find('./*')
+        set_id = response.get('set-id')
+        fetch_node = new_ele_ns('get-next', 'http://www.huawei.com/netconf/capability/base/1.0', {'set-id': set_id})
+        while True:
+            try:
+                next = conn.dispatch(etree.tostring(fetch_node))
+                if next is not None:
+                    result.extend(next.find('./*'))
+            except ConnectionError:
+                break
+    return result
+
+    return to_string(to_xml(response))
 
 
 def get_nc_config(module, xml_str):
