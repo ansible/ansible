@@ -3173,8 +3173,8 @@ lib/ansible/modules/network/cloudengine/ce_mlag_config.py validate-modules:E337
 lib/ansible/modules/network/cloudengine/ce_mlag_config.py validate-modules:E338
 lib/ansible/modules/network/cloudengine/ce_mlag_config.py validate-modules:E340
 lib/ansible/modules/network/cloudengine/ce_mlag_interface.py future-import-boilerplate
-lib/ansible/modules/network/cloudengine/ce_mlag_interface.py pylint:blacklisted-name
 lib/ansible/modules/network/cloudengine/ce_mlag_interface.py metaclass-boilerplate
+lib/ansible/modules/network/cloudengine/ce_mlag_interface.py pylint:blacklisted-name
 lib/ansible/modules/network/cloudengine/ce_mlag_interface.py validate-modules:E322
 lib/ansible/modules/network/cloudengine/ce_mlag_interface.py validate-modules:E324
 lib/ansible/modules/network/cloudengine/ce_mlag_interface.py validate-modules:E326
