@@ -76,7 +76,7 @@ DOCUMENTATION = '''
             description: Length of group name prefix
             type: int
             default: full
-        slugify_group:
+        use_slugs:
             description: Use slug instead of name for group name suffix
             type: boolean
             default: false
@@ -121,7 +121,7 @@ compose:
   nested_variable: rack.display_name
   
 substr_group: 4
-slugify_group: True
+use_slugs: True
 '''
 
 import json
@@ -209,40 +209,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         return hosts_list
 
     @property
-    if !self.slugify:
-        def group_extractors(self):
-            return {
-                "sites": self.extract_site,
-                "tenants": self.extract_tenant,
-                "racks": self.extract_rack,
-                "tags": self.extract_tags,
-                "disk": self.extract_disk,
-                "memory": self.extract_memory,
-                "vcpus": self.extract_vcpus,
-                "device_roles": self.extract_device_role,
-                "platforms": self.extract_platform,
-                "device_types": self.extract_device_type,
-                "config_context": self.extract_config_context,
-                "manufacturers": self.extract_manufacturer,
-                "regions": self.extract_region
-            }
-    else:
-        def group_extractors(self):
-            return {
-                "sites": self.extract_site_slug,
-                "tenants": self.extract_tenant_slug,
-                "racks": self.extract_rack,
-                "tags": self.extract_tags,
-                "disk": self.extract_disk,
-                "memory": self.extract_memory,
-                "vcpus": self.extract_vcpus,
-                "device_roles": self.extract_device_role_slug,
-                "platforms": self.extract_platform_slug,
-                "device_types": self.extract_device_type,
-                "config_context": self.extract_config_context,
-                "manufacturers": self.extract_manufacturer_slug,
-                "regions": self.extract_region_slug
-            }
+    def group_extractors(self):
+        return {
+            "sites": self.extract_site,
+            "tenants": self.extract_tenant,
+            "racks": self.extract_rack,
+            "tags": self.extract_tags,
+            "disk": self.extract_disk,
+            "memory": self.extract_memory,
+            "vcpus": self.extract_vcpus,
+            "device_roles": self.extract_device_role,
+            "platforms": self.extract_platform,
+            "device_types": self.extract_device_type,
+            "config_context": self.extract_config_context,
+            "manufacturers": self.extract_manufacturer,
+            "regions": self.extract_region
+        }
 
     def extract_disk(self, host):
         return host.get("disk")
@@ -255,13 +237,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_platform(self, host):
         try:
-            return [self.platforms_lookup[host["platform"]["id"]]]
-        except Exception:
-            return
-        
-    def extract_platform_slug(self, host):
-        try:
-            return [self.platforms_slug_lookup[host["platform"]["id"]]]
+            return [self.platforms_lookup[host["platform"]["id"]]] if !self.use_slugs else [self.platforms_slug_lookup[host["platform"]["id"]]]
         except Exception:
             return
 
@@ -279,7 +255,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_site(self, host):
         try:
-            return [self.sites_lookup[host["site"]["id"]]]
+            return [self.sites_lookup[host["site"]["id"]]] if !self.use_slugs else [self.sites_slug_lookup[host["site"]["id"]]]
         except Exception:
             return
 
@@ -292,9 +268,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_device_role(self, host):
         try:
             if 'device_role' in host:
-                return [self.device_roles_lookup[host["device_role"]["id"]]]
+                return [self.device_roles_lookup[host["device_role"]["id"]]] if !self.use_slugs else [self.device_roles_slug_lookup[host["device_role"]["id"]]]
             elif 'role' in host:
-                return [self.device_roles_lookup[host["role"]["id"]]]
+                return [self.device_roles_lookup[host["role"]["id"]]] if !self.use_slugs else [self.device_roles_slug_lookup[host["role"]["id"]]]
         except Exception:
             return
 
@@ -309,13 +285,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_manufacturer(self, host):
         try:
-            return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
+            return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]] if !self.use_slugs else [self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
         
     def extract_region(self, host):
         try:
-            return [self.sites_region_lookup[host["site"]["id"]]]
+            return [self.sites_region_lookup[host["site"]["id"]]] if !self.use_slugs else [self.sites_region_slug_lookup[host["site"]["id"]]]
         except Exception:
             return
 
@@ -354,7 +330,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         sites = self.get_resource_list(api_url=url)
         self.sites_lookup = dict((site["id"], site["name"]) for site in sites)
         self.sites_slug_lookup = dict((site["id"], site["slug"]) for site in sites)
-        self.sites_region_lookup = dict((site["id"], site["region"]["slug"]) for site in sites)
+        self.sites_region_lookup = dict((site["id"], site["region"]["name"]) for site in sites)
+        self.sites_region_slug_lookup = dict((site["id"], site["region"]["slug"]) for site in sites)
 
     def refresh_regions_lookup(self):
         url = self.api_endpoint + "/api/dcim/regions/?limit=0"
@@ -518,5 +495,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.group_by = self.get_option("group_by")
         self.query_filters = self.get_option("query_filters")
         self.substr = self.get_option("substr_group")
-        self.slugify = self.get_option("slugify_group")
+        self.slugify = self.get_option("use_slugs")
         self.main()
