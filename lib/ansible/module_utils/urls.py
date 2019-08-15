@@ -1123,8 +1123,8 @@ class Request:
         :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
             connection to the provided url
         :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
-        :kawrg unredirected_headers: (optional) A list of headers to not attach on a redirected request
-        :returns: HTTPResponse
+        :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
+        :returns: HTTPResponse. Added in Ansible 2.9
         """
 
         method = method.upper()
