@@ -2241,7 +2241,7 @@ def main():
         end_state["confederation peer as"] = confed_end
 
     # bgp instance
-    if need_bgp_instance:
+    if need_bgp_instance and default_af_type != "ipv6uni":
         router_id_new = vrf_name
 
         if state == "present":
