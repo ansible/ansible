@@ -145,7 +145,7 @@ class AWSConnection:
             if not resources:
                 resources = ['lambda']
 
-            resources.append('iam')
+            resources.append('sts')
 
             for resource in resources:
                 aws_connect_kwargs.update(dict(region=self.region,
@@ -164,7 +164,7 @@ class AWSConnection:
 
         # set account ID
         try:
-            self.account_id = self.resource_client['iam'].get_user()['User']['Arn'].split(':')[4]
+            self.account_id = self.resource_client['sts'].get_caller_identity()['Account']
         except (ClientError, ValueError, KeyError, IndexError):
             self.account_id = ''
 
