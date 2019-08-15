@@ -98,7 +98,7 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 The following functionality will be removed in Ansible 2.12. Please update update your playbooks accordingly.
 
-* ``vmware_cluster`` DRS, HA and VSAN configuration; use `vmware_cluster_drs <vmware_cluster_drs_module>`, `vmware_cluster_ha <vmware_cluster_ha_module>` and `vmware_cluster_vsan <vmware_cluster_vsan_module>` instead.
+* ``vmware_cluster`` DRS, HA and VSAN configuration; use :ref:`vmware_cluster_drs <vmware_cluster_drs_module>`, :ref:`vmware_cluster_ha <vmware_cluster_ha_module>` and :ref:`vmware_cluster_vsan <vmware_cluster_vsan_module>` instead.
 
 The following functionality will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
