@@ -20,7 +20,7 @@ description:
 version_added: 2.0
 author:
 - Joseph Callen (@jcpowermac)
-- Updated Ryan Butler (@ryan_c_butler)
+- Ryan Butler (@ryan_c_butler)
 notes:
     - Tested on vSphere 6.0
 requirements:
