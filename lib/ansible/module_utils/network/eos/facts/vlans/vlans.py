@@ -61,7 +61,7 @@ class VlansFacts(object):
             if resource:
                 obj = self.render_config(self.generated_spec, resource)
                 if obj:
-                    objs.append(obj)
+                    objs.extend(obj)
 
         ansible_facts['ansible_network_resources'].pop('vlans', None)
         facts = {}
@@ -85,8 +85,26 @@ class VlansFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        config['vlan_id'] = utils.parse_conf_arg(conf, 'vlan')
-        config['name'] = utils.parse_conf_arg(conf, 'name')
-        config['state'] = utils.parse_conf_arg(conf, 'state')
+        vlans = []
 
-        return utils.remove_empties(config)
+        vlan_list = vlan_to_list(utils.parse_conf_arg(conf, 'vlan'))
+        for vlan in vlan_list:
+            config['vlan_id'] = vlan
+            config['name'] = utils.parse_conf_arg(conf, 'name')
+            config['state'] = utils.parse_conf_arg(conf, 'state')
+
+            vlans.append(utils.remove_empties(config))
+
+        return vlans
+
+
+def vlan_to_list(vlan_str):
+    vlans = []
+    for vlan in vlan_str.split(','):
+        if '-' in vlan:
+            start, stop = vlan.split('-')
+            vlans.extend(range(int(start), int(stop) + 1))
+        else:
+            vlans.append(int(vlan))
+
+    return vlans
