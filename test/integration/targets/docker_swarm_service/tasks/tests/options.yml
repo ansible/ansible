@@ -1590,6 +1590,24 @@
   register: publish_7
   ignore_errors: yes
 
+- name: publish (publishes the same port with both protocols)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    publish:
+      - protocol: udp
+        published_port: 60001
+        target_port: 60001
+        mode: host
+      - protocol: tcp
+        published_port: 60001
+        target_port: 60001
+        mode: host
+  register: publish_8
+  ignore_errors: yes
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -1605,6 +1623,8 @@
       - publish_5 is not changed
       - publish_6 is changed
       - publish_7 is not changed
+      - publish_8 is changed
+      - (publish_8.swarm_service.publish | length) == 2
   when: docker_api_version is version('1.25', '>=') and docker_py_version is version('3.0.0', '>=')
 - assert:
     that:
