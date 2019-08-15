@@ -473,16 +473,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if self.extract_primary_ip6(host):
             self.inventory.set_variable(hostname, "primary_ip6", self.extract_primary_ip6(host=host))
 
-    def _fill_sites_vlans_group_variables(self, group):
+    def _fill_sites_vlans_group_variables(self, site_id):
         try:
-            url = self.api_endpoint + "/api/ipam/vlans/?site=" + str(group)
+            url = self.api_endpoint + "/api/ipam/vlans/?site_id=" + str(site_id)
             vlans_lookup = self._fetch_information(url)
             wanted_keys = ['description', 'group', 'name', 'role', 'status', 'vid', 'tenant', 'tags']
             vlans_short = []
             for vlan_lookup in vlans_lookup['results']:
                 vlans_short.append(dict((k, vlan_lookup[k]) for k in wanted_keys if k in vlan_lookup))
-            group_name = "_".join(["sites"[:self.substr], str(group)])
+            group_name = "_".join(["sites"[:self.substr], str(self.sites_slug_lookup[site_id])])
+            self.inventory.add_group(group=group_name)
             self.inventory.set_variable(group_name, "vlans", vlans_short)
+            if "regions" in self.sgroup_by:
+                region_name = "_".join(["regions"[:self.substr], str(self.sites_region_slug_lookup[site_id])])
+                self.inventory.add_group(group_name, region_name)
         except Exception as e:
             print(e)
             return
@@ -509,10 +513,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
             self.add_host_to_groups(host=host, hostname=hostname)
 
+        self.sgroup_by = set(self.group_by)
+        if "regions" in self.sgroup_by:
+            for region_id in self.regions_slug_lookup:
+                region_name = "_".join(["regions"[:self.substr], str(self.regions_slug_lookup[region_id])])
+                self.inventory.add_group(group=region_name)
+
         if self.vlans:
             for site in self.sites_slug_lookup:
-                self._fill_sites_vlans_group_variables(group=self.sites_slug_lookup[site])
-
+                self._fill_sites_vlans_group_variables(site_id=site)
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
