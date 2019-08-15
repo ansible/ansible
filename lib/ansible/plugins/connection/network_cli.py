@@ -191,6 +191,65 @@ options:
       - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
     vars:
       - name: ansible_persistent_log_messages
+  terminal_stdout_re:
+    type: list
+    elements: dict
+    description:
+      - A single regex pattern or a sequence of patterns along with optional flags
+        to match the command prompt from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
+    vars:
+      - name: ansible_terminal_stdout_re
+  terminal_stderr_re:
+    type: list
+    elements: dict
+    description:
+      - This option provides the regex pattern and optional flags to match the
+        error string from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
+    vars:
+      - name: ansible_terminal_stderr_re
+  terminal_initial_prompt:
+    type: list
+    description:
+      - A single regex pattern or a sequence of patterns to evaluate the expected
+        prompt at the time of initial login to the remote host.
+    vars:
+      - name: ansible_terminal_initial_prompt
+  terminal_initial_answer:
+    type: list
+    description:
+      - The answer to reply with if the C(terminal_initial_prompt) is matched. The value can be a single answer
+        or a list of answers for multiple terminal_initial_prompt. In case the login menu has
+        multiple prompts the sequence of the prompt and excepted answer should be in same order and the value
+        of I(terminal_prompt_checkall) should be set to I(True) if all the values in C(terminal_initial_prompt) are
+        expected to be matched and set to I(False) if any one login prompt is to be matched.
+    vars:
+      - name: ansible_terminal_initial_answer
+  terminal_initial_prompt_checkall:
+    type: boolean
+    description:
+      - By default the value is set to I(False) and any one of the prompts mentioned in C(terminal_initial_prompt)
+        option is matched it won't check for other prompts. When set to I(True) it will check for all the prompts
+        mentioned in C(terminal_initial_prompt) option in the given order and all the prompts
+        should be received from remote host if not it will result in timeout.
+    default: False
+    vars:
+      - name: ansible_terminal_initial_prompt_checkall
+  terminal_inital_prompt_newline:
+    type: boolean
+    description:
+      - This boolean flag, that when set to I(True) will send newline in the response if any of values
+        in I(terminal_initial_prompt) is matched.
+    default: True
+    vars:
+      - name: ansible_terminal_initial_prompt_newline
 """
 
 import getpass
@@ -247,7 +306,7 @@ class Connection(NetworkConnectionBase):
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
                 self.queue_message('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os)
-                self._sub_plugin.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
+                self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
             else:
                 self.queue_message('vvvv', 'unable to load cliconf for network_os %s' % self._network_os)
         else:
@@ -256,13 +315,6 @@ class Connection(NetworkConnectionBase):
                 'manually configure ansible_network_os value for this host'
             )
         self.queue_message('log', 'network_os is set to %s' % self._network_os)
-
-        self._terminal = terminal_loader.get(self._network_os, self)
-        if self._terminal:
-            self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
-            self._sub_plugin.append({'type': 'terminal', 'name': self._network_os, 'obj': self._terminal})
-        else:
-            raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -280,7 +332,6 @@ class Connection(NetworkConnectionBase):
         # the local connection
         if self._ssh_shell:
             try:
-
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
                 for key in ('prompt', 'answer', 'sendonly', 'newline', 'prompt_retry_check'):
@@ -340,10 +391,16 @@ class Connection(NetworkConnectionBase):
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
 
-            terminal_initial_prompt = self._terminal.get_option('terminal_initial_prompt') or self._terminal.terminal_initial_prompt
-            terminal_initial_answer = self._terminal.get_option('terminal_initial_answer') or self._terminal.terminal_initial_answer
-            newline = self._terminal.get_option('terminal_inital_prompt_newline') or self._terminal.terminal_inital_prompt_newline
-            check_all = self._terminal.get_option('terminal_initial_prompt_checkall') or False
+            self._terminal = terminal_loader.get(self._network_os, self)
+            if not self._terminal:
+                raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
+
+            self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
+
+            terminal_initial_prompt = self.get_option('terminal_initial_prompt') or self._terminal.terminal_initial_prompt
+            terminal_initial_answer = self.get_option('terminal_initial_answer') or self._terminal.terminal_initial_answer
+            newline = self.get_option('terminal_inital_prompt_newline') or self._terminal.terminal_inital_prompt_newline
+            check_all = self.get_option('terminal_initial_prompt_checkall') or False
 
             self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
@@ -616,7 +673,7 @@ class Connection(NetworkConnectionBase):
         self.close()
 
     def _get_terminal_std_re(self, option):
-        terminal_std_option = self._terminal.get_option(option)
+        terminal_std_option = self.get_option(option)
         terminal_std_re = []
 
         if terminal_std_option:

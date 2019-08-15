@@ -564,9 +564,9 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
 Timeout issue due to platform specific login menu with ``network_cli`` connection type
 --------------------------------------------------------------------------------------
 
-In Ansible 2.9 and later,  the terminal plugin supports configuration options
-to handle the platform specific login menu. These options can be set as global, group/host or
-tasks variables.
+In Ansible 2.9 and later, the network_cli connection plugin configuration options are added
+to handle the platform specific login menu. These options can be set as group/host or tasks
+variables.
 
 Example: Handle single login menu prompts with host variables
 
@@ -801,7 +801,7 @@ This timer delay per command executed on remote host can be disabled by setting 
 Task failure due to mismatched error regex within command response using ``network_cli`` connection type
 --------------------------------------------------------------------------------------------------------
 
-In Ansible 2.9 and later the terminal plugin supports configuration options
+In Ansible 2.9 and later, the network_cli connection plugin configuration options are added
 to handle the stdout and stderr regex to identify if the command execution response consist
 of a normal response or an error response. These options can be set group/host variables or as
 tasks variables.
