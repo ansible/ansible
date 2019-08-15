@@ -90,7 +90,7 @@ class AnsibleJSONEncoder(json.JSONEncoder):
             value = super(AnsibleJSONEncoder, self).default(o)
         return value
 
-    def iterencode(self, o, _one_shot=False):
+    def iterencode(self, o, **kwargs):
         """Custom encode, primarily design to handle encoding ``AnsibleUnsafe``
         as the ``AnsibleUnsafe`` subclasses inherit from string types and the
         ``json.JSONEncoder`` does not support custom encoders for string types
@@ -98,4 +98,4 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         if self._preprocess_unsafe:
             o = _preprocess_unsafe_encode(o)
 
-        return super(AnsibleJSONEncoder, self).iterencode(o, _one_shot=_one_shot)
+        return super(AnsibleJSONEncoder, self).iterencode(o, **kwargs)
