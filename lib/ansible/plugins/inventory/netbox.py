@@ -474,7 +474,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             for sub_group in sub_groups:
                 if isset(self.substr):
                     group_name = "_".join([group[:substr], sub_group])
-                else
+                else:
                     group_name = "_".join([group, sub_group])
                 self.inventory.add_group(group=group_name)
                 self.inventory.add_host(group=group_name, host=hostname)
