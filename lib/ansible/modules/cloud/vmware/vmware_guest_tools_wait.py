@@ -30,7 +30,7 @@ requirements:
 options:
    name:
      description:
-     - Name of the VM for which to wait until the tools become available.
+     - Name of the VM for which to wait until the tools become available, power on VM before use this module.
      - This is required if C(uuid) or C(moid) is not supplied.
      type: str
    name_match:
@@ -131,6 +131,13 @@ instance:
 
 import time
 
+HAS_PYVMOMI = False
+try:
+    from pyVmomi import vim
+    HAS_PYVMOMI = True
+except ImportError:
+    pass
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import PyVmomi, gather_vm_facts, vmware_argument_spec
@@ -140,29 +147,56 @@ class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
         super(PyVmomiHelper, self).__init__(module)
 
-    def gather_facts(self, vm):
-        return gather_vm_facts(self.content, vm)
+    def gather_tools_facts(self):
+        vm_tools_facts = dict(
+            vm_name=self.current_vm_obj.name,
+            vm_hw_version=self.current_vm_obj.config.version,
+            vm_guest_id=self.current_vm_obj.summary.guest.guestId,
+            vm_guest_fullname=self.current_vm_obj.summary.guest.guestFullName,
+            vm_guest_hostname=self.current_vm_obj.summary.guest.hostName,
+            vm_ipaddress=self.current_vm_obj.summary.guest.ipAddress,
+            vm_tools_running_status=self.current_vm_obj.summary.guest.toolsRunningStatus,
+            vm_tools_install_status=self.current_vm_obj.summary.guest.toolsStatus,
+            vm_tools_version_status=self.current_vm_obj.summary.guest.toolsVersionStatus,
+            vm_tools_install_type=self.current_vm_obj.config.tools.toolsInstallType,
+            vm_tools_version=self.current_vm_obj.config.tools.toolsVersion,
+            vm_tools_upgrade_policy=self.current_vm_obj.config.tools.toolsUpgradePolicy,
+            vm_tools_last_install_count=self.current_vm_obj.config.tools.lastInstallInfo.counter,
+        )
 
-    def wait_for_tools(self, vm, poll=100, sleep=5):
+        return vm_tools_facts
+
+    def wait_for_tools(self, poll=100, sleep=5):
         tools_running = False
-        vm_facts = {}
         poll_num = 0
+        vm_power_state = self.current_vm_obj.runtime.powerState
+        if vm_power_state != vim.VirtualMachinePowerState.poweredOn:
+            return {'failed': True, 'msg': "VM power state: {%s}, not poweredOn." % vm_power_state}
+
+        tools_installed_status = self.current_vm_obj.summary.guest.toolsStatus
+        if tools_installed_status == "toolsNotInstalled":
+            return {'failed': True, 'msg': "VMware tools installed status: {%s}, not wait for tools running." % tools_installed_status}
+
+        # add guest fullname empty check since there is delay getting guest info after tools running
         while not tools_running and poll_num <= poll:
-            newvm = self.get_vm()
-            vm_facts = self.gather_facts(newvm)
-            if vm_facts['guest_tools_status'] == 'guestToolsRunning':
+            tools_running_facts = self.current_vm_obj.summary.guest.toolsRunningStatus
+            guest_fullname = self.current_vm_obj.summary.guest.guestFullName
+            if tools_running_facts == 'guestToolsRunning' and guest_fullname:
                 tools_running = True
             else:
                 time.sleep(sleep)
                 poll_num += 1
 
         if not tools_running:
-            return {'failed': True, 'msg': 'VMware tools either not present or not running after {0} seconds'.format((poll * sleep))}
+            return {'failed': True, 'msg': "VMware tools status: {%s}, installed status: {%s},"
+                                           "not running after {%s} seconds."
+                                           % (self.current_vm_obj.summary.guest.toolsRunningStatus, tools_installed_status, (poll * sleep))}
 
         changed = False
         if poll_num > 0:
             changed = True
-        return {'changed': changed, 'failed': False, 'instance': vm_facts}
+        vm_tools_facts = self.gather_tools_facts()
+        return {'changed': changed, 'failed': False, 'instance': vm_tools_facts}
 
 
 def main():
@@ -197,7 +231,7 @@ def main():
 
     result = dict(changed=False)
     try:
-        result = pyv.wait_for_tools(vm)
+        result = pyv.wait_for_tools()
     except Exception as e:
         module.fail_json(msg="Waiting for VMware tools failed with"
                              " exception: {0:s}".format(to_native(e)))
