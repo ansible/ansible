@@ -638,23 +638,23 @@ EXAMPLES = r'''
       - "result.signature_algorithm == 'sha256WithRSAEncryption' or result.signature_algorithm == 'sha512WithRSAEncryption'"
       # subject and subject_strict
       - "result.subject.commonName == 'ansible.com'"
-      - "result.subject | len == 1"  # the number must be the number of entries you check for
+      - "result.subject | length == 1"  # the number must be the number of entries you check for
       # issuer and issuer_strict
       - "result.issuer.commonName == 'ansible.com'"
-      - "result.issuer | len == 1"  # the number must be the number of entries you check for
+      - "result.issuer | length == 1"  # the number must be the number of entries you check for
       # has_expired
       - not result.expired
       # version
       - result.version == 3
       # key_usage and key_usage_strict
       - "'Data Encipherment' in result.key_usage"
-      - "result.key_usage | len == 1"  # the number must be the number of entries you check for
+      - "result.key_usage | length == 1"  # the number must be the number of entries you check for
       # extended_key_usage and extended_key_usage_strict
       - "'DVCS' in result.extended_key_usage"
-      - "result.extended_key_usage | len == 1"  # the number must be the number of entries you check for
+      - "result.extended_key_usage | length == 1"  # the number must be the number of entries you check for
       # subject_alt_name and subject_alt_name_strict
       - "'dns:ansible.com' in result.subject_alt_name"
-      - "result.subject_alt_name | len == 1"  # the number must be the number of entries you check for
+      - "result.subject_alt_name | length == 1"  # the number must be the number of entries you check for
       # not_before and not_after
       - "result.not_before == '20190331202428Z'"
       - "result.not_after == '20190413202428Z'"
