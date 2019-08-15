@@ -64,6 +64,7 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm = MagicMock(TaskQueueManager)
         mock_tqm._final_q = mock_queue
+        mock_tqm._workers = []
         strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base.cleanup()
 
@@ -103,6 +104,7 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm._failed_hosts = dict()
         mock_tqm._unreachable_hosts = dict()
+        mock_tqm._workers = []
         strategy_base = StrategyBase(tqm=mock_tqm)
 
         mock_host = MagicMock()
