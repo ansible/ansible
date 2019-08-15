@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.2',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -59,7 +59,7 @@ EXAMPLES = '''
     cluster_name: '{{ vcenter_cluster }}'
     validate_certs: no
     domainname: foo.org
-    search_domain: 
+    search_domain:
         - foo.org
         - subdomain.foo.org
     dns_servers:
@@ -90,6 +90,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
 from ansible.module_utils._text import to_native
 
+
 class VmwareDNSConfig(PyVmomi):
     def __init__(self, module):
         super(VmwareDNSConfig, self).__init__(module)
@@ -102,7 +103,6 @@ class VmwareDNSConfig(PyVmomi):
         self.domainname = self.params.get('domainname', None)
         self.hosts = self.get_all_host_objs(cluster_name=self.cluster_name, esxi_host_name=self.esxi_host_name)
         self.results = {}
-        
 
     def check_host_state(self):
         change_list = []
@@ -122,7 +122,6 @@ class VmwareDNSConfig(PyVmomi):
                         changed = self.update_dns_searchdomain(host=host, search_domain=self.search_domain)
                         change_list.append(changed)
             if self.change_hostname_to:
-                #Only set hostname if esxi_hostname is used
                 if self.esxi_host_name:
                     hostname_to_change = self.check_dns_hostname(host=host)
                     if hostname_to_change != 'good':
@@ -133,7 +132,7 @@ class VmwareDNSConfig(PyVmomi):
                 if domainname_to_change != 'good':
                     changed = self.update_dns_domainname(host=host, domainname=self.domainname)
                     change_list.append(changed)
-            if self.dhcp:    
+            if self.dhcp:
                 dhcp_to_change = self.check_dns_dhcp(host=host)
                 if dhcp_to_change != 'good':
                     changed = self.update_dns_dhcp(host=host, dhcp=self.dhcp)
@@ -141,7 +140,7 @@ class VmwareDNSConfig(PyVmomi):
 
         if any(change_list):
             changed = True
-           
+
         self.module.exit_json(changed=changed, results=self.results)
 
     def check_dns_servers(self, host):
@@ -149,7 +148,8 @@ class VmwareDNSConfig(PyVmomi):
         if dns_config:
             if dns_config.address == self.dns_servers:
                 return 'good'
-        self.results[host.name]['before_change_dns_server']=dns_config.address     
+        self.results[host.name]['before_change_dns_server'] = dns_config.address
+
         return dns_config.address
 
     def update_dns_servers(self, host, dns_servers):
@@ -165,6 +165,7 @@ class VmwareDNSConfig(PyVmomi):
             self.results[host.name]['error'] = to_native(e.msg)
         except Exception as e:
             self.results[host.name]['error'] = to_native(e)
+
         return changed
 
     def check_dns_domainname(self, host):
@@ -172,7 +173,8 @@ class VmwareDNSConfig(PyVmomi):
         if dns_config:
             if dns_config.domainName == self.domainname:
                 return 'good'
-        self.results[host.name]['before_change_domain_name']= dns_config.domainName
+            self.results[host.name]['before_change_domain_name'] = dns_config.domainName
+
         return dns_config.domainName
 
     def update_dns_domainname(self, host, domainname):
@@ -189,7 +191,7 @@ class VmwareDNSConfig(PyVmomi):
         except Exception as e:
             self.results[host.name]['error'] = to_native(e)
         return changed
-    
+
     def update_dns_hostname(self, host, host_name):
         changed = False
         dns_config = host.configManager.networkSystem.dnsConfig
@@ -218,8 +220,9 @@ class VmwareDNSConfig(PyVmomi):
         if dns_config:
             if dns_config.searchDomain == self.search_domain:
                 return 'good'
-        self.results[host.name]['before_change_search_domain'] = dns_config.searchDomain 
-        return dns_config.searchDomain 
+        self.results[host.name]['before_change_search_domain'] = dns_config.searchDomain
+
+        return dns_config.searchDomain
 
     def update_dns_searchdomain(self, host, search_domain):
         changed = False
@@ -259,7 +262,8 @@ class VmwareDNSConfig(PyVmomi):
         except Exception as e:
             self.results[host.name]['error'] = to_native(e)
         return changed
-    
+
+
 def main():
 
     argument_spec = vmware_argument_spec()
@@ -277,16 +281,17 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_one_of=[
-            ['cluster_name', 'esxi_hostname']   
+            ['cluster_name', 'esxi_hostname']
         ],
         mutually_exclusive=[
-            [ 'cluster_name', 'host_name' ],
+            ['cluster_name', 'host_name'],
             ['dhcp', 'dns_servers']
         ]
     )
 
     vmware_dns_config = VmwareDNSConfig(module)
     vmware_dns_config.check_host_state()
+
 
 if __name__ == '__main__':
     main()

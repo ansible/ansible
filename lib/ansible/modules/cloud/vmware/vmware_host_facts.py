@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.2',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -194,7 +194,7 @@ class VMwareHostFactManager(PyVmomi):
         if self.params.get('show_tag'):
             ansible_facts.update(self.get_tag_facts())
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
-    
+
     def get_cluster_facts(self):
         cluster_facts = {'cluster': None}
         if self.host.parent and isinstance(self.host.parent, vim.ClusterComputeResource):
@@ -264,7 +264,6 @@ class VMwareHostFactManager(PyVmomi):
         return facts
 
     def get_system_facts(self):
-        
         sn = 'NA'
         for info in self.host.hardware.systemInfo.otherIdentifyingInfo:
             if info.identifierType.key == 'ServiceTag':
