@@ -95,7 +95,7 @@ def main():
         supports_check_mode=False,
     )
 
-    module.deprecate("The 'digital_ocean_sshkey_facts' module has been deprecated, use the new 'digital_ocean_sshkey_info'", version='2.13')
+    module.deprecate("The 'digital_ocean_sshkey_facts' module has been deprecated, use the new 'digital_ocean_sshkey_info' module", version='2.13')
 
     core(module)
 
