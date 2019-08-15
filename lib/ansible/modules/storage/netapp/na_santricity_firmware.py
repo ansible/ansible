@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: na_santricity_firmware
 version_added: "2.9"
-short_description: NetApp E-Series manage firmware bundles and for legacy systems manage embedded firmware, and nvsram file.
+short_description: NetApp E-Series manage firmware.
 description:
     - Ensure specific firmware versions are activated on E-Series storage system.
 author:
@@ -41,7 +41,7 @@ options:
     ignore_health_check:
         description:
             - This flag will force firmware to be activated in spite of the health check.
-            - Use at you own risk. Certain non-optimal states could result in data loss.
+            - Use at your own risk. Certain non-optimal states could result in data loss.
         type: bool
         default: false
 """
@@ -73,7 +73,7 @@ msg:
     returned: always
     sample:
 """
-import re
+import os
 
 from time import sleep
 from ansible.module_utils import six
@@ -113,8 +113,8 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
         self.upgrade_in_progress = False
         self.module_info = dict()
 
-        self.nvsram_name = re.split(r"/", self.nvsram)[-1]
-        self.firmware_name = re.split(r"/", self.firmware)[-1]
+        self.nvsram_name = os.path.basename(self.nvsram)
+        self.firmware_name = os.path.basename(self.firmware)
 
     def is_firmware_bundled(self):
         """Determine whether supplied firmware is bundle."""
@@ -144,10 +144,10 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
                             for item in line[25:].split(b','):
                                 key, value = item.split(b"|")
                                 if key == b'VERSION':
-                                    self.firmware_version_cache = value.strip(b"\n")    # [int(num) for num in value.split(b".")]
+                                    self.firmware_version_cache = value.strip(b"\n")
                             break
                     elif b"Version:" in line:
-                        self.firmware_version_cache = line.split()[-1].strip(b"\n")  # [int(num) for num in line.split()[-1]]
+                        self.firmware_version_cache = line.split()[-1].strip(b"\n")
                         break
                     line = fh.readline()
                 else:
@@ -190,7 +190,7 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
         except Exception as error:
             self.module.fail_json(msg="Failed to initiate health check. Array Id [%s]. Error[%s]." % (self.ssid, to_native(error)))
 
-        self.module.fail_json(msg="Failed to retrieve health check status. Array Id [%s]. Error[%s]." % (self.ssid, to_native(error)))
+        self.module.fail_json(msg="Failed to retrieve health check status. Array Id [%s]. Error[%s]." % self.ssid)
 
     def embedded_check_compatibility(self):
         """Verify files are compatible with E-Series storage system."""
@@ -262,9 +262,8 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
 
     def embedded_wait_for_controller_reboot(self):
         """Wait for SANtricity Web Services Embedded to be available after reboot."""
-        sleep(60)  # wait for controller to reboot
         about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
-        for count in range(0, int((self.REBOOT_TIMEOUT_SEC - 60) / 5)):
+        for count in range(0, int(self.REBOOT_TIMEOUT_SEC / 5)):
             sleep(5)
             try:
                 rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, ignore_errors=True, **self.creds)
@@ -413,23 +412,24 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
                 except Exception as error:
                     self.module.fail_json(msg="Failed to retrieve firmware upgrade status. Array [%s]. Error [%s]." % (self.ssid, to_native(error)))
         else:
-            while True:
+            for count in range(0, int(self.REBOOT_TIMEOUT_SEC / 5)):
                 try:
                     sleep(5)
-                    rc, response = self.request("batch/cfw-upgrade/%s" % request_id)
+                    rc_firmware, firmware = self.request("storage-systems/%s/graph/xpath-filter?query=/sa/saData/fwVersion" % self.ssid)
+                    rc_nvsram, nvsram = self.request("storage-systems/%s/graph/xpath-filter?query=/sa/saData/nvsramVersion" % self.ssid)
 
-                    if response["status"] == "complete":
+                    if six.b(firmware[0]) == self.firmware_version() and six.b(nvsram[0]) == self.nvsram_version():
                         self.upgrade_in_progress = False
                         break
-                    elif response["status"] in ["failed", "cancelled"]:
-                        self.module.fail_json(msg="Firmware upgrade failed to complete. Array [%s]." % self.ssid)
                 except Exception as error:
-                    self.module.fail_json(msg="Failed to retrieve firmware upgrade status. Array [%s]. Error [%s]." % (self.ssid, to_native(error)))
+                    pass
+            else:
+                self.module.fail_json(msg="Failed to retrieve firmware upgrade status. Array [%s]." % self.ssid)
 
     def proxy_upgrade(self):
         """Activate previously uploaded firmware related files."""
         request_id = None
-        if self.is_firmware_bundled:
+        if self.is_firmware_bundled():
             data = {"activate": True,
                     "firmwareFile": self.firmware_name,
                     "nvsramFile": self.nvsram_name,
@@ -447,7 +447,7 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
                     "cfwFile": self.firmware_name,
                     "nvsramFile": self.nvsram_name}
             try:
-                rc, response = self.request("batch/cfw-upgrade", method="POST", data=data)
+                rc, response = self.request("storage-systems/%s/cfw-upgrade" % self.ssid, method="POST", data=data)
                 request_id = response["requestId"]
             except Exception as error:
                 self.module.fail_json(msg="Failed to initiate firmware upgrade. Array [%s]. Error [%s]." % (self.ssid, to_native(error)))
