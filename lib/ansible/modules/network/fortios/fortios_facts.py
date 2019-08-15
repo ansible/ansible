@@ -46,17 +46,18 @@ options:
         description:
             - FortiOS or FortiGate IP address.
         type: str
-        required: false
+        required: true
     username:
         description:
             - FortiOS or FortiGate username.
         type: str
-        required: false
+        required: true
     password:
         description:
             - FortiOS or FortiGate password.
         type: str
         default: ""
+        required: true
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
@@ -64,26 +65,29 @@ options:
               used as a different unit.
         type: str
         default: root
+        required: false
     https:
         description:
             - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+        required: false
     ssl_verify:
         description:
             - Ensures FortiGate certificate must be verified by a proper CA.
         type: bool
-        default: true
+        default: false
+        required: false
     gather_subset:
-      description:
-        - When supplied, this argument will restrict the facts collected
-          to a given subset.  Possible values for this argument include
-          all, hardware, config, and interfaces.  Can specify a list of
-          values to include a larger subset.  Values can also be used
-          with an initial C(M(!)) to specify that a specific subset should
-          not be collected.
+        description:
+            - When supplied, this argument will restrict the facts collected
+            to a given subset.  Possible values for this argument include
+            all, hardware, config, and interfaces.  Can specify a list of
+            values to include a larger subset.
+      type: list
+      default:
+          - "system_status_select"
       required: false
-      default: 'system'
 '''
 
 EXAMPLES = '''
@@ -182,22 +186,20 @@ class Factbase(object):
 
 FACT_SYSTEM_SUBSETS = frozenset([
     'system_current-admins_select',
-    'system_debug_download'
     'system_firmware_select',
     'system_fortimanager_status',
     'system_ha-checksums_select',
     'system_interface_select',
     'system_status_select',
     'system_time_select',
-    'system_timezong_select',
 ])
 
 class System(Factbase):
     def populate_facts(self):
         fos = self.fos
-        vdom = 'root' #data['vdom']
+        vdom = self.module.params['vdom']
         if self.uri.startswith(tuple(FACT_SYSTEM_SUBSETS)):
-            resp = fos.monitor('system', self.uri[len('system_'):].replace('_','/'), vdom=vdom)
+            resp = fos.monitor('system', self.uri[len('system_'):].replace('_', '/'), vdom=vdom)
             self.facts.update({self.uri: resp})
 
 
@@ -231,7 +233,7 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": False},
-        'gather_subset': {"required": False, "type": "list", "default": ['system']}
+        'gather_subset': {"required": False, "type": "list", "default": ['system_status_select']}
     }
 
     module = AnsibleModule(argument_spec=fields,
