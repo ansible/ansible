@@ -410,11 +410,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         vlans = self.get_resource_list(api_url=url)
         self.vlans_lookup = dict((vlan["results"]["id"], vlan["results"]["vid"]) for vlan in vlans)
 
-    def refresh_interfaces_lookup(self):
-        url = self.api_endpoint + "/api/dcim/interfaces/?limit=0"
-        interfaces = self.get_resource_list(api_url=url)
-        self.interfaces_lookup = dict((interface["results"]["id"], interface["results"]["name"]) for interface in interfaces)
-
     def refresh_lookups(self):
         lookup_processes = (
             self.refresh_sites_lookup,
@@ -426,7 +421,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.refresh_device_types_lookup,
             self.refresh_manufacturers_lookup,
             #self.refresh_vlans_lookup,
-            #self.refresh_interfaces_lookup,
         )
 
         thread_list = []
