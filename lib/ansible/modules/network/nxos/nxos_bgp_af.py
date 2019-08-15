@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -159,6 +159,12 @@ options:
         optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
         ['192.168.1.1', 'Chicago'], ['192.168.2.0/24'],
         ['192.168.3.0/24', 'routemap_NYC']].
+  networks_purge:
+    description:
+      - When used with 'networks' you can choose to wipe out previous
+        advertised networks and force only the requested advertised networks
+        or you can choose to leave other networks untouched.
+    type: bool
   next_hop_route_map:
     description:
       - Configure a route-map for valid nexthops. Valid values are a
@@ -479,7 +485,7 @@ def default_existing(existing_value, key, value):
     return commands
 
 
-def get_network_command(existing, key, value):
+def get_network_command(existing, key, value, networks_purge):
     commands = []
     existing_networks = existing.get('networks', [])
     for inet in value:
@@ -492,14 +498,15 @@ def get_network_command(existing, key, value):
                 command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
             if command:
                 commands.append(command)
-    for enet in existing_networks:
-        if enet not in value:
-            if len(enet) == 1:
-                command = 'no {0} {1}'.format(key, enet[0])
-            elif len(enet) == 2:
-                command = 'no {0} {1} route-map {2}'.format(key, enet[0], enet[1])
-            if command:
-                commands.append(command)
+    if (networks_purge == True):
+        for enet in existing_networks:
+            if (enet[0] not in value):
+                if len(enet) == 1:
+                    command = 'no {0} {1}'.format(key, enet[0])
+                elif len(enet) == 2:
+                    command = 'no {0} {1} route-map {2}'.format(key, enet[0], enet[1])
+                if command:
+                    commands.append(command)
     return commands
 
 
@@ -617,7 +624,7 @@ def state_present(module, existing, proposed, candidate):
                         commands.extend(default_command)
         else:
             if key == 'network':
-                network_commands = get_network_command(existing, key, value)
+                network_commands = get_network_command(existing, key, value, module.params['networks_purge'])
                 if network_commands:
                     commands.extend(network_commands)
 
@@ -687,6 +694,7 @@ def main():
         maximum_paths=dict(required=False, type='str'),
         maximum_paths_ibgp=dict(required=False, type='str'),
         networks=dict(required=False, type='list'),
+        networks_purge=dict(required=False, type='bool'),
         next_hop_route_map=dict(required=False, type='str'),
         redistribute=dict(required=False, type='list'),
         suppress_inactive=dict(required=False, type='bool'),
