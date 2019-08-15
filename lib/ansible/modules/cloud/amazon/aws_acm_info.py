@@ -26,6 +26,7 @@ options:
     aliases:
      - arn
     version_added: '2.9'
+    type: str
   domain_name:
     description:
       - The domain name of an ACM certificate to limit the search to
