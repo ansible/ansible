@@ -62,6 +62,8 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
+* digital_ocean_sshkey_facts use :ref:`digital_ocean_sshkey_info <digital_ocean_sshkey_info_module>` instead.
+
 * junos_interface use :ref:`junos_interfaces <junos_interfaces_module>` instead.
 
 * junos_l2_interface use :ref:`junos_l2_interfaces <junos_l2_interfaces_module>` instead.

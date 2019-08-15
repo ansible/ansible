@@ -1,0 +1,2 @@
+minor_changes:
+- The ``digital_ocean_sshkey_facts`` module has been deprecated. Use ``digital_ocean_sshkey_info`` instead.
