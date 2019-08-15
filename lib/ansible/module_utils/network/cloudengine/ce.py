@@ -42,11 +42,16 @@ from ansible.module_utils.network.common.netconf import NetconfConnection
 
 
 try:
-    from ncclient.xml_ import to_xml
+    from ncclient.xml_ import to_xml, new_ele_ns
     HAS_NCCLIENT = True
 except ImportError:
     HAS_NCCLIENT = False
 
+
+try:
+    from lxml import etree
+except ImportError:
+    from xml.etree import ElementTree as etree
 
 _DEVICE_CLI_CONNECTION = None
 _DEVICE_NC_CONNECTION = None
