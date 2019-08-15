@@ -1,97 +1,48 @@
 .. _intro_adhoc:
 
-Introduction To Ad-Hoc Commands
-===============================
+*******************************
+Introduction to ad-hoc commands
+*******************************
 
-.. contents:: Topics
+An Ansible ad-hoc command uses the `/usr/bin/ansible` command-line tool to automate a single task on one or more managed nodes. Ad-hoc commands are quick and easy, but they are not re-usable. So why learn about ad-hoc commands first? Ad-hoc commands demonstrate the simplicity and power of Ansible. The concepts you learn here will port over directly to the playbook language. Before reading and executing these examples, please read :ref:`intro_inventory`.
 
-The following examples show how to use `/usr/bin/ansible` for running
-ad hoc tasks.
+.. contents::
+   :local:
 
-What's an ad-hoc command?
+Why use ad-hoc commands?
+========================
 
-An ad-hoc command is something that you might type in to do something really
-quick, but don't want to save for later.
+Ad-hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad-hoc command looks like this::
 
-This is a good place to start to understand the basics of what Ansible can do
-prior to learning the playbooks language -- ad-hoc commands can also be used
-to do quick things that you might not necessarily want to write a full playbook for.
+    $ ansible [hosts] -m [module] [parameters]
 
-Generally speaking, the true power of Ansible lies in playbooks.
-Why would you use ad-hoc tasks versus playbooks?
+Use cases for ad-hoc tasks
+==========================
 
-For instance, if you wanted to power off all of your lab for Christmas vacation,
-you could execute a quick one-liner in Ansible without writing a playbook.
+Ad-hoc tasks can be used to reboot servers, copy files, manage packages and users, and much more. You can use any Ansible module in an ad-hoc task. Ad-hoc tasks, like playbooks, use a declarative model,
+calculating and executing the actions required to reach a specified final state. They
+achieve a form of idempotence by checking the current state before they begin and doing nothing unless the current state is different from the specified final state.
 
-For configuration management and deployments, though, you'll want to pick up on
-using '/usr/bin/ansible-playbook' -- the concepts you will learn here will
-port over directly to the playbook language.
+Rebooting servers
+-----------------
 
-(See :ref:`working_with_playbooks` for more information about those)
+The default module for the ``ansible`` command-line utility is the :ref:`command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have those servers listed in a a group called *atlanta* in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group::
 
-If you haven't read :ref:`intro_inventory` already, please look that over a bit first
-and then we'll get going.
+    $ ansible atlanta -a "/sbin/reboot"
 
-.. _parallelism_and_shell_commands:
-
-Parallelism and Shell Commands
-``````````````````````````````
-
-Arbitrary example.
-
-Let's use Ansible's command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let's
-set up SSH-agent so it can remember our credentials::
-
-    $ ssh-agent bash
-    $ ssh-add ~/.ssh/id_rsa
-
-If you don't want to use ssh-agent and want to instead SSH with a
-password instead of keys, you can with ``--ask-pass`` (``-k``), but
-it's much better to just use ssh-agent.
-
-Now to run the command on all servers in a group, in this case,
-*atlanta*, in 10 parallel forks::
+By default Ansible uses only 5 simultaneous processes. If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will take a little longer. To reboot the [atlanta] servers with 10 parallel forks::
 
     $ ansible atlanta -a "/sbin/reboot" -f 10
 
-/usr/bin/ansible will default to running from your user account.  If you do not like this
-behavior, pass in "-u username".  If you want to run commands as a different user, it looks like this::
+/usr/bin/ansible will default to running from your user account. To connect as a different user::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u username
+    $ ansible atlanta -a "/sbin/reboot" -f 10 -u username
 
-Often you'll not want to just do things from your user account.  If you want to run commands through privilege escalation::
+Rebooting probably requires privilege escalation. You can connect to the server as ``username`` and run the command as the ``root`` user by using the :ref:`become <become>` keyword::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u username --become [--ask-become-pass]
+    $ ansible atlanta -a "/sbin/reboot" -f 10 -u username --become [--ask-become-pass]
 
-Use ``--ask-become-pass`` (``-K``) if you are not using a passwordless privilege escalation method (sudo/su/pfexec/doas/etc).
-This will interactively prompt you for the password to use.
-Use of a passwordless setup makes things easier to automate, but it's not required.
-
-It is also possible to become a user other than root using
-``--become-user``::
-
-    $ ansible atlanta -a "/usr/bin/foo" -u username --become --become-user otheruser [--ask-become-pass]
-
-.. note::
-
-    Rarely, some users have security rules where they constrain their sudo/pbrun/doas environment to running specific command paths only.
-    This does not work with Ansible's no-bootstrapping philosophy and hundreds of different modules.
-    If doing this, use Ansible from a special account that does not have this constraint.
-    One way of doing this without sharing access to unauthorized users would be gating Ansible with :ref:`ansible_tower`, which
-    can hold on to an SSH credential and let members of certain organizations use it on their behalf without having direct access.
-
-Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :ref:`intro_patterns`.
-
-The ``-f 10`` in the above specifies the usage of 10 simultaneous
-processes to use.   You can also set this in :ref:`intro_configuration` to avoid setting it again.  The default is actually 5, which
-is really small and conservative.  You are probably going to want to talk to a lot more simultaneous hosts so feel free
-to crank this up.  If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will
-take a little longer.  Feel free to push this value as high as your system can handle!
-
-You can also select what Ansible "module" you want to run.  Normally commands also take a ``-m`` for module name, but
-the default module name is 'command', so we didn't need to
-specify that all of the time.  We'll use ``-m`` in later examples to
-run some other modules.
+If you add ``--ask-become-pass`` or ``-K``, Ansible prompts you for the password to use for privilege escalation (sudo/su/pfexec/doas/etc).
 
 .. note::
    The :ref:`command module <command_module>` does not support extended shell syntax like piping and
@@ -99,38 +50,28 @@ run some other modules.
    syntax, use the `shell` module instead. Read more about the differences on the
    :ref:`working_with_modules` page.
 
-Using the :ref:`shell module <shell_module>` looks like this::
+So far all our examples have used the default 'command' module. To use a different module, pass ``-m`` for module name. For example, to use the :ref:`shell module <shell_module>`::
 
     $ ansible raleigh -m shell -a 'echo $TERM'
 
 When running any command with the Ansible *ad hoc* CLI (as opposed to
 :ref:`Playbooks <working_with_playbooks>`), pay particular attention to shell quoting rules, so
-the local shell doesn't eat a variable before it gets passed to Ansible.
+the local shell retains the variable and passes it to Ansible.
 For example, using double rather than single quotes in the above example would
 evaluate the variable on the box you were on.
 
-So far we've been demoing simple command execution, but most Ansible modules are not simple imperative scripts. Instead, they use a declarative model,
-calculating and executing the actions required to reach a specified final state.
-Furthermore, they achieve a form of idempotence by checking the current state
-before they begin, and if the current state matches the specified final state,
-doing nothing.
-However, we also recognize that running arbitrary commands can be valuable, so Ansible easily supports both.
-
 .. _file_transfer:
 
-File Transfer
-`````````````
+Managing files
+--------------
 
-Here's another use case for the `/usr/bin/ansible` command line.  Ansible can SCP lots of files to multiple machines in parallel.
-
-To transfer a file directly to many servers::
+An ad-hoc task can harness the power of Ansible and SCP to transfer many files to multiple machines in parallel. To transfer a file directly to all servers in the [atlanta] group::
 
     $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
-If you use playbooks, you can also take advantage of the ``template`` module,
-which takes this another step further.  (See module and playbook documentation).
+If you plan to repeat a task like this, use the :ref:`template <template_module` module in a playbook.
 
-The ``file`` module allows changing ownership and permissions on files.  These
+The :ref:`file <file_module` module allows changing ownership and permissions on files. These
 same options can be passed directly to the ``copy`` module as well::
 
     $ ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
@@ -146,67 +87,45 @@ As well as delete directories (recursively) and delete files::
 
 .. _managing_packages:
 
-Managing Packages
-`````````````````
+Managing packages
+-----------------
 
-There are modules available for yum and apt.  Here are some examples
-with yum.
-
-Ensure a package is installed, but don't update it::
+You might also use an ad-hoc task to install, update, or remove packages on managed nodes using a package management module like yum. To ensure a package is installed without updating it::
 
     $ ansible webservers -m yum -a "name=acme state=present"
 
-Ensure a package is installed to a specific version::
+To ensure a specific version of a package is installed::
 
     $ ansible webservers -m yum -a "name=acme-1.5 state=present"
 
-Ensure a package is at the latest version::
+To ensure a package is at the latest version::
 
     $ ansible webservers -m yum -a "name=acme state=latest"
 
-Ensure a package is not installed::
+To ensure a package is not installed::
 
     $ ansible webservers -m yum -a "name=acme state=absent"
 
-Ansible has modules for managing packages under many platforms.  If there isn't
-a module for your package manager, you can install packages using the
-command module or (better!) contribute a module for your package manager.
-Stop by the mailing list for info/details.
+Ansible has modules for managing packages under many platforms. If there is no module for your package manager, you can install packages using the command module or create a module for your package manager.
 
 .. _users_and_groups:
 
-Users and Groups
-````````````````
+Managing users and groups
+-------------------------
 
-The 'user' module allows easy creation and manipulation of
-existing user accounts, as well as removal of user accounts that may
-exist::
+You can create, manage, and remove user accounts on your managed nodes with ad-hoc tasks::
 
     $ ansible all -m user -a "name=foo password=<crypted password here>"
 
     $ ansible all -m user -a "name=foo state=absent"
 
-See the :ref:`Module Docs <modules_by_category>` section for details on all of the available options, including
+See the :ref:`user <user_module>` module documentation for details on all of the available options, including
 how to manipulate groups and group membership.
-
-.. _from_source_control:
-
-Deploying From Source Control
-`````````````````````````````
-
-Deploy your webapp straight from git::
-
-    $ ansible webservers -m git -a "repo=https://foo.example.org/repo.git dest=/srv/myapp version=HEAD"
-
-Since Ansible modules can notify change handlers it is possible to
-tell Ansible to run specific tasks when the code is updated, such as
-deploying Perl/Python/PHP/Ruby directly from git and then restarting
-apache.
 
 .. _managing_services:
 
-Managing Services
-`````````````````
+Managing services
+-----------------
 
 Ensure a service is started on all webservers::
 
@@ -255,15 +174,15 @@ shell commands or software upgrades.  Backgrounding the copy module does not do 
 
 .. _checking_facts:
 
-Gathering Facts
+Gathering facts
 ```````````````
 
 Facts are described in the playbooks section and represent discovered variables about a
-system.  These can be used to implement conditional execution of tasks but also just to get ad-hoc information about your system. You can see all facts via::
+system. These can be used to implement conditional execution of tasks but also just to get ad-hoc information about your system. You can see all facts via::
 
     $ ansible all -m setup
 
-It's also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
+You can also filter this output to just export certain facts, see the :ref:`setup <setup_module>` module documentation for details.
 
 Read more about facts at :ref:`playbooks_variables` once you're ready to read up on :ref:`Playbooks <playbooks_intro>`.
 

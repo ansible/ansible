@@ -186,8 +186,10 @@ Ansible does not always
 use a specific command to do something but runs modules (code) from
 a temporary file name which changes every time.  If you have '/sbin/service'
 or '/bin/chmod' as the allowed commands this will fail with ansible as those
-paths won't match with the temporary file that ansible creates to run the
-module.
+paths won't match with the temporary file that Ansible creates to run the
+module. If you have security rules that constrain your sudo/pbrun/doas environment
+to running specific command paths only, use Ansible from a special account that
+does not have this constraint, or use :ref:`ansible_tower` to manage indirect access to SSH credentials.
 
 May not access environment variables populated by pamd_systemd
 --------------------------------------------------------------
