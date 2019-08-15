@@ -88,6 +88,7 @@ options:
       default:
           - "system_status_select"
       required: false
+
 '''
 
 EXAMPLES = '''
@@ -194,6 +195,7 @@ FACT_SYSTEM_SUBSETS = frozenset([
     'system_time_select',
 ])
 
+
 class System(Factbase):
     def populate_facts(self):
         fos = self.fos
@@ -214,7 +216,7 @@ def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
-    ssl_verify = False #data['ssl_verify']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -243,7 +245,8 @@ def main():
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
 
-    if not legacy_mode: # for now only support local connection mode
+    # for now only support local connection mode
+    if not legacy_mode:
         module.fail_json(**FAIL_SOCKET_MSG)
     else:
         try:
