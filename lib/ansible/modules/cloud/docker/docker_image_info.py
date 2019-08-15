@@ -25,7 +25,7 @@ description:
      - Non-existing images will not be added to the result list. I.e. if you want to check whether an image exists
        locally, you can call the module with this image, and check whether the result list is empty (image does not
        exist) or has one element (the image exists locally).
-     - The module will not attempt to pull images from registries. Use M(docker_image) with I(source) set to O(pull)
+     - The module will not attempt to pull images from registries. Use M(docker_image) with I(source) set to C(pull)
        to ensure an image is pulled.
 
 notes:
