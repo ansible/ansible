@@ -1607,6 +1607,10 @@
         mode: host
   register: publish_8
   ignore_errors: yes
+- name: gather service info
+  docker_swarm_service_info:
+    name: "{{ service_name }}"
+  register: publish_8_info
 
 - name: cleanup
   docker_swarm_service:
@@ -1624,7 +1628,7 @@
       - publish_6 is changed
       - publish_7 is not changed
       - publish_8 is changed
-      - (publish_8.swarm_service.publish | length) == 2
+      - (publish_8_info.service.Endpoint.Ports | length) == 2
   when: docker_api_version is version('1.25', '>=') and docker_py_version is version('3.0.0', '>=')
 - assert:
     that:
