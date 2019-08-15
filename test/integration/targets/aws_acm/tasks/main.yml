@@ -1,14 +1,12 @@
+- name: AWS ACM integration test
+  block:
 
-- set_fact:
+  - set_fact:
     aws_connection_info: &aws_connection_info
         aws_region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
-      
-
-- name: AWS ACM integration test
-  block:
 
   # just check this task doesn't fail
   # I'm not sure if I can assume there aren't already other certs in this account

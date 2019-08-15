@@ -316,7 +316,7 @@ def main():
         if same:
              module.debug("Existing certificate in ACM is the same, doing nothing")
              domain = acm.get_domain_of_cert(client=client, module=module, arn=old_cert['certificate_arn'])
-             module.exit_json(certificate=dict(domain_name=domain, arn=old_cert['certificate_arn'] ), changed=False)
+             module.exit_json(certificate=dict(domain_name=domain, arn=old_cert['certificate_arn']), changed=False)
         else:
           module.debug("Existing certificate in ACM is different, overwriting")
 
@@ -328,7 +328,7 @@ def main():
                                        arn=old_cert['certificate_arn'],
                                        tags=tags)
           domain = acm.get_domain_of_cert(client=client, module=module, arn=arn)
-          module.exit_json(certificate=dict(domain_name=domain, arn=arn ), changed=True)
+          module.exit_json(certificate=dict(domain_name=domain, arn=arn), changed=True)
 
       else:
         #create a new certificate
@@ -340,7 +340,7 @@ def main():
                                      tags=tags)
         domain = acm.get_domain_of_cert(client=client, module=module, arn=arn)
 
-        module.exit_json(certificate=dict(domain_name=domain, arn=arn ), changed=True)
+        module.exit_json(certificate=dict(domain_name=domain, arn=arn), changed=True)
 
     else: # state == absent
       for cert in certificates:
