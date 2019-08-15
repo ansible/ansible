@@ -108,10 +108,12 @@ options:
     description:
       - Name of the network.
     type: str
+    version_added: '2.9'
   vpc:
     description:
       - Name of the VPC.
     type: str
+    version_added: '2.9'
 extends_documentation_fragment: cloudstack
 '''
 
