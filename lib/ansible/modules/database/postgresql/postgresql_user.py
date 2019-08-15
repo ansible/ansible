@@ -764,13 +764,12 @@ def get_valid_flags_by_version(cursor):
 
 
 class PgMembership():
-    def __init__(self, module, cursor, target_roles, groups, fail_on_role=False):
+    def __init__(self, module, cursor, target_roles, groups, fail_on_role=True):
         self.module = module
         self.cursor = cursor
         self.target_roles = [r.strip() for r in target_roles]
         self.groups = groups
         self.granted = {}
-        self.revoked = {}
         self.fail_on_role = fail_on_role
         self.non_existent_roles = []
         self.changed = False
