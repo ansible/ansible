@@ -472,7 +472,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 continue
 
             for sub_group in sub_groups:
-                if isset(self.substr):
+                if self.substr != 15:
                     group_name = "_".join([group[:substr], sub_group])
                 else:
                     group_name = "_".join([group, sub_group])
