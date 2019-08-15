@@ -367,8 +367,6 @@ def get_nc_next(module, xml_str):
                 break
     return result
 
-    return to_string(to_xml(response))
-
 
 def get_nc_config(module, xml_str):
     """ get_config """
