@@ -38,7 +38,7 @@ def test_encode_decode_unsafe():
         '"list": [{"__ansible_unsafe": "{#NOTACOMMENT#}"}], '
         '"list_dict": [{"key_value": {"__ansible_unsafe": "{#NOTACOMMENT#}"}}]}'
     )
-    assert json.dumps(data, cls=AnsibleJSONEncoder, preprocess_unsafe=True) == json_expected
+    assert json.dumps(data, cls=AnsibleJSONEncoder, preprocess_unsafe=True, sort_keys=True) == json_expected
     assert json.loads(json_expected, cls=AnsibleJSONDecoder) == data
 
 
