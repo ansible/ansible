@@ -1,5 +1,4 @@
 # Copyright (c) 2018 Cisco and/or its affiliates.
-# Copyright (c) 2018 Cisco and/or its affiliates.
 #
 # This file is part of Ansible
 #
