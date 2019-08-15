@@ -54,7 +54,6 @@ author:
 '''
 
 EXAMPLES = '''
-
 - name: Inspect a single image
   docker_image_info:
     name: pacur/centos-7
@@ -64,6 +63,12 @@ EXAMPLES = '''
     name:
       - pacur/centos-7
       - sinatra
+  register: result
+
+- name: Make sure that both images pacur/centos-7 and sinatra exist locally
+  assert:
+    that:
+      - result.images | length == 2
 '''
 
 RETURN = '''
