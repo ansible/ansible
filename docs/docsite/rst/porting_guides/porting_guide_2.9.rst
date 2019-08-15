@@ -104,7 +104,7 @@ The following functionality will be removed in Ansible 2.13. Please update updat
 
 * ``openssl_certificate`` deprecates the ``assertonly`` provider.
   Please see the :ref:`openssl_certificate <openssl_certificate_module>` documentation examples on how to
-  replace the provider with the :ref:`openssl_certificate <openssl_certificate_info_module>`,
+  replace the provider with the :ref:`openssl_certificate_info <openssl_certificate_info_module>`,
   :ref:`openssl_csr_info <openssl_csr_info_module>`, :ref:`openssl_privatekey_info <openssl_privatekey_info_module>`
   and :ref:`assert <assert_module>` modules.
 

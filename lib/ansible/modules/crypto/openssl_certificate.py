@@ -24,7 +24,7 @@ description:
     - The C(assertonly) provider is intended for use cases where one is only interested in
       checking properties of a supplied certificate. Please note that this provider has been
       deprecated in Ansible 2.9 and will be removed in Ansible 2.13. See the examples on how
-      to convert C(assertonly) usage with M(openssl_certificate_info), M(openssl_csr_info),
+      to emulate C(assertonly) usage with M(openssl_certificate_info), M(openssl_csr_info),
       M(openssl_privatekey_info) and M(assert). This also allows more flexible checks than
       the ones offered by the C(assertonly) provider.
     - The C(ownca) provider is intended for generate OpenSSL certificate signed with your own
