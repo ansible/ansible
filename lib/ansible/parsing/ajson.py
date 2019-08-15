@@ -67,6 +67,10 @@ class AnsibleJSONEncoder(json.JSONEncoder):
     Simple encoder class to deal with JSON encoding of Ansible internal types
     '''
 
+    def __init__(self, preprocess_unsafe=False, **kwargs):
+        self._preprocess_unsafe = preprocess_unsafe
+        super(AnsibleJSONEncoder, self).__init__(**kwargs)
+
     # NOTE: ALWAYS inform AWS/Tower when new items get added as they consume them downstream via a callback
     def default(self, o):
         if isinstance(o, AnsibleVaultEncryptedUnicode):
@@ -86,11 +90,12 @@ class AnsibleJSONEncoder(json.JSONEncoder):
             value = super(AnsibleJSONEncoder, self).default(o)
         return value
 
-    def encode(self, o):
+    def iterencode(self, o, _one_shot=False):
         """Custom encode, primarily design to handle encoding ``AnsibleUnsafe``
         as the ``AnsibleUnsafe`` subclasses inherit from string types and the
         ``json.JSONEncoder`` does not support custom encoders for string types
         """
-        o = _preprocess_unsafe_encode(o)
+        if self._preprocess_unsafe:
+            o = _preprocess_unsafe_encode(o)
 
-        return super(AnsibleJSONEncoder, self).encode(o)
+        return super(AnsibleJSONEncoder, self).iterencode(o, _one_shot=_one_shot)
