@@ -22,7 +22,11 @@ description:
     - It implements a notion of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly), C(entrust))
       for your certificate.
     - The C(assertonly) provider is intended for use cases where one is only interested in
-      checking properties of a supplied certificate.
+      checking properties of a supplied certificate. Please note that this provider has been
+      deprecated in Ansible 2.9 and will be removed in Ansible 2.13. See the examples on how
+      to convert C(assertonly) usage with M(openssl_certificate_info), M(openssl_csr_info),
+      M(openssl_privatekey_info) and M(assert). This also allows more flexible checks than
+      the ones offered by the C(assertonly) provider.
     - The C(ownca) provider is intended for generate OpenSSL certificate signed with your own
       CA (Certificate Authority) certificate (self-signed certificate).
     - Many properties that can be specified in this module are for validation of an
@@ -58,6 +62,9 @@ options:
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
             - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
+            - The C(assertonly) provider has been deprecated in Ansible 2.9 and will be removed in Ansible 2.13.
+              Please see the examples on how to emulate it with M(openssl_certificate_info), M(openssl_csr_info),
+              M(openssl_privatekey_info) and M(assert).
             - "The C(entrust) provider was added for Ansible 2.9 and requires credentials for the
                L(https://www.entrustdatacard.com/products/categories/ssl-certificates,Entrust Certificate Services) (ECS) API."
         type: str
@@ -224,6 +231,8 @@ options:
             - A list of algorithms that you would accept the certificate to be signed with
               (e.g. ['sha256WithRSAEncryption', 'sha512WithRSAEncryption']).
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: list
 
     issuer:
@@ -231,12 +240,16 @@ options:
             - The key/value pairs that must be present in the issuer name field of the certificate.
             - If you need to specify more than one value with the same key, use a list as value.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: dict
 
     issuer_strict:
         description:
             - If set to C(yes), the I(issuer) field must contain only these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: bool
         default: no
         version_added: "2.5"
@@ -246,12 +259,16 @@ options:
             - The key/value pairs that must be present in the subject name field of the certificate.
             - If you need to specify more than one value with the same key, use a list as value.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: dict
 
     subject_strict:
         description:
             - If set to C(yes), the I(subject) field must contain only these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: bool
         default: no
         version_added: "2.5"
@@ -260,6 +277,8 @@ options:
         description:
             - Checks if the certificate is expired/not expired at the time the module is executed.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: bool
         default: no
 
@@ -268,6 +287,8 @@ options:
             - The version of the certificate.
             - Nowadays it should almost always be 3.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: int
 
     valid_at:
@@ -275,6 +296,8 @@ options:
             - The certificate must be valid at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: str
 
     invalid_at:
@@ -282,6 +305,8 @@ options:
             - The certificate must be invalid at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: str
 
     not_before:
@@ -289,6 +314,8 @@ options:
             - The certificate must start to become valid at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: str
         aliases: [ notBefore ]
 
@@ -297,6 +324,8 @@ options:
             - The certificate must expire at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: str
         aliases: [ notAfter ]
 
@@ -307,12 +336,16 @@ options:
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using this parameter, this module is NOT idempotent.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: str
 
     key_usage:
         description:
             - The I(key_usage) extension field must contain all these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: list
         aliases: [ keyUsage ]
 
@@ -320,6 +353,8 @@ options:
         description:
             - If set to C(yes), the I(key_usage) extension field must contain only these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: bool
         default: no
         aliases: [ keyUsage_strict ]
@@ -328,6 +363,8 @@ options:
         description:
             - The I(extended_key_usage) extension field must contain all these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: list
         aliases: [ extendedKeyUsage ]
 
@@ -335,6 +372,8 @@ options:
         description:
             - If set to C(yes), the I(extended_key_usage) extension field must contain only these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: bool
         default: no
         aliases: [ extendedKeyUsage_strict ]
@@ -343,6 +382,8 @@ options:
         description:
             - The I(subject_alt_name) extension field must contain these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: list
         aliases: [ subjectAltName ]
 
@@ -350,6 +391,8 @@ options:
         description:
             - If set to C(yes), the I(subject_alt_name) extension field must contain only these values.
             - This is only used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: bool
         default: no
         aliases: [ subjectAltName_strict ]
@@ -370,6 +413,8 @@ options:
             - Create a backup file including a timestamp so you can get the original
               certificate back if you overwrote it with a new one by accident.
             - This is not used by the C(assertonly) provider.
+            - This option is deprecated since Ansible 2.9 and will be removed with the C(assertonly) provider in Ansible 2.13.
+              For alternatives, see the example on replacing C(assertonly).
         type: bool
         default: no
         version_added: "2.8"
@@ -529,6 +574,7 @@ EXAMPLES = r'''
     entrust_api_specification_path: /etc/ssl/entrust/api-docs/cms-api-2.1.0.yaml
 
 # Examples for some checks one could use the assertonly provider for:
+# (Please note that assertonly has been deprecated!)
 
 # How to use the assertonly provider to implement and trigger your own custom certificate generation workflow:
 - name: Check if a certificate is currently still valid, ignoring failures
@@ -2060,24 +2106,24 @@ def main():
             privatekey_passphrase=dict(type='str', no_log=True),
 
             # provider: assertonly
-            signature_algorithms=dict(type='list', elements='str'),
-            subject=dict(type='dict'),
-            subject_strict=dict(type='bool', default=False),
-            issuer=dict(type='dict'),
-            issuer_strict=dict(type='bool', default=False),
-            has_expired=dict(type='bool', default=False),
-            version=dict(type='int'),
-            key_usage=dict(type='list', elements='str', aliases=['keyUsage']),
-            key_usage_strict=dict(type='bool', default=False, aliases=['keyUsage_strict']),
-            extended_key_usage=dict(type='list', elements='str', aliases=['extendedKeyUsage']),
-            extended_key_usage_strict=dict(type='bool', default=False, aliases=['extendedKeyUsage_strict']),
-            subject_alt_name=dict(type='list', elements='str', aliases=['subjectAltName']),
-            subject_alt_name_strict=dict(type='bool', default=False, aliases=['subjectAltName_strict']),
-            not_before=dict(type='str', aliases=['notBefore']),
-            not_after=dict(type='str', aliases=['notAfter']),
-            valid_at=dict(type='str'),
-            invalid_at=dict(type='str'),
-            valid_in=dict(type='str'),
+            signature_algorithms=dict(type='list', elements='str', removed_in_version='2.13'),
+            subject=dict(type='dict', removed_in_version='2.13'),
+            subject_strict=dict(type='bool', default=False, removed_in_version='2.13'),
+            issuer=dict(type='dict', removed_in_version='2.13'),
+            issuer_strict=dict(type='bool', default=False, removed_in_version='2.13'),
+            has_expired=dict(type='bool', default=False, removed_in_version='2.13'),
+            version=dict(type='int', removed_in_version='2.13'),
+            key_usage=dict(type='list', elements='str', aliases=['keyUsage'], removed_in_version='2.13'),
+            key_usage_strict=dict(type='bool', default=False, aliases=['keyUsage_strict'], removed_in_version='2.13'),
+            extended_key_usage=dict(type='list', elements='str', aliases=['extendedKeyUsage'], removed_in_version='2.13'),
+            extended_key_usage_strict=dict(type='bool', default=False, aliases=['extendedKeyUsage_strict'], removed_in_version='2.13'),
+            subject_alt_name=dict(type='list', elements='str', aliases=['subjectAltName'], removed_in_version='2.13'),
+            subject_alt_name_strict=dict(type='bool', default=False, aliases=['subjectAltName_strict'], removed_in_version='2.13'),
+            not_before=dict(type='str', aliases=['notBefore'], removed_in_version='2.13'),
+            not_after=dict(type='str', aliases=['notAfter'], removed_in_version='2.13'),
+            valid_at=dict(type='str', removed_in_version='2.13'),
+            invalid_at=dict(type='str', removed_in_version='2.13'),
+            valid_in=dict(type='str', removed_in_version='2.13'),
 
             # provider: selfsigned
             selfsigned_version=dict(type='int', default=3),
@@ -2138,6 +2184,8 @@ def main():
                 )
 
             provider = module.params['provider']
+            if provider == 'assertonly':
+                module.deprecate("The 'assertonly' provider is deprecated; please see the examples of the 'openssl_certificate' module on how to replace it with other modules", version='2.13')
 
             backend = module.params['select_crypto_backend']
             if backend == 'auto':
