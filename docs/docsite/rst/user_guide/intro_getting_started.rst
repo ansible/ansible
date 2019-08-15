@@ -4,98 +4,73 @@
 Getting Started
 ***************
 
+Now that you have read the :ref:`installation guide<installation_guide>` and installed Ansible on a control node, you are ready to learn how Ansible works. A basic Ansible command or playbook:
+  * selects machines to execute against from inventory
+  * connects to those machines (or network devices, or other managed nodes), usually over SSH
+  * copies one or more modules to the remote machines and starts execution there
+  * collects return values and reports results on the control node
+
+Ansible can do much more, but you should understand the most common use case before exploring all the powerful configuration, deployment, and orchestration features of Ansible. This page illustrates the basic process with a simple inventory and an ad-hoc command. Once you understand how Ansible works, you can read more details about :ref:`ad-hoc commands<intro_adhoc>`, organize your infrastructure with :ref:`inventory <intro_inventory>`, and harness the full power of Ansible with :ref:`playbooks<intro_playbooks>`.
+
 .. contents::
    :local:
 
-Now that you have read the :ref:`installation guide<installation_guide>` and installed Ansible on a control node, you can get
-started with some ad-hoc commands. These commands illustrate the how Ansible connects to managed nodes and does its work. They do not leverage all the powerful configuration/deployment/orchestration features of Ansible.
-These features are handled by playbooks which are covered in a separate section.
+Selecting machines from inventory
+=================================
 
-This section is about how to get Ansible running.  Once you understand these concepts, read :ref:`intro_adhoc` for more detail, and then move on to learning about playbooks.
+Ansible reads information about which machines you want to manage from your inventory. Although you can pass an IP address to an ad-hoc command, you need inventory to take advantage of the full flexibility and repeatability of Ansible.
+
+Action: create a basic inventory
+--------------------------------
+For this basic inventory, edit (or create) ``/etc/ansible/hosts`` and add a few remote systems to it. For this example, use either IP addresses or FQDNs::
+
+   192.0.2.50
+   aserver.example.org
+   bserver.example.org
+
+Beyond the basics
+-----------------
+
 
 .. _remote_connection_information:
 
-Setting up remote connections
+Connecting to remote nodes
+==========================
+
+Ansible communicates with remote machines over the `SSH protocol <https://www.ssh.com/ssh/protocol/>`_. By default, Ansible uses native OpenSSH and connects to remote machines using your current user name, just as SSH does.
+
+Action: check your SSH connections
+----------------------------------
+Confirm that you can connect using SSH to all the nodes in your inventory using the same username. If necessary, add your public SSH key to the ``authorized_keys`` file on those systems.
+
+Beyond the basics
+-----------------
+You can override the default remote user name in several ways, including passing the ``-u`` parameter at the command line, setting user information in your inventory file, setting user information in your configuration file, and setting environment variables. See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information. You can read more about connections in :ref:`connections`.
+
+Copying and executing modules
 =============================
 
-Ansible communicates with remote machines over the `SSH protocol <https://www.ssh.com/ssh/protocol/>`_.
+Once it has connected, Ansible transfers the modules required by your command or playbook to the remote machine(s) for execution.
 
-By default, Ansible will use native OpenSSH for remote communication when possible. OpenSSH supports ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
-OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, macOS, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
-
-By default, Ansible will attempt to remote connect to the machines using your current user name, just like SSH would.
-You can override the default remote user name in several ways, including passing the ``-u`` parameter at the command line, setting user information in your inventory file, setting user information in your configuration file, and setting environment variables. See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information.
-
-Occasionally you will encounter a device that does not support SFTP. This is rare, but should it occur, you can switch to SCP mode in :ref:`intro_configuration`.
-
-Ansible by default assumes you are using SSH keys to connect to remote machines.  SSH keys are encouraged but you can use password authentication if needed with the ``--ask-pass`` option. If you need to provide a password for :ref:`privilege escalation <become>` (sudo, pbrun, etc.), use ``--ask-become-pass`` (previously ``--ask-sudo-pass`` which has been deprecated).
-
-.. include:: shared_snippets/SSH_password_prompt.txt
-
-Ansible is not limited to remote connections over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
-
-
-Setting up inventory
-====================
-
-Now that you have installed Ansible, set up an inventory file and try some basics.
-
-Edit (or create) ``/etc/ansible/hosts`` and put one or more remote systems in it. Your
-public SSH key should be located in ``authorized_keys`` on those systems::
-
-    192.0.2.50
-    aserver.example.org
-    bserver.example.org
-
-This is an inventory file, which is also explained in greater depth here:  :ref:`intro_inventory`.
-
-We assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
-do:
-
-.. code-block:: bash
-
-    $ ssh-agent bash
-    $ ssh-add ~/.ssh/id_rsa
-
-Depending on your setup, you may wish to use Ansible's ``--private-key`` command line option to specify a pem file instead.  You can also add the private key file:
-
-    $ ssh-agent bash
-    $ ssh-add ~/.ssh/keypair.pem
-
-Another way to add private key files without using ssh-agent is using ``ansible_ssh_private_key_file`` in an inventory file as explained here:  :ref:`intro_inventory`.
-
-.. _host_key_checking:
-
-Host Key Checking
------------------
-
-Ansible enables host key checking by default. Checking host keys guards against server spoofing and man-in-the-middle attacks, but it does require some maintenance.
-
-If a host is reinstalled and has a different key in 'known_hosts', this will result in an error message until corrected.  If a new host is not in 'known_hosts' your control node may prompt for confirmation of the key, which results in an interactive experience if using Ansible, from say, cron. You might not want this.
-
-If you understand the implications and wish to disable this behavior, you can do so by editing ``/etc/ansible/ansible.cfg`` or ``~/.ansible.cfg``::
-
-    [defaults]
-    host_key_checking = False
-
-Alternatively this can be set by the :envvar:`ANSIBLE_HOST_KEY_CHECKING` environment variable:
-
-.. code-block:: bash
-
-    $ export ANSIBLE_HOST_KEY_CHECKING=False
-
-Also note that host key checking in paramiko mode is reasonably slow, therefore switching to 'ssh' is also recommended when using this feature.
-
-Your first command
-==================
-
-Now that you have an inventory file and some connection settings, you can use Ansible to ping all your nodes:
+Action: run your first Ansible commands
+---------------------------------------
+Use the ping module to ping all the nodes in your inventory:
 
 .. code-block:: bash
 
    $ ansible all -m ping
 
-To use privilege escalation (sudo and similar), pass the ``become`` flags:
+Now run a live command on all of your nodes:
+
+.. code-block:: bash
+
+   $ ansible all -a "/bin/echo hello"
+
+Beyond the basics
+-----------------
+By default Ansible uses SFTP to transfer files. If the machine or device you want to manage does not support SFTP, you can switch to SCP mode in :ref:`intro_configuration`. The files are placed in a temporary directory
+
+If you need privilege escalation (sudo and similar) to run a command, pass the ``become`` flags:
 
 .. code-block:: bash
 
@@ -106,40 +81,31 @@ To use privilege escalation (sudo and similar), pass the ``become`` flags:
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --become --become-user batman
 
-The sudo implementation (and other methods of changing the current user) can be modified in Ansible configuration
-if you happen to want to use a sudo replacement. Flags passed to sudo (like -H) can also be set.
+You can read more about privilege escalation in :ref:`become`.
 
-Now run a live command on all of your nodes:
+Return values and results
+==========================
 
-.. code-block:: bash
+Ansible collects information about the connection, the command, and the results from each remote node and presents them to you at the end of each run.
 
-   $ ansible all -a "/bin/echo hello"
+Action
+------
+Compare the results of your first Ansible command to this sample output:
 
-Congratulations!  You have contacted your nodes with Ansible. You have a fully working infrastructure.
+
+Beyond the basics
+-----------------
+
+
+Congratulations! You have contacted your nodes using Ansible. You used a basic inventory file and an ad-hoc command to direct Ansible to connect to specific remote nodes, copy a module file there and execute it, and return output. You have a fully working infrastructure.
+
+
+Next steps
+==========
 Next you can read about more real-world cases in :ref:`intro_adhoc`,
 explore what you can do with different modules, or read about the Ansible
 :ref:`working_with_playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.
-
-Tips
-
-When running commands, you can specify the local server by using "localhost" or "127.0.0.1" for the server name.
-
-Example:
-
-.. code-block:: bash
-
-    $ ansible localhost -m ping -e 'ansible_python_interpreter="/usr/bin/env python"'
-
-You can specify localhost explicitly by adding this to your inventory file::
-
-    localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
-
-.. _a_note_about_logging:
-
-Ansible will log some information about module arguments on the remote system in the remote syslog, unless a task or play is marked with a "no_log: True" attribute. This is explained later.
-
-To enable basic logging on the control machine see :ref:`intro_configuration` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in :ref:`ansible_tower`.  Tower provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
 
 .. seealso::
 
