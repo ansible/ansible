@@ -232,7 +232,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
             "config_context": self.extract_config_context,
-            "vlans": self.extract_vlans,
             "interfaces": self.extract_interfaces,
             "manufacturers": self.extract_manufacturer,
             "regions": self.extract_region
@@ -292,19 +291,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
                 device_lookup = self._fetch_information(url)
                 return device_lookup["config_context"]
-        except Exception:
-            return
-
-    def extract_vlans(self, host):
-        try:
-            if self.vlans:
-                url = self.api_endpoint + "/api/ipam/vlans/?site_id=" + str(host["site"]["id"])
-                vlans_lookup = self._fetch_information(url)
-                wanted_keys = ['description', 'group', 'name', 'role', 'status', 'vid', 'tenant', 'tags']
-                vlans_shorts = []
-                for vlan_lookup in vlans_lookup['results']:
-                    vlans_short.append(dict((k, vlan_lookup[k]) for k in wanted_keys if k in vlan_lookup))
-                return vlans_short
         except Exception:
             return
 
@@ -408,7 +394,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def refresh_vlans_lookup(self):
         url = self.api_endpoint + "/api/ipam/vlans/?limit=0"
         vlans = self.get_resource_list(api_url=url)
-        self.vlans_lookup = dict((vlan["results"]["id"], vlan["results"]["vid"]) for vlan in vlans)
+        self.vlans_lookup = dict((vlan["id"], vlan["vid"]) for vlan in vlans["results"])
 
     def refresh_lookups(self):
         lookup_processes = (
@@ -474,10 +460,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 continue
 
             for sub_group in sub_groups:
-                if self.substr != 15:
-                    group_name = "_".join([group[:self.substr], sub_group])
-                else:
-                    group_name = "_".join([group, sub_group])
+                group_name = "_".join([group[:self.substr], sub_group])
                 self.inventory.add_group(group=group_name)
                 self.inventory.add_host(group=group_name, host=hostname)
 
@@ -495,6 +478,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         if self.extract_primary_ip6(host):
             self.inventory.set_variable(hostname, "primary_ip6", self.extract_primary_ip6(host=host))
+
+    def _fill_sites_vlans_group_variables(self, group):
+        try:
+            url = self.api_endpoint + "/api/ipam/vlans/?site_id=" + str(group.keys()[0])
+            vlans_lookup = self._fetch_information(url)
+            wanted_keys = ['description', 'group', 'name', 'role', 'status', 'vid', 'tenant', 'tags']
+            vlans_shorts = []
+            for vlan_lookup in vlans_lookup['results']:
+                vlans_short.append(dict((k, vlan_lookup[k]) for k in wanted_keys if k in vlan_lookup))
+            group_name = "_".join("sites"[:self.substr], str(group.values()[0]))
+            self.inventory.set_variable(group_name, "vlans", vlans_short)
+        except Exception:
+            return
 
     def main(self):
         self.refresh_lookups()
@@ -517,6 +513,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             # Create groups based on variable values and add the corresponding hosts to it
             self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
             self.add_host_to_groups(host=host, hostname=hostname)
+
+        if self.vlans:
+            for site in self.sites_slug_lookup:
+                self._fill_sites_vlans_group_variables(group=site)
+
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
