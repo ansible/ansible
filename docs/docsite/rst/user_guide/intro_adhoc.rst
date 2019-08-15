@@ -14,7 +14,7 @@ Why use ad-hoc commands?
 
 Ad-hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad-hoc command looks like this::
 
-    $ ansible [hosts] -m [module] [parameters]
+    $ ansible [hosts] [general options] -m [module] -a "[module options]"
 
 Use cases for ad-hoc tasks
 ==========================
@@ -26,7 +26,7 @@ achieve a form of idempotence by checking the current state before they begin an
 Rebooting servers
 -----------------
 
-The default module for the ``ansible`` command-line utility is the :ref:`command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have those servers listed in a a group called *atlanta* in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group::
+The default module for the ``ansible`` command-line utility is the :ref:`command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group::
 
     $ ansible atlanta -a "/sbin/reboot"
 
@@ -139,52 +139,18 @@ Ensure a service is stopped::
 
     $ ansible webservers -m service -a "name=httpd state=stopped"
 
-.. _time_limited_background_operations:
-
-Time Limited Background Operations
-``````````````````````````````````
-
-Long running operations can be run in the background, and it is possible to
-check their status later. For example, to execute ``long_running_operation``
-asynchronously in the background, with a timeout of 3600 seconds (``-B``),
-and without polling (``-P``)::
-
-    $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
-
-If you do decide you want to check on the job status later, you can use the
-async_status module, passing it the job id that was returned when you ran
-the original job in the background::
-
-    $ ansible web1.example.com -m async_status -a "jid=488359678239.2844"
-
-Polling is built-in and looks like this::
-
-    $ ansible all -B 1800 -P 60 -a "/usr/bin/long_running_operation --do-stuff"
-
-The above example says "run for 30 minutes max (``-B`` 30*60=1800),
-poll for status (``-P``) every 60 seconds".
-
-Poll mode is smart so all jobs will be started before polling will begin on any machine.
-Be sure to use a high enough ``--forks`` value if you want to get all of your jobs started
-very quickly. After the time limit (in seconds) runs out (``-B``), the process on
-the remote nodes will be terminated.
-
-Typically you'll only be backgrounding long-running
-shell commands or software upgrades.  Backgrounding the copy module does not do a background file transfer. :ref:`Playbooks <working_with_playbooks>` also support polling, and have a simplified syntax for this.
-
-.. _checking_facts:
+.. _gathering_facts:
 
 Gathering facts
-```````````````
+---------------
 
-Facts are described in the playbooks section and represent discovered variables about a
-system. These can be used to implement conditional execution of tasks but also just to get ad-hoc information about your system. You can see all facts via::
+Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad-hoc information about your systems. You can see all facts via::
 
     $ ansible all -m setup
 
-You can also filter this output to just export certain facts, see the :ref:`setup <setup_module>` module documentation for details.
+You can also filter this output to display only certain facts, see the :ref:`setup <setup_module>` module documentation for details.
 
-Read more about facts at :ref:`playbooks_variables` once you're ready to read up on :ref:`Playbooks <playbooks_intro>`.
+Now that you understand the basic elements of Ansible execution, you are ready to learn to automate repetitive tasks using :ref:`Ansible Playbooks <playbooks_intro>`.
 
 .. seealso::
 
