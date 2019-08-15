@@ -20,7 +20,7 @@ module: digital_ocean_sshkey_info
 short_description: Gather information about DigitalOcean SSH keys
 description:
   - This module can be used to gather information about DigitalOcean SSH keys.
-  - This module was called C(digital_ocean_sshkey_facts) before Ansible 2.9. The usage did not change.
+  - This module replaces the C(digital_ocean_sshkey_facts) module.
 version_added: "2.5"
 author: "Patrick Marques (@pmarques)"
 extends_documentation_fragment: digital_ocean.documentation
