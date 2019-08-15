@@ -83,7 +83,7 @@ DOCUMENTATION = '''
         substr_group:
             description: Length of group name prefix
             type: int
-            default: full
+            default: 15
         use_slugs:
             description: Use slug instead of name for group name suffix
             type: boolean
