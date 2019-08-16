@@ -10,6 +10,7 @@
     password: "{{ vcenter_password }}"
     name: "{{ virtual_machines[0].name }}"
     datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: "{{ item }}"
   with_items:
     - absent
@@ -40,6 +41,7 @@
     password: "{{ vcenter_password }}"
     name: non_existent_vm
     datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: "{{ item }}"
   with_items:
     - present

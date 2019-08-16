@@ -25,7 +25,7 @@
           gateway: 192.168.10.254
           mac: aa:bb:cc:dd:aa:42
     state: poweredoff
-    folder: vm
+    folder: "{{ f0 }}"
   register: clone_d1_c1_f0
 
 - debug: var=clone_d1_c1_f0

@@ -27,6 +27,7 @@
     password: '{{ vcenter_password }}'
     name: "{{ virtual_machines[0].name }}"
     datacenter: '{{ dc1 }}'
+    folder: "{{ f0 }}"
   register: disk_facts
 
 - debug:

@@ -10,6 +10,7 @@
     password: "{{ vcenter_password }}"
     name: nothinghere
     datacenter: "{{ dc1 }}"
+    folder: "{{ f0 }}"
     state: absent
   register: delete_vm
   ignore_errors: yes

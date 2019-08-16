@@ -4,7 +4,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: vm
+    folder: "{{ f0 }}"
     name: test_vm1
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
@@ -36,7 +36,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "vm"
+    folder: "{{ f0 }}"
     name: test_vm1
     datastore: "{{ rw_datastore }}"
     datacenter: "{{ dc1 }}"
@@ -59,7 +59,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: vm
+    folder: "{{ f0 }}"
     name: test_vm1
     datacenter: "{{ dc1 }}"
     cdrom:
@@ -84,7 +84,7 @@
     template: test_vm1
     datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: vm
+    folder: "{{ f0 }}"
     convert: thin
 
 - name: Update CDROM to none for the new VM
@@ -93,7 +93,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: vm
+    folder: "{{ f0 }}"
     name: test_vm2
     datacenter: "{{ dc1 }}"
     cdrom:
@@ -114,7 +114,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: vm
+    folder: "{{ f0 }}"
     name: test_vm3
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
@@ -152,7 +152,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: vm
+    folder: "{{ f0 }}"
     name: test_vm1
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
@@ -197,7 +197,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: vm
+    folder: "{{ f0 }}"
     name: test_vm1
     datacenter: "{{ dc1 }}"
     cdrom:

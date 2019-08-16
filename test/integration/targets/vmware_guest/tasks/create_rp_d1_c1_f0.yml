@@ -17,7 +17,7 @@
           type: thin
           datastore: "{{ rw_datastore }}"
     state: poweredoff
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rp_d1_c1_f0
 
 - debug: var=clone_rp_d1_c1_f0
@@ -38,7 +38,7 @@
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     state: absent
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rp_d1_c1_f0_delete
 
 - debug: var=clone_rp_d1_c1_f0_delete
@@ -68,7 +68,7 @@
           type: thin
           datastore: "{{ rw_datastore }}"
     state: poweredoff
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rpc_d1_c1_f0
 
 - debug: var=clone_rpc_d1_c1_f0
@@ -90,7 +90,7 @@
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     state: absent
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rpc_d1_c1_f0_delete
 
 - debug: var=clone_rpc_d1_c1_f0_delete
@@ -121,7 +121,7 @@
           type: thin
           datastore: "{{ rw_datastore }}"
     state: poweredoff
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rpcp_d1_c1_f0
 
 - debug: var=clone_rpcp_d1_c1_f0
@@ -143,7 +143,7 @@
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     state: absent
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rpcp_d1_c1_f0_delete
 
 - debug: var=clone_rpcp_d1_c1_f0_delete
@@ -173,7 +173,7 @@
           type: thin
           datastore: "{{ rw_datastore }}"
     state: poweredoff
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rph_d1_c1_f0
 
 - debug: var=clone_rph_d1_c1_f0
@@ -194,7 +194,7 @@
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     state: absent
-    folder: F0
+    folder: "{{ f0 }}"
   register: clone_rph_d1_c1_f0_delete
 
 - debug: var=clone_rph_d1_c1_f0_delete

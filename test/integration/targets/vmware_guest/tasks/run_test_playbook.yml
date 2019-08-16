@@ -7,6 +7,8 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         validate_certs: no
+        datacenter: "{{ dc1 }}"
+        folder: "{{ f0 }}"
 #        cluster: "{{ ccr1 }}"
         name: '{{ item }}'
         force: yes

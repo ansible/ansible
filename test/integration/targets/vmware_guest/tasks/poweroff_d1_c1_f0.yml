@@ -8,6 +8,8 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ item.folder }}"
     name: "{{ item.name }}"
     state: poweredoff
   with_items: "{{ virtual_machines }}"

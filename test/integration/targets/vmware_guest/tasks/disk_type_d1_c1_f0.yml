@@ -22,7 +22,7 @@
           type: thin
           datastore: "{{ rw_datastore }}"
     state: poweredoff
-    folder: F0
+    folder: "{{ f0 }}"
   register: disk_type_d1_c1_f0
 
 - debug: var=disk_type_d1_c1_f0
