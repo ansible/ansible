@@ -58,8 +58,10 @@ class L2_interfacesFacts(object):
                     objs.append(obj)
         facts = {}
         if objs:
-            facts['l2_interfaces'] = objs
+            params = utils.validate_config(self.argument_spec, {'config': objs})
+            facts['l2_interfaces'] = [utils.remove_empties(cfg) for cfg in params['config']]
         ansible_facts['ansible_network_resources'].update(facts)
+
         return ansible_facts
 
     def render_config(self, spec, conf):
