@@ -1226,8 +1226,8 @@ def has_list_changed(new_list, old_list):
     if len(new_list) != len(old_list):
         return True
     for new_item, old_item in zip(new_list, old_list):
-        is_same_type = type(new_item) != type(old_item)
-        if is_same_type:
+        is_same_type = type(new_item) == type(old_item)
+        if not is_same_type:
             return True
         if isinstance(new_item, dict):
             if has_dict_changed(new_item, old_item):
