@@ -1290,6 +1290,8 @@ class TaskParameters(DockerBaseClass):
 
         self.mounts_opt, self.expected_mounts = self._process_mounts()
 
+        self._check_mount_target_collisions()
+
         for param_name in ["device_read_bps", "device_write_bps"]:
             if client.module.params.get(param_name):
                 self._process_rate_bps(option=param_name)
@@ -1841,6 +1843,25 @@ class TaskParameters(DockerBaseClass):
             self.client.module.warn('Cannot find a container with name or ID "{0}"'.format(container_name))
             return mode
         return 'container:{0}'.format(container['Id'])
+
+    def _check_mount_target_collisions(self):
+        last = dict()
+
+        def f(t, name):
+            if t in last:
+                if name == last[t]:
+                    self.client.fail('The mount point "{0}" appears twice in the {1} option'.format(t, name))
+                else:
+                    self.client.fail('The mount point "{0}" appears both in the {1} and {2} option'.format(t, name, last[t]))
+            last[t] = name
+
+        if self.expected_mounts:
+            for t in [m['target'] for m in self.expected_mounts]:
+                f(t, 'mounts')
+        if self.volumes:
+            for v in self.volumes:
+                vs = v.split(':')
+                f(vs[0 if len(vs) == 1 else 1], 'volumes')
 
 
 class Container(DockerBaseClass):
