@@ -362,7 +362,7 @@ def get_nc_next(module, xml_str):
             try:
                 next = conn.dispatch(etree.tostring(fetch_node))
                 if next is not None:
-                    result.extend(next.find('./*'))
+                    result.extend(next)
             except ConnectionError:
                 break
     return result
