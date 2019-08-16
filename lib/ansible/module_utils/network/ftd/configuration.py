@@ -210,7 +210,6 @@ class BaseConfigurationResource(object):
         self._operation_checker = OperationChecker
         self._system_info = None
 
-
     def execute_operation(self, op_name, params):
         """
         Allow user request execution of simple operations(natively supported by API provider) as well as complex
