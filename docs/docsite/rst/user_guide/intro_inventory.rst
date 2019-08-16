@@ -356,7 +356,7 @@ Default groups
 
 There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
 ``ungrouped`` contains all hosts that don't have another group aside from ``all``.
-Every host will always belong to at least 2 groups.
+Every host will always belong to at least 2 groups (``all`` and ``ungrouped`` or ``all`` and some other group).
 Though ``all`` and ``ungrouped`` are always present, they can be implicit and not appear in group listings like ``group_names``.
 
 .. _splitting_out_vars:
