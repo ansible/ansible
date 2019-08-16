@@ -21,7 +21,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'deprecated'}
 
 
 DOCUMENTATION = """
@@ -33,6 +33,10 @@ short_description: Manage VLANs on Arista EOS network devices
 description:
   - This module provides declarative management of VLANs
     on Arista EOS network devices.
+deprecated:
+  removed_in: "2.13"
+  alternative: eos_vlans
+  why: Updated modules released with more functionality
 notes:
   - Tested against EOS 4.15
 options:
