@@ -28,7 +28,7 @@ from contextlib import contextmanager
 
 from ansible.module_utils.six import reraise
 
-from .utils import find_executable
+from .utils import CaptureStd, find_executable
 
 
 class AnsibleModuleCallError(RuntimeError):
@@ -110,9 +110,10 @@ def get_py_argument_spec(filename):
             # We use ``module`` here instead of ``__main__``
             # which helps with some import issues in this tool
             # where modules may import things that conflict
-            mod = imp.load_source('module', filename)
-            if not fake.called:
-                mod.main()
+            with CaptureStd():
+                mod = imp.load_source('module', filename)
+                if not fake.called:
+                    mod.main()
         except AnsibleModuleCallError:
             pass
         except Exception as e:
@@ -124,7 +125,7 @@ def get_py_argument_spec(filename):
             return fake.kwargs['argument_spec'], fake.args, fake.kwargs
         except KeyError:
             return fake.args[0], fake.args, fake.kwargs
-    except TypeError:
+    except (TypeError, IndexError):
         return {}, (), {}
 
 
