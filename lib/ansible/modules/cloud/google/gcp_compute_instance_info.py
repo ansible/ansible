@@ -90,6 +90,11 @@ resources:
       - Creation timestamp in RFC3339 text format.
       returned: success
       type: str
+    deletionProtection:
+      description:
+      - Whether the resource should be protected against deletion.
+      returned: success
+      type: bool
     disks:
       description:
       - An array of disks that are associated with the instances that are created
@@ -432,6 +437,27 @@ resources:
           - The list of scopes to be made available for this service account.
           returned: success
           type: list
+    shieldedInstanceConfig:
+      description:
+      - Configuration for various parameters related to shielded instances.
+      returned: success
+      type: complex
+      contains:
+        enableSecureBoot:
+          description:
+          - Defines whether the instance has Secure Boot enabled.
+          returned: success
+          type: bool
+        enableVtpm:
+          description:
+          - Defines whether the instance has the vTPM enabled.
+          returned: success
+          type: bool
+        enableIntegrityMonitoring:
+          description:
+          - Defines whether the instance has integrity monitoring enabled.
+          returned: success
+          type: bool
     status:
       description:
       - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
