@@ -293,6 +293,12 @@ def use_old_user_mgmt(cursor):
             return False
 
 
+def get_default_auth_plugin(cursor):
+    cursor.execute('SELECT @@GLOBAL.default_authentication_plugin')
+    result = cursor.fetchone()
+    return result[0]
+
+
 def get_mode(cursor):
     cursor.execute('SELECT @@GLOBAL.sql_mode')
     result = cursor.fetchone()
@@ -363,9 +369,6 @@ def user_mod(cursor, user, host, host_all, password, encrypted,
     for host in hostnames:
         # Handle clear text and hashed passwords.
         if bool(password):
-            # Determine what user management method server uses
-            old_user_mgmt = use_old_user_mgmt(cursor)
-
             # Get a list of valid columns in mysql.user table to check if Password and/or authentication_string exist
             cursor.execute("""
                 SELECT COLUMN_NAME FROM information_schema.COLUMNS
@@ -396,35 +399,14 @@ def user_mod(cursor, user, host, host_all, password, encrypted,
                 if not is_hash(encrypted_password):
                     module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
             else:
-                if old_user_mgmt:
-                    cursor.execute("SELECT PASSWORD(%s)", (password,))
-                else:
-                    cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
+                cursor.execute("SELECT PASSWORD(%s)", (password,))
                 encrypted_password = cursor.fetchone()[0]
 
             if current_pass_hash != encrypted_password:
                 msg = "Password updated"
                 if module.check_mode:
                     return (True, msg)
-                if old_user_mgmt:
-                    cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, encrypted_password))
-                    msg = "Password updated (old style)"
-                else:
-                    try:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, encrypted_password))
-                        msg = "Password updated (new style)"
-                    except (mysql_driver.Error) as e:
-                        # https://stackoverflow.com/questions/51600000/authentication-string-of-root-user-on-mysql
-                        # Replacing empty root password with new authentication mechanisms fails with error 1396
-                        if e.args[0] == 1396:
-                            cursor.execute(
-                                "UPDATE user SET plugin = %s, authentication_string = %s, Password = '' WHERE User = %s AND Host = %s",
-                                ('mysql_native_password', encrypted_password, user, host)
-                            )
-                            cursor.execute("FLUSH PRIVILEGES")
-                            msg = "Password forced update"
-                        else:
-                            raise e
+                cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, encrypted_password))
                 changed = True
 
         # Handle plugin authentication
@@ -728,6 +710,11 @@ def main():
 
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")
+
+    if not plugin and password and encrypted and not use_old_user_mgmt(cursor):
+        plugin = get_default_auth_plugin(cursor)
+        plugin_hash_string = password
+        password = None
 
     if priv is not None:
         try:
