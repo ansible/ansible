@@ -54,32 +54,6 @@ class Lacp_interfaces(ConfigBase):
         :returns: The result from module execution
         """
         result = {'changed': False}
-        commands = list()
-        warnings = list()
-
-        existing_lacp_interfaces_facts = self.get_lacp_interfaces_facts()
-        commands.extend(self.set_config(existing_lacp_interfaces_facts))
-        if commands:
-            if not self._module.check_mode:
-                self._connection.edit_config(commands)
-            result['changed'] = True
-        result['commands'] = commands
-
-        changed_lacp_interfaces_facts = self.get_lacp_interfaces_facts()
-
-        result['before'] = existing_lacp_interfaces_facts
-        if result['changed']:
-            result['after'] = changed_lacp_interfaces_facts
-
-        result['warnings'] = warnings
-        return result
-
-    def execute_module(self):
-        """ Execute the module
-        :rtype: A dictionary
-        :returns: The result from module execution
-        """
-        result = {'changed': False}
 
         existing_lacp_interfaces_facts = self.get_lacp_interfaces_facts()
         config_xmls = self.set_config(existing_lacp_interfaces_facts)
