@@ -555,6 +555,8 @@ def _get_coverage_targets(args, walk_func):
     sources = []
 
     if args.all or args.stub:
+        # excludes symlinks of regular files to avoid reporting on the same file multiple times
+        # in the future it would be nice to merge any coverage for symlinks into the real files
         for target in walk_func(include_symlinks=False):
             target_path = os.path.abspath(target.path)
 

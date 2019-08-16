@@ -94,10 +94,10 @@ function cleanup
 
         # upload coverage report to codecov.io only when using complete on-demand coverage
         if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
-            for file in test/results/reports/coverage=*.xml, test/results/coverage=*-powershell.json; do
+            for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
+                flags="${flags%-powershell.xml}"
                 flags="${flags%.xml}"
-                flags="${flags%-powershell.json}"
                 # remove numbered component from stub files when converting to tags
                 flags="${flags//stub-[0-9]*/stub}"
                 flags="${flags//=/,}"
