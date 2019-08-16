@@ -27,7 +27,7 @@ def add_command_to_config_list(interface, cmd, commands):
     commands.append(cmd)
 
 
-def dict_diff(sample_dict):
+def dict_to_set(sample_dict):
     # Generate a set with passed dictionary for comparison
     test_dict = {}
     for k, v in iteritems(sample_dict):
