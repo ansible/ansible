@@ -254,10 +254,10 @@ static_setup_params = dict(
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
-    package_dir={'': 'lib'},
-    packages=find_packages('lib'),
+    package_dir={'ansible': 'lib/ansible', 'ansible_test': 'test/lib/ansible_test'},
+    packages=find_packages('lib') + find_packages('test/lib'),
     package_data={
-        '': [
+        'ansible': [
             'executor/powershell/*.ps1',
             'module_utils/csharp/*.cs',
             'module_utils/csharp/*/*.cs',
@@ -275,6 +275,14 @@ static_setup_params = dict(
             'config/base.yml',
             'config/module_defaults.yml',
         ],
+        'ansible_test': [
+            '*/*.*',
+            '*/*/*.*',
+            '*/*/*/*.*',
+            '*/*/*/*/*.*',
+            '*/*/*/*/*/*.*',
+            '*/*/*/*/*/*/*.*'
+        ]
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -306,6 +314,7 @@ static_setup_params = dict(
         'bin/ansible-vault',
         'bin/ansible-config',
         'bin/ansible-inventory',
+        'bin/ansible-test',
     ],
     data_files=[],
     # Installing as zip files would break due to references to __file__
