@@ -39,7 +39,7 @@ options:
         choices: [ absent, present, query ]
 
 extends_documentation_fragment:
-    - ACI
+    - aci
 author:
     - Steven Gerhart (@sgerhart)
 '''

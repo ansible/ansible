@@ -113,7 +113,7 @@ def add_fragments(doc, filename, fragment_loader):
             raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
 
     if unknown_fragments:
-        raise AnsibleError('unknown doc_fragment(s): {0}'.format(to_native(', '.join(unknown_fragments))))
+        raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
