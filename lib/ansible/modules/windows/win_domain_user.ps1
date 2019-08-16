@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.AccessToken
 
 Function Test-Credential {
     param(
@@ -21,76 +22,32 @@ Function Test-Credential {
         # No domain provided, so maybe local user, or domain specified separately.
     }
 
-    # More information about LogonUser at https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-logonusera
-    $platform_util = @'
-using System;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
-using System.Security;
-namespace Ansible
-{
-    public class WinUserPInvoke
-    {
-        // Refere to: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
-        static int[] success_codes = new int[] {
-            0x0000052F,  // ERROR_ACCOUNT_RESTRICTION
-            0x00000530,  // ERROR_INVALID_LOGON_HOURS
-            0x00000531,  // ERROR_INVALID_WORKSTATION
-            0x00000569   // ERROR_LOGON_TYPE_GRANTED
-        };
-        static int[] failed_codes = new int[] {
-            0x0000052E,  // ERROR_LOGON_FAILURE - the user or pass was incorrect
-            0x00000532   // ERROR_PASSWORD_EXPIRED - The password has exired
-        };
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        internal static extern bool LogonUser(String username, String domain, String password,
-            int logonType, int logonProvider, out IntPtr token);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern bool CloseHandle(
-            IntPtr hObject);
-        public static bool TestCredential(string userName, string password, string domainName = null)
-        {
-            IntPtr tokenHandle = IntPtr.Zero;
-            bool returnValue   = false;
-            int err_code = 0;
+    try {
+        $handle = [Ansible.AccessToken.TokenUtil]::LogonUser($Username, $Domain, $Password, "Network", "Default")
+        $handle.Dispose()
+        return $true
+    } catch [Ansible.AccessToken.Win32Exception] {
+        # following errors indicate the creds are correct but the user was
+        # unable to log on for other reasons, which we don't care about
+        $success_codes = @(
+            0x0000052F,  # ERROR_ACCOUNT_RESTRICTION
+            0x00000530,  # ERROR_INVALID_LOGON_HOURS
+            0x00000531,  # ERROR_INVALID_WORKSTATION
+            0x00000569  # ERROR_LOGON_TYPE_GRANTED
+        )
+        $failed_codes = @(
+            0x0000052E,  # ERROR_LOGON_FAILURE
+            0x00000532  # ERROR_PASSWORD_EXPIRED
+        )
 
-            // Pass LogonUser the decrypted copy of the password.
-            returnValue = LogonUser(userName, domainName, password,
-                                    3, // LOGON32_LOGON_NETWORK = 3
-                                    0, // LOGON32_PROVIDER_DEFAULT = 0; Negotiate if (domain == null and username not upn) else NTLM
-                                    out tokenHandle);
-            error_code = Marshal.GetLastWin32Error();
-
-            // We don't need the token, so close it again.
-            CloseHandle(tokenHandle);
-
-            if (returnValue) {
-                return true;
-            } else {
-                if (Array.Exists(success_codes, element => element == err_code)) {
-                    return true;
-                } else if (Array.Exists(failed_codes, element => element == err_code)) {
-                    return false;
-                } else {
-                    throw new System.ComponentModel.Win32Exception(err_code);
-                }
-            }
+        if ($_.Exception.NativeErrorCode -in $failed_codes) {
+            return $false
+        } elseif ($_.Exception.NativeErrorCode -in $success_codes) {
+            return $true
+        } else {
+            # an unknown failure, reraise exception
+            throw $_
         }
-    }
-}
-'@
-    if ($null -ne $Username) {
-        $original_tmp = $env:TMP
-        $env:TMP = $_remote_tmp
-        Add-Type -TypeDefinition $platform_util
-        $env:TMP = $original_tmp
-
-        # Todo: Make sure $UserName is always in UPN format.
-        # Than $Domain can be $null
-        $logon_res = [Ansible.WinUserPInvoke]::TestCredential($Username, $Password, $Domain)
-        return $logon_res
-    } else {
-        return $false
     }
 }
 
