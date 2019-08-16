@@ -87,7 +87,7 @@ This test also accepts a 3rd parameter, ``strict`` which defines if strict versi
 
     {{ sample_version_var is version('1.0', operator='lt', strict=True) }}
 
-Use the bare variable names in a 'when' statement to prevent warnings on included jinja2::
+When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_::
 
     vars:
         my_version: 1.2.3
