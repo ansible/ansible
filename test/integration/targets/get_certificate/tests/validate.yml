@@ -1,3 +1,4 @@
+---
 - name: Get servers certificate
   get_certificate:
     host: "{{ httpbin_host }}"
