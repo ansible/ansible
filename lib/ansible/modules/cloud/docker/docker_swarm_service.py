@@ -1156,7 +1156,7 @@ def get_docker_networks(networks, network_ids):
                 options = network['options']
                 if not isinstance(options, dict):
                     raise TypeError('Only dict is allowed as network options.')
-                parsed_network['options'] = network['options']
+                parsed_network['options'] = clean_dict_booleans_for_docker_api(network['options'])
         else:
             raise TypeError(
                 'Only a list of strings or dictionaries are allowed to be passed as networks.'
