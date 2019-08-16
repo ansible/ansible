@@ -36,10 +36,11 @@ description:
 author:
   - Jason Edelman (@jedelman8)
   - Gabriele Gerbino (@GGabriele)
+  - Rewritten as a plugin by (@mikewiebe)
 notes:
   - Tested against NXOS 7.0(3)I2(5), 7.0(3)I4(6), 7.0(3)I5(3),
     7.0(3)I6(1), 7.0(3)I7(3), 6.0(2)A8(8), 7.0(3)F3(4), 7.3(0)D1(1),
-    8.3(0)
+    8.3(0), 9.2, 9.3
   - When pushing files (file_pull is False) to the NXOS device,
     feature scp-server must be enabled.
   - When pulling files (file_pull is True) to the NXOS device,
@@ -56,7 +57,7 @@ options:
     description:
       - When (file_pull is False) this is the path to the local file on the Ansible controller.
         The local directory must exist.
-      - When (file_pull is True) this is the file name used on the NXOS device.
+      - When (file_pull is True) this is the target file name on the NXOS device.
   remote_file:
     description:
       - When (file_pull is False) this is the remote file path on the NXOS device.
@@ -66,13 +67,13 @@ options:
         server to be copied to the NXOS device.
   file_system:
     description:
-      - The remote file system of the device. If omitted,
+      - The remote file system on the nxos device. If omitted,
         devices that support a I(file_system) parameter will use
         their default values.
     default: "bootflash:"
   connect_ssh_port:
     description:
-      - SSH port to connect to server during transfer of file
+      - SSH server port used for file transfer.
     default: 22
     version_added: "2.5"
   file_pull:
@@ -85,33 +86,61 @@ options:
     type: bool
     default: False
     version_added: "2.7"
+  file_pull_compact:
+    description:
+      - When file_pull is True, this is used to compact nxos image files.
+        This option can only be used with nxos image files.
+      - When (file_pull is False), this is not used.
+    type: bool
+    default: False
+    version_added: "2.9"
+  file_pull_compact:
+    description:
+      - When file_pull is True, this is used to compact nxos image files.
+        This option can only be used with nxos image files.
+      - When (file_pull is False), this is not used.
+    type: bool
+    default: False
+    version_added: "2.9"
+  file_pull_kstack:
+    description:
+      - When file_pull is True, this can be used to speed up file copies when
+        the nxos running image supports the use-kstack option.
+      - When (file_pull is False), this is not used.
+    type: bool
+    default: False
+    version_added: "2.9"
   local_file_directory:
     description:
       - When (file_pull is True) file is copied from a remote SCP server to the NXOS device,
         and written to this directory on the NXOS device. If the directory does not exist, it
         will be created under the file_system. This is an optional parameter.
-      - When (file_pull is False), this not used.
+      - When (file_pull is False), this is not used.
     version_added: "2.7"
   file_pull_timeout:
     description:
       - Use this parameter to set timeout in seconds, when transferring
         large files or when the network is slow.
+      - When (file_pull is False), this is not used.
     default: 300
     version_added: "2.7"
   remote_scp_server:
     description:
-      - The remote scp server address which is used to pull the file.
+      - The remote scp server address when file_pull is True.
         This is required if file_pull is True.
+      - When (file_pull is False), this is not used.
     version_added: "2.7"
   remote_scp_server_user:
     description:
-      - The remote scp server username which is used to pull the file.
+      - The remote scp server username when file_pull is True.
         This is required if file_pull is True.
+      - When (file_pull is False), this is not used.
     version_added: "2.7"
   remote_scp_server_password:
     description:
-      - The remote scp server password which is used to pull the file.
+      - The remote scp server password when file_pull is True.
         This is required if file_pull is True.
+      - When (file_pull is False), this is not used.
     version_added: "2.7"
   vrf:
     description:
@@ -142,20 +171,19 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-transfer_status:
-    description: Whether a file was transferred. "No Transfer" or "Sent".
-                 If file_pull is successful, it is set to "Received".
-    returned: success
-    type: str
-    sample: 'Sent'
-local_file:
-    description: The path of the local file.
-    returned: success
-    type: str
-    sample: '/path/to/local/file'
-remote_file:
-    description: The path of the remote file.
-    returned: success
-    type: str
-    sample: '/path/to/remote/file'
+# When file_pull is True
+  changed: true
+  copy_cmd: "copy scp://username@fileserver.example.com/images/nxos.9.2.1.bin bootflash:/nxos.9.2.1.bin vrf management"
+  file_system: "bootflash:"
+  local_file: "bootflash:/nxos.9.2.1.bin"
+  remote_file: "/images/nxos.9.2.1.bin"
+  remote_scp_server: "fileserver.example.com"
+  transfer_status: "Received: File copied/pulled to nxos device from remote scp server."
+
+# When file_pull is False
+  changed": true
+  file_system: "bootflash:"
+  local_file: "./network-integration.cfg"
+  remote_file: "network-integration.cfg"
+  transfer_status: "Sent: File copied to remote device."
 '''

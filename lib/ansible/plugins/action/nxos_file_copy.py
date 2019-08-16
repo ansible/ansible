@@ -66,6 +66,8 @@ class ActionModule(ActionBase):
             file_system=dict(type='str', default='bootflash:'),
             file_pull=dict(type='bool', default=False),
             file_pull_timeout=dict(type='int', default=300),
+            file_pull_compact=dict(type='bool', default=False),
+            file_pull_kstack=dict(type='bool', default=False),
             local_file=dict(type='str'),
             local_file_directory=dict(type='str'),
             remote_file=dict(type='str'),
@@ -236,6 +238,7 @@ class ActionModule(ActionBase):
         self.results['remote_file'] = remote_file
 
     def copy_file_from_remote(self, local, local_file_directory, file_system):
+        self.results['failed'] = False
         nxos_hostname = self.play_context.remote_addr
         nxos_username = self.play_context.remote_user
         nxos_password = self.play_context.password
@@ -248,6 +251,14 @@ class ActionModule(ActionBase):
         rfile = self.playvals['remote_file'] + ' '
         vrf = ' vrf ' + self.playvals['vrf']
         local_dir_root = '/'
+        if self.playvals['file_pull_compact']:
+            compact = ' compact '
+        else:
+            compact = ''
+        if self.playvals['file_pull_kstack']:
+            kstack = ' use-kstack '
+        else:
+            kstack = ''
 
         def process_outcomes(session, timeout=None):
             if timeout is None:
@@ -257,15 +268,40 @@ class ActionModule(ActionBase):
             outcome['password_prompt_detected'] = False
             outcome['existing_file_with_same_name'] = False
             outcome['final_prompt_detected'] = False
+            outcome['copy_complete'] = False
+            outcome['expect_timeout'] = False
+            outcome['error'] = False
+            outcome['error_data'] = None
 
             # Possible outcomes key:
             # 0) - Are you sure you want to continue connecting (yes/no)
             # 1) - Password: or @servers's password:
             # 2) - nxos_router_prompt#
             # 3) - Warning: There is already a file existing with this name. Do you want to overwrite (y/n)?[n]
-            possible_outcomes = ['yes', '(?i)Password', '#\s', 'existing', 'timed out',
-                                 '(?i)No space', '(?i)Permission denied', '(?i)No such file',
-                                 pexpect.TIMEOUT]
+            # 4) - Timeout conditions
+            # 5) - No space on nxos device file_system
+            # 6) - Username/Password or file permission issues
+            # 7) - File does not exist on remote scp server
+            # 8) - pexpect timeout
+            # 9) - invalid nxos command
+            # 10) - compact option not supported
+            # 11) - compaction attempt failed
+            # 12) - other failures like attempting to compact non image file
+            # 13) - Copy completed without issues
+            possible_outcomes = ['yes',
+                                 '(?i)Password',
+                                 '#\s',
+                                 'file existing with this name',
+                                 'timed out.*#',
+                                 '(?i)No space.*#',
+                                 '(?i)Permission denied',
+                                 '(?i)No such file.*#',
+                                 pexpect.TIMEOUT,
+                                 '.*Invalid command.*#',
+                                 'Compaction is not supported on this platform.*#',
+                                 'Compact of.*failed.*#',
+                                 '(?i)Failed.*#',
+                                 '(?i)Copy complete.*#']
             index = session.expect(possible_outcomes, timeout=timeout)
             # Each index maps to items in possible_outcomes
             if index == 0:
@@ -280,32 +316,33 @@ class ActionModule(ActionBase):
             elif index == 3:
                 outcome['existing_file_with_same_name'] = True
                 return outcome
-            elif index == 4:
-                raise AnsibleError('Timeout occured. Remote scp server {0} not responding.'.format(rserver))
-            elif index == 5:
-                raise AnsibleError('File copy failed. No space left on the nxos file system {0}.'.format(file_system))
-            elif index == 6:
-                msg = 'Incorrect username/password for remote scp server {0} '
-                msg += 'or Incorrect file permisions for remote file {1}'
-                raise AnsibleError(msg.format(rserver, rfile))
-            elif index == 7:
-                raise AnsibleError('File copy failed. File {0} not found on remote scp server {1}'.format(rfile, file_system))
+            elif index in [4, 5, 6, 7, 9, 10, 11, 12]:
+                before = session.before.strip().replace(' \x08', '')
+                after = session.after.strip().replace(' \x08', '')
+                outcome['error'] = True
+                outcome['error_data'] = 'COMMAND {0} ERROR {1}'.format(before, after)
+                return outcome
             elif index == 8:
                 # The before property will contain all text up to the expected string pattern.
                 # The after string will contain the text that was matched by the expected pattern.
-                msg = 'Timeout error occured: BEFORE {0} AFTER {1}'.format(session.before, session.after)
-                raise AnsibleError(msg)
+                outcome['expect_timeout'] = True
+                outcome['error_data'] = 'Expect Timeout error occured: BEFORE {0} AFTER {1}'.format(session.before, session.after)
+                return outcome
+            elif index == 13:
+                outcome['copy_complete'] = True
+                return outcome
             else:
-                msg = 'Unrecognized error occured: BEFORE {0} AFTER {1}'.format(session.before, session.after)
-                raise AnsibleError(msg)
+                outcome['error'] = True
+                outcome['error_data'] = 'Unrecognized error occured: BEFORE {0} AFTER {1}'.format(session.before, session.after)
+                return outcome
 
             return outcome
 
         # Spawn pexpect connection to NX-OS device.
         nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
-        # There might be multiple user_response_required prompts so loop up to
-        # 5 times during the connection process.
-        for connect_attempt in range(30):
+        # There might be multiple user_response_required prompts or intermittent timeouts
+        # spawning the expect session so loop up to 30 times during the spwan process.
+        for connect_attempt in range(31):
             outcome = process_outcomes(nxos_session)
             if outcome['user_response_required']:
                 nxos_session.sendline('yes')
@@ -315,6 +352,10 @@ class ActionModule(ActionBase):
                 continue
             if outcome['final_prompt_detected']:
                 break
+            if outcome['error'] or outcome['expect_timeout']:
+                self.results['failed'] = True
+                self.results['error_data'] = outcome['error_data']
+                return
         else:
             # The before property will contain all text up to the expected string pattern.
             # The after string will contain the text that was matched by the expected pattern.
@@ -333,7 +374,8 @@ class ActionModule(ActionBase):
                     local_dir_root += each + '/'
 
         # Initiate file copy
-        copy_cmd = (cmdroot + ruser + rserver + rfile + file_system + local_dir_root + local + vrf)
+        copy_cmd = (cmdroot + ruser + rserver + rfile + file_system + local_dir_root + local + compact + vrf + kstack)
+        self.results['copy_cmd'] = copy_cmd
         nxos_session.sendline(copy_cmd)
         for copy_attempt in range(6):
             outcome = process_outcomes(nxos_session, self.playvals['file_pull_timeout'])
@@ -346,15 +388,19 @@ class ActionModule(ActionBase):
             if outcome['existing_file_with_same_name']:
                 nxos_session.sendline('y')
                 continue
-            if outcome['final_prompt_detected']:
+            if outcome['copy_complete']:
+                self.results['transfer_status'] = 'Received: File copied/pulled to nxos device from remote scp server.'
                 break
+            if outcome['error'] or outcome['expect_timeout']:
+                self.results['failed'] = True
+                self.results['error_data'] = outcome['error_data']
+                return
         else:
             # The before property will contain all text up to the expected string pattern.
             # The after string will contain the text that was matched by the expected pattern.
             msg = 'After {0} attempts, failed to copy file to {1}'
-            msg += 'BEFORE: {2}, AFTER: {3}'
-            raise AnsibleError(msg.format(copy_attempt, nxos_hostname, nxos_session.before, nxos_session.before))
-        nxos_session.close()
+            msg += 'BEFORE: {2}, AFTER: {3}, CMD: {4}'
+            raise AnsibleError(msg.format(copy_attempt, nxos_hostname, nxos_session.before, nxos_session.before, copy_cmd))
 
     def file_pull(self):
         local_file = self.playvals['local_file']
@@ -367,16 +413,16 @@ class ActionModule(ActionBase):
 
         if not self.play_context.check_mode:
             self.copy_file_from_remote(local_file, local_file_dir, file_system)
-            self.results['transfer_status'] = 'Received: File copied/pulled to nxos device from remote scp server.'
 
-        self.results['changed'] = True
-        self.results['remote_file'] = remote_file
-        if local_file_dir:
-            dir = local_file_dir
-        else:
-            dir = ''
-        self.results['local_file'] = file_system + dir + '/' + local_file
-        self.results['remote_scp_server'] = self.playvals['remote_scp_server']
+        if not self.results['failed']:
+            self.results['changed'] = True
+            self.results['remote_file'] = remote_file
+            if local_file_dir:
+                dir = local_file_dir
+            else:
+                dir = ''
+            self.results['local_file'] = file_system + dir + '/' + local_file
+            self.results['remote_scp_server'] = self.playvals['remote_scp_server']
 
     # This is the main run method for the action plugin to copy files
     def run(self, tmp=None, task_vars=None):
