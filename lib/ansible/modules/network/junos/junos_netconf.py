@@ -81,7 +81,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
-from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.six import iteritems
 
