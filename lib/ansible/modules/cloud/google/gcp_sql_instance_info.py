@@ -215,8 +215,8 @@ resources:
               - Path to a SQL dump file in Google Cloud Storage from which the slave
                 instance is to be created. The URI is in the form gs://bucketName/fileName.
                 Compressed gzip files (.gz) are also supported. Dumps should have
-                the binlog co-ordinates from which replication should begin. This
-                can be accomplished by setting --master-data to 1 when using mysqldump.
+                the binlog coordinates from which replication should begin. This can
+                be accomplished by setting --master-data to 1 when using mysqldump.
               returned: success
               type: str
             masterHeartbeatPeriod:

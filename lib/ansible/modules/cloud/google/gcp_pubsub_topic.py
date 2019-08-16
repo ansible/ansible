@@ -56,7 +56,7 @@ options:
   kms_key_name:
     description:
     - The resource name of the Cloud KMS CryptoKey to be used to protect access to
-      messsages published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
+      messages published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
       must have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
     - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
     required: false
@@ -110,7 +110,7 @@ name:
   type: str
 kmsKeyName:
   description:
-  - The resource name of the Cloud KMS CryptoKey to be used to protect access to messsages
+  - The resource name of the Cloud KMS CryptoKey to be used to protect access to messages
     published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
     must have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
   - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
