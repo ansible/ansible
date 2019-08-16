@@ -1,0 +1,117 @@
+# Test code for the Tetration modules
+# Copyright 2019, Brandon Beck (@techBeck03)
+
+- name: Test that we have a Tetration server endpoint, api key, and api secret
+  fail:
+    msg: 'Please define the following variables: server_endpoint api_key api_secret.'
+  when: server_endpoint is not defined or api_key is not defined or api_secret is not defined
+  vars:
+    provider: &provider
+      server_endpoint: "{{ server_endpoint }}"
+      api_key: "{{ api_key }}"
+      api_secret: "{{ api_secret }}"
+
+# Setup (clean environment)
+- name: User Annotation absent (clean environment)
+  tetration_user_annotations: &user_annotation_absent
+    <<: *provider 
+    ip: 10.10.10.10
+    name: default
+    state: absent
+  register: tenant
+
+# Test present (check_mode)
+- name: User Annotation present (check mode)
+  tetration_user_annotations: &user_annotation_present
+    <<: *provider 
+    ip: 10.10.10.10
+    name: default
+    annotations:
+      Department: Engineering
+    state: present
+  check_mode: yes
+  register: cm_user_annotation_present
+
+# Present (normal mode)
+- name: User Annotations present (normal mode)
+  tetration_user_annotation: *user_annotation_present
+  register: nm_user_annotation_present
+
+# Test present again (idempotent)
+- name: User Annotation present (normal mode)
+  tetration_user_annotation: *user_annotation_present
+  check_mode: yes
+  register: cm_user_annotation_present_again
+
+# Test present again (normal mode)
+- name: User Annotation present (normal mode)
+  tetration_user_annotation: *user_annotation_present
+  register: nm_user_annotation_present_again
+
+# Verfiy present
+- name: Verify User Annotation present results
+  assert:
+    that:
+    - cm_user_annotation_present.changed == nm_user_annotation_present.changed == true
+    - cm_user_annotation_present_again.changed == nm_user_annotation_present_again.changed == false
+
+# Test change (check_mode)
+- name: User Annotation change (check_mode)
+  tetration_user_annotation: &user_annotation_change
+    <<: *user_annotation_present
+    annotations:
+      Department: Marketing
+  check_mode: yes
+  register: cm_user_annotation_change
+
+# Change (normal mode)
+- name: User Annotation change (check_mode)
+  tetration_user_annotation: &user_annotation_change
+  register: nm_user_annotation_change
+
+# Test change again (idempotent)
+- name: User Annotation change (check_mode)
+  tetration_user_annotation: &user_annotation_change
+  check_mode: yes
+  register: cm_user_annotation_change_again
+
+# Change again (normal mode)
+- name: User Annotation change (check_mode)
+  tetration_user_annotation: &user_annotation_change
+  register: nm_user_annotation_change_again
+
+# Verfiy change
+- name: Verify User Annotation Server change results
+  assert:
+    that:
+    - cm_user_annotation_change.changed == nm_user_annotation_change.changed == true
+    - cm_user_annotation_change_again.changed == nm_user_annotation_change_again.changed == false
+
+# Teardown (clean environment)
+- name: User Annotation absent (check_mode)
+  tetration_user_annotation: *user_annotation_absent
+  check_mode: yes
+  register: cm_user_annotation_absent
+
+# Teardown (clean environment)
+- name: User Annotation absent (check_mode)
+  tetration_user_annotation: *user_annotation_absent
+  register: nm_user_annotation_absent
+
+# Test absent check mode again (idempotent)
+- name: User Annotation absent (check_mode)
+  tetration_user_annotation: *user_annotation_absent
+  check_mode: yes
+  register: cm_user_annotation_absent_again
+
+# Absent normal again (idempotent)
+- name: User Annotation absent (check_mode)
+  tetration_user_annotation: *user_annotation_absent
+  register: nm_user_annotation_absent_again
+
+# Verfiy absent
+- name: Verify User Annotation absent results
+  assert:
+    that:
+    - cm_user_annotation_absent.changed == nm_user_annotation_absent.changed == true
+    - cm_user_annotation_absent_again.changed == nm_user_annotation_absent_again.changed == false

@@ -342,6 +342,9 @@ files:
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
+  $modules/networking/tetration/: &tetration
+    labels: [ cisco, tetration ]
+    maintainers: $team_tetration
   $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos NilashishC
   $modules/notification/_osx_say.py: $team_ansible
@@ -825,6 +828,7 @@ files:
     maintainers: $team_scaleway
     labels:
       - cloud
+  $module_utils/tetration.py: *tetration
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
   $module_utils/vmware: *vmware
@@ -1145,6 +1149,7 @@ files:
   $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/postgres.py: *postgresql
   $plugins/doc_fragments/proxysql.py: *mysql
+  $plugins/doc_fragments/tetration.py: *tetration
   $plugins/doc_fragments/ucs.py: *ucs
   $plugins/doc_fragments/vultr.py: *vultr
   $plugins/doc_fragments/ovirt.py: *ovirt
@@ -1604,7 +1609,8 @@ macros:
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
   team_solaris: bcoca dagwieers danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
-  team_suse: evrardjp toabctl dcermak lrupp commel
+  team_suse: evrardjp toabctl
+  team_tetration: dchosnek techBeck03 movinalot
   team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee chrismeyersfsu
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
   team_vmware: Akasurde warthog9 Tomorrow9 goneri pgbidkar
