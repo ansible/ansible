@@ -495,13 +495,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 # Fetch all instances
                 link = self._instances % project
                 resp = self.fetch_list(params, link, query)
-                for key, value in resp.get('items').items():
-                    if 'instances' in value:
-                        # Key is in format: "zones/europe-west1-b"
-                        zone = key[6:]
-                        if not zones or zone in zones:
-                            self._add_hosts(value['instances'], config_data, project_disks=project_disks)
-                            cached_data[project][zone] = value['instances']
+                if 'items' in resp and resp['items']:
+                    for key, value in resp.get('items').items():
+                        if 'instances' in value:
+                            # Key is in format: "zones/europe-west1-b"
+                            zone = key[6:]
+                            if not zones or zone in zones:
+                                self._add_hosts(value['instances'], config_data, project_disks=project_disks)
+                                cached_data[project][zone] = value['instances']
 
         if cache_needs_update:
             self._cache[cache_key] = cached_data
