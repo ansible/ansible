@@ -22,7 +22,7 @@ version_added: "2.1.0"
 
 description:
      - Provide one or more image names, and the module will inspect each, returning an array of inspection results.
-     - Non-existing images will not be added to the result list. I.e. if you want to check whether an image exists
+     - If an image does not exist locally, it will not appear in the results. If you want to check whether an image exists
        locally, you can call the module with this image, and check whether the result list is empty (image does not
        exist) or has one element (the image exists locally).
      - The module will not attempt to pull images from registries. Use M(docker_image) with I(source) set to C(pull)
