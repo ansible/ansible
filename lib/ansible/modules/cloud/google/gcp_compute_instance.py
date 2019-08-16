@@ -250,6 +250,12 @@ options:
       except the last character, which cannot be a dash.
     required: false
     type: str
+  hostname:
+    description:
+    - The hostname of the instance to be created. The specified hostname must be RFC1035
+      compliant. If hostname is not specified, the default hostname is
+      [INSTANCE_NAME].c.[PROJECT_ID].internal when using the global DNS, and
+      [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal when using zonal DNS.
   network_interfaces:
     description:
     - An array of configurations for this interface. This specifies how this interface
@@ -717,6 +723,14 @@ name:
     which cannot be a dash.
   returned: success
   type: str
+hostname:
+  description:
+  - The hostname of the instance to be created. The specified hostname must be RFC1035
+    compliant. If hostname is not specified, the default hostname is
+    [INSTANCE_NAME].c.[PROJECT_ID].internal when using the global DNS, and
+    [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal when using zonal DNS.
+  returned: success
+  type: str
 networkInterfaces:
   description:
   - An array of configurations for this interface. This specifies how this interface
@@ -946,6 +960,7 @@ def main():
             machine_type=dict(type='str'),
             min_cpu_platform=dict(type='str'),
             name=dict(type='str'),
+            hostname=dict(type='str'),
             network_interfaces=dict(
                 type='list',
                 elements='dict',
@@ -1056,6 +1071,7 @@ def resource_to_request(module):
         u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params),
         u'minCpuPlatform': module.params.get('min_cpu_platform'),
         u'name': module.params.get('name'),
+        u'hostname': module.params.get('hostname'),
         u'networkInterfaces': InstanceNetworkinterfacesArray(module.params.get('network_interfaces', []), module).to_request(),
         u'scheduling': InstanceScheduling(module.params.get('scheduling', {}), module).to_request(),
         u'serviceAccounts': InstanceServiceaccountsArray(module.params.get('service_accounts', []), module).to_request(),
@@ -1142,6 +1158,7 @@ def response_to_hash(module, response):
         u'machineType': response.get(u'machineType'),
         u'minCpuPlatform': response.get(u'minCpuPlatform'),
         u'name': response.get(u'name'),
+        u'hostname': response.get(u'hostname'),
         u'networkInterfaces': InstanceNetworkinterfacesArray(response.get(u'networkInterfaces', []), module).from_response(),
         u'scheduling': InstanceScheduling(response.get(u'scheduling', {}), module).from_response(),
         u'serviceAccounts': InstanceServiceaccountsArray(response.get(u'serviceAccounts', []), module).from_response(),
