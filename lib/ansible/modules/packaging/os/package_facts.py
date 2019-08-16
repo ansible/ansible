@@ -229,7 +229,13 @@ class RPM(LibMgr):
     def is_available(self):
         ''' we expect the python bindings installed, but this gives warning if they are missing and we have rpm cli'''
         we_have_lib = super(RPM, self).is_available()
-        if not we_have_lib and get_bin_path('rpm'):
+
+        try:
+            rpm_bin = get_bin_path('rpm')
+        except ValueError:
+            rpm_bin = None
+
+        if not we_have_lib and rpm_bin:
             module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
         return we_have_lib
 
