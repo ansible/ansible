@@ -164,7 +164,7 @@ EXAMPLES = r'''
     vrf:
      name: vrf1
     state: present
-   delegate_to: localhost
+  delegate_to: localhost
     
 - name: Remove an EPG
   mso_schema_template_anp_epg:
@@ -180,7 +180,7 @@ EXAMPLES = r'''
     vrf:
      name: vrf1
     state: absent
-   delegate_to: localhost
+  delegate_to: localhost
 
 - name: Query a specific EPG
   mso_schema_template_anp_epg:
