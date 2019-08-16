@@ -506,7 +506,7 @@ class MlagInterface(object):
         for _, value in enumerate(mac, start=0):
             if value.lower() not in valid_char:
                 return False
-        if all((int(mac_list[0], base=16) == 0, int(mac_list[1], base=16) == 0, int(mac_list[2], base=16) ==0)):
+        if all((int(mac_list[0], base=16) == 0, int(mac_list[1], base=16) == 0, int(mac_list[2], base=16) == 0)):
             return False
         a = "000" + mac_list[0]
         b = "000" + mac_list[1]
