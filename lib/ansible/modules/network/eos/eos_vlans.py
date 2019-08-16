@@ -44,6 +44,8 @@ description: This module provides declarative management of VLANs on Arista EOS 
 author: Nathaniel Case (@qalthos)
 notes:
 - Tested against Arista EOS 4.20.10M
+- This module works with connection C(network_cli). See the
+  L(EOS Platform Options,../network/user_guide/platform_eos.html).
 options:
   config:
     description: A dictionary of VLANs options
@@ -197,14 +199,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
-  type: dict
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
-  type: dict
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -212,7 +214,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['vlan 10', 'no name', 'vlan 11', 'name Eleven']
 """
 
 

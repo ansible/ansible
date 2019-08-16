@@ -67,9 +67,7 @@ class VlansFacts(object):
         facts = {}
         if objs:
             params = utils.validate_config(self.argument_spec, {'config': objs})
-            # I don't know why it keeps insisting that state needs to be present
-            params['config'] = [utils.remove_empties(obj) for obj in params['config']]
-            facts['vlans'] = params['config']
+            facts['vlans'] = [utils.remove_empties(cfg) for cfg in params['config']]
 
         ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
