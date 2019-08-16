@@ -19,7 +19,7 @@ DOCUMENTATION = r'''
 module: postgresql_query
 short_description: Run PostgreSQL queries
 description:
-- Runs arbitraty PostgreSQL queries.
+- Runs arbitrary PostgreSQL queries.
 - Can run queries from SQL script files.
 version_added: '2.8'
 options:
