@@ -11,6 +11,7 @@ import os
 import shutil
 import tarfile
 import tempfile
+import threading
 import time
 import uuid
 import yaml
@@ -20,6 +21,11 @@ from distutils.version import LooseVersion, StrictVersion
 from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
+
+try:
+    import queue
+except ImportError:
+    import Queue as queue  # Python 2
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
@@ -383,13 +389,14 @@ def build_collection(collection_path, output_path, force):
     _build_collection_tar(b_collection_path, b_collection_output, collection_manifest, file_manifest)
 
 
-def publish_collection(collection_path, api, wait):
+def publish_collection(collection_path, api, wait, timeout):
     """
     Publish an Ansible collection tarball into an Ansible Galaxy server.
 
     :param collection_path: The path to the collection tarball to publish.
     :param api: A GalaxyAPI to publish the collection to.
     :param wait: Whether to wait until the import process is complete.
+    :param timeout: The time in seconds to wait for the import process to finish, 0 is indefinite.
     """
     b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
     if not os.path.exists(b_collection_path):
@@ -423,14 +430,16 @@ def publish_collection(collection_path, api, wait):
         raise AnsibleError("Error when publishing collection (HTTP Code: %d, Message: %s Code: %s)"
                            % (err.code, message, code))
 
-    display.vvv("Collection has been pushed to the Galaxy server %s %s" % (api.name, api.api_server))
     import_uri = resp['task']
     if wait:
-        _wait_import(import_uri, api)
-        display.display("Collection has been successfully published to the Galaxy server")
+        display.display("Collection has been published to the Galaxy server %s %s" % (api.name, api.api_server))
+        _wait_import(import_uri, api, timeout)
+        display.display("Collection has been successfully published and imported to the Galaxy server %s %s"
+                        % (api.name, api.api_server))
     else:
-        display.display("Collection has been pushed to the Galaxy server, not waiting until import has completed "
-                        "due to --no-wait being set. Import task results can be found at %s" % import_uri)
+        display.display("Collection has been pushed to the Galaxy server %s %s, not waiting until import has "
+                        "completed due to --no-wait being set. Import task results can be found at %s"
+                        % (api.name, api.api_server, import_uri))
 
 
 def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps):
@@ -729,27 +738,76 @@ def _get_mime_data(b_collection_path):
     return b"\r\n".join(form), content_type
 
 
-def _wait_import(task_url, api):
+def _wait_import(task_url, api, timeout):
     headers = api._auth_header()
 
-    display.vvv('Waiting until galaxy import task %s has completed' % task_url)
+    def display_progress(message_queue):
+        display.debug("Starting collection publish wait_import display thread")
+        t = threading.current_thread()
 
-    wait = 2
-    while True:
-        resp = json.load(open_url(to_native(task_url, errors='surrogate_or_strict'), headers=headers, method='GET',
-                                  validate_certs=api.validate_certs))
+        display.display("Waiting until Galaxy import task %s has completed" % task_url)
+        while True:
+            for c in "|/-\\":
+                display.display(c + "\b", newline=False)
+                time.sleep(0.1)
 
-        if resp.get('finished_at', None):
-            break
-        elif wait > 20:
-            # We try for a maximum of ~60 seconds before giving up in case something has gone wrong on the server end.
-            raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
-                               % to_native(task_url))
+                # Display a message from the main thread
+                while True:
+                    try:
+                        msg = message_queue.get(block=False, timeout=0.1)
+                    except queue.Empty:
+                        break
+                    else:
+                        func = getattr(display, msg[0])
+                        func(msg[1])
 
-        status = resp.get('status', 'waiting')
-        display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again' % (status, wait))
-        time.sleep(wait)
-        wait *= 1.5  # poor man's exponential backoff algo so we don't flood the Galaxy API.
+                if getattr(t, "finish", False):
+                    display.debug("Received end signal for collection publish wait import display thread")
+                    return
+
+    @contextmanager
+    def daemon_thread(func, queue):
+        t = threading.Thread(target=func, args=(queue,))
+        t.daemon = True
+        t.start()
+
+        try:
+            yield
+        finally:
+            t.finish = True
+            t.join()
+
+    state = 'waiting'
+    resp = None
+
+    try:
+        msg_queue = queue.Queue()
+
+        with daemon_thread(display_progress, msg_queue):
+            start = time.time()
+            wait = 2
+
+            while timeout == 0 or (time.time() - start) < timeout:
+                resp = json.load(open_url(to_native(task_url, errors='surrogate_or_strict'), headers=headers,
+                                          method='GET', validate_certs=api.validate_certs))
+                state = resp.get('state', 'waiting')
+
+                if resp.get('finished_at', None):
+                    break
+
+                msg_queue.put(('vvv', 'Galaxy import process has a status of %s, wait %d seconds before trying again'
+                               % (state, wait)))
+                time.sleep(wait)
+
+                # poor man's exponential backoff algo so we don't flood the Galaxy API, cap at 30 seconds.
+                wait = min(30, wait * 1.5)
+    except Exception:
+        # The exception is re-raised so we can sure the thread is finished and not using the display anymore
+        raise
+
+    if state == 'waiting':
+        raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
+                           % to_native(task_url))
 
     for message in resp.get('messages', []):
         level = message['level']
@@ -760,7 +818,7 @@ def _wait_import(task_url, api):
         else:
             display.vvv("Galaxy import message: %s - %s" % (level, message['message']))
 
-    if resp['state'] == 'failed':
+    if state == 'failed':
         code = to_native(resp['error'].get('code', 'UNKNOWN'))
         description = to_native(resp['error'].get('description', "Unknown error, see %s for more details" % task_url))
         raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
