@@ -50,5 +50,5 @@ options:
       version_added: "2.5"
 notes:
     - If you use I(login_password=zabbix), the word "zabbix" is replaced by "********" in all module output, because I(login_password) uses C(no_log).
-      See L(this FAQ,https://docs.ansible.com/ansible/devel/network/user_guide/faq.html#why-is-my-output-sometimes-replaced-with) for more information.
+      See L(this FAQ,https://docs.ansible.com/ansible/latest/network/user_guide/faq.html#why-is-my-output-sometimes-replaced-with) for more information.
 '''
