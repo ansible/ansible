@@ -25,4 +25,4 @@
 
 - assert:
     that:
-      - "ansible_facts.network_resources.lacp == []"
+      - "ansible_facts.network_resources.lacp == {}"
