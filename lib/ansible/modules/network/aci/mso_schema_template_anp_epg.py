@@ -159,9 +159,13 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: present
-  delegate_to: localhost
-
+   delegate_to: localhost
+    
 - name: Remove an EPG
   mso_schema_template_anp_epg:
     host: mso_host
@@ -171,8 +175,12 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: absent
-  delegate_to: localhost
+   delegate_to: localhost
 
 - name: Query a specific EPG
   mso_schema_template_anp_epg:
@@ -183,6 +191,10 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: query
   delegate_to: localhost
   register: query_result
@@ -195,6 +207,11 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     anp: ANP 1
+    epg: EPG 1
+    bd:
+     name: bd1
+    vrf:
+     name: vrf1
     state: query
   delegate_to: localhost
   register: query_result
