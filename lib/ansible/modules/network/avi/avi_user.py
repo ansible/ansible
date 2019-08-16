@@ -91,12 +91,12 @@ options:
     user_profile_ref:
         description:
             - Refer user profile.
-            - This can also be full URI same as it comes in response payloa
+            - This can also be full URI same as it comes in response payload
         type: str
     default_tenant_ref:
         description:
             - Default tenant reference.
-            - This can also be full URI same as it comes in response payloa
+            - This can also be full URI same as it comes in response payload
         default: /api/tenant?name=admin
         type: str
 
@@ -126,7 +126,7 @@ EXAMPLES = '''
 
   - name: user creation
     avi_user:
-      controller: ""
+      controller: "192.0.2.10"
       username: ""
       password: ""
       api_version: ""
