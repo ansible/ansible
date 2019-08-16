@@ -136,7 +136,6 @@ AUTH_ARG_MAP = {
     'ssl_ca_cert': 'ca_cert',
     'cert_file': 'client_cert',
     'key_file': 'client_key',
-    'proxy': 'proxy',
 }
 
 

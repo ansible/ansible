@@ -1,0 +1,2 @@
+bugfixes:
+  Backported to stable-2.8 - Fix #56640 Map k8s ansible keys to api keys (https://github.com/ansible/ansible/pull/57418)
