@@ -162,7 +162,7 @@ CE_NC_CREATE_MLAG_INFO = """
 <config>
 <mlag xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
   <mlagInstances>
-    <mlagInstance operation="create">
+    <mlagInstance operation="merge">
       <dfsgroupId>%s</dfsgroupId>
       <mlagId>%s</mlagId>
       <localMlagPort>%s</localMlagPort>
@@ -265,7 +265,7 @@ CE_NC_CREATE_MLAG_ERROR_DOWN_INFO = """
 <config>
 <mlag xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
   <errordowns>
-    <errordown operation="create">
+    <errordown operation="merge">
       <dfsgroupId>1</dfsgroupId>
       <portName>%s</portName>
     </errordown>
@@ -398,7 +398,7 @@ class MlagInterface(object):
             mlag_info["mlagInfos"] = list()
             root = ElementTree.fromstring(xml_str)
             dfs_mlag_infos = root.findall(
-                "data/mlag/mlagInstances/mlagInstance")
+                "./mlag/mlagInstances/mlagInstance")
 
             if dfs_mlag_infos:
                 for dfs_mlag_info in dfs_mlag_infos:
@@ -424,7 +424,7 @@ class MlagInterface(object):
 
             root = ElementTree.fromstring(xml_str)
             global_info = root.findall(
-                "data/ifmtrunk/lacpSysInfo/lacpMlagGlobal")
+                "./ifmtrunk/lacpSysInfo/lacpMlagGlobal")
 
             if global_info:
                 for tmp in global_info:
