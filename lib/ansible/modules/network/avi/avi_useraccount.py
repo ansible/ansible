@@ -42,11 +42,15 @@ options:
     old_password:
         description:
             - Old password for update password or default password for bootstrap.
+        required: true
+        type: str
     force_change:
         description:
             - If specifically set to true then old password is tried first for controller and then the new password is
               tried. If not specified this flag then the new password is tried first.
         version_added: "2.9"
+        type: bool
+
 
 extends_documentation_fragment:
     - avi

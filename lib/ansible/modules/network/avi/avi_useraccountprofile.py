@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,46 +38,58 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     account_lock_timeout:
         description:
             - Lock timeout period (in minutes).
             - Default is 30 minutes.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+        type: int
     credentials_timeout_threshold:
         description:
             - The time period after which credentials expire.
             - Default is 180 days.
             - Default value when not specified in API or module is interpreted by Avi Controller as 180.
+        type: int
     max_concurrent_sessions:
         description:
             - Maximum number of concurrent sessions allowed.
             - There are unlimited sessions by default.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        type: int
     max_login_failure_count:
         description:
             - Number of login attempts before lockout.
             - Default is 3 attempts.
             - Default value when not specified in API or module is interpreted by Avi Controller as 3.
+        type: int
     max_password_history_count:
         description:
             - Maximum number of passwords to be maintained in the password history.
             - Default is 4 passwords.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
+        type: int
     name:
         description:
             - Name of the object.
         required: true
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,11 +38,13 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     connection_mirror:
         description:
             - When enabled, avi mirrors all tcp fastpath connections to standby.
@@ -53,23 +56,31 @@ options:
     description:
         description:
             - User defined description for the object.
+        type: str
     name:
         description:
             - The name of the network profile.
         required: true
+        type: str
     profile:
         description:
             - Networkprofileunion settings for networkprofile.
         required: true
+        type: dict
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the network profile.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,26 +38,33 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     app_cookie_persistence_profile:
         description:
             - Specifies the application cookie persistence profile parameters.
+        type: dict
     description:
         description:
             - User defined description for the object.
+        type: str
     hdr_persistence_profile:
         description:
             - Specifies the custom http header persistence profile parameters.
+        type: dict
     http_cookie_persistence_profile:
         description:
             - Specifies the http cookie persistence profile parameters.
+        type: dict
     ip_persistence_profile:
         description:
             - Specifies the client ip persistence profile parameters.
+        type: dict
     is_federated:
         description:
             - This field describes the object's replication scope.
@@ -70,6 +78,7 @@ options:
         description:
             - A user-friendly name for the persistence profile.
         required: true
+        type: str
     persistence_type:
         description:
             - Method used to persist clients to the same server for a duration of time or a session.
@@ -77,20 +86,27 @@ options:
             - PERSISTENCE_TYPE_CUSTOM_HTTP_HEADER, PERSISTENCE_TYPE_APP_COOKIE, PERSISTENCE_TYPE_GSLB_SITE.
             - Default value when not specified in API or module is interpreted by Avi Controller as PERSISTENCE_TYPE_CLIENT_IP_ADDRESS.
         required: true
+        type: str
     server_hm_down_recovery:
         description:
             - Specifies behavior when a persistent server has been marked down by a health monitor.
             - Enum options - HM_DOWN_PICK_NEW_SERVER, HM_DOWN_ABORT_CONNECTION, HM_DOWN_CONTINUE_PERSISTENT_SERVER.
             - Default value when not specified in API or module is interpreted by Avi Controller as HM_DOWN_PICK_NEW_SERVER.
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the persistence profile.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

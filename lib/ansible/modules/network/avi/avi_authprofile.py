@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,52 +38,67 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     description:
         description:
             - User defined description for the object.
+        type: str
     http:
         description:
             - Http user authentication params.
+        type: dict
     ldap:
         description:
             - Ldap server and directory settings.
+        type: dict
     name:
         description:
             - Name of the auth profile.
         required: true
+        type: str
     pa_agent_ref:
         description:
             - Pingaccessagent uuid.
             - It is a reference to an object of type pingaccessagent.
             - Field introduced in 18.2.3.
         version_added: "2.9"
+        type: str
     saml:
         description:
             - Saml settings.
             - Field introduced in 17.2.3.
         version_added: "2.5"
+        type: dict
     tacacs_plus:
         description:
             - Tacacs+ settings.
+        type: dict
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     type:
         description:
             - Type of the auth profile.
             - Enum options - AUTH_PROFILE_LDAP, AUTH_PROFILE_TACACS_PLUS, AUTH_PROFILE_SAML, AUTH_PROFILE_PINGACCESS.
         required: true
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the auth profile.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

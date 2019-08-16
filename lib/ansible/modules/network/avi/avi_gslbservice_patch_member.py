@@ -31,19 +31,25 @@ options:
     data:
         description:
             - HTTP body of GSLB Service Member in YAML or JSON format.
+        type: dict
     params:
         description:
             - Query parameters passed to the HTTP API.
+        type: dict
     name:
         description:
             - Name of the GSLB Service
         required: true
+        type: str
     state:
         description:
             - The state that should be applied to the member. Member is
             - identified using field member.ip.addr.
         default: present
         choices: ["absent","present"]
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

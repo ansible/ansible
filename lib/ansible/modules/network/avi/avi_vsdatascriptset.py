@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,57 +38,73 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     created_by:
         description:
             - Creator name.
             - Field introduced in 17.1.11,17.2.4.
         version_added: "2.5"
+        type: str
     datascript:
         description:
             - Datascripts to execute.
+        type: list
     description:
         description:
             - User defined description for the object.
+        type: str
     ipgroup_refs:
         description:
             - Uuid of ip groups that could be referred by vsdatascriptset objects.
             - It is a reference to an object of type ipaddrgroup.
+        type: list
     name:
         description:
             - Name for the virtual service datascript collection.
         required: true
+        type: str
     pool_group_refs:
         description:
             - Uuid of pool groups that could be referred by vsdatascriptset objects.
             - It is a reference to an object of type poolgroup.
+        type: list
     pool_refs:
         description:
             - Uuid of pools that could be referred by vsdatascriptset objects.
             - It is a reference to an object of type pool.
+        type: list
     protocol_parser_refs:
         description:
             - List of protocol parsers that could be referred by vsdatascriptset objects.
             - It is a reference to an object of type protocolparser.
             - Field introduced in 18.2.3.
         version_added: "2.9"
+        type: list
     string_group_refs:
         description:
             - Uuid of string groups that could be referred by vsdatascriptset objects.
             - It is a reference to an object of type stringgroup.
+        type: list
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the virtual service datascript collection.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,38 +38,47 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     cloud_config_cksum:
         description:
             - Checksum of application profiles.
             - Internally set by cloud connector.
             - Field introduced in 17.2.14, 18.1.5, 18.2.1.
         version_added: "2.9"
+        type: str
     created_by:
         description:
             - Name of the application profile creator.
             - Field introduced in 17.2.14, 18.1.5, 18.2.1.
         version_added: "2.9"
+        type: str
     description:
         description:
             - User defined description for the object.
+        type: str
     dns_service_profile:
         description:
             - Specifies various dns service related controls for virtual service.
+        type: dict
     dos_rl_profile:
         description:
             - Specifies various security related controls for virtual service.
+        type: dict
     http_profile:
         description:
             - Specifies the http application proxy profile parameters.
+        type: dict
     name:
         description:
             - The name of the application profile.
         required: true
+        type: str
     preserve_client_ip:
         description:
             - Specifies if client ip needs to be preserved for backend connection.
@@ -87,24 +97,32 @@ options:
             - Specifies various sip service related controls for virtual service.
             - Field introduced in 17.2.8, 18.1.3, 18.2.1.
         version_added: "2.9"
+        type: dict
     tcp_app_profile:
         description:
             - Specifies the tcp application proxy profile parameters.
+        type: dict
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     type:
         description:
             - Specifies which application layer proxy is enabled for the virtual service.
             - Enum options - APPLICATION_PROFILE_TYPE_L4, APPLICATION_PROFILE_TYPE_HTTP, APPLICATION_PROFILE_TYPE_SYSLOG, APPLICATION_PROFILE_TYPE_DNS,
             - APPLICATION_PROFILE_TYPE_SSL, APPLICATION_PROFILE_TYPE_SIP.
         required: true
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the application profile.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

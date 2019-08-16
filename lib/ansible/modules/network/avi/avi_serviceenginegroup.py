@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,11 +38,13 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     accelerated_networking:
         description:
             - Enable accelerated networking option for azure se.
@@ -62,9 +65,11 @@ options:
             - Field deprecated in 18.1.2.
             - Field introduced in 18.1.1.
         version_added: "2.9"
+        type: int
     advertise_backend_networks:
         description:
             - Advertise reach-ability of backend server networks via adc through bgp for default gateway feature.
+            - Field deprecated in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
     aggressive_failure_detection:
@@ -77,6 +82,7 @@ options:
             - In compact placement, virtual services are placed on existing ses until max_vs_per_se limit is reached.
             - Enum options - PLACEMENT_ALGO_PACKED, PLACEMENT_ALGO_DISTRIBUTED.
             - Default value when not specified in API or module is interpreted by Avi Controller as PLACEMENT_ALGO_PACKED.
+        type: str
     allow_burst:
         description:
             - Allow ses to be created using burst license.
@@ -85,13 +91,14 @@ options:
         type: bool
     app_cache_percent:
         description:
-            - A percent value of total se memory reserved for application caching.
-            - This is an se bootup property and requires se restart.
+            - A percent value of total se memory reserved for applicationcaching.
+            - This is an se bootup property and requires se restart.requires se reboot.
             - Allowed values are 0 - 100.
             - Special values are 0- 'disable'.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     app_learning_memory_percent:
         description:
             - A percent value of total se memory reserved for application learning.
@@ -100,23 +107,26 @@ options:
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     archive_shm_limit:
         description:
             - Amount of se memory in gb until which shared memory is collected in core archive.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 8.
+        type: int
     async_ssl:
         description:
-            - Ssl handshakes will be handled by dedicated ssl threads.
+            - Ssl handshakes will be handled by dedicated ssl threads.requires se reboot.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.4"
         type: bool
     async_ssl_threads:
         description:
-            - Number of async ssl threads per se_dp.
+            - Number of async ssl threads per se_dp.requires se reboot.
             - Allowed values are 1-16.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
         version_added: "2.4"
+        type: int
     auto_rebalance:
         description:
             - If set, virtual services will be automatically migrated when load on an se is less than minimum or more than maximum thresholds.
@@ -128,16 +138,19 @@ options:
             - Capacities of se for auto rebalance for each criteria.
             - Field introduced in 17.2.4.
         version_added: "2.5"
+        type: list
     auto_rebalance_criteria:
         description:
             - Set of criteria for se auto rebalance.
             - Enum options - SE_AUTO_REBALANCE_CPU, SE_AUTO_REBALANCE_PPS, SE_AUTO_REBALANCE_MBPS, SE_AUTO_REBALANCE_OPEN_CONNS, SE_AUTO_REBALANCE_CPS.
             - Field introduced in 17.2.3.
         version_added: "2.5"
+        type: list
     auto_rebalance_interval:
         description:
             - Frequency of rebalance, if 'auto rebalance' is enabled.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+        type: int
     auto_redistribute_active_standby_load:
         description:
             - Redistribution of virtual services from the takeover se to the replacement se can cause momentary traffic loss.
@@ -149,15 +162,18 @@ options:
             - Bgp peer state update interval.
             - Allowed values are 5-100.
             - Field introduced in 17.2.14,18.1.5,18.2.1.
-            - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 60.
         version_added: "2.9"
+        type: int
     buffer_se:
         description:
             - Excess service engine capacity provisioned for ha failover.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        type: int
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
+        type: str
     config_debugs_on_all_cores:
         description:
             - Enable config debugs on all cores of se.
@@ -171,6 +187,7 @@ options:
             - This will come at the expense of memory used for http in-memory cache.
             - Allowed values are 10-90.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+        type: int
     cpu_reserve:
         description:
             - Boolean flag to set cpu_reserve.
@@ -186,20 +203,24 @@ options:
         description:
             - Custom security groups to be associated with data vnics for se instances in openstack and aws clouds.
             - Field introduced in 17.1.3.
+        type: list
     custom_securitygroups_mgmt:
         description:
             - Custom security groups to be associated with management vnic for se instances in openstack and aws clouds.
             - Field introduced in 17.1.3.
+        type: list
     custom_tag:
         description:
             - Custom tag will be used to create the tags for se instance in aws.
             - Note this is not the same as the prefix for se name.
+        type: list
     data_network_id:
         description:
             - Subnet used to spin up the data nic for service engines, used only for azure cloud.
             - Overrides the cloud level setting for service engine subnet.
             - Field introduced in 18.2.3.
         version_added: "2.9"
+        type: str
     datascript_timeout:
         description:
             - Number of instructions before datascript times out.
@@ -207,6 +228,7 @@ options:
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1000000.
         version_added: "2.9"
+        type: int
     dedicated_dispatcher_core:
         description:
             - Dedicate the core that handles packet receive/transmit from the network to just the dispatching function.
@@ -216,6 +238,7 @@ options:
     description:
         description:
             - User defined description for the object.
+        type: str
     disable_avi_securitygroups:
         description:
             - By default, avi creates and manages security groups along with custom sg provided by user.
@@ -253,13 +276,14 @@ options:
             - Disable tcp segmentation offload (tso) in dpdk poll-mode driver packet transmit path.
             - Tso is on by default on nics that support it.
             - Field introduced in 17.2.5, 18.1.1.
-            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
         type: bool
     disk_per_se:
         description:
             - Amount of disk space for each of the service engine virtual machines.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+        type: int
     distribute_load_active_standby:
         description:
             - Use both the active and standby service engines for virtual service placement in the legacy active standby ha mode.
@@ -267,8 +291,22 @@ options:
         type: bool
     distribute_queues:
         description:
-            - Distributes queue ownership among cores so multiple cores handle dispatcher duties.
+            - Distributes queue ownership among cores so multiple cores handle dispatcher duties.requires se reboot.
             - Field introduced in 17.2.8.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.9"
+        type: bool
+    distribute_vnics:
+        description:
+            - Distributes vnic ownership among cores so multiple cores handle dispatcher duties.requires se reboot.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.9"
+        type: bool
+    enable_gratarp_permanent:
+        description:
+            - Enable gratarp for vip_ip.
+            - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.9"
         type: bool
@@ -289,20 +327,31 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.9"
         type: bool
+    enable_pcap_tx_ring:
+        description:
+            - Enable tx ring support in pcap mode of operation.
+            - Tso feature is not supported with tx ring enabled.requires se reboot.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.9"
+        type: bool
     enable_routing:
         description:
-            - Enable routing for this serviceenginegroup .
+            - Enable routing for this serviceenginegroup.
+            - Field deprecated in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
     enable_vip_on_all_interfaces:
         description:
             - Enable vip on all interfaces of se.
+            - Field deprecated in 18.2.5.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         type: bool
     enable_vmac:
         description:
             - Use virtual mac address for interfaces on which floating interface ips are placed.
+            - Field deprecated in 18.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
     ephemeral_portrange_end:
@@ -310,50 +359,70 @@ options:
             - End local ephemeral port number for outbound connections.
             - Field introduced in 17.2.13, 18.1.5, 18.2.1.
         version_added: "2.9"
+        type: int
     ephemeral_portrange_start:
         description:
             - Start local ephemeral port number for outbound connections.
             - Field introduced in 17.2.13, 18.1.5, 18.2.1.
         version_added: "2.9"
+        type: int
     extra_config_multiplier:
         description:
             - Multiplier for extra config to support large vs/pool config.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.0.
+        type: float
     extra_shared_config_memory:
         description:
             - Extra config memory to support large geo db configuration.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        type: int
     floating_intf_ip:
         description:
             - If serviceenginegroup is configured for legacy 1+1 active standby ha mode, floating ip's will be advertised only by the active se in the pair.
             - Virtual services in this group must be disabled/enabled for any changes to the floating ip's to take effect.
             - Only active se hosting vs tagged with active standby se 1 tag will advertise this floating ip when manual load distribution is enabled.
+            - Field deprecated in 18.2.5.
+        type: list
     floating_intf_ip_se_2:
         description:
             - If serviceenginegroup is configured for legacy 1+1 active standby ha mode, floating ip's will be advertised only by the active se in the pair.
             - Virtual services in this group must be disabled/enabled for any changes to the floating ip's to take effect.
             - Only active se hosting vs tagged with active standby se 2 tag will advertise this floating ip when manual load distribution is enabled.
+            - Field deprecated in 18.2.5.
+        type: list
     flow_table_new_syn_max_entries:
         description:
             - Maximum number of flow table entries that have not completed tcp three-way handshake yet.
             - Field introduced in 17.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.5"
+        type: int
     free_list_size:
         description:
             - Number of entries in the free list.
             - Field introduced in 17.2.10, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1024.
         version_added: "2.9"
+        type: int
+    gratarp_permanent_periodicity:
+        description:
+            - Gratarp periodicity for vip-ip.
+            - Allowed values are 5-30.
+            - Field introduced in 18.2.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+        version_added: "2.9"
+        type: int
     ha_mode:
         description:
             - High availability mode for all the virtual services using this service engine group.
             - Enum options - HA_MODE_SHARED_PAIR, HA_MODE_SHARED, HA_MODE_LEGACY_ACTIVE_STANDBY.
             - Default value when not specified in API or module is interpreted by Avi Controller as HA_MODE_SHARED.
+        type: str
     hardwaresecuritymodulegroup_ref:
         description:
             - It is a reference to an object of type hardwaresecuritymodulegroup.
+        type: str
     heap_minimum_config_memory:
         description:
             - Minimum required heap memory to apply any configuration.
@@ -361,6 +430,7 @@ options:
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 8.
         version_added: "2.9"
+        type: int
     hm_on_standby:
         description:
             - Enable active health monitoring from the standby se for all placed virtual services.
@@ -376,10 +446,12 @@ options:
             - A openshift/kubernetes namespace maybe annotated with a matching se group label as openshift.io/node-selector  apptype=prod.
             - When multiple se groups are used in a cloud with host attributes specified,just a single se group can exist as a match-all se group without a
             - host_attribute_key.
+        type: str
     host_attribute_value:
         description:
             - Value of a (key, value) pair identifying a label for a set of nodes usually in container clouds.
             - Needs to be specified together with host_attribute_key.
+        type: str
     host_gateway_monitor:
         description:
             - Enable the host gateway monitor when service engine is deployed as docker container.
@@ -392,12 +464,14 @@ options:
         description:
             - Override default hypervisor.
             - Enum options - DEFAULT, VMWARE_ESX, KVM, VMWARE_VSAN, XEN.
+        type: str
     ignore_rtt_threshold:
         description:
             - Ignore rtt samples if it is above threshold.
             - Field introduced in 17.1.6,17.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5000.
         version_added: "2.5"
+        type: int
     ingress_access_data:
         description:
             - Program se security group ingress rules to allow vip data access from remote cidr type.
@@ -405,6 +479,7 @@ options:
             - Field introduced in 17.1.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as SG_INGRESS_ACCESS_ALL.
         version_added: "2.5"
+        type: str
     ingress_access_mgmt:
         description:
             - Program se security group ingress rules to allow ssh/icmp management access from remote cidr type.
@@ -412,12 +487,15 @@ options:
             - Field introduced in 17.1.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as SG_INGRESS_ACCESS_ALL.
         version_added: "2.5"
+        type: str
     instance_flavor:
         description:
             - Instance/flavor name for se instance.
+        type: str
     iptables:
         description:
             - Iptable rules.
+        type: list
     least_load_core_selection:
         description:
             - Select core with least load for new flow.
@@ -430,29 +508,34 @@ options:
             - Enum options - ENTERPRISE_16, ENTERPRISE_18.
             - Field introduced in 17.2.5.
         version_added: "2.5"
+        type: str
     license_type:
         description:
             - If no license type is specified then default license enforcement for the cloud type is chosen.
             - Enum options - LIC_BACKEND_SERVERS, LIC_SOCKETS, LIC_CORES, LIC_HOSTS, LIC_SE_BANDWIDTH, LIC_METERED_SE_BANDWIDTH.
             - Field introduced in 17.2.5.
         version_added: "2.5"
+        type: str
     log_disksz:
         description:
             - Maximum disk capacity (in mb) to be allocated to an se.
             - This is exclusively used for debug and log data.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10000.
+        type: int
     max_cpu_usage:
         description:
             - When cpu usage on an se exceeds this threshold, virtual services hosted on this se may be rebalanced to other ses to reduce load.
             - A new se may be created as part of this process.
             - Allowed values are 40-90.
             - Default value when not specified in API or module is interpreted by Avi Controller as 80.
+        type: int
     max_memory_per_mempool:
         description:
             - Max bytes that can be allocated in a single mempool.
             - Field introduced in 18.1.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as 64.
         version_added: "2.9"
+        type: int
     max_public_ips_per_lb:
         description:
             - Applicable to azure platform only.
@@ -460,6 +543,7 @@ options:
             - Field introduced in 17.2.12, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
         version_added: "2.9"
+        type: int
     max_rules_per_lb:
         description:
             - Applicable to azure platform only.
@@ -467,22 +551,26 @@ options:
             - Field introduced in 17.2.12, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 150.
         version_added: "2.9"
+        type: int
     max_scaleout_per_vs:
         description:
             - Maximum number of active service engines for the virtual service.
             - Allowed values are 1-64.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
+        type: int
     max_se:
         description:
             - Maximum number of services engines in this group.
             - Allowed values are 0-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+        type: int
     max_vs_per_se:
         description:
             - Maximum number of virtual services that can be placed on a single service engine.
             - East west virtual services are excluded from this limit.
             - Allowed values are 1-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+        type: int
     mem_reserve:
         description:
             - Boolean flag to set mem_reserve.
@@ -495,28 +583,34 @@ options:
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
         version_added: "2.9"
+        type: int
     memory_per_se:
         description:
             - Amount of memory for each of the service engine virtual machines.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2048.
+        type: int
     mgmt_network_ref:
         description:
             - Management network to use for avi service engines.
             - It is a reference to an object of type network.
+        type: str
     mgmt_subnet:
         description:
             - Management subnet to use for avi service engines.
+        type: dict
     min_cpu_usage:
         description:
             - When cpu usage on an se falls below the minimum threshold, virtual services hosted on the se may be consolidated onto other underutilized ses.
             - After consolidation, unused service engines may then be eligible for deletion.
             - Allowed values are 20-60.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+        type: int
     min_scaleout_per_vs:
         description:
             - Minimum number of active service engines for the virtual service.
             - Allowed values are 1-64.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        type: int
     min_se:
         description:
             - Minimum number of services engines in this group (relevant for se autorebalance only).
@@ -524,6 +618,7 @@ options:
             - Field introduced in 17.2.13,18.1.3,18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
         version_added: "2.9"
+        type: int
     minimum_connection_memory:
         description:
             - Indicates the percent of memory reserved for connections.
@@ -531,6 +626,7 @@ options:
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
         version_added: "2.9"
+        type: int
     minimum_required_config_memory:
         description:
             - Required available config memory to apply any configuration.
@@ -538,6 +634,7 @@ options:
             - Field deprecated in 18.1.2.
             - Field introduced in 18.1.1.
         version_added: "2.9"
+        type: int
     n_log_streaming_threads:
         description:
             - Number of threads to use for log streaming.
@@ -545,10 +642,60 @@ options:
             - Field introduced in 17.2.12, 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
         version_added: "2.9"
+        type: int
     name:
         description:
             - Name of the object.
         required: true
+        type: str
+    nat_flow_tcp_closed_timeout:
+        description:
+            - Idle timeout in seconds for nat tcp flows in closed state.
+            - Allowed values are 1-3600.
+            - Field deprecated in 18.2.5.
+            - Field introduced in 18.2.5.
+        version_added: "2.9"
+        type: int
+    nat_flow_tcp_established_timeout:
+        description:
+            - Idle timeout in seconds for nat tcp flows in established state.
+            - Allowed values are 1-3600.
+            - Field deprecated in 18.2.5.
+            - Field introduced in 18.2.5.
+        version_added: "2.9"
+        type: int
+    nat_flow_tcp_half_closed_timeout:
+        description:
+            - Idle timeout in seconds for nat tcp flows in half closed state.
+            - Allowed values are 1-3600.
+            - Field deprecated in 18.2.5.
+            - Field introduced in 18.2.5.
+        version_added: "2.9"
+        type: int
+    nat_flow_tcp_handshake_timeout:
+        description:
+            - Idle timeout in seconds for nat tcp flows in handshake state.
+            - Allowed values are 1-3600.
+            - Field deprecated in 18.2.5.
+            - Field introduced in 18.2.5.
+        version_added: "2.9"
+        type: int
+    nat_flow_udp_noresponse_timeout:
+        description:
+            - Idle timeout in seconds for nat udp flows in noresponse state.
+            - Allowed values are 1-3600.
+            - Field deprecated in 18.2.5.
+            - Field introduced in 18.2.5.
+        version_added: "2.9"
+        type: int
+    nat_flow_udp_response_timeout:
+        description:
+            - Idle timeout in seconds for nat udp flows in response state.
+            - Allowed values are 1-3600.
+            - Field deprecated in 18.2.5.
+            - Field introduced in 18.2.5.
+        version_added: "2.9"
+        type: int
     non_significant_log_throttle:
         description:
             - This setting limits the number of non-significant logs generated per second per core on this se.
@@ -556,34 +703,42 @@ options:
             - Set it to zero (0) to disable throttling.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+        type: int
     num_dispatcher_cores:
         description:
             - Number of dispatcher cores (0,1,2,4,8 or 16).
-            - If set to 0, then number of dispatcher cores is deduced automatically.
+            - If set to 0, then number of dispatcher cores is deduced automatically.requires se reboot.
             - Allowed values are 0,1,2,4,8,16.
             - Field introduced in 17.2.12, 18.1.3, 18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     num_flow_cores_sum_changes_to_ignore:
         description:
             - Number of changes in num flow cores sum to ignore.
             - Default value when not specified in API or module is interpreted by Avi Controller as 8.
+        type: int
     openstack_availability_zone:
         description:
             - Field deprecated in 17.1.1.
+        type: str
     openstack_availability_zones:
         description:
             - Field introduced in 17.1.1.
+        type: list
     openstack_mgmt_network_name:
         description:
             - Avi management network name.
+        type: str
     openstack_mgmt_network_uuid:
         description:
             - Management network uuid.
+        type: str
     os_reserved_memory:
         description:
             - Amount of extra memory to be reserved for use by the operating system on a service engine.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        type: int
     per_app:
         description:
             - Per-app se mode is designed for deploying dedicated load balancers per app (vs).
@@ -596,14 +751,22 @@ options:
             - If placement mode is 'auto', virtual services are automatically placed on service engines.
             - Enum options - PLACEMENT_MODE_AUTO.
             - Default value when not specified in API or module is interpreted by Avi Controller as PLACEMENT_MODE_AUTO.
+        type: str
     realtime_se_metrics:
         description:
             - Enable or disable real time se metrics.
+        type: dict
+    reboot_on_panic:
+        description:
+            - Reboot the vm or host on kernel panic.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.9"
+        type: bool
     reboot_on_stop:
         description:
             - Reboot the system if the se is stopped.
-            - Field introduced in 17.2.16,18.2.3.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+            - Field deprecated in 18.2.5.
         version_added: "2.9"
         type: bool
     se_bandwidth_type:
@@ -612,6 +775,7 @@ options:
             - Enum options - SE_BANDWIDTH_UNLIMITED, SE_BANDWIDTH_25M, SE_BANDWIDTH_200M, SE_BANDWIDTH_1000M, SE_BANDWIDTH_10000M.
             - Field introduced in 17.2.5.
         version_added: "2.5"
+        type: str
     se_deprovision_delay:
         description:
             - Duration to preserve unused service engine virtual machines before deleting them.
@@ -619,41 +783,99 @@ options:
             - If this value is set to 0, controller will never delete any ses and administrator has to manually cleanup unused ses.
             - Allowed values are 0-525600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 120.
+        type: int
     se_dos_profile:
         description:
             - Dosthresholdprofile settings for serviceenginegroup.
+        type: dict
+    se_dp_vnic_queue_stall_event_sleep:
+        description:
+            - Time (in seconds) service engine waits for after generating a vnic transmit queue stall event before resetting thenic.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        version_added: "2.9"
+        type: int
+    se_dp_vnic_queue_stall_threshold:
+        description:
+            - Number of consecutive transmit failures to look for before generating a vnic transmit queue stall event.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 2000.
+        version_added: "2.9"
+        type: int
+    se_dp_vnic_queue_stall_timeout:
+        description:
+            - Time (in milliseconds) to wait for network/nic recovery on detecting a transmit queue stall after which service engine resets the nic.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 10000.
+        version_added: "2.9"
+        type: int
+    se_dp_vnic_restart_on_queue_stall_count:
+        description:
+            - Number of consecutive transmit queue stall events in se_dp_vnic_stall_se_restart_window to look for before restarting se.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 3.
+        version_added: "2.9"
+        type: int
+    se_dp_vnic_stall_se_restart_window:
+        description:
+            - Window of time (in seconds) during which se_dp_vnic_restart_on_queue_stall_count number of consecutive stalls results in a se restart.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 3600.
+        version_added: "2.9"
+        type: int
     se_dpdk_pmd:
         description:
             - Determines if dpdk pool mode driver should be used or not   0  automatically determine based on hypervisor/nic type 1  unconditionally use dpdk
-            - poll mode driver 2  don't use dpdk poll mode driver.
+            - poll mode driver 2  don't use dpdk poll mode driver.requires se reboot.
             - Allowed values are 0-2.
             - Field introduced in 18.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     se_flow_probe_retries:
         description:
-            - Flow probe retry count if no replies are received.
+            - Flow probe retry count if no replies are received.requires se reboot.
             - Allowed values are 0-5.
             - Field introduced in 18.1.4, 18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
         version_added: "2.9"
+        type: int
+    se_flow_probe_retry_timer:
+        description:
+            - Timeout in milliseconds for flow probe retries.requires se reboot.
+            - Allowed values are 20-50.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 40.
+        version_added: "2.9"
+        type: int
     se_flow_probe_timer:
         description:
             - Timeout in milliseconds for flow probe entries.
             - Allowed values are 10-200.
+            - Field deprecated in 18.2.5.
             - Field introduced in 18.1.4, 18.2.1.
-            - Default value when not specified in API or module is interpreted by Avi Controller as 100.
         version_added: "2.9"
+        type: int
     se_ipc_udp_port:
         description:
             - Udp port for se_dp ipc in docker bridge mode.
             - Field introduced in 17.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1500.
         version_added: "2.4"
+        type: int
+    se_lro:
+        description:
+            - Enable or disable large receive optimization for vnics.
+            - Requires se reboot.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.9"
+        type: bool
     se_name_prefix:
         description:
             - Prefix to use for virtual machine name of service engines.
             - Default value when not specified in API or module is interpreted by Avi Controller as Avi.
+        type: str
     se_pcap_lookahead:
         description:
             - Enables lookahead mode of packet receive in pcap mode.
@@ -663,6 +885,22 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.9"
         type: bool
+    se_pcap_pkt_count:
+        description:
+            - Max number of packets the pcap interface can hold and if the value is 0 the optimum value will be chosen.
+            - The optimum value will be chosen based on se-memory, cloud type and number of interfaces.requires se reboot.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        version_added: "2.9"
+        type: int
+    se_pcap_pkt_sz:
+        description:
+            - Max size of each packet in the pcap interface.
+            - Requires se reboot.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 69632.
+        version_added: "2.9"
+        type: int
     se_pcap_reinit_frequency:
         description:
             - Frequency in seconds at which periodically a pcap reinit check is triggered.
@@ -673,6 +911,7 @@ options:
             - Field introduced in 17.2.13, 18.1.3, 18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     se_pcap_reinit_threshold:
         description:
             - Threshold for input packet receive errors in pcap mode exceeding which a pcap reinit is triggered.
@@ -681,51 +920,58 @@ options:
             - Field introduced in 17.2.13, 18.1.3, 18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     se_probe_port:
         description:
             - Tcp port on se where echo service will be run.
             - Field introduced in 17.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 7.
         version_added: "2.5"
+        type: int
     se_remote_punt_udp_port:
         description:
             - Udp port for punted packets in docker bridge mode.
             - Field introduced in 17.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1501.
         version_added: "2.4"
+        type: int
     se_routing:
         description:
             - Enable routing via service engine datapath.
             - When disabled, routing is done by the linux kernel.
             - Ip routing needs to be enabled in service engine group for se routing to be effective.
+            - Field deprecated in 18.2.5.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.9"
         type: bool
     se_sb_dedicated_core:
         description:
-            - Sideband traffic will be handled by a dedicated core.
+            - Sideband traffic will be handled by a dedicated core.requires se reboot.
             - Field introduced in 16.5.2, 17.1.9, 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
         type: bool
     se_sb_threads:
         description:
-            - Number of sideband threads per se.
+            - Number of sideband threads per se.requires se reboot.
             - Allowed values are 1-128.
             - Field introduced in 16.5.2, 17.1.9, 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
         version_added: "2.5"
+        type: int
     se_thread_multiplier:
         description:
             - Multiplier for se threads based on vcpu.
             - Allowed values are 1-10.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        type: int
     se_tracert_port_range:
         description:
             - Traceroute port range.
             - Field introduced in 17.2.8.
         version_added: "2.9"
+        type: dict
     se_tunnel_mode:
         description:
             - Determines if dsr from secondary se is active or not  0  automatically determine based on hypervisor type.
@@ -734,19 +980,30 @@ options:
             - Allowed values are 0-2.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        type: int
     se_tunnel_udp_port:
         description:
-            - Udp port for tunneled packets from secondary to primary se in docker bridge mode.
+            - Udp port for tunneled packets from secondary to primary se in docker bridge mode.requires se reboot.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1550.
+        type: int
+    se_tx_batch_size:
+        description:
+            - Number of packets to batch for transmit to the nic.
+            - Requires se reboot.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 64.
+        version_added: "2.9"
+        type: int
     se_udp_encap_ipc:
         description:
             - Determines if se-se ipc messages are encapsulated in a udp header  0  automatically determine based on hypervisor type.
-            - 1  use udp encap unconditionally.
+            - 1  use udp encap unconditionally.requires se reboot.
             - Allowed values are 0-1.
             - Field introduced in 17.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.4"
+        type: int
     se_use_dpdk:
         description:
             - Determines if dpdk library should be used or not   0  automatically determine based on hypervisor type 1  use dpdk if pcap is not enabled 2
@@ -755,18 +1012,21 @@ options:
             - Field introduced in 18.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     se_vs_hb_max_pkts_in_batch:
         description:
             - Maximum number of aggregated vs heartbeat packets to send in a batch.
             - Allowed values are 1-256.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 64.
+        type: int
     se_vs_hb_max_vs_in_pkt:
         description:
             - Maximum number of virtualservices for which heartbeat messages are aggregated in one packet.
             - Allowed values are 1-1024.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 256.
+        type: int
     self_se_election:
         description:
             - Enable ses to elect a primary amongst themselves in the absence of a connectivity to controller.
@@ -780,11 +1040,13 @@ options:
             - Required for vs group placement.
             - Field introduced in 18.1.1.
         version_added: "2.9"
+        type: list
     service_ip_subnets:
         description:
             - Subnets assigned to the se group.
             - Required for vs group placement.
             - Field introduced in 17.1.1.
+        type: list
     shm_minimum_config_memory:
         description:
             - Minimum required shared memory to apply any configuration.
@@ -792,6 +1054,7 @@ options:
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
         version_added: "2.9"
+        type: int
     significant_log_throttle:
         description:
             - This setting limits the number of significant logs generated per second per core on this se.
@@ -799,6 +1062,7 @@ options:
             - Set it to zero (0) to disable throttling.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+        type: int
     ssl_preprocess_sni_hostname:
         description:
             - (beta) preprocess ssl client hello for sni hostname extension.if set to true, this will apply sni child's ssl protocol(s), if they are different
@@ -810,6 +1074,7 @@ options:
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     udf_log_throttle:
         description:
             - This setting limits the number of udf logs generated per second per core on this se.
@@ -818,9 +1083,11 @@ options:
             - Set it to zero (0) to disable throttling.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+        type: int
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     use_standard_alb:
         description:
             - Use standard sku azure load balancer.
@@ -832,16 +1099,20 @@ options:
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
     vcenter_clusters:
         description:
             - Vcenterclusters settings for serviceenginegroup.
+        type: dict
     vcenter_datastore_mode:
         description:
             - Enum options - vcenter_datastore_any, vcenter_datastore_local, vcenter_datastore_shared.
             - Default value when not specified in API or module is interpreted by Avi Controller as VCENTER_DATASTORE_ANY.
+        type: str
     vcenter_datastores:
         description:
             - List of vcenterdatastore.
+        type: list
     vcenter_datastores_include:
         description:
             - Boolean flag to set vcenter_datastores_include.
@@ -851,18 +1122,22 @@ options:
         description:
             - Folder to place all the service engine virtual machines in vcenter.
             - Default value when not specified in API or module is interpreted by Avi Controller as AviSeFolder.
+        type: str
     vcenter_hosts:
         description:
             - Vcenterhosts settings for serviceenginegroup.
+        type: dict
     vcpus_per_se:
         description:
             - Number of vcpus for each of the service engine virtual machines.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        type: int
     vip_asg:
         description:
             - When vip_asg is set, vip configuration will be managed by avi.user will be able to configure vip_asg or vips individually at the time of create.
             - Field introduced in 17.2.12, 18.1.2.
         version_added: "2.9"
+        type: dict
     vs_host_redundancy:
         description:
             - Ensure primary and secondary service engines are deployed on different physical hosts.
@@ -872,14 +1147,17 @@ options:
         description:
             - Time to wait for the scaled in se to drain existing flows before marking the scalein done.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+        type: int
     vs_scalein_timeout_for_upgrade:
         description:
             - During se upgrade, time to wait for the scaled-in se to drain existing flows before marking the scalein done.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
+        type: int
     vs_scaleout_timeout:
         description:
             - Time to wait for the scaled out se to become ready before marking the scaleout done.
             - Default value when not specified in API or module is interpreted by Avi Controller as 600.
+        type: int
     vs_se_scaleout_additional_wait_time:
         description:
             - Wait time for sending scaleout ready notification after virtual service is marked up.
@@ -889,6 +1167,7 @@ options:
             - Field introduced in 18.1.5,18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     vs_se_scaleout_ready_timeout:
         description:
             - Timeout in seconds for service engine to sendscaleout ready notification of a virtual service.
@@ -896,17 +1175,20 @@ options:
             - Field introduced in 18.1.5,18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 25.
         version_added: "2.9"
+        type: int
     vs_switchover_timeout:
         description:
             - During se upgrade in a legacy active/standby segroup, time to wait for the new primary se to accept flows before marking the switchover done.
             - Field introduced in 17.2.13,18.1.4,18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
         version_added: "2.9"
+        type: int
     vss_placement:
         description:
             - Parameters to place virtual services on only a subset of the cores of an se.
             - Field introduced in 17.2.5.
         version_added: "2.5"
+        type: dict
     vss_placement_enabled:
         description:
             - If set, virtual services will be placed on only a subset of the cores of an se.
@@ -920,29 +1202,32 @@ options:
             - Allowed values are 1-43200.
             - Field deprecated in 18.2.3.
             - Field introduced in 18.1.2.
-            - Default value when not specified in API or module is interpreted by Avi Controller as 10.
         version_added: "2.9"
+        type: int
     waf_learning_memory:
         description:
             - Amount of memory reserved on se for waf learning.
             - This can be atmost 5% of se memory.
             - Field deprecated in 18.2.3.
             - Field introduced in 18.1.2.
-            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     waf_mempool:
         description:
-            - Enable memory pool for waf.
+            - Enable memory pool for waf.requires se reboot.
             - Field introduced in 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.5"
         type: bool
     waf_mempool_size:
         description:
-            - Memory pool size used for waf.
+            - Memory pool size used for waf.requires se reboot.
             - Field introduced in 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 64.
         version_added: "2.5"
+        type: int
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -1018,8 +1303,11 @@ def main():
         disk_per_se=dict(type='int',),
         distribute_load_active_standby=dict(type='bool',),
         distribute_queues=dict(type='bool',),
+        distribute_vnics=dict(type='bool',),
+        enable_gratarp_permanent=dict(type='bool',),
         enable_hsm_priming=dict(type='bool',),
         enable_multi_lb=dict(type='bool',),
+        enable_pcap_tx_ring=dict(type='bool',),
         enable_routing=dict(type='bool',),
         enable_vip_on_all_interfaces=dict(type='bool',),
         enable_vmac=dict(type='bool',),
@@ -1031,6 +1319,7 @@ def main():
         floating_intf_ip_se_2=dict(type='list',),
         flow_table_new_syn_max_entries=dict(type='int',),
         free_list_size=dict(type='int',),
+        gratarp_permanent_periodicity=dict(type='int',),
         ha_mode=dict(type='str',),
         hardwaresecuritymodulegroup_ref=dict(type='str',),
         heap_minimum_config_memory=dict(type='int',),
@@ -1067,6 +1356,12 @@ def main():
         minimum_required_config_memory=dict(type='int',),
         n_log_streaming_threads=dict(type='int',),
         name=dict(type='str', required=True),
+        nat_flow_tcp_closed_timeout=dict(type='int',),
+        nat_flow_tcp_established_timeout=dict(type='int',),
+        nat_flow_tcp_half_closed_timeout=dict(type='int',),
+        nat_flow_tcp_handshake_timeout=dict(type='int',),
+        nat_flow_udp_noresponse_timeout=dict(type='int',),
+        nat_flow_udp_response_timeout=dict(type='int',),
         non_significant_log_throttle=dict(type='int',),
         num_dispatcher_cores=dict(type='int',),
         num_flow_cores_sum_changes_to_ignore=dict(type='int',),
@@ -1078,16 +1373,26 @@ def main():
         per_app=dict(type='bool',),
         placement_mode=dict(type='str',),
         realtime_se_metrics=dict(type='dict',),
+        reboot_on_panic=dict(type='bool',),
         reboot_on_stop=dict(type='bool',),
         se_bandwidth_type=dict(type='str',),
         se_deprovision_delay=dict(type='int',),
         se_dos_profile=dict(type='dict',),
+        se_dp_vnic_queue_stall_event_sleep=dict(type='int',),
+        se_dp_vnic_queue_stall_threshold=dict(type='int',),
+        se_dp_vnic_queue_stall_timeout=dict(type='int',),
+        se_dp_vnic_restart_on_queue_stall_count=dict(type='int',),
+        se_dp_vnic_stall_se_restart_window=dict(type='int',),
         se_dpdk_pmd=dict(type='int',),
         se_flow_probe_retries=dict(type='int',),
+        se_flow_probe_retry_timer=dict(type='int',),
         se_flow_probe_timer=dict(type='int',),
         se_ipc_udp_port=dict(type='int',),
+        se_lro=dict(type='bool',),
         se_name_prefix=dict(type='str',),
         se_pcap_lookahead=dict(type='bool',),
+        se_pcap_pkt_count=dict(type='int',),
+        se_pcap_pkt_sz=dict(type='int',),
         se_pcap_reinit_frequency=dict(type='int',),
         se_pcap_reinit_threshold=dict(type='int',),
         se_probe_port=dict(type='int',),
@@ -1099,6 +1404,7 @@ def main():
         se_tracert_port_range=dict(type='dict',),
         se_tunnel_mode=dict(type='int',),
         se_tunnel_udp_port=dict(type='int',),
+        se_tx_batch_size=dict(type='int',),
         se_udp_encap_ipc=dict(type='int',),
         se_use_dpdk=dict(type='int',),
         se_vs_hb_max_pkts_in_batch=dict(type='int',),

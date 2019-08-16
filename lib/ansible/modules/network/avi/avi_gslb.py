@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,11 +38,13 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     async_interval:
         description:
             - Frequency with which messages are propagated to vs mgr.
@@ -50,24 +53,39 @@ options:
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.9"
+        type: int
     clear_on_max_retries:
         description:
             - Max retries after which the remote site is treated as a fresh start.
             - In fresh start all the configs are downloaded.
             - Allowed values are 1-1024.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+        type: int
     client_ip_addr_group:
         description:
             - Group to specify if the client ip addresses are public or private.
             - Field introduced in 17.1.2.
         version_added: "2.4"
+        type: dict
     description:
         description:
             - User defined description for the object.
+        type: str
     dns_configs:
         description:
             - Sub domain configuration for the gslb.
             - Gslb service's fqdn must be a match one of these subdomains.
+        type: list
+    error_resync_interval:
+        description:
+            - Frequency with which errored messages are resynced to follower sites.
+            - Value of 0 disables resync behavior.
+            - Allowed values are 60-3600.
+            - Special values are 0 - 'disable'.
+            - Field introduced in 18.2.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+        version_added: "2.9"
+        type: int
     is_federated:
         description:
             - This field indicates that this object is replicated across gslb federation.
@@ -80,6 +98,7 @@ options:
             - Mark this site as leader of gslb configuration.
             - This site is the one among the avi sites.
         required: true
+        type: str
     maintenance_mode:
         description:
             - This field disables the configuration operations on the leader for all federated objects.
@@ -95,11 +114,13 @@ options:
         description:
             - Name for the gslb object.
         required: true
+        type: str
     send_interval:
         description:
             - Frequency with which group members communicate.
             - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
+        type: int
     send_interval_prior_to_maintenance_mode:
         description:
             - The user can specify a send-interval while entering maintenance mode.
@@ -108,27 +129,36 @@ options:
             - This internal variable is used to store the original send-interval.
             - Field introduced in 18.2.3.
         version_added: "2.9"
+        type: int
     sites:
         description:
             - Select avi site member belonging to this gslb.
+        type: list
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     third_party_sites:
         description:
             - Third party site member belonging to this gslb.
             - Field introduced in 17.1.1.
+        type: list
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the gslb object.
+        type: str
     view_id:
         description:
             - The view-id is used in change-leader mode to differentiate partitioned groups while they have the same gslb namespace.
             - Each partitioned group will be able to operate independently by using the view-id.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        type: int
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -180,19 +210,17 @@ EXAMPLES = """
     dns_configs:
       - domain_name: "temp1.com"
       - domain_name: "temp2.com"
-    gslb_sites_config:
-      - ip_addr: "10.10.28.83"
-        dns_vses:
-          - dns_vs_uuid: "virtualservice-f2a711cd-5e78-473f-8f47-d12de660fd62"
-            domain_names:
-              - "test1.com"
-              - "test2.com"
-      - ip_addr: "10.10.28.86"
-        dns_vses:
-          - dns_vs_uuid: "virtualservice-c1a63a16-f2a1-4f41-aab4-1e90f92a5e49"
-            domain_names:
-              - "temp1.com"
-              - "temp2.com"
+    sites:
+      - name: "test-site1"
+        username: "gslb_username"
+        password: "gslb_password"
+        ip_addresses:
+          - type: "V4"
+            addr: "10.10.21.13"
+        enabled: True
+        member_type: "GSLB_ACTIVE_MEMBER"
+        port: 283
+        cluster_uuid: "cluster-d4ee5fcc-3e0a-4d4f-9ae6-4182bc605829"
 
 - name: Update Gslb site's configurations (Patch Replace Operation)
   avi_gslb:
@@ -208,19 +236,17 @@ EXAMPLES = """
     dns_configs:
       - domain_name: "test3.com"
       - domain_name: "temp3.com"
-    gslb_sites_config:
-      # Ip address is mapping key for dns_vses field update. For the given IP address,
-      # dns_vses is updated.
-      - ip_addr: "10.10.28.83"
-        dns_vses:
-          - dns_vs_uuid: "virtualservice-7c947ed4-77f3-4a52-909c-4f12afaf5bb0"
-            domain_names:
-              - "test3.com"
-      - ip_addr: "10.10.28.86"
-        dns_vses:
-          - dns_vs_uuid: "virtualservice-799b2c6d-7f2d-4c3f-94c6-6e813b20b674"
-            domain_names:
-              - "temp3.com"
+    sites:
+      - name: "test-site1"
+        username: "gslb_username"
+        password: "gslb_password"
+        ip_addresses:
+          - type: "V4"
+            addr: "10.10.11.24"
+        enabled: True
+        member_type: "GSLB_ACTIVE_MEMBER"
+        port: 283
+        cluster_uuid: "cluster-d4ee5fcc-3e0a-4d4f-9ae6-4182bc605829"
 
 - name: Update Gslb site's configurations (Patch Delete Operation)
   avi_gslb:
@@ -234,9 +260,9 @@ EXAMPLES = """
     avi_api_update_method: patch
     avi_api_patch_op: delete
     dns_configs:
-    gslb_sites_config:
-      - ip_addr: "10.10.28.83"
-      - ip_addr: "10.10.28.86"
+    sites:
+      - ip_addresses: "10.10.28.83"
+      - ip_addresses: "10.10.28.86"
 """
 
 RETURN = '''
@@ -267,6 +293,7 @@ def main():
         client_ip_addr_group=dict(type='dict',),
         description=dict(type='str',),
         dns_configs=dict(type='list',),
+        error_resync_interval=dict(type='int',),
         is_federated=dict(type='bool',),
         leader_cluster_uuid=dict(type='str', required=True),
         maintenance_mode=dict(type='bool',),
@@ -302,7 +329,7 @@ def main():
         rsp = api.get('gslb', api_version=api_creds.api_version)
         existing_gslb = rsp.json()
         gslb = existing_gslb['results']
-        sites = module.params['gslb_sites_config']
+        sites = module.params['sites']
         for gslb_obj in gslb:
             # Update/Delete domain names in dns_configs fields in gslb object.
             if 'dns_configs' in module.params:
@@ -319,11 +346,11 @@ def main():
                 for site_obj in gslb_obj['sites']:
                     dns_vses = site_obj.get('dns_vses', [])
                     for obj in sites:
-                        config_for = obj.get('ip_addr', None)
+                        config_for = obj.get('ip_addresses', None)
                         if not config_for:
                             return module.fail_json(msg=(
                                 "ip_addr of site in a configuration is mandatory. "
-                                "Please provide ip_addr i.e. gslb site's ip."))
+                                "Please provide ip_addresses i.e. gslb site's ip."))
                         if config_for == site_obj['ip_addresses'][0]['addr']:
                             if str(patch_op).lower() == 'delete':
                                 site_obj['dns_vses'] = []

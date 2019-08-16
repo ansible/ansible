@@ -29,6 +29,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -36,17 +37,21 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     availability_zone:
         description:
             - Availability_zone of serviceengine.
+        type: str
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
+        type: str
     container_mode:
         description:
             - Boolean flag to set container_mode.
@@ -56,6 +61,7 @@ options:
         description:
             - Enum options - container_type_bridge, container_type_host, container_type_host_dpdk.
             - Default value when not specified in API or module is interpreted by Avi Controller as CONTAINER_TYPE_HOST.
+        type: str
     controller_created:
         description:
             - Boolean flag to set controller_created.
@@ -64,45 +70,60 @@ options:
     controller_ip:
         description:
             - Controller_ip of serviceengine.
+        type: str
     data_vnics:
         description:
             - List of vnic.
+        type: list
     enable_state:
         description:
             - Inorder to disable se set this field appropriately.
             - Enum options - SE_STATE_ENABLED, SE_STATE_DISABLED_FOR_PLACEMENT, SE_STATE_DISABLED, SE_STATE_DISABLED_FORCE.
             - Default value when not specified in API or module is interpreted by Avi Controller as SE_STATE_ENABLED.
+        type: str
     flavor:
         description:
             - Flavor of serviceengine.
+        type: str
     host_ref:
         description:
             - It is a reference to an object of type vimgrhostruntime.
+        type: str
     hypervisor:
         description:
             - Enum options - default, vmware_esx, kvm, vmware_vsan, xen.
+        type: str
     mgmt_vnic:
         description:
             - Vnic settings for serviceengine.
+        type: dict
     name:
         description:
             - Name of the object.
             - Default value when not specified in API or module is interpreted by Avi Controller as VM name unknown.
+        type: str
     resources:
         description:
             - Seresources settings for serviceengine.
+        type: dict
     se_group_ref:
         description:
             - It is a reference to an object of type serviceenginegroup.
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

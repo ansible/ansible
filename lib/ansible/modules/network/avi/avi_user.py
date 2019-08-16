@@ -82,22 +82,21 @@ options:
             - Default method for object update is HTTP PUT.
             - Setting to patch will override that behavior to use HTTP PATCH.
         default: put
-        choices: ["post", "put", "patch"]
+        choices: ["put", "patch"]
         type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         choices: ["add", "replace", "delete"]
-        type: str
     user_profile_ref:
         description:
             - Refer user profile.
-            - This can also be full URI same as it comes in response payload
+            - This can also be full URI same as it comes in response payloa
         type: str
     default_tenant_ref:
         description:
             - Default tenant reference.
-            - This can also be full URI same as it comes in response payload
+            - This can also be full URI same as it comes in response payloa
         default: /api/tenant?name=admin
         type: str
 
@@ -116,7 +115,7 @@ EXAMPLES = '''
       name: "testuser"
       obj_username: "testuser"
       obj_password: "test123"
-      email: "test@abc.test"
+      email: "test@abc.com"
       access:
         - role_ref: "/api/role?name=Tenant-Admin"
           tenant_ref: "/api/tenant/admin#admin"
@@ -151,7 +150,9 @@ obj:
     type: dict
 '''
 
+
 from ansible.module_utils.basic import AnsibleModule
+
 
 try:
     from ansible.module_utils.network.avi.avi import (
@@ -174,9 +175,9 @@ def main():
         is_superuser=dict(type='bool',),
         is_active=dict(type='bool',),
         avi_api_update_method=dict(default='put',
-                                   choices=['post', 'put', 'patch']),
+                                   choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
-        user_profile_ref=dict(type='str',),
+        user_profile_ref=dict(type='str'),
         default_tenant_ref=dict(type='str', default='/api/tenant?name=admin'),
     )
     argument_specs.update(avi_common_argument_spec())

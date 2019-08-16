@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,17 +38,21 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     ca_certs:
         description:
             - List of certificate authorities (root and intermediate) trusted that is used for certificate validation.
+        type: list
     created_by:
         description:
             - Creator name.
+        type: str
     crl_check:
         description:
             - When enabled, avi will verify via crl checks that certificates in the trust chain have not been revoked.
@@ -56,6 +61,7 @@ options:
     crls:
         description:
             - Certificate revocation lists.
+        type: list
     ignore_peer_chain:
         description:
             - When enabled, avi will not trust intermediate and root certs presented by a client.
@@ -75,21 +81,27 @@ options:
         description:
             - Name of the pki profile.
         required: true
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
     validate_only_leaf_crl:
         description:
             - When enabled, avi will only validate the revocation status of the leaf certificate using crl.
             - To enable validation for the entire chain, disable this option and provide all the relevant crls.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         type: bool
+
+
 extends_documentation_fragment:
     - avi
 '''

@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,53 +38,73 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     azure_serviceprincipal:
         description:
             - Field introduced in 17.2.1.
         version_added: "2.5"
+        type: dict
     azure_userpass:
         description:
             - Field introduced in 17.2.1.
         version_added: "2.5"
+        type: dict
     gcp_credentials:
         description:
             - Credentials for google cloud platform.
             - Field introduced in 18.2.1.
         version_added: "2.9"
+        type: dict
     name:
         description:
             - Name of the object.
         required: true
+        type: str
+    obj_password:
+        description:
+            - Password of cloudconnectoruser.
+        version_added: "2.9"
+        type: str
     oci_credentials:
         description:
             - Credentials for oracle cloud infrastructure.
             - Field introduced in 18.2.1,18.1.3.
         version_added: "2.9"
+        type: dict
     private_key:
         description:
             - Private_key of cloudconnectoruser.
+        type: str
     public_key:
         description:
             - Public_key of cloudconnectoruser.
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     tencent_credentials:
         description:
             - Credentials for tencent cloud.
             - Field introduced in 18.2.3.
         version_added: "2.9"
+        type: dict
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -128,6 +149,7 @@ def main():
         azure_userpass=dict(type='dict',),
         gcp_credentials=dict(type='dict',),
         name=dict(type='str', required=True),
+        obj_password=dict(type='str',),
         oci_credentials=dict(type='dict',),
         private_key=dict(type='str', no_log=True,),
         public_key=dict(type='str',),
@@ -144,7 +166,7 @@ def main():
             'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'cloudconnectoruser',
-                           set(['private_key']))
+                           set(['private_key', 'password']))
 
 
 if __name__ == '__main__':

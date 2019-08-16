@@ -29,6 +29,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -36,19 +37,23 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     action_group_ref:
         description:
             - The alert config will trigger the selected alert action, which can send notifications and execute a controlscript.
             - It is a reference to an object of type actiongroupconfig.
+        type: str
     alert_rule:
         description:
             - List of filters matching on events or client logs used for triggering alerts.
         required: true
+        type: dict
     autoscale_alert:
         description:
             - This alert config applies to auto scale alerts.
@@ -60,9 +65,11 @@ options:
             - Enum options - REALTIME, ROLLINGWINDOW, WATERMARK.
             - Default value when not specified in API or module is interpreted by Avi Controller as REALTIME.
         required: true
+        type: str
     description:
         description:
             - A custom description field.
+        type: str
     enabled:
         description:
             - Enable or disable this alert config from generating new alerts.
@@ -74,13 +81,16 @@ options:
             - The original event triggering the alert remains in the event's log.
             - Allowed values are 1-31536000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 86400.
+        type: int
     name:
         description:
             - Name of the alert configuration.
         required: true
+        type: str
     obj_uuid:
         description:
             - Uuid of the resource for which alert was raised.
+        type: str
     object_type:
         description:
             - The object type to which the alert config is associated with.
@@ -90,7 +100,7 @@ options:
             - PKIPROFILE, AUTHPROFILE, CLOUD, SERVERAUTOSCALEPOLICY, AUTOSCALELAUNCHCONFIG, MICROSERVICEGROUP, IPAMPROFILE, HARDWARESECURITYMODULEGROUP,
             - POOLGROUP, PRIORITYLABELS, POOLGROUPDEPLOYMENTPOLICY, GSLBSERVICE, GSLBSERVICERUNTIME, SCHEDULER, GSLBGEODBPROFILE,
             - GSLBAPPLICATIONPERSISTENCEPROFILE, TRAFFICCLONEPROFILE, VSVIP, WAFPOLICY, WAFPROFILE, ERRORPAGEPROFILE, ERRORPAGEBODY, L4POLICYSET,
-            - GSLBSERVICERUNTIMEBATCH, WAFPOLICYPSMGROUP, PINGACCESSAGENT, SERVICEENGINEPOLICY, NATPOLICY, SSOPOLICY, PROTOCOLPARSER, SERVICEENGINE,
+            - GSLBSERVICERUNTIMEBATCH, WAFPOLICYPSMGROUP, PINGACCESSAGENT, NETWORKSERVICE, NATPOLICY, SSOPOLICY, PROTOCOLPARSER, SERVICEENGINE,
             - DEBUGSERVICEENGINE, DEBUGCONTROLLER, DEBUGVIRTUALSERVICE, SERVICEENGINEGROUP, SEPROPERTIES, NETWORK, CONTROLLERNODE, CONTROLLERPROPERTIES,
             - SYSTEMCONFIGURATION, VRFCONTEXT, USER, ALERTCONFIG, ALERTSYSLOGCONFIG, ALERTEMAILCONFIG, ALERTTYPECONFIG, APPLICATION, ROLE, CLOUDPROPERTIES,
             - SNMPTRAPPROFILE, ACTIONGROUPPROFILE, MICROSERVICE, ALERTPARAMS, ACTIONGROUPCONFIG, CLOUDCONNECTORUSER, GSLB, GSLBDNSUPDATE, GSLBSITEOPS,
@@ -115,48 +125,60 @@ options:
             - VSESSHARINGPOOL, NDTABLERUNTIME, IP6STATRUNTIME, ICMP6STATRUNTIME, SEVSSPLACEMENT, L4POLICYSETSTATS, L4POLICYSETINTERNAL, BGPDEBUGINFO, SHARD,
             - CPUSTATRUNTIMEDETAIL, SEASSERTSTATRUNTIME, SEFAULTINJECTINFRA, SEAGENTASSERTSTATRUNTIME, SEDATASTORESTATUS, DIFFQUEUESTATUS, IP6ROUTETABLERUNTIME,
             - SECURITYMGRSTATE, VIRTUALSERVICESESCALEOUTSTATUS, SHARDSERVERSTATUS, SEAGENTSHARDCLIENTRESOURCEMAP, SEAGENTCONSISTENTHASH, SEAGENTVNICDBHISTORY,
-            - SEAGENTSHARDCLIENTAPPMAP, SEAGENTSHARDCLIENTEVENTHISTORY, SENATSTATRUNTIME, SENATFLOWRUNTIME, SERESOURCEPROTO, SECONSUMERPROTO,
-            - SECREATEPENDINGPROTO, PLACEMENTSTATS, SEVIPPROTO, RMVRFPROTO, VCENTERMAP, VIMGRVCENTERRUNTIME, INTERESTEDVMS, INTERESTEDHOSTS,
+            - SEAGENTSHARDCLIENTAPPMAP, SEAGENTSHARDCLIENTEVENTHISTORY, NATSTATRUNTIME, NATFLOWRUNTIME, SECUTIRYMGRRUNTIME, SSOPOLICYSTATS, SERESOURCEPROTO,
+            - SECONSUMERPROTO, SECREATEPENDINGPROTO, PLACEMENTSTATS, SEVIPPROTO, RMVRFPROTO, VCENTERMAP, VIMGRVCENTERRUNTIME, INTERESTEDVMS, INTERESTEDHOSTS,
             - VCENTERSUPPORTEDCOUNTERS, ENTITYCOUNTERS, TRANSACTIONSTATS, SEVMCREATEPROGRESS, PLACEMENTSTATUS, VISUBFOLDERS, VIDATASTORE, VIHOSTRESOURCES,
             - CLOUDCONNECTOR, VINETWORKSUBNETVMS, VIDATASTORECONTENTS, VIMGRVCENTERCLOUDRUNTIME, VIVCENTERPORTGROUPS, VIVCENTERDATACENTERS, VIMGRHOSTRUNTIME,
             - PLACEMENTGLOBALS, APICCONFIGURATION, CIFTABLE, APICTRANSACTION, VIRTUALSERVICESTATEDBCACHESUMMARY, POOLSTATEDBCACHESUMMARY,
             - SERVERSTATEDBCACHESUMMARY, APICAGENTINTERNAL, APICTRANSACTIONFLAP, APICGRAPHINSTANCES, APICEPGS, APICEPGEPS, APICDEVICEPKGVER, APICTENANTS,
             - APICVMMDOMAINS, NSXCONFIGURATION, NSXSGTABLE, NSXAGENTINTERNAL, NSXSGINFO, NSXSGIPS, NSXAGENTINTERNALCLI, MAXOBJECTS.
+        type: str
     recommendation:
         description:
             - Recommendation of alertconfig.
+        type: str
     rolling_window:
         description:
             - Only if the number of events is reached or exceeded within the time window will an alert be generated.
             - Allowed values are 1-31536000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+        type: int
     source:
         description:
             - Signifies system events or the type of client logsused in this alert configuration.
             - Enum options - CONN_LOGS, APP_LOGS, EVENT_LOGS, METRICS.
         required: true
+        type: str
     summary:
         description:
             - Summary of reason why alert is generated.
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     threshold:
         description:
             - An alert is created only when the number of events meets or exceeds this number within the chosen time frame.
             - Allowed values are 1-65536.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        type: int
     throttle:
         description:
             - Alerts are suppressed (throttled) for this duration of time since the last alert was raised for this alert config.
             - Allowed values are 0-31536000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 600.
+        type: int
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

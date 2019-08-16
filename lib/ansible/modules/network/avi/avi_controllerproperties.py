@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,11 +38,13 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     allow_ip_forwarding:
         description:
             - Field introduced in 17.1.1.
@@ -61,6 +64,7 @@ options:
         description:
             - Allowed values are 0-1440.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
+        type: int
     api_perf_logging_threshold:
         description:
             - Threshold to log request timing in portal_performance.log and server-timing response header.
@@ -68,6 +72,7 @@ options:
             - Field introduced in 18.1.4, 18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10000.
         version_added: "2.9"
+        type: int
     appviewx_compat_mode:
         description:
             - Export configuration in appviewx compatibility mode.
@@ -78,10 +83,12 @@ options:
         description:
             - Number of attach_ip_retry_interval.
             - Default value when not specified in API or module is interpreted by Avi Controller as 360.
+        type: int
     attach_ip_retry_limit:
         description:
             - Number of attach_ip_retry_limit.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
+        type: int
     bm_use_ansible:
         description:
             - Use ansible for se creation in baremetal.
@@ -95,12 +102,14 @@ options:
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
         version_added: "2.9"
+        type: int
     cleanup_sessions_timeout_period:
         description:
             - Period for sessions cleanup job.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
         version_added: "2.9"
+        type: int
     cloud_reconcile:
         description:
             - Enable/disable periodic reconcile for all the clouds.
@@ -112,27 +121,33 @@ options:
         description:
             - Period for cluster ip gratuitous arp job.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+        type: int
     consistency_check_timeout_period:
         description:
             - Period for consistency check job.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
         version_added: "2.9"
+        type: int
     crashed_se_reboot:
         description:
             - Number of crashed_se_reboot.
             - Default value when not specified in API or module is interpreted by Avi Controller as 900.
+        type: int
     dead_se_detection_timer:
         description:
             - Number of dead_se_detection_timer.
             - Default value when not specified in API or module is interpreted by Avi Controller as 360.
+        type: int
     dns_refresh_period:
         description:
             - Period for refresh pool and gslb dns job.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+        type: int
     dummy:
         description:
             - Number of dummy.
+        type: int
     enable_api_sharding:
         description:
             - This setting enables the controller leader to shard api requests to the followers (if any).
@@ -151,64 +166,77 @@ options:
         description:
             - Number of fatal_error_lease_time.
             - Default value when not specified in API or module is interpreted by Avi Controller as 120.
+        type: int
     max_dead_se_in_grp:
         description:
             - Number of max_dead_se_in_grp.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+        type: int
     max_pcap_per_tenant:
         description:
             - Maximum number of pcap files stored per tenant.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
+        type: int
     max_seq_attach_ip_failures:
         description:
             - Maximum number of consecutive attach ip failures that halts vs placement.
             - Field introduced in 17.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 3.
         version_added: "2.5"
+        type: int
     max_seq_vnic_failures:
         description:
             - Number of max_seq_vnic_failures.
             - Default value when not specified in API or module is interpreted by Avi Controller as 3.
+        type: int
     persistence_key_rotate_period:
         description:
             - Period for rotate app persistence keys job.
             - Allowed values are 1-1051200.
             - Special values are 0 - 'disabled'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        type: int
     portal_token:
         description:
             - Token used for uploading tech-support to portal.
             - Field introduced in 16.4.6,17.1.2.
         version_added: "2.4"
+        type: str
     process_locked_useraccounts_timeout_period:
         description:
             - Period for process locked user accounts job.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
         version_added: "2.9"
+        type: int
     process_pki_profile_timeout_period:
         description:
             - Period for process pki profile job.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1440.
         version_added: "2.9"
+        type: int
     query_host_fail:
         description:
             - Number of query_host_fail.
             - Default value when not specified in API or module is interpreted by Avi Controller as 180.
+        type: int
     safenet_hsm_version:
         description:
             - Version of the safenet package installed on the controller.
             - Field introduced in 16.5.2,17.2.3.
         version_added: "2.5"
+        type: str
     se_create_timeout:
         description:
             - Number of se_create_timeout.
             - Default value when not specified in API or module is interpreted by Avi Controller as 900.
+        type: int
     se_failover_attempt_interval:
         description:
             - Interval between attempting failovers to an se.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+        type: int
     se_from_marketplace:
         description:
             - This setting decides whether se is to be deployed from the cloud marketplace or to be created by the controller.
@@ -217,117 +245,153 @@ options:
             - Field introduced in 18.1.4, 18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as IMAGE.
         version_added: "2.9"
+        type: str
     se_offline_del:
         description:
             - Number of se_offline_del.
             - Default value when not specified in API or module is interpreted by Avi Controller as 172000.
+        type: int
     se_vnic_cooldown:
         description:
             - Number of se_vnic_cooldown.
             - Default value when not specified in API or module is interpreted by Avi Controller as 120.
+        type: int
     secure_channel_cleanup_timeout:
         description:
             - Period for secure channel cleanup job.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+        type: int
     secure_channel_controller_token_timeout:
         description:
             - Number of secure_channel_controller_token_timeout.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+        type: int
     secure_channel_se_token_timeout:
         description:
             - Number of secure_channel_se_token_timeout.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+        type: int
     seupgrade_fabric_pool_size:
         description:
             - Pool size used for all fabric commands during se upgrade.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+        type: int
     seupgrade_segroup_min_dead_timeout:
         description:
             - Time to wait before marking segroup upgrade as stuck.
             - Default value when not specified in API or module is interpreted by Avi Controller as 360.
+        type: int
+    shared_ssl_certificates:
+        description:
+            - Ssl certificates in the admin tenant can be used in non-admin tenants.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.9"
+        type: bool
     ssl_certificate_expiry_warning_days:
         description:
             - Number of days for ssl certificate expiry warning.
+        type: list
     unresponsive_se_reboot:
         description:
             - Number of unresponsive_se_reboot.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+        type: int
     upgrade_dns_ttl:
         description:
             - Time to account for dns ttl during upgrade.
             - This is in addition to vs_scalein_timeout_for_upgrade in se_group.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5.
+        type: int
     upgrade_lease_time:
         description:
             - Number of upgrade_lease_time.
             - Default value when not specified in API or module is interpreted by Avi Controller as 360.
+        type: int
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
     vnic_op_fail_time:
         description:
             - Number of vnic_op_fail_time.
             - Default value when not specified in API or module is interpreted by Avi Controller as 180.
+        type: int
     vs_apic_scaleout_timeout:
         description:
             - Time to wait for the scaled out se to become ready before marking the scaleout done, applies to apic configuration only.
             - Default value when not specified in API or module is interpreted by Avi Controller as 360.
+        type: int
     vs_awaiting_se_timeout:
         description:
             - Number of vs_awaiting_se_timeout.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+        type: int
     vs_key_rotate_period:
         description:
             - Period for rotate vs keys job.
             - Allowed values are 1-1051200.
             - Special values are 0 - 'disabled'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 360.
+        type: int
     vs_scaleout_ready_check_interval:
         description:
             - Interval for checking scaleout_ready status while controller is waiting for scaleoutready rpc from the service engine.
             - Field introduced in 18.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
         version_added: "2.9"
+        type: int
     vs_se_attach_ip_fail:
         description:
             - Time to wait before marking attach ip operation on an se as failed.
             - Field introduced in 17.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 600.
         version_added: "2.5"
+        type: int
     vs_se_bootup_fail:
         description:
             - Number of vs_se_bootup_fail.
             - Default value when not specified in API or module is interpreted by Avi Controller as 480.
+        type: int
     vs_se_create_fail:
         description:
             - Number of vs_se_create_fail.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1500.
+        type: int
     vs_se_ping_fail:
         description:
             - Number of vs_se_ping_fail.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
+        type: int
     vs_se_vnic_fail:
         description:
             - Number of vs_se_vnic_fail.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+        type: int
     vs_se_vnic_ip_fail:
         description:
             - Number of vs_se_vnic_ip_fail.
             - Default value when not specified in API or module is interpreted by Avi Controller as 120.
+        type: int
     warmstart_se_reconnect_wait_time:
         description:
             - Number of warmstart_se_reconnect_wait_time.
             - Default value when not specified in API or module is interpreted by Avi Controller as 480.
+        type: int
     warmstart_vs_resync_wait_time:
         description:
             - Timeout for warmstart vs resync.
             - Field introduced in 18.1.4, 18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
         version_added: "2.9"
+        type: int
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -405,6 +469,7 @@ def main():
         secure_channel_se_token_timeout=dict(type='int',),
         seupgrade_fabric_pool_size=dict(type='int',),
         seupgrade_segroup_min_dead_timeout=dict(type='int',),
+        shared_ssl_certificates=dict(type='bool',),
         ssl_certificate_expiry_warning_days=dict(type='list',),
         unresponsive_se_reboot=dict(type='int',),
         upgrade_dns_ttl=dict(type='int',),

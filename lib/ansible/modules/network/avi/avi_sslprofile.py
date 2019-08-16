@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,18 +38,22 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     accepted_ciphers:
         description:
             - Ciphers suites represented as defined by U(http://www.openssl.org/docs/apps/ciphers.html).
             - Default value when not specified in API or module is interpreted by Avi Controller as AES:3DES:RC4.
+        type: str
     accepted_versions:
         description:
             - Set of versions accepted by the server.
+        type: list
     cipher_enums:
         description:
             - Enum options - tls_ecdhe_ecdsa_with_aes_128_gcm_sha256, tls_ecdhe_ecdsa_with_aes_256_gcm_sha384, tls_ecdhe_rsa_with_aes_128_gcm_sha256,
@@ -57,13 +62,16 @@ options:
             - tls_rsa_with_aes_128_cbc_sha256, tls_rsa_with_aes_256_cbc_sha256, tls_ecdhe_ecdsa_with_aes_128_cbc_sha, tls_ecdhe_ecdsa_with_aes_256_cbc_sha,
             - tls_ecdhe_rsa_with_aes_128_cbc_sha, tls_ecdhe_rsa_with_aes_256_cbc_sha, tls_rsa_with_aes_128_cbc_sha, tls_rsa_with_aes_256_cbc_sha,
             - tls_rsa_with_3des_ede_cbc_sha, tls_rsa_with_rc4_128_sha.
+        type: list
     description:
         description:
             - User defined description for the object.
+        type: str
     dhparam:
         description:
             - Dh parameters used in ssl.
             - At this time, it is not configurable and is set to 2048 bits.
+        type: str
     enable_ssl_session_reuse:
         description:
             - Enable ssl session re-use.
@@ -73,6 +81,7 @@ options:
         description:
             - Name of the object.
         required: true
+        type: str
     prefer_client_cipher_ordering:
         description:
             - Prefer the ssl cipher ordering presented by the client during the ssl handshake over the one specified in the ssl profile.
@@ -86,16 +95,20 @@ options:
     ssl_rating:
         description:
             - Sslrating settings for sslprofile.
+        type: dict
     ssl_session_timeout:
         description:
             - The amount of time in seconds before an ssl session expires.
             - Default value when not specified in API or module is interpreted by Avi Controller as 86400.
+        type: int
     tags:
         description:
             - List of tag.
+        type: list
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     type:
         description:
             - Ssl profile type.
@@ -103,12 +116,17 @@ options:
             - Field introduced in 17.2.8.
             - Default value when not specified in API or module is interpreted by Avi Controller as SSL_PROFILE_TYPE_APPLICATION.
         version_added: "2.6"
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

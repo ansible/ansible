@@ -34,19 +34,27 @@ options:
             - Allowed HTTP methods for RESTful services and are supported by Avi Controller.
         choices: ["get", "put", "post", "patch", "delete"]
         required: true
+        type: str
     data:
         description:
             - HTTP body in YAML or JSON format.
+        type: jsonarg
     params:
         description:
             - Query parameters passed to the HTTP API.
+        type: dict
     path:
         description:
             - 'Path for Avi API resource. For example, C(path: virtualservice) will translate to C(api/virtualserivce).'
+        required: true
+        type: str
     timeout:
         description:
             - Timeout (in seconds) for Avi API calls.
         default: 60
+        type: int
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -98,6 +106,20 @@ EXAMPLES = '''
         step: 300
         limit: 10
     register: pool_metrics
+
+  - name: Wait for Controller upgrade to finish
+    avi_api_session:
+      controller: "{{ controller }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      http_method: get
+      timeout: 300
+      path: cluster/upgrade/status
+      api_version: 16.4
+    register: upgrade_status
+    until: "'result' in upgrade_status.obj and upgrade_status.obj.result == 'SUCCESS'"
+    retries: 120
+    delay: 10
 
 '''
 

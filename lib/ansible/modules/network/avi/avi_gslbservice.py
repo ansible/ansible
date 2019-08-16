@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,17 +38,20 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     application_persistence_profile_ref:
         description:
             - The federated application persistence associated with gslbservice site persistence functionality.
             - It is a reference to an object of type applicationpersistenceprofile.
             - Field introduced in 17.2.1.
         version_added: "2.5"
+        type: str
     controller_health_status_enabled:
         description:
             - Gs member's overall health status is derived based on a combination of controller and datapath health-status inputs.
@@ -59,15 +63,19 @@ options:
         description:
             - Creator name.
             - Field introduced in 17.1.2.
+        type: str
     description:
         description:
             - User defined description for the object.
+        type: str
     domain_names:
         description:
             - Fully qualified domain name of the gslb service.
+        type: list
     down_response:
         description:
             - Response to the client query when the gslb service is down.
+        type: dict
     enabled:
         description:
             - Enable or disable the gslb service.
@@ -78,11 +86,13 @@ options:
     groups:
         description:
             - Select list of pools belonging to this gslb service.
+        type: list
     health_monitor_refs:
         description:
             - Verify vs health by applying one or more health monitors.
             - Active monitors generate synthetic traffic from dns service engine and to mark a vs up or down based on the response.
             - It is a reference to an object of type healthmonitor.
+        type: list
     health_monitor_scope:
         description:
             - Health monitor probe can be executed for all the members or it can be executed only for third-party members.
@@ -90,6 +100,7 @@ options:
             - In such a case, avi members can have controller derived status while non-avi members can be probed by via health monitor probes in dataplane.
             - Enum options - GSLB_SERVICE_HEALTH_MONITOR_ALL_MEMBERS, GSLB_SERVICE_HEALTH_MONITOR_ONLY_NON_AVI_MEMBERS.
             - Default value when not specified in API or module is interpreted by Avi Controller as GSLB_SERVICE_HEALTH_MONITOR_ALL_MEMBERS.
+        type: str
     hm_off:
         description:
             - This field is an internal field and is used in se.
@@ -110,16 +121,19 @@ options:
             - Field introduced in 17.2.4.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
         version_added: "2.5"
+        type: int
     name:
         description:
             - Name for the gslb service.
         required: true
+        type: str
     num_dns_ip:
         description:
             - Number of ip addresses of this gslb service to be returned by the dns service.
             - Enter 0 to return all ip addresses.
             - Allowed values are 1-20.
             - Special values are 0- 'return all ip addresses'.
+        type: int
     pool_algorithm:
         description:
             - The load balancing algorithm will pick a gslb pool within the gslb service list of available pools.
@@ -127,6 +141,14 @@ options:
             - Field introduced in 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as GSLB_SERVICE_ALGORITHM_PRIORITY.
         version_added: "2.5"
+        type: str
+    resolve_cname:
+        description:
+            - This field indicates that for a cname query, respond with resolved cnames in the additional section with a records.
+            - Field introduced in 18.2.5.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.9"
+        type: bool
     site_persistence_enabled:
         description:
             - Enable site-persistence for the gslbservice.
@@ -137,13 +159,16 @@ options:
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     ttl:
         description:
             - Ttl value (in seconds) for records served for this gslb service by the dns service.
             - Allowed values are 0-86400.
+        type: int
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     use_edns_client_subnet:
         description:
             - Use the client ip subnet from the edns option as source ipaddress for client geo-location and consistent hash algorithm.
@@ -154,6 +179,7 @@ options:
     uuid:
         description:
             - Uuid of the gslb service.
+        type: str
     wildcard_match:
         description:
             - Enable wild-card match of fqdn  if an exact match is not found in the dns table, the longest match is chosen by wild-carding the fqdn in the dns
@@ -162,6 +188,8 @@ options:
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -214,6 +242,7 @@ def main():
         name=dict(type='str', required=True),
         num_dns_ip=dict(type='int',),
         pool_algorithm=dict(type='str',),
+        resolve_cname=dict(type='bool',),
         site_persistence_enabled=dict(type='bool',),
         tenant_ref=dict(type='str',),
         ttl=dict(type='int',),

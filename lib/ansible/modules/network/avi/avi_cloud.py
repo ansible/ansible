@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,14 +38,17 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     apic_configuration:
         description:
             - Apicconfiguration settings for cloud.
+        type: dict
     apic_mode:
         description:
             - Boolean flag to set apic_mode.
@@ -52,25 +56,31 @@ options:
         type: bool
     autoscale_polling_interval:
         description:
-            - Cloudconnector polling interval for external autoscale groups.
+            - Cloudconnector polling interval in seconds for external autoscale groups, minimum 60 seconds.
+            - Allowed values are 60-3600.
             - Field introduced in 18.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
         version_added: "2.9"
+        type: int
     aws_configuration:
         description:
             - Awsconfiguration settings for cloud.
+        type: dict
     azure_configuration:
         description:
             - Field introduced in 17.2.1.
         version_added: "2.5"
+        type: dict
     cloudstack_configuration:
         description:
             - Cloudstackconfiguration settings for cloud.
+        type: dict
     custom_tags:
         description:
             - Custom tags for all avi created resources in the cloud infrastructure.
             - Field introduced in 17.1.5.
         version_added: "2.5"
+        type: list
     dhcp_enabled:
         description:
             - Select the ip address management scheme.
@@ -80,13 +90,16 @@ options:
         description:
             - Dns profile for the cloud.
             - It is a reference to an object of type ipamdnsproviderprofile.
+        type: str
     docker_configuration:
         description:
             - Dockerconfiguration settings for cloud.
+        type: dict
     east_west_dns_provider_ref:
         description:
             - Dns profile for east-west services.
             - It is a reference to an object of type ipamdnsproviderprofile.
+        type: str
     east_west_ipam_provider_ref:
         description:
             - Ipam profile for east-west services.
@@ -94,6 +107,7 @@ options:
             - For example in aws and gcp, 169.254.0.0/16 is used for storing instance metadata.
             - Hence, it should not be used in this profile.
             - It is a reference to an object of type ipamdnsproviderprofile.
+        type: str
     enable_vip_static_routes:
         description:
             - Use static routes for vip side network resolution during virtualservice placement.
@@ -104,6 +118,7 @@ options:
             - Google cloud platform configuration.
             - Field introduced in 18.2.1.
         version_added: "2.9"
+        type: dict
     ip6_autocfg_enabled:
         description:
             - Enable ipv6 auto configuration.
@@ -115,6 +130,7 @@ options:
         description:
             - Ipam profile for the cloud.
             - It is a reference to an object of type ipamdnsproviderprofile.
+        type: str
     license_tier:
         description:
             - Specifies the default license tier which would be used by new se groups.
@@ -122,39 +138,49 @@ options:
             - Enum options - ENTERPRISE_16, ENTERPRISE_18.
             - Field introduced in 17.2.5.
         version_added: "2.5"
+        type: str
     license_type:
         description:
             - If no license type is specified then default license enforcement for the cloud type is chosen.
             - The default mappings are container cloud is max ses, openstack and vmware is cores and linux it is sockets.
             - Enum options - LIC_BACKEND_SERVERS, LIC_SOCKETS, LIC_CORES, LIC_HOSTS, LIC_SE_BANDWIDTH, LIC_METERED_SE_BANDWIDTH.
+        type: str
     linuxserver_configuration:
         description:
             - Linuxserverconfiguration settings for cloud.
+        type: dict
     mesos_configuration:
         description:
             - Field deprecated in 18.2.2.
+        type: dict
     mtu:
         description:
             - Mtu setting for the cloud.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1500.
+        type: int
     name:
         description:
             - Name of the object.
         required: true
+        type: str
     nsx_configuration:
         description:
             - Configuration parameters for nsx manager.
             - Field introduced in 17.1.1.
+        type: dict
     obj_name_prefix:
         description:
             - Default prefix for all automatically created objects in this cloud.
             - This prefix can be overridden by the se-group template.
+        type: str
     openstack_configuration:
         description:
             - Openstackconfiguration settings for cloud.
+        type: dict
     oshiftk8s_configuration:
         description:
             - Oshiftk8sconfiguration settings for cloud.
+        type: dict
     prefer_static_routes:
         description:
             - Prefer static routes over interface routes during virtualservice placement.
@@ -163,9 +189,18 @@ options:
     proxy_configuration:
         description:
             - Proxyconfiguration settings for cloud.
+        type: dict
     rancher_configuration:
         description:
             - Rancherconfiguration settings for cloud.
+        type: dict
+    se_group_template_ref:
+        description:
+            - The service engine group to use as template.
+            - It is a reference to an object of type serviceenginegroup.
+            - Field introduced in 18.2.5.
+        version_added: "2.9"
+        type: str
     state_based_dns_registration:
         description:
             - Dns records for vips are added/deleted based on the operational state of the vips.
@@ -176,18 +211,23 @@ options:
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
     vca_configuration:
         description:
             - Vcloudairconfiguration settings for cloud.
+        type: dict
     vcenter_configuration:
         description:
             - Vcenterconfiguration settings for cloud.
+        type: dict
     vtype:
         description:
             - Cloud type.
@@ -195,12 +235,15 @@ options:
             - CLOUD_RANCHER, CLOUD_OSHIFT_K8S, CLOUD_AZURE, CLOUD_GCP.
             - Default value when not specified in API or module is interpreted by Avi Controller as CLOUD_NONE.
         required: true
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''
 
 EXAMPLES = """
-  - name: Create a VMware cloud with write access mode
+  - name: Create a VMWare cloud with write access mode
     avi_cloud:
       username: '{{ username }}'
       controller: '{{ controller }}'
@@ -210,7 +253,7 @@ EXAMPLES = """
       enable_vip_static_routes: false
       license_type: LIC_CORES
       mtu: 1500
-      name: vCenter Cloud
+      name: VCenter Cloud
       prefer_static_routes: false
       tenant_ref: admin
       vcenter_configuration:
@@ -274,6 +317,7 @@ def main():
         prefer_static_routes=dict(type='bool',),
         proxy_configuration=dict(type='dict',),
         rancher_configuration=dict(type='dict',),
+        se_group_template_ref=dict(type='str',),
         state_based_dns_registration=dict(type='bool',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),

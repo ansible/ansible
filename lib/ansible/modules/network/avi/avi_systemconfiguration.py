@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,14 +38,17 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     admin_auth_configuration:
         description:
             - Adminauthconfiguration settings for systemconfiguration.
+        type: dict
     default_license_tier:
         description:
             - Specifies the default license tier which would be used by new clouds.
@@ -52,15 +56,18 @@ options:
             - Field introduced in 17.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as ENTERPRISE_18.
         version_added: "2.5"
+        type: str
     dns_configuration:
         description:
             - Dnsconfiguration settings for systemconfiguration.
+        type: dict
     dns_virtualservice_refs:
         description:
             - Dns virtualservices hosting fqdn records for applications across avi vantage.
             - If no virtualservices are provided, avi vantage will provide dns services for configured applications.
             - Switching back to avi vantage from dns virtualservices is not allowed.
             - It is a reference to an object of type virtualservice.
+        type: list
     docker_mode:
         description:
             - Boolean flag to set docker_mode.
@@ -69,46 +76,59 @@ options:
     email_configuration:
         description:
             - Emailconfiguration settings for systemconfiguration.
+        type: dict
     global_tenant_config:
         description:
             - Tenantconfiguration settings for systemconfiguration.
+        type: dict
     linux_configuration:
         description:
             - Linuxconfiguration settings for systemconfiguration.
+        type: dict
     mgmt_ip_access_control:
         description:
             - Configure ip access control for controller to restrict open access.
+        type: dict
     ntp_configuration:
         description:
             - Ntpconfiguration settings for systemconfiguration.
+        type: dict
     portal_configuration:
         description:
             - Portalconfiguration settings for systemconfiguration.
+        type: dict
     proxy_configuration:
         description:
             - Proxyconfiguration settings for systemconfiguration.
+        type: dict
     secure_channel_configuration:
         description:
             - Configure secure channel properties.
             - Field introduced in 18.1.4, 18.2.1.
         version_added: "2.9"
+        type: dict
     snmp_configuration:
         description:
             - Snmpconfiguration settings for systemconfiguration.
+        type: dict
     ssh_ciphers:
         description:
             - Allowed ciphers list for ssh to the management interface on the controller and service engines.
             - If this is not specified, all the default ciphers are allowed.
+        type: list
     ssh_hmacs:
         description:
             - Allowed hmac list for ssh to the management interface on the controller and service engines.
             - If this is not specified, all the default hmacs are allowed.
+        type: list
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
     welcome_workflow_complete:
         description:
             - This flag is set once the initial controller setup workflow is complete.
@@ -116,6 +136,8 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.9"
         type: bool
+
+
 extends_documentation_fragment:
     - avi
 '''

@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,30 +38,38 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for pool.
             - Internally set by cloud connector.
+        type: str
     created_by:
         description:
             - Creator name.
+        type: str
     description:
         description:
             - User defined description for the object.
+        type: str
     http_request_policy:
         description:
             - Http request policy for the virtual service.
+        type: dict
     http_response_policy:
         description:
             - Http response policy for the virtual service.
+        type: dict
     http_security_policy:
         description:
             - Http security policy for the virtual service.
+        type: dict
     is_internal_policy:
         description:
             - Boolean flag to set is_internal_policy.
@@ -70,15 +79,21 @@ options:
         description:
             - Name of the http policy set.
         required: true
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the http policy set.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

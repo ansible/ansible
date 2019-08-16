@@ -29,6 +29,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -36,18 +37,22 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     name:
         description:
             - Name of the object.
         required: true
+        type: str
     nodes:
         description:
             - List of clusternode.
+        type: list
     rejoin_nodes_automatically:
         description:
             - Re-join cluster nodes automatically in the event one of the node is reset to factory.
@@ -56,16 +61,22 @@ options:
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
     virtual_ip:
         description:
             - A virtual ip address.
             - This ip address will be dynamically reconfigured so that it always is the ip of the cluster leader.
+        type: dict
+
+
 extends_documentation_fragment:
     - avi
 '''

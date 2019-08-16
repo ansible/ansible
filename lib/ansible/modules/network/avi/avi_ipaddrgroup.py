@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,53 +38,70 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     addrs:
         description:
             - Configure ip address(es).
+        type: list
     apic_epg_name:
         description:
             - Populate ip addresses from members of this cisco apic epg.
+        type: str
     country_codes:
         description:
             - Populate the ip address ranges from the geo database for this country.
+        type: list
     description:
         description:
             - User defined description for the object.
+        type: str
     ip_ports:
         description:
             - Configure (ip address, port) tuple(s).
+        type: list
     marathon_app_name:
         description:
             - Populate ip addresses from tasks of this marathon app.
+        type: str
     marathon_service_port:
         description:
             - Task port associated with marathon service port.
             - If marathon app has multiple service ports, this is required.
             - Else, the first task port is used.
+        type: int
     name:
         description:
             - Name of the ip address group.
         required: true
+        type: str
     prefixes:
         description:
             - Configure ip address prefix(es).
+        type: list
     ranges:
         description:
             - Configure ip address range(s).
+        type: list
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the ip address group.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

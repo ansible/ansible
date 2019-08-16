@@ -29,6 +29,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -36,11 +37,13 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     auto_disable_old_prod_pools:
         description:
             - It will automatically disable old production pools once there is a new production candidate.
@@ -49,49 +52,62 @@ options:
     description:
         description:
             - User defined description for the object.
+        type: str
     evaluation_duration:
         description:
             - Duration of evaluation period for automatic deployment.
             - Allowed values are 60-86400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
+        type: int
     name:
         description:
             - The name of the pool group deployment policy.
         required: true
+        type: str
     rules:
         description:
             - List of pgdeploymentrule.
+        type: list
     scheme:
         description:
             - Deployment scheme.
             - Enum options - BLUE_GREEN, CANARY.
             - Default value when not specified in API or module is interpreted by Avi Controller as BLUE_GREEN.
+        type: str
     target_test_traffic_ratio:
         description:
             - Target traffic ratio before pool is made production.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+        type: int
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     test_traffic_ratio_rampup:
         description:
             - Ratio of the traffic that is sent to the pool under test.
             - Test ratio of 100 means blue green.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
+        type: int
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the pool group deployment policy.
+        type: str
     webhook_ref:
         description:
             - Webhook configured with url that avi controller will pass back information about pool group, old and new pool information and current deployment
             - rule results.
             - It is a reference to an object of type webhook.
             - Field introduced in 17.1.1.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

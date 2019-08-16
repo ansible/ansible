@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,41 +38,54 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     backup_config_ref:
         description:
             - Backupconfiguration information.
             - It is a reference to an object of type backupconfiguration.
+        type: str
     file_name:
         description:
             - The file name of backup.
         required: true
+        type: str
     local_file_url:
         description:
             - Url to download the backup file.
+        type: str
     remote_file_url:
         description:
             - Url to download the backup file.
+        type: str
     scheduler_ref:
         description:
             - Scheduler information.
             - It is a reference to an object of type scheduler.
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     timestamp:
         description:
             - Unix timestamp of when the backup file is created.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Unique object identifier of the object.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

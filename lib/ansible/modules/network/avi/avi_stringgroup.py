@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,36 +38,47 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     description:
         description:
             - User defined description for the object.
+        type: str
     kv:
         description:
             - Configure key value in the string group.
+        type: list
     name:
         description:
             - Name of the string group.
         required: true
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     type:
         description:
             - Type of stringgroup.
             - Enum options - SG_TYPE_STRING, SG_TYPE_KEYVAL.
             - Default value when not specified in API or module is interpreted by Avi Controller as SG_TYPE_STRING.
         required: true
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the string group.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''
