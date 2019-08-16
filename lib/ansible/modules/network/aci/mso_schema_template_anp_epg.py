@@ -165,7 +165,7 @@ EXAMPLES = r'''
     name: vrf1
    state: present
   delegate_to: localhost
-    
+
 - name: Remove an EPG
   mso_schema_template_anp_epg:
    host: mso_host
