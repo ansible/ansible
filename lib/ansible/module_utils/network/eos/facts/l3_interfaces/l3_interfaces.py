@@ -61,10 +61,8 @@ class L3_interfacesFacts(object):
                     objs.append(obj)
         facts = {}
         if objs:
-            facts['l3_interfaces'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
-            for cfg in params['config']:
-                facts['l3_interfaces'].append(utils.remove_empties(cfg))
+            facts['l3_interfaces'] = [utils.remove_empties(cfg) for cfg in params['config']]
         ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
 
