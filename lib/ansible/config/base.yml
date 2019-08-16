@@ -1407,6 +1407,10 @@ INTERPRETER_PYTHON_DISTRO_MAP:
     ubuntu:
       '14': /usr/bin/python
       '16': /usr/bin/python3
+  env: [{name: INTERPRETER_PYTHON_DISTRO_MAP}]
+  ini:
+  - {key: interpreter_python_distro_map, section: defaults}
+  type: dict
   version_added: "2.8"
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
@@ -1422,6 +1426,10 @@ INTERPRETER_PYTHON_FALLBACK:
   - /usr/libexec/platform-python
   - /usr/bin/python3
   - python
+  env: [{name: INTERPRETER_PYTHON_FALLBACK}]
+  ini:
+  - {key: interpreter_python_fallback, section: defaults}
+  type: list
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   version_added: "2.8"
 TRANSFORM_INVALID_GROUP_CHARS:
