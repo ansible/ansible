@@ -2640,7 +2640,7 @@ def main():
             gid=dict(type='str'),
             mode=dict(type='int'),
         )),
-        networks=dict(type='list'),
+        networks=dict(type='list', elements='raw'),
         command=dict(type='raw'),
         args=dict(type='list', elements='str'),
         env=dict(type='raw'),
