@@ -108,11 +108,12 @@ class Reporter:
                 'warning_traces': []
             }
 
-    def _log(self, path, code, msg, level='error', line=0, column=0):
+    def _log(self, path, name, code, msg, level='error', line=0, column=0):
         self._ensure_default_entry(path)
         lvl_dct = self.files[path]['%ss' % level]
         lvl_dct.append({
             'code': code,
+            'name': name,
             'msg': msg,
             'line': line,
             'column': column
@@ -354,6 +355,7 @@ class ModuleValidator(Validator):
             if not self.text.startswith('#!powershell\n'):
                 self.reporter.error(
                     path=self.object_path,
+                    name='interpreter-line-powershell',
                     code=102,
                     msg='Interpreter line is not "#!powershell"'
                 )
@@ -362,6 +364,7 @@ class ModuleValidator(Validator):
         if not self.text.startswith('#!/usr/bin/python'):
             self.reporter.error(
                 path=self.object_path,
+                name='interpreter-line-python',
                 code=101,
                 msg='Interpreter line is not "#!/usr/bin/python"'
             )
@@ -375,6 +378,7 @@ class ModuleValidator(Validator):
                 # TODO: add column
                 self.reporter.error(
                     path=self.object_path,
+                    name='type-comparison-isinstance',
                     code=403,
                     msg=('Type comparison using type() found. '
                          'Use isinstance() instead'),
@@ -392,6 +396,7 @@ class ModuleValidator(Validator):
                 # TODO: add column
                 self.reporter.error(
                     path=self.object_path,
+                    name='sys-exit-call-found',
                     code=205,
                     msg='sys.exit() call found. Should be exit_json/fail_json',
                     line=line_no + 1
@@ -403,6 +408,7 @@ class ModuleValidator(Validator):
                 ('version 3' not in header and 'v3.0' not in header)):
             self.reporter.error(
                 path=self.object_path,
+                name='gplv3-license-header',
                 code=105,
                 msg='GPLv3 license header not found in the first 20 lines of the module'
             )
@@ -411,6 +417,7 @@ class ModuleValidator(Validator):
                     if 'GNU General Public License' in line]) > 1:
                 self.reporter.error(
                     path=self.object_path,
+                    name='old-style-gplv3-license-header',
                     code=108,
                     msg='Found old style GPLv3 license header: '
                         'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
@@ -425,6 +432,7 @@ class ModuleValidator(Validator):
                         if sp_match:
                             self.reporter.error(
                                 path=self.object_path,
+                                name='subprocess-popen',
                                 code=210,
                                 msg=('subprocess.Popen call found. Should be module.run_command'),
                                 line=(line_no + 1),
@@ -438,6 +446,7 @@ class ModuleValidator(Validator):
                 if os_call_match:
                     self.reporter.error(
                         path=self.object_path,
+                        name='os-call',
                         code=211,
                         msg=('os.call() call found. Should be module.run_command'),
                         line=(line_no + 1),
@@ -501,6 +510,7 @@ class ModuleValidator(Validator):
                             if self._is_new_module():
                                 self.reporter.error(
                                     path=self.object_path,
+                                    name='FIXME',
                                     code=msg[0],
                                     msg=msg[1],
                                     line=child.lineno
@@ -508,6 +518,7 @@ class ModuleValidator(Validator):
                             else:
                                 self.reporter.warning(
                                     path=self.object_path,
+                                    name='FIXME',
                                     code=msg[0],
                                     msg=msg[1],
                                     line=child.lineno
@@ -520,12 +531,14 @@ class ModuleValidator(Validator):
         if not linenos:
             self.reporter.error(
                 path=self.object_path,
+                name='module-utils-import',
                 code=201,
                 msg='Did not find a module_utils import'
             )
         elif not found_basic:
             self.reporter.warning(
                 path=self.object_path,
+                name='module-utils-basic-import',
                 code=292,
                 msg='Did not find "ansible.module_utils.basic" import'
             )
@@ -580,6 +593,7 @@ class ModuleValidator(Validator):
                 if not mainchecked:
                     self.reporter.error(
                         path=self.object_path,
+                        name='if-name-main',
                         code=109,
                         msg='Next to last line should be: if __name__ == "__main__":',
                         line=child.lineno
@@ -594,6 +608,7 @@ class ModuleValidator(Validator):
                         if lineno < self.length - 1:
                             self.reporter.error(
                                 path=self.object_path,
+                                name='last-line-call-to-main',
                                 code=104,
                                 msg=('Call to %s() not the last line' % look_for),
                                 line=lineno
@@ -602,6 +617,7 @@ class ModuleValidator(Validator):
         if not lineno:
             self.reporter.error(
                 path=self.object_path,
+                name='missing-call-to-main',
                 code=103,
                 msg=('Did not find a call to %s()' % look_for)
             )
@@ -627,6 +643,7 @@ class ModuleValidator(Validator):
                 # TODO: Add line/col
                 self.reporter.warning(
                     path=self.object_path,
+                    name='try-except-without-has',
                     code=291,
                     msg='Found Try/Except block without HAS_ assignment'
                 )
@@ -654,6 +671,7 @@ class ModuleValidator(Validator):
                         if future_import.name not in self.WHITELIST_FUTURE_IMPORTS:
                             self.reporter.error(
                                 path=self.object_path,
+                                name='allowed-future-imports',
                                 code=209,
                                 msg=('Only the following from __future__ imports are allowed: %s'
                                      % ', '.join(self.WHITELIST_FUTURE_IMPORTS)),
@@ -666,6 +684,7 @@ class ModuleValidator(Validator):
                 if child.lineno < min_doc_line:
                     self.reporter.error(
                         path=self.object_path,
+                        name='imports-below-documentation',  # This is descriptive of the check, not the error. This name may be confusing.
                         code=106,
                         msg=('Import found before documentation variables. '
                              'All imports must appear below '
@@ -683,6 +702,7 @@ class ModuleValidator(Validator):
                         if grandchild.lineno < min_doc_line:
                             self.reporter.error(
                                 path=self.object_path,
+                                name='imports-below-documentation',  # This is descriptive of the check, not the error. This name may be confusing.
                                 code=106,
                                 msg=('Import found before documentation '
                                      'variables. All imports must appear below '
@@ -702,6 +722,7 @@ class ModuleValidator(Validator):
                 if self._is_new_module():
                     self.reporter.error(
                         path=self.object_path,
+                        name='imports-directly-below-documentation',
                         code=msg[0],
                         msg=msg[1],
                         line=import_line
@@ -709,6 +730,7 @@ class ModuleValidator(Validator):
                 else:
                     self.reporter.warning(
                         path=self.object_path,
+                        name='imports-directly-below-documentation',
                         code=msg[0],
                         msg=msg[1],
                         line=import_line
@@ -730,6 +752,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
+                    name='module-utils-multiple-modules-per-statement',
                     code=210,
                     msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
                 )
@@ -740,6 +763,7 @@ class ModuleValidator(Validator):
             if module_name.lower().endswith('.psm1'):
                 self.reporter.error(
                     path=self.object_path,
+                    name='module-ends-in-psm1',
                     code=211,
                     msg='Module #Requires should not end in .psm1: "%s"' % module_name
                 )
@@ -751,6 +775,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
+                    name='c#-util-requirements-multiple-modules-per-statement',
                     code=210,
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
@@ -761,6 +786,7 @@ class ModuleValidator(Validator):
             if module_name.lower().endswith('.cs'):
                 self.reporter.error(
                     path=self.object_path,
+                    name='c#-ansible-requires-ends-in-cs',
                     code=211,
                     msg='Module #AnsibleRequires -CSharpUtil should not end in .cs: "%s"' % module_name
                 )
@@ -769,6 +795,7 @@ class ModuleValidator(Validator):
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
+                name='module-utils-import-c#-requirements',
                 code=207,
                 msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
@@ -780,6 +807,7 @@ class ModuleValidator(Validator):
         if not os.path.isfile(py_path):
             self.reporter.error(
                 path=self.object_path,
+                name='python-documentation-file',
                 code=503,
                 msg='Missing python documentation file'
             )
@@ -871,6 +899,7 @@ class ModuleValidator(Validator):
 
             self.reporter.error(
                 path=self.object_path,
+                name='FIXME',
                 code=error_code,
                 msg='%s: %s' % (combined_path, error_message)
             )
@@ -897,6 +926,7 @@ class ModuleValidator(Validator):
             if not bool(doc_info['ANSIBLE_METADATA']['value']):
                 self.reporter.error(
                     path=self.object_path,
+                    name='ansible-metadata',
                     code=314,
                     msg='No ANSIBLE_METADATA provided'
                 )
@@ -918,6 +948,7 @@ class ModuleValidator(Validator):
                     # for error in errors:
                     #     self.reporter.error(
                     #         path=self.object_path,
+                    #         name='ansible-metadata-format',
                     #         code=315,
                     #         **error
                     #     )
@@ -929,6 +960,7 @@ class ModuleValidator(Validator):
 
                     self.reporter.error(
                         path=self.object_path,
+                        name='ansible-metadata-format',
                         code=315,
                         msg='ANSIBLE_METADATA was not provided as a dict, YAML not supported'
                     )
@@ -946,14 +978,16 @@ class ModuleValidator(Validator):
                 if (deprecated or removed) and len(metadata['status']) > 1:
                     self.reporter.error(
                         path=self.object_path,
+                        name='ansible-metadata-status',
                         code=333,
-                        msg='ANSIBLE_METADATA.status  must be exactly one of "deprecated" or "removed"'
+                        msg='ANSIBLE_METADATA.status must be exactly one of "deprecated" or "removed"'
                     )
 
         if not removed:
             if not bool(doc_info['DOCUMENTATION']['value']):
                 self.reporter.error(
                     path=self.object_path,
+                    name='documentation-provided',
                     code=301,
                     msg='No DOCUMENTATION provided'
                 )
@@ -967,6 +1001,7 @@ class ModuleValidator(Validator):
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
+                        name='documentation-valid',
                         code=302,
                         **error
                     )
@@ -984,6 +1019,7 @@ class ModuleValidator(Validator):
                             fragment = doc['extends_documentation_fragment']
                             self.reporter.error(
                                 path=self.object_path,
+                                name='documentation-fragment',
                                 code=303,
                                 msg='DOCUMENTATION fragment missing: %s' % fragment
                             )
@@ -995,6 +1031,7 @@ class ModuleValidator(Validator):
                             )
                             self.reporter.error(
                                 path=self.object_path,
+                                name='documentation-error',
                                 code=304,
                                 msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                             )
@@ -1005,6 +1042,7 @@ class ModuleValidator(Validator):
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
                             path=self.object_path,
+                            name='documentation-options',
                             code=320,
                             msg='DOCUMENTATION.options must be a dictionary/hash when used',
                         )
@@ -1045,6 +1083,7 @@ class ModuleValidator(Validator):
             if not bool(doc_info['EXAMPLES']['value']):
                 self.reporter.error(
                     path=self.object_path,
+                    name='examples-provided',
                     code=310,
                     msg='No EXAMPLES provided'
                 )
@@ -1055,6 +1094,7 @@ class ModuleValidator(Validator):
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
+                        name='examples-valid',
                         code=311,
                         **error
                     )
@@ -1068,12 +1108,14 @@ class ModuleValidator(Validator):
                 if self._is_new_module():
                     self.reporter.error(
                         path=self.object_path,
+                        name='return-provided',
                         code=312,
                         msg='No RETURN provided'
                     )
                 else:
                     self.reporter.warning(
                         path=self.object_path,
+                        name='return-provided',
                         code=312,
                         msg='No RETURN provided'
                     )
@@ -1086,6 +1128,7 @@ class ModuleValidator(Validator):
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
+                        name='return-valid',
                         code=313,
                         **error
                     )
@@ -1108,6 +1151,7 @@ class ModuleValidator(Validator):
         if mismatched_deprecation:
             self.reporter.error(
                 path=self.object_path,
+                name='module-deprecation-mismatch',
                 code=318,
                 msg='Module deprecation/removed must agree in Metadata, by prepending filename with'
                     ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
@@ -1125,6 +1169,7 @@ class ModuleValidator(Validator):
             if self._is_new_module() or version_added != 'historical':
                 self.reporter.error(
                     path=self.object_path,
+                    name='version-added-valid',
                     code=306,
                     msg='version_added is not a valid version number: %r' % version_added
                 )
@@ -1133,6 +1178,7 @@ class ModuleValidator(Validator):
         if existing_doc and str(version_added_raw) != str(existing_doc.get('version_added')):
             self.reporter.error(
                 path=self.object_path,
+                name='version-added-correct',
                 code=307,
                 msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'),
                                                                   version_added_raw)
@@ -1148,6 +1194,7 @@ class ModuleValidator(Validator):
                 strict_ansible_version < version_added):
             self.reporter.error(
                 path=self.object_path,
+                name='version-added-correct',
                 code=307,
                 msg='version_added should be %r. Currently %r' % (should_be, version_added_raw)
             )
@@ -1158,6 +1205,7 @@ class ModuleValidator(Validator):
         except AnsibleModuleImportError as e:
             self.reporter.error(
                 path=self.object_path,
+                name='exception-importing-module',
                 code=321,
                 msg="Exception attempting to import module for argument_spec introspection, '%s'" % e
             )
@@ -1202,6 +1250,7 @@ class ModuleValidator(Validator):
                 msg += " must be a dictionary/hash when used"
                 self.reporter.error(
                     path=self.object_path,
+                    name='argument-spec-valid',
                     code=331,
                     msg=msg,
                 )
@@ -1216,6 +1265,7 @@ class ModuleValidator(Validator):
                 if data.get('options') is not None and not isinstance(data.get('options'), Mapping):
                     self.reporter.error(
                         path=self.object_path,
+                        name='argument-spec-options-valid',
                         code=331,
                         msg="Argument 'options' in argument_spec['provider'] must be a dictionary/hash when used",
                     )
@@ -1233,6 +1283,7 @@ class ModuleValidator(Validator):
                        " default should not be marked as required"
                 self.reporter.error(
                     path=self.object_path,
+                    name='required-parameter-does-not-set-default',
                     code=317,
                     msg=msg
                 )
@@ -1259,6 +1310,7 @@ class ModuleValidator(Validator):
                     msg += " defines elements as %s but it is valid only when value of parameter type is list" % _elements
                     self.reporter.error(
                         path=self.object_path,
+                        name='elements-type-list',
                         code=339,
                         msg=msg
                     )
@@ -1275,6 +1327,7 @@ class ModuleValidator(Validator):
                     msg += " defines default as (%r) but this is incompatible with parameter type %r" % (data['default'], _type)
                     self.reporter.error(
                         path=self.object_path,
+                        name='default-value-matches-parameter-type',
                         code=329,
                         msg=msg
                     )
@@ -1297,6 +1350,7 @@ class ModuleValidator(Validator):
                 msg += " defines default as (%r) but this is incompatible with parameter type %r" % (doc_options_arg.get('default'), _type)
                 self.reporter.error(
                     path=self.object_path,
+                    name='documentation-default-matches-parameter-type',
                     code=327,
                     msg=msg
                 )
@@ -1309,6 +1363,7 @@ class ModuleValidator(Validator):
                 msg += " defines default as (%r) but documentation defines default as (%r)" % (arg_default, doc_default)
                 self.reporter.error(
                     path=self.object_path,
+                    name='parameter-default-matches-documentation',
                     code=324,
                     msg=msg
                 )
@@ -1323,6 +1378,7 @@ class ModuleValidator(Validator):
                         msg += " defines type as %r but documentation doesn't define type" % (data['type'])
                         self.reporter.error(
                             path=self.object_path,
+                            name='documentation-type',
                             code=337,
                             msg=msg
                         )
@@ -1333,6 +1389,7 @@ class ModuleValidator(Validator):
                     msg += " defines type as %r but documentation defines type as %r" % (data['type'], doc_type)
                     self.reporter.error(
                         path=self.object_path,
+                        name='parameter-type-matches-documentation-type',
                         code=325,
                         msg=msg
                     )
@@ -1344,6 +1401,7 @@ class ModuleValidator(Validator):
                     msg += " uses default type ('str') but documentation doesn't define type"
                     self.reporter.error(
                         path=self.object_path,
+                        name='documentation-defines-default-type',
                         code=338,
                         msg=msg
                     )
@@ -1354,6 +1412,7 @@ class ModuleValidator(Validator):
                     msg += "implies type as 'str' but documentation defines as %r" % doc_type
                     self.reporter.error(
                         path=self.object_path,
+                        name='parameter-default-type-matches-documentation',
                         code=335,
                         msg=msg
                     )
@@ -1371,6 +1430,7 @@ class ModuleValidator(Validator):
                         msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
                         self.reporter.error(
                             path=self.object_path,
+                            name='documentation-choices-match-parameter-type',
                             code=328,
                             msg=msg
                         )
@@ -1391,6 +1451,7 @@ class ModuleValidator(Validator):
                         msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
                         self.reporter.error(
                             path=self.object_path,
+                            name='parameter-choices-correct-type',
                             code=330,
                             msg=msg
                         )
@@ -1405,6 +1466,7 @@ class ModuleValidator(Validator):
                 msg += " defines choices as (%r) but documentation defines choices as (%r)" % (arg_choices, doc_choices)
                 self.reporter.error(
                     path=self.object_path,
+                    name='parameter-choices-match-documentation',
                     code=326,
                     msg=msg
                 )
@@ -1419,6 +1481,7 @@ class ModuleValidator(Validator):
                     msg += " has sub-options but documentation does not define it"
                     self.reporter.error(
                         path=self.object_path,
+                        name='documentation-defines-suboptions',
                         code=340,
                         msg=msg
                     )
@@ -1432,6 +1495,7 @@ class ModuleValidator(Validator):
                 msg += " is not a valid python identifier"
                 self.reporter.error(
                     path=self.object_path,
+                    name='argument-is-valid',
                     code=336,
                     msg=msg
                 )
@@ -1464,6 +1528,7 @@ class ModuleValidator(Validator):
                 msg += " is listed in the argument_spec, but not documented in the module documentation"
                 self.reporter.error(
                     path=self.object_path,
+                    name='parameter-documented',
                     code=322,
                     msg=msg
                 )
@@ -1478,6 +1543,7 @@ class ModuleValidator(Validator):
                 msg += " is listed in DOCUMENTATION.options, but not accepted by the module argument_spec"
                 self.reporter.error(
                     path=self.object_path,
+                    name='only-valid-parameters-documented',
                     code=323,
                     msg=msg
                 )
@@ -1494,6 +1560,7 @@ class ModuleValidator(Validator):
                 fragment = doc['extends_documentation_fragment']
                 self.reporter.warning(
                     path=self.object_path,
+                    name='documentation-fragment-exists',
                     code=392,
                     msg='Pre-existing DOCUMENTATION fragment missing: %s' % fragment
                 )
@@ -1505,6 +1572,7 @@ class ModuleValidator(Validator):
                 )
                 self.reporter.warning(
                     path=self.object_path,
+                    name='unknown-documentation-fragment-error',
                     code=391,
                     msg=('Unknown pre-existing DOCUMENTATION error, see TRACE. Submodule refs may need updated')
                 )
@@ -1524,6 +1592,7 @@ class ModuleValidator(Validator):
             if metadata != existing_metadata:
                 self.reporter.error(
                     path=self.object_path,
+                    name='metadata-changed-in-point-release',
                     code=334,
                     msg=('ANSIBLE_METADATA cannot be changed in a point release for a stable branch')
                 )
@@ -1549,6 +1618,7 @@ class ModuleValidator(Validator):
                 if str(current_version) != str(existing_version):
                     self.reporter.error(
                         path=self.object_path,
+                        name='correct-version-added',
                         code=309,
                         msg=('version_added for new option (%s) should '
                              'be %r. Currently %r' %
@@ -1565,6 +1635,7 @@ class ModuleValidator(Validator):
                 version_added = details.get('version_added', '0.0')
                 self.reporter.error(
                     path=self.object_path,
+                    name='version-added-valid-number',
                     code=308,
                     msg=('version_added for new option (%s) '
                          'is not a valid version number: %r' %
@@ -1582,6 +1653,7 @@ class ModuleValidator(Validator):
                      strict_ansible_version < version_added)):
                 self.reporter.error(
                     path=self.object_path,
+                    name='version-added-new-option',
                     code=309,
                     msg=('version_added for new option (%s) should '
                          'be %r. Currently %r' %
@@ -1612,6 +1684,7 @@ class ModuleValidator(Validator):
         if not self._python_module() and not self._powershell_module():
             self.reporter.error(
                 path=self.object_path,
+                name='valid-extension-official-modules',
                 code=501,
                 msg=('Official Ansible modules must have a .py '
                      'extension for python modules or a .ps1 '
@@ -1622,6 +1695,7 @@ class ModuleValidator(Validator):
         if self._python_module() and self.ast is None:
             self.reporter.error(
                 path=self.object_path,
+                name='python-syntax-error',
                 code=401,
                 msg='Python SyntaxError while parsing module'
             )
@@ -1714,6 +1788,7 @@ class PythonPackageValidator(Validator):
         if not os.path.exists(init_file):
             self.reporter.error(
                 path=self.object_path,
+                name='subdirectories-init',
                 code=502,
                 msg='Ansible module subdirectories must contain an __init__.py'
             )
