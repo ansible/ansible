@@ -1061,6 +1061,7 @@ from ansible.module_utils.docker.common import (
     DockerBaseClass,
     convert_duration_to_nanosecond,
     parse_healthcheck,
+    clean_dict_booleans_for_docker_api,
     RequestException,
 )
 
@@ -1145,18 +1146,27 @@ def get_docker_networks(networks, network_ids):
                 raise TypeError(
                     '"name" is required when networks are passed as dictionaries.'
                 )
-            parsed_network = {'name': network['name']}
-            if 'aliases' in network:
+            name = network.pop('name')
+            parsed_network = {'name': name}
+            aliases = network.pop('aliases', None)
+            if aliases:
                 if not all(
-                    isinstance(alias, string_types) for alias in network['aliases']
+                    isinstance(alias, string_types) for alias in aliases
                 ):
                     raise TypeError('Only strings are allowed as network aliases.')
-                parsed_network['aliases'] = network['aliases']
-            if 'options' in network:
-                options = network['options']
+                parsed_network['aliases'] = aliases
+            options = network.pop('options', None)
+            if options:
                 if not isinstance(options, dict):
                     raise TypeError('Only dict is allowed as network options.')
-                parsed_network['options'] = clean_dict_booleans_for_docker_api(network['options'])
+                parsed_network['options'] = clean_dict_booleans_for_docker_api(options)
+            # Check if any invalid keys left
+            if network:
+                invalid_keys = ', '.join(network.keys())
+                raise TypeError(
+                    '%s are not valid keys for the networks option' % invalid_keys
+                )
+
         else:
             raise TypeError(
                 'Only a list of strings or dictionaries are allowed to be passed as networks.'

@@ -336,8 +336,13 @@ def test_get_docker_networks(docker_swarm_service):
         )
     with pytest.raises(ValueError):
         docker_swarm_service.get_docker_networks(
-            {'name': 'idontexist'},
+            [{'name': 'idontexist'}],
             {'test': 1}
         )
     assert docker_swarm_service.get_docker_networks([], {}) == []
     assert docker_swarm_service.get_docker_networks(None, {}) is None
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'test', 'nonexisting_option': 'foo'}],
+            {'test': '1'}
+        )
