@@ -1,4 +1,0 @@
-eclipse.preferences.version=1
-encoding//lib/ansible/modules/monitoring/icinga2_host.py=utf-8
-encoding//test/units/modules/monitoring/test_icinga2_feature.py=utf-8
-encoding//test/units/modules/monitoring/test_icinga2_host.py=utf-8
