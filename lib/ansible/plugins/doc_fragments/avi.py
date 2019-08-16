@@ -47,39 +47,50 @@ options:
             controller:
                 description:
                   - Avi controller IP or SQDN
+                type: str
             username:
                 description:
                   - Avi controller username
+                type: str
             password:
                 description:
                   - Avi controller password
+                type: str
             api_version:
                 description:
                   - Avi controller version
+                type: str
                 default: 16.4.4
             tenant:
                 description:
                   - Avi controller tenant
+                type: str
                 default: admin
             tenant_uuid:
                 description:
                   - Avi controller tenant UUID
+                type: str
             port:
                 description:
                   - Avi controller port
+                type: int
             token:
                 description:
                   - Avi controller API token
+                type: str
             timeout:
                 description:
                   - Avi controller request timeout
+                type: int
                 default: 300
             session_id:
                 description:
                   - Avi controller API session id to reuse existing session with csrftoken
+                type: str
             csrftoken:
                 description:
                   - Avi controller API csrftoken to reuse existing session with session id
+                type: str
         type: dict
         version_added: "2.5"
     api_context:

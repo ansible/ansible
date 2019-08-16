@@ -6,8 +6,9 @@ from units.modules.utils import set_module_args
 from ansible.modules.network.avi import avi_api_fileservice
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-with open(fixture_path +'/avi_api_fileservice.json') as json_file:
+with open(fixture_path + '/avi_api_fileservice.json') as json_file:
     data = json.load(json_file)
+
 
 class TestAviApiFileservice(unittest.TestCase):
     def test_api_fileservice_upload(self):
@@ -38,13 +39,12 @@ class TestAviApiFileservice(unittest.TestCase):
             "upload": False,
             "path": "seova",
             "file_path": "./test_se.qcow2",
-            "params":
-                {
-                    "file_format": "qcow2"
-                }
+            "params": {
+                "file_format": "qcow2"
+            }
         })
 
         avi_api_fileservice.download_file = Mock(
-            return_value = data['download_successful'])
+            return_value=data['download_successful'])
         response = avi_api_fileservice.main()
         assert response['changed']
