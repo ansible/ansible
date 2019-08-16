@@ -19,7 +19,7 @@
 
 - assert:
     that:
-      - "ansible_facts.network_resources.lacp|symmetric_difference(result.before) == []"
+      - "ansible_facts.network_resources.lacp == result.before"
 
 - eos_facts:
     gather_network_resources: lacp
@@ -27,8 +27,8 @@
 
 - assert:
     that:
-      - "ansible_facts.network_resources.lacp|symmetric_difference(result.after) == []"
+      - "ansible_facts.network_resources.lacp == result.after"
 
 - assert:
     that:
-      - "config|symmetric_difference(ansible_facts.network_resources.lacp) == []"
+      - "config == ansible_facts.network_resources.lacp"

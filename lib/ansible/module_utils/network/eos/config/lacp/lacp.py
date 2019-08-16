@@ -9,8 +9,12 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import to_list, dict_diff
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
@@ -27,9 +31,6 @@ class Lacp(ConfigBase):
     gather_network_resources = [
         'lacp',
     ]
-
-    def __init__(self, module):
-        super(Lacp, self).__init__(module)
 
     def get_lacp_facts(self):
         """ Get the 'facts' (the current configuration)
@@ -93,22 +94,16 @@ class Lacp(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
-        if state == 'overridden':
-            kwargs = {}
-            commands = self._state_overridden(**kwargs)
-        elif state == 'deleted':
-            kwargs = {}
-            commands = self._state_deleted(**kwargs)
+        if state == 'deleted':
+            commands = self._state_deleted(want, have)
         elif state == 'merged':
-            kwargs = {}
-            commands = self._state_merged(**kwargs)
+            commands = self._state_merged(want, have)
         elif state == 'replaced':
-            kwargs = {}
-            commands = self._state_replaced(**kwargs)
+            commands = self._state_replaced(want, have)
         return commands
 
     @staticmethod
-    def _state_replaced(**kwargs):
+    def _state_replaced(want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -116,21 +111,23 @@ class Lacp(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        to_set = dict_diff(have, want)
+        if 'system' in to_set:
+            system = to_set['system']
+            if 'priority' in system:
+                commands.append('lacp system-priority {0}'.format(system['priority']))
+
+        to_del = dict_diff(want, have)
+        if 'system' in to_del:
+            system = to_del['system']
+            system_set = to_set.get('system', {})
+            if 'priority' in system and 'priority' not in system_set:
+                commands.append('no lacp system-priority')
+
         return commands
 
     @staticmethod
-    def _state_overridden(**kwargs):
-        """ The command generator when state is overridden
-
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = []
-        return commands
-
-    @staticmethod
-    def _state_merged(**kwargs):
+    def _state_merged(want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -138,10 +135,16 @@ class Lacp(ConfigBase):
                   the current configuration
         """
         commands = []
+        to_set = dict_diff(have, want)
+        if 'system' in to_set:
+            system = to_set['system']
+            if 'priority' in system:
+                commands.append('lacp system-priority {0}'.format(system['priority']))
+
         return commands
 
     @staticmethod
-    def _state_deleted(**kwargs):
+    def _state_deleted(want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -149,4 +152,10 @@ class Lacp(ConfigBase):
                   of the provided objects
         """
         commands = []
+        to_del = dict_diff(want, have)
+        if 'system' in to_del:
+            system = to_del['system']
+            if 'priority' in system:
+                commands.append('no lacp system-priority')
+
         return commands
