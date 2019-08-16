@@ -1149,14 +1149,14 @@ def get_docker_networks(networks, network_ids):
             name = network.pop('name')
             parsed_network = {'name': name}
             aliases = network.pop('aliases', None)
-            if aliases:
+            if aliases is not None:
                 if not all(
                     isinstance(alias, string_types) for alias in aliases
                 ):
                     raise TypeError('Only strings are allowed as network aliases.')
                 parsed_network['aliases'] = aliases
             options = network.pop('options', None)
-            if options:
+            if options is not None:
                 if not isinstance(options, dict):
                     raise TypeError('Only dict is allowed as network options.')
                 parsed_network['options'] = clean_dict_booleans_for_docker_api(options)
