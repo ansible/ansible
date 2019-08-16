@@ -247,6 +247,46 @@ resources:
             are not supported, but a header value can contain commas.
           returned: success
           type: dict
+        oauthToken:
+          description:
+          - Contains information needed for generating an OAuth token.
+          - This type of authorization should be used when sending requests to a GCP
+            endpoint.
+          returned: success
+          type: complex
+          contains:
+            serviceAccountEmail:
+              description:
+              - Service account email to be used for generating OAuth token.
+              - The service account must be within the same project as the job.
+              returned: success
+              type: str
+            scope:
+              description:
+              - OAuth scope to be used for generating OAuth access token. If not specified,
+                "U(https://www.googleapis.com/auth/cloud-platform") will be used.
+              returned: success
+              type: str
+        oidcToken:
+          description:
+          - Contains information needed for generating an OpenID Connect token.
+          - This type of authorization should be used when sending requests to third
+            party endpoints or Cloud Run.
+          returned: success
+          type: complex
+          contains:
+            serviceAccountEmail:
+              description:
+              - Service account email to be used for generating OAuth token.
+              - The service account must be within the same project as the job.
+              returned: success
+              type: str
+            audience:
+              description:
+              - Audience to be used when generating OIDC token. If not specified,
+                the URI specified in target will be used.
+              returned: success
+              type: str
     region:
       description:
       - Region where the scheduler job resides .
