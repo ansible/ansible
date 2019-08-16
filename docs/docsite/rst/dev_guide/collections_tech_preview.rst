@@ -394,8 +394,9 @@ This works for roles or any type of plugin distributed within the collection:
 
      - hosts: all
        tasks:
-         - include_role:
-             name : my_namespace.my_collection.role1
+         - import_role:
+             name: my_namespace.my_collection.role1
+
          - my_namespace.mycollection.mymodule:
              option1: value
 
@@ -403,7 +404,7 @@ This works for roles or any type of plugin distributed within the collection:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
 
-To avoid a lot of typing, you can use the ``collections`` keyword added in Ansbile 2.8:
+To avoid a lot of typing, you can use the ``collections`` keyword added in Ansible 2.8:
 
 
 .. code-block:: yaml
@@ -412,8 +413,9 @@ To avoid a lot of typing, you can use the ``collections`` keyword added in Ansbi
        collections:
         - my_namespace.my_collection
        tasks:
-         - include_role:
+         - import_role:
              name: role1
+
          - mymodule:
              option1: value
 
