@@ -234,6 +234,46 @@ options:
           not supported, but a header value can contain commas.
         required: false
         type: dict
+      oauth_token:
+        description:
+        - Contains information needed for generating an OAuth token.
+        - This type of authorization should be used when sending requests to a GCP
+          endpoint.
+        required: false
+        type: dict
+        suboptions:
+          service_account_email:
+            description:
+            - Service account email to be used for generating OAuth token.
+            - The service account must be within the same project as the job.
+            required: false
+            type: str
+          scope:
+            description:
+            - OAuth scope to be used for generating OAuth access token. If not specified,
+              "U(https://www.googleapis.com/auth/cloud-platform") will be used.
+            required: false
+            type: str
+      oidc_token:
+        description:
+        - Contains information needed for generating an OpenID Connect token.
+        - This type of authorization should be used when sending requests to third
+          party endpoints or Cloud Run.
+        required: false
+        type: dict
+        suboptions:
+          service_account_email:
+            description:
+            - Service account email to be used for generating OAuth token.
+            - The service account must be within the same project as the job.
+            required: false
+            type: str
+          audience:
+            description:
+            - Audience to be used when generating OIDC token. If not specified, the
+              URI specified in target will be used.
+            required: false
+            type: str
   region:
     description:
     - Region where the scheduler job resides .
@@ -447,6 +487,45 @@ httpTarget:
         not supported, but a header value can contain commas.
       returned: success
       type: dict
+    oauthToken:
+      description:
+      - Contains information needed for generating an OAuth token.
+      - This type of authorization should be used when sending requests to a GCP endpoint.
+      returned: success
+      type: complex
+      contains:
+        serviceAccountEmail:
+          description:
+          - Service account email to be used for generating OAuth token.
+          - The service account must be within the same project as the job.
+          returned: success
+          type: str
+        scope:
+          description:
+          - OAuth scope to be used for generating OAuth access token. If not specified,
+            "U(https://www.googleapis.com/auth/cloud-platform") will be used.
+          returned: success
+          type: str
+    oidcToken:
+      description:
+      - Contains information needed for generating an OpenID Connect token.
+      - This type of authorization should be used when sending requests to third party
+        endpoints or Cloud Run.
+      returned: success
+      type: complex
+      contains:
+        serviceAccountEmail:
+          description:
+          - Service account email to be used for generating OAuth token.
+          - The service account must be within the same project as the job.
+          returned: success
+          type: str
+        audience:
+          description:
+          - Audience to be used when generating OIDC token. If not specified, the
+            URI specified in target will be used.
+          returned: success
+          type: str
 region:
   description:
   - Region where the scheduler job resides .
@@ -498,7 +577,15 @@ def main():
                 ),
             ),
             http_target=dict(
-                type='dict', options=dict(uri=dict(required=True, type='str'), http_method=dict(type='str'), body=dict(type='str'), headers=dict(type='dict'))
+                type='dict',
+                options=dict(
+                    uri=dict(required=True, type='str'),
+                    http_method=dict(type='str'),
+                    body=dict(type='str'),
+                    headers=dict(type='dict'),
+                    oauth_token=dict(type='dict', options=dict(service_account_email=dict(type='str'), scope=dict(type='str'))),
+                    oidc_token=dict(type='dict', options=dict(service_account_email=dict(type='str'), audience=dict(type='str'))),
+                ),
             ),
             region=dict(required=True, type='str'),
         ),
@@ -767,6 +854,8 @@ class JobHttptarget(object):
                 u'httpMethod': self.request.get('http_method'),
                 u'body': self.request.get('body'),
                 u'headers': self.request.get('headers'),
+                u'oauthToken': JobOauthtoken(self.request.get('oauth_token', {}), self.module).to_request(),
+                u'oidcToken': JobOidctoken(self.request.get('oidc_token', {}), self.module).to_request(),
             }
         )
 
@@ -777,8 +866,40 @@ class JobHttptarget(object):
                 u'httpMethod': self.request.get(u'httpMethod'),
                 u'body': self.request.get(u'body'),
                 u'headers': self.request.get(u'headers'),
+                u'oauthToken': JobOauthtoken(self.module.params.get('oauth_token', {}), self.module).to_request(),
+                u'oidcToken': JobOidctoken(self.module.params.get('oidc_token', {}), self.module).to_request(),
             }
         )
+
+
+class JobOauthtoken(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get('service_account_email'), u'scope': self.request.get('scope')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get(u'serviceAccountEmail'), u'scope': self.request.get(u'scope')})
+
+
+class JobOidctoken(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get('service_account_email'), u'audience': self.request.get('audience')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get(u'serviceAccountEmail'), u'audience': self.request.get(u'audience')})
 
 
 if __name__ == '__main__':
