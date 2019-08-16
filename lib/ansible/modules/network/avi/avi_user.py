@@ -88,6 +88,7 @@ options:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         choices: ["add", "replace", "delete"]
+        type: str
     user_profile_ref:
         description:
             - Refer user profile.
