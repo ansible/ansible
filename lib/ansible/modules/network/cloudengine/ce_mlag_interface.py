@@ -152,6 +152,7 @@ CE_NC_GET_MLAG_INFO = """
 <mlag xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
   <mlagInstances>
     <mlagInstance>
+    %s
     </mlagInstance>
   </mlagInstances>
 </mlag>
@@ -178,7 +179,6 @@ CE_NC_DELETE_MLAG_INFO = """
   <mlagInstances>
     <mlagInstance operation="delete">
       <dfsgroupId>%s</dfsgroupId>
-      <mlagId>%s</mlagId>
       <localMlagPort>%s</localMlagPort>
     </mlagInstance>
   </mlagInstances>
@@ -386,7 +386,7 @@ class MlagInterface(object):
         """ get mlag info."""
 
         mlag_info = dict()
-        conf_str = CE_NC_GET_MLAG_INFO
+        conf_str = CE_NC_GET_MLAG_INFO % ("<localMlagPort>Eth-Trunk%s</localMlagPort>" % self.eth_trunk_id)
         xml_str = get_nc_config(self.module, conf_str)
         if "<data/>" in xml_str:
             return mlag_info
@@ -713,7 +713,7 @@ class MlagInterface(object):
             mlag_port = "Eth-Trunk"
             mlag_port += self.eth_trunk_id
             conf_str = CE_NC_DELETE_MLAG_INFO % (
-                self.dfs_group_id, self.mlag_id, mlag_port)
+                self.dfs_group_id, mlag_port)
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
