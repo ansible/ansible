@@ -1150,6 +1150,8 @@ def get_docker_networks(networks, network_ids):
             parsed_network = {'name': name}
             aliases = network.pop('aliases', None)
             if aliases is not None:
+                if not isinstance(aliases, list):
+                    raise TypeError('"aliases" network option is only allowed as a list')
                 if not all(
                     isinstance(alias, string_types) for alias in aliases
                 ):
