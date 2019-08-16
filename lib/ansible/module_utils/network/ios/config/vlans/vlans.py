@@ -15,10 +15,10 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
+from ansible.module_utils.network.ios.utils.utils import dict_to_set
 
 
 class Vlans(ConfigBase):
@@ -110,8 +110,7 @@ class Vlans(ConfigBase):
             commands = self._state_replaced(want, have)
         return commands
 
-    @staticmethod
-    def _state_replaced(want, have):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -126,18 +125,16 @@ class Vlans(ConfigBase):
                 if every['vlan_id'] == each['vlan_id']:
                     check = True
                     break
-                else:
-                    continue
-            if check:
-                kwargs = {'want': each, 'have': every}
             else:
-                kwargs = {'want': each, 'have': {}}
-            commands.extend(Vlans.set_interface(**kwargs))
+                continue
+            if check:
+                commands.extend(self._set_config(each, every))
+            else:
+                commands.extend(self._set_config(each, dict()))
 
         return commands
 
-    @staticmethod
-    def _state_overridden(want, have, state):
+    def _state_overridden(self, want, have, state):
         """ The command generator when state is overridden
 
         :rtype: A list
@@ -146,28 +143,20 @@ class Vlans(ConfigBase):
         """
         commands = []
 
-        check = False
-        for each in want:
-            for every in have:
+        for each in have:
+            for every in want:
                 if each['vlan_id'] == every['vlan_id']:
-                    check = True
                     break
-                else:
-                    # We didn't find a matching desired state, which means we can
-                    # pretend we recieved an empty desired state.
-                    kwargs = {'want': each, 'have': every, 'state': state}
-                    commands.extend(Vlans.clear_interface(**kwargs))
-                    continue
-            if check:
-                kwargs = {'want': each, 'have': every}
             else:
-                kwargs = {'want': each, 'have': {}}
-            commands.extend(Vlans.set_interface(**kwargs))
+                # We didn't find a matching desired state, which means we can
+                # pretend we recieved an empty desired state.
+                commands.extend(self._clear_config(every, each, state))
+                continue
+            commands.extend(self._set_config(every, each))
 
         return commands
 
-    @staticmethod
-    def _state_merged(want, have):
+    def _state_merged(self, want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -185,15 +174,13 @@ class Vlans(ConfigBase):
                 else:
                     continue
             if check:
-                kwargs = {'want': each, 'have': every}
+                commands.extend(self._set_config(each, every))
             else:
-                kwargs = {'want': each, 'have': {}}
-            commands.extend(Vlans.set_interface(**kwargs))
+                commands.extend(self._set_config(each, dict()))
 
         return commands
 
-    @staticmethod
-    def _state_deleted(want, have, state):
+    def _state_deleted(self, want, have, state):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -213,17 +200,14 @@ class Vlans(ConfigBase):
                         check = False
                         continue
                 if check:
-                    kwargs = {'want': each, 'have': every, 'state': state}
-                    commands.extend(Vlans.clear_interface(**kwargs))
+                    commands.extend(self._clear_config(each, every, state))
         else:
             for each in have:
-                kwargs = {'want': {}, 'have': each, 'state': state}
-                commands.extend(Vlans.clear_interface(**kwargs))
+                commands.extend(self._clear_config(dict(), each, state))
 
         return commands
 
-    @staticmethod
-    def _remove_command_from_interface(vlan, cmd, commands):
+    def remove_command_from_config_list(self, vlan, cmd, commands):
         if vlan not in commands and cmd != 'vlan':
             commands.insert(0, vlan)
         elif cmd == 'vlan':
@@ -232,34 +216,20 @@ class Vlans(ConfigBase):
         commands.append('no %s' % cmd)
         return commands
 
-    @staticmethod
-    def _add_command_to_interface(vlan_id, cmd, commands):
+    def add_command_to_config_list(self, vlan_id, cmd, commands):
         if vlan_id not in commands:
             commands.insert(0, vlan_id)
         if cmd not in commands:
             commands.append(cmd)
 
-    @staticmethod
-    def dict_diff(sample_dict):
-        # Generate a set with passed dictionary for comparison
-        test_dict = {}
-        for k, v in iteritems(sample_dict):
-            if v is not None:
-                test_dict.update({k: v})
-        return_set = set(tuple(test_dict.items()))
-        return return_set
-
-    @staticmethod
-    def set_interface(**kwargs):
+    def _set_config(self, want, have):
         # Set the interface config based on the want and have config
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
         vlan = 'vlan {0}'.format(want.get('vlan_id'))
 
         # Get the diff b/w want n have
-        want_dict = Vlans.dict_diff(want)
-        have_dict = Vlans.dict_diff(have)
+        want_dict = dict_to_set(want)
+        have_dict = dict_to_set(have)
         diff = want_dict - have_dict
 
         if diff:
@@ -270,42 +240,38 @@ class Vlans(ConfigBase):
             remote_span = dict(diff).get('remote_span')
             if name:
                 cmd = 'name {0}'.format(name)
-                Vlans._add_command_to_interface(vlan, cmd, commands)
+                self.add_command_to_config_list(vlan, cmd, commands)
             if state:
                 cmd = 'state {0}'.format(state)
-                Vlans._add_command_to_interface(vlan, cmd, commands)
+                self.add_command_to_config_list(vlan, cmd, commands)
             if mtu:
                 cmd = 'mtu {0}'.format(mtu)
-                Vlans._add_command_to_interface(vlan, cmd, commands)
+                self.add_command_to_config_list(vlan, cmd, commands)
             if remote_span:
-                Vlans._add_command_to_interface(vlan, 'remote-span', commands)
+                self.add_command_to_config_list(vlan, 'remote-span', commands)
             if shutdown == 'enabled':
-                Vlans._add_command_to_interface(vlan, 'shutdown', commands)
+                self.add_command_to_config_list(vlan, 'shutdown', commands)
             elif shutdown == 'disabled':
-                Vlans._add_command_to_interface(vlan, 'no shutdown', commands)
+                self.add_command_to_config_list(vlan, 'no shutdown', commands)
 
         return commands
 
-    @staticmethod
-    def clear_interface(**kwargs):
+    def _clear_config(self, want, have, state):
         # Delete the interface config based on the want and have config
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
-        state = kwargs['state']
         vlan = 'vlan {0}'.format(have.get('vlan_id'))
 
         if have.get('vlan_id') and 'default' not in have.get('name')\
                 and (have.get('vlan_id') != want.get('vlan_id') or state == 'deleted'):
-            Vlans._remove_command_from_interface(vlan, 'vlan', commands)
+            self.remove_command_from_config_list(vlan, 'vlan', commands)
         elif 'default' not in have.get('name'):
             if have.get('mtu') != want.get('mtu'):
-                Vlans._remove_command_from_interface(vlan, 'mtu', commands)
+                self.remove_command_from_config_list(vlan, 'mtu', commands)
             if have.get('remote_span') != want.get('remote_span') and want.get('remote_span'):
-                Vlans._remove_command_from_interface(vlan, 'remote-span', commands)
+                self.remove_command_from_config_list(vlan, 'remote-span', commands)
             if have.get('shutdown') != want.get('shutdown') and want.get('shutdown'):
-                Vlans._remove_command_from_interface(vlan, 'shutdown', commands)
+                self.remove_command_from_config_list(vlan, 'shutdown', commands)
             if have.get('state') != want.get('state') and want.get('state'):
-                Vlans._remove_command_from_interface(vlan, 'state', commands)
+                self.remove_command_from_config_list(vlan, 'state', commands)
 
         return commands

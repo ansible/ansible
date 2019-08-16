@@ -36,10 +36,6 @@ ANSIBLE_METADATA = {
     'supported_by': 'network'
 }
 
-NETWORK_OS = "ios"
-RESOURCE = "vlans"
-COPYRIGHT = "Copyright 2019 Red Hat"
-
 DOCUMENTATION = """
 module: ios_vlans
 version_added: 2.9
@@ -47,7 +43,9 @@ short_description: Manage VLANs on Cisco IOS devices.
 description: This module provides declarative management of VLANs on Cisco IOS network devices.
 author: Sumit Jaiswal (@justjais)
 notes:
-- Tested against Cisco IOSv Version 15.2 on VIRL
+  - Tested against Cisco IOSv Version 15.2 on VIRL
+  - This module works with connection C(network_cli).
+    See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
 config:
   description: A dictionary of VLANs options
@@ -99,66 +97,7 @@ state:
   default: merged
 """
 EXAMPLES = """
-# Using deleted
-
-# Before state:
-# -------------
-#
-# vios#show vlan
-# VLAN Name                             Status    Ports
-# ---- -------------------------------- --------- -------------------------------
-# 1    default                          active    Gi0/1, Gi0/2
-# 10   vlan_10                          active
-# 20   vlan_20                          act/lshut
-# 30   vlan_30                          sus/lshut
-# 1002 fddi-default                     act/unsup
-# 1003 token-ring-default               act/unsup
-# 1004 fddinet-default                  act/unsup
-# 1005 trnet-default                    act/unsup
-#
-# VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
-# ---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
-# 1    enet  100001     1500  -      -      -        -    -        0      0
-# 10   enet  100010     1500  -      -      -        -    -        0      0
-# 20   enet  100020     610   -      -      -        -    -        0      0
-# 30   enet  100030     1500  -      -      -        -    -        0      0
-# 1002 fddi  101002     1500  -      -      -        -    -        0      0
-# 1003 tr    101003     1500  -      -      -        -    -        0      0
-# 1004 fdnet 101004     1500  -      -      -        ieee -        0      0
-# 1005 trnet 101005     1500  -      -      -        ibm  -        0      0
-#
-# Remote SPAN VLANs
-# ------------------------------------------------------------------------------
-# 10
-
-- name: Delete attributes of given VLANs
-  ios_vlans:
-    config:
-      - vlan_id: 10
-      - vlan_id: 20
-      - vlan_id: 30
-    state: deleted
-
-# After state:
-# -------------
-#
-# vios#show vlan
-# VLAN Name                             Status    Ports
-# ---- -------------------------------- --------- -------------------------------
-# 1    default                          active    Gi0/1, Gi0/2
-# 1002 fddi-default                     act/unsup
-# 1003 token-ring-default               act/unsup
-# 1004 fddinet-default                  act/unsup
-# 1005 trnet-default                    act/unsup
-#
-# VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
-# ---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
-# 1    enet  100001     1500  -      -      -        -    -        0      0
-# 1002 fddi  101002     1500  -      -      -        -    -        0      0
-# 1003 tr    101003     1500  -      -      -        -    -        0      0
-# 1004 fdnet 101004     1500  -      -      -        ieee -        0      0
-# 1005 trnet 101005     1500  -      -      -        ibm  -        0      0
-
+---
 # Using merged
 
 # Before state:
@@ -355,6 +294,124 @@ EXAMPLES = """
 # Remote SPAN VLANs
 # ------------------------------------------------------------------------------
 # 10
+
+# Using deleted
+
+# Before state:
+# -------------
+#
+# vios#show vlan
+# VLAN Name                             Status    Ports
+# ---- -------------------------------- --------- -------------------------------
+# 1    default                          active    Gi0/1, Gi0/2
+# 10   vlan_10                          active
+# 20   vlan_20                          act/lshut
+# 30   vlan_30                          sus/lshut
+# 1002 fddi-default                     act/unsup
+# 1003 token-ring-default               act/unsup
+# 1004 fddinet-default                  act/unsup
+# 1005 trnet-default                    act/unsup
+#
+# VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+# ---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
+# 1    enet  100001     1500  -      -      -        -    -        0      0
+# 10   enet  100010     1500  -      -      -        -    -        0      0
+# 20   enet  100020     610   -      -      -        -    -        0      0
+# 30   enet  100030     1500  -      -      -        -    -        0      0
+# 1002 fddi  101002     1500  -      -      -        -    -        0      0
+# 1003 tr    101003     1500  -      -      -        -    -        0      0
+# 1004 fdnet 101004     1500  -      -      -        ieee -        0      0
+# 1005 trnet 101005     1500  -      -      -        ibm  -        0      0
+#
+# Remote SPAN VLANs
+# ------------------------------------------------------------------------------
+# 10
+
+- name: Delete attributes of given VLANs
+  ios_vlans:
+    config:
+      - vlan_id: 10
+      - vlan_id: 20
+    state: deleted
+
+# After state:
+# -------------
+#
+# vios#show vlan
+# VLAN Name                             Status    Ports
+# ---- -------------------------------- --------- -------------------------------
+# 1    default                          active    Gi0/1, Gi0/2
+# 30   vlan_30                          sus/lshut
+# 1002 fddi-default                     act/unsup
+# 1003 token-ring-default               act/unsup
+# 1004 fddinet-default                  act/unsup
+# 1005 trnet-default                    act/unsup
+#
+# VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+# ---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
+# 1    enet  100001     1500  -      -      -        -    -        0      0
+# 30   enet  100030     1500  -      -      -        -    -        0      0
+# 1002 fddi  101002     1500  -      -      -        -    -        0      0
+# 1003 tr    101003     1500  -      -      -        -    -        0      0
+# 1004 fdnet 101004     1500  -      -      -        ieee -        0      0
+# 1005 trnet 101005     1500  -      -      -        ibm  -        0      0
+
+# Using Deleted without any config passed
+#"(NOTE: This will delete all of configured vlans attributes)"
+
+# Before state:
+# -------------
+#
+# vios#show vlan
+# VLAN Name                             Status    Ports
+# ---- -------------------------------- --------- -------------------------------
+# 1    default                          active    Gi0/1, Gi0/2
+# 10   vlan_10                          active
+# 20   vlan_20                          act/lshut
+# 30   vlan_30                          sus/lshut
+# 1002 fddi-default                     act/unsup
+# 1003 token-ring-default               act/unsup
+# 1004 fddinet-default                  act/unsup
+# 1005 trnet-default                    act/unsup
+#
+# VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+# ---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
+# 1    enet  100001     1500  -      -      -        -    -        0      0
+# 10   enet  100010     1500  -      -      -        -    -        0      0
+# 20   enet  100020     610   -      -      -        -    -        0      0
+# 30   enet  100030     1500  -      -      -        -    -        0      0
+# 1002 fddi  101002     1500  -      -      -        -    -        0      0
+# 1003 tr    101003     1500  -      -      -        -    -        0      0
+# 1004 fdnet 101004     1500  -      -      -        ieee -        0      0
+# 1005 trnet 101005     1500  -      -      -        ibm  -        0      0
+#
+# Remote SPAN VLANs
+# ------------------------------------------------------------------------------
+# 10
+
+- name: Delete attributes of ALL VLANs
+  ios_vlans:
+    state: deleted
+
+# After state:
+# -------------
+#
+# vios#show vlan
+# VLAN Name                             Status    Ports
+# ---- -------------------------------- --------- -------------------------------
+# 1    default                          active    Gi0/1, Gi0/2
+# 1002 fddi-default                     act/unsup
+# 1003 token-ring-default               act/unsup
+# 1004 fddinet-default                  act/unsup
+# 1005 trnet-default                    act/unsup
+#
+# VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+# ---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
+# 1    enet  100001     1500  -      -      -        -    -        0      0
+# 1002 fddi  101002     1500  -      -      -        -    -        0      0
+# 1003 tr    101003     1500  -      -      -        -    -        0      0
+# 1004 fdnet 101004     1500  -      -      -        ieee -        0      0
+# 1005 trnet 101005     1500  -      -      -        ibm  -        0      0
 
 """
 RETURN = """

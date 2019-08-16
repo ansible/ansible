@@ -7,3 +7,4 @@
       vlan 10
       vlan 20
       vlan 30
+  when: ansible_net_version != "15.6(2)T"
