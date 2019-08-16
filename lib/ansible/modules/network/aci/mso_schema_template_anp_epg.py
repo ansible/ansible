@@ -152,67 +152,67 @@ extends_documentation_fragment: mso
 EXAMPLES = r'''
 - name: Add a new EPG
   mso_schema_template_anp_epg:
-    host: mso_host
-    username: admin
-    password: SomeSecretPassword
-    schema: Schema 1
-    template: Template 1
-    anp: ANP 1
-    epg: EPG 1
-    bd:
-     name: bd1
-    vrf:
-     name: vrf1
-    state: present
+   host: mso_host
+   username: admin
+   password: SomeSecretPassword
+   schema: Schema 1
+   template: Template 1
+   anp: ANP 1
+   epg: EPG 1
+   bd:
+    name: bd1
+   vrf:
+    name: vrf1
+   state: present
   delegate_to: localhost
     
 - name: Remove an EPG
   mso_schema_template_anp_epg:
-    host: mso_host
-    username: admin
-    password: SomeSecretPassword
-    schema: Schema 1
-    template: Template 1
-    anp: ANP 1
-    epg: EPG 1
-    bd:
-     name: bd1
-    vrf:
-     name: vrf1
-    state: absent
+   host: mso_host
+   username: admin
+   password: SomeSecretPassword
+   schema: Schema 1
+   template: Template 1
+   anp: ANP 1
+   epg: EPG 1
+   bd:
+    name: bd1
+   vrf:
+    name: vrf1
+   state: absent
   delegate_to: localhost
 
 - name: Query a specific EPG
   mso_schema_template_anp_epg:
-    host: mso_host
-    username: admin
-    password: SomeSecretPassword
-    schema: Schema 1
-    template: Template 1
-    anp: ANP 1
-    epg: EPG 1
-    bd:
-     name: bd1
-    vrf:
-     name: vrf1
-    state: query
+   host: mso_host
+   username: admin
+   password: SomeSecretPassword
+   schema: Schema 1
+   template: Template 1
+   anp: ANP 1
+   epg: EPG 1
+   bd:
+    name: bd1
+   vrf:
+    name: vrf1
+   state: query
   delegate_to: localhost
   register: query_result
 
 - name: Query all EPGs
   mso_schema_template_anp_epg:
-    host: mso_host
-    username: admin
-    password: SomeSecretPassword
-    schema: Schema 1
-    template: Template 1
-    anp: ANP 1
-    epg: EPG 1
-    bd:
-     name: bd1
-    vrf:
-     name: vrf1
-    state: query
+   host: mso_host
+   username: admin
+   password: SomeSecretPassword
+   schema: Schema 1
+   template: Template 1
+   anp: ANP 1
+   epg: EPG 1
+   bd:
+    name: bd1
+   vrf:
+    name: vrf1
+   state: query
   delegate_to: localhost
   register: query_result
 '''
