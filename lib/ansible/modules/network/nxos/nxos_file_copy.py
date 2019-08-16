@@ -133,7 +133,7 @@ EXAMPLES = '''
       nxos_file_copy:
       file_pull: True
       local_file: "xyz"
-      local_filr_directory: "dir1/dir2/dir3"
+      local_file_directory: "dir1/dir2/dir3"
       remote_file: "/mydir/abc"
       remote_scp_server: "192.168.0.1"
       remote_scp_server_user: "myUser"
