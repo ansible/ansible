@@ -118,6 +118,6 @@ def create_temporary_bin_files(args):  # type: (CommonConfig) -> t.Tuple[t.Tuple
 
         for name, dest in ANSIBLE_BIN_SYMLINK_MAP.items():
             path = os.path.join(temp_path, name)
-            os.link(dest, path)
+            os.symlink(dest, path)
 
     return tuple((os.path.join(temp_path, name), os.path.join('bin', name)) for name in sorted(ANSIBLE_BIN_SYMLINK_MAP))
