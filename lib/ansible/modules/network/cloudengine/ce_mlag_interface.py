@@ -450,7 +450,7 @@ class MlagInterface(object):
 
             root = ElementTree.fromstring(xml_str)
             global_info = root.findall(
-                "data/ifmtrunk/TrunkIfs/TrunkIf/lacpMlagIf")
+                "./ifmtrunk/TrunkIfs/TrunkIf/lacpMlagIf")
 
             if global_info:
                 for tmp in global_info:
@@ -475,7 +475,7 @@ class MlagInterface(object):
             mlag_error_down_info["mlagErrorDownInfos"] = list()
             root = ElementTree.fromstring(xml_str)
             mlag_error_infos = root.findall(
-                "data/mlag/errordowns/errordown")
+                "./mlag/errordowns/errordown")
 
             if mlag_error_infos:
                 for mlag_error_info in mlag_error_infos:
@@ -506,7 +506,12 @@ class MlagInterface(object):
         for _, value in enumerate(mac, start=0):
             if value.lower() not in valid_char:
                 return False
-
+        if all((int(mac_list[0], base=16) == 0, int(mac_list[1], base=16) == 0, int(mac_list[2], base=16) ==0)):
+            return False
+        a = "000" + mac_list[0]
+        b = "000" + mac_list[1]
+        c = "000" + mac_list[2]
+        self.mlag_system_id = "-".join([a[-4:], b[-4:], c[-4:]])
         return True
 
     def check_params(self):
@@ -582,7 +587,7 @@ class MlagInterface(object):
         eth_trunk += self.eth_trunk_id
 
         for info in self.mlag_info["mlagInfos"]:
-            if info["mlagId"] == self.mlag_id and info["localMlagPort"] == eth_trunk:
+            if info["localMlagPort"] == eth_trunk:
                 return True
         return False
 
@@ -892,18 +897,18 @@ class MlagInterface(object):
             if self.eth_trunk_id:
                 if self.mlag_trunk_attribute_info:
                     if self.mlag_system_id:
-                        self.end_state["lacpMlagSysId"] = self.mlag_trunk_attribute_info[
+                        self.existing["lacpMlagSysId"] = self.mlag_trunk_attribute_info[
                             "lacpMlagSysId"]
                     if self.mlag_priority_id:
-                        self.end_state["lacpMlagPriority"] = self.mlag_trunk_attribute_info[
+                        self.existing["lacpMlagPriority"] = self.mlag_trunk_attribute_info[
                             "lacpMlagPriority"]
             else:
                 if self.mlag_global_info:
                     if self.mlag_system_id:
-                        self.end_state["lacpMlagSysId"] = self.mlag_global_info[
+                        self.existing["lacpMlagSysId"] = self.mlag_global_info[
                             "lacpMlagSysId"]
                     if self.mlag_priority_id:
-                        self.end_state["lacpMlagPriority"] = self.mlag_global_info[
+                        self.existing["lacpMlagPriority"] = self.mlag_global_info[
                             "lacpMlagPriority"]
 
         if self.interface or self.mlag_error_down:
