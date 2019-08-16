@@ -39,4 +39,4 @@
 
 - assert:
     that:
-      - "expected_config|difference(ansible_facts.network_resources.vlans) == []"
+      - "expected_config|symmetric_difference(ansible_facts.network_resources.vlans) == []"
