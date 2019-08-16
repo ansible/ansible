@@ -41,7 +41,7 @@ class Lacp(ConfigBase):
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         lacp_facts = facts['ansible_network_resources'].get('lacp')
         if not lacp_facts:
-            return []
+            return {}
         return lacp_facts
 
     def execute_module(self):
@@ -79,7 +79,7 @@ class Lacp(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        want = self._module.params['config']
+        want = self._module.params['config'] or {}
         have = existing_lacp_facts
         resp = self.set_state(want, have)
         return to_list(resp)

@@ -58,7 +58,7 @@ class LacpFacts(object):
                     objs.update(obj)
 
         ansible_facts['ansible_network_resources'].pop('lacp', None)
-        facts = {}
+        facts = {'lacp': {}}
         if objs:
             params = utils.validate_config(self.argument_spec, {'config': objs})
             facts['lacp'] = utils.remove_empties(params['config'])
