@@ -57,6 +57,12 @@ options:
     type: bool
     aliases:
     - ip_forward
+  deletion_protection:
+    description:
+    - Whether the resource should be protected against deletion.
+    required: false
+    type: bool
+    version_added: 2.9
   disks:
     description:
     - An array of disks that are associated with the instances that are created from
@@ -395,6 +401,28 @@ options:
         - The list of scopes to be made available for this service account.
         required: false
         type: list
+  shielded_instance_config:
+    description:
+    - Configuration for various parameters related to shielded instances.
+    required: false
+    type: dict
+    version_added: 2.9
+    suboptions:
+      enable_secure_boot:
+        description:
+        - Defines whether the instance has Secure Boot enabled.
+        required: false
+        type: bool
+      enable_vtpm:
+        description:
+        - Defines whether the instance has the vTPM enabled.
+        required: false
+        type: bool
+      enable_integrity_monitoring:
+        description:
+        - Defines whether the instance has integrity monitoring enabled.
+        required: false
+        type: bool
   status:
     description:
     - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
@@ -513,6 +541,11 @@ creationTimestamp:
   - Creation timestamp in RFC3339 text format.
   returned: success
   type: str
+deletionProtection:
+  description:
+  - Whether the resource should be protected against deletion.
+  returned: success
+  type: bool
 disks:
   description:
   - An array of disks that are associated with the instances that are created from
@@ -851,6 +884,27 @@ serviceAccounts:
       - The list of scopes to be made available for this service account.
       returned: success
       type: list
+shieldedInstanceConfig:
+  description:
+  - Configuration for various parameters related to shielded instances.
+  returned: success
+  type: complex
+  contains:
+    enableSecureBoot:
+      description:
+      - Defines whether the instance has Secure Boot enabled.
+      returned: success
+      type: bool
+    enableVtpm:
+      description:
+      - Defines whether the instance has the vTPM enabled.
+      returned: success
+      type: bool
+    enableIntegrityMonitoring:
+      description:
+      - Defines whether the instance has integrity monitoring enabled.
+      returned: success
+      type: bool
 status:
   description:
   - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
@@ -915,6 +969,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             can_ip_forward=dict(type='bool', aliases=['ip_forward']),
+            deletion_protection=dict(type='bool'),
             disks=dict(
                 type='list',
                 elements='dict',
@@ -965,6 +1020,9 @@ def main():
                 type='dict', options=dict(automatic_restart=dict(type='bool'), on_host_maintenance=dict(type='str'), preemptible=dict(type='bool'))
             ),
             service_accounts=dict(type='list', elements='dict', options=dict(email=dict(type='str'), scopes=dict(type='list', elements='str'))),
+            shielded_instance_config=dict(
+                type='dict', options=dict(enable_secure_boot=dict(type='bool'), enable_vtpm=dict(type='bool'), enable_integrity_monitoring=dict(type='bool'))
+            ),
             status=dict(type='str'),
             tags=dict(type='dict', options=dict(fingerprint=dict(type='str'), items=dict(type='list', elements='str'))),
             zone=dict(required=True, type='str'),
@@ -1018,10 +1076,14 @@ def update(module, link, kind, fetch):
 
 
 def update_fields(module, request, response):
+    if response.get('deletionProtection') != request.get('deletionProtection'):
+        deletion_protection_update(module, request, response)
     if response.get('labels') != request.get('labels'):
         label_fingerprint_update(module, request, response)
     if response.get('machineType') != request.get('machineType'):
         machine_type_update(module, request, response)
+    if response.get('shieldedInstanceConfig') != request.get('shieldedInstanceConfig'):
+        shielded_instance_config_update(module, request, response)
 
 
 def label_fingerprint_update(module, request, response):
@@ -1049,6 +1111,7 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#instance',
         u'canIpForward': module.params.get('can_ip_forward'),
+        u'deletionProtection': module.params.get('deletion_protection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(module.params.get('guest_accelerators', []), module).to_request(),
         u'labels': module.params.get('labels'),
@@ -1059,6 +1122,7 @@ def resource_to_request(module):
         u'networkInterfaces': InstanceNetworkinterfacesArray(module.params.get('network_interfaces', []), module).to_request(),
         u'scheduling': InstanceScheduling(module.params.get('scheduling', {}), module).to_request(),
         u'serviceAccounts': InstanceServiceaccountsArray(module.params.get('service_accounts', []), module).to_request(),
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(module.params.get('shielded_instance_config', {}), module).to_request(),
         u'status': module.params.get('status'),
         u'tags': InstanceTags(module.params.get('tags', {}), module).to_request(),
     }
@@ -1133,6 +1197,7 @@ def response_to_hash(module, response):
         u'canIpForward': response.get(u'canIpForward'),
         u'cpuPlatform': response.get(u'cpuPlatform'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
+        u'deletionProtection': response.get(u'deletionProtection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(response.get(u'guestAccelerators', []), module).from_response(),
         u'id': response.get(u'id'),
@@ -1145,6 +1210,7 @@ def response_to_hash(module, response):
         u'networkInterfaces': InstanceNetworkinterfacesArray(response.get(u'networkInterfaces', []), module).from_response(),
         u'scheduling': InstanceScheduling(response.get(u'scheduling', {}), module).from_response(),
         u'serviceAccounts': InstanceServiceaccountsArray(response.get(u'serviceAccounts', []), module).from_response(),
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(response.get(u'shieldedInstanceConfig', {}), module).from_response(),
         u'status': response.get(u'status'),
         u'statusMessage': response.get(u'statusMessage'),
         u'tags': InstanceTags(response.get(u'tags', {}), module).from_response(),
@@ -1280,6 +1346,33 @@ class InstancePower(object):
 
     def _stop_url(self):
         return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{name}/stop".format(**self.module.params)
+
+
+def deletion_protection_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(
+            [
+                "https://www.googleapis.com/compute/v1/",
+                "projects/{project}/zones/{zone}/instances/{name}/setDeletionProtection?deletionProtection={deletionProtection}",
+            ]
+        ).format(**module.params),
+        {},
+    )
+
+
+def shielded_instance_config_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/instances/{name}/updateShieldedInstanceConfig"]).format(
+            **module.params
+        ),
+        {
+            u'enableSecureBoot': navigate_hash(module.params, ['shielded_instance_config', 'enable_secure_boot']),
+            u'enableVtpm': navigate_hash(module.params, ['shielded_instance_config', 'enable_vtpm']),
+            u'enableIntegrityMonitoring': navigate_hash(module.params, ['shielded_instance_config', 'enable_integrity_monitoring']),
+        },
+    )
 
 
 class InstanceDisksArray(object):
@@ -1574,6 +1667,33 @@ class InstanceServiceaccountsArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'email': item.get(u'email'), u'scopes': item.get(u'scopes')})
+
+
+class InstanceShieldedinstanceconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get('enable_secure_boot'),
+                u'enableVtpm': self.request.get('enable_vtpm'),
+                u'enableIntegrityMonitoring': self.request.get('enable_integrity_monitoring'),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get(u'enableSecureBoot'),
+                u'enableVtpm': self.request.get(u'enableVtpm'),
+                u'enableIntegrityMonitoring': self.request.get(u'enableIntegrityMonitoring'),
+            }
+        )
 
 
 class InstanceTags(object):

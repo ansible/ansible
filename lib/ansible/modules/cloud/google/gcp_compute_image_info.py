@@ -155,7 +155,7 @@ resources:
       contains:
         type:
           description:
-          - The type of supported feature. Currenty only VIRTIO_SCSI_MULTIQUEUE is
+          - The type of supported feature. Currently only VIRTIO_SCSI_MULTIQUEUE is
             supported. For newer Windows images, the server might also populate this
             property with the value WINDOWS to indicate that this is a Windows image.
             This value is purely informational and does not enable or disable any
