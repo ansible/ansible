@@ -36,8 +36,9 @@ from ansible.module_utils._text import to_bytes
 
 try:
     import botocore
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass
+    pass  # caught by imported HAS_BOTO3
 
 
 class ACMServiceManager(object):
@@ -57,7 +58,7 @@ class ACMServiceManager(object):
         module.debug("Attempting to delete certificate %s" % arn)
         try:
             self.delete_certificate_with_backoff(client, arn)
-        except botocore.exceptions.ClientError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't delete certificate %s" % arn)
         module.debug("Successfully deleted certificate %s" % arn)
 
@@ -92,7 +93,7 @@ class ACMServiceManager(object):
     def get_certificates(self, client, module, domain_name=None, statuses=None, arn=None, only_tags=None):
         try:
             all_certificates = self.list_certificates_with_backoff(client=client, statuses=statuses)
-        except botocore.exceptions.ClientError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't obtain certificates")
         if domain_name:
             certificates = [cert for cert in all_certificates
@@ -108,17 +109,17 @@ class ACMServiceManager(object):
         for certificate in certificates:
             try:
                 cert_data = self.describe_certificate_with_backoff(client, certificate['CertificateArn'])
-            except botocore.exceptions.ClientError as e:
+            except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'])
             try:
                 cert_data.update(self.get_certificate_with_backoff(client, certificate['CertificateArn']))
-            except botocore.exceptions.ClientError as e:
+            except (BotoCoreError, ClientError) as e:
                 if e.response['Error']['Code'] != "RequestInProgressException":
                     module.fail_json_aws(e, msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
             cert_data = camel_dict_to_snake_dict(cert_data)
             try:
                 tags = self.list_certificate_tags_with_backoff(client, certificate['CertificateArn'])
-            except botocore.exceptions.ClientError as e:
+            except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Couldn't obtain tags for domain %s" % certificate['DomainName'])
 
             cert_data['tags'] = boto3_tag_list_to_ansible_dict(tags)
@@ -144,7 +145,7 @@ class ACMServiceManager(object):
             module.fail(msg="Internal error with ACM domain fetching" % arn)
         try:
             cert_data = self.describe_certificate_with_backoff(client=client, certificate_arn=arn)
-        except botocore.exceptions.ClientError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't obtain certificate data for arn %s" % arn)
         return(cert_data['DomainName'])
 
@@ -184,7 +185,7 @@ class ACMServiceManager(object):
         # upload cert
         try:
             arn = self.import_certificate_with_backoff(client, certificate, private_key, certificate_chain, arn)
-        except botocore.exceptions.ClientError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't upload new certificate")
 
         if original_arn and (arn != original_arn):
@@ -196,7 +197,7 @@ class ACMServiceManager(object):
         # tag that cert
         try:
             self.tag_certificate_with_backoff(client, arn, tags)
-        except botocore.exceptions.ClientError as e:
+        except (BotoCoreError, ClientError) as e:
             module.debug("Attempting to delete the cert we just created, arn=%s" % arn)
             try:
                 self.delete_certificate_with_backoff(client, arn)
