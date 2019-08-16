@@ -26,7 +26,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
-from ansible.utils.collection_loader import is_collection_ref
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
 from ansible.module_utils.urls import open_url
@@ -521,7 +521,7 @@ def validate_collection_name(name):
     :return: The input value, required for argparse validation.
     """
     collection, dummy, dummy = name.partition(':')
-    if is_collection_ref('ansible_collections.{0}'.format(collection)):
+    if AnsibleCollectionRef.is_valid_collection_name(collection):
         return name
 
     raise AnsibleError("Invalid collection name '%s', name must be in the format <namespace>.<collection>." % name)

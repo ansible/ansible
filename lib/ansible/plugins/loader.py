@@ -22,7 +22,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
-from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader, is_collection_ref
+from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader, AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 
@@ -317,38 +317,25 @@ class PluginLoader:
                 display.debug('Added %s to loader search path' % (directory))
 
     def _find_fq_plugin(self, fq_name, extension):
-        fq_name = to_native(fq_name)
-        # prefix our extension Python namespace if it isn't already there
-        if not fq_name.startswith('ansible_collections.'):
-            fq_name = 'ansible_collections.' + fq_name
+        plugin_type = AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(self.subdir)
 
-        splitname = fq_name.rsplit('.', 1)
-        if len(splitname) != 2:
-            raise ValueError('{0} is not a valid namespace-qualified plugin name'.format(to_native(fq_name)))
+        acr = AnsibleCollectionRef.from_fqcr(fq_name, plugin_type)
 
-        package = splitname[0]
-        resource = splitname[1]
-
-        append_plugin_type = self.subdir.replace('_plugins', '')
-
-        if append_plugin_type == 'library':
-            append_plugin_type = 'modules'
-
-        package += '.plugins.{0}'.format(append_plugin_type)
+        resource = acr.resource
 
         if extension:
             resource += extension
 
-        pkg = sys.modules.get(package)
+        pkg = sys.modules.get(acr.python_package_name)
         if not pkg:
             # FIXME: there must be cheaper/safer way to do this
-            pkg = import_module(package)
+            pkg = import_module(acr.python_package_name)
 
         # if the package is one of our flatmaps, we need to consult its loader to find the path, since the file could be
         # anywhere in the tree
         if hasattr(pkg, '__loader__') and isinstance(pkg.__loader__, AnsibleFlatMapLoader):
             try:
-                file_path = pkg.__loader__.find_file(resource)
+                file_path = pkg.__loader__.find_file(acr.resource)
                 return to_text(file_path)
             except IOError:
                 # this loader already takes care of extensionless files, so if we didn't find it, just bail
@@ -392,8 +379,8 @@ class PluginLoader:
             # they can have any suffix
             suffix = ''
 
-        # HACK: need this right now so we can still load shipped PS module_utils
-        if (is_collection_ref(name) or collection_list) and not name.startswith('Ansible'):
+        # FIXME: need this right now so we can still load shipped PS module_utils- come up with a more robust solution
+        if (AnsibleCollectionRef.is_valid_fqcr(name) or collection_list) and not name.startswith('Ansible'):
             if '.' in name or not collection_list:
                 candidates = [name]
             else:

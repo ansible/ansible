@@ -17,6 +17,10 @@ ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m pin
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
 
+echo "testing bad doc_fragments (expected ERROR message follows)"
+# test documentation failure
+ansible-doc testns.testcoll.testmodule_bad_docfrags -vvv 2>&1 | grep -- "unknown doc_fragment"
+
 # we need multiple plays, and conditional import_playbook is noisy and causes problems, so choose here which one to use...
 if [[ ${INVENTORY_PATH} == *.winrm ]]; then
   export TEST_PLAYBOOK=windows.yml

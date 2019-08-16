@@ -3,7 +3,7 @@ __metaclass__ = type
 
 
 def testfilter(data):
-    return "{0}_from_userdir".format(data)
+    return "{0}_via_testfilter_from_userdir".format(data)
 
 
 class FilterModule(object):
