@@ -28,6 +28,7 @@ import sys
 import tempfile
 import traceback
 
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
@@ -923,15 +924,17 @@ def set_crypto_backend(module):
         try:
             cryptography.__version__
         except Exception as dummy:
-            module.fail_json(msg='Cannot find cryptography module!')
+            module.fail_json(msg=missing_required_lib('cryptography'))
         HAS_CURRENT_CRYPTOGRAPHY = True
     else:
         module.fail_json(msg='Unknown crypto backend "{0}"!'.format(backend))
     # Inform about choices
     if HAS_CURRENT_CRYPTOGRAPHY:
         module.debug('Using cryptography backend (library version {0})'.format(CRYPTOGRAPHY_VERSION))
+        return 'cryptography'
     else:
         module.debug('Using OpenSSL binary backend')
+        return 'openssl'
 
 
 def process_links(info, callback):
@@ -963,7 +966,7 @@ def handle_standard_module_arguments(module, needs_acme_v2=False):
     '''
     Do standard module setup, argument handling and warning emitting.
     '''
-    set_crypto_backend(module)
+    backend = set_crypto_backend(module)
 
     if not module.params['validate_certs']:
         module.warn(
@@ -986,3 +989,5 @@ def handle_standard_module_arguments(module, needs_acme_v2=False):
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
     locale.setlocale(locale.LC_ALL, 'C')
+
+    return backend
