@@ -237,15 +237,15 @@ options:
           - "Allows to specify parts of the issuer of a certificate in the chain must
              have to be selected."
           - "If I(issuer) is empty, any certificate will match."
+          - 'An example value would be C({"commonName": "My Preferred CA Root"}).'
         type: dict
-        sample: '{"commonName": "My Preferred CA Root"}'
       subject:
         description:
           - "Allows to specify parts of the subject of a certificate in the chain must
              have to be selected."
           - "If I(subject) is empty, any certificate will match."
+          - 'An example value would be C({"CN": "My Preferred CA Intermediate"})'
         type: dict
-        sample: '{"commonName": "My Preferred CA Intermediate"}'
 '''
 
 EXAMPLES = r'''
