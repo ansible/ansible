@@ -1,0 +1,74 @@
+{
+    "upload_successful": {
+        "changed": true,
+        "invocation": {
+            "module_args": {
+                "api_context": null,
+                "api_version": "16.4.4",
+                "avi_credentials": {
+                    "api_version": "19.1.1",
+                    "controller": "10.10.25.219",
+                    "csrftoken": "",
+                    "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
+                    "port": null,
+                    "session_id": "",
+                    "tenant": "admin",
+                    "tenant_uuid": "",
+                    "timeout": 300,
+                    "token": "",
+                    "username": "admin"
+                },
+                "avi_disable_session_cache_as_fact": false,
+                "controller": "",
+                "file_path": "./safenet.tar",
+                "force_mode": true,
+                "params": null,
+                "password": "",
+                "path": "hsmpackages?hsmtype=safenet",
+                "tenant": "admin",
+                "tenant_uuid": "",
+                "timeout": 60,
+                "upload": true,
+                "username": ""
+            }
+        },
+        "msg": "File uploaded successfully"
+    },
+    "download_successful": {
+        "changed": true,
+        "invocation": {
+            "module_args": {
+                "api_context": null,
+                "api_version": "16.4.4",
+                "avi_credentials": {
+                    "api_version": "19.1.1",
+                    "controller": "10.10.25.219",
+                    "csrftoken": "",
+                    "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
+                    "port": null,
+                    "session_id": "",
+                    "tenant": "admin",
+                    "tenant_uuid": "",
+                    "timeout": 300,
+                    "token": "",
+                    "username": "admin"
+                },
+                "avi_disable_session_cache_as_fact": false,
+                "controller": "",
+                "file_path": "./test_se.qcow2",
+                "force_mode": true,
+                "params": {
+                    "file_format": "qcow2"
+                },
+                "password": "",
+                "path": "seova",
+                "tenant": "admin",
+                "tenant_uuid": "",
+                "timeout": 60,
+                "upload": false,
+                "username": ""
+            }
+        },
+        "msg": "File downloaded successfully"
+    }
+}
