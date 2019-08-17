@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = """
@@ -21,6 +21,10 @@ short_description: Manage Layer-2 interface on Cisco IOS devices.
 description:
   - This module provides declarative management of Layer-2 interfaces on
     Cisco IOS devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: ios_l2_interfaces
+  why: Newer and updated modules released with more functionality in Ansible 2.9
 author:
   - Nathaniel Case (@Qalthos)
 options:
@@ -68,27 +72,23 @@ EXAMPLES = """
   ios_l2_interface:
     name: GigabitEthernet0/5
     state: unconfigured
-
 - name: Ensure GigabitEthernet0/5 is configured for access vlan 20
   ios_l2_interface:
     name: GigabitEthernet0/5
     mode: access
     access_vlan: 20
-
 - name: Ensure GigabitEthernet0/5 only has vlans 5-10 as trunk vlans
   ios_l2_interface:
     name: GigabitEthernet0/5
     mode: trunk
     native_vlan: 10
     trunk_vlans: 5-10
-
 - name: Ensure GigabitEthernet0/5 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
   ios_l2_interface:
     name: GigabitEthernet0/5
     mode: trunk
     native_vlan: 10
     trunk_vlans: 2-50
-
 - name: Ensure these VLANs are not being tagged on the trunk
   ios_l2_interface:
     name: GigabitEthernet0/5
@@ -112,7 +112,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import get_config, load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 

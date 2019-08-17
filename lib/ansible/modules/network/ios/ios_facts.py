@@ -54,7 +54,7 @@ options:
         to a given subset. Possible values for this argument include
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
-    choices: ['all', '!all', 'interfaces', '!interfaces']
+    choices: ['all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces']
     version_added: "2.9"
 """
 
@@ -90,6 +90,11 @@ EXAMPLES = """
   ios_facts:
     gather_subset: min
     gather_network_resources: interfaces
+
+- name: Gather L2 interfaces resource and minimal legacy facts
+  ios_facts:
+    gather_subset: min
+    gather_network_resources: l2_interfaces
 """
 
 RETURN = """
