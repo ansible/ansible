@@ -19,7 +19,7 @@
   set_fact: resource_pool="{{ resource_pools['json'][2].split('/').7 }}"
 
 - name: get a vm name
-  set_fact: vm_name="{{ infra.vm_list[0] }}"
+  set_fact: vm_name="DC0_H0_VM0"
 
 - block:
   - name: gather facts of vm
@@ -29,6 +29,7 @@
       password: "{{ vcenter_password }}"
       validate_certs: False
       datacenter: "{{ dc1 }}"
+      folder: "{{ f0 }}"
       name: "{{ vm_name }}"
     register: vm_facts
     
@@ -125,6 +126,7 @@
       password: "{{ vcenter_password }}"
       validate_certs: False
       datacenter: "{{ dc1 }}"
+      folder: "{{ f0 }}"
       name: "{{ vm_name }}"
     register: vm_facts
 
