@@ -19,7 +19,7 @@ version_added: "2.4"
 short_description: Generate and/or check OpenSSL certificates
 description:
     - This module allows one to (re)generate OpenSSL certificates.
-    - It implements a notion of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly))
+    - It implements a notion of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly), C(entrust))
       for your certificate.
     - The C(assertonly) provider is intended for use cases where one is only interested in
       checking properties of a supplied certificate.
@@ -58,9 +58,11 @@ options:
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
             - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
+            - "The C(entrust) provider was added for Ansible 2.9 and requires credentials for the
+               L(https://www.entrustdatacard.com/products/categories/ssl-certificates,Entrust Certificate Services) (ECS) API."
         type: str
         required: true
-        choices: [ acme, assertonly, ownca, selfsigned ]
+        choices: [ acme, assertonly, entrust, ownca, selfsigned ]
 
     force:
         description:
@@ -298,7 +300,6 @@ options:
         type: str
         aliases: [ notAfter ]
 
-
     valid_in:
         description:
             - The certificate must still be valid at this relative time offset from now.
@@ -373,6 +374,97 @@ options:
         default: no
         version_added: "2.8"
 
+    entrust_cert_type:
+        description:
+            - The type of certificate product to request.
+            - This is only used by the C(entrust) provider.
+        type: str
+        default: STANDARD_SSL
+        choices: [ 'STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL', 'PRIVATE_SSL', 'PD_SSL', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT' ]
+        version_added: "2.9"
+
+    entrust_requester_email:
+        description:
+            - The email of the requester of the certificate (for tracking purposes).
+            - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust).
+        type: str
+        version_added: "2.9"
+
+    entrust_requester_name:
+        description:
+            - The name of the requester of the certificate (for tracking purposes).
+            - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust).
+        type: str
+        version_added: "2.9"
+
+    entrust_requester_phone:
+        description:
+            - The phone number of the requester of the certificate (for tracking purposes).
+            - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust).
+        type: str
+        version_added: "2.9"
+
+    entrust_api_user:
+        description:
+            - The username for authentication to the Entrust Certificate Services (ECS) API.
+            - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust).
+        type: str
+        version_added: "2.9"
+
+    entrust_api_key:
+        description:
+            - The key (password) for authentication to the Entrust Certificate Services (ECS) API.
+            - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust).
+        type: str
+        version_added: "2.9"
+
+    entrust_api_client_cert_path:
+        description:
+            - The path of the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
+            - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust).
+        type: path
+        version_added: "2.9"
+
+    entrust_api_client_cert_key_path:
+        description:
+            - The path of the key for the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
+            - This is only used by the C(entrust) provider.
+            - This is required if the provider is C(entrust).
+        type: path
+        version_added: "2.9"
+
+    entrust_not_after:
+        description:
+            - The point in time at which the certificate stops being valid.
+            - Time can be specified either as relative time or as absolute timestamp.
+            - Time will always be interpreted as UTC.
+            - Note that only the date (day, month, year) is supported for specifying expiry date of the issued certificate.
+            - The full date-time is adjusted to EST (GMT -5:00) before issuance, which may result in a certificate with an expiration date one day
+              earlier than expected if a relative time is used.
+            - The minimum certificate lifetime is 90 days, and maximum is three years.
+            - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
+              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+            - If this value is not specified, the certificate will stop being valid 365 days from now.
+            - This is only used by the C(entrust) provider.
+        type: str
+        default: +365d
+        version_added: "2.9"
+
+    entrust_api_specification_path:
+        description:
+            - Path to the specification file defining the Entrust Certificate Services (ECS) API.
+            - Can be used to keep a local copy of the specification to avoid downloading it every time the module is used.
+            - This is only used by the C(entrust) provider.
+        type: path
+        default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
+        version_added: "2.9"
+
 extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
@@ -420,6 +512,21 @@ EXAMPLES = r'''
     acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
     force: yes
+
+- name: Generate an Entrust certificate via the Entrust Certificate Services (ECS) API
+  openssl_certificate:
+    path: /etc/ssl/crt/ansible.com.crt
+    csr_path: /etc/ssl/csr/ansible.com.csr
+    provider: entrust
+    entrust_requester_name: Jo Doe
+    entrust_requester_email: jdoe@ansible.com
+    entrust_requester_phone: 555-555-5555
+    entrust_cert_type: STANDARD_SSL
+    entrust_api_user: apiusername
+    entrust_api_key: a^lv*32!cd9LnT
+    entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+    entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-key.crt
+    entrust_api_specification_path: /etc/ssl/entrust/api-docs/cms-api-2.1.0.yaml
 
 # Examples for some checks one could use the assertonly provider for:
 
@@ -535,6 +642,7 @@ backup_file:
 from random import randint
 import abc
 import datetime
+import time
 import os
 import traceback
 from distutils.version import LooseVersion
@@ -543,6 +651,7 @@ from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils.ecs.api import ECSClient, RestOperationException, SessionConfigurationException
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -564,7 +673,9 @@ try:
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives.serialization import Encoding
+    from cryptography.hazmat.primitives.hashes import SHA1
     from cryptography.x509 import NameAttribute, Name
+    from cryptography.x509.oid import NameOID
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
@@ -1701,6 +1812,167 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
         return self.cert.get_notBefore(), valid_in_date, self.cert.get_notAfter()
 
 
+class EntrustCertificate(Certificate):
+    """Retrieve a certificate using Entrust (ECS)."""
+
+    def __init__(self, module, backend):
+        super(EntrustCertificate, self).__init__(module, backend)
+        self.trackingId = None
+        self.notAfter = self.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after')
+
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file {0} does not exist'.format(self.csr_path)
+            )
+
+        self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+
+        # ECS API defaults to using the validated organization tied to the account.
+        # We want to always force behavior of trying to use the organization provided in the CSR.
+        # To that end we need to parse out the organization from the CSR.
+        self.csr_org = None
+        if self.backend == 'pyopenssl':
+            csr_subject = self.csr.get_subject()
+            csr_subject_components = csr_subject.get_components()
+            for k, v in csr_subject_components:
+                if k.upper() == 'O':
+                    # Entrust does not support multiple validated organizations in a single certificate
+                    if self.csr_org is not None:
+                        module.fail_json(msg=("Entrust provider does not currently support multiple validated organizations. Multiple organizations found in "
+                                              "Subject DN: '{0}'. ".format(csr_subject)))
+                    else:
+                        self.csr_org = v
+        elif self.backend == 'cryptography':
+            csr_subject_orgs = self.csr.subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)
+            if len(csr_subject_orgs) == 1:
+                self.csr_org = csr_subject_orgs[0].value
+            elif len(csr_subject_orgs) > 1:
+                module.fail_json(msg=("Entrust provider does not currently support multiple validated organizations. Multiple organizations found in "
+                                      "Subject DN: '{0}'. ".format(self.csr.subject)))
+        # If no organization in the CSR, explicitly tell ECS that it should be blank in issued cert, not defaulted to
+        # organization tied to the account.
+        if self.csr_org is None:
+            self.csr_org = ''
+
+        try:
+            self.ecs_client = ECSClient(
+                entrust_api_user=module.params.get('entrust_api_user'),
+                entrust_api_key=module.params.get('entrust_api_key'),
+                entrust_api_cert=module.params.get('entrust_api_client_cert_path'),
+                entrust_api_cert_key=module.params.get('entrust_api_client_cert_key_path'),
+                entrust_api_specification_path=module.params.get('entrust_api_specification_path')
+            )
+        except SessionConfigurationException as e:
+            module.fail_json(msg='Failed to initialize Entrust Provider: {0}'.format(to_native(e.message)))
+
+    def generate(self, module):
+
+        if not self.check(module, perms_required=False) or self.force:
+            # Read the CSR that was generated for us
+            body = {}
+            with open(self.csr_path, 'r') as csr_file:
+                body['csr'] = csr_file.read()
+
+            body['certType'] = module.params['entrust_cert_type']
+
+            # Handle expiration (30 days if not specified)
+            expiry = self.notAfter
+            if not expiry:
+                gmt_now = datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))
+                expiry = gmt_now + datetime.timedelta(days=365)
+
+            expiry_iso3339 = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
+            body['certExpiryDate'] = expiry_iso3339
+            body['org'] = self.csr_org
+            body['tracking'] = {
+                'requesterName': module.params['entrust_requester_name'],
+                'requesterEmail': module.params['entrust_requester_email'],
+                'requesterPhone': module.params['entrust_requester_phone'],
+            }
+
+            try:
+                result = self.ecs_client.NewCertRequest(Body=body)
+                self.trackingId = result.get('trackingId')
+            except RestOperationException as e:
+                module.fail_json(msg='Failed to request new certificate from Entrust Certificate Services (ECS): {0}'.format(to_native(e.message)))
+
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
+            crypto_utils.write_file(module, to_bytes(result.get('endEntityCert')))
+            self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
+            self.changed = True
+
+    def check(self, module, perms_required=True):
+        """Ensure the resource is in its desired state."""
+
+        parent_check = super(EntrustCertificate, self).check(module, perms_required)
+
+        try:
+            cert_details = self._get_cert_details()
+        except RestOperationException as e:
+            module.fail_json(msg='Failed to get status of existing certificate from Entrust Certificate Services (ECS): {0}.'.format(to_native(e.message)))
+
+        # Always issue a new certificate if the certificate is expired, suspended or revoked
+        status = cert_details.get('status', False)
+        if status == 'EXPIRED' or status == 'SUSPENDED' or status == 'REVOKED':
+            return False
+
+        # If the requested cert type was specified and it is for a different certificate type than the initial certificate, a new one is needed
+        if module.params['entrust_cert_type'] and cert_details.get('certType') and module.params['entrust_cert_type'] != cert_details.get('certType'):
+            return False
+
+        return parent_check
+
+    def _get_cert_details(self):
+        cert_details = {}
+        if self.cert:
+            serial_number = None
+            expiry = None
+            if self.backend == 'pyopenssl':
+                serial_number = "{0:X}".format(self.cert.get_serial_number())
+                time_string = to_native(self.cert.get_notAfter())
+                expiry = datetime.datetime.strptime(time_string, "%Y%m%d%H%M%SZ")
+            elif self.backend == 'cryptography':
+                serial_number = "{0:X}".format(self.cert.serial_number)
+                expiry = self.cert.not_valid_after
+
+            # get some information about the expiry of this certificate
+            expiry_iso3339 = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
+            cert_details['expiresAfter'] = expiry_iso3339
+
+            # If a trackingId is not already defined (from the result of a generate)
+            # use the serial number to identify the tracking Id
+            if self.trackingId is None and serial_number is not None:
+                cert_results = self.ecs_client.GetCertificates(serialNumber=serial_number).get('certificates', {})
+
+                # Finding 0 or more than 1 result is a very unlikely use case, it simply means we cannot perform additional checks
+                # on the 'state' as returned by Entrust Certificate Services (ECS). The general certificate validity is
+                # still checked as it is in the rest of the module.
+                if len(cert_results) == 1:
+                    self.trackingId = cert_results[0].get('trackingId')
+
+        if self.trackingId is not None:
+            cert_details.update(self.ecs_client.GetCertificate(trackingId=self.trackingId))
+
+        return cert_details
+
+    def dump(self, check_mode=False):
+
+        result = {
+            'changed': self.changed,
+            'filename': self.path,
+            'privatekey': self.privatekey_path,
+            'csr': self.csr_path,
+        }
+
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
+
+        result.update(self._get_cert_details())
+
+        return result
+
+
 class AcmeCertificate(Certificate):
     """Retrieve a certificate using the ACME protocol."""
 
@@ -1777,7 +2049,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['present', 'absent']),
             path=dict(type='path', required=True),
-            provider=dict(type='str', choices=['acme', 'assertonly', 'ownca', 'selfsigned']),
+            provider=dict(type='str', choices=['acme', 'assertonly', 'entrust', 'ownca', 'selfsigned']),
             force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
             backup=dict(type='bool', default=False),
@@ -1826,9 +2098,28 @@ def main():
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
             acme_chain=dict(type='bool', default=False),
+
+            # provider: entrust
+            entrust_cert_type=dict(type='str', default='STANDARD_SSL',
+                                   choices=['STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL',
+                                            'PRIVATE_SSL', 'PD_SSL', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT']),
+            entrust_requester_email=dict(type='str'),
+            entrust_requester_name=dict(type='str'),
+            entrust_requester_phone=dict(type='str'),
+            entrust_api_user=dict(type='str'),
+            entrust_api_key=dict(type='str', no_log=True),
+            entrust_api_client_cert_path=dict(type='path'),
+            entrust_api_client_cert_key_path=dict(type='path', no_log=True),
+            entrust_api_specification_path=dict(type='path', default='https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml'),
+            entrust_not_after=dict(type='str', default='+365d'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
+        required_if=[
+            ['provider', 'entrust', ['entrust_requester_email', 'entrust_requester_name', 'entrust_requester_phone',
+                                     'entrust_api_user', 'entrust_api_key', 'entrust_api_client_cert_path',
+                                     'entrust_api_client_cert_key_path']]
+        ]
     )
 
     try:
@@ -1887,6 +2178,8 @@ def main():
                     certificate = AcmeCertificate(module, 'pyopenssl')
                 elif provider == 'ownca':
                     certificate = OwnCACertificate(module)
+                elif provider == 'entrust':
+                    certificate = EntrustCertificate(module, 'pyopenssl')
                 else:
                     certificate = AssertOnlyCertificate(module)
             elif backend == 'cryptography':
@@ -1902,6 +2195,8 @@ def main():
                     certificate = AcmeCertificate(module, 'cryptography')
                 elif provider == 'ownca':
                     certificate = OwnCACertificateCryptography(module)
+                elif provider == 'entrust':
+                    certificate = EntrustCertificate(module, 'cryptography')
                 else:
                     certificate = AssertOnlyCertificateCryptography(module)
 

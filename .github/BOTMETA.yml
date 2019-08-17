@@ -216,6 +216,8 @@ files:
     labels: crypto
     maintainers: $team_crypto
     supershipit: felixfontein
+  $modules/crypto/openssl_certificate.py:
+    maintainers: ctrufan
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
@@ -668,6 +670,7 @@ files:
     labels:
       - aws
       - cloud
+    maintainers: ctrufan $team_crypto
   $module_utils/facts:
     support: core
   $module_utils/facts/hardware/aix.py: *aix
