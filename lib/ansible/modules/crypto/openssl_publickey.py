@@ -284,7 +284,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     publickey_content = public_key_fh.read()
                 if self.backend == 'cryptography':
                     if self.format == 'OpenSSH':
-                        # Read and dump public key. Makes sure that comment is stripped of.
+                        # Read and dump public key. Makes sure that the comment is stripped off.
                         current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
                         publickey_content = current_publickey.public_bytes(
                             crypto_serialization.Encoding.OpenSSH,
