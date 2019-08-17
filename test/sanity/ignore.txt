@@ -5984,16 +5984,6 @@ lib/ansible/modules/windows/win_chocolatey_source.ps1 pslint:PSCustomUseLiteralP
 lib/ansible/modules/windows/win_copy.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_credential.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_credential.ps1 validate-modules:E337
-lib/ansible/modules/windows/win_credential.py future-import-boilerplate
-lib/ansible/modules/windows/win_credential.py metaclass-boilerplate
-lib/ansible/modules/windows/win_data_deduplication.py future-import-boilerplate
-lib/ansible/modules/windows/win_data_deduplication.py metaclass-boilerplate
-lib/ansible/modules/windows/win_defrag.py future-import-boilerplate
-lib/ansible/modules/windows/win_defrag.py metaclass-boilerplate
-lib/ansible/modules/windows/win_disk_facts.py future-import-boilerplate
-lib/ansible/modules/windows/win_disk_facts.py metaclass-boilerplate
-lib/ansible/modules/windows/win_disk_image.py future-import-boilerplate
-lib/ansible/modules/windows/win_disk_image.py metaclass-boilerplate
 lib/ansible/modules/windows/win_dns_client.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_dns_client.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_domain.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
