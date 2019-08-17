@@ -135,10 +135,18 @@ ocsp_must_staple_critical:
     returned: success
     type: bool
 subject:
-    description: The CSR's subject.
+    description:
+        - The CSR's subject as a dictionary.
+        - Note that for repeated values, only the last one will be returned.
     returned: success
     type: dict
     sample: '{"commonName": "www.example.com", "emailAddress": "test@example.com"}'
+subject_ordered:
+    description: The CSR's subject as an ordered list of tuples.
+    returned: success
+    type: list
+    sample: '[["commonName", "www.example.com"], ["emailAddress": "test@example.com"]]'
+    version_added: "2.9"
 public_key:
     description: CSR's public key in PEM format
     returned: success
@@ -225,7 +233,7 @@ class CertificateSigningRequestInfo(crypto_utils.OpenSSLObject):
         pass
 
     @abc.abstractmethod
-    def _get_subject(self):
+    def _get_subject_ordered(self):
         pass
 
     @abc.abstractmethod
@@ -264,7 +272,11 @@ class CertificateSigningRequestInfo(crypto_utils.OpenSSLObject):
         result = dict()
         self.csr = crypto_utils.load_certificate_request(self.path, backend=self.backend)
 
-        result['subject'] = self._get_subject()
+        subject = self._get_subject_ordered()
+        result['subject'] = dict()
+        for k, v in subject:
+            result['subject'][k] = v
+        result['subject_ordered'] = subject
         result['key_usage'], result['key_usage_critical'] = self._get_key_usage()
         result['extended_key_usage'], result['extended_key_usage_critical'] = self._get_extended_key_usage()
         result['basic_constraints'], result['basic_constraints_critical'] = self._get_basic_constraints()
@@ -291,10 +303,10 @@ class CertificateSigningRequestInfoCryptography(CertificateSigningRequestInfo):
     def __init__(self, module):
         super(CertificateSigningRequestInfoCryptography, self).__init__(module, 'cryptography')
 
-    def _get_subject(self):
-        result = dict()
+    def _get_subject_ordered(self):
+        result = []
         for attribute in self.csr.subject:
-            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
+            result.append([crypto_utils.cryptography_oid_to_name(attribute.oid), attribute.value])
         return result
 
     def _get_key_usage(self):
@@ -398,12 +410,12 @@ class CertificateSigningRequestInfoPyOpenSSL(CertificateSigningRequestInfo):
         super(CertificateSigningRequestInfoPyOpenSSL, self).__init__(module, 'pyopenssl')
 
     def __get_name(self, name):
-        result = dict()
+        result = []
         for sub in name.get_components():
-            result[crypto_utils.pyopenssl_normalize_name(sub[0])] = to_text(sub[1])
+            result.append([crypto_utils.pyopenssl_normalize_name(sub[0]), to_text(sub[1])])
         return result
 
-    def _get_subject(self):
+    def _get_subject_ordered(self):
         return self.__get_name(self.csr.get_subject())
 
     def _get_extension(self, short_name):
