@@ -5,6 +5,19 @@
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token | default(omit) }}"
   block:
+    # ============================================================
+    #   PREPARATION
+    #
+    # IAM Roles completes before the Role is fully instantiated, create it here
+    # to ensure it exists when we need it for updating the policies
+    - name: create an IAM role that can do nothing
+      iam_role:
+        name: "{{ resource_prefix }}-kms-role"
+        state: present
+        assume_role_policy_document: '{"Version": "2012-10-17", "Statement": {"Action": "sts:AssumeRole", "Principal": {"Service": "ec2.amazonaws.com"}, "Effect": "Deny"} }'
+      register: iam_role_result
+    # ============================================================
+    #   TESTS
     - name: See whether key exists and its current state
       aws_kms_info:
         filters:
@@ -36,12 +49,6 @@
         that:
           - new_key["keys"]|length == 1
 
-    - name: create an IAM role that can do nothing
-      iam_role:
-        name: "{{ resource_prefix }}-kms-role"
-        state: present
-        assume_role_policy_document: '{"Version": "2012-10-17", "Statement": {"Action": "sts:AssumeRole", "Principal": {"Service": "ec2.amazonaws.com"}, "Effect": "Deny"} }'
-      register: iam_role_result
 
     - name: grant user-style access to production secrets
       aws_kms:
@@ -284,8 +291,8 @@
           - undelete_kms.changed
 
   always:
-
     # ============================================================
+    #   CLEAN-UP
     - name: finish off by deleting key
       aws_kms:
         state: absent
