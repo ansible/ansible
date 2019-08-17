@@ -15,25 +15,25 @@
 - name: Validate public key - OpenSSH format (test - privatekey's publickey)
   shell: 'ssh-keygen -y -f {{ output_dir }}/privatekey.pem'
   register: privatekey_publickey
-  when: cryptography_version.stdout is version('1.4.0', '>=')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('1.4.0', '>=')
 
 - name: Validate public key - OpenSSH format  (test - publickey)
   slurp:
     src: '{{ output_dir }}/publickey-ssh.pub'
   register: publickey
-  when: cryptography_version.stdout is version('1.4.0', '>=')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('1.4.0', '>=')
 
 - name: Validate public key - OpenSSH format (assert)
   assert:
     that:
       - privatekey_publickey.stdout == '{{ publickey.content|b64decode }}'
-  when: cryptography_version.stdout is version('1.4.0', '>=')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('1.4.0', '>=')
 
 - name: Validate public key - OpenSSH format - test idempotence (issue 33256)
   assert:
     that:
       - publickey_ssh_idempotence is not changed
-  when: cryptography_version.stdout is version('1.4.0', '>=')
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('1.4.0', '>=')
 
 - name: Validate publickey2 (test - Ensure key has been removed)
   stat:
