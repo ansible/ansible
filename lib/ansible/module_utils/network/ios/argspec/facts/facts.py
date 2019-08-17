@@ -22,7 +22,9 @@ class FactsArgs(object):
         'all',
         '!all',
         'interfaces',
-        '!interfaces'
+        '!interfaces',
+        'l2_interfaces',
+        '!l2_interfaces'
     ]
 
     argument_spec = {
