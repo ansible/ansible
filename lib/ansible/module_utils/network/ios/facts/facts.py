@@ -16,6 +16,7 @@ __metaclass__ = type
 from ansible.module_utils.network.ios.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.ios.facts.interfaces.interfaces import InterfacesFacts
+from ansible.module_utils.network.ios.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
 from ansible.module_utils.network.ios.facts.legacy.base import Default, Hardware, Interfaces, Config
 
 
@@ -28,6 +29,7 @@ FACT_LEGACY_SUBSETS = dict(
 
 FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
+    l2_interfaces=L2_InterfacesFacts,
 )
 
 
