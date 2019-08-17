@@ -8,13 +8,13 @@ DOCUMENTATION = '''
     description:
         - In comparison to host_group_vars plugin, this plugin traverses the `r_group_vars` directory
           and instead of matching all files and directories within the first matching directory it
-          traverses the directory tree and recursively matches directories and files during directory
-          traversal to groups.
-        - In a directory first matching files are applied and then matching directories traversed.
-          The existing priorities for groups apply for both files and directories.
-        - If several matching directories are found on the same level they are traversed consecutively
-          in a depth-first fashion.
-        - The deepest found matching file is applied last.
+          traverses the directory tree and recursively matches directories and files to groups during
+          directory traversal.
+        - During traversal in a directory first matching files are applied and then matching directories
+          traversed. The existing priorities for groups apply for both files and directories,
+          respectively.
+        - If several matching directories are found on the same directory level they are traversed
+          consecutively in a depth-first fashion.
         - Only files that match a group name are applied. Any other files are ignored.
         - The following points are identical to host_group_vars plugin -
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
