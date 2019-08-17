@@ -41,7 +41,9 @@ class L2_InterfacesArgs(object):
                                                        },
                                             'trunk': {'type': 'dict',
                                                       'options': {'allowed_vlans': {'type': 'list'},
-                                                                  'encapsulation': {'type': 'str'},
+                                                                  'encapsulation': {'type': 'str',
+                                                                                    'choices':
+                                                                                        ['dot1q', 'isl', 'negotiate']},
                                                                   'native_vlan': {'type': 'int'},
                                                                   'pruning_vlans': {'type': 'list'}}
                                                       }},
