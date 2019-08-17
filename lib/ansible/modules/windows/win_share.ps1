@@ -47,7 +47,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
-$appendRules = Get-AnsibleParam -obj $params -name "appendRules" -type "bool" -default $false
+$rule_action  = Get-AnsibleParam -obj $params -name "rule_action " -type "str" -default "replace" -validateset "replace","remove","append"
 
 if (-not (Get-Command -Name Get-SmbShare -ErrorAction SilentlyContinue)) {
     Fail-Json $result "The current host does not support the -SmbShare cmdlets required by this module. Please run on Server 2012 or Windows 8 and later"
@@ -152,7 +152,7 @@ If ($state -eq "absent") {
 
     # remove permissions
     $permissions = Get-SmbShareAccess -Name $name
-    if(-not $appendRules) {
+    if($rule_action -eq "replace") {
         ForEach ($permission in $permissions) {
             If ($permission.AccessControlType -eq "Deny") {
                 $cim_count = 0

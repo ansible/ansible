@@ -75,10 +75,11 @@ options:
     type: bool
     default: no
     version_added: "2.4"
-  appendRules:
-    description: Sets whether to add or replace access control entries
-    type: bool
-    default: no
+  rule_action:
+    description: Whether to append or replace access control entries.
+    type: str
+    choices: [ replace, append ]
+    default: replace
     version_added: "2.9"
 author:
   - Hans-Joachim Kliemeck (@h0nIg)

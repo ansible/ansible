@@ -404,7 +404,7 @@
     state: present
     path: "{{test_win_share_path}}"
     change: Remote Desktop Users
-    appendRules: yes
+    rule_action: append
   register: append_acl
 
 - name: get actual share ACLs
