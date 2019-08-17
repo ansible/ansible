@@ -256,7 +256,7 @@ def main():
         payload = dict(
             name=bd,
             displayName=display_name,
-            intersiteBumTraffic=intersite_bum_traffic,
+            intersiteBumTrafficAllow=intersite_bum_traffic,
             optimizeWanBandwidth=optimize_wan_bandwidth,
             l2UnknownUnicast=layer2_unknown_unicast,
             l2Stretch=layer2_stretch,
