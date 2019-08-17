@@ -11,7 +11,7 @@ $params = Parse-Args $args -supports_check_mode $true
 $drive_letter = Get-AnsibleParam -obj $params -name 'drive_letter' -type 'str' -failifempty $true
 $state = Get-AnsibleParam -obj $params -name 'state' -type 'str' -default 'present'
 $settings = Get-AnsibleParam -obj $params -name 'settings' -type 'dict' -default $null
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type 'bool' -default $false
 
 $result = @{
   changed = $false
@@ -38,7 +38,7 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
   }
 
   if ( $state -ne $current_state ) {
-		if(!$check_mode) {
+		if( -not $check_mode) {
 			if($state -eq 'present') {
 				# Enable-DedupVolume -Volume <String>
 				Enable-DedupVolume -Volume "$($volume.DriveLetter):"
@@ -92,7 +92,7 @@ function Set-DataDedupJobSettings ($volume, $settings) {
       #                 -NoCompress <bool> `
       #                 -MinimumFileAgeDays <UInt32> `
       #                 -MinimumFileSize <UInt32> (minimum 32768)
-			if(!$check_mode) {
+			if( -not $check_mode) {
 				Set-DedupVolume -Volume "$($volume.DriveLetter):" @command_param
 			}
 			$result.msg += " Setting DedupVolume settings for $update_key"
