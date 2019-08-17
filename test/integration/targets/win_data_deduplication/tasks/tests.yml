@@ -8,7 +8,7 @@
       no_compress: true
       minimum_file_age_days: 2
       minimum_file_size: 0
-    check_mode: yes
+  check_mode: yes
   register: win_data_deduplication_enable_check_mode
 
 - name: Check that it was successful with a change - check mode
