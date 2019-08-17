@@ -35,6 +35,7 @@ from ansible.module_utils.common.dict_transformations import dict_merge
 try:
     import yaml
     from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError, ForbiddenError, KubernetesValidateMissing
+    import urllib3
 except ImportError:
     # Exceptions handled in common
     pass
@@ -159,7 +160,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
     def execute_module(self):
         changed = False
         results = []
-        self.client = self.get_api_client()
+        try:
+            self.client = self.get_api_client()
+        # Hopefully the kubernetes client will provide its own exception class one day
+        except (urllib3.exceptions.RequestError) as e:
+            self.fail_json(msg="Couldn't connect to Kubernetes: %s" % str(e))
 
         flattened_definitions = []
         for definition in self.resource_definitions:
