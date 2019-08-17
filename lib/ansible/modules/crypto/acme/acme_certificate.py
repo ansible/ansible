@@ -246,6 +246,20 @@ options:
           - "If I(subject) is empty, any certificate will match."
           - 'An example value would be C({"CN": "My Preferred CA Intermediate"})'
         type: dict
+      subject_key_identifier:
+        description:
+          - "Checks for the SubjectKeyIdentifier extension. This is an identifier based
+             on the private key of the intermediate certificate."
+          - "The identifier must be of the form
+             C(A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1)."
+        type: str
+      authority_key_identifier:
+        description:
+          - "Checks for the AuthorityKeyIdentifier extension. This is an identifier based
+             on the private key of the issuer of the intermediate certificate."
+          - "The identifier must be of the form
+             C(C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10)."
+        type: str
 '''
 
 EXAMPLES = r'''
@@ -495,6 +509,7 @@ from ansible.module_utils.acme import (
 )
 
 import base64
+import binascii
 import hashlib
 import os
 import re
@@ -981,6 +996,12 @@ class ACMEClient(object):
                 identifier_type, identifier = type_identifier.split(':', 1)
                 self._validate_challenges(identifier_type, identifier, auth)
 
+    def _key_identifier_matches(self, identifier_str, identifier_bytes):
+        if identifier_bytes is None:
+            return False
+        b = binascii.unhexlify(identifier_str.replace(':', ''))
+        return b == identifier_bytes
+
     def _chain_matches(self, chain, criterium):
         if criterium['test_certificates'] == 'last':
             chain = chain[-1:]
@@ -1012,6 +1033,20 @@ class ACMEClient(object):
                         if not found:
                             matches = False
                             break
+                if criterium['subject_key_identifier']:
+                    try:
+                        ext = x509.extensions.get_extension_for_class(cryptography.x509.SubjectKeyIdentifier)
+                        if not self._key_identifier_matches(criterium['subject_key_identifier'], ext.digest):
+                            matches = False
+                    except cryptography.x509.ExtensionNotFound:
+                        matches = False
+                if criterium['authority_key_identifier']:
+                    try:
+                        ext = x509.extensions.get_extension_for_class(cryptography.x509.AuthorityKeyIdentifier)
+                        if not self._key_identifier_matches(criterium['authority_key_identifier'], ext.key_identifier):
+                            matches = False
+                    except cryptography.x509.ExtensionNotFound:
+                        matches = False
                 if matches:
                     return True
             except Exception as e:
@@ -1064,15 +1099,18 @@ class ACMEClient(object):
 
                 if self.module.params['select_alternate_chain']:
                     matching_chain = None
-                    for criterium in self.module.params['select_alternate_chain']:
+                    for criterium_idx, criterium in enumerate(self.module.params['select_alternate_chain']):
                         for alt_chain in alternate_chains:
                             if self._chain_matches(alt_chain.get('chain', []), criterium):
+                                self.module.debug('Found matching alternative chain for criterium {0}'.format(criterium_idx))
                                 matching_chain = alt_chain
                                 break
                         if matching_chain:
                             break
                     if matching_chain:
                         cert.update(matching_chain)
+                    else:
+                        self.module.debug('Found no matching alternative chain')
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
@@ -1138,6 +1176,8 @@ def main():
             test_certificates=dict(type='str', default='all', choices=['last', 'all']),
             issuer=dict(type='dict'),
             subject=dict(type='dict'),
+            subject_key_identifier=dict(type='str'),
+            authority_key_identifier=dict(type='str'),
         )),
     ))
     module = AnsibleModule(
