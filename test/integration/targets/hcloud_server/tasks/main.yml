@@ -279,7 +279,7 @@
       - ci@ansible.hetzner.cloud
     state: started
   register: main_server
-- name: verify create server
+- name: verify create server with ssh key
   assert:
     that:
       - main_server is changed
@@ -287,6 +287,115 @@
       - main_server.hcloud_server.server_type == "cx11"
       - main_server.hcloud_server.status == "running"
       - main_server.root_password != ""
+
+- name: absent server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify absent server
+  assert:
+    that:
+    - result is success
+
+- name: test create server with rescue_mode
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    rescue_mode: "linux64"
+    state: started
+  register: main_server
+- name: verify create server with rescue_mode
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.name == "{{ hcloud_server_name }}"
+      - main_server.hcloud_server.server_type == "cx11"
+      - main_server.hcloud_server.status == "running"
+      - main_server.root_password != ""
+      - main_server.hcloud_server.rescue_enabled is sameas true
+
+- name: absent server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify absent server
+  assert:
+    that:
+    - result is success
+
+- name: setup server
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: ubuntu-18.04
+    state: started
+  register: main_server
+- name: verify setup server
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.name == "{{ hcloud_server_name }}"
+      - main_server.hcloud_server.server_type == "cx11"
+      - main_server.hcloud_server.status == "running"
+      - main_server.root_password != ""
+
+- name: test activate rescue mode with check_mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    rescue_mode: "linux64"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: present
+  register: main_server
+  check_mode: true
+- name: verify activate rescue mode
+  assert:
+    that:
+      - main_server is changed
+
+- name: test activate rescue mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    rescue_mode: "linux64"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: present
+  register: main_server
+- name: verify activate rescue mode
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.rescue_enabled is sameas true
+
+- name: test disable rescue mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: present
+  register: main_server
+- name: verify activate rescue mode
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.rescue_enabled is sameas false
+
+- name: test activate rescue mode without ssh keys
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    rescue_mode: "linux64"
+    state: present
+  register: main_server
+- name: verify activate rescue mode without ssh keys
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.rescue_enabled is sameas true
 
 - name: cleanup
   hcloud_server:
@@ -335,7 +444,6 @@
       - main_server is changed
       - main_server.hcloud_server.labels.key == "other"
       - main_server.hcloud_server.labels.mylabel == "val123"
-
 
 - name: test update server with labels in other order
   hcloud_server:
