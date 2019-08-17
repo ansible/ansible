@@ -3,7 +3,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     vars: recursive_group_vars
-    version_added: "?"
+    version_added: "2.9"
     short_description: Loads r_group_vars recursively
     description:
         - In comparison to host_group_vars plugin, this plugin traverses the `r_group_vars` directory
