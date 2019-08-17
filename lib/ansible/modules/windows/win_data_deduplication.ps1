@@ -15,7 +15,8 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default
 
 $result = @{
   changed = $false
-  reboot_required= $false
+  reboot_required = $false
+	msg = ""
 }
 
 function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
@@ -115,9 +116,6 @@ if(!$check_mode) {
 
 $volume = Get-Volume -DriveLetter $drive_letter
 
-if ($null -ne $volume) {
-  $result.msg += "Start setting FileDeduplication"
-  Set-DataDeduplication -volume $volume -state $state -settings $settings -dedup_job $dedup_job
-}
+Set-DataDeduplication -volume $volume -state $state -settings $settings -dedup_job $dedup_job
 
 Exit-Json -obj $result
