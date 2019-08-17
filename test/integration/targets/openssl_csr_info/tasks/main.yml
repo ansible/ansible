@@ -21,7 +21,9 @@
       ST: Zurich
       streetAddress: Welcome Street
       O: Ansible
-      organizationalUnitName: Crypto Department
+      organizationalUnitName:
+        - Crypto Department
+        - ACME Department
       serialNumber: "1234"
       SN: Last Name
       GN: First Name

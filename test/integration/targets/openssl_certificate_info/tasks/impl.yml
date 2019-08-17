@@ -8,6 +8,16 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result
 
+- name: Check whether issuer and subject behave as expected
+  assert:
+    that:
+      - result.issuer.organizationalUnitName == 'ACME Department'
+      - "['organizationalUnitName', 'Crypto Department'] in result.issuer_ordered"
+      - "['organizationalUnitName', 'ACME Department'] in result.issuer_ordered"
+      - result.subject.organizationalUnitName == 'ACME Department'
+      - "['organizationalUnitName', 'Crypto Department'] in result.subject_ordered"
+      - "['organizationalUnitName', 'ACME Department'] in result.subject_ordered"
+
 - name: Update result list
   set_fact:
     info_results: "{{ info_results + [result] }}"
