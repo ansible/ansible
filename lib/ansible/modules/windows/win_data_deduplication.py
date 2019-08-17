@@ -72,18 +72,16 @@ EXAMPLES = r'''
 - name: Enable Data Deduplication on D
   win_data_deduplication:
     drive_letter: 'D'
-    enabled: true
+    state: present
 
 - name: Enable Data Deduplication on D
   win_data_deduplication:
     drive_letter: 'D'
-    enabled: true
+    state: present
     settings:
-      - NoCompress: true
-      - MinimumFileAgeDays: 1
-      - MinimumFileSize: 0
-    dedup_job:
-      - Type: 'Optimization'
+      no_compress: true
+      minimum_file_age_days: 1
+      minimum_file_size: 0
 '''
 
 RETURN = r'''
