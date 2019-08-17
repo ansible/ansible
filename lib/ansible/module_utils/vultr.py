@@ -23,6 +23,7 @@ def vultr_argument_spec():
         api_key=dict(type='str', default=os.environ.get('VULTR_API_KEY'), no_log=True),
         api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT')),
         api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES')),
+        api_retry_max_delay=dict(type='int', default=os.environ.get('VULTR_API_RETRY_MAX_DELAY')),
         api_account=dict(type='str', default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
         api_endpoint=dict(type='str', default=os.environ.get('VULTR_API_ENDPOINT')),
         validate_certs=dict(type='bool', default=True),
@@ -60,6 +61,7 @@ class Vultr:
                 'api_key': self.module.params.get('api_key') or config.get('key'),
                 'api_timeout': self.module.params.get('api_timeout') or int(config.get('timeout') or 60),
                 'api_retries': self.module.params.get('api_retries') or int(config.get('retries') or 5),
+                'api_retry_max_delay': self.module.params.get('api_retries') or int(config.get('retry_max_delay') or 12),
                 'api_endpoint': self.module.params.get('api_endpoint') or config.get('endpoint') or VULTR_API_ENDPOINT,
             }
         except ValueError as e:
@@ -75,6 +77,7 @@ class Vultr:
             'api_account': self.module.params.get('api_account'),
             'api_timeout': self.api_config['api_timeout'],
             'api_retries': self.api_config['api_retries'],
+            'api_retry_max_delay': self.api_config['api_retry_max_delay'],
             'api_endpoint': self.api_config['api_endpoint'],
         }
 
@@ -86,7 +89,7 @@ class Vultr:
         }
 
     def read_env_variables(self):
-        keys = ['key', 'timeout', 'retries', 'endpoint']
+        keys = ['key', 'timeout', 'retries', 'retry_max_delay', 'endpoint']
         env_conf = {}
         for key in keys:
             if 'VULTR_API_%s' % key.upper() not in os.environ:
@@ -160,7 +163,7 @@ class Vultr:
             except AttributeError:
                 data = urllib.parse.urlencode(data_encoded) + data_list
 
-        max_fail_sleep = 12
+        retry_max_delay = self.api_config['api_retry_max_delay']
         randint = random.randint(0, 1000) / 1000
 
         for retry in range(0, self.api_config['api_retries']):
@@ -178,10 +181,10 @@ class Vultr:
 
             # Vultr has a rate limiting requests per second, try to be polite
             # Use exponential backoff plus a little bit of randomness
-            fail_sleep = 2 ** retry + randint
-            if fail_sleep > max_fail_sleep:
-                fail_sleep = max_fail_sleep + randint
-            time.sleep(fail_sleep)
+            delay = 2 ** retry + randint
+            if delay > retry_max_delay:
+                delay = retry_max_delay + randint
+            time.sleep(delay)
 
         else:
             self.fail_json(msg="Reached API retries limit %s for URL %s, method %s with data %s. Returned %s, with body: %s %s" % (
