@@ -1,0 +1,11 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AnsibleUnitTest",
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::{{aws_account}}:role/{{ test_role.iam_role.arn }}"
+        }
+    ]
+}

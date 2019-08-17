@@ -47,6 +47,21 @@
         seconds: 30
 
     # ============================================================
+    - name: create test iam policy
+      iam_managed_policy:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        policy_name: "ansible-test-sts-policy-{{ resource_prefix }}"
+        policy: "{{ lookup('template','policy.json.j2') }}"
+        state: present
+      register: test_policy
+    # ============================================================
+    - name: pause to ensure policy exists before using
+      pause:
+        seconds: 30
+
+    # ============================================================
     - name: test with no parameters
       sts_assume_role:
       register: result
@@ -301,6 +316,34 @@
       when: result.module_stderr is defined
 
     # ============================================================
+    - name: test assume not existing sts policy
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        policy_arns:
+          - arn: "arn:aws:iam:123456789:policy/non-existing-policy"
+        role_session_name: AnsibleTest
+      register: result
+      ignore_errors: true
+
+    - name: assert assume not existing sts policy
+      assert:
+        that:
+          - 'result.failed'
+          - "'specified ARN in the PolicyArns parameter is not valid' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert assume not existing sts policy
+      assert:
+        that:
+          - 'result.failed'
+          - "'specified ARN in the PolicyArns parameter is not valid' in result.module_stderr"
+      when: result.module_stderr is defined
+
+  # ============================================================
     - name: test assume role
       sts_assume_role:
         aws_access_key: "{{ aws_access_key }}"
@@ -370,7 +413,67 @@
       when: result.module_stderr is defined
 
     # ============================================================
+    - name: test assume role
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        role_session_name: AnsibleTest
+        policy_arns:
+          - arn: "{{test_policy.policy.arn}}"
+      register: assumed_role
+
+    - name: assert assume role
+      assert:
+        that:
+        - 'not assumed_role.failed'
+        - "'sts_creds' in assumed_role"
+        - "'access_key' in assumed_role.sts_creds"
+        - "'secret_key' in assumed_role.sts_creds"
+        - "'session_token' in assumed_role.sts_creds"
+
+    - name: test that assumed credentials have no access with the policy
+      iam_role:
+        aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+        aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+        security_token: "{{ assumed_role.sts_creds.session_token }}"
+        region: "{{ aws_region}}"
+        name: "ansible-test-sts-{{ resource_prefix }}"
+        assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
+        create_instance_profile: False
+        state: present
+      register: result
+      ignore_errors: true
+
+    - name: assert assumed role with limited permissions
+      assert:
+        that:
+          - 'result.failed'
+          - "'is not authorized to perform: iam:GetRole' in result.msg"
+      # runs on Python2
+      when: result.module_stderr is not defined
+
+    - name: assert assumed role with limited permissions
+      assert:
+        that:
+          - 'result.failed'
+          - "'is not authorized to perform: iam:GetRole' in result.msg"
+      # runs on Python3
+      when: result.module_stderr is defined
+
+    # ============================================================
   always:
+
+    - name: delete test iam policy
+      iam_managed_policy:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        policy_name: "ansible-test-sts-policy-{{ resource_prefix }}"
+        policy: "{{ lookup('template','policy2.json.j2') }}"
+        state: absent
 
     - name: delete test iam role
       iam_role:

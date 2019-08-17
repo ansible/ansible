@@ -34,6 +34,12 @@ options:
   policy:
     description:
       - Supplemental policy to use in addition to assumed role's policies.
+  policy_arns:
+    description:
+      - The ARN of the IAM managed policies that you want to use as managed session policies.
+        The policies must exist in the same account as the role.
+        You can provide up to 10 managed policy ARNs.
+        However, the plain text that you use for both inline and  managed  session  policies  shouldn't  exceed 2048 characters.
   duration_seconds:
     description:
       - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 43200 seconds (12 hours).
@@ -101,6 +107,13 @@ ec2_tag:
   tags:
     MyNewTag: value
 
+# Get an STS token limited to the policy policyS3ReadOnly
+sts_assume_role:
+  role_arn: "arn:aws:iam::123456789012:role/someRole"
+  role_session_name: "someRoleSession"
+  policy_arns:
+    - arn: "arn:aws:iam::123456789012:role/policyS3ReadOnly"
+register: assumed_role
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -133,6 +146,7 @@ def assume_role_policy(connection, module):
         'RoleArn': module.params.get('role_arn'),
         'RoleSessionName': module.params.get('role_session_name'),
         'Policy': module.params.get('policy'),
+        'PolicyArns': module.params.get('policy_arns'),
         'DurationSeconds': module.params.get('duration_seconds'),
         'ExternalId': module.params.get('external_id'),
         'SerialNumber': module.params.get('mfa_serial_number'),
@@ -161,6 +175,7 @@ def main():
             duration_seconds=dict(required=False, default=None, type='int'),
             external_id=dict(required=False, default=None),
             policy=dict(required=False, default=None),
+            policy_arns=dict(type='list',required=False, default=None),
             mfa_serial_number=dict(required=False, default=None),
             mfa_token=dict(required=False, default=None)
         )
