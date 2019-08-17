@@ -17,7 +17,7 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.junos.junos import locked_config, load_config, commit_configuration, discard_changes, tostring
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.junos.facts.facts import Facts
-from ansible.module_utils.network.common.netconf import build_root_xml_node, build_child_xml_node, build_subtree
+from ansible.module_utils.network.common.netconf import build_root_xml_node, build_child_xml_node
 
 
 class Lldp_global(ConfigBase):

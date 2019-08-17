@@ -14,7 +14,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, get_xml_conf_arg
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.junos.facts.facts import Facts
 from ansible.module_utils.network.junos.junos import locked_config, load_config, commit_configuration, discard_changes, tostring
 from ansible.module_utils.network.common.netconf import build_root_xml_node, build_child_xml_node, build_subtree
@@ -47,32 +47,6 @@ class Lacp_interfaces(ConfigBase):
         if not lacp_interfaces_facts:
             return []
         return lacp_interfaces_facts
-
-    def execute_module(self):
-        """ Execute the module
-        :rtype: A dictionary
-        :returns: The result from module execution
-        """
-        result = {'changed': False}
-        commands = list()
-        warnings = list()
-
-        existing_lacp_interfaces_facts = self.get_lacp_interfaces_facts()
-        commands.extend(self.set_config(existing_lacp_interfaces_facts))
-        if commands:
-            if not self._module.check_mode:
-                self._connection.edit_config(commands)
-            result['changed'] = True
-        result['commands'] = commands
-
-        changed_lacp_interfaces_facts = self.get_lacp_interfaces_facts()
-
-        result['before'] = existing_lacp_interfaces_facts
-        if result['changed']:
-            result['after'] = changed_lacp_interfaces_facts
-
-        result['warnings'] = warnings
-        return result
 
     def execute_module(self):
         """ Execute the module
