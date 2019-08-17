@@ -997,6 +997,9 @@ class ACMEClient(object):
                 self._validate_challenges(identifier_type, identifier, auth)
 
     def _chain_matches(self, chain, criterium):
+        '''
+        Check whether an alternate chain matches the specified criterium.
+        '''
         if criterium['test_certificates'] == 'last':
             chain = chain[-1:]
         for cert in chain:
@@ -1068,6 +1071,7 @@ class ACMEClient(object):
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
             if self.module.params['retrieve_all_alternates'] or self.module.params['select_alternate_chain']:
+                # Retrieve alternate chains
                 alternate_chains = []
                 for alternate in cert['alternates']:
                     try:
@@ -1077,6 +1081,7 @@ class ACMEClient(object):
                         continue
                     alternate_chains.append(alt_cert)
 
+                # Prepare return value for all alternate chains
                 if self.module.params['retrieve_all_alternates']:
                     self.all_chains = []
 
@@ -1091,6 +1096,7 @@ class ACMEClient(object):
                     for alt_chain in alternate_chains:
                         _append_all_chains(alt_chain)
 
+                # Try to select alternate chain depending on criteria
                 if self.module.params['select_alternate_chain']:
                     matching_chain = None
                     for criterium_idx, criterium in enumerate(self.module.params['select_alternate_chain']):
