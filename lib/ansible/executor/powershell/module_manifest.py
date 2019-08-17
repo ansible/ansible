@@ -275,6 +275,9 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
         finder.scan_exec_script('coverage_wrapper')
         coverage_manifest['output'] = coverage_output
 
+        coverage_whitelist = C.config.get_config_value('COVERAGE_REMOTE_WHITELIST', variables=task_vars)
+        coverage_manifest['whitelist'] = coverage_whitelist
+
     # make sure Ansible.ModuleUtils.AddType is added if any C# utils are used
     if len(finder.cs_utils_wrapper) > 0 or len(finder.cs_utils_module) > 0:
         finder._add_module((b"Ansible.ModuleUtils.AddType", ".psm1"),

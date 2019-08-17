@@ -54,6 +54,20 @@ Function New-CoverageBreakpoint {
     $info
 }
 
+Function Compare-WhitelistPattern {
+    Param (
+        [String[]]$Patterns,
+        [String]$Path
+    )
+
+    foreach ($pattern in $Patterns) {
+        if ($Path -like $pattern) {
+            return $true
+        }
+    }
+    return $false
+}
+
 $module_name = $Payload.module_args["_ansible_module_name"]
 Write-AnsibleLog "INFO - building coverage payload for '$module_name'" "coverage_wrapper"
 
@@ -66,6 +80,8 @@ $breakpoint_info = [System.Collections.Generic.List`1[PSObject]]@()
 
 try {
     $scripts = [System.Collections.Generic.List`1[System.Object]]@($script:common_functions)
+
+    $coverage_whitelist = $Payload.coverage.whitelist.Split(":", [StringSplitOptions]::RemoveEmptyEntries)
 
     # We need to track what utils have already been added to the script for loading. This is because the load
     # order is important and can have module_utils that rely on other utils.
@@ -83,13 +99,16 @@ try {
         Write-AnsibleLog "INFO - Outputting module_util $util_name to temp file '$util_path'" "coverage_wrapper"
         Set-Content -LiteralPath $util_path -Value $util_code
 
-        $cov_params = @{
-            Path = $util_path
-            Code = $util_sb
-            AnsiblePath = $Payload.coverage.module_util_paths.$util_name
+        $ansible_path = $Payload.coverage.module_util_paths.$util_name
+        if ((Compare-WhitelistPattern -Patterns $coverage_whitelist -Path $ansible_path)) {
+            $cov_params = @{
+                Path = $util_path
+                Code = $util_sb
+                AnsiblePath = $ansible_path
+            }
+            $breakpoints = New-CoverageBreakpoint @cov_params
+            $breakpoint_info.Add($breakpoints)
         }
-        $breakpoints = New-CoverageBreakpoint @cov_params
-        $breakpoint_info.Add($breakpoints)
 
         if ($null -ne $util_sb.Ast.ScriptRequirements) {
             foreach ($required_util in $util_sb.Ast.ScriptRequirements.RequiredModules) {
@@ -109,13 +128,16 @@ try {
     Set-Content -LiteralPath $module_path -Value $module
     $scripts.Add($module_path)
 
-    $cov_params = @{
-        Path = $module_path
-        Code = [ScriptBlock]::Create($module)
-        AnsiblePath = $Payload.coverage.module_path
+    $ansible_path = $Payload.coverage.module_path
+    if ((Compare-WhitelistPattern -Patterns $coverage_whitelist -Path $ansible_path)) {
+        $cov_params = @{
+            Path = $module_path
+            Code = [ScriptBlock]::Create($module)
+            AnsiblePath = $Payload.coverage.module_path
+        }
+        $breakpoints = New-CoverageBreakpoint @cov_params
+        $breakpoint_info.Add($breakpoints)
     }
-    $breakpoints = New-CoverageBreakpoint @cov_params
-    $breakpoint_info.Add($breakpoints)
 
     $variables = [System.Collections.ArrayList]@(@{ Name = "complex_args"; Value = $Payload.module_args; Scope = "Global" })
     $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($payload.module_wrapper))
@@ -126,8 +148,11 @@ try {
         Variables = $variables
         Environment = $Payload.environment
         ModuleName = $module_name
-        Breakpoints = $breakpoint_info.Breakpoints
     }
+    if ($breakpoint_info) {
+        $params.Breakpoints = $breakpoint_info.Breakpoints
+    }
+
     try {
         &$entrypoint @params
     } finally {
