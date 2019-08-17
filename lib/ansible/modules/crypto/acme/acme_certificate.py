@@ -668,12 +668,10 @@ class ACMEClient(object):
         if info['status'] not in [200]:
             raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
 
-        order = info['location']
-
         status = result['status']
         while status not in ['valid', 'invalid']:
             time.sleep(2)
-            result, dummy = self.account.get_request(order)
+            result, dummy = self.account.get_request(self.order_uri)
             status = result['status']
 
         if status != 'valid':
