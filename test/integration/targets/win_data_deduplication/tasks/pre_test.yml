@@ -2,6 +2,20 @@
 - set_fact:
     AnsibleVhdx: '{{ remote_tmp_dir }}\AnsiblePart.vhdx'
 
+- name: Install FS-Data-Deduplication
+  win_feature:
+    name: FS-Data-Deduplication
+    include_sub_features: true
+    state: present
+  register: data_dedup_feat_reg
+
+- name: Reboot windows after the feature has been installed
+  win_reboot:
+    reboot_timeout: 3600
+  when:
+    - data_dedup_feat_reg.success
+    - data_dedup_feat_reg.reboot_required
+
 - name: Copy VHDX scripts
   win_template:
     src: "{{ item.src }}"
@@ -17,20 +31,6 @@
   win_format:
     drive_letter: T
     file_system: ntfs
-
-- name: Install FS-Data-Deduplication
-  win_feature:
-    name: FS-Data-Deduplication
-    include_sub_features: true
-    state: present
-  register: data_dedup_feat_reg
-
-- name: Reboot windows after the feature has been installed
-  win_reboot:
-    reboot_timeout: 3600
-  when:
-    - data_dedup_feat_reg.success
-    - data_dedup_feat_reg.reboot_required
 
 - name: Run tests
   block:
