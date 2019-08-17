@@ -2,7 +2,8 @@
     "disabled": true,
     "all_targets": true,
     "prefixes": [
-        "lib/ansible/"
+        "lib/ansible/",
+	"test"
     ],
     "output": "path-message"
 }
