@@ -15,8 +15,7 @@ version_added: "2.9"
 short_description: Module to enable Data Deduplication on a volume.
 description:
 - This module can be used to enable Data Deduplication on a Windows volume.
-- You have to have the FS-Data-Deduplication feature installed.
-- This module doesn't support check_mode due to a lack of WhatIf support.
+- The module will install the FS-Data-Deduplication feature (a reboot will be necessary).
 options:
   drive_letter:
     description:
@@ -27,24 +26,44 @@ options:
     description:
     - Wether to enable or disable data deduplication on the selected volume.
     required: yes
-    default: enabled
+    default: present
     type: str
-    choices: [ enabled, disabled ]
+    choices: [ present, absent ]
   settings:
     description:
-    - List of settings to pass to the Set-DedupVolume powershell command.
-    - Please see the Microsoft Powershell for Windows documentation for all the available options.
-    - MinimumFileSize will default to 32768 if not defined or if the value is less than 32768.
+    - Dictionary of settings to pass to the Set-DedupVolume powershell command.
     required: no
-    type: list
-  dedup_job:
-    description:
-    - Start a dedup job immediately.
-    - Type parameter is mandatory in case you want to run a dedup job.
-    - Please see the Microsoft Powershell for Windows documentation for all the available options.
-    - This option is not idempotent.
-    required: no
-    type: list
+    type: dict
+		suboptions:
+			minimum_file_size:
+				description:
+					- Minimum file size you want to target for deduplication.
+					- It will default to 32768 if not defined or if the value is less than 32768.
+				type: int
+				required: no
+			minimum_file_age_days:
+				description:
+					- Minimum file age you want to target for deduplication.
+				type: int
+				required: no
+			no_compress:
+				description:
+					- Wether you want to enabled filesystem compression or not.
+				required: no
+				type: bool
+			optimize_in_use_files:
+				description:
+					- Indicates that the server attempts to optimize currently open files.
+				required: no
+				type: bool
+			verify:
+				description:
+					- Indicates whether the deduplication engine performs a byte-for-byte verification for each duplicate chunk 
+						that optimization creates, rather than relying on a cryptographically strong hash.
+					- This option is not recommend.
+					- Setting this parameter to True can degrade optimization performance.
+				required: no
+				type: bool
 author:
 - rnsc (@rnsc)
 '''
