@@ -16,7 +16,7 @@ __metaclass__ = type
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
-from ansible.module_utils.network.ios.utils.utils import dict_diff
+from ansible.module_utils.network.ios.utils.utils import dict_to_set
 from ansible.module_utils.network.ios.utils.utils import remove_command_from_config_list, add_command_to_config_list
 from ansible.module_utils.network.ios.utils.utils import filter_dict_having_none_value, remove_duplicate_interface
 
@@ -231,8 +231,8 @@ class L2_Interfaces(ConfigBase):
         interface = 'interface ' + want['name']
 
         # Get the diff b/w want and have
-        want_dict = dict_diff(want)
-        have_dict = dict_diff(have)
+        want_dict = dict_to_set(want)
+        have_dict = dict_to_set(have)
         want_trunk = dict(want_dict).get('trunk')
         have_trunk = dict(have_dict).get('trunk')
         if want_trunk and have_trunk:

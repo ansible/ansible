@@ -65,7 +65,7 @@ options:
           vlan:
             description:
             - Configure given VLAN in access port. It's used as the access VLAN ID.
-          type: int
+            type: int
       trunk:
         description:
         - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
