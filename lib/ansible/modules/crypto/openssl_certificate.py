@@ -603,7 +603,11 @@ class Certificate(crypto_utils.OpenSSLObject):
     def get_relative_time_option(self, input_string, input_name):
         """Return an ASN1 formatted string if a relative timespec
            or an ASN1 formatted string is provided."""
-        result = input_string
+        result = to_native(input_string)
+        if result is None:
+            raise CertificateError(
+                'The timespec "%s" for %s is not valid' %
+                input_string, input_name)
         if result.startswith("+") or result.startswith("-"):
             result_datetime = crypto_utils.convert_relative_to_datetime(
                 result)
@@ -611,24 +615,18 @@ class Certificate(crypto_utils.OpenSSLObject):
                 return result_datetime.strftime("%Y%m%d%H%M%SZ")
             elif self.backend == 'cryptography':
                 return result_datetime
-        if result is None:
-            raise CertificateError(
-                'The timespec "%s" for %s is not valid' %
-                input_string, input_name)
         if self.backend == 'cryptography':
             for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
                 try:
-                    result = datetime.datetime.strptime(input_string, date_fmt)
-                    break
+                    return datetime.datetime.strptime(result, date_fmt)
                 except ValueError:
                     pass
 
-            if not isinstance(result, datetime.datetime):
-                raise CertificateError(
-                    'The time spec "%s" for %s is invalid' %
-                    (input_string, input_name)
-                )
-        return result
+            raise CertificateError(
+                'The time spec "%s" for %s is invalid' %
+                (input_string, input_name)
+            )
+        return input_string
 
     def _validate_privatekey(self):
         if self.backend == 'pyopenssl':
@@ -1365,7 +1363,7 @@ class AssertOnlyCertificateBase(Certificate):
 
         if self.invalid_at is not None:
             not_before, invalid_at, not_after = self._validate_invalid_at()
-            if (invalid_at <= not_before) or (invalid_at >= not_after):
+            if not_before <= invalid_at <= not_after:
                 messages.append(
                     'Certificate is not invalid for the specified date (%s) - not_before: %s - not_after: %s' %
                     (self.invalid_at, not_before, not_after)
@@ -1485,7 +1483,7 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
 
             key_usages = crypto_utils.cryptography_parse_key_usage_params(self.key_usage)
             if not compare_dicts(key_usages, test_key_usage, self.key_usage_strict):
-                return self.key_usage, [x for x in test_key_usage if x is True]
+                return self.key_usage, [k for k, v in test_key_usage.items() if v is True]
 
         except cryptography.x509.ExtensionNotFound:
             # This is only bad if the user specified a non-empty list
@@ -1527,7 +1525,7 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
         return self.cert.not_valid_before, rt, self.cert.not_valid_after
 
     def _validate_invalid_at(self):
-        rt = self.get_relative_time_option(self.valid_at, 'valid_at')
+        rt = self.get_relative_time_option(self.invalid_at, 'invalid_at')
         return self.cert.not_valid_before, rt, self.cert.not_valid_after
 
     def _validate_valid_in(self):
@@ -1629,9 +1627,9 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
             extension = self.cert.get_extension(extension_idx)
             if extension.get_short_name() == b'keyUsage':
                 found = True
-                key_usage = [OpenSSL._util.lib.OBJ_txt2nid(key_usage) for key_usage in self.key_usage]
-                current_ku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
-                              to_bytes(extension, errors='surrogate_or_strict').split(b',')]
+                expected_extension = crypto.X509Extension(b"keyUsage", False, b', '.join(self.key_usage))
+                key_usage = [usage.strip() for usage in to_text(expected_extension, errors='surrogate_or_strict').split(',')]
+                current_ku = [usage.strip() for usage in to_text(extension, errors='surrogate_or_strict').split(',')]
                 if not compare_sets(key_usage, current_ku, self.key_usage_strict):
                     return self.key_usage, str(extension).split(', ')
         if not found:
@@ -1688,10 +1686,14 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
         return self.cert.get_notAfter()
 
     def _validate_valid_at(self):
-        return self.cert.get_notBefore(), self.valid_at, self.cert.get_notAfter()
+        rt = self.get_relative_time_option(self.valid_at, "valid_at")
+        rt = to_bytes(rt, errors='surrogate_or_strict')
+        return self.cert.get_notBefore(), rt, self.cert.get_notAfter()
 
     def _validate_invalid_at(self):
-        return self.cert.get_notBefore(), self.valid_at, self.cert.get_notAfter()
+        rt = self.get_relative_time_option(self.invalid_at, "invalid_at")
+        rt = to_bytes(rt, errors='surrogate_or_strict')
+        return self.cert.get_notBefore(), rt, self.cert.get_notAfter()
 
     def _validate_valid_in(self):
         valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
