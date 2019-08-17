@@ -996,12 +996,6 @@ class ACMEClient(object):
                 identifier_type, identifier = type_identifier.split(':', 1)
                 self._validate_challenges(identifier_type, identifier, auth)
 
-    def _key_identifier_matches(self, identifier_str, identifier_bytes):
-        if identifier_bytes is None:
-            return False
-        b = binascii.unhexlify(identifier_str.replace(':', ''))
-        return b == identifier_bytes
-
     def _chain_matches(self, chain, criterium):
         if criterium['test_certificates'] == 'last':
             chain = chain[-1:]
@@ -1036,14 +1030,14 @@ class ACMEClient(object):
                 if criterium['subject_key_identifier']:
                     try:
                         ext = x509.extensions.get_extension_for_class(cryptography.x509.SubjectKeyIdentifier)
-                        if not self._key_identifier_matches(criterium['subject_key_identifier'], ext.digest):
+                        if criterium['subject_key_identifier'] != ext.digest:
                             matches = False
                     except cryptography.x509.ExtensionNotFound:
                         matches = False
                 if criterium['authority_key_identifier']:
                     try:
                         ext = x509.extensions.get_extension_for_class(cryptography.x509.AuthorityKeyIdentifier)
-                        if not self._key_identifier_matches(criterium['authority_key_identifier'], ext.key_identifier):
+                        if criterium['authority_key_identifier'] != ext.key_identifier:
                             matches = False
                     except cryptography.x509.ExtensionNotFound:
                         matches = False
@@ -1100,6 +1094,14 @@ class ACMEClient(object):
                 if self.module.params['select_alternate_chain']:
                     matching_chain = None
                     for criterium_idx, criterium in enumerate(self.module.params['select_alternate_chain']):
+                        for v in ('subject_key_identifier', 'authority_key_identifier'):
+                            if criterium[v]:
+                                try:
+                                    criterium[v] = binascii.unhexlify(criterium[v].replace(':', ''))
+                                except Exception:
+                                    self.module.warn('Criterium {0} in select_alternate_chain has invalid {1} value. '
+                                                     'Ignoring criterium.'.format(criterium_idx, v))
+                                    continue
                         for alt_chain in alternate_chains:
                             if self._chain_matches(alt_chain.get('chain', []), criterium):
                                 self.module.debug('Found matching alternative chain for criterium {0}'.format(criterium_idx))
