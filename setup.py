@@ -43,11 +43,36 @@ def _find_symlinks(topdir, extension=''):
             filepath = os.path.join(base_path, filename)
             if os.path.islink(filepath) and filename.endswith(extension):
                 target = os.readlink(filepath)
+                if target.startswith('/'):
+                    # We do not support absolute symlinks at all
+                    continue
+
                 if os.path.dirname(target) == '':
                     link = filepath[len(topdir):]
                     if link.startswith('/'):
                         link = link[1:]
                     symlinks[os.path.basename(target)].append(link)
+                else:
+                    # Count how many directory levels from the topdir we are
+                    levels_deep = os.path.dirname(filepath).count('/')
+
+                    # Count the number of directory levels higher we walk up the tree in target
+                    target_depth = 0
+                    for path_component in target.split('/'):
+                        if path_component == '..':
+                            target_depth += 1
+                            # If we walk past the topdir, then don't store
+                            if target_depth >= levels_deep:
+                                break
+                        else:
+                            target_depth -= 1
+                    else:
+                        # If we managed to stay within the tree, store the symlink
+                        link = filepath[len(topdir):]
+                        if link.startswith('/'):
+                            link = link[1:]
+                        symlinks[target].append(link)
+
     return symlinks
 
 
@@ -69,8 +94,11 @@ def _maintain_symlinks(symlink_type, base_path):
             # SYMLINKS_CACHE doesn't exist.  Fallback to trying to create the
             # cache now.  Will work if we're running directly from a git
             # checkout or from an sdist created earlier.
+            library_symlinks = _find_symlinks('lib', '.py')
+            library_symlinks.update(_find_symlinks('test/lib'))
+
             symlink_data = {'script': _find_symlinks('bin'),
-                            'library': _find_symlinks('lib', '.py'),
+                            'library': library_symlinks,
                             }
 
             # Sanity check that something we know should be a symlink was
@@ -129,8 +157,11 @@ class SDistCommand(SDist):
     def run(self):
         # have to generate the cache of symlinks for release as sdist is the
         # only command that has access to symlinks from the git repo
+        library_symlinks = _find_symlinks('lib', '.py')
+        library_symlinks.update(_find_symlinks('test/lib'))
+
         symlinks = {'script': _find_symlinks('bin'),
-                    'library': _find_symlinks('lib', '.py'),
+                    'library': library_symlinks,
                     }
         _cache_symlinks(symlinks)
 
@@ -254,28 +285,10 @@ static_setup_params = dict(
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
-    package_dir={'': 'lib'},
-    packages=find_packages('lib'),
-    package_data={
-        '': [
-            'executor/powershell/*.ps1',
-            'module_utils/csharp/*.cs',
-            'module_utils/csharp/*/*.cs',
-            'module_utils/powershell/*.psm1',
-            'module_utils/powershell/*/*.psm1',
-            'modules/windows/*.ps1',
-            'modules/windows/*/*.ps1',
-            'galaxy/data/*.*',
-            'galaxy/data/*/*.*',
-            'galaxy/data/*/.*',
-            'galaxy/data/*/*/.*',
-            'galaxy/data/*/*/*.*',
-            'galaxy/data/*/tests/inventory',
-            'galaxy/data/*/role/tests/inventory',
-            'config/base.yml',
-            'config/module_defaults.yml',
-        ],
-    },
+    package_dir={'': 'lib',
+                 'ansible_test': 'test/lib/ansible_test'},
+    packages=find_packages('lib') + find_packages('test/lib'),
+    include_package_data=True,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
@@ -306,6 +319,7 @@ static_setup_params = dict(
         'bin/ansible-vault',
         'bin/ansible-config',
         'bin/ansible-inventory',
+        'bin/ansible-test',
     ],
     data_files=[],
     # Installing as zip files would break due to references to __file__
