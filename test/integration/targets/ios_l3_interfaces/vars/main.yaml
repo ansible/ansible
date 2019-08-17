@@ -1,7 +1,10 @@
 ---
 merged:
   before:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - name: GigabitEthernet0/1
     - name: GigabitEthernet0/2
@@ -14,9 +17,11 @@ merged:
     - "ip address 192.168.3.2 255.255.255.0"
     - "ipv6 address fd5d:12c9:2201:1::1/64"
 
-
   after:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
       - address: dhcp
@@ -34,7 +39,10 @@ merged:
 
 replaced:
   before:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
       - address: dhcp
@@ -58,7 +66,10 @@ replaced:
     - "ip address 192.168.4.2 255.255.255.0"
 
   after:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
       - address: dhcp
@@ -75,7 +86,10 @@ replaced:
 
 overridden:
   before:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
       - address: dhcp
@@ -98,7 +112,10 @@ overridden:
     - "ip address 192.168.4.2 255.255.255.0"
 
   after:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - name: GigabitEthernet0/1
     - ipv4:
@@ -109,7 +126,10 @@ overridden:
 
 deleted:
   before:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
       - address: dhcp
@@ -131,7 +151,10 @@ deleted:
     - "no ip address"
 
   after:
-    - address: dhcp
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
       name: GigabitEthernet0/0
     - name: GigabitEthernet0/1
     - name: GigabitEthernet0/2
