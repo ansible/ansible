@@ -43,9 +43,9 @@ short_description: Manage Layer-2 interface on Cisco IOS devices.
 description: This module provides declarative management of Layer-2 interface on Cisco IOS devices.
 author: Sumit Jaiswal (@justjais)
 notes:
-- Tested against Cisco IOSv Version 15.2 on VIRL
-- This module works with connection C(network_cli).
-  See L(IOS Platform Options,../network/user_guide/platform_ios.html).
+  - Tested against Cisco IOSv Version 15.2 on VIRL
+  - This module works with connection C(network_cli).
+    See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
   config:
     description: A dictionary of Layer-2 interface options
@@ -60,6 +60,7 @@ options:
       access:
         description:
         - Switchport mode access command to configure the interface as a layer 2 access.
+        type: dict
         suboptions:
           vlan:
             description:
@@ -69,6 +70,7 @@ options:
         description:
         - Switchport mode trunk command to configure the interface as a Layer 2 trunk.
           Note The encapsulation is always set to dot1q.
+        type: dict
         suboptions:
           allowed_vlans:
             description:
@@ -321,12 +323,12 @@ before:
   description: The configuration prior to the model invocation
   returned: always
   type: list
-  sample: The configuration returned will alwys be in the same format of the paramters above.
+  sample: The configuration returned will always be in the same format of the paramters above.
 after:
   description: The resulting configuration model invocation
   returned: when changed
   type: list
-  sample: The configuration returned will alwys be in the same format of the paramters above.
+  sample: The configuration returned will always be in the same format of the paramters above.
 commands:
   description: The set of commands pushed to the remote device
   returned: always
