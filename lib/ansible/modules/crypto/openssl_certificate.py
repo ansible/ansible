@@ -632,7 +632,7 @@ EXAMPLES = r'''
       - result.public_key == result_privatekey.public_key
       # When CSR is specified for assertonly, this will be checked:
       - result.public_key == result_csr.public_key
-      - result.subject == result_csr.subject
+      - result.subject_ordered == result_csr.subject_ordered
       - result.extensions_by_oid == result_csr.extensions_by_oid
       # signature_algorithms check
       - "result.signature_algorithm == 'sha256WithRSAEncryption' or result.signature_algorithm == 'sha512WithRSAEncryption'"
