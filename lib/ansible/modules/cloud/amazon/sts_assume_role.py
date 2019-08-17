@@ -40,6 +40,7 @@ options:
         The policies must exist in the same account as the role.
         You can provide up to 10 managed policy ARNs.
         However, the plain text that you use for both inline and  managed  session  policies  shouldn't  exceed 2048 characters.
+    version_added: 2.9
   duration_seconds:
     description:
       - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 43200 seconds (12 hours).
@@ -92,28 +93,28 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Assume an existing role (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
-sts_assume_role:
-  role_arn: "arn:aws:iam::123456789012:role/someRole"
-  role_session_name: "someRoleSession"
-register: assumed_role
+- sts_assume_role:
+    role_arn: "arn:aws:iam::123456789012:role/someRole"
+    role_session_name: "someRoleSession"
+  register: assumed_role
 
 # Use the assumed role above to tag an instance in account 123456789012
-ec2_tag:
-  aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
-  aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
-  security_token: "{{ assumed_role.sts_creds.session_token }}"
-  resource: i-xyzxyz01
-  state: present
-  tags:
-    MyNewTag: value
+- ec2_tag:
+    aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+    aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+    security_token: "{{ assumed_role.sts_creds.session_token }}"
+    resource: i-xyzxyz01
+    state: present
+    tags:
+      MyNewTag: value
 
 # Get an STS token limited to the policy policyS3ReadOnly
-sts_assume_role:
-  role_arn: "arn:aws:iam::123456789012:role/someRole"
-  role_session_name: "someRoleSession"
-  policy_arns:
-    - arn: "arn:aws:iam::123456789012:role/policyS3ReadOnly"
-register: assumed_role
+- sts_assume_role:
+    role_arn: "arn:aws:iam::123456789012:role/someRole"
+    role_session_name: "someRoleSession"
+    policy_arns:
+      - arn: "arn:aws:iam::123456789012:role/policyS3ReadOnly"
+  register: assumed_role
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -175,7 +176,7 @@ def main():
             duration_seconds=dict(required=False, default=None, type='int'),
             external_id=dict(required=False, default=None),
             policy=dict(required=False, default=None),
-            policy_arns=dict(type='list',required=False, default=None),
+            policy_arns=dict(type='list', required=False, default=None),
             mfa_serial_number=dict(required=False, default=None),
             mfa_token=dict(required=False, default=None)
         )
