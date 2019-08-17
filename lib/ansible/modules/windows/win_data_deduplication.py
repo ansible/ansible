@@ -58,7 +58,7 @@ options:
         type: bool
       verify:
         description:
-          - Indicates whether the deduplication engine performs a byte-for-byte verification for each duplicate chunk 
+          - Indicates whether the deduplication engine performs a byte-for-byte verification for each duplicate chunk
             that optimization creates, rather than relying on a cryptographically strong hash.
           - This option is not recommend.
           - Setting this parameter to True can degrade optimization performance.
