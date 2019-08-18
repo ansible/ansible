@@ -1000,6 +1000,16 @@ class SelfSignedCertificateCryptography(Certificate):
         self.digest = crypto_utils.select_message_digest(module.params['selfsigned_digest'])
         self.version = module.params['selfsigned_version']
         self.serial_number = x509.random_serial_number()
+
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file {0} does not exist'.format(self.csr_path)
+            )
+        if not os.path.exists(self.privatekey_path):
+            raise CertificateError(
+                'The private key file {0} does not exist'.format(self.privatekey_path)
+            )
+
         self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
         self._module = module
 
@@ -1093,6 +1103,16 @@ class SelfSignedCertificate(Certificate):
         self.digest = module.params['selfsigned_digest']
         self.version = module.params['selfsigned_version']
         self.serial_number = randint(1000, 99999)
+
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file {0} does not exist'.format(self.csr_path)
+            )
+        if not os.path.exists(self.privatekey_path):
+            raise CertificateError(
+                'The private key file {0} does not exist'.format(self.privatekey_path)
+            )
+
         self.csr = crypto_utils.load_certificate_request(self.csr_path)
         try:
             self.privatekey = crypto_utils.load_privatekey(
@@ -1175,6 +1195,20 @@ class OwnCACertificateCryptography(Certificate):
         self.ca_cert_path = module.params['ownca_path']
         self.ca_privatekey_path = module.params['ownca_privatekey_path']
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
+
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file {0} does not exist'.format(self.csr_path)
+            )
+        if not os.path.exists(self.ca_cert_path):
+            raise CertificateError(
+                'The CA certificate file {0} does not exist'.format(self.ca_cert_path)
+            )
+        if not os.path.exists(self.ca_privatekey_path):
+            raise CertificateError(
+                'The CA private key file {0} does not exist'.format(self.ca_privatekey_path)
+            )
+
         self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
         self.ca_cert = crypto_utils.load_certificate(self.ca_cert_path, backend=self.backend)
         try:
@@ -1272,6 +1306,20 @@ class OwnCACertificate(Certificate):
         self.ca_cert_path = module.params['ownca_path']
         self.ca_privatekey_path = module.params['ownca_privatekey_path']
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
+
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file {0} does not exist'.format(self.csr_path)
+            )
+        if not os.path.exists(self.ca_cert_path):
+            raise CertificateError(
+                'The CA certificate file {0} does not exist'.format(self.ca_cert_path)
+            )
+        if not os.path.exists(self.ca_privatekey_path):
+            raise CertificateError(
+                'The CA private key file {0} does not exist'.format(self.ca_privatekey_path)
+            )
+
         self.csr = crypto_utils.load_certificate_request(self.csr_path)
         self.ca_cert = crypto_utils.load_certificate(self.ca_cert_path)
         try:
