@@ -300,6 +300,18 @@
           - delete_kms.key_state == "PendingDeletion"
           - delete_kms.changed
 
+    - name: re-delete the key
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: absent
+      register: delete_kms
+
+    - name: assert that state is pending deletion
+      assert:
+        that:
+          - delete_kms.key_state == "PendingDeletion"
+          - delete_kms is not changed
+
     - name: undelete and enable the key
       aws_kms:
         alias: "{{ resource_prefix }}-kms"
@@ -312,6 +324,17 @@
         that:
           - undelete_kms.key_state == "Enabled"
           - undelete_kms.changed
+
+    - name: delete a non-existant key
+      aws_kms:
+        key_id: '00000000-0000-0000-0000-000000000000'
+        state: absent
+      register: delete_kms
+
+    - name: assert that state is unchanged
+      assert:
+        that:
+          - delete_kms is not changed
 
   always:
     # ============================================================
