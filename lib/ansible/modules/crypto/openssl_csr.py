@@ -200,6 +200,47 @@ options:
         type: bool
         default: no
         version_added: "2.8"
+    create_subject_key_identifier:
+        description:
+            - Create the Subject Key Identifier from the public key.
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: bool
+        default: no
+        version_added: "2.9"
+    subject_key_identifier:
+        description:
+            - The subject key identifier as a hex string, where two bytes are separated by colons.
+            - "Example: C(00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33)"
+            - Note that this option can only be used if I(create_subject_key_identifier) is C(no).
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: str
+        version_added: "2.9"
+    authority_key_identifier:
+        description:
+            - The authority key identifier as a hex string, where two bytes are separated by colons.
+            - "Example: C(00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33)"
+            - Note that this is only supported if the C(cryptography) backend is used!
+            - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
+              I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
+        type: str
+        version_added: "2.9"
+    authority_cert_issuer:
+        description:
+            - Key/value pairs that will be present in the authority cert issuer field of the certificate signing request.
+            - If you need to specify more than one value with the same key, use a list as value.
+            - Note that this is only supported if the C(cryptography) backend is used!
+            - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
+              I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
+        type: dict
+        version_added: "2.9"
+    authority_cert_serial_number:
+        description:
+            - The authority cert serial number.
+            - Note that this is only supported if the C(cryptography) backend is used!
+            - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
+              I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
+        type: int
+        version_added: "2.9"
 extends_documentation_fragment:
 - files
 notes:
@@ -329,6 +370,7 @@ backup_file:
 '''
 
 import abc
+import binascii
 import os
 import traceback
 from distutils.version import LooseVersion
@@ -406,8 +448,16 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         self.basicConstraints_critical = module.params['basic_constraints_critical']
         self.ocspMustStaple = module.params['ocsp_must_staple']
         self.ocspMustStaple_critical = module.params['ocsp_must_staple_critical']
+        self.create_subject_key_identifier = module.params['create_subject_key_identifier']
+        self.subject_key_identifier = module.params['subject_key_identifier']
+        self.authority_key_identifier = module.params['authority_key_identifier']
+        self.authority_cert_issuer = module.params['authority_cert_issuer']
+        self.authority_cert_serial_number = module.params['authority_cert_serial_number']
         self.request = None
         self.privatekey = None
+
+        if self.create_subject_key_identifier and self.subject_key_identifier is not None:
+            module.fail_json(msg='subject_key_identifier cannot be specified if create_subject_key_identifier is true')
 
         self.backup = module.params['backup']
         self.backup_file = None
@@ -431,6 +481,21 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
                 if sub[0] in ('commonName', 'CN'):
                     self.subjectAltName = ['DNS:%s' % sub[1]]
                     break
+
+        if self.subject_key_identifier is not None:
+            try:
+                self.subject_key_identifier = binascii.unhexlify(self.subject_key_identifier.replace(':', ''))
+            except Exception as e:
+                raise CertificateSigningRequestError('Cannot parse subject_key_identifier: {0}'.format(e))
+
+        if self.authority_key_identifier is not None:
+            try:
+                self.authority_key_identifier = binascii.unhexlify(self.authority_key_identifier.replace(':', ''))
+            except Exception as e:
+                raise CertificateSigningRequestError('Cannot parse authority_key_identifier: {0}'.format(e))
+
+        if self.authority_cert_issuer is not None:
+            self.authority_cert_issuer = crypto_utils.parse_name_field(self.authority_cert_issuer)
 
     @abc.abstractmethod
     def _generate_csr(self):
@@ -496,6 +561,11 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
 class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
     def __init__(self, module):
+        if module.params['create_subject_key_identifier']:
+            module.fail_json(msg='You cannot use create_subject_key_identifier with the pyOpenSSL backend!')
+        for o in ('subject_key_identifier', 'authority_key_identifier', 'authority_cert_issuer', 'authority_cert_serial_number'):
+            if module.params[o] is not None:
+                module.fail_json(msg='You cannot use {0} with the pyOpenSSL backend!'.format(o))
         super(CertificateSigningRequestPyOpenSSL, self).__init__(module)
 
     def _generate_csr(self):
@@ -691,6 +761,29 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
                     critical=self.ocspMustStaple_critical
                 )
 
+        if self.create_subject_key_identifier:
+            csr = csr.add_extension(
+                cryptography.x509.SubjectKeyIdentifier.from_public_key(self.privatekey.public_key()),
+                critical=False
+            )
+        elif self.subject_key_identifier is not None:
+            csr = csr.add_extension(cryptography.x509.SubjectKeyIdentifier(self.subject_key_identifier), critical=False)
+
+        if self.authority_key_identifier is not None or self.authority_cert_issuer is not None or self.authority_cert_serial_number is not None:
+            issuer = None
+            if self.authority_cert_issuer is not None:
+                try:
+                    issuer = cryptography.x509.Name([
+                        cryptography.x509.NameAttribute(crypto_utils.cryptography_name_to_oid(entry[0]), to_text(entry[1]))
+                        for entry in self.authority_cert_issuer
+                    ])
+                except ValueError as e:
+                    raise CertificateSigningRequestError(e)
+            csr = csr.add_extension(
+                cryptography.x509.AuthorityKeyIdentifier(self.authority_key_identifier, issuer, self.authority_cert_serial_number),
+                critical=False
+            )
+
         digest = None
         if self.digest == 'sha256':
             digest = cryptography.hazmat.primitives.hashes.SHA256()
@@ -806,11 +899,48 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             else:
                 return tlsfeature_ext is None
 
+        def _check_subject_key_identifier(extensions):
+            ext = _find_extension(extensions, cryptography.x509.SubjectKeyIdentifier)
+            if self.create_subject_key_identifier or self.subject_key_identifier is not None:
+                if not ext or ext.critical:
+                    return False
+                if self.create_subject_key_identifier:
+                    digest = cryptography.x509.SubjectKeyIdentifier.from_public_key(self.privatekey.public_key()).digest
+                    return ext.value.digest == digest
+                else:
+                    return ext.value.digest == self.subject_key_identifier
+            else:
+                return ext is None
+
+        def _check_authority_key_identifier(extensions):
+            ext = _find_extension(extensions, cryptography.x509.AuthorityKeyIdentifier)
+            if self.authority_key_identifier is not None or self.authority_cert_issuer is not None or self.authority_cert_serial_number is not None:
+                if not ext or ext.critical:
+                    return False
+                aci = None
+                csr_aci = None
+                if self.authority_cert_issuer is not None:
+                    try:
+                        aci = [
+                            (crypto_utils.cryptography_name_to_oid(entry[0]), to_text(entry[1]))
+                            for entry in self.authority_cert_issuer
+                        ]
+                    except ValueError as e:
+                        raise CertificateSigningRequestError(e)
+                if ext.value.authority_cert_issuer is not None:
+                    csr_aci = [(sub.oid, sub.value) for sub in ext.value.authority_cert_issuer]
+                return (ext.value.key_identifier == self.authority_key_identifier
+                        and csr_aci == aci
+                        and ext.value.authority_cert_serial_number == self.authority_cert_serial_number)
+            else:
+                return ext is None
+
         def _check_extensions(csr):
             extensions = csr.extensions
             return (_check_subjectAltName(extensions) and _check_keyUsage(extensions) and
                     _check_extenededKeyUsage(extensions) and _check_basicConstraints(extensions) and
-                    _check_ocspMustStaple(extensions))
+                    _check_ocspMustStaple(extensions) and _check_subject_key_identifier(extensions) and
+                    _check_authority_key_identifier(extensions))
 
         def _check_signature(csr):
             if not csr.is_signature_valid:
@@ -865,6 +995,11 @@ def main():
             ocsp_must_staple=dict(type='bool', default=False, aliases=['ocspMustStaple']),
             ocsp_must_staple_critical=dict(type='bool', default=False, aliases=['ocspMustStaple_critical']),
             backup=dict(type='bool', default=False),
+            create_subject_key_identifier=dict(type='bool', default=False),
+            subject_key_identifier=dict(type='str'),
+            authority_key_identifier=dict(type='str'),
+            authority_cert_issuer=dict(type='dict'),
+            authority_cert_serial_number=dict(type='int'),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
         add_file_common_args=True,
