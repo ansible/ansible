@@ -137,7 +137,8 @@ def is_snap_installed(module, snap_name):
     cmd = ' '.join(cmd_parts)
     rc, out, err = module.run_command(cmd, check_rc=False)
 
-    return rc == 0
+    # https://github.com/ansible/ansible/issues/59868
+    return rc == 0 and 'No snaps are installed yet' not in err
 
 
 def get_snap_for_action(module):
