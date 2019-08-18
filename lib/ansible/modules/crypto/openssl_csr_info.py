@@ -180,20 +180,11 @@ authority_key_identifier:
     version_added: "2.9"
 authority_cert_issuer:
     description:
-        - The CSR's authority cert issuer as a dictionary.
-        - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
-        - Note that for repeated values, only the last one will be returned.
-    returned: success and if the pyOpenSSL backend is I(not) used
-    type: dict
-    sample: '{"commonName": "www.example.com", "emailAddress": "test@example.com"}'
-    version_added: "2.9"
-authority_cert_issuer_ordered:
-    description:
-        - The CSR's authority cert issuer as an ordered list of tuples.
+        - The CSR's authority cert issuer as a list of strings.
         - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: list
-    sample: '[["commonName", "www.example.com"], ["emailAddress": "test@example.com"]]'
+    sample: "[DNS:www.ansible.com, IP:1.2.3.4]"
     version_added: "2.9"
 authority_cert_serial_number:
     description:
@@ -340,22 +331,16 @@ class CertificateSigningRequestInfo(crypto_utils.OpenSSLObject):
         if self.backend != 'pyopenssl':
             ski = self._get_subject_key_identifier()
             if ski is not None:
-                ski = binascii.hexlify(ski)
+                ski = to_native(binascii.hexlify(ski))
                 ski = ':'.join([ski[i:i + 2] for i in range(0, len(ski), 2)])
             result['subject_key_identifier'] = ski
 
             aki, aci, acsn = self._get_authority_key_identifier()
             if aki is not None:
-                aki = binascii.hexlify(aki)
+                aki = to_native(binascii.hexlify(aki))
                 aki = ':'.join([aki[i:i + 2] for i in range(0, len(aki), 2)])
             result['authority_key_identifier'] = aki
-            aci_dict = None
-            if aci is not None:
-                aci_dict = dict()
-                for k, v in aci:
-                    aci_dict[k] = v
-            result['authority_cert_issuer'] = aci_dict
-            result['authority_cert_issuer_ordered'] = aci
+            result['authority_cert_issuer'] = aci
             result['authority_cert_serial_number'] = acsn
 
         result['extensions_by_oid'] = self._get_all_extensions()
@@ -470,7 +455,7 @@ class CertificateSigningRequestInfoCryptography(CertificateSigningRequestInfo):
     def _get_subject_key_identifier(self):
         try:
             ext = self.csr.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
-            return ext.digest
+            return ext.value.digest
         except cryptography.x509.ExtensionNotFound:
             return None
 
@@ -478,11 +463,9 @@ class CertificateSigningRequestInfoCryptography(CertificateSigningRequestInfo):
         try:
             ext = self.csr.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
             issuer = None
-            if ext.authority_cert_issuer is not None:
-                issuer = []
-                for attribute in ext.authority_cert_issuer:
-                    issuer.append([crypto_utils.cryptography_oid_to_name(attribute.oid), attribute.value])
-            return ext.key_identifier, issuer, ext.authority_cert_serial_number
+            if ext.value.authority_cert_issuer is not None:
+                issuer = [crypto_utils.cryptography_decode_name(san) for san in ext.value.authority_cert_issuer]
+            return ext.value.key_identifier, issuer, ext.value.authority_cert_serial_number
         except cryptography.x509.ExtensionNotFound:
             return None, None, None
 

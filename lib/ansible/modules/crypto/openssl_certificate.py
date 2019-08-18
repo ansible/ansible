@@ -938,6 +938,14 @@ class Certificate(crypto_utils.OpenSSLObject):
             # Check subject
             if self.csr.subject != self.cert.subject:
                 return False
+            # Check SubjectKeyIdentifier
+            if self.create_subject_key_identifier:
+                try:
+                    ext = self.csr.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+                    if ext.digest != x509.SubjectKeyIdentifier.from_public_key(self.privatekey.public_key()).value:
+                        return False
+                except cryptography.x509.ExtensionNotFound as dummy:
+                    return False
             # Check extensions
             cert_exts = list(self.cert.extensions)
             csr_exts = list(self.csr.extensions)

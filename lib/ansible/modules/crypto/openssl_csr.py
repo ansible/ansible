@@ -219,6 +219,7 @@ options:
         description:
             - The authority key identifier as a hex string, where two bytes are separated by colons.
             - "Example: C(00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33)"
+            - If specified, I(authority_cert_issuer) must also be specified.
             - Note that this is only supported if the C(cryptography) backend is used!
             - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
@@ -226,12 +227,16 @@ options:
         version_added: "2.9"
     authority_cert_issuer:
         description:
-            - Key/value pairs that will be present in the authority cert issuer field of the certificate signing request.
-            - If you need to specify more than one value with the same key, use a list as value.
+        description:
+            - Names that will be present in the authority cert issuer field of the certificate signing request.
+            - Values must be prefixed by their options. (i.e., C(email), C(URI), C(DNS), C(RID), C(IP), C(dirName),
+              C(otherName) and the ones specific to your CA)
+            - "Example: C(DNS:ca.example.org)"
+            - If specified, I(authority_key_identifier) must also be specified.
             - Note that this is only supported if the C(cryptography) backend is used!
             - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
-        type: dict
+        type: list
         version_added: "2.9"
     authority_cert_serial_number:
         description:
@@ -493,9 +498,6 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
                 self.authority_key_identifier = binascii.unhexlify(self.authority_key_identifier.replace(':', ''))
             except Exception as e:
                 raise CertificateSigningRequestError('Cannot parse authority_key_identifier: {0}'.format(e))
-
-        if self.authority_cert_issuer is not None:
-            self.authority_cert_issuer = crypto_utils.parse_name_field(self.authority_cert_issuer)
 
     @abc.abstractmethod
     def _generate_csr(self):
@@ -770,17 +772,11 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             csr = csr.add_extension(cryptography.x509.SubjectKeyIdentifier(self.subject_key_identifier), critical=False)
 
         if self.authority_key_identifier is not None or self.authority_cert_issuer is not None or self.authority_cert_serial_number is not None:
-            issuer = None
+            issuers = None
             if self.authority_cert_issuer is not None:
-                try:
-                    issuer = cryptography.x509.Name([
-                        cryptography.x509.NameAttribute(crypto_utils.cryptography_name_to_oid(entry[0]), to_text(entry[1]))
-                        for entry in self.authority_cert_issuer
-                    ])
-                except ValueError as e:
-                    raise CertificateSigningRequestError(e)
+                issuers = [crypto_utils.cryptography_get_name(n) for n in self.authority_cert_issuer]
             csr = csr.add_extension(
-                cryptography.x509.AuthorityKeyIdentifier(self.authority_key_identifier, issuer, self.authority_cert_serial_number),
+                cryptography.x509.AuthorityKeyIdentifier(self.authority_key_identifier, issuers, self.authority_cert_serial_number),
                 critical=False
             )
 
@@ -920,15 +916,9 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
                 aci = None
                 csr_aci = None
                 if self.authority_cert_issuer is not None:
-                    try:
-                        aci = [
-                            (crypto_utils.cryptography_name_to_oid(entry[0]), to_text(entry[1]))
-                            for entry in self.authority_cert_issuer
-                        ]
-                    except ValueError as e:
-                        raise CertificateSigningRequestError(e)
+                    aci = [str(crypto_utils.cryptography_get_name(n)) for n in self.authority_cert_issuer]
                 if ext.value.authority_cert_issuer is not None:
-                    csr_aci = [(sub.oid, sub.value) for sub in ext.value.authority_cert_issuer]
+                    csr_aci = [str(n) for n in ext.value.authority_cert_issuer]
                 return (ext.value.key_identifier == self.authority_key_identifier
                         and csr_aci == aci
                         and ext.value.authority_cert_serial_number == self.authority_cert_serial_number)
@@ -998,10 +988,11 @@ def main():
             create_subject_key_identifier=dict(type='bool', default=False),
             subject_key_identifier=dict(type='str'),
             authority_key_identifier=dict(type='str'),
-            authority_cert_issuer=dict(type='dict'),
+            authority_cert_issuer=dict(type='list', elements='str'),
             authority_cert_serial_number=dict(type='int'),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
+        required_together=[('authority_cert_issuer', 'authority_cert_serial_number')],
         add_file_common_args=True,
         supports_check_mode=True,
     )
