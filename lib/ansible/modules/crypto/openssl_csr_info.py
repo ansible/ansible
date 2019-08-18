@@ -164,14 +164,12 @@ public_key_fingerprints:
 
 
 import abc
-import datetime
 import os
 import traceback
 from distutils.version import LooseVersion
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
