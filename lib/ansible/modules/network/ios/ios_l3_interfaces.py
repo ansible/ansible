@@ -38,73 +38,75 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-  module: ios_l3_interfaces
-  version_added: 2.9
-  short_description: Manage Layer-3 interface on Cisco IOS devices.
-  description:
-    - This module provides declarative management of Layer-3 interface
-      on Cisco IOS devices.
-  author: Sumit Jaiswal (@justjais)
-  options:
-    config:
-      description: A dictionary of Layer-3 interface options
-      type: list
-      elements: dict
-      suboptions:
-        name:
-          description:
-          - Full name of the interface excluding any logical unit number,
-            i.e. GigabitEthernet0/1.
-          type: str
-          required: True
-        ipv4:
-          description:
-          - IPv4 address to be set for the Layer-3 interface mentioned in
-            I(name) option. The address format is <ipv4 address>/<mask>,
-            the mask is number in range 0-32 eg. 192.168.0.1/24.
-          suboptions:
-            address:
-              description:
-              - Configures the IPv4 address for Interface.
-              type: str
-            secondary:
-              description:
-              - Configures the IP address as a secondary address.
-              type: bool
-            dhcp_client:
-              description:
-              - Configures and specifies client-id to use over DHCP ip.
-                Note, This option shall work only when dhcp is configured
-                as IP.
-              - GigabitEthernet interface number
-              type: int
-            dhcp_hostname:
-              description:
-              - Configures and specifies value for hostname option over
-                DHCP ip. Note, This option shall work only when dhcp is
-                configured as IP.
-              type: str
-        ipv6:
-         description:
-         - IPv6 address to be set for the Layer-3 interface mentioned in
-           I(name) option.
-         - The address format is <ipv6 address>/<mask>, the mask is number
-           in range 0-128 eg. fd5d:12c9:2201:1::1/64
-         suboptions:
-            address:
-              description:
-              - Configures the IPv6 address for Interface.
-              type: str
-    state:
-      choices:
-      - merged
-      - replaced
-      - overridden
-      - deleted
-      default: merged
-      description:
-      - The state the configuration should be left in
-      type: str
+module: ios_l3_interfaces
+version_added: 2.9
+short_description: Manage Layer-3 interface on Cisco IOS devices.
+description:
+- This module provides declarative management of Layer-3 interface
+  on Cisco IOS devices.
+author: Sumit Jaiswal (@justjais)
+options:
+  config:
+    description: A dictionary of Layer-3 interface options
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description:
+        - Full name of the interface excluding any logical unit number,
+          i.e. GigabitEthernet0/1.
+        type: str
+        required: True
+      ipv4:
+        description:
+        - IPv4 address to be set for the Layer-3 interface mentioned in
+          I(name) option. The address format is <ipv4 address>/<mask>,
+          the mask is number in range 0-32 eg. 192.168.0.1/24.
+        type: dict
+        suboptions:
+          address:
+            description:
+            - Configures the IPv4 address for Interface.
+            type: str
+          secondary:
+            description:
+            - Configures the IP address as a secondary address.
+            type: bool
+          dhcp_client:
+            description:
+            - Configures and specifies client-id to use over DHCP ip.
+              Note, This option shall work only when dhcp is configured
+              as IP.
+            - GigabitEthernet interface number
+            type: int
+          dhcp_hostname:
+            description:
+            - Configures and specifies value for hostname option over
+              DHCP ip. Note, This option shall work only when dhcp is
+              configured as IP.
+            type: str
+      ipv6:
+        description:
+        - IPv6 address to be set for the Layer-3 interface mentioned in
+          I(name) option.
+        - The address format is <ipv6 address>/<mask>, the mask is number
+          in range 0-128 eg. fd5d:12c9:2201:1::1/64
+        type: dict
+        suboptions:
+          address:
+            description:
+            - Configures the IPv6 address for Interface.
+            type: str
+  state:
+    choices:
+    - merged
+    - replaced
+    - overridden
+    - deleted
+    default: merged
+    description:
+    - The state the configuration should be left in
+    type: str
 """
 
 EXAMPLES = """
@@ -341,7 +343,9 @@ EXAMPLES = """
 # interface GigabitEthernet0/3.100
 #  encapsulation dot1Q 20
 
-# Using Deleted without config
+# Using Deleted without any config passed
+#"(NOTE: This will delete all of configured L3 resource module attributes from each configured interface)"
+
 #
 # Before state:
 # -------------
@@ -407,7 +411,7 @@ commands:
   description: The set of commands pushed to the remote device
   returned: always
   type: list
-  sample: ['interface GigabitEthernet0/1', 'command 2', 'command 3']
+  sample: ['interface GigabitEthernet0/1', 'ip address 192.168.0.2 255.255.255.0']
 """
 
 from ansible.module_utils.basic import AnsibleModule
