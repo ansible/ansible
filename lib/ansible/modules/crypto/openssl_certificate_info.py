@@ -238,10 +238,54 @@ valid_at:
                  or not.
     returned: success
     type: dict
+subject_key_identifier:
+    description:
+        - The CSR's subject key identifier.
+        - The identifier is returned in hexadecial, with C(:) used to separate bytes.
+        - Is C(none) if the C(SubjectKeyIdentifier) extension is not present.
+    returned: success and if the pyOpenSSL backend is I(not) used
+    type: str
+    sample: '00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33'
+    version_added: "2.9"
+authority_key_identifier:
+    description:
+        - The CSR's authority key identifier.
+        - The identifier is returned in hexadecial, with C(:) used to separate bytes.
+        - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
+    returned: success and if the pyOpenSSL backend is I(not) used
+    type: str
+    sample: '00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33'
+    version_added: "2.9"
+authority_cert_issuer:
+    description:
+        - The CSR's authority cert issuer as a dictionary.
+        - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
+        - Note that for repeated values, only the last one will be returned.
+    returned: success and if the pyOpenSSL backend is I(not) used
+    type: dict
+    sample: '{"commonName": "www.example.com", "emailAddress": "test@example.com"}'
+    version_added: "2.9"
+authority_cert_issuer_ordered:
+    description:
+        - The CSR's authority cert issuer as an ordered list of tuples.
+        - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
+    returned: success and if the pyOpenSSL backend is I(not) used
+    type: list
+    sample: '[["commonName", "www.example.com"], ["emailAddress": "test@example.com"]]'
+    version_added: "2.9"
+authority_cert_serial_number:
+    description:
+        - The CSR's authority cert serial number.
+        - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
+    returned: success and if the pyOpenSSL backend is I(not) used
+    type: int
+    sample: '12345'
+    version_added: "2.9"
 '''
 
 
 import abc
+import binascii
 import datetime
 import os
 import traceback
@@ -393,6 +437,14 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         pass
 
     @abc.abstractmethod
+    def _get_subject_key_identifier(self):
+        pass
+
+    @abc.abstractmethod
+    def _get_authority_key_identifier(self):
+        pass
+
+    @abc.abstractmethod
     def _get_serial_number(self):
         pass
 
@@ -436,6 +488,27 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         result['public_key'] = self._get_public_key(binary=False)
         pk = self._get_public_key(binary=True)
         result['public_key_fingerprints'] = crypto_utils.get_fingerprint_of_bytes(pk) if pk is not None else dict()
+
+        if self.backend != 'pyopenssl':
+            ski = self._get_subject_key_identifier()
+            if ski is not None:
+                ski = binascii.hexlify(ski)
+                ski = ':'.join([ski[i:i + 2] for i in range(0, len(ski), 2)])
+            result['subject_key_identifier'] = ski
+
+            aki, aci, acsn = self._get_authority_key_identifier()
+            if aki is not None:
+                aki = binascii.hexlify(aki)
+                aki = ':'.join([aki[i:i + 2] for i in range(0, len(aki), 2)])
+            result['authority_key_identifier'] = aki
+            aci_dict = None
+            if aci is not None:
+                aci_dict = dict()
+                for k, v in aci:
+                    aci_dict[k] = v
+            result['authority_cert_issuer'] = aci_dict
+            result['authority_cert_issuer_ordered'] = aci
+            result['authority_cert_serial_number'] = acsn
 
         result['serial_number'] = self._get_serial_number()
         result['extensions_by_oid'] = self._get_all_extensions()
@@ -563,6 +636,25 @@ class CertificateInfoCryptography(CertificateInfo):
             serialization.PublicFormat.SubjectPublicKeyInfo
         )
 
+    def _get_subject_key_identifier(self):
+        try:
+            ext = self.cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+            return ext.digest
+        except cryptography.x509.ExtensionNotFound:
+            return None
+
+    def _get_authority_key_identifier(self):
+        try:
+            ext = self.cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
+            issuer = None
+            if ext.authority_cert_issuer is not None:
+                issuer = []
+                for attribute in ext.authority_cert_issuer:
+                    issuer.append([crypto_utils.cryptography_oid_to_name(attribute.oid), attribute.value])
+            return ext.key_identifier, issuer, ext.authority_cert_serial_number
+        except cryptography.x509.ExtensionNotFound:
+            return None, None, None
+
     def _get_serial_number(self):
         return self.cert.serial_number
 
@@ -674,6 +766,14 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
             except AttributeError:
                 self.module.warn('Your pyOpenSSL version does not support dumping public keys. '
                                  'Please upgrade to version 16.0 or newer, or use the cryptography backend.')
+
+    def _get_subject_key_identifier(self):
+        # Won't be implemented
+        return None
+
+    def _get_authority_key_identifier(self):
+        # Won't be implemented
+        return None, None, None
 
     def _get_serial_number(self):
         return self.cert.get_serial_number()
