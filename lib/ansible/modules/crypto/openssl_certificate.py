@@ -1349,6 +1349,28 @@ class OwnCACertificateCryptography(Certificate):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
+    def check(self, module, perms_required=True):
+        """Ensure the resource is in its desired state."""
+
+        if not super(OwnCACertificateCryptography, self).check(module, perms_required):
+            return False
+
+        # Check AuthorityKeyIdentifier
+        if self.create_authority_key_identifier:
+            try:
+                ext = self.ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+                expected_ext = x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value)
+            except cryptography.x509.ExtensionNotFound:
+                expected_ext = x509.AuthorityKeyIdentifier.from_issuer_public_key(self.ca_cert.public_key())
+            try:
+                ext = self.cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
+                if ext.value != expected_ext:
+                    return False
+            except cryptography.x509.ExtensionNotFound as dummy:
+                return False
+
+        return True
+
     def dump(self, check_mode=False):
 
         result = {
