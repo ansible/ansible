@@ -130,3 +130,13 @@
       - ownca_subject_key_identifier_4 is not changed
       - ownca_subject_key_identifier_5 is changed
   when: select_crypto_backend != 'pyopenssl'
+
+- name: Check create authority key identifier
+  assert:
+    that:
+      - ownca_authority_key_identifier_1 is changed
+      - ownca_authority_key_identifier_2 is not changed
+      - ownca_authority_key_identifier_3 is changed
+      - ownca_authority_key_identifier_4 is not changed
+      - ownca_authority_key_identifier_5 is changed
+  when: select_crypto_backend != 'pyopenssl'

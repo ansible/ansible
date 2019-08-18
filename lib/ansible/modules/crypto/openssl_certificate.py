@@ -224,6 +224,16 @@ options:
         default: no
         version_added: "2.9"
 
+    ownca_create_authority_key_identifier:
+        description:
+            - Create a Authority Key Identifier from the CA's certificate. If the CSR provided
+              a authority key identifier, it is ignored.
+            - This is only used by the C(ownca) provider.
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: bool
+        default: yes
+        version_added: "2.9"
+
     acme_accountkey_path:
         description:
             - The path to the accountkey for the C(acme) provider.
@@ -854,6 +864,7 @@ class Certificate(crypto_utils.OpenSSLObject):
         )
 
         self.create_subject_key_identifier = False
+        self.create_authority_key_identifier = False
         self.provider = module.params['provider']
         self.privatekey_path = module.params['privatekey_path']
         self.privatekey_passphrase = module.params['privatekey_passphrase']
@@ -945,6 +956,10 @@ class Certificate(crypto_utils.OpenSSLObject):
                 # Filter out SubjectKeyIdentifier extension before comparison
                 cert_exts = list(filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), cert_exts))
                 csr_exts = list(filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), csr_exts))
+            if self.create_authority_key_identifier:
+                # Filter out AuthorityKeyIdentifier extension before comparison
+                cert_exts = list(filter(lambda x: not isinstance(x.value, x509.AuthorityKeyIdentifier), cert_exts))
+                csr_exts = list(filter(lambda x: not isinstance(x.value, x509.AuthorityKeyIdentifier), csr_exts))
             if len(cert_exts) != len(csr_exts):
                 return False
             for cert_ext in cert_exts:
@@ -1081,6 +1096,8 @@ class SelfSignedCertificateCryptography(Certificate):
                 cert_builder = cert_builder.public_key(self.privatekey.public_key())
                 for extension in self.csr.extensions:
                     if self.create_subject_key_identifier and isinstance(extension.value, x509.SubjectKeyIdentifier):
+                        continue
+                    if self.create_authority_key_identifier and isinstance(extension.value, x509.AuthorityKeyIdentifier):
                         continue
                     cert_builder = cert_builder.add_extension(extension.value, critical=extension.critical)
                 if self.create_subject_key_identifier:
@@ -1233,6 +1250,7 @@ class OwnCACertificateCryptography(Certificate):
     def __init__(self, module):
         super(OwnCACertificateCryptography, self).__init__(module, 'cryptography')
         self.create_subject_key_identifier = module.params['ownca_create_subject_key_identifier']
+        self.create_authority_key_identifier = module.params['ownca_create_authority_key_identifier']
         self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before')
         self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after')
         self.digest = crypto_utils.select_message_digest(module.params['ownca_digest'])
@@ -1298,6 +1316,18 @@ class OwnCACertificateCryptography(Certificate):
                     x509.SubjectKeyIdentifier.from_public_key(self.csr.public_key()),
                     critical=False
                 )
+            if self.create_authority_key_identifier:
+                try:
+                    ext = self.ca_cert.get_extension_for_class(x509.SubjectKeyIdentifier)
+                    cert_builder = cert_builder.add_extension(
+                        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value),
+                        critical=False
+                    )
+                except cryptography.x509.ExtensionNotFound:
+                    cert_builder = cert_builder.add_extension(
+                        x509.AuthorityKeyIdentifier.from_issuer_public_key(self.ca_cert.public_key()),
+                        critical=False
+                    )
 
             certificate = cert_builder.sign(
                 private_key=self.ca_private_key, algorithm=self.digest,
@@ -1358,6 +1388,8 @@ class OwnCACertificate(Certificate):
         self.serial_number = randint(1000, 99999)
         if module.params['ownca_create_subject_key_identifier']:
             module.fail_json(msg='ownca_create_subject_key_identifier cannot be used with the pyOpenSSL backend!')
+        if module.params['ownca_create_authority_key_identifier']:
+            module.warn(msg='ownca_create_authority_key_identifier is ignored by the pyOpenSSL backend!')
         self.ca_cert_path = module.params['ownca_path']
         self.ca_privatekey_path = module.params['ownca_privatekey_path']
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
@@ -2334,6 +2366,7 @@ def main():
             ownca_not_before=dict(type='str', default='+0s'),
             ownca_not_after=dict(type='str', default='+3650d'),
             ownca_create_subject_key_identifier=dict(type='bool', default=False),
+            ownca_create_authority_key_identifier=dict(type='bool', default=True),
 
             # provider: acme
             acme_accountkey_path=dict(type='path'),
