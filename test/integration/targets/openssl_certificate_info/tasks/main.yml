@@ -172,5 +172,4 @@
       - subject_key_identifier
       - authority_key_identifier
       - authority_cert_issuer
-      - authority_cert_issuer_ordered
       - authority_cert_serial_number
