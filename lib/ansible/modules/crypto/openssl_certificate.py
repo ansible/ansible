@@ -228,6 +228,8 @@ options:
         description:
             - Create a Authority Key Identifier from the CA's certificate. If the CSR provided
               a authority key identifier, it is ignored.
+            - The Authority Key Identifier is generated from the CA certificate's Subject Key Identifier,
+              if available. If it is not available, the CA certificate's public key will be used.
             - This is only used by the C(ownca) provider.
             - Note that this is only supported if the C(cryptography) backend is used!
         type: bool
@@ -1318,7 +1320,7 @@ class OwnCACertificateCryptography(Certificate):
                 )
             if self.create_authority_key_identifier:
                 try:
-                    ext = self.ca_cert.get_extension_for_class(x509.SubjectKeyIdentifier)
+                    ext = self.ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
                     cert_builder = cert_builder.add_extension(
                         x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value),
                         critical=False
@@ -1389,7 +1391,7 @@ class OwnCACertificate(Certificate):
         if module.params['ownca_create_subject_key_identifier']:
             module.fail_json(msg='ownca_create_subject_key_identifier cannot be used with the pyOpenSSL backend!')
         if module.params['ownca_create_authority_key_identifier']:
-            module.warn(msg='ownca_create_authority_key_identifier is ignored by the pyOpenSSL backend!')
+            module.warn('ownca_create_authority_key_identifier is ignored by the pyOpenSSL backend!')
         self.ca_cert_path = module.params['ownca_path']
         self.ca_privatekey_path = module.params['ownca_privatekey_path']
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
