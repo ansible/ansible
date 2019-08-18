@@ -390,6 +390,11 @@ all_chains:
   returned: when certificate was retrieved and I(retrieve_all_alternates) is set to C(yes)
   type: list
   contains:
+    cert:
+      description:
+        - The leaf certificate itself, in PEM format.
+      type: str
+      returned: always
     chain:
       description:
         - The certificate chain, excluding the root, as concatenated PEM certificates.
@@ -917,22 +922,19 @@ class ACMEClient(object):
                     except ModuleFailException as e:
                         self.module.warn('Error while downloading alternative certificate {0}: {1}'.format(alternate, e))
                         continue
-                    alt_chain = alt_cert.get('chain', [])
-                    if alt_chain:
-                        alternate_chains.append(alt_chain)
-                    else:
-                        self.module.warn('Alternative certificate {0} chain is empty'.format(alternate))
+                    alternate_chains.append(alt_cert)
                 self.all_chains = []
 
-                def _append_all_chains(chain):
+                def _append_all_chains(cert, chain):
                     self.all_chains.append(dict(
+                        cert=cert.encode('utf8'),
                         chain=("\n".join(chain)).encode('utf8'),
                         full_chain=(cert['cert'] + "\n".join(chain)).encode('utf8'),
                     ))
 
-                _append_all_chains(cert.get('chain', []))
+                _append_all_chains(cert['cert'], cert.get('chain', []))
                 for alt_chain in alternate_chains:
-                    _append_all_chains(alt_chain.get('chain', []))
+                    _append_all_chains(alt_chain['cert'], alt_chain.get('chain', []))
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
