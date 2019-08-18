@@ -670,6 +670,7 @@ files:
     labels:
       - aws
       - cloud
+  $module_utils/ecs/:
     maintainers: ctrufan $team_crypto
   $module_utils/facts:
     support: core
