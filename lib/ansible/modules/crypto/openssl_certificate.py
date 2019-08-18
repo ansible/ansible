@@ -958,7 +958,8 @@ class Certificate(crypto_utils.OpenSSLObject):
                 )
             except crypto_utils.OpenSSLBadPassphraseError as exc:
                 raise CertificateError(exc)
-            return self._validate_privatekey()
+            if not self._validate_privatekey():
+                return False
 
         if self.csr_path:
             self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
