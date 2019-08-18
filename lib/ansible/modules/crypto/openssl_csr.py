@@ -726,9 +726,9 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             current_subject = [(sub.oid, sub.value) for sub in csr.subject]
             return set(subject) == set(current_subject)
 
-        def _find_extension(extensions, type):
+        def _find_extension(extensions, exttype):
             return next(
-                (ext for ext in extensions if isinstance(ext.value, type)),
+                (ext for ext in extensions if isinstance(ext.value, exttype)),
                 None
             )
 

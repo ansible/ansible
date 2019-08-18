@@ -237,7 +237,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
         else:
             try:
                 return crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
-            except AttributeError as exc:
+            except AttributeError as dummy:
                 raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
 
     def generate(self, module):
