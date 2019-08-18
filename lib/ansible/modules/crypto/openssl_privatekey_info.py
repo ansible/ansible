@@ -440,11 +440,11 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
         '''Convert OpenSSL BIGINT to Python integer'''
         if bn == OpenSSL._util.ffi.NULL:
             return None
+        hexstr = OpenSSL._util.lib.BN_bn2hex(bn)
         try:
-            hex = OpenSSL._util.lib.BN_bn2hex(bn)
-            return int(OpenSSL._util.ffi.string(hex), 16)
+            return int(OpenSSL._util.ffi.string(hexstr), 16)
         finally:
-            OpenSSL._util.lib.OPENSSL_free(hex)
+            OpenSSL._util.lib.OPENSSL_free(hexstr)
 
     def _get_key_info(self):
         key_public_data = dict()

@@ -270,7 +270,6 @@ else:
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.six import string_types
 
 
 class PrivateKeyError(crypto_utils.OpenSSLObjectError):
@@ -488,7 +487,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
             self.module.fail_json(msg='Your cryptography version does not support Ed448')
 
     def _generate_private_key_data(self):
-        format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
+        export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
         try:
             if self.type == 'RSA':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
@@ -503,16 +502,16 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 )
             if CRYPTOGRAPHY_HAS_X25519_FULL and self.type == 'X25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if self.type == 'ECC' and self.curve in self.curves:
                 if self.curves[self.curve]['deprecated']:
                     self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.curve))
@@ -520,7 +519,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
                     curve=self.curves[self.curve]['create'](self.size),
                     backend=self.cryptography_backend
                 )
-        except cryptography.exceptions.UnsupportedAlgorithm as e:
+        except cryptography.exceptions.UnsupportedAlgorithm as dummy:
             self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
         # Select key encryption
@@ -534,7 +533,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         # Serialize key
         return self.privatekey.private_bytes(
             encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
-            format=format,
+            format=export_format,
             encryption_algorithm=encryption_algorithm
         )
 

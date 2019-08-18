@@ -970,7 +970,7 @@ class ACMEClient(object):
                     result, info = self.account.send_signed_request(auth['uri'], authz_deactivate)
                     if 200 <= info['status'] < 300 and result.get('status') == 'deactivated':
                         auth['status'] = 'deactivated'
-                except Exception as e:
+                except Exception as dummy:
                     # Ignore errors on deactivating authzs
                     pass
                 if auth.get('status') != 'deactivated':
