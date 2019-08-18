@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "win_domain_user - Allow to only set password when it actually changed (https://github.com/ansible/ansible/issues/58246)"

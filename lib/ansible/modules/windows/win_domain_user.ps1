@@ -3,6 +3,53 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.AccessToken
+
+Function Test-Credential {
+    param(
+        [String]$Username,
+        [String]$Password,
+        [String]$Domain = $null
+    )
+    if (($Username.ToCharArray()) -contains [char]'@') {
+        # UserPrincipalName
+        $Domain = $null # force $Domain to be null, to prevent undefined behaviour, as a domain name is already included in the username
+    } elseif (($Username.ToCharArray()) -contains [char]'\') {
+        # Pre Win2k Account Name
+        $Username = ($Username -split '\')[0]
+        $Domain = ($Username -split '\')[1]
+    } else {
+        # No domain provided, so maybe local user, or domain specified separately.
+    }
+
+    try {
+        $handle = [Ansible.AccessToken.TokenUtil]::LogonUser($Username, $Domain, $Password, "Network", "Default")
+        $handle.Dispose()
+        return $true
+    } catch [Ansible.AccessToken.Win32Exception] {
+        # following errors indicate the creds are correct but the user was
+        # unable to log on for other reasons, which we don't care about
+        $success_codes = @(
+            0x0000052F,  # ERROR_ACCOUNT_RESTRICTION
+            0x00000530,  # ERROR_INVALID_LOGON_HOURS
+            0x00000531,  # ERROR_INVALID_WORKSTATION
+            0x00000569  # ERROR_LOGON_TYPE_GRANTED
+        )
+        $failed_codes = @(
+            0x0000052E,  # ERROR_LOGON_FAILURE
+            0x00000532  # ERROR_PASSWORD_EXPIRED
+        )
+
+        if ($_.Exception.NativeErrorCode -in $failed_codes) {
+            return $false
+        } elseif ($_.Exception.NativeErrorCode -in $success_codes) {
+            return $true
+        } else {
+            # an unknown failure, reraise exception
+            throw $_
+        }
+    }
+}
 
 try {
     Import-Module ActiveDirectory
@@ -24,7 +71,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default
 
 # Module control parameters
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","query"
-$update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always","on_create"
+$update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always","on_create","when_changed"
 $groups_action = Get-AnsibleParam -obj $params -name "groups_action" -type "str" -default "replace" -validateset "add","remove","replace"
 $domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
 $domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($null -ne $domain_username)
@@ -105,13 +152,25 @@ If ($state -eq 'present') {
         $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
     }
 
-    # Set the password if required
-    If ($password -and (($new_user -and $update_password -eq "on_create") -or $update_password -eq "always")) {
-        $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
-        Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
-        $result.password_updated = $true
-        $result.changed = $true
+    If ($password) {
+        # Don't uncecessary check for working credentials.
+        # Set the password if we need to.
+        # For new_users there is also no difference between always and when_changed
+        # so we don't need to differentiate between this two states.
+        If ($new_user -or ($update_password -eq "always")) {
+            $set_new_credentials = $true
+        } elseif ($update_password -eq "when_changed") {
+            $set_new_credentials = -not (Test-Credential -Username $user_obj.UserPrincipalName -Password $password)
+        } else {
+            $set_new_credentials = $false
+        }
+        If ($set_new_credentials) {
+            $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
+            Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
+            $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+            $result.password_updated = $true
+            $result.changed = $true
+        }
     }
 
     # Configure password policies
