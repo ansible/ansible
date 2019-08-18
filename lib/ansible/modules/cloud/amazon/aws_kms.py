@@ -367,7 +367,9 @@ from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import compare_aws_tags, compare_policies
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
+import traceback
 import json
 
 try:
@@ -608,21 +610,28 @@ def ensure_enabled_disabled(connection, module, key):
     return changed
 
 
-def update_key(connection, module, key):
-    changed = False
-    alias = module.params['alias']
+def update_alias(connection, module, key_id, alias):
     if not alias.startswith('alias/'):
         alias = 'alias/' + alias
     aliases = get_kms_aliases_with_backoff(connection)['Aliases']
-    key_id = module.params.get('key_id')
     if key_id:
         # We will only add new aliases, not rename existing ones
         if alias not in [_alias['AliasName'] for _alias in aliases]:
             try:
                 connection.create_alias(KeyId=key_id, AliasName=alias)
-                changed = True
+                return True
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Failed create key alias")
+    return False
+
+
+def update_key(connection, module, key):
+    changed = False
+    alias = module.params.get('alias')
+    key_id = module.params.get('key_id')
+
+    if alias:
+        changed = update_alias(connection, module, key_id, alias) or changed
 
     if key['key_state'] == 'PendingDeletion':
         try:
@@ -750,17 +759,17 @@ def create_key(connection, module):
     module.exit_json(changed=True, **result)
 
 
-def delete_key(connection, module, key):
+def delete_key(connection, module, key_metadata, key_id):
     changed = False
 
-    if key['key_state'] != 'PendingDeletion':
+    if key_metadata['KeyState'] != 'PendingDeletion':
         try:
-            connection.schedule_key_deletion(KeyId=key['key_id'])
+            connection.schedule_key_deletion(KeyId=key_id)
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Failed to schedule key for deletion")
 
-    result = get_key_details(connection, module, key['key_id'])
+    result = get_key_details(connection, module, key_id)
     module.exit_json(changed=changed, **result)
 
 
@@ -790,9 +799,9 @@ def get_arn_from_role_name(iam, rolename):
     raise Exception('could not find arn for name {0}.'.format(rolename))
 
 
-def do_policy_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clean_invalid_entries=True):
+def do_policy_grant(module, kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clean_invalid_entries=True):
     ret = {}
-    keyret = kms.get_key_policy(KeyId=keyarn, PolicyName='default')
+    keyret = get_key_policy_with_backoff(kms, keyarn, 'default')
     policy = json.loads(keyret['Policy'])
 
     changes_needed = {}
@@ -847,7 +856,8 @@ def do_policy_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=Tru
             kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
             # returns nothing, so we have to just assume it didn't throw
             ret['changed'] = True
-    except Exception:
+    except Exception as e:
+        module.fail_json(msg='Could not update key_policy', new_policy=policy_json_string, details=to_native(e), exception=traceback.format_exc())
         raise
 
     ret['changes_needed'] = changes_needed
@@ -915,17 +925,30 @@ def main():
     kms = module.client('kms')
     iam = module.client('iam')
 
-    all_keys = get_kms_facts(kms, module)
     key_id = module.params.get('key_id')
     alias = module.params.get('alias')
-    if alias.startswith('alias/'):
+    if alias and alias.startswith('alias/'):
         alias = alias[6:]
-    if key_id:
-        filtr = ('key-id', key_id)
-    elif module.params.get('alias'):
-        filtr = ('alias', alias)
 
-    candidate_keys = [key for key in all_keys if key_matches_filter(key, filtr)]
+    # Fetch/Canonicalize key_id where possible
+    if key_id:
+        try:
+            # Don't use get_key_details it triggers module.fail when the key
+            # doesn't exist
+            key_metadata = get_kms_metadata_with_backoff( kms, key_id)['KeyMetadata']
+            key_id = key_metadata['Arn']
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            # We can't create keys with a specific ID, if we can't access the
+            # key we'll have to fail
+            if module.params.get('state') == 'present':
+                module.fail_json(msg="Could not find key with id %s to update")
+            key_metadata = None
+    elif alias:
+        try:
+            key_metadata = get_kms_metadata_with_backoff(kms, 'alias/%s' % alias)['KeyMetadata']
+            key_id = key_metadata['Arn']
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            key_metadata = None
 
     if module.params.get('policy_grant_types') or mode == 'deny':
         module.deprecate('Managing the KMS IAM Policy via policy_mode and policy_grant_types is fragile'
@@ -941,8 +964,8 @@ def main():
                 if g not in statement_label:
                     module.fail_json(msg='{0} is an unknown grant type.'.format(g))
 
-        ret = do_policy_grant(kms,
-                              candidate_keys[0]['key_arn'],
+        ret = do_policy_grant(module, kms,
+                              key_id,
                               module.params['policy_role_arn'],
                               module.params['policy_grant_types'],
                               mode=mode,
@@ -954,16 +977,17 @@ def main():
     else:
 
         if module.params.get('state') == 'present':
-            if candidate_keys:
-                update_key(kms, module, candidate_keys[0])
+            if key_metadata:
+                key_details = get_key_details(kms, module, key_id)
+                update_key(kms, module, key_details)
             else:
-                if module.params.get('key_id'):
-                    module.fail_json(msg="Could not find key with id %s to update")
+                if key_id:
+                    module.fail_json(msg="Could not find key with id %s to update" % key_id)
                 else:
                     create_key(kms, module)
         else:
-            if candidate_keys:
-                delete_key(kms, module, candidate_keys[0])
+            if key_metadata:
+                delete_key(kms, module, key_metadata, key_id)
             else:
                 module.exit_json(changed=False)
 
