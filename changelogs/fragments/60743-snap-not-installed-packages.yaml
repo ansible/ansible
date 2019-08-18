@@ -1,0 +1,2 @@
+bugfixes:
+- "snap - fix the problem that packages can't be installed when snap has no installed packages."
