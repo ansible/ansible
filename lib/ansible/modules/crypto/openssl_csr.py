@@ -227,7 +227,6 @@ options:
         version_added: "2.9"
     authority_cert_issuer:
         description:
-        description:
             - Names that will be present in the authority cert issuer field of the certificate signing request.
             - Values must be prefixed by their options. (i.e., C(email), C(URI), C(DNS), C(RID), C(IP), C(dirName),
               C(otherName) and the ones specific to your CA)
