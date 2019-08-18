@@ -1,0 +1,5 @@
+minor_changes:
+- "openssl_certificate - add support for subject key identifier and authority key identifier extensions."
+- "openssl_certificate_info - add support for subject key identifier and authority key identifier extensions."
+- "openssl_csr - add support for subject key identifier and authority key identifier extensions."
+- "openssl_csr_info - add support for subject key identifier and authority key identifier extensions."
