@@ -212,7 +212,20 @@ Try {
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                try
+                {
+                    $null = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
+                    # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
+                    # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
+                    if ($_.Exception.ExitCode -eq 15) {
+                        $result.reboot_required = $true
+                    } else {
+                        Fail-Json -obj $result -message "Failed to install ADDSDomainController with DCPromo: $($_.Exception.Message)"
+                    }
+                }
+                # If $_.FullyQualifiedErrorId -eq 'Test.VerifyUserCredentialPermissions.DCPromo.General.25,Microsoft.DirectoryServices.Deployment.PowerShell.Commands.InstallADDSDomainControllerCommand'
+                # the module failed to resolve the given dns domain name
 
                 Write-DebugLog "Installation complete, trying to start the Netlogon service"
                 # The Netlogon service is set to auto start but is not started. This is
