@@ -69,6 +69,12 @@
       - "pathlen:23"
     basic_constraints_critical: yes
     ocsp_must_staple: yes
+    subject_key_identifier: "00:11:22:33"
+    authority_key_identifier: "44:55:66:77"
+    authority_cert_issuer:
+      - "DNS:ca.example.org"
+      - "IP:1.2.3.4"
+    authority_cert_serial_number: 12345
 
 - name: Generate CSR 2
   openssl_csr:
@@ -90,12 +96,17 @@
       - "IP:DEAD:BEEF::1"
     basic_constraints:
       - "CA:FALSE"
+    authority_cert_issuer:
+      - "DNS:ca.example.org"
+      - "IP:1.2.3.4"
+    authority_cert_serial_number: 12345
 
 - name: Generate CSR 4
   openssl_csr:
     path: '{{ output_dir }}/csr_4.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     useCommonNameForSAN: no
+    authority_key_identifier: "44:55:66:77"
 
 - name: Generate selfsigned certificates
   openssl_certificate:
