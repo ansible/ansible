@@ -1322,7 +1322,9 @@ class OwnCACertificateCryptography(Certificate):
                 try:
                     ext = self.ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
                     cert_builder = cert_builder.add_extension(
-                        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value),
+                        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value)
+                        if CRYPTOGRAPHY_VERSION >= LooseVersion('2.7') else
+                        x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext),
                         critical=False
                     )
                 except cryptography.x509.ExtensionNotFound:
@@ -1359,7 +1361,11 @@ class OwnCACertificateCryptography(Certificate):
         if self.create_authority_key_identifier:
             try:
                 ext = self.ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
-                expected_ext = x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value)
+                expected_ext = (
+                    x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext.value)
+                    if CRYPTOGRAPHY_VERSION >= LooseVersion('2.7') else
+                    x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext)
+                )
             except cryptography.x509.ExtensionNotFound:
                 expected_ext = x509.AuthorityKeyIdentifier.from_issuer_public_key(self.ca_cert.public_key())
             try:
