@@ -57,7 +57,7 @@
 
     - name: Update Policy on key to match AWS Console generate policy
       aws_kms:
-        key_alias: "alias/{{ resource_prefix }}-kms"
+        key_id: '{{ new_key["keys"][0]["key_id"] }}'
         policy: "{{ lookup('template', 'console-policy.j2') | to_json }}"
       register: kms_policy_changed
 
@@ -68,7 +68,7 @@
 
     - name: Attempt to re-assert the same policy
       aws_kms:
-        key_alias: "alias/{{ resource_prefix }}-kms"
+        alias: "alias/{{ resource_prefix }}-kms"
         policy: "{{ lookup('template', 'console-policy.j2') | to_json }}"
       register: kms_policy_changed
 
@@ -80,7 +80,7 @@
     - name: grant user-style access to production secrets
       aws_kms:
         mode: grant
-        key_alias: "alias/{{ resource_prefix }}-kms"
+        alias: "alias/{{ resource_prefix }}-kms"
         role_name: "{{ resource_prefix }}-kms-role"
         grant_types: "role,role grant"
 
@@ -93,7 +93,7 @@
     - name: remove access to production secrets from role
       aws_kms:
         mode: deny
-        key_alias: "alias/{{ resource_prefix }}-kms"
+        alias: "alias/{{ resource_prefix }}-kms"
         role_arn: "{{ iam_role_result.iam_role.arn }}"
 
     - name: find facts about the key
