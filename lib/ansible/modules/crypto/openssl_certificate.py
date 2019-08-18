@@ -938,21 +938,13 @@ class Certificate(crypto_utils.OpenSSLObject):
             # Check subject
             if self.csr.subject != self.cert.subject:
                 return False
-            # Check SubjectKeyIdentifier
-            if self.create_subject_key_identifier:
-                try:
-                    ext = self.csr.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
-                    if ext.digest != x509.SubjectKeyIdentifier.from_public_key(self.privatekey.public_key()).value:
-                        return False
-                except cryptography.x509.ExtensionNotFound as dummy:
-                    return False
             # Check extensions
             cert_exts = list(self.cert.extensions)
             csr_exts = list(self.csr.extensions)
             if self.create_subject_key_identifier:
                 # Filter out SubjectKeyIdentifier extension before comparison
-                cert_exts = filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), cert_exts)
-                csr_exts = filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), csr_exts)
+                cert_exts = list(filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), cert_exts))
+                csr_exts = list(filter(lambda x: not isinstance(x.value, x509.SubjectKeyIdentifier), csr_exts))
             if len(cert_exts) != len(csr_exts):
                 return False
             for cert_ext in cert_exts:
@@ -998,6 +990,16 @@ class Certificate(crypto_utils.OpenSSLObject):
             self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
             if not self._validate_csr():
                 return False
+
+        # Check SubjectKeyIdentifier
+        if self.create_subject_key_identifier:
+            if self.backend == 'cryptography':
+                try:
+                    ext = self.cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+                    if ext.value.digest != x509.SubjectKeyIdentifier.from_public_key(self.cert.public_key()).digest:
+                        return False
+                except cryptography.x509.ExtensionNotFound as dummy:
+                    return False
 
         return True
 
