@@ -925,16 +925,16 @@ class ACMEClient(object):
                     alternate_chains.append(alt_cert)
                 self.all_chains = []
 
-                def _append_all_chains(cert, chain):
+                def _append_all_chains(cert_data):
                     self.all_chains.append(dict(
-                        cert=cert.encode('utf8'),
-                        chain=("\n".join(chain)).encode('utf8'),
-                        full_chain=(cert['cert'] + "\n".join(chain)).encode('utf8'),
+                        cert=cert_data['cert'].encode('utf8'),
+                        chain=("\n".join(cert_data.get('chain', []))).encode('utf8'),
+                        full_chain=(cert_data['cert'] + "\n".join(cert_data.get('chain', []))).encode('utf8'),
                     ))
 
-                _append_all_chains(cert['cert'], cert.get('chain', []))
+                _append_all_chains(cert)
                 for alt_chain in alternate_chains:
-                    _append_all_chains(alt_chain['cert'], alt_chain.get('chain', []))
+                    _append_all_chains(alt_chain)
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
