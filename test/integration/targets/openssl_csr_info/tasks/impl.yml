@@ -26,7 +26,7 @@
     expected_authority_cert_issuer:
       - "DNS:ca.example.org"
       - "IP:1.2.3.4"
-  when: select_crypto_backend != 'pyopenssl'
+  when: select_crypto_backend != 'pyopenssl' and cryptography_version.stdout is version('1.3', '>=')
 
 - name: Update result list
   set_fact:
@@ -58,7 +58,7 @@
     expected_authority_cert_issuer:
       - "DNS:ca.example.org"
       - "IP:1.2.3.4"
-  when: select_crypto_backend != 'pyopenssl'
+  when: select_crypto_backend != 'pyopenssl' and cryptography_version.stdout is version('1.3', '>=')
 
 - name: Update result list
   set_fact:
@@ -76,7 +76,7 @@
       - result.authority_key_identifier == "44:55:66:77"
       - result.authority_cert_issuer is none
       - result.authority_cert_serial_number is none
-  when: select_crypto_backend != 'pyopenssl'
+  when: select_crypto_backend != 'pyopenssl' and cryptography_version.stdout is version('1.3', '>=')
 
 - name: Update result list
   set_fact:
