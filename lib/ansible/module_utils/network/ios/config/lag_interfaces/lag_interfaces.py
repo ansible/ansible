@@ -41,7 +41,7 @@ class Lag_interfaces(ConfigBase):
     def __init__(self, module):
         super(Lag_interfaces, self).__init__(module)
 
-    def get_interfaces_facts(self):
+    def get_lag_interfaces_facts(self):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
@@ -63,24 +63,24 @@ class Lag_interfaces(ConfigBase):
         commands = list()
         warnings = list()
 
-        existing_interfaces_facts = self.get_interfaces_facts()
-        commands.extend(self.set_config(existing_interfaces_facts))
+        existing_lag_interfaces_facts = self.get_lag_interfaces_facts()
+        commands.extend(self.set_config(existing_lag_interfaces_facts))
         if commands:
             if not self._module.check_mode:
                 self._connection.edit_config(commands)
             result['changed'] = True
         result['commands'] = commands
 
-        changed_interfaces_facts = self.get_interfaces_facts()
+        changed_interfaces_facts = self.get_lag_interfaces_facts()
 
-        result['before'] = existing_interfaces_facts
+        result['before'] = existing_lag_interfaces_facts
         if result['changed']:
             result['after'] = changed_interfaces_facts
 
         result['warnings'] = warnings
         return result
 
-    def set_config(self, existing_interfaces_facts):
+    def set_config(self, existing_lag_interfaces_facts):
         """ Collect the configuration from the args passed to the module,
             collect the current configuration (as a dict from facts)
 
@@ -89,7 +89,7 @@ class Lag_interfaces(ConfigBase):
                   to the desired configuration
         """
         want = self._module.params['config']
-        have = existing_interfaces_facts
+        have = existing_lag_interfaces_facts
         resp = self.set_state(want, have)
         return to_list(resp)
 
