@@ -43,6 +43,19 @@ options:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         type: bool
         default: "yes"
+    update_cache_retries:
+        description:
+            - Amount of update cache retries in case of failed fetches.
+            - Each retry count is used as potency for 2 to calculate the delay between the next retry (1, 2, 4, 8, ...), also see C(update_cache_retry_max_delay).
+        type: int
+        default: 5
+        version_added: '2.9'
+    update_cache_retry_max_delay:
+        description:
+            - The max. delay between cache update reries, also see the C(update_cache_retries) option.
+        type: int
+        default: 12
+        version_added: '2.9'
     validate_certs:
         description:
             - If C(no), SSL certificates for the target repo will not be validated. This should only be used
@@ -498,6 +511,8 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
             mode=dict(type='raw'),
             update_cache=dict(type='bool', default=True, aliases=['update-cache']),
+            update_cache_retries=dict(type='int', default=5),
+            update_cache_max_retry_delay=dict(type='int', default=12),
             filename=dict(type='str'),
             # This should not be needed, but exists as a failsafe
             install_python_apt=dict(type='bool', default=True),
@@ -558,11 +573,11 @@ def main():
             sourceslist.save()
             if update_cache:
                 err = ''
-                max_fail_count = 5
-                max_fail_sleep = 12
+                retries = module.params.get('update_cache_retries')
+                max_delay = module.params.get('update_cache_retry_max_delay')
                 randint = random.randint(0, 1000) / 1000
 
-                for retry in range(max_fail_count):
+                for retry in range(retries):
                     try:
                         cache = apt.Cache()
                         cache.update()
@@ -571,10 +586,10 @@ def main():
                         err = to_native(e)
 
                     # Use exponential backoff with a max fail count, plus a little bit of randomness
-                    fail_sleep = 2 ** retry + randint
-                    if fail_sleep > max_fail_sleep:
-                        fail_sleep = max_fail_sleep + randint
-                    time.sleep(fail_sleep)
+                    delay = 2 ** retry + randint
+                    if delay > max_delay:
+                        delay = max_delay + randint
+                    time.sleep(delay)
                 else:
                     revert_sources_list(sources_before, sources_after, sourceslist_before)
                     module.fail_json(msg='Failed to update apt cache: %s' % err)
