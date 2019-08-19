@@ -13,3 +13,5 @@
       lacp max-bundle 2
       interface Port-channel 40
       lacp max-bundle 5
+  when: ansible_net_version != "15.6(2)T"
+
