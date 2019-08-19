@@ -256,34 +256,7 @@ static_setup_params = dict(
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     package_dir={'ansible': 'lib/ansible', 'ansible_test': 'test/lib/ansible_test'},
     packages=find_packages('lib') + find_packages('test/lib'),
-    package_data={
-        'ansible': [
-            'executor/powershell/*.ps1',
-            'module_utils/csharp/*.cs',
-            'module_utils/csharp/*/*.cs',
-            'module_utils/powershell/*.psm1',
-            'module_utils/powershell/*/*.psm1',
-            'modules/windows/*.ps1',
-            'modules/windows/*/*.ps1',
-            'galaxy/data/*.*',
-            'galaxy/data/*/*.*',
-            'galaxy/data/*/.*',
-            'galaxy/data/*/*/.*',
-            'galaxy/data/*/*/*.*',
-            'galaxy/data/*/tests/inventory',
-            'galaxy/data/*/role/tests/inventory',
-            'config/base.yml',
-            'config/module_defaults.yml',
-        ],
-        'ansible_test': [
-            '*/*.*',
-            '*/*/*.*',
-            '*/*/*/*.*',
-            '*/*/*/*/*.*',
-            '*/*/*/*/*/*.*',
-            '*/*/*/*/*/*/*.*'
-        ]
-    },
+    include_package_data=True,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
@@ -316,7 +289,6 @@ static_setup_params = dict(
         'bin/ansible-inventory',
         'bin/ansible-test',
     ],
-    data_files=[],
     # Installing as zip files would break due to references to __file__
     zip_safe=False
 )
