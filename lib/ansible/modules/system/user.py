@@ -371,7 +371,7 @@ ssh_fingerprint:
   type: str
   sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
 ssh_key_file:
-  description: Path to generated SSH public key file
+  description: Path to generated SSH private key file
   returned: When C(generate_ssh_key) is C(True)
   type: str
   sample: /home/asmith/.ssh/id_rsa
