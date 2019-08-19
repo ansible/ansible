@@ -137,6 +137,7 @@ options:
 author:
   - Ted Timmons (@tedder)
   - Will Thames (@willthames)
+  - Mark Chappell (@tremble)
 extends_documentation_fragment:
 - aws
 - ec2
@@ -538,7 +539,7 @@ def get_kms_facts(connection, module):
 
 
 def convert_grant_params(grant, key):
-    grant_params = dict(KeyId=key['key_id'],
+    grant_params = dict(KeyId=key['key_arn'],
                         GranteePrincipal=grant['grantee_principal'])
     if grant.get('operations'):
         grant_params['Operations'] = grant['operations']
@@ -596,14 +597,14 @@ def ensure_enabled_disabled(connection, module, key):
     changed = False
     if key['key_state'] == 'Disabled' and module.params['enabled']:
         try:
-            connection.enable_key(KeyId=key['key_id'])
+            connection.enable_key(KeyId=key['key_arn'])
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Failed to enable key")
 
     if key['key_state'] == 'Enabled' and not module.params['enabled']:
         try:
-            connection.disable_key(KeyId=key['key_id'])
+            connection.disable_key(KeyId=key['key_arn'])
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Failed to disable key")
@@ -628,14 +629,14 @@ def update_alias(connection, module, key_id, alias):
 def update_key(connection, module, key):
     changed = False
     alias = module.params.get('alias')
-    key_id = module.params.get('key_id')
+    key_id = key['key_arn']
 
     if alias:
         changed = update_alias(connection, module, key_id, alias) or changed
 
     if key['key_state'] == 'PendingDeletion':
         try:
-            connection.cancel_key_deletion(KeyId=key['key_id'])
+            connection.cancel_key_deletion(KeyId=key_id)
             # key is disabled after deletion cancellation
             # set this so that ensure_enabled_disabled works correctly
             key['key_state'] = 'Disabled'
@@ -650,7 +651,7 @@ def update_key(connection, module, key):
     # (means you can't remove a description completely)
     if description and key['description'] != description:
         try:
-            connection.update_key_description(KeyId=key['key_id'], Description=description)
+            connection.update_key_description(KeyId=key_id, Description=description)
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Failed to update key description")
@@ -660,13 +661,13 @@ def update_key(connection, module, key):
                                          module.params.get('purge_tags'))
     if to_remove:
         try:
-            connection.untag_resource(KeyId=key['key_id'], TagKeys=to_remove)
+            connection.untag_resource(KeyId=key_id, TagKeys=to_remove)
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Unable to remove or update tag")
     if to_add:
         try:
-            connection.tag_resource(KeyId=key['key_id'],
+            connection.tag_resource(KeyId=key_id,
                                     Tags=[{'TagKey': tag_key, 'TagValue': desired_tags[tag_key]}
                                           for tag_key in to_add])
             changed = True
@@ -677,7 +678,7 @@ def update_key(connection, module, key):
     if module.params.get('policy'):
         policy = module.params.get('policy')
         try:
-            keyret = connection.get_key_policy(KeyId=key['key_id'], PolicyName='default')
+            keyret = connection.get_key_policy(KeyId=key_id, PolicyName='default')
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             # If we can't fetch the current policy assume we're making a change
             # Could occur if we have PutKeyPolicy without GetKeyPolicy
@@ -691,7 +692,7 @@ def update_key(connection, module, key):
             changed = True
             if not module.check_mode:
                 try:
-                    connection.put_key_policy(KeyId=key['key_id'], PolicyName='default', Policy=policy)
+                    connection.put_key_policy(KeyId=key_id, PolicyName='default', Policy=policy)
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     module.fail_json_aws(e, msg="Unable to update key policy")
 
@@ -703,7 +704,7 @@ def update_key(connection, module, key):
     if to_remove:
         for grant in to_remove:
             try:
-                connection.retire_grant(KeyId=key['key_arn'], GrantId=grant['grant_id'])
+                connection.retire_grant(KeyId=key_id, GrantId=grant['grant_id'])
                 changed = True
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Unable to retire grant")
@@ -717,8 +718,8 @@ def update_key(connection, module, key):
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Unable to create grant")
 
-    # make results consistent with kms_facts
-    result = get_key_details(connection, module, key['key_id'])
+    # make results consistent with kms_facts before returning
+    result = get_key_details(connection, module, key_id)
     module.exit_json(changed=changed, **result)
 
 
@@ -935,7 +936,7 @@ def main():
         try:
             # Don't use get_key_details it triggers module.fail when the key
             # doesn't exist
-            key_metadata = get_kms_metadata_with_backoff( kms, key_id)['KeyMetadata']
+            key_metadata = get_kms_metadata_with_backoff(kms, key_id)['KeyMetadata']
             key_id = key_metadata['Arn']
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             # We can't create keys with a specific ID, if we can't access the
@@ -974,8 +975,8 @@ def main():
         result.update(ret)
 
         module.exit_json(**result)
-    else:
 
+    else:
         if module.params.get('state') == 'present':
             if key_metadata:
                 key_details = get_key_details(kms, module, key_id)
