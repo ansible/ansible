@@ -133,12 +133,14 @@ EXAMPLES = r'''
     creates: /path/to/database
 
 # 'argv' is a parameter, indented one level from the module
+# When using this syntax, you don't need the "args" block anymore
 - name: Use 'argv' to send a command as a list - leave 'command' empty
   command:
     argv:
       - /usr/bin/make_database.sh
       - Username with whitespace
       - dbname with whitespace
+    creates: /path/to/database
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
