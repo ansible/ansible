@@ -293,15 +293,29 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 return device_lookup["config_context"]
         except Exception:
             return
+    
+    def extract_interface_ip(self, interface_id):
+        try:
+            url = self.api_endpoint + "/api/ipam/ip-addresses/?limit=0&interface_id=" + str(interface_id)
+            interface_ips_lookup = self._fetch_information(url)
+            wanted_keys = ['address', 'family', 'tenant', 'vrf', 'status', 'role', 'tags']
+            interface_ips_short = []
+            for interface_ip_lookup in interface_ips_lookup['results']:
+                interface_ips_short.append(dict((k, interface_ip_lookup[k]) for k in wanted_keys if k in interface_ip_lookup))
+            return interface_ips_short
+        except Exception:
+            return
 
     def extract_interfaces(self, host):
         try:
             if self.interfaces:
                 url = self.api_endpoint + "/api/dcim/interfaces/?limit=0&device_id=" + str(host["id"])
                 interfaces_lookup = self._fetch_information(url)
-                wanted_keys = ['description', 'enabled', 'lag', 'name', 'mode', 'tagged_vlans', 'untagged_vlan', 'tags', 'form_factor', 'count_ipaddresses']
+                wanted_keys = ['description', 'enabled', 'lag', 'name', 'mode', 'tagged_vlans', 'untagged_vlan', 'tags', 'form_factor', 'ip']
                 interfaces_short = []
                 for interface_lookup in interfaces_lookup['results']:
+                    if interface_lookup['count_ipaddresses'] > 0:
+                        interface_lookup['ip'] = self.extract_interface_ip(interface_lookup['id'])
                     interfaces_short.append(dict((k, interface_lookup[k]) for k in wanted_keys if k in interface_lookup))
                 return interfaces_short
         except Exception:
@@ -309,7 +323,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_manufacturer(self, host):
         try:
-            return ([self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]]
+            return ([self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]] 
                     if self.use_slugs else [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]])
         except Exception:
             return
