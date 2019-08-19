@@ -25,7 +25,6 @@ import sys
 import time
 import traceback
 import uuid
-import six
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
@@ -33,13 +32,11 @@ from ansible.module_utils.connection import Connection
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.display import Display
-
-# From nxos module
 from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
-
+from ansible.module_utils import six
 
 try:
     from scp import SCPClient
@@ -341,8 +338,8 @@ class ActionModule(ActionBase):
         # Spawn pexpect connection to NX-OS device.
         nxos_session = pexpect.spawn('ssh ' + nxos_username + '@' + nxos_hostname + ' -p' + str(port))
         # There might be multiple user_response_required prompts or intermittent timeouts
-        # spawning the expect session so loop up to 30 times during the spwan process.
-        for connect_attempt in range(31):
+        # spawning the expect session so loop up to 5 times during the spwan process.
+        for connect_attempt in range(6):
             outcome = process_outcomes(nxos_session)
             if outcome['user_response_required']:
                 nxos_session.sendline('yes')
@@ -354,7 +351,7 @@ class ActionModule(ActionBase):
                 break
             if outcome['error'] or outcome['expect_timeout']:
                 self.results['failed'] = True
-                self.results['error_data'] = outcome['error_data']
+                self.results['error_data'] = 'Failed to spawn expect session! ' + outcome['error_data']
                 return
         else:
             # The before property will contain all text up to the expected string pattern.
@@ -369,8 +366,14 @@ class ActionModule(ActionBase):
             dir_array = local_file_directory.split('/')
             for each in dir_array:
                 if each:
-                    nxos_session.sendline('mkdir ' + local_dir_root + each)
-                    process_outcomes(nxos_session)
+                    mkdir_cmd = 'mkdir ' + local_dir_root + each
+                    nxos_session.sendline(mkdir_cmd)
+                    outcome = process_outcomes(nxos_session)
+                    if outcome['error'] or outcome['expect_timeout']:
+                        self.results['mkdir_cmd'] = mkdir_cmd
+                        self.results['failed'] = True
+                        self.results['error_data'] = outcome['error_data']
+                        return
                     local_dir_root += each + '/'
 
         # Initiate file copy
