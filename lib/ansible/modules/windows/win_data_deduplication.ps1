@@ -16,14 +16,14 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type 'b
 $result = @{
   changed = $false
   reboot_required = $false
-	msg = ""
+  msg = ""
 }
 
 function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
 
   $current_state = 'absent'
 
-	try {
+  try {
     $dedup_info = Get-DedupVolume -Volume "$($volume.DriveLetter):"
   } catch {
     $dedup_info = $null
@@ -38,16 +38,16 @@ function Set-DataDeduplication($volume, $state, $settings, $dedup_job) {
   }
 
   if ( $state -ne $current_state ) {
-		if( -not $check_mode) {
-			if($state -eq 'present') {
-				# Enable-DedupVolume -Volume <String>
-				Enable-DedupVolume -Volume "$($volume.DriveLetter):"
-			} elseif ($state -eq 'absent') {
-				Disable-DedupVolume -Volume "$($volume.DriveLetter):"
-			} else {
-				Fail-Json $result "Unsupported state option, it can only be 'present' or 'absent'."
-			}
-		}
+    if( -not $check_mode) {
+      if($state -eq 'present') {
+        # Enable-DedupVolume -Volume <String>
+        Enable-DedupVolume -Volume "$($volume.DriveLetter):"
+      } elseif ($state -eq 'absent') {
+        Disable-DedupVolume -Volume "$($volume.DriveLetter):"
+      } else {
+        Fail-Json $result "Unsupported state option, it can only be 'present' or 'absent'."
+      }
+    }
     $result.msg += " Deduplication on volume: "+$volume.DriveLetter+" set to: $state"
     $result.changed = $true
   }
@@ -69,19 +69,19 @@ function Set-DataDedupJobSettings ($volume, $settings) {
 
   ForEach ($key in $settings.keys) {
 
-		# See Microsoft documentation:
-		# https://docs.microsoft.com/en-us/powershell/module/deduplication/set-dedupvolume?view=win10-ps
+    # See Microsoft documentation:
+    # https://docs.microsoft.com/en-us/powershell/module/deduplication/set-dedupvolume?view=win10-ps
 
     $update_key = $key
     $update_value = $settings.$($key)
-		# Transform Ansible style options to Powershell params
-		$update_key = $update_key -replace('_', '')
+    # Transform Ansible style options to Powershell params
+    $update_key = $update_key -replace('_', '')
 
     if ($update_key -eq "MinimumFileSize" -and $update_value -lt 32768) {
       $update_value = 32768
     }
 
-		$current_value = ($dedup_info | Select-Object -ExpandProperty $update_key)
+    $current_value = ($dedup_info | Select-Object -ExpandProperty $update_key)
 
     if ($update_value -ne $current_value) {
       $command_param = @{
@@ -92,10 +92,10 @@ function Set-DataDedupJobSettings ($volume, $settings) {
       #                 -NoCompress <bool> `
       #                 -MinimumFileAgeDays <UInt32> `
       #                 -MinimumFileSize <UInt32> (minimum 32768)
-			if( -not $check_mode) {
-				Set-DedupVolume -Volume "$($volume.DriveLetter):" @command_param
-			}
-			$result.msg += " Setting DedupVolume settings for $update_key"
+      if( -not $check_mode) {
+        Set-DedupVolume -Volume "$($volume.DriveLetter):" @command_param
+      }
+      $result.msg += " Setting DedupVolume settings for $update_key"
 
       $result.changed = $true
     }
@@ -106,12 +106,12 @@ function Set-DataDedupJobSettings ($volume, $settings) {
 # Install required feature
 $feature_name = "FS-Data-Deduplication"
 if(!$check_mode) {
-	$feature = Install-WindowsFeature -Name $feature_name
+  $feature = Install-WindowsFeature -Name $feature_name
 
-	if ($feature.RestartNeeded -eq 'Yes') {
-		$result.reboot_required = $true
-		Fail-Json $result "$feature_name was installed but requires Windows to be rebooted to work."
-	}
+  if ($feature.RestartNeeded -eq 'Yes') {
+    $result.reboot_required = $true
+    Fail-Json $result "$feature_name was installed but requires Windows to be rebooted to work."
+  }
 }
 
 $volume = Get-Volume -DriveLetter $drive_letter
