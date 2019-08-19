@@ -58,12 +58,13 @@ replaced:
       name: GigabitEthernet0/2
 
   commands:
-    - interface GigabitEthernet0/1
-    - ip address 192.168.3.1 255.255.255.0
-    - interface GigabitEthernet0/2
-    - no ipv6 address
-    - ip address 192.168.4.1 255.255.255.0 secondary
-    - ip address 192.168.4.2 255.255.255.0
+    - "interface GigabitEthernet0/1"
+    - "ip address 192.168.3.1 255.255.255.0"
+    - "interface GigabitEthernet0/2"
+    - "no ip address"
+    - "no ipv6 address"
+    - "ip address 192.168.4.1 255.255.255.0 secondary"
+    - "ip address 192.168.4.2 255.255.255.0"
 
   after:
     - name: loopback888
@@ -75,8 +76,6 @@ replaced:
       - address: 192.168.3.1 255.255.255.0
       name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.2.1 255.255.255.0
-        secondary: true
       - address: 192.168.4.1 255.255.255.0
         secondary: true
       - address: 192.168.4.2 255.255.255.0
@@ -106,8 +105,10 @@ overridden:
     - "interface GigabitEthernet0/1"
     - "no ip address"
     - "interface GigabitEthernet0/2"
-    - "ip address 192.168.4.1 255.255.255.0 secondary"
-    - "ip address 192.168.4.2 255.255.255.0"
+    - "no ip address"
+    - "no ipv6 address"
+    - "ip address 192.168.4.1 255.255.255.0"
+    - "ip address 192.168.4.2 255.255.255.0 secondary"
 
   after:
     - name: loopback888
@@ -118,8 +119,8 @@ overridden:
     - name: GigabitEthernet0/1
     - ipv4:
       - address: 192.168.4.1 255.255.255.0
-        secondary: true
       - address: 192.168.4.2 255.255.255.0
+        secondary: true
       name: GigabitEthernet0/2
 
 deleted:
@@ -147,6 +148,7 @@ deleted:
     - "no ip address"
     - "interface GigabitEthernet0/2"
     - "no ip address"
+    - "no ipv6 address"
 
   after:
     - name: loopback888
