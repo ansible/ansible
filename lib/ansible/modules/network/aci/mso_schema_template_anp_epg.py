@@ -349,6 +349,7 @@ def main():
             contractRelationships=[],
             subnets=subnets,
             bdRef=bd_ref,
+            preferredGroup=preferred_group,
             vrfRef=vrf_ref,
         )
 
