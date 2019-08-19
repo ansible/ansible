@@ -93,17 +93,16 @@ EXAMPLES = """
     gather_subset: min
     gather_network_resources: interfaces
 
-<<<<<<< HEAD
 - name: Gather L2 interfaces resource and minimal legacy facts
   ios_facts:
     gather_subset: min
     gather_network_resources: l2_interfaces
-=======
+
 - name: Gather L3 interfaces resource and minimal legacy facts
   ios_facts:
     gather_subset: min
     gather_network_resources: l3_interfaces
->>>>>>> ios_l3_interfaces
+
 """
 
 RETURN = """

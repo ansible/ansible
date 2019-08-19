@@ -41,13 +41,11 @@ class L3_InterfacesArgs(object):
                                                      'type': 'list',
                                                      'options': {'address': {'type': 'str'},
                                                                  'secondary': {'type': 'bool'},
-                                                                 'dhcp_client': {'type': int},
+                                                                 'dhcp_client': {'type': 'int'},
                                                                  'dhcp_hostname': {'type': 'str'}}},
                                             'ipv6': {'element': 'dict',
                                                      'type': 'list',
-                                                     'options': {'address': {'type': 'str'},
-                                                                 'autoconfig': {'type': 'bool'},
-                                                                 'dhcp': {'type': 'str'}}}
+                                                     'options': {'address': {'type': 'str'}}}
                                             },
                                 'type': 'list'},
                      'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
