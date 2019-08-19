@@ -48,10 +48,10 @@ class Lag_interfaces(ConfigBase):
         :returns: The current configuration as a dictionary
         """
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
-        interfaces_facts = facts['ansible_network_resources'].get('lag_interfaces')
-        if not interfaces_facts:
+        lag_interfaces_facts = facts['ansible_network_resources'].get('lag_interfaces')
+        if not lag_interfaces_facts:
             return []
-        return interfaces_facts
+        return lag_interfaces_facts
 
     def execute_module(self):
         """ Execute the module
@@ -71,11 +71,11 @@ class Lag_interfaces(ConfigBase):
             result['changed'] = True
         result['commands'] = commands
 
-        changed_interfaces_facts = self.get_lag_interfaces_facts()
+        changed_lag_interfaces_facts = self.get_lag_interfaces_facts()
 
         result['before'] = existing_lag_interfaces_facts
         if result['changed']:
-            result['after'] = changed_interfaces_facts
+            result['after'] = changed_lag_interfaces_facts
 
         result['warnings'] = warnings
         return result
