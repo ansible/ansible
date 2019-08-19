@@ -113,7 +113,7 @@ class AzureRMAKSVersion(AzureRMModuleBase):
                 return result.get(version) or []
             else:
                 keys = list(result.keys())
-                keys.sort() 
+                keys.sort()
                 return keys
         except Exception as exc:
             self.fail('Error when getting AKS supported kubernetes version list for location {0} - {1}'.format(self.location, exc.message or str(exc)))
