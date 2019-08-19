@@ -16,7 +16,7 @@ module: aci_vmm_credential
 short_description: Manage virtual domain credential profiles (vmm:UsrAccP)
 description:
 - Manage virtual domain credential profiles on Cisco ACI fabrics.
-version_added: '2.8'
+version_added: '2.9'
 options:
   name:
     description:
@@ -60,9 +60,6 @@ options:
 extends_documentation_fragment: aci
 seealso:
 - module: aci_domain
-- module: aci_aep_to_domain
-- module: aci_domain_to_encap_pool
-- module: aci_domain_to_vlan_pool
 - name: APIC Management Information Model reference
   description: More information about the internal APIC classes B(vmm:DomP)
   link: https://developer.cisco.com/docs/apic-mim-ref/
