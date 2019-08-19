@@ -315,7 +315,7 @@
     privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_create_subject_key_identifier: yes
+    selfsigned_create_subject_key_identifier: always_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: selfsigned_subject_key_identifier_1
@@ -327,7 +327,7 @@
     privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_create_subject_key_identifier: yes
+    selfsigned_create_subject_key_identifier: always_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: selfsigned_subject_key_identifier_2
@@ -339,7 +339,7 @@
     privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_create_subject_key_identifier: no
+    selfsigned_create_subject_key_identifier: never_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: selfsigned_subject_key_identifier_3
@@ -351,7 +351,7 @@
     privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_create_subject_key_identifier: no
+    selfsigned_create_subject_key_identifier: never_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: selfsigned_subject_key_identifier_4
@@ -363,7 +363,7 @@
     privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_create_subject_key_identifier: yes
+    selfsigned_create_subject_key_identifier: always_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: selfsigned_subject_key_identifier_5

@@ -40,7 +40,6 @@
     privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_create_subject_key_identifier: '{{ select_crypto_backend != "pyopenssl" }}'
     select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: (OwnCA, {{select_crypto_backend}}) Generate selfsigned CA certificate (privatekey passphrase)
@@ -51,7 +50,6 @@
     privatekey_passphrase: hunter2
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_create_subject_key_identifier: '{{ select_crypto_backend != "pyopenssl" }}'
     select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate
@@ -318,7 +316,7 @@
     ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: ownca
     ownca_digest: sha256
-    ownca_create_subject_key_identifier: yes
+    ownca_create_subject_key_identifier: always_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: ownca_subject_key_identifier_1
@@ -331,7 +329,7 @@
     ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: ownca
     ownca_digest: sha256
-    ownca_create_subject_key_identifier: yes
+    ownca_create_subject_key_identifier: always_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: ownca_subject_key_identifier_2
@@ -344,7 +342,7 @@
     ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: ownca
     ownca_digest: sha256
-    ownca_create_subject_key_identifier: no
+    ownca_create_subject_key_identifier: never_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: ownca_subject_key_identifier_3
@@ -357,7 +355,7 @@
     ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: ownca
     ownca_digest: sha256
-    ownca_create_subject_key_identifier: no
+    ownca_create_subject_key_identifier: never_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: ownca_subject_key_identifier_4
@@ -370,7 +368,7 @@
     ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: ownca
     ownca_digest: sha256
-    ownca_create_subject_key_identifier: yes
+    ownca_create_subject_key_identifier: always_create
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: select_crypto_backend != 'pyopenssl'
   register: ownca_subject_key_identifier_5
