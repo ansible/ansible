@@ -83,16 +83,16 @@ options:
             - Refer to vendor documentation for valid values.
             - NOTE, parameter only supported on Cisco IOS XE platform.
             type: int
-    state:
-      description:
-      - The state the configuration should be left in
-      type: str
-      choices:
-      - merged
-      - replaced
-      - overridden
-      - deleted
-      default: merged
+  state:
+    description:
+    - The state the configuration should be left in
+    type: str
+    choices:
+    - merged
+    - replaced
+    - overridden
+    - deleted
+    default: merged
 """
 
 EXAMPLES = """
@@ -118,17 +118,17 @@ EXAMPLES = """
     config:
       - name: 10
         members:
-          member: GigabitEthernet0/1
+        - member: GigabitEthernet0/1
           mode: auto
-          member: GigabitEthernet0/2
+        - member: GigabitEthernet0/2
           mode: auto
       - name: 20
         members:
-          member: GigabitEthernet0/3
+        - member: GigabitEthernet0/3
           mode: on
       - name: 30
         members:
-          member: GigabitEthernet0/4
+        - member: GigabitEthernet0/4
           mode: active
     state: merged
 
@@ -179,9 +179,9 @@ EXAMPLES = """
     config:
       - name: 20
         members:
-          member: GigabitEthernet0/2
+        - member: GigabitEthernet0/2
           mode: auto
-          member: GigabitEthernet0/3
+        - member: GigabitEthernet0/3
           mode: auto
     state: overridden
 
@@ -230,7 +230,7 @@ EXAMPLES = """
     config:
       - name: 40
         members:
-          member: GigabitEthernet0/3
+        - member: GigabitEthernet0/3
           mode: auto
     state: replaced
 
