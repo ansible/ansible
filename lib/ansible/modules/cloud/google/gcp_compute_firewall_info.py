@@ -258,12 +258,7 @@ def main():
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
-    items = fetch_list(module, collection(module), query_options(module.params['filters']))
-    if items.get('items'):
-        items = items.get('items')
-    else:
-        items = []
-    return_value = {'resources': items}
+    return_value = {'resources': fetch_list(module, collection(module), query_options(module.params['filters']))}
     module.exit_json(**return_value)
 
 
@@ -273,8 +268,7 @@ def collection(module):
 
 def fetch_list(module, link, query):
     auth = GcpSession(module, 'compute')
-    response = auth.get(link, params={'filter': query})
-    return return_if_object(module, response)
+    return auth.list(link, return_if_object, array_name='items', params={'filter': query})
 
 
 def query_options(filters):
