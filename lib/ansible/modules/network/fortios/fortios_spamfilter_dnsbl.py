@@ -119,7 +119,7 @@ options:
                             - disable
             id:
                 description:
-                    - ID.
+                    - Id of the spamfilter dnsb entry.
                 required: true
                 type: int
             name:
