@@ -195,7 +195,7 @@ options:
                 type: int
             neighbor:
                 description:
-                    - List of neighbors. 
+                    - List of neighbors.
                 type: list
                 suboptions:
                     id:
