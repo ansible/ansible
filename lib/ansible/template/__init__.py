@@ -539,7 +539,6 @@ class Templar:
             obj = mapping.get(key, self.environment)
             setattr(obj, key, original[key])
 
-
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
                  convert_data=True, static_vars=None, cache=True, disable_lookups=False):
         '''
