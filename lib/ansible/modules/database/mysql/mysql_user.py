@@ -114,7 +114,10 @@ notes:
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
 
-author: "Jonathan Mainguy (@Jmainguy), Lukasz Tomaszkiewicz (@tomaszkiewicz)"
+author:
+- Jonathan Mainguy (@Jmainguy)
+- Benjamin Malynovytch (@bmalynovytch)
+- Lukasz Tomaszkiewicz (@tomaszkiewicz)
 
 extends_documentation_fragment: mysql
 '''
@@ -400,7 +403,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, plugin, plugin_h
         # Handle plugin authentication
 
         if plugin:
-            cursor.execute("SELECT plugin, authentication_string FROM user WHERE user = %s AND host = %s", (user, host))
+            cursor.execute("SELECT plugin, authentication_string FROM mysql.user WHERE user = %s AND host = %s", (user, host))```
             current_plugin = cursor.fetchone()
 
             update = False
@@ -707,10 +710,10 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, host_all, password, encrypted, plugin, plugin_hash_string, plugin_auth_string,
+                    changed, msg = user_mod(cursor, user, host, host_all, password, encrypted, plugin, plugin_hash_string, plugin_auth_string,
                                        priv, append_privs, module)
                 else:
-                    changed = user_mod(cursor, user, host, host_all, None, encrypted, plugin, plugin_hash_string, plugin_auth_string,
+                    changed, msg = user_mod(cursor, user, host, host_all, None, encrypted, plugin, plugin_hash_string, plugin_auth_string,
                                        priv, append_privs, module)
 
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
