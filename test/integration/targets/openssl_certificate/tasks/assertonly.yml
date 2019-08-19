@@ -18,10 +18,31 @@
       commonName: www.example.com
     useCommonNameForSAN: no
 
+- name: (Assertonly, {{select_crypto_backend}}) - Generate CSR (with SANs)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_sans.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+    subject_alt_name:
+      - "DNS:ansible.com"
+      - "IP:127.0.0.1"
+      - "IP:::1"
+    useCommonNameForSAN: no
+
 - name: (Assertonly, {{select_crypto_backend}}) - Generate selfsigned certificate (no extensions)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     csr_path: '{{ output_dir }}/csr_noext.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (Assertonly, {{select_crypto_backend}}) - Generate selfsigned certificate (with SANs)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_sans.pem'
+    csr_path: '{{ output_dir }}/csr_sans.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
@@ -36,6 +57,29 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: extension_missing_san
+
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that subject_alt_name is there
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_sans.pem'
+    provider: assertonly
+    subject_alt_name:
+      - "DNS:ansible.com"
+      - "IP:127.0.0.1"
+      - "IP:::1"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: extension_san
+
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that subject_alt_name is there (strict)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_sans.pem'
+    provider: assertonly
+    subject_alt_name:
+      - "DNS:ansible.com"
+      - "IP:127.0.0.1"
+      - "IP:::1"
+    subject_alt_name_strict: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: extension_san_strict
 
 - name: (Assertonly, {{select_crypto_backend}}) - Assert that key_usage is there (should fail)
   openssl_certificate:
@@ -61,6 +105,8 @@
     that:
       - extension_missing_san is failed
       - "'Found no subjectAltName extension' in extension_missing_san.msg"
+      - extension_san is succeeded
+      - extension_san_strict is succeeded
       - extension_missing_ku is failed
       - "'Found no keyUsage extension' in extension_missing_ku.msg"
       - extension_missing_eku is failed

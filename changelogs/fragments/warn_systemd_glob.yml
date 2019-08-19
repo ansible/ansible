@@ -1,0 +1,2 @@
+bugfixes:
+    - warn user when attempting to use service with globs in systemd module.

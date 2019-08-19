@@ -34,7 +34,7 @@ author:
   - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
-  - python-gitlab python module
+  - python-gitlab >= 1.5.0
 extends_documentation_fragment:
     - auth_basic
 options:
@@ -259,10 +259,10 @@ class GitLabRunner(object):
     @param description Description of the runner
     '''
     def findRunner(self, description):
-        runners = self._gitlab.runners.all()
+        runners = self._gitlab.runners.list(as_list=False)
         for runner in runners:
-            if (runner['description'] == description):
-                return self._gitlab.runners.get(runner['id'])
+            if (runner.description == description):
+                return self._gitlab.runners.get(runner.id)
 
     '''
     @param description Description of the runner

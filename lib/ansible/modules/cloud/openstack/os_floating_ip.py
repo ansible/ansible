@@ -20,7 +20,8 @@ author: Davide Guerri (@dguerri) <davide.guerri@hp.com>
 short_description: Add/Remove floating IP from an instance
 extends_documentation_fragment: openstack
 description:
-   - Add or Remove a floating IP to an instance
+   - Add or Remove a floating IP to an instance.
+   - Returns the floating IP when attaching only if I(wait=true).
 options:
    server:
      description:
@@ -54,8 +55,8 @@ options:
      version_added: "2.3"
    wait:
      description:
-        - When attaching a floating IP address, specify whether we should
-          wait for it to appear as attached.
+        - When attaching a floating IP address, specify whether to wait for it to appear as attached.
+        - Must be set to C(yes) for the module to return the value of the floating IP.
      type: bool
      default: 'no'
    timeout:

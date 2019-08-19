@@ -34,11 +34,13 @@ options:
     - Name of the cluster.
     - DRS facts for the given cluster will be returned.
     - This is required parameter if C(datacenter) parameter is not provided.
+    type: str
   datacenter:
     description:
     - Name of the datacenter.
     - DRS facts for all the clusters from the given datacenter will be returned.
     - This is required parameter if C(cluster_name) parameter is not provided.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -70,6 +72,7 @@ drs_rule_facts:
     sample: {
             "DC0_C0": [
                 {
+                    "rule_affinity": false,
                     "rule_enabled": true,
                     "rule_key": 1,
                     "rule_mandatory": true,
@@ -182,6 +185,7 @@ class VmwareDrsFactManager(PyVmomi):
                     rule_uuid=rule_obj.ruleUuid,
                     rule_vms=[vm.name for vm in rule_obj.vm],
                     rule_type="vm_vm_rule",
+                    rule_affinity=True if isinstance(rule_obj, vim.cluster.AffinityRuleSpec) else False,
                     )
 
     def normalize_vm_host_rule_spec(self, rule_obj=None, cluster_obj=None):

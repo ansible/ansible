@@ -45,7 +45,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 author:
-  - Piotr Wojciechowski (@wojciechowskipiotr)
+  - Piotr Wojciechowski (@WojciechowskiPiotr)
 
 requirements:
   - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.4.0"
@@ -87,10 +87,15 @@ nodes:
     type: list
 '''
 
+import traceback
+
+from ansible.module_utils.docker.common import (
+    RequestException,
+)
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
 try:
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -136,12 +141,17 @@ def main():
 
     client.fail_task_if_not_swarm_manager()
 
-    nodes = get_node_facts(client)
+    try:
+        nodes = get_node_facts(client)
 
-    client.module.exit_json(
-        changed=False,
-        nodes=nodes,
-    )
+        client.module.exit_json(
+            changed=False,
+            nodes=nodes,
+        )
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

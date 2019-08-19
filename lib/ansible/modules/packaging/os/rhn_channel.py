@@ -154,7 +154,7 @@ def main():
                 unsubscribe_channels(channelname, client, session, systname, sys_id)
                 module.exit_json(changed=True, msg="Channel %s removed" % channelname)
     except Exception as e:
-        module.fail_json('Unable to %s channel (%s): %s' % ('add' if state == 'present' else 'remove', channelname, to_text(e)))
+        module.fail_json(msg='Unable to %s channel (%s): %s' % ('add' if state == 'present' else 'remove', channelname, to_text(e)))
     finally:
         client.auth.logout(session)
 

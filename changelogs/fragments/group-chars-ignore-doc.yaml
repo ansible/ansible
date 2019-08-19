@@ -1,0 +1,3 @@
+---
+bugfixes:
+- documented ``ignore`` option for ``TRANSFORM_INVALID_GROUP_CHARS``

@@ -169,7 +169,7 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
 # Ensure WebAdministration module is loaded
 if ($null -eq (Get-Module -Name "WebAdministration" -ErrorAction SilentlyContinue)) {
     Import-Module WebAdministration
-    $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
+    $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll
     Add-Type -Path $web_admin_dll_path
 }
 

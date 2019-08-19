@@ -1,0 +1,2 @@
+bugfixes:
+- "crypto modules - improve error messages when required Python library is missing."

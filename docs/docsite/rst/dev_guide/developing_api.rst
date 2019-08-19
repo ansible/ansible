@@ -113,11 +113,11 @@ command line tools (``lib/ansible/cli/``) is `available on GitHub <https://githu
 
 .. seealso::
 
-   :doc:`developing_inventory`
+   :ref:`developing_inventory`
        Developing dynamic inventory integrations
-   :doc:`developing_modules`
-       How to develop modules
-   :doc:`developing_plugins`
+   :ref:`developing_modules_general`
+       Getting started on developing a module
+   :ref:`developing_plugins`
        How to develop plugins
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics

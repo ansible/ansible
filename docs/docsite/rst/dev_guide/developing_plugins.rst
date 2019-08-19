@@ -25,7 +25,7 @@ You must write your plugin in Python so it can be loaded by the ``PluginLoader``
 Raising errors
 ==============
 
-You should return errors encountered during plugin execution by raising ``AnsibleError()`` or a similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_text`` Ansible function to ensure proper string compatibility across Python versions:
+You should return errors encountered during plugin execution by raising ``AnsibleError()`` or a similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_native`` Ansible function to ensure proper string compatibility across Python versions:
 
 .. code-block:: python
 
@@ -331,7 +331,7 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
   __metaclass__ = type
 
   DOCUMENTATION = """
-        lookup: file
+          lookup: file
           author: Daniel Hokka Zakrisson <daniel@hozac.com>
           version_added: "0.9"
           short_description: read file contents
@@ -453,11 +453,11 @@ For example vars plugins, see the source code for the `vars plugins included wit
 
    :ref:`all_modules`
        List of all modules
-   :doc:`developing_api`
+   :ref:`developing_api`
        Learn about the Python API for task execution
-   :doc:`developing_inventory`
+   :ref:`developing_inventory`
        Learn about how to develop dynamic inventory sources
-   :doc:`developing_modules`
+   :ref:`developing_modules_general`
        Learn about how to write Ansible modules
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list

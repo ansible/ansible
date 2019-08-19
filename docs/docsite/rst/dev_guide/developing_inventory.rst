@@ -151,7 +151,7 @@ The base class does some minimal assignment for reuse in other methods.
         self.templar = Templar(loader=loader)
 
 It is up to the plugin now to deal with the inventory source provided and translate that into the Ansible inventory.
-To facilitate this the example below uses a few helper functions:
+To facilitate this, the example below uses a few helper functions:
 
 .. code-block:: python
 
@@ -422,11 +422,11 @@ An easy way to see how this should look is using :ref:`ansible-inventory`, which
 
 .. seealso::
 
-   :doc:`developing_api`
+   :ref:`developing_api`
        Python API to Playbooks and Ad Hoc Task Execution
-   :doc:`developing_modules`
-       How to develop modules
-   :doc:`developing_plugins`
+   :ref:`developing_modules_general`
+       Get started with developing a module
+   :ref:`developing_plugins`
        How to develop plugins
    `Ansible Tower <https://www.ansible.com/products/tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory

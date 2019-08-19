@@ -63,11 +63,9 @@ the handler from running, such as a host becoming unreachable.)
 Controlling What Defines Failure
 ````````````````````````````````
 
-Suppose the error code of a command is meaningless and to tell if there
-is a failure what really matters is the output of the command, for instance
-if the string "FAILED" is in the output.
+Ansible lets you define what "failure" means in each task using the ``failed_when`` conditional. As with all conditionals in Ansible, lists of multiple ``failed_when`` conditions are joined with an implicit ``and``, meaning the task only fails when *all* conditions are met. If you want to trigger a failure when any of the conditions is met, you must define the conditions in a string with an explicit ``or`` operator.
 
-Ansible provides a way to specify this behavior as follows::
+You may check for failure by searching for a word or phrase in the output of a command::
 
     - name: Fail task when the command error output prints FAILED
       command: /usr/bin/example-command -x -y -z
@@ -93,14 +91,29 @@ In previous version of Ansible, this can still be accomplished as follows::
         msg: "the command failed"
       when: "'FAILED' in command_result.stderr"
 
-You can also combine multiple conditions to specify this behavior as follows::
+You can also combine multiple conditions for failure. This task will fail if both conditions are true::
 
     - name: Check if a file exists in temp and fail task if it does
       command: ls /tmp/this_should_not_be_here
       register: result
       failed_when:
-        - '"No such" not in result.stdout'
         - result.rc == 0
+        - '"No such" not in result.stdout'
+
+If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to::
+
+      failed_when: result.rc == 0 or "No such" not in result.stdout
+
+If you have too many conditions to fit neatly into one line, you can split it into a multi-line yaml value with ``>``::
+
+
+    - name: example of many failed_when conditions with OR
+      shell: "./myBinary"
+      register: ret
+      failed_when: >
+        ("No such file or directory" in ret.stdout) or
+        (ret.stderr != '') or
+        (ret.rc == 10)
 
 .. _override_the_changed_result:
 
@@ -139,7 +152,7 @@ Aborting the play
 
 Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
 
-The ``any_errors_fatal`` play option will mark all hosts as failed if any fails, causing an immediate abort::
+The ``any_errors_fatal`` play option will end the play when any tasks results in an error and stop execution of the play::
 
      - hosts: somehosts
        any_errors_fatal: true
@@ -168,22 +181,20 @@ Blocks only deal with 'failed' status of a task. A bad task definition or an unr
         - debug:
             msg: 'I caught an error, can do stuff here to fix it, :-)'
 
-This will 'revert' the failed status of the outer ``block`` task for the run and the play will continue as if it had succeeded. 
+This will 'revert' the failed status of the outer ``block`` task for the run and the play will continue as if it had succeeded.
 See :ref:`block_error_handling` for more examples.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

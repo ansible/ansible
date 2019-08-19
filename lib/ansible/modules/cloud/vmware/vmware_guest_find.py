@@ -32,13 +32,15 @@ options:
      description:
      - Name of the VM to work with.
      - This is required if C(uuid) parameter is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) parameter is not supplied.
+     type: str
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -46,6 +48,7 @@ options:
      description:
      - Destination datacenter for the find operation.
      - Deprecated in 2.5, will be removed in 2.9 release.
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

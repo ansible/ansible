@@ -1,0 +1,2 @@
+bugfixes:
+  - we don't really need to template vars on definition as we do this on demand in templating.

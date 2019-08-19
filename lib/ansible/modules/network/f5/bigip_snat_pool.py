@@ -27,6 +27,12 @@ options:
     type: list
     aliases:
       - member
+  description:
+    description:
+      - A general description of the SNAT pool, provided by the user for their
+        benefit. It is optional.
+    type: str
+    version_added: 2.9
   name:
     description:
       - The name of the SNAT pool.
@@ -86,6 +92,20 @@ EXAMPLES = r'''
       user: admin
       password: secret
   delegate_to: localhost
+
+- name: Add the SNAT pool 'my-snat-pool' with a description
+  bigip_snat_pool:
+    name: my-snat-pool
+    state: present
+    members:
+      - 10.10.10.10
+      - 20.20.20.20
+    description: A SNAT pool description
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -110,6 +130,7 @@ try:
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -118,21 +139,25 @@ except ImportError:
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {}
 
     updatables = [
-        'members'
+        'members',
+        'description',
     ]
 
     returnables = [
-        'members'
+        'members',
+        'description',
     ]
 
     api_attributes = [
-        'members'
+        'members',
+        'description',
     ]
 
 
@@ -164,6 +189,14 @@ class ModuleParameters(Parameters):
             address = self._format_member_address(member)
             result.update([address])
         return list(result)
+
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -214,6 +247,11 @@ class Difference(object):
         if set(self.want.members) == set(self.have.members):
             return None
         result = list(set(self.want.members))
+        return result
+
+    @property
+    def description(self):
+        result = cmp_str_with_none(self.want.description, self.have.description)
         return result
 
 
@@ -416,6 +454,7 @@ class ArgumentSpec(object):
                 type='list',
                 aliases=['member']
             ),
+            description=dict(),
             state=dict(
                 default='present',
                 choices=['absent', 'present']

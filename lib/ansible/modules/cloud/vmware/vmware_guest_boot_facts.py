@@ -20,10 +20,10 @@ DOCUMENTATION = '''
 module: vmware_guest_boot_facts
 short_description: Gather facts about boot options for the given virtual machine
 description:
-    - This module can be used to gather facts aboyt boot options for the given virtual machine.
+    - Gather facts about boot options for the given virtual machine.
 version_added: 2.7
 author:
-    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -33,14 +33,22 @@ options:
    name:
      description:
      - Name of the VM to work with.
-     - This is required if C(uuid) parameter is not supplied.
+     - This is required if C(uuid) or C(moid) parameter is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
-     - This is required if C(name) parameter is not supplied.
+     - This is required if C(name) or C(moid) parameter is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -49,6 +57,7 @@ options:
      - If multiple virtual machines matching the name, use the first or last found.
      default: 'first'
      choices: ['first', 'last']
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -61,6 +70,15 @@ EXAMPLES = r'''
     validate_certs: no
     name: "{{ vm_name }}"
   register: vm_boot_order_facts
+
+- name: Gather facts about virtual machine's boot order using MoID
+  vmware_guest_boot_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    moid: "vm-42"
+  register: vm_moid_boot_order_facts
 '''
 
 RETURN = r"""
@@ -89,7 +107,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_vm_by_id
 
 try:
-    from pyVmomi import vim
+    from pyVmomi import vim, VmomiSupport
 except ImportError:
     pass
 
@@ -99,6 +117,7 @@ class VmBootFactsManager(PyVmomi):
         super(VmBootFactsManager, self).__init__(module)
         self.name = self.params['name']
         self.uuid = self.params['uuid']
+        self.moid = self.params['moid']
         self.use_instance_uuid = self.params['use_instance_uuid']
         self.vm = None
 
@@ -120,13 +139,18 @@ class VmBootFactsManager(PyVmomi):
                 if temp_vm_object.obj.name == self.name:
                     vms.append(temp_vm_object.obj)
 
+        elif self.moid:
+            vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.module.params['moid'], self.si._stub)
+            if vm_obj:
+                vms.append(vm_obj)
+
         if vms:
             if self.params.get('name_match') == 'first':
                 self.vm = vms[0]
             elif self.params.get('name_match') == 'last':
                 self.vm = vms[-1]
         else:
-            self.module.fail_json(msg="Failed to find virtual machine using %s" % (self.name or self.uuid))
+            self.module.fail_json(msg="Failed to find virtual machine using %s" % (self.name or self.uuid or self.moid))
 
     @staticmethod
     def humanize_boot_order(boot_order):
@@ -165,6 +189,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         name_match=dict(
             choices=['first', 'last'],
@@ -175,10 +200,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ],
         mutually_exclusive=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ],
         supports_check_mode=True,
     )

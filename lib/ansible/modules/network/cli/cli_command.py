@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: cli_command
 version_added: "2.7"
-author: "Nathaniel Case (@qalthos)"
+author: "Nathaniel Case (@Qalthos)"
 short_description: Run a cli command on cli-based network devices
 description:
   - Sends a command to a network device and returns the result read from the device.
@@ -46,6 +46,14 @@ options:
     type: bool
     default: false
     required: false
+  newline:
+    description:
+      - The boolean value, that when set to false will send I(answer) to the
+        device without a trailing newline.
+    type: bool
+    default: true
+    required: false
+    version_added: 2.9
   check_all:
     description:
       - By default if any one of the prompts mentioned in C(prompt) option is matched it won't check
@@ -70,6 +78,13 @@ EXAMPLES = """
     command: commit replace
     prompt: This commit will replace or remove the entire running configuration
     answer: yes
+
+- name: run command expecting user confirmation
+  cli_command:
+    command: show interface summary
+    prompt: Press any key to continue
+    answer: y
+    newline: false
 
 - name: run config mode command and handle prompt/answer
   cli_command:
@@ -129,6 +144,7 @@ def main():
         command=dict(type='str', required=True),
         prompt=dict(type='list', required=False),
         answer=dict(type='list', required=False),
+        newline=dict(type='bool', default=True, required=False),
         sendonly=dict(type='bool', default=False, required=False),
         check_all=dict(type='bool', default=False, required=False),
     )

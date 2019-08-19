@@ -24,6 +24,8 @@ __metaclass__ = type
 
 import json
 
+from functools import wraps
+
 from ansible import context
 import ansible.constants as C
 from ansible.errors import AnsibleError
@@ -36,6 +38,16 @@ from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 
 display = Display()
+
+
+def requires_token(func):
+    ''' wrapper to laziliy initialize token file '''
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if self.token is None:
+            self.token = GalaxyToken()
+        return func(self, *args, **kwargs)
+    return wrapped
 
 
 def g_connect(method):
@@ -62,7 +74,7 @@ class GalaxyAPI(object):
 
     def __init__(self, galaxy):
         self.galaxy = galaxy
-        self.token = GalaxyToken()
+        self.token = None
         self._api_server = C.GALAXY_SERVER
         self._validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
@@ -75,6 +87,7 @@ class GalaxyAPI(object):
         if context.CLIARGS['api_server'] != C.GALAXY_SERVER:
             self._api_server = context.CLIARGS['api_server']
 
+    @requires_token
     def __auth_header(self):
         token = self.token.get()
         if token is None:
@@ -200,6 +213,7 @@ class GalaxyAPI(object):
         The url comes from the 'related' field of the role.
         """
 
+        results = []
         try:
             url = '%s/roles/%s/%s/?page_size=50' % (self.baseurl, role_id, related)
             data = self.__call_galaxy(url)
@@ -210,9 +224,9 @@ class GalaxyAPI(object):
                 data = self.__call_galaxy(url)
                 results += data['results']
                 done = (data.get('next_link', None) is None)
-            return results
-        except Exception:
-            return None
+        except Exception as e:
+            display.vvvv("Unable to retrive role (id=%s) data (%s), but this is not fatal so we continue: %s" % (role_id, related, to_text(e)))
+        return results
 
     @g_connect
     def get_list(self, what):

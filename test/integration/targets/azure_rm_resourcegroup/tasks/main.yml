@@ -1,0 +1,39 @@
+- name: Get resource group info
+  azure_rm_resourcegroup_info:
+  register: rg
+
+- assert:
+    that:
+        - rg.resourcegroups | length >= 1
+
+- name: Get resource group info
+  azure_rm_resourcegroup_info:
+      name: "{{ resource_group }}"
+      list_resources: yes
+  register: rg
+
+- assert:
+    that:
+        - rg.resourcegroups | length == 1
+        - rg.resourcegroups[0].resources | length >= 0
+
+- name: Create resource group (idempontent)
+  azure_rm_resourcegroup:
+      name: "{{ resource_group }}"
+      location: "{{ rg.resourcegroups[0].location }}"
+  register: output
+
+- assert:
+    that:
+        - not output.changed
+
+- name: delete resource group
+  azure_rm_resourcegroup:
+      name: "{{ resource_group }}"
+      state: absent
+  check_mode: yes
+  register: output
+
+- assert:
+    that:
+        - output.changed

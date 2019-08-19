@@ -1,8 +1,9 @@
 - debug: msg="START eos cli/eos_bgp.yaml on connection={{ ansible_connection }}"
 
 - name: Clear existing BGP config
-  eos_bgp:
+  eos_bgp: &rm
     operation: delete
+  become: yes
   ignore_errors: yes
 
 - name: Configure BGP with AS 64496 and a router-id
@@ -11,6 +12,7 @@
     config:
       bgp_as: 64496
       router_id: 192.0.2.2
+  become: yes
   register: result
 
 - assert:
@@ -21,6 +23,7 @@
 
 - name: Configure BGP with AS 64496 and a router-id (idempotent)
   eos_bgp: *config
+  become: yes
   register: result
 
 - assert:
@@ -45,6 +48,7 @@
           remote_as: 64496
           description: IBGP_NBR_2
           ebgp_multihop: 150
+  become: yes
   register: result
 
 - assert:
@@ -61,6 +65,7 @@
 
 - name: Configure BGP neighbors (idempotent)
   eos_bgp: *nbr
+  become: yes
   register: result
 
 - assert:
@@ -81,6 +86,7 @@
         - neighbor: 203.0.113.10
           remote_as: 64511
           description: EBGP_NBR_1
+  become: yes
   register: result
 
 - assert:
@@ -92,6 +98,7 @@
 
 - name: Configure BGP neighbors with operation replace (idempotent)
   eos_bgp: *nbr_rplc
+  become: yes
   register: result
 
 - assert:
@@ -111,6 +118,7 @@
         - prefix: 203.0.113.32
           masklen: 27
           route_map: RMAP_2
+  become: yes
   register: result
 
 - assert:
@@ -122,6 +130,7 @@
 
 - name: Configure root-level networks for BGP (idempotent)
   eos_bgp: *net
+  become: yes
   register: result
 
 - assert:
@@ -140,6 +149,7 @@
 
         - prefix: 198.51.100.16
           masklen: 28
+  become: yes
   register: result
 
 - assert:
@@ -151,6 +161,7 @@
 
 - name: Configure root-level networks for BGP with operation replace (idempotent)
   eos_bgp: *net_rplc
+  become: yes
   register: result
 
 - assert:
@@ -167,6 +178,7 @@
           route_map: RMAP_1
 
         - protocol: rip
+  become: yes
   register: result
 
 - assert:
@@ -178,6 +190,7 @@
 
 - name: Configure BGP route redistribute information (idempotent)
   eos_bgp: *rdr
+  become: yes
   register: result
 
 - assert:
@@ -195,6 +208,7 @@
 
         - protocol: static
           route_map: RMAP_2
+  become: yes
   register: result
 
 - assert:
@@ -205,6 +219,7 @@
 
 - name: Configure BGP route redistribute information with operation replace (idempotent)
   eos_bgp: *rdr_rplc
+  become: yes
   register: result
 
 - assert:
@@ -226,6 +241,7 @@
             - neighbor: 192.0.2.15
               activate: yes
               graceful_restart: True
+  become: yes
   register: result
 
 - assert:
@@ -240,6 +256,7 @@
 
 - name: Configure BGP neighbors under address family mode (idempotent)
   eos_bgp: *af_nbr
+  become: yes
   register: result
 
 - assert:
@@ -269,6 +286,7 @@
           networks:
             - prefix: "2001:db8::"
               masklen: 33
+  become: yes
   register: result
 
 - assert:
@@ -284,6 +302,7 @@
 
 - name: Configure networks under address family (idempotent)
   eos_bgp: *af_net
+  become: yes
   register: result
 
 - assert:
@@ -311,6 +330,7 @@
           networks:
             - prefix: "2001:db8:1000::"
               masklen: 37
+  become: yes
   register: result
 
 - assert:
@@ -328,6 +348,7 @@
 
 - name: Configure networks under address family with operation replace (idempotent)
   eos_bgp: *af_net_rplc
+  become: yes
   register: result
 
 - assert:
@@ -341,6 +362,7 @@
       bgp_as: 64497
       router_id: 192.0.2.10
       log_neighbor_changes: True
+  become: yes
   register: result
 
 - assert:
@@ -352,8 +374,8 @@
       - "'bgp log-neighbor-changes' in result.commands"
 
 - name: Teardown
-  eos_bgp: &rm
-    operation: delete
+  eos_bgp: *rm
+  become: yes
   register: result
 
 - assert:
@@ -363,6 +385,7 @@
 
 - name: Teardown again (idempotent)
   eos_bgp: *rm
+  become: yes
   register: result
 
 - assert:

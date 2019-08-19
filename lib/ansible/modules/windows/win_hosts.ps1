@@ -3,35 +3,38 @@
 # Copyright: (c) 2018, Micah Hunsberger (@mhunsber)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 
-$params = Parse-Args -arguments $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$spec = @{
+    options = @{
+        state = @{ type = "str"; choices = "absent", "present"; default = "present" }
+        aliases = @{ type = "list"; elements = "str" }
+        canonical_name = @{ type = "str" }
+        ip_address = @{ type = "str" }
+        action = @{ type = "str"; choices = "add", "remove", "set"; default = "set" }
+    }
+    required_if = @(,@( "state", "present", @("canonical_name", "ip_address")))
+    supports_check_mode = $true
+}
 
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
-$aliases = Get-AnsibleParam -obj $params -name "aliases" -type "list" -failifempty $false
-$canonical_name = Get-AnsibleParam -obj $params -name "canonical_name" -type "str" -failifempty ($state -eq 'present')
-$ip_address = Get-AnsibleParam -obj $params -name "ip_address" -type "str" -default "" -failifempty ($state -eq 'present')
-$action = Get-AnsibleParam -obj $params -name "action" -type "str" -default "set" -validateset "add","remove","set"
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$state = $module.Params.state
+$aliases = $module.Params.aliases
+$canonical_name = $module.Params.canonical_name
+$ip_address = $module.Params.ip_address
+$action = $module.Params.action
 
 $tmp = [ipaddress]::None
 if($ip_address -and -not [ipaddress]::TryParse($ip_address, [ref]$tmp)){
-    Fail-Json -obj @{} -message "win_hosts: Argument ip_address needs to be a valid ip address, but was $ip_address"
+    $module.FailJson("win_hosts: Argument ip_address needs to be a valid ip address, but was $ip_address")
 }
 $ip_address_type = $tmp.AddressFamily
 
 $hosts_file = Get-Item -LiteralPath "$env:SystemRoot\System32\drivers\etc\hosts"
-
-$result = @{
-    changed = $false
-    diff = @{
-        prepared = ""
-    }
-}
 
 Function Get-CommentIndex($line) {
     $c_index = $line.IndexOf('#')
@@ -79,30 +82,14 @@ Function Find-HostName($line, $name) {
 }
 
 Function Remove-HostEntry($list, $idx) {
-    $result.changed = $true
-    $removed = $false
-
-    if($diff_mode) {
-        $result.diff.prepared += "`n-[$($list[$idx])]`n"
-    }
-
-    if(-not $check_mode) {
-        $list.RemoveAt($idx)
-        $removed = $true
-    }
-
-    return $removed
+    $module.Result.changed = $true
+    $list.RemoveAt($idx)
 }
 
 Function Add-HostEntry($list, $cname, $aliases, $ip) {
-    $result.changed = $true
+    $module.Result.changed = $true
     $line = "$ip $cname $($aliases -join ' ')"
-    if($diff_mode) {
-        $result.diff.prepared += "`n+[$line]`n"
-    }
-    if(-not $check_mode) {
-        $list.Add($line) | Out-Null
-    }
+    $list.Add($line) | Out-Null
 }
 
 Function Remove-HostnamesFromEntry($list, $idx, $aliases) {
@@ -115,13 +102,8 @@ Function Remove-HostnamesFromEntry($list, $idx, $aliases) {
             $line = $line.Remove($match.Index + 1, $match.Length -1)
             # was this the last alias? (check for space characters after trimming)
             if($line.Substring(0,(Get-CommentIndex -line $line)).Trim() -inotmatch "\s") {
-                if($diff_mode){
-                    $result.diff.prepared += "`n-[$($list[$idx])]`n"
-                }
-                if(-not $check_mode) {
-                    $list.RemoveAt($idx)
-                    $line_removed = $true
-                }
+                $list.RemoveAt($idx)
+                $line_removed = $true
                 # we're done
                 return @{
                     line_removed = $line_removed
@@ -130,13 +112,8 @@ Function Remove-HostnamesFromEntry($list, $idx, $aliases) {
         }
     }
     if($line -ne $list[$idx]){
-        $result.changed = $true
-        if($diff_mode) {
-            $result.diff.prepared += "`n-[$($list[$idx])]`n+[$line]`n"
-        }
-        if(-not $check_mode) {
-            $list[$idx] = $line
-        }
+        $module.Result.changed = $true
+        $list[$idx] = $line
     }
     return @{
         line_removed = $line_removed
@@ -153,19 +130,15 @@ Function Add-AliasesToEntry($list, $idx, $aliases) {
         }
     }
     if($line -ne $list[$idx]){
-        $result.changed = $true
-        if($diff_mode) {
-            $result.diff.prepared += "`n-[$($list[$idx])]`n+[$line]`n"
-        }
-        if(-not $check_mode) {
-            $list[$idx] = $line
-        }
+        $module.Result.changed = $true
+        $list[$idx] = $line
     }
 }
 
 $hosts_lines = New-Object System.Collections.ArrayList
 
 Get-Content -LiteralPath $hosts_file.FullName | ForEach-Object { $hosts_lines.Add($_) } | Out-Null
+$module.Diff.before = ($hosts_lines -join "`n") + "`n"
 
 if ($state -eq 'absent') {
     # go through and remove canonical_name and ip
@@ -200,11 +173,9 @@ if($state -eq 'present') {
                 $aliases_to_remove = @()
                 if($entry_parts.ip_address -eq $ip_address) {
                     if($entry_parts.canonical_name -eq $canonical_name) {
-                        # don't need to worry about line being removed since canonical_name is present
                         $entry_idx = $idx
 
                         if($action -eq 'set') {
-                            # remove the entry's aliases that are not in $aliases
                             $aliases_to_remove = $entry_parts.aliases | Where-Object { $aliases -notcontains $_ }
                         } elseif($action -eq 'remove') {
                             $aliases_to_remove = $aliases
@@ -220,41 +191,31 @@ if($state -eq 'present') {
                     # this is not the ip_address we are looking for
                     if ($ip_address_type -eq $entry_parts.ip_type) {
                         if ($entry_parts.canonical_name -eq $canonical_name) {
-                            # remove the entry
-                            if (Remove-HostEntry -list $hosts_lines -idx $idx){
-                                # keep index correct if we removed the line
-                                $idx = $idx - 1
-                            }
+                            Remove-HostEntry -list $hosts_lines -idx $idx
+                            $idx = $idx - 1
                             if ($action -ne "set") {
                                 # keep old aliases intact
                                 $aliases_to_keep += $entry_parts.aliases | Where-Object { ($aliases + $aliases_to_keep + $canonical_name) -notcontains $_ }
                             }
                         } elseif ($action -eq "remove") {
-                            # just remove canonical_name. user may want alias(es) mapped to this canonical name
                             $aliases_to_remove = $canonical_name
                         } elseif ($aliases -contains $entry_parts.canonical_name) {
-                            # remove the entry
-                            if (Remove-HostEntry -list $hosts_lines -idx $idx) {
-                                # keep index correct if we removed the line
-                                $idx = $idx - 1
-                            }
+                            Remove-HostEntry -list $hosts_lines -idx $idx
+                            $idx = $idx - 1
                             if ($action -eq "add") {
                                 # keep old aliases intact
                                 $aliases_to_keep += $entry_parts.aliases | Where-Object { ($aliases + $aliases_to_keep + $canonical_name) -notcontains $_ }
                             }
                         } else {
-                            # ensure canonical_name and aliases removed from this entry
                             $aliases_to_remove = $aliases + $canonical_name
                         }
                     } else {
-                        # Just ignore if the types don't match.
                         # TODO: Better ipv6 support. There is odd behavior for when an alias can be used for both ipv6 and ipv4
                     }
                 }
 
                 if($aliases_to_remove) {
                     if((Remove-HostnamesFromEntry -list $hosts_lines -idx $idx -aliases $aliases_to_remove).line_removed) {
-                        # keep index correct if we removed the line
                         $idx = $idx - 1
                     }
                 }
@@ -263,14 +224,11 @@ if($state -eq 'present') {
     }
 
     if($entry_idx -ge 0) {
-        # we found the entry
         $aliases_to_add = @()
         $entry_parts = Get-HostEntryParts -line $hosts_lines[$entry_idx]
         if($action -eq 'remove') {
-            # just preserve any previously removed aliases
             $aliases_to_add = $aliases_to_keep | Where-Object { $entry_parts.aliases -notcontains $_ }
         } else {
-            # we want to add provided aliases and previously removed aliases that are not already in the list
             $aliases_to_add = ($aliases + $aliases_to_keep) | Where-Object { $entry_parts.aliases -notcontains $_ }
         }
 
@@ -291,8 +249,9 @@ if($state -eq 'present') {
     }
 }
 
-if( $result.changed -and -not $check_mode ) {
+$module.Diff.after = ($hosts_lines -join "`n") + "`n"
+if( $module.Result.changed -and -not $module.CheckMode ) {
     Set-Content -LiteralPath $hosts_file.FullName -Value $hosts_lines
 }
 
-Exit-Json $result
+$module.ExitJson()

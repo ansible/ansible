@@ -30,7 +30,7 @@ as a ``.rpmnew`` file (or other) as appropriate in the case of updates.
 If you installed Ansible from pip or from source, you may want to create this file in order to override
 default settings in Ansible.
 
-An `example file is available on GitHub <https://raw.githubusercontent.com/ansible/ansible/devel/examples/ansible.cfg>`_.
+An `example file is available on GitHub <https://github.com/ansible/ansible/blob/devel/examples/ansible.cfg>`_.
 
 For more details and a full listing of available configurations go to :ref:`configuration_settings<ansible_configuration_settings>`. Starting with Ansible version 2.4, you can use the :ref:`ansible-config` command line utility to list your available options and inspect the current values.
 

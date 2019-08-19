@@ -115,6 +115,7 @@ options:
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
+- C(win_updates) will I(become) SYSTEM using I(runas) unless C(use_scheduled_task) is C(yes)
 - By default C(win_updates) does not manage reboots, but will signal when a
   reboot is required with the I(reboot_required) return value, as of Ansible v2.5
   C(reboot) can be used to reboot the host if required in the one task.

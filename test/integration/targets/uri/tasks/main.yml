@@ -56,7 +56,7 @@
 
 - name: fetch pass_json
   uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
-  register: pass
+  register: fetch_pass_json
   with_sequence: start=0 end=4 format=pass%d
 
 - name: check pass_json
@@ -66,7 +66,7 @@
       - item.0.stat.checksum == item.1.content | checksum
   with_together:
     - "{{pass_checksum.results}}"
-    - "{{pass.results}}"
+    - "{{fetch_pass_json.results}}"
 
 
 - name: checksum fail_json
@@ -102,9 +102,12 @@
 - name: Assert that the file was not downloaded
   assert:
     that:
-      - "result.failed == true"
-      - "'Failed to validate the SSL certificate' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
-      - "stat_result.stat.exists == false"
+      - result.failed == true
+      - "'Failed to validate the SSL certificate' in result.msg or 'Hostname mismatch' in result.msg or (result.msg is match('hostname .* doesn.t match .*'))"
+      - stat_result.stat.exists == false
+      - result.status is defined
+      - result.status == -1
+      - result.url == 'https://' ~ badssl_host ~ '/'
 
 - name: Clean up any cruft from the results directory
   file:

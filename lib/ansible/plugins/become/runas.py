@@ -55,6 +55,7 @@ DOCUMENTATION = """
     notes:
         - runas is really implemented in the powershell module handler and as such can only be used with winrm connections.
         - This plugin ignores the 'become_exe' setting as it uses an API and not an executable.
+        - The Secondary Logon service (seclogon) must be running to use runas
 """
 
 from ansible.plugins.become import BecomeBase

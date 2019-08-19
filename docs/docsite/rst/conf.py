@@ -34,7 +34,7 @@ sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 # the repository version needs to be the one that is loaded:
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
 
-VERSION = '2.7'
+VERSION = 'devel'
 AUTHOR = 'Ansible, Inc'
 
 
@@ -45,7 +45,7 @@ AUTHOR = 'Ansible, Inc'
 # They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 # TEST: 'sphinxcontrib.fulltoc'
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'pygments_lexer']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'pygments_lexer', 'notfound.extension']
 
 # Later on, add 'sphinx.ext.viewcode' to the list if you want to have
 # colorized code generated too for references.
@@ -112,17 +112,14 @@ highlight_language = 'YAML+Jinja'
 
 # Substitutions, variables, entities, & shortcuts for text which do not need to link to anything.
 # For titles which should be a link, use the intersphinx anchors set at the index, chapter, and section levels, such as  qi_start_:
+# |br| is useful for formatting fields inside of tables
+# |_| is a nonbreaking space; similarly useful inside of tables
 rst_epilog = """
-.. |acapi| replace:: *Ansible Core API Guide*
-.. |acrn| replace:: *Ansible Core Release Notes*
-.. |ac| replace:: Ansible Core
-.. |acversion| replace:: Ansible Core Version 2.1
-.. |acversionshort| replace:: Ansible Core 2.1
-.. |versionshortest| replace:: 2.2
-.. |versiondev| replace:: 2.3
-.. |pubdate| replace:: July 19, 2016
-.. |rhel| replace:: Red Hat Enterprise Linux
+.. |br| raw:: html
 
+   <br>
+.. |_| unicode:: 0xA0
+    :trim:
 """
 
 
@@ -135,6 +132,22 @@ html_short_title = 'Ansible Documentation'
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
+    'collapse_navigation': "True",
+    'vcs_pageview_mode': 'edit'
+}
+
+html_context = {
+    'display_github': 'True',
+    'github_user': 'ansible',
+    'github_repo': 'ansible',
+    'github_version': 'devel/docs/docsite/rst/',
+    'github_module_version': 'devel/lib/ansible/modules/',
+    'current_version': version,
+    'latest_version': '2.8',
+    # list specifically out of order to make latest work
+    'available_versions': ('latest', '2.7', '2.6', 'devel'),
+    'css_files': ('_static/ansible.css',  # overrides to the standard theme
+                  ),
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
@@ -201,6 +214,19 @@ html_use_opensearch = 'https://docs.ansible.com/ansible/latest'
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Poseidodoc'
 
+# Configuration for sphinx-notfound-pages
+# with no 'notfound_template' and no 'notfound_context' set,
+# the extension builds 404.rst into a location-agnostic 404 page
+#
+# default is `en` - using this for the sub-site:
+notfound_default_language = "ansible"
+# default is `latest`:
+# setting explicitly - docsite serves up /ansible/latest/404.html
+# so keep this set to `latest` even on the `devel` branch
+# then no maintenance is needed when we branch a new stable_x.x
+notfound_default_version = "latest"
+# makes default setting explicit:
+notfound_no_urls_prefix = False
 
 # Options for LaTeX output
 # ------------------------

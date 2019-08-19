@@ -1,5 +1,5 @@
-Sanity Tests » empty-init
-=========================
+empty-init
+==========
 
 The ``__init__.py`` files under the following directories must be empty.  For some of these (modules
 and tests), ``__init__.py`` files with code won't be used.  For others (module_utils), we want the

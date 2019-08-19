@@ -1,0 +1,48 @@
+---
+- name: Registering image name
+  set_fact:
+    iname: "{{ name_prefix ~ '-old-options' }}"
+
+- name: Registering image name
+  set_fact:
+    inames: "{{ inames + [iname]}}"
+
+####################################################################
+## build ###########################################################
+####################################################################
+
+- name: build with old-style options
+  docker_image:
+    name: "{{ iname }}"
+    path: "{{ role_path }}/files"
+    dockerfile: Dockerfile
+    http_timeout: 60
+    nocache: yes
+    pull: no
+    rm: no
+    buildargs:
+      TEST1: val1
+      TEST2: val2
+      TEST3: "True"
+    container_limits:
+      memory: 5000000
+      memswap: 7000000
+    source: build
+  register: build
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - '"Please specify build.container_limits instead of container_limits. The container_limits option has been renamed and will be removed in Ansible 2.12." in build.warnings'
+    - '"Please specify build.dockerfile instead of dockerfile. The dockerfile option has been renamed and will be removed in Ansible 2.12." in build.warnings'
+    - '"Please specify build.http_timeout instead of http_timeout. The http_timeout option has been renamed and will be removed in Ansible 2.12." in build.warnings'
+    - '"Please specify build.nocache instead of nocache. The nocache option has been renamed and will be removed in Ansible 2.12." in build.warnings'
+    - '"Please specify build.path instead of path. The path option has been renamed and will be removed in Ansible 2.12." in build.warnings'
+    - '"Please specify build.pull instead of pull. The pull option has been renamed and will be removed in Ansible 2.12." in build.warnings'
+    - '"Please specify build.rm instead of rm. The rm option has been renamed and will be removed in Ansible 2.12." in build.warnings'
+    - '"Please specify build.args instead of buildargs. The buildargs option has been renamed and will be removed in Ansible 2.12." in build.warnings'

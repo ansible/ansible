@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "nagios - Removed redundant type check which caused crashes. Guardrails added elsewhere in earlier change."

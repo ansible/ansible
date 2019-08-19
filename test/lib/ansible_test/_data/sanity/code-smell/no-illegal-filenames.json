@@ -1,0 +1,4 @@
+{
+    "include_directories": true,
+    "output": "path-message"
+}

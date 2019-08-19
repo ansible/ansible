@@ -18,7 +18,7 @@ module: azure_rm_aks_facts
 
 version_added: "2.6"
 
-short_description: Get Azure Kubernetes Service facts.
+short_description: Get Azure Kubernetes Service facts
 
 description:
     - Get facts for a specific Azure Kubernetes Service or all Azure Kubernetes Services.
@@ -37,7 +37,7 @@ options:
         description:
             - Show kubeconfig of the AKS cluster.
             - Note the operation will cost more network overhead, not recommended when listing AKS.
-        version_added: 2.8
+        version_added: "2.8"
         choices:
             - user
             - admin
@@ -46,7 +46,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 '''
 
 EXAMPLES = '''

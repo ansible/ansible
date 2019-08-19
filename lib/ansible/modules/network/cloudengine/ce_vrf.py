@@ -214,7 +214,7 @@ class Vrf(object):
 
         root = ElementTree.fromstring(xml_str)
         vpn_instances = root.findall(
-            "data/l3vpn/l3vpncomm/l3vpnInstances/l3vpnInstance")
+            "l3vpn/l3vpncomm/l3vpnInstances/l3vpnInstance")
         if vpn_instances:
             for vpn_instance in vpn_instances:
                 if vpn_instance.find('vrfName').text == self.vrf:

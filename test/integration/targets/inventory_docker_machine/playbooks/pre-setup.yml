@@ -1,0 +1,18 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - name: Setup docker
+      include_role:
+        name: setup_docker
+
+    # There seems to be no better way to install docker-machine. At least I couldn't find any packages for RHEL7/8.
+    - name: Download docker-machine binary
+      vars:
+        docker_machine_version: "0.16.1"
+      get_url:
+        url: "https://github.com/docker/machine/releases/download/v{{ docker_machine_version }}/docker-machine-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+        dest: /tmp/docker-machine
+    - name: Install docker-machine binary
+      command: install /tmp/docker-machine /usr/bin/docker-machine
+      become: yes

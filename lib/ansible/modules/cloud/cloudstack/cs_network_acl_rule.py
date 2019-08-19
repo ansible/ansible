@@ -23,11 +23,12 @@ options:
     type: str
     required: true
     aliases: [ acl ]
-  cidr:
+  cidrs:
     description:
-      - CIDR of the rule.
-    type: str
-    default: 0.0.0.0/0
+      - CIDRs of the rule.
+    type: list
+    default: [ 0.0.0.0/0 ]
+    aliases: [ cidr ]
   rule_position:
     description:
       - The position of the network ACL rule.
@@ -134,7 +135,7 @@ EXAMPLES = '''
     cidr: 0.0.0.0/0
   delegate_to: localhost
 
-- name: create a network ACL rule, deny port range 8000-9000 ingress for 10.20.0.0/16
+- name: create a network ACL rule, deny port range 8000-9000 ingress for 10.20.0.0/16 and 10.22.0.0/16
   cs_network_acl_rule:
     network_acl: web
     rule_position: 1
@@ -142,20 +143,10 @@ EXAMPLES = '''
     traffic_type: ingress
     action_policy: deny
     start_port: 8000
-    end_port: 8000
-    cidr: 10.20.0.0/16
-  delegate_to: localhost
-
-- name: create a network ACL rule
-  cs_network_acl_rule:
-    network_acl: web
-    rule_position: 1
-    vpc: my vpc
-    traffic_type: ingress
-    action_policy: deny
-    start_port: 8000
-    end_port: 8000
-    cidr: 10.20.0.0/16
+    end_port: 9000
+    cidrs:
+    - 10.20.0.0/16
+    - 10.22.0.0/16
   delegate_to: localhost
 
 - name: remove a network ACL rule
@@ -179,6 +170,12 @@ cidr:
   returned: success
   type: str
   sample: 0.0.0.0/0
+cidrs:
+  description: CIDRs of the network ACL rule.
+  returned: success
+  type: list
+  sample: [ 0.0.0.0/0 ]
+  version_added: '2.9'
 rule_position:
   description: Position of the network ACL rule.
   returned: success
@@ -357,7 +354,7 @@ class AnsibleCloudStackNetworkAclRule(AnsibleCloudStack):
             'icmpcode': self.module.params.get('icmp_code'),
             'icmptype': self.module.params.get('icmp_type'),
             'traffictype': self.module.params.get('traffic_type'),
-            'cidrlist': self.module.params.get('cidr'),
+            'cidrlist': self.module.params.get('cidrs'),
         }
         if not self.module.check_mode:
             res = self.query_api('createNetworkACL', **args)
@@ -379,7 +376,7 @@ class AnsibleCloudStackNetworkAclRule(AnsibleCloudStack):
             'icmpcode': self.module.params.get('icmp_code'),
             'icmptype': self.module.params.get('icmp_type'),
             'traffictype': self.module.params.get('traffic_type'),
-            'cidrlist': self.module.params.get('cidr'),
+            'cidrlist': ",".join(self.module.params.get('cidrs')),
         }
         if self.has_changed(args, network_acl_rule):
             self.result['changed'] = True
@@ -395,6 +392,8 @@ class AnsibleCloudStackNetworkAclRule(AnsibleCloudStack):
     def get_result(self, network_acl_rule):
         super(AnsibleCloudStackNetworkAclRule, self).get_result(network_acl_rule)
         if network_acl_rule:
+            if 'cidrlist' in network_acl_rule:
+                self.result['cidrs'] = network_acl_rule['cidrlist'].split(',') or [network_acl_rule['cidrlist']]
             if network_acl_rule['protocol'] not in ['tcp', 'udp', 'icmp', 'all']:
                 self.result['protocol_number'] = int(network_acl_rule['protocol'])
                 self.result['protocol'] = 'by_number'
@@ -409,7 +408,7 @@ def main():
         network_acl=dict(required=True, aliases=['acl']),
         rule_position=dict(required=True, type='int', aliases=['number']),
         vpc=dict(required=True),
-        cidr=dict(default='0.0.0.0/0'),
+        cidrs=dict(type='list', default=['0.0.0.0/0'], aliases=['cidr']),
         protocol=dict(choices=['tcp', 'udp', 'icmp', 'all', 'by_number'], default='tcp'),
         protocol_number=dict(type='int'),
         traffic_type=dict(choices=['ingress', 'egress'], aliases=['type'], default='ingress'),

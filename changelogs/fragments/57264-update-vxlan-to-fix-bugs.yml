@@ -1,0 +1,8 @@
+bugfixes:
+  - ce_dldp - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
+  - ce_dldp_interface - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
+  - ce_vxlan_arp - override 'get_config' to show specific configuration.
+  - ce_vxlan_gateway - override 'get_config' to show specific configuration.
+  - ce_vxlan_global - Netwrok_cli and netconf should be not mixed together, otherwise something bad will happen. Function get_nc_config uses netconf and load_config uses network_cli.
+  - ce_vxlan_tunnel - Netwrok_cli and netconf should be not mixed together, otherwise something bad will happen. Function get_nc_config uses netconf and load_config uses network_cli.
+  - ce_vxlan_vap - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.

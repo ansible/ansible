@@ -20,6 +20,7 @@ options:
         description:
             - Active Directory user password. Use when authenticating with an Active Directory user rather than service
               principal.
+        type: str
     profile:
         description:
             - Security profile found in ~/.azure/credentials file.

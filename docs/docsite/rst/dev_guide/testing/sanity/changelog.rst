@@ -1,5 +1,5 @@
-Sanity Tests » changelog
-========================
+changelog
+=========
 
 Basic linting of changelog fragments with yamllint and rstcheck.
 

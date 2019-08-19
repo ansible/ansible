@@ -1,0 +1,2 @@
+bugfixes:
+  - Correctly handle delegate_to hostnames in loops (https://github.com/ansible/ansible/issues/59650)

@@ -1,0 +1,43 @@
+- name: test templated values in handlers
+  hosts: localhost
+  gather_facts: no
+  vars:
+    handler1: name1
+    handler2: name2
+    handler3: name3
+    handler4: name4
+
+  handlers:
+    - name: name1
+      set_fact:
+        non_templated_name: True
+    - name: "{{ handler2 }}"
+      set_fact:
+        templated_name: True
+    - name: testlistener1
+      set_fact:
+        non_templated_listener: True
+      listen: name3
+    - name: testlistener2
+      set_fact:
+        templated_listener: True
+      listen: "{{ handler4 }}"
+
+  tasks:
+    - command: echo Hello World
+      notify:
+        - "{{ handler1 }}"
+        - "{{ handler2 }}"
+        - "{{ handler3 }}"
+        - "{{ handler4 }}"
+
+    - meta: flush_handlers
+
+    - assert:
+        that:
+          - non_templated_name is defined
+          - templated_name is defined
+          - non_templated_listener is defined
+          - templated_listener is undefined
+
+    - include_role: name=test_templating_in_handlers

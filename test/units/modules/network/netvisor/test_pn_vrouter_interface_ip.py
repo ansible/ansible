@@ -4,12 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.netvisor import pn_vrouter_interface_ip
 from units.modules.utils import set_module_args
-from .nvos_module import TestNvosModule, load_fixture
+from .nvos_module import TestNvosModule
 
 
 class TestVrouterInterfaceIpModule(TestNvosModule):

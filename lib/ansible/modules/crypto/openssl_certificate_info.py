@@ -45,7 +45,7 @@ options:
             - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h), and ASN.1 TIME (i.e. pattern C(YYYYMMDDHHMMSSZ)).
               Note that all timestamps will be treated as being in UTC.
-
+        type: dict
     select_crypto_backend:
         description:
             - Determines which crypto backend to use.
@@ -169,15 +169,31 @@ ocsp_must_staple_critical:
     returned: success
     type: bool
 issuer:
-    description: The certificate's issuer.
+    description:
+        - The certificate's issuer.
+        - Note that for repeated values, only the last one will be returned.
     returned: success
     type: dict
-    sample: '{"organizationName": "Ansible"}'
+    sample: '{"organizationName": "Ansible", "commonName": "ca.example.com"}'
+issuer_ordered:
+    description: The certificate's issuer as an ordered list of tuples.
+    returned: success
+    type: list
+    sample: '[["organizationName", "Ansible"], ["commonName": "ca.example.com"]]'
+    version_added: "2.9"
 subject:
-    description: The certificate's subject.
+    description:
+        - The certificate's subject as a dictionary.
+        - Note that for repeated values, only the last one will be returned.
     returned: success
     type: dict
     sample: '{"commonName": "www.example.com", "emailAddress": "test@example.com"}'
+subject_ordered:
+    description: The certificate's subject as an ordered list of tuples.
+    returned: success
+    type: list
+    sample: '[["commonName", "www.example.com"], ["emailAddress": "test@example.com"]]'
+    version_added: "2.9"
 not_after:
     description: C(notAfter) date as ASN.1 TIME
     returned: success
@@ -333,11 +349,11 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         pass
 
     @abc.abstractmethod
-    def _get_subject(self):
+    def _get_subject_ordered(self):
         pass
 
     @abc.abstractmethod
-    def _get_issuer(self):
+    def _get_issuer_ordered(self):
         pass
 
     @abc.abstractmethod
@@ -389,8 +405,16 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
 
         result['signature_algorithm'] = self._get_signature_algorithm()
-        result['subject'] = self._get_subject()
-        result['issuer'] = self._get_issuer()
+        subject = self._get_subject_ordered()
+        issuer = self._get_issuer_ordered()
+        result['subject'] = dict()
+        for k, v in subject:
+            result['subject'][k] = v
+        result['subject_ordered'] = subject
+        result['issuer'] = dict()
+        for k, v in issuer:
+            result['issuer'][k] = v
+        result['issuer_ordered'] = issuer
         result['version'] = self._get_version()
         result['key_usage'], result['key_usage_critical'] = self._get_key_usage()
         result['extended_key_usage'], result['extended_key_usage_critical'] = self._get_extended_key_usage()
@@ -427,16 +451,16 @@ class CertificateInfoCryptography(CertificateInfo):
     def _get_signature_algorithm(self):
         return crypto_utils.cryptography_oid_to_name(self.cert.signature_algorithm_oid)
 
-    def _get_subject(self):
-        result = dict()
+    def _get_subject_ordered(self):
+        result = []
         for attribute in self.cert.subject:
-            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
+            result.append([crypto_utils.cryptography_oid_to_name(attribute.oid), attribute.value])
         return result
 
-    def _get_issuer(self):
-        result = dict()
+    def _get_issuer_ordered(self):
+        result = []
         for attribute in self.cert.issuer:
-            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
+            result.append([crypto_utils.cryptography_oid_to_name(attribute.oid), attribute.value])
         return result
 
     def _get_version(self):
@@ -556,15 +580,15 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
         return to_text(self.cert.get_signature_algorithm())
 
     def __get_name(self, name):
-        result = dict()
+        result = []
         for sub in name.get_components():
-            result[crypto_utils.pyopenssl_normalize_name(sub[0])] = to_text(sub[1])
+            result.append([crypto_utils.pyopenssl_normalize_name(sub[0]), to_text(sub[1])])
         return result
 
-    def _get_subject(self):
+    def _get_subject_ordered(self):
         return self.__get_name(self.cert.get_subject())
 
-    def _get_issuer(self):
+    def _get_issuer_ordered(self):
         return self.__get_name(self.cert.get_issuer())
 
     def _get_version(self):
@@ -697,7 +721,8 @@ def main():
 
         if backend == 'pyopenssl':
             if not PYOPENSSL_FOUND:
-                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                 exception=PYOPENSSL_IMP_ERR)
             try:
                 getattr(crypto.X509Req, 'get_extensions')
             except AttributeError:
@@ -706,7 +731,8 @@ def main():
             certificate = CertificateInfoPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:
-                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                 exception=CRYPTOGRAPHY_IMP_ERR)
             certificate = CertificateInfoCryptography(module)
 
         result = certificate.get_info()

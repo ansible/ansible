@@ -83,6 +83,7 @@ notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
       and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
     - Before 2.4 you always required 'name'.
+    - Globs are not supported in name, i.e ``postgres*.service``.
 requirements:
     - A system managed by systemd.
 '''
@@ -269,7 +270,11 @@ from ansible.module_utils._text import to_native
 
 
 def is_running_service(service_status):
-    return service_status['ActiveState'] in set(['active', 'activating'])
+    return service_status['ActiveState'] in set(['active', 'activating', 'deactivating'])
+
+
+def is_deactivating_service(service_status):
+    return service_status['ActiveState'] in set(['deactivating'])
 
 
 def request_was_ignored(out):
@@ -339,6 +344,12 @@ def main():
         mutually_exclusive=[['scope', 'user']],
     )
 
+    unit = module.params['name']
+    if unit is not None:
+        for globpattern in (r"*", r"?", r"["):
+            if globpattern in unit:
+                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+
     systemctl = module.get_bin_path('systemctl', True)
 
     if os.getenv('XDG_RUNTIME_DIR') is None:
@@ -364,7 +375,6 @@ def main():
     if module.params['force']:
         systemctl += " --force"
 
-    unit = module.params['name']
     rc = 0
     out = err = ''
     result = dict(
@@ -492,7 +502,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                 elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']):
+                    if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
                 else:
                     if not is_running_service(result['status']):

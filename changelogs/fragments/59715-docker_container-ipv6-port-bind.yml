@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - fix port bindings with IPv6 addresses."

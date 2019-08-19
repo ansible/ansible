@@ -47,32 +47,38 @@ options:
     - present
     - absent
     default: present
+    type: str
   alternative_location_id:
     description:
     - Only applicable to STANDARD_HA tier which protects the instance against zonal
       failures by provisioning it across two zones.
     - If provided, it must be a different zone from the one provided in [locationId].
     required: false
+    type: str
   authorized_network:
     description:
     - The full name of the Google Compute Engine network to which the instance is
       connected. If left unspecified, the default network will be used.
     required: false
+    type: str
   display_name:
     description:
     - An arbitrary and optional user-provided name for the instance.
     required: false
+    type: str
   labels:
     description:
     - Resource labels to represent user provided metadata.
     required: false
+    type: dict
   redis_configs:
     description:
-    - Redis configuration parameters, according to U(http://redis.io/topics/config.)
+    - Redis configuration parameters, according to U(http://redis.io/topics/config).
     - 'Please check Memorystore documentation for the list of supported parameters:
       U(https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)
       .'
     required: false
+    type: dict
   location_id:
     description:
     - The zone where the instance will be provisioned. If not provided, the service
@@ -80,20 +86,24 @@ options:
       created across two zones for protection against zonal failures. If [alternativeLocationId]
       is also provided, it must be different from [locationId].
     required: false
+    type: str
   name:
     description:
     - The ID of the instance or a fully qualified identifier for the instance. .
     required: true
+    type: str
   memory_size_gb:
     description:
     - Redis memory size in GiB.
     required: true
+    type: int
   redis_version:
     description:
-    - The version of Redis software. If not provided, latest supported version will
-      be used. Updating the version will perform an upgrade/downgrade to the new version.
-      Currently, the supported values are REDIS_3_2 for Redis 3.2.
+    - 'The version of Redis software. If not provided, latest supported version will
+      be used. Currently, the supported values are: - REDIS_4_0 for Redis 4.0 compatibility
+      - REDIS_3_2 for Redis 3.2 compatibility .'
     required: false
+    type: str
   reserved_ip_range:
     description:
     - The CIDR range of internal addresses that are reserved for this instance. If
@@ -101,19 +111,20 @@ options:
       or 192.168.0.0/29. Ranges must be unique and non-overlapping with existing subnets
       in an authorized network.
     required: false
+    type: str
   tier:
     description:
     - 'The service tier of the instance. Must be one of these values: - BASIC: standalone
       instance - STANDARD_HA: highly available primary/replica instances .'
+    - 'Some valid choices include: "BASIC", "STANDARD_HA"'
     required: false
     default: BASIC
-    choices:
-    - BASIC
-    - STANDARD_HA
+    type: str
   region:
     description:
     - The name of the Redis region of the instance.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/memorystore/docs/redis/reference/rest/)'
@@ -194,7 +205,7 @@ labels:
   type: dict
 redisConfigs:
   description:
-  - Redis configuration parameters, according to U(http://redis.io/topics/config.)
+  - Redis configuration parameters, according to U(http://redis.io/topics/config).
   - 'Please check Memorystore documentation for the list of supported parameters:
     U(https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)
     .'
@@ -225,9 +236,9 @@ port:
   type: int
 redisVersion:
   description:
-  - The version of Redis software. If not provided, latest supported version will
-    be used. Updating the version will perform an upgrade/downgrade to the new version.
-    Currently, the supported values are REDIS_3_2 for Redis 3.2.
+  - 'The version of Redis software. If not provided, latest supported version will
+    be used. Currently, the supported values are: - REDIS_4_0 for Redis 4.0 compatibility
+    - REDIS_3_2 for Redis 3.2 compatibility .'
   returned: success
   type: str
 reservedIpRange:
@@ -280,7 +291,7 @@ def main():
             memory_size_gb=dict(required=True, type='int'),
             redis_version=dict(type='str'),
             reserved_ip_range=dict(type='str'),
-            tier=dict(default='BASIC', type='str', choices=['BASIC', 'STANDARD_HA']),
+            tier=dict(default='BASIC', type='str'),
             region=dict(required=True, type='str'),
         )
     )
@@ -305,7 +316,7 @@ def main():
             changed = True
     else:
         if state == 'present':
-            fetch = create(module, collection(module))
+            fetch = create(module, create_link(module))
             changed = True
         else:
             fetch = {}
@@ -378,6 +389,10 @@ def self_link(module):
 
 
 def collection(module):
+    return "https://redis.googleapis.com/v1/projects/{project}/locations/{region}/instances".format(**module.params)
+
+
+def create_link(module):
     return "https://redis.googleapis.com/v1/projects/{project}/locations/{region}/instances?instanceId={name}".format(**module.params)
 
 
@@ -457,7 +472,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
-    raise_if_errors(op_result, ['error'], module)
+    raise_if_errors(wait_done, ['error'], module)
     return navigate_hash(wait_done, ['response'])
 
 

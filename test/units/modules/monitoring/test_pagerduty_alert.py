@@ -1,8 +1,6 @@
 from units.compat import unittest
 from ansible.modules.monitoring import pagerduty_alert
 
-from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode, urlunparse
-
 
 class PagerDutyAlertsTest(unittest.TestCase):
     def _assert_incident_api(self, module, url, method, headers):

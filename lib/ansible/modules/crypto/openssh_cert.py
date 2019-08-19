@@ -186,7 +186,7 @@ filename:
     description: path to the certificate
     returned: changed or success
     type: str
-    sample: /tmp/certifivate-cert.pub
+    sample: /tmp/certificate-cert.pub
 info:
     description: Information about the certificate. Output of C(ssh-keygen -L -f).
     returned: change or success
@@ -196,13 +196,11 @@ info:
 
 import os
 import errno
-import random
 import re
 import tempfile
 
 from datetime import datetime
 from datetime import MINYEAR, MAXYEAR
-from datetime import timedelta
 from shutil import copy2
 from shutil import rmtree
 from ansible.module_utils.basic import AnsibleModule
@@ -366,8 +364,8 @@ class Certificate(object):
     def is_same_datetime(self, datetime_one, datetime_two):
 
         # This function is for backwards compatability only because .total_seconds() is new in python2.7
-        def timedelta_total_seconds(timedelta):
-            return ((timedelta.microseconds + 0.0 + (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6)
+        def timedelta_total_seconds(time_delta):
+            return (time_delta.microseconds + 0.0 + (time_delta.seconds + time_delta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
         # try to use .total_ seconds() from python2.7
         try:
             return (datetime_one - datetime_two).total_seconds() == 0.0
@@ -519,7 +517,6 @@ class Certificate(object):
                 raise CertificateError(exc)
             else:
                 pass
-        return
 
 
 def main():

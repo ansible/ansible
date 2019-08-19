@@ -17,27 +17,34 @@ DOCUMENTATION = '''
 ---
 module: rpm_key
 author:
-- Hector Acosta (@hacosta) <hector.acosta@gazzang.com>
+  - Hector Acosta (@hacosta) <hector.acosta@gazzang.com>
 short_description: Adds or removes a gpg key from the rpm db
 description:
-    - Adds or removes (rpm --import) a gpg key to your rpm database.
+  - Adds or removes (rpm --import) a gpg key to your rpm database.
 version_added: "1.3"
 options:
     key:
       description:
-          - Key that will be modified. Can be a url, a file, or a keyid if the key already exists in the database.
+        - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
+          already exists in the database.
       required: true
     state:
       description:
-          - If the key will be imported or removed from the rpm db.
+        - If the key will be imported or removed from the rpm db.
       default: present
       choices: [ absent, present ]
     validate_certs:
       description:
-          - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated. This should only be used
-            on personally controlled sites using self-signed certificates.
+        - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated.
+        - This should only be used on personally controlled sites using self-signed certificates.
       type: bool
       default: 'yes'
+    fingerprint:
+      description:
+        - The long-form fingerprint of the key being imported.
+        - This will be used to verify the specified key.
+      type: str
+      version_added: 2.9
 '''
 
 EXAMPLES = '''
@@ -55,6 +62,11 @@ EXAMPLES = '''
 - rpm_key:
     state: absent
     key: DEADB33F
+
+# Verify the key, using a fingerprint, before import
+- rpm_key:
+    key: /path/to/RPM-GPG-KEY.dag.txt
+    fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
 '''
 import re
 import os.path
@@ -83,6 +95,9 @@ class RpmKey(object):
         self.rpm = self.module.get_bin_path('rpm', True)
         state = module.params['state']
         key = module.params['key']
+        fingerprint = module.params['fingerprint']
+        if fingerprint:
+            fingerprint = fingerprint.replace(' ', '').upper()
 
         self.gpg = self.module.get_bin_path('gpg')
         if not self.gpg:
@@ -107,6 +122,12 @@ class RpmKey(object):
             else:
                 if not keyfile:
                     self.module.fail_json(msg="When importing a key, a valid file must be given")
+                if fingerprint:
+                    has_fingerprint = self.getfingerprint(keyfile)
+                    if fingerprint != has_fingerprint:
+                        self.module.fail_json(
+                            msg="The specified fingerprint, '%s', does not match the key fingerprint '%s'" % (fingerprint, has_fingerprint)
+                        )
                 self.import_key(keyfile)
                 if should_cleanup_keyfile:
                     self.module.cleanup(keyfile)
@@ -153,6 +174,26 @@ class RpmKey(object):
 
         self.module.fail_json(msg="Unexpected gpg output")
 
+    def getfingerprint(self, keyfile):
+        stdout, stderr = self.execute_command([
+            self.gpg, '--no-tty', '--batch', '--with-colons',
+            '--fixed-list-mode', '--with-fingerprint', keyfile
+        ])
+        for line in stdout.splitlines():
+            line = line.strip()
+            if line.startswith('fpr:'):
+                # As mentioned here,
+                #
+                # https://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
+                #
+                # The description of the `fpr` field says
+                #
+                # "fpr :: Fingerprint (fingerprint is in field 10)"
+                #
+                return line.split(':')[9]
+
+        self.module.fail_json(msg="Unexpected gpg output")
+
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
         return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
@@ -189,6 +230,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             key=dict(type='str', required=True),
+            fingerprint=dict(type='str'),
             validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,

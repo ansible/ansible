@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_subnet_facts
 version_added: "2.8"
-short_description: Get Azure Subnet facts.
+short_description: Get Azure Subnet facts
 description:
     - Get facts of Azure Subnet.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -58,7 +58,8 @@ EXAMPLES = '''
 
 RETURN = '''
 subnets:
-    description: A list of dictionaries containing facts for subnet.
+    description:
+        - A list of dictionaries containing facts for subnet.
     returned: always
     type: complex
     contains:
@@ -95,13 +96,13 @@ subnets:
             sample: "10.1.0.0/16"
         route_table:
             description:
-                - Associated route table id.
+                - Associated route table ID.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/routeTables/myRouteTable
         security_group:
             description:
-                - Associated security group id.
+                - Associated security group ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkSecurityGr
@@ -115,11 +116,16 @@ subnets:
                 service:
                     description:
                         - The type of the endpoint service.
+                    returned: always
+                    type: str
                     required: True
+                    sample: Microsoft.Sql
                 locations:
                     description:
                         - A list of location names.
                     type: list
+                    returned: always
+                    sample: [ 'eastus', 'westus' ]
                 provisioning_state:
                     description:
                         - Provisioning state.

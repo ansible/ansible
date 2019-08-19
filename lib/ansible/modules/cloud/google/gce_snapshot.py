@@ -192,9 +192,11 @@ def main():
 
     for instance_disk in instance_disks:
         disk_snapshot_name = snapshot_name
-        device_name = instance_disk['deviceName']
+        disk_info = gce._get_components_from_path(instance_disk['source'])
+        device_name = disk_info['name']
+        device_zone = disk_info['zone']
         if disks is None or device_name in disks:
-            volume_obj = gce.ex_get_volume(device_name)
+            volume_obj = gce.ex_get_volume(device_name, device_zone)
 
             # If we have more than one disk to snapshot, prepend the disk name
             if len(instance_disks) > 1:

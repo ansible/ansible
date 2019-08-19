@@ -4,51 +4,21 @@
 
 # TODO: Current pinned version of vcsim does not support custom fields
 # commenting testcase below
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Datacenter from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-  register: datacenters
-
-- set_fact: dc1="{{ datacenters['json'][0] }}"
-
-- name: get a list of virtual machines from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vms
-
-- set_fact: vm1="{{ vms['json'][0] }}"
-
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
 - name: Add custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-    name: "{{ vm1 | basename }}"
-    folder: "{{ vm1 | dirname }}"
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: "{{ dc1 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     attributes:
       - name: 'sample_1'
@@ -59,21 +29,21 @@
         value: 'sample_3_value'
   register: guest_facts_0001
 
-- debug: msg="{{ guest_facts_0001 }}"
+- debug: var=guest_facts_0001
 
 - assert:
     that:
-      - "guest_facts_0001.changed"
+      - guest_facts_0001 is changed
 
 - name: Add custom attribute to the given virtual machine again
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-    name: "{{ vm1 | basename }}"
-    folder: "{{ vm1 | dirname }}"
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: "{{ dc1 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     attributes:
       - name: 'sample_1'
@@ -84,21 +54,21 @@
         value: 'sample_3_value'
   register: guest_facts_0002
 
-- debug: msg="{{ guest_facts_0002 }}"
+- debug: var=guest_facts_0002
 
 - assert:
     that:
-      - "not guest_facts_0002.changed"
+      - not (guest_facts_0002 is changed)
 
 - name: Remove custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-    name: "{{ vm1 | basename }}"
-    folder: "{{ vm1 | dirname }}"
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: "{{ dc1 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: absent
     attributes:
       - name: 'sample_1'
@@ -115,24 +85,26 @@
 # TODO: vcsim returns duplicate values so removing custom attributes
 # results in change. vCenter show correct behavior. Commenting this
 # till this is supported by vcsim.
-#- name: Remove custom attribute to the given virtual machine again
-#  vmware_guest_custom_attributes:
-#    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
-#    datacenter: "{{ dc1 | basename }}"
-#    name: "{{ vm1 | basename }}"
-#    folder: "{{ vm1 | dirname }}"
-#    state: absent
-#    attributes:
-#      - name: 'sample_1'
-#      - name: 'sample_2'
-#      - name: 'sample_3'
-#  register: guest_facts_0005
+- when: vcsim is not defined
+  block:
+    - name: Remove custom attribute to the given virtual machine again
+      vmware_guest_custom_attributes:
+        validate_certs: False
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        datacenter: "{{ dc1 }}"
+        name: "{{ virtual_machines[0].name }}"
+        folder: "{{ virtual_machines[0].folder }}"
+        state: absent
+        attributes:
+          - name: 'sample_1'
+          - name: 'sample_2'
+          - name: 'sample_3'
+      register: guest_facts_0005
 
-#- debug: msg="{{ guest_facts_0005 }}"
+    - debug: var=guest_facts_0005
 
-#- assert:
-#    that:
-#      - "not guest_facts_0005.changed"
+    - assert:
+        that:
+          - not (guest_facts_0005 is changed)

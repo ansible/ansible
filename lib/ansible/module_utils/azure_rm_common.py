@@ -1149,8 +1149,9 @@ class AzureRMAuth(object):
 
         return None
 
-    def _get_msi_credentials(self, subscription_id_param=None):
-        credentials = MSIAuthentication()
+    def _get_msi_credentials(self, subscription_id_param=None, **kwargs):
+        client_id = kwargs.get('client_id', None)
+        credentials = MSIAuthentication(client_id=client_id)
         subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             try:
@@ -1206,7 +1207,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'msi':
             self.log('Retrieving credenitals from MSI')
-            return self._get_msi_credentials(arg_credentials['subscription_id'])
+            return self._get_msi_credentials(arg_credentials['subscription_id'], client_id=params.get('client_id', None))
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:
@@ -1226,7 +1227,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'credential_file':
             self.log("Retrieving credentials from credential file")
-            profile = params.get('profile', 'default')
+            profile = params.get('profile') or 'default'
             default_credentials = self._get_profile(profile)
             return default_credentials
 

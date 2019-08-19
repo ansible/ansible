@@ -64,7 +64,6 @@ class MockONTAPConnection(object):
     def invoke_successfully(self, xml, enable_tunneling):  # pylint: disable=unused-argument
         ''' mock invoke_successfully returning xml data '''
         self.xml_in = xml
-        print(xml.to_string())
         if self.type == 'vserver':
             xml = self.build_vserver_info()
         elif self.type == 'net_port':

@@ -131,11 +131,6 @@ $security = Get-AnsibleParam -obj $params -name "security" -type "str" -validate
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 
-$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
-if ($force) {
-    Add-DeprecationWarning -obj $result -message "'force' isn't required anymore" -version 2.9
-}
-
 if ($diff_support) {
     $result.diff = @{}
     $result.diff.prepared = ""
@@ -156,7 +151,7 @@ try {
     # the default for enabled in module description is "true", but the actual COM object defaults to "false" when created
     if ($null -ne $enabled) { $new_rule.Enabled = $enabled } else { $new_rule.Enabled = $true }
     if ($null -ne $description) { $new_rule.Description = $description }
-    if ($null -ne $program -and $program -ne "any") { $new_rule.ApplicationName = $program }
+    if ($null -ne $program -and $program -ne "any") { $new_rule.ApplicationName = [System.Environment]::ExpandEnvironmentVariables($program) }
     if ($null -ne $service -and $program -ne "any") { $new_rule.ServiceName = $service }
     if ($null -ne $protocol -and $protocol -ne "any") { $new_rule.Protocol = Parse-ProtocolType -protocol $protocol }
     if ($null -ne $localport -and $localport -ne "any") { $new_rule.LocalPorts = $localport }

@@ -197,10 +197,11 @@ def create_netbox_object(nb_endpoint, data, check_mode):
     if check_mode:
         serialized_nb_obj = data
     else:
+        nb_obj = nb_endpoint.create(data)
         try:
-            serialized_nb_obj = nb_endpoint.create(data).serialize()
+            serialized_nb_obj = nb_obj.serialize()
         except AttributeError:
-            serialized_nb_obj = nb_endpoint.create(data)
+            serialized_nb_obj = nb_obj
 
     diff = _build_diff(before={"state": "absent"}, after={"state": "present"})
     return serialized_nb_obj, diff

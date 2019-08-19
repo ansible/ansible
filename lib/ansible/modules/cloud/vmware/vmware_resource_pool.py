@@ -30,14 +30,17 @@ options:
         description:
             - Name of the datacenter to add the host.
         required: True
+        type: str
     cluster:
         description:
             - Name of the cluster to add the host.
         required: True
+        type: str
     resource_pool:
         description:
             - Resource pool name to manage.
         required: True
+        type: str
     cpu_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value.
@@ -47,11 +50,13 @@ options:
         description:
             - Amount of resource that is guaranteed available to the virtual machine or resource pool.
         default: 0
+        type: int
     cpu_limit:
         description:
             - The utilization of a virtual machine/resource pool will not exceed this limit, even if there are available resources.
             - The default value -1 indicates no limit.
         default: -1
+        type: int
     cpu_shares:
         description:
             - Memory shares are used in case of resource contention.
@@ -61,6 +66,7 @@ options:
             - low
             - normal
         default: normal
+        type: str
     mem_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value.
@@ -70,11 +76,13 @@ options:
         description:
             - Amount of resource that is guaranteed available to the virtual machine or resource pool.
         default: 0
+        type: int
     mem_limit:
         description:
             - The utilization of a virtual machine/resource pool will not exceed this limit, even if there are available resources.
             - The default value -1 indicates no limit.
         default: -1
+        type: int
     mem_shares:
         description:
             - Memory shares are used in case of resource contention.
@@ -84,6 +92,7 @@ options:
             - low
             - normal
         default: normal
+        type: str
     state:
         description:
             - Add or remove the resource pool
@@ -91,6 +100,7 @@ options:
         choices:
             - 'present'
             - 'absent'
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

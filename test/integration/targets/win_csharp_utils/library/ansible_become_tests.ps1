@@ -509,7 +509,7 @@ $tests = @{
 
     "Runas without working dir set" = {
         $expected = "$env:SystemRoot\system32`r`n"
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe $pwd.Path', $null, $null, "")
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
@@ -518,7 +518,7 @@ $tests = @{
 
     "Runas with working dir set" = {
         $expected = "$env:SystemRoot`r`n"
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe $pwd.Path', $env:SystemRoot, $null, "")
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
@@ -527,7 +527,7 @@ $tests = @{
 
     "Runas without environment set" = {
         $expected = "Windows_NT`r`n"
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe $env:TEST; $env:OS', $null, $null, "")
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
@@ -539,7 +539,7 @@ $tests = @{
             TEST = "tesTing"
             TEST2 = "Testing 2"
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'cmd.exe /c set', $null, $env_vars, "")
         ("TEST=tesTing" -cin $actual.StandardOut.Split("`r`n")) | Assert-Equals -Expected $true
         ("TEST2=Testing 2" -cin $actual.StandardOut.Split("`r`n")) | Assert-Equals -Expected $true
@@ -550,7 +550,7 @@ $tests = @{
 
     "Runas with string stdin" = {
         $expected = "input value`r`n`r`n"
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe [System.Console]::In.ReadToEnd()', $null, $null, "input value")
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
@@ -559,7 +559,7 @@ $tests = @{
 
     "Runas with string stdin and newline" = {
         $expected = "input value`r`n`r`n"
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe [System.Console]::In.ReadToEnd()', $null, $null, "input value`r`n")
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
@@ -568,7 +568,7 @@ $tests = @{
 
     "Runas with byte stdin" = {
         $expected = "input value`r`n"
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe [System.Console]::In.ReadToEnd()', $null, $null, [System.Text.Encoding]::UTF8.GetBytes("input value"))
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
@@ -592,13 +592,13 @@ $tests = @{
     "CreateProcessAsUser with lpApplicationName" = {
         $expected = "abc`r`n"
         $full_path = "$($env:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "LOGON32_LOGON_INTERACTIVE", $full_path,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $full_path,
             "Write-Output 'abc'", $null, $null, "")
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "LOGON32_LOGON_INTERACTIVE", $full_path,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $full_path,
             "powershell.exe Write-Output 'abc'", $null, $null, "")
         $actual.StandardOut | Assert-Equals -Expected $expected
         $actual.StandardError | Assert-Equals -Expected ""
@@ -606,7 +606,7 @@ $tests = @{
     }
 
     "CreateProcessAsUser with stderr" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $null,
             "powershell.exe [System.Console]::Error.WriteLine('hi')", $null, $null, "")
         $actual.StandardOut | Assert-Equals -Expected ""
         $actual.StandardError | Assert-Equals -Expected "hi`r`n"
@@ -614,7 +614,7 @@ $tests = @{
     }
 
     "CreateProcessAsUser with exit code" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "LOGON32_LOGON_INTERACTIVE", $null,
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $null,
             "powershell.exe exit 10", $null, $null, "")
         $actual.StandardOut | Assert-Equals -Expected ""
         $actual.StandardError | Assert-Equals -Expected ""
@@ -653,7 +653,7 @@ $tests = @{
             [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, "incorrect", "powershell.exe Write-Output abc")
         } catch {
             $failed = $true
-            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.Process.Win32Exception"
+            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.AccessToken.Win32Exception"
             # Server 2008 has a slightly different error msg, just assert we get the error 1326
             ($_.Exception.Message.Contains("Win32ErrorCode 1326")) | Assert-Equals -Expected $true
         }
@@ -675,8 +675,8 @@ $tests = @{
     }
 
     "Interactive logon with standard" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
+            "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -689,8 +689,8 @@ $tests = @{
     }
 
     "Batch logon with standard" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_BATCH", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
+            "Batch", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -707,8 +707,8 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_NETWORK", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
+            "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -725,8 +725,8 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_NETWORK_CLEARTEXT", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
+            "NetworkCleartext", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -739,8 +739,8 @@ $tests = @{
     }
 
     "Logon without password with standard" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "WithProfile",
+            "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -759,8 +759,8 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_NETWORK", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "WithProfile",
+            "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -775,8 +775,8 @@ $tests = @{
     }
 
     "Interactive logon with admin" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
+            "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -789,8 +789,8 @@ $tests = @{
     }
 
     "Batch logon with admin" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_BATCH", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
+            "Batch", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -807,8 +807,8 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_NETWORK", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
+            "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -825,8 +825,8 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_NETWORK_CLEARTEXT", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
+            "NetworkCleartext", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -845,11 +845,11 @@ $tests = @{
             # become without setting the password. This is confusing as $null gets converted to "" and we need to
             # use [NullString]::Value instead if we want that behaviour. This just tests to see that an empty
             # string won't go the S4U route.
-            [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $null, "LOGON_WITH_PROFILE",
-                    "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+            [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $null, "WithProfile",
+                    "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         } catch {
             $failed = $true
-            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.Process.Win32Exception"
+            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.AccessToken.Win32Exception"
             # Server 2008 has a slightly different error msg, just assert we get the error 1326
             ($_.Exception.Message.Contains("Win32ErrorCode 1326")) | Assert-Equals -Expected $true
         }
@@ -857,8 +857,8 @@ $tests = @{
     }
 
     "Logon without password with admin" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "WithProfile",
+            "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -877,8 +877,8 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_NETWORK", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "WithProfile",
+            "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -899,7 +899,7 @@ $tests = @{
         }
 
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0,
-            "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+            "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -912,8 +912,8 @@ $tests = @{
     }
 
     "Logon with network credentials and no profile" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("fakeuser", "fakepassword", "LOGON_NETCREDENTIALS_ONLY",
-            "LOGON32_LOGON_NEW_CREDENTIALS", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("fakeuser", "fakepassword", "NetcredentialsOnly",
+            "NewCredentials", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -921,15 +921,15 @@ $tests = @{
         $stdout.LogonType | Assert-Equals -Expected "NewCredentials"
         $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $current_user.MandatoryLabelSid.Value
 
-        # while we didn't set LOGON_WITH_PROFILE, the new process is based on the current process
+        # while we didn't set WithProfile, the new process is based on the current process
         $stdout.ProfileLoaded | Assert-Equals -Expected $current_user.ProfileLoaded
         $stdout.SourceName | Assert-Equals -Expected "Advapi"
         $stdout.UserSid.Value | Assert-Equals -Expected $current_user.UserSid.Value
     }
 
     "Logon with network credentials and with profile" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("fakeuser", "fakepassword", "LOGON_NETCREDENTIALS_ONLY, LOGON_WITH_PROFILE",
-            "LOGON32_LOGON_NEW_CREDENTIALS", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("fakeuser", "fakepassword", "NetcredentialsOnly, WithProfile",
+            "NewCredentials", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
@@ -990,8 +990,6 @@ try {
             }
             $group_obj.Add($user_obj.Path)
         }
-
-
     }
     foreach ($test_impl in $tests.GetEnumerator()) {
         $test = $test_impl.Key

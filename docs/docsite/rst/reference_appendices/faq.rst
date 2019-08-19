@@ -96,6 +96,13 @@ With earlier versions of Ansible, it was necessary to configure a
 suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
 or globally by setting `ssh_args` in `ansible.cfg`.
 
+.. _ssh_serveraliveinterval:
+
+How do I get Ansible to notice a dead target in a timely manner?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+You can add ``-o ServerAliveInterval=NumberOfSeconds`` in ``ssh_args`` from ``ansible.cfg``. Without this option, SSH and therefore Ansible will wait until the TCP connection times out. Another solution is to add ``ServerAliveInterval`` into your global SSH configuration. A good value for ``ServerAliveInterval`` is up to you to decide; keep in mind that ``ServerAliveCountMax=3`` is the SSH default so any value you set will be tripled before terminating the SSH session.
+
 .. _ec2_cloud_performance:
 
 How do I speed up management inside EC2?
@@ -152,6 +159,12 @@ Please refer the documentation of the respective package for such dependencies a
 
 Common Platform Issues
 ++++++++++++++++++++++
+
+What customer platforms does Red Hat Support?
+---------------------------------------------
+
+
+A number of them! For a definitive list please see this `Knowledge Base article <https://access.redhat.com/articles/3168091>`_.
 
 Running in a virtualenv
 -----------------------
@@ -273,7 +286,7 @@ Where does the configuration file live and what can I configure in it?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-See :doc:`../installation_guide/intro_configuration`.
+See :ref:`intro_configuration`.
 
 .. _who_would_ever_want_to_disable_cowsay_but_ok_here_is_how:
 
@@ -390,7 +403,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-is static and predictable.  (If you are using :doc:`../reference_appendices/tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable.  (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -472,7 +485,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
     python -c "from passlib.hash import sha512_crypt; import getpass; print(sha512_crypt.using(rounds=5000).hash(getpass.getpass()))"
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
-You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`../user_guide/playbooks_vault` to encrypt sensitive data.
+You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :ref:`playbooks_vault` to encrypt sensitive data.
 
 In OpenBSD, a similar option is available in the base system called encrypt(1):
 
@@ -552,7 +565,7 @@ We also offer free web-based training classes on a regular basis. See our `webin
 Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :doc:`../reference_appendices/tower`.
+Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
 
 
 .. _docs_contributions:
@@ -568,7 +581,7 @@ Great question!  Documentation for Ansible is kept in the main project git repos
 How do I keep secret data in my playbook?
 +++++++++++++++++++++++++++++++++++++++++
 
-If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`../user_guide/playbooks_vault`.
+If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :ref:`playbooks_vault`.
 
 If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
@@ -678,9 +691,9 @@ Please see the section below for a link to IRC and the Google Group, where you c
 
 .. seealso::
 
-   :doc:`../user_guide/playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`../user_guide/playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

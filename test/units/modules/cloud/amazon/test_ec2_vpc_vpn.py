@@ -19,7 +19,6 @@ import pytest
 import os
 from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import ec2_vpc_vpn
-from ansible.module_utils._text import to_text
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, boto3_tag_list_to_ansible_dict
 
 

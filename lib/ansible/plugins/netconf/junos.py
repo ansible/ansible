@@ -23,6 +23,7 @@ import json
 import re
 
 from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.six import string_types
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected, ensure_ncclient
@@ -119,7 +120,10 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj.get_option('persistent_connect_timeout')
+                timeout=obj.get_option('persistent_connect_timeout'),
+                # We need to pass in the path to the ssh_config file when guessing
+                # the network_os so that a jumphost is correctly used if defined
+                ssh_config=obj._ssh_config
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))
@@ -138,8 +142,15 @@ class Netconf(NetconfBase):
         Retrieve all or part of a specified configuration.
         :param format: format in which configuration should be retrieved
         :param filter: specifies the portion of the configuration to retrieve
+               as either xml string rooted in <configuration> element
         :return: Received rpc response from remote host in string format
         """
+        if filter is not None:
+            if not isinstance(filter, string_types):
+                raise AnsibleConnectionFailure("get configuration filter should be of type string,"
+                                               " received value '%s' is of type '%s'" % (filter, type(filter)))
+            filter = to_ele(filter)
+
         return self.m.get_configuration(format=format, filter=filter).data_xml
 
     @ensure_connected

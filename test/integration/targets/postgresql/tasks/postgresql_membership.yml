@@ -39,7 +39,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.groups == ["group1"]
     - result.queries == ["GRANT \"group1\" TO \"user1\""]
     - result.granted.group1 == ["user1"]
@@ -63,7 +63,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.groups == ["group1"]
     - result.queries == []
     - result.revoked.group1 == []
@@ -86,7 +86,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.groups == ["group1"]
     - result.queries == ["GRANT \"group1\" TO \"user1\""]
     - result.granted.group1 == ["user1"]
@@ -108,7 +108,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.groups == ["group1"]
     - result.queries == []
     - result.granted.group1 == []
@@ -130,7 +130,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.groups == ["group1"]
     - result.queries == ["REVOKE \"group1\" FROM \"user1\""]
     - result.revoked.group1 == ["user1"]
@@ -152,7 +152,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.groups == ["group1"]
     - result.queries == []
     - result.revoked.group1 == []
@@ -178,7 +178,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.groups == ["group1", "group2"]
     - result.queries == ["GRANT \"group1\" TO \"user1\"", "GRANT \"group1\" TO \"user2\"", "GRANT \"group2\" TO \"user1\"", "GRANT \"group2\" TO \"user2\""]
     - result.granted.group1 == ["user1", "user2"]
@@ -205,7 +205,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.groups == ["group1", "group2"]
     - result.queries == []
     - result.granted.group1 == []
@@ -228,7 +228,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.groups == ["group1"]
     - result.queries == ["REVOKE \"group1\" FROM \"user1\""]
     - result.revoked.group1 == ["user1"]
@@ -254,7 +254,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.groups == ["group1", "group2"]
     - result.queries == ["GRANT \"group1\" TO \"user1\""]
     - result.granted.group1 == ["user1"]
@@ -281,7 +281,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
 
 # Try to grant non existent group to non existent role with fail_on_role=no:
 - name: postgresql_membership - grant group1 to user1
@@ -299,7 +299,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.granted == {}
     - result.groups == []
     - result.target_roles == []
@@ -321,7 +321,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.revoked == {}
     - result.groups == []
     - result.target_roles == []

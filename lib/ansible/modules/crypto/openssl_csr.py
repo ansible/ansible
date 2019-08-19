@@ -555,7 +555,7 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
             raise CertificateSigningRequestError(exc)
 
     def _normalize_san(self, san):
-        # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+        # Apparently OpenSSL returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
         # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
         if san.startswith('IP Address:'):
             san = 'IP:' + san[len('IP Address:'):]
@@ -726,9 +726,9 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             current_subject = [(sub.oid, sub.value) for sub in csr.subject]
             return set(subject) == set(current_subject)
 
-        def _find_extension(extensions, type):
+        def _find_extension(extensions, exttype):
             return next(
-                (ext for ext in extensions if isinstance(ext.value, type)),
+                (ext for ext in extensions if isinstance(ext.value, exttype)),
                 None
             )
 
@@ -896,7 +896,8 @@ def main():
     try:
         if backend == 'pyopenssl':
             if not PYOPENSSL_FOUND:
-                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                 exception=PYOPENSSL_IMP_ERR)
             try:
                 getattr(crypto.X509Req, 'get_extensions')
             except AttributeError:
@@ -904,7 +905,8 @@ def main():
             csr = CertificateSigningRequestPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:
-                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                 exception=CRYPTOGRAPHY_IMP_ERR)
             csr = CertificateSigningRequestCryptography(module)
 
         if module.params['state'] == 'present':

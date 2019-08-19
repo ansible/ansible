@@ -304,7 +304,8 @@ namespace Ansible.Basic
                 }
                 catch (System.Security.SecurityException)
                 {
-                    Warn(String.Format("Access error when creating EventLog source {0}, logging to the Application source instead", logSource));
+                    // Cannot call Warn as that calls LogEvent and we get stuck in a loop
+                    warnings.Add(String.Format("Access error when creating EventLog source {0}, logging to the Application source instead", logSource));
                     logSource = "Application";
                 }
             }
@@ -334,7 +335,7 @@ namespace Ansible.Basic
             LogEvent(String.Format("[WARNING] {0}", message), EventLogEntryType.Warning);
         }
 
-        public static Dictionary<string, object> FromJson(string json) { return FromJson<Dictionary<string, object>>(json); }
+        public static object FromJson(string json) { return FromJson<object>(json); }
         public static T FromJson<T>(string json)
         {
 #if CORECLR
@@ -375,7 +376,7 @@ namespace Ansible.Basic
             if (args.Length > 0)
             {
                 string inputJson = File.ReadAllText(args[0]);
-                Dictionary<string, object> rawParams = FromJson(inputJson);
+                Dictionary<string, object> rawParams = FromJson<Dictionary<string, object>>(inputJson);
                 if (!rawParams.ContainsKey("ANSIBLE_MODULE_ARGS"))
                     throw new ArgumentException("Module was unable to get ANSIBLE_MODULE_ARGS value from the argument path json");
                 return (IDictionary)rawParams["ANSIBLE_MODULE_ARGS"];

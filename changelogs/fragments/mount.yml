@@ -1,0 +1,2 @@
+minor_changes:
+  - Added a parameter to allow remounting a filesystem

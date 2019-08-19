@@ -77,9 +77,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#vpnTunnel'"
 - name: verify that vpn_tunnel was created
-  gcp_compute_vpn_tunnel_facts:
+  gcp_compute_vpn_tunnel_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -92,7 +91,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a vpn tunnel that already exists
   gcp_compute_vpn_tunnel:
@@ -110,7 +109,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#vpnTunnel'"
 #----------------------------------------------------------
 - name: delete a vpn tunnel
   gcp_compute_vpn_tunnel:
@@ -128,9 +126,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that vpn_tunnel was deleted
-  gcp_compute_vpn_tunnel_facts:
+  gcp_compute_vpn_tunnel_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -143,7 +140,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a vpn tunnel that does not exist
   gcp_compute_vpn_tunnel:
@@ -161,7 +158,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

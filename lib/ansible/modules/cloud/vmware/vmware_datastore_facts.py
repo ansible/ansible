@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: vmware_datastore_facts
 short_description: Gather facts about datastores available in given vCenter
 description:
-    - This module can be used to gather facts about datastores in VMWare infrastructure.
+    - This module can be used to gather facts about datastores in VMware infrastructure.
     - All values and VMware object names are case sensitive.
 version_added: 2.5
 author:
@@ -35,18 +35,21 @@ options:
      - Name of the datastore to match.
      - If set, facts of specific datastores are returned.
      required: False
+     type: str
    datacenter:
      description:
      - Datacenter to search for datastores.
      - This parameter is required, if C(cluster) is not supplied.
      required: False
      aliases: ['datacenter_name']
+     type: str
    cluster:
      description:
      - Cluster to search for datastores.
      - If set, facts of datastores belonging this clusters will be returned.
      - This parameter is required, if C(datacenter) is not supplied.
      required: False
+     type: str
    gather_nfs_mount_info:
     description:
     - Gather mount information of NFS datastores.
@@ -214,12 +217,10 @@ class PyVmomiCache(object):
         if confine_to_datacenter:
             if hasattr(objects, 'items'):
                 # resource pools come back as a dictionary
-                tmpobjs = objects.copy()
-                for k, v in objects.items():
+                for k, v in tuple(objects.items()):
                     parent_dc = get_parent_datacenter(k)
                     if parent_dc.name != self.dc_name:
-                        tmpobjs.pop(k, None)
-                objects = tmpobjs
+                        del objects[k]
             else:
                 # everything else should be a list
                 objects = [x for x in objects if get_parent_datacenter(x).name == self.dc_name]
@@ -233,9 +234,9 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
 
-    def lookup_datastore(self):
+    def lookup_datastore(self, confine_to_datacenter):
         """ Get datastore(s) per ESXi host or vCenter server """
-        datastores = self.cache.get_all_objs(self.content, [vim.Datastore], confine_to_datacenter=True)
+        datastores = self.cache.get_all_objs(self.content, [vim.Datastore], confine_to_datacenter)
         return datastores
 
     def lookup_datastore_by_cluster(self):
@@ -258,9 +259,6 @@ def main():
         gather_vmfs_mount_info=dict(type='bool', default=False)
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[
-                               ['cluster', 'datacenter'],
-                           ],
                            supports_check_mode=True
                            )
     result = dict(changed=False)
@@ -269,23 +267,17 @@ def main():
 
     if module.params['cluster']:
         dxs = pyv.lookup_datastore_by_cluster()
+    elif module.params['datacenter']:
+        dxs = pyv.lookup_datastore(confine_to_datacenter=True)
     else:
-        dxs = pyv.lookup_datastore()
+        dxs = pyv.lookup_datastore(confine_to_datacenter=False)
 
     vmware_host_datastore = VMwareHostDatastore(module)
     datastores = vmware_host_datastore.build_datastore_list(dxs)
 
     result['datastores'] = datastores
 
-    # found a datastore
-    if datastores:
-        module.exit_json(**result)
-    else:
-        msg = "Unable to gather datastore facts"
-        if module.params['name']:
-            msg += " for %(name)s" % module.params
-        msg += " in datacenter %(datacenter)s" % module.params
-        module.fail_json(msg=msg)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

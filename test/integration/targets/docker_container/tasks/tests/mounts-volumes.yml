@@ -1,0 +1,440 @@
+---
+- name: Registering container name
+  set_fact:
+    cname: "{{ cname_prefix ~ '-mounts' }}"
+    cname_h1: "{{ cname_prefix ~ '-mounts-h1' }}"
+    cname_h2: "{{ cname_prefix ~ '-mounts-h2' }}"
+- name: Registering container name
+  set_fact:
+    cnames: "{{ cnames + [cname, cname_h1, cname_h2] }}"
+
+####################################################################
+## keep_volumes ####################################################
+####################################################################
+
+# TODO: - keep_volumes
+
+####################################################################
+## mounts ##########################################################
+####################################################################
+
+- name: mounts
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /tmp
+      target: /tmp
+      type: bind
+    - source: /
+      target: /whatever
+      type: bind
+      read_only: no
+  register: mounts_1
+  ignore_errors: yes
+
+- name: mounts (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /
+      target: /whatever
+      type: bind
+      read_only: no
+    - source: /tmp
+      target: /tmp
+      type: bind
+  register: mounts_2
+  ignore_errors: yes
+
+- name: mounts (less mounts)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /tmp
+      target: /tmp
+      type: bind
+  register: mounts_3
+  ignore_errors: yes
+
+- name: mounts (more mounts)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /tmp
+      target: /tmp
+      type: bind
+    - source: /tmp
+      target: /somewhereelse
+      type: bind
+      read_only: yes
+    force_kill: yes
+  register: mounts_4
+  ignore_errors: yes
+
+- name: mounts (different modes)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /tmp
+      target: /tmp
+      type: bind
+    - source: /tmp
+      target: /somewhereelse
+      type: bind
+      read_only: no
+    force_kill: yes
+  register: mounts_5
+  ignore_errors: yes
+
+- name: mounts (endpoint collision)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /home
+      target: /x
+      type: bind
+    - source: /etc
+      target: /x
+      type: bind
+      read_only: no
+    force_kill: yes
+  register: mounts_6
+  ignore_errors: yes
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - mounts_1 is changed
+    - mounts_2 is not changed
+    - mounts_3 is not changed
+    - mounts_4 is changed
+    - mounts_5 is changed
+    - mounts_6 is failed
+    - "'The mount point \"/x\" appears twice in the mounts option' == mounts_6.msg"
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - mounts_1 is failed
+    - "('version is ' ~ docker_py_version ~ ' ') in mounts_1.msg"
+    - "'Minimum version required is 2.6.0 ' in mounts_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
+
+####################################################################
+## mounts + volumes ################################################
+####################################################################
+
+- name: mounts + volumes
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /
+      target: /whatever
+      type: bind
+      read_only: yes
+    volumes:
+    - /tmp:/tmp
+  register: mounts_volumes_1
+  ignore_errors: yes
+
+- name: mounts + volumes (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /
+      target: /whatever
+      type: bind
+      read_only: yes
+    volumes:
+    - /tmp:/tmp
+  register: mounts_volumes_2
+  ignore_errors: yes
+
+- name: mounts + volumes (switching)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /tmp
+      target: /tmp
+      type: bind
+      read_only: no
+    volumes:
+    - /:/whatever:ro
+    force_kill: yes
+  register: mounts_volumes_3
+  ignore_errors: yes
+
+- name: mounts + volumes (collision, should fail)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /tmp
+      target: /tmp
+      type: bind
+      read_only: no
+    volumes:
+    - /tmp:/tmp
+    force_kill: yes
+  register: mounts_volumes_4
+  ignore_errors: yes
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - mounts_volumes_1 is changed
+    - mounts_volumes_2 is not changed
+    - mounts_volumes_3 is changed
+    - mounts_volumes_4 is failed
+    - "'The mount point \"/tmp\" appears both in the volumes and mounts option' in mounts_volumes_4.msg"
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - mounts_volumes_1 is failed
+    - "('version is ' ~ docker_py_version ~ ' ') in mounts_1.msg"
+    - "'Minimum version required is 2.6.0 ' in mounts_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
+
+####################################################################
+## volume_driver ###################################################
+####################################################################
+
+- name: volume_driver
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    volume_driver: local
+    state: started
+  register: volume_driver_1
+
+- name: volume_driver (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    volume_driver: local
+    state: started
+  register: volume_driver_2
+
+- name: volume_driver (change)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    volume_driver: /
+    state: started
+    force_kill: yes
+  register: volume_driver_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - volume_driver_1 is changed
+    - volume_driver_2 is not changed
+    - volume_driver_3 is changed
+
+####################################################################
+## volumes #########################################################
+####################################################################
+
+- name: volumes
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/tmp:/tmp"
+    - "/:/whatever:rw,z"
+  register: volumes_1
+
+- name: volumes (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/:/whatever:rw,z"
+    - "/tmp:/tmp"
+  register: volumes_2
+
+- name: volumes (less volumes)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/tmp:/tmp"
+  register: volumes_3
+
+- name: volumes (more volumes)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/tmp:/tmp"
+    - "/tmp:/somewhereelse:ro,Z"
+    force_kill: yes
+  register: volumes_4
+
+- name: volumes (different modes)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/tmp:/tmp"
+    - "/tmp:/somewhereelse:ro"
+    force_kill: yes
+  register: volumes_5
+
+- name: volumes (collision)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/etc:/tmp"
+    - "/home:/tmp:ro"
+    force_kill: yes
+  register: volumes_6
+  ignore_errors: yes
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - volumes_1 is changed
+    - volumes_2 is not changed
+    - volumes_3 is not changed
+    - volumes_4 is changed
+    - volumes_5 is changed
+    - volumes_6 is failed
+    - "'The mount point \"/tmp\" appears twice in the volumes option' in volumes_6.msg"
+
+####################################################################
+## volumes_from ####################################################
+####################################################################
+
+- name: start helpers
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ container_name }}"
+    state: started
+    volumes:
+    - "{{ '/tmp:/tmp' if container_name == cname_h1 else '/:/whatever:ro' }}"
+  loop:
+  - "{{ cname_h1 }}"
+  - "{{ cname_h2 }}"
+  loop_control:
+    loop_var: container_name
+
+- name: volumes_from
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes_from: "{{ cname_h1 }}"
+  register: volumes_from_1
+
+- name: volumes_from (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes_from: "{{ cname_h1 }}"
+  register: volumes_from_2
+
+- name: volumes_from (change)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes_from: "{{ cname_h2 }}"
+    force_kill: yes
+  register: volumes_from_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ container_name }}"
+    state: absent
+    force_kill: yes
+  loop:
+  - "{{ cname }}"
+  - "{{ cname_h1 }}"
+  - "{{ cname_h2 }}"
+  loop_control:
+    loop_var: container_name
+  diff: no
+
+- assert:
+    that:
+    - volumes_from_1 is changed
+    - volumes_from_2 is not changed
+    - volumes_from_3 is changed
+
+####################################################################
+####################################################################
+####################################################################

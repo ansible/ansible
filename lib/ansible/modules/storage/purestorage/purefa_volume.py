@@ -145,6 +145,8 @@ from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
 QOS_API_VERSION = "1.14"
+VGROUPS_API_VERSION = "1.13"
+POD_API_VERSION = "1.13"
 
 
 def human_to_bytes(size):
@@ -198,9 +200,51 @@ def get_target(module, array):
         return None
 
 
+def check_vgroup(module, array):
+    """Check is the requested VG to create volume in exists"""
+    vg_exists = False
+    api_version = array._list_available_rest_versions()
+    if VGROUPS_API_VERSION in api_version:
+        vg_name = module.params["name"].split("/")[0]
+        try:
+            vgs = array.list_vgroups()
+        except Exception:
+            module.fail_json(msg="Failed to get volume groups list. Check array.")
+        for vgroup in range(0, len(vgs)):
+            if vg_name == vgs[vgroup]['name']:
+                vg_exists = True
+                break
+    else:
+        module.fail_json(msg="VG volumes are not supported. Please upgrade your FlashArray.")
+    return vg_exists
+
+
+def check_pod(module, array):
+    """Check is the requested pod to create volume in exists"""
+    pod_exists = False
+    api_version = array._list_available_rest_versions()
+    if POD_API_VERSION in api_version:
+        pod_name = module.params["name"].split("::")[0]
+        try:
+            pods = array.list_pods()
+        except Exception:
+            module.fail_json(msg="Failed to get pod list. Check array.")
+        for pod in range(0, len(pods)):
+            if pod_name == pods[pod]['name']:
+                pod_exists = True
+                break
+    else:
+        module.fail_json(msg="Pod volumes are not supported. Please upgrade your FlashArray.")
+    return pod_exists
+
+
 def create_volume(module, array):
     """Create Volume"""
     changed = False
+    if "/" in module.params['name'] and not check_vgroup(module, array):
+        module.fail_json(msg="Failed to create volume {0}. Volume Group does not exist.".format(module.params["name"]))
+    if "::" in module.params['name'] and not check_pod(module, array):
+        module.fail_json(msg="Failed to create volume {0}. Poid does not exist".format(module.params["name"]))
     volfact = []
     api_version = array._list_available_rest_versions()
     if module.params['qos'] and QOS_API_VERSION in api_version:
@@ -295,7 +339,7 @@ def delete_volume(module, array):
     changed = False
     volfact = []
     try:
-        volume = array.destroy_volume(module.params['name'])
+        array.destroy_volume(module.params['name'])
         if module.params['eradicate']:
             try:
                 volfact = array.eradicate_volume(module.params['name'])
@@ -313,7 +357,7 @@ def eradicate_volume(module, array):
     volfact = []
     if module.params['eradicate']:
         try:
-            volume = array.eradicate_volume(module.params['name'])
+            array.eradicate_volume(module.params['name'])
             changed = True
         except Exception:
             module.fail_json(msg='Eradication of volume {0} failed'.format(module.params['name']))

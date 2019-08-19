@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlconfiguration_facts
 version_added: "2.8"
-short_description: Get Azure PostgreSQL Configuration facts.
+short_description: Get Azure PostgreSQL Configuration facts
 description:
     - Get facts of Azure PostgreSQL Configuration.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,13 +57,14 @@ EXAMPLES = '''
 
 RETURN = '''
 settings:
-    description: A list of dictionaries containing MySQL Server settings.
+    description:
+        - A list of dictionaries containing MySQL Server settings.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Setting resource ID
+                - Setting resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testrg/providers/Microsoft.DBforPostgreSQL/servers/testpostgresqlser

@@ -114,7 +114,7 @@ EXAMPLES = '''
     name: my_first_group
     path: my_first_group
     state: present
-    parent_path: "super_parent/parent"
+    parent: "super_parent/parent"
 '''
 
 RETURN = '''
@@ -188,7 +188,8 @@ class GitLabGroup(object):
             group = self.createGroup({
                 'name': name,
                 'path': options['path'],
-                'parent_id': parent_id})
+                'parent_id': parent_id,
+                'visibility': options['visibility']})
             changed = True
         else:
             changed, group = self.updateGroup(self.groupObject, {

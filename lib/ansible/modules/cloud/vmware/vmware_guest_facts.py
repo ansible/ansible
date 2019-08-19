@@ -34,22 +34,31 @@ options:
    name:
      description:
      - Name of the VM to work with
-     - This is required if UUID is not supplied.
+     - This is required if C(uuid) or C(moid) is not supplied.
+     type: str
    name_match:
      description:
      - If multiple VMs matching the name, use the first or last found
      default: 'first'
      choices: ['first', 'last']
+     type: str
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's unique identifier.
-     - This is required if name is not supplied.
+     - This is required if C(name) or C(moid) is not supplied.
+     type: str
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -65,12 +74,12 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
-     - '   folder: vm/folder2'
-     - '   folder: folder2'
+     type: str
    datacenter:
      description:
      - Destination datacenter for the deploy operation
      required: True
+     type: str
    tags:
      description:
      - Whether to show tags or not.
@@ -133,6 +142,33 @@ EXAMPLES = '''
     properties: ["config.hardware.memoryMB", "guest.disk", "overallStatus"]
   delegate_to: localhost
   register: facts
+
+- name: Gather some facts from a guest using MoID
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter_name }}"
+    moid: vm-42
+    schema: "vsphere"
+    properties: ["config.hardware.memoryMB", "guest.disk", "overallStatus"]
+  delegate_to: localhost
+  register: vm_moid_facts
+
+- name: Gather Managed object ID (moid) from a guest using the vSphere API output schema for REST Calls
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter_name }}"
+    name: "{{ vm_name }}"
+    schema: "vsphere"
+    properties:
+      - _moId
+  delegate_to: localhost
+  register: moid_facts
 '''
 
 RETURN = """
@@ -192,7 +228,9 @@ instance:
         "tags": [
             "backup"
         ],
-        "vnc": {}
+        "vnc": {},
+        "moid": "vm-42",
+        "vimref": "vim.VirtualMachine:vm-42"
     }
 """
 
@@ -202,17 +240,16 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
     from com.vmware.vapi.std_client import DynamicID
-    from com.vmware.cis.tagging_client import Tag, TagAssociation
-    HAS_VCLOUD = True
+    HAS_VSPHERE = True
 except ImportError:
-    HAS_VCLOUD = False
+    HAS_VSPHERE = False
 
 
 class VmwareTag(VmwareRestClient):
     def __init__(self, module):
         super(VmwareTag, self).__init__(module)
-        self.tag_service = Tag(self.connect)
-        self.tag_association_svc = TagAssociation(self.connect)
+        self.tag_service = self.api_client.tagging.Tag
+        self.tag_association_svc = self.api_client.tagging.TagAssociation
 
 
 def main():
@@ -222,6 +259,7 @@ def main():
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
         tags=dict(type='bool', default=False),
@@ -229,7 +267,8 @@ def main():
         properties=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+                           required_one_of=[['name', 'uuid', 'moid']],
+                           supports_check_mode=True)
 
     if module.params.get('folder'):
         # FindByInventoryPath() does not require an absolute path
@@ -250,9 +289,8 @@ def main():
                 instance = pyv.gather_facts(vm)
             else:
                 instance = pyv.to_json(vm, module.params['properties'])
-
             if module.params.get('tags'):
-                if not HAS_VCLOUD:
+                if not HAS_VSPHERE:
                     module.fail_json(msg="Unable to find 'vCloud Suite SDK' Python library which is required."
                                          " Please refer this URL for installation steps"
                                          " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")
@@ -267,8 +305,8 @@ def main():
         except Exception as exc:
             module.fail_json(msg="Fact gather failed with exception %s" % to_text(exc))
     else:
-        module.fail_json(msg="Unable to gather facts for non-existing VM %s" % (module.params.get('uuid') or
-                                                                                module.params.get('name')))
+        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
+        module.fail_json(msg="Unable to gather facts for non-existing VM %s" % vm_id)
 
 
 if __name__ == '__main__':

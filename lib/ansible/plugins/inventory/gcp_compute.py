@@ -33,7 +33,7 @@ DOCUMENTATION = '''
         filters:
           description: >
             A list of filter value pairs. Available filters are listed here
-            U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
+            U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/aggregatedList).
             Each additional filter in the list will act be added as an AND condition
             (filter1 and filter2)
           type: list
@@ -48,22 +48,40 @@ DOCUMENTATION = '''
                 - The type of credential used.
             required: True
             choices: ['application', 'serviceaccount', 'machineaccount']
+            env:
+                - name: GCP_AUTH_KIND
+                  version_added: "2.8.2"
         scopes:
             description: list of authentication scopes
             type: list
             default: ['https://www.googleapis.com/auth/compute']
+            env:
+                - name: GCP_SCOPES
+                  version_added: "2.8.2"
         service_account_file:
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
-            required: True
             type: path
             env:
+                - name: GCP_SERVICE_ACCOUNT_FILE
+                  version_added: "2.8.2"
                 - name: GCE_CREDENTIALS_FILE_PATH
                   version_added: "2.8"
+        service_account_contents:
+            description:
+                - A string representing the contents of a Service Account JSON file. This should not be passed in as a dictionary,
+                  but a string that has the exact contents of a service account json file (valid JSON).
+            type: string
+            env:
+                - name: GCP_SERVICE_ACCOUNT_CONTENTS
+            version_added: "2.8.2"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
                   and the user does not wish to use the default email.
+            env:
+                - name: GCP_SERVICE_ACCOUNT_EMAIL
+                  version_added: "2.8.2"
         vars_prefix:
             description: prefix to apply to host variables, does not include facts nor params
             default: ''
@@ -120,15 +138,10 @@ compose:
 import json
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_native
-from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException, HAS_GOOGLE_LIBRARIES
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
-
-try:
-    import google.auth
-    import requests
-except ImportError:
-    raise AnsibleError('The gcp dynamic inventory plugin requires the requests and google-auth libraries')
 
 
 # Mocking a module to reuse module_utils
@@ -144,7 +157,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'gcp_compute'
 
-    _instances = r"https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances"
+    _instances = r"https://www.googleapis.com/compute/v1/projects/%s/aggregated/instances"
 
     def __init__(self):
         super(InventoryModule, self).__init__()
@@ -161,7 +174,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item[key])
             except (ValueError, TypeError) as e:
-                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_native(e)))
+                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_text(e)))
         self.inventory.add_child('all', hostname)
 
     def verify_file(self, path):
@@ -185,18 +198,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         response = self.auth_session.get(link, params={'filter': query})
         return self._return_if_object(self.fake_module, response)
-
-    def _get_zones(self, project, config_data):
-        '''
-            :param config_data: dict of info from inventory file
-            :return an array of zones that this project has access to
-        '''
-        link = "https://www.googleapis.com/compute/v1/projects/%s/zones" % project
-        zones = []
-        zones_response = self.fetch_list(config_data, link, '')
-        for item in zones_response['items']:
-            zones.append(item['name'])
-        return zones
 
     def _get_query_options(self, filters):
         '''
@@ -243,8 +244,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if navigate_hash(result, ['error', 'errors']):
             module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-        if result['kind'] != 'compute#instanceList' and result['kind'] != 'compute#zoneList':
-            module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
         return result
 
@@ -266,6 +265,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         network['network'] = self._format_network_info(network['network'])
                     if 'subnetwork' in network:
                         network['subnetwork'] = self._format_network_info(network['subnetwork'])
+
+            if 'metadata' in host:
+                # If no metadata, 'items' will be blank.
+                # We want the metadata hash overriden anyways for consistency.
+                host['metadata'] = self._format_metadata(host['metadata'].get('items', {}))
 
             host['project'] = host['selfLink'].split('/')[6]
             host['image'] = self._get_image(host, project_disks)
@@ -306,6 +310,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'name': split[-1],
             'selfLink': address
         }
+
+    def _format_metadata(self, metadata):
+        '''
+            :param metadata: A list of dicts where each dict has keys "key" and "value"
+            :return a dict with key/value pairs for each in list.
+        '''
+        new_metadata = {}
+        for pair in metadata:
+            new_metadata[pair["key"]] = pair["value"]
+        return new_metadata
 
     def _get_hostname(self, item):
         '''
@@ -421,6 +435,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return interface[u'networkIP']
 
     def parse(self, inventory, loader, path, cache=True):
+
+        if not HAS_GOOGLE_LIBRARIES:
+            raise AnsibleParserError('gce inventory plugin cannot start: %s' % missing_required_lib('google-auth'))
+
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = {}
@@ -437,6 +455,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'zones': self.get_option('zones'),
             'auth_kind': self.get_option('auth_kind'),
             'service_account_file': self.get_option('service_account_file'),
+            'service_account_contents': self.get_option('service_account_contents'),
             'service_account_email': self.get_option('service_account_email'),
         }
 
@@ -472,16 +491,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             for project in params['projects']:
                 cached_data[project] = {}
                 params['project'] = project
-                if not params['zones']:
-                    zones = self._get_zones(project, params)
-                else:
-                    zones = params['zones']
-                for zone in zones:
-                    link = self._instances % (project, zone)
-                    params['zone'] = zone
-                    resp = self.fetch_list(params, link, query)
-                    self._add_hosts(resp.get('items'), config_data, project_disks=project_disks)
-                    cached_data[project][zone] = resp.get('items')
+                zones = params['zones']
+                # Fetch all instances
+                link = self._instances % project
+                resp = self.fetch_list(params, link, query)
+                if 'items' in resp and resp['items']:
+                    for key, value in resp.get('items').items():
+                        if 'instances' in value:
+                            # Key is in format: "zones/europe-west1-b"
+                            zone = key[6:]
+                            if not zones or zone in zones:
+                                self._add_hosts(value['instances'], config_data, project_disks=project_disks)
+                                cached_data[project][zone] = value['instances']
 
         if cache_needs_update:
             self._cache[cache_key] = cached_data

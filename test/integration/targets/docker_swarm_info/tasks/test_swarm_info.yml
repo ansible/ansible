@@ -149,7 +149,8 @@
   - assert:
       that:
         - output is failed
-        - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.7.0') in output.msg"
+        - "('version is ' ~ docker_py_version ~ ' ') in output.msg"
+        - "'Minimum version required is 2.7.0 ' in output.msg"
     when: docker_py_version is version('2.7.0', '<')
 
   - name: Update swarm cluster to be locked
@@ -178,7 +179,8 @@
   - assert:
       that:
         - output is failed
-        - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.7.0') in output.msg"
+        - "('version is ' ~ docker_py_version ~ ' ') in output.msg"
+        - "'Minimum version required is 2.7.0 ' in output.msg"
     when: docker_py_version is version('2.7.0', '<')
 
   always:

@@ -54,7 +54,7 @@ function Get-RAP([string] $name) {
 
     # Fetch RAP user groups in Down-Level Logon format
     $rap.UserGroups = @(
-        Get-ChildItem -Path "$rap_path\UserGroups" | 
+        Get-ChildItem -Path "$rap_path\UserGroups" |
             Select-Object -ExpandProperty Name |
             ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
     )

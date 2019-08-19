@@ -1,0 +1,6 @@
+{
+    "prefixes": [
+        "lib/"
+    ],
+    "output": "path-message"
+}

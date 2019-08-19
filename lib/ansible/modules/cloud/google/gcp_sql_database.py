@@ -47,28 +47,28 @@ options:
     - present
     - absent
     default: present
+    type: str
   charset:
     description:
     - The MySQL charset value.
     required: false
+    type: str
   collation:
     description:
     - The MySQL collation value.
     required: false
+    type: str
   name:
     description:
     - The name of the database in the Cloud SQL instance.
     - This does not include the project ID or instance name.
-    required: false
+    required: true
+    type: str
   instance:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
-    - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place a dictionary with key ''name'' and value of
-      your resource''s name Alternatively, you can add `register: name-of-resource`
-      to a gcp_sql_instance task and then set this instance field to "{{ name-of-resource
-      }}"'
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -121,7 +121,7 @@ instance:
   description:
   - The name of the Cloud SQL instance. This does not include the project ID.
   returned: success
-  type: dict
+  type: str
 '''
 
 ################################################################################
@@ -145,8 +145,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             charset=dict(type='str'),
             collation=dict(type='str'),
-            name=dict(type='str'),
-            instance=dict(required=True, type='dict'),
+            name=dict(required=True, type='str'),
+            instance=dict(required=True, type='str'),
         )
     )
 
@@ -187,8 +187,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'sql')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="SQL objects can't be updated to ensure data safety")
 
 
 def delete(module, link, kind):
@@ -199,6 +198,7 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'sql#database',
+        u'instance': module.params.get('instance'),
         u'charset': module.params.get('charset'),
         u'collation': module.params.get('collation'),
         u'name': module.params.get('name'),
@@ -217,13 +217,11 @@ def fetch_resource(module, link, kind, allow_not_found=True):
 
 
 def self_link(module):
-    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name'), 'name': module.params['name']}
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**module.params)
 
 
 def collection(module):
-    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**module.params)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):
@@ -271,7 +269,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'charset': response.get(u'charset'), u'collation': response.get(u'collation'), u'name': response.get(u'name')}
+    return {u'charset': response.get(u'charset'), u'collation': response.get(u'collation'), u'name': module.params.get('name')}
 
 
 def async_op_url(module, extra_data=None):

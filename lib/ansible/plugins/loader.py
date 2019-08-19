@@ -8,10 +8,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import glob
-import imp
 import os
 import os.path
-import pkgutil
 import sys
 import warnings
 
@@ -27,6 +25,12 @@ from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_P
 from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader, is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
+
+try:
+    import importlib.util
+    imp = None
+except ImportError:
+    import imp
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -51,7 +55,7 @@ def add_all_plugin_dirs(path):
                 if os.path.isdir(plugin_path):
                     obj.add_directory(to_text(plugin_path))
     else:
-        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_native(path))
+        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_text(path))
 
 
 def get_shell_plugin(shell_type=None, executable=None):
@@ -325,15 +329,12 @@ class PluginLoader:
         package = splitname[0]
         resource = splitname[1]
 
-        append_plugin_type = self.class_name or self.subdir
+        append_plugin_type = self.subdir.replace('_plugins', '')
 
-        if append_plugin_type:
-            # only current non-class special case, module_utils don't use this loader method
-            if append_plugin_type == 'library':
-                append_plugin_type = 'modules'
-            elif append_plugin_type != 'module_utils':
-                append_plugin_type = get_plugin_class(append_plugin_type)
-            package += '.plugins.{0}'.format(append_plugin_type)
+        if append_plugin_type == 'library':
+            append_plugin_type = 'modules'
+
+        package += '.plugins.{0}'.format(append_plugin_type)
 
         if extension:
             resource += extension
@@ -374,7 +375,7 @@ class PluginLoader:
 
         return to_text(found_files[0])
 
-    def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
         ''' Find a plugin named name '''
 
         global _PLUGIN_FILTERS
@@ -497,20 +498,6 @@ class PluginLoader:
 
         return None
 
-    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
-        ''' Find a plugin named name '''
-
-        # Import here to avoid circular import
-        from ansible.vars.reserved import is_reserved_name
-
-        plugin = self._find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases, collection_list=collection_list)
-        if plugin and self.package == 'ansible.modules' and name not in ('gather_facts',) and is_reserved_name(name):
-            raise AnsibleError(
-                'Module "%s" shadows the name of a reserved keyword. Please rename or remove this module. Found at %s' % (name, plugin)
-            )
-
-        return plugin
-
     def has_plugin(self, name, collection_list=None):
         ''' Checks if a plugin named name exists '''
 
@@ -520,7 +507,7 @@ class PluginLoader:
             if isinstance(ex, AnsibleError):
                 raise
             # log and continue, likely an innocuous type/package loading failure in collections import
-            display.debug('has_plugin error: {0}'.format(to_native(ex)))
+            display.debug('has_plugin error: {0}'.format(to_text(ex)))
 
     __contains__ = has_plugin
 
@@ -535,9 +522,15 @@ class PluginLoader:
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            with open(to_bytes(path), 'rb') as module_file:
-                # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
-                module = imp.load_source(to_native(full_name), to_native(path), module_file)
+            if imp is None:
+                spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                sys.modules[full_name] = module
+            else:
+                with open(to_bytes(path), 'rb') as module_file:
+                    # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
+                    module = imp.load_source(to_native(full_name), to_native(path), module_file)
         return module
 
     def _update_object(self, obj, name, path):
@@ -671,7 +664,13 @@ class PluginLoader:
 
             if path not in self._module_cache:
                 try:
-                    module = self._load_module_source(name, path)
+                    if self.subdir in ('filter_plugins', 'test_plugins'):
+                        # filter and test plugin files can contain multiple plugins
+                        # they must have a unique python module name to prevent them from shadowing each other
+                        full_name = '{0}_{1}'.format(abs(hash(path)), basename)
+                    else:
+                        full_name = basename
+                    module = self._load_module_source(full_name, path)
                     self._load_config_defs(basename, module, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
@@ -819,7 +818,7 @@ def _load_plugin_filter():
 
 def _configure_collection_loader():
     if not any((isinstance(l, AnsibleCollectionLoader) for l in sys.meta_path)):
-        sys.meta_path.insert(0, AnsibleCollectionLoader())
+        sys.meta_path.insert(0, AnsibleCollectionLoader(C.config))
 
 
 # TODO: All of the following is initialization code   It should be moved inside of an initialization

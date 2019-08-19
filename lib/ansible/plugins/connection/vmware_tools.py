@@ -277,7 +277,7 @@ class Connection(ConnectionBase):
             self.module_implementation_preferences = (".ps1", ".exe", "")
             self.become_methods = ["runas"]
             self.allow_executable = False
-            self.has_pipelining = True
+            self.has_pipelining = False
             self.allow_extras = True
 
     def _establish_connection(self):
@@ -368,10 +368,13 @@ class Connection(ConnectionBase):
 
     def _get_program_spec_program_path_and_arguments(self, cmd):
         if self.windowsGuest:
-            cmd_parts = self._shell._encode_script(cmd, as_list=False, strict_mode=False, preserve_rc=False)
-
+            '''
+            we need to warp the execution of powershell into a cmd /c because
+            the call otherwise fails with "Authentication or permission failure"
+            #FIXME: Fix the unecessary invocation of cmd and run the command directly
+            '''
             program_path = "cmd.exe"
-            arguments = "/c %s" % cmd_parts
+            arguments = "/c %s" % cmd
         else:
             program_path = self.get_option("executable")
             arguments = re.sub(r"^%s\s*" % program_path, "", cmd)

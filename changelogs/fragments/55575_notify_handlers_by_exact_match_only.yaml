@@ -1,0 +1,3 @@
+bugfixes:
+  - handlers - Only notify a handler if the handler is an exact match by ensuring `listen` is a list of strings.
+    (https://github.com/ansible/ansible/issues/55575)

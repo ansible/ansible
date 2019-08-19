@@ -5,19 +5,42 @@
 
 from __future__ import absolute_import
 
+import pytest
+
 from ansible.modules.source_control.gitlab_deploy_key import GitLabDeployKey
 
-from .gitlab import (GitlabModuleTestCase,
-                     python_version_match_requirement,
-                     resp_get_project, resp_find_project_deploy_key,
-                     resp_create_project_deploy_key, resp_delete_project_deploy_key)
 
-# Gitlab module requirements
-if python_version_match_requirement():
-    from gitlab.v4.objects import ProjectKey
+def _dummy(x):
+    """Dummy function.  Only used as a placeholder for toplevel definitions when the test is going
+    to be skipped anyway"""
+    return x
+
+
+pytestmark = []
+try:
+    from .gitlab import (GitlabModuleTestCase,
+                         python_version_match_requirement,
+                         resp_get_project, resp_find_project_deploy_key,
+                         resp_create_project_deploy_key, resp_delete_project_deploy_key)
+
+    # Gitlab module requirements
+    if python_version_match_requirement():
+        from gitlab.v4.objects import ProjectKey
+except ImportError:
+    pytestmark.append(pytest.mark.skip("Could not load gitlab module required for testing"))
+    # Need to set these to something so that we don't fail when parsing
+    GitlabModuleTestCase = object
+    resp_get_project = _dummy
+    resp_find_project_deploy_key = _dummy
+    resp_create_project_deploy_key = _dummy
+    resp_delete_project_deploy_key = _dummy
 
 # Unit tests requirements
-from httmock import with_httmock  # noqa
+try:
+    from httmock import with_httmock  # noqa
+except ImportError:
+    pytestmark.append(pytest.mark.skip("Could not load httmock module required for testing"))
+    with_httmock = _dummy
 
 
 class TestGitlabDeployKey(GitlabModuleTestCase):

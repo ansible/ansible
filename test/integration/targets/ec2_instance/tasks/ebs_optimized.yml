@@ -1,0 +1,34 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- name: Make EBS optimized instance in the testing subnet of the test VPC
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
+    image_id: "{{ ec2_ebs_optimized_ami_image[aws_region] }}"
+    tags:
+      TestId: "{{ resource_prefix }}"
+    security_groups: "{{ sg.group_id }}"
+    vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+    ebs_optimized: true
+    instance_type: t3.nano
+    wait: false
+    <<: *aws_connection_info
+  register: ebs_opt_in_vpc
+
+- name: Get ec2 instance info
+  ec2_instance_info:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
+    <<: *aws_connection_info
+  register: ebs_opt_instance_info
+
+- name: Assert instance is ebs_optimized
+  assert:
+    that:
+      - "{{ ebs_opt_instance_info.instances.0.ebs_optimized }}"

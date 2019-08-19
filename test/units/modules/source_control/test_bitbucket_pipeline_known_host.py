@@ -1,5 +1,8 @@
+import pytest
+
 from ansible.module_utils.source_control.bitbucket import BitbucketHelper
 from ansible.modules.source_control.bitbucket import bitbucket_pipeline_known_host
+from ansible.modules.source_control.bitbucket.bitbucket_pipeline_known_host import HAS_PARAMIKO
 from units.compat import unittest
 from units.compat.mock import patch
 from units.modules.utils import AnsibleExitJson, ModuleTestCase, set_module_args
@@ -10,6 +13,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
         super(TestBucketPipelineKnownHostModule, self).setUp()
         self.module = bitbucket_pipeline_known_host
 
+    @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_known_host, 'get_existing_known_host', return_value=None)
     def test_create_known_host(self, *args):
@@ -48,6 +52,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
             self.assertEqual(get_host_key_mock.call_count, 0)
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
+    @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_known_host, 'get_existing_known_host', return_value={
         'type': 'pipeline_known_host',
@@ -77,6 +82,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
             self.assertEqual(create_known_host_mock.call_count, 0)
             self.assertEqual(exec_info.exception.args[0]['changed'], False)
 
+    @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_known_host, 'get_existing_known_host', return_value=None)
     def test_create_known_host_check_mode(self, *args):
@@ -96,6 +102,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
             self.assertEqual(create_known_host_mock.call_count, 0)
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
+    @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_known_host, 'get_existing_known_host', return_value={
         'type': 'pipeline_known_host',
@@ -125,6 +132,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
             self.assertEqual(delete_known_host_mock.call_count, 1)
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
+    @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_known_host, 'get_existing_known_host', return_value=None)
     def test_delete_absent_known_host(self, *args):
@@ -143,6 +151,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
             self.assertEqual(delete_known_host_mock.call_count, 0)
             self.assertEqual(exec_info.exception.args[0]['changed'], False)
 
+    @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_known_host, 'get_existing_known_host', return_value={
         'type': 'pipeline_known_host',

@@ -56,6 +56,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   bucket:
     description:
     - The name of the bucket.
@@ -65,6 +66,7 @@ options:
       to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   entity:
     description:
     - 'The entity holding the permission, in one of the following forms: user-userId
@@ -74,35 +76,35 @@ options:
     - To refer to all members of the Google Apps for Business domain example.com,
       the entity would be domain-example.com.
     required: true
+    type: str
   entity_id:
     description:
     - The ID for the entity.
     required: false
+    type: str
   project_team:
     description:
     - The project team associated with the entity.
     required: false
+    type: dict
     suboptions:
       project_number:
         description:
         - The project team associated with the entity.
         required: false
+        type: str
       team:
         description:
         - The team.
+        - 'Some valid choices include: "editors", "owners", "viewers"'
         required: false
-        choices:
-        - editors
-        - owners
-        - viewers
+        type: str
   role:
     description:
     - The access permission for the entity.
+    - 'Some valid choices include: "OWNER", "READER", "WRITER"'
     required: false
-    choices:
-    - OWNER
-    - READER
-    - WRITER
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -207,8 +209,8 @@ def main():
             bucket=dict(required=True, type='dict'),
             entity=dict(required=True, type='str'),
             entity_id=dict(type='str'),
-            project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))),
-            role=dict(type='str', choices=['OWNER', 'READER', 'WRITER']),
+            project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str'))),
+            role=dict(type='str'),
         )
     )
 

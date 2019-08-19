@@ -17,7 +17,9 @@ module: netapp_e_host
 short_description: NetApp E-Series manage eseries hosts
 description: Create, update, remove hosts on NetApp E-series storage arrays
 version_added: '2.2'
-author: Kevin Hulquest (@hulquest)
+author:
+    - Kevin Hulquest (@hulquest)
+    - Nathan Swartz (@ndswartz)
 extends_documentation_fragment:
     - netapp.eseries
 options:
@@ -37,13 +39,15 @@ options:
             - present
         default: present
         version_added: 2.7
-    host_type_index:
+    host_type:
         description:
-            - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information.
-              Alternatively you can use the WSP portal to retrieve the information.
+            - This is the type of host to be mapped
             - Required when C(state=present)
+            - Either one of the following names can be specified, Linux DM-MP, VMWare, Windows, Windows Clustered, or a
+              host type index which can be found in M(netapp_e_facts)
+        type: str
         aliases:
-            - host_type
+            - host_type_index
     ports:
         description:
             - A list of host ports you wish to associate with the host.
@@ -88,7 +92,6 @@ options:
             - A local path to a file to be used for debug logging
         required: False
         version_added: 2.7
-
 """
 
 EXAMPLES = """
@@ -96,11 +99,11 @@ EXAMPLES = """
       netapp_e_host:
         ssid: "1"
         api_url: "10.113.1.101:8443"
-        api_username: "admin"
-        api_password: "myPassword"
+        api_username: admin
+        api_password: myPassword
         name: "Host1"
         state: present
-        host_type_index: 28
+        host_type_index: Linux DM-MP
         ports:
           - type: 'iscsi'
             label: 'PORT_1'
@@ -116,11 +119,10 @@ EXAMPLES = """
       netapp_e_host:
         ssid: "1"
         api_url: "10.113.1.101:8443"
-        api_username: "admin"
-        api_password: "myPassword"
+        api_username: admin
+        api_password: myPassword
         name: "Host2"
         state: absent
-
 """
 
 RETURN = """
@@ -153,10 +155,10 @@ api_url:
     type: str
     sample: https://webservices.example.com:8443
     version_added: "2.6"
-
 """
 import json
 import logging
+import re
 from pprint import pformat
 
 from ansible.module_utils.basic import AnsibleModule
@@ -170,6 +172,8 @@ HEADERS = {
 
 
 class Host(object):
+    HOST_TYPE_INDEXES = {"linux dm-mp": 28, "vmware": 10, "windows": 1, "windows clustered": 8}
+
     def __init__(self):
         argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
@@ -178,57 +182,70 @@ class Host(object):
             ports=dict(type='list', required=False),
             force_port=dict(type='bool', default=False),
             name=dict(type='str', required=True, aliases=['label']),
-            host_type_index=dict(type='int', aliases=['host_type']),
+            host_type_index=dict(type='str', aliases=['host_type']),
             log_path=dict(type='str', required=False),
         ))
 
-        required_if = [
-            ["state", "absent", ["name"]],
-            ["state", "present", ["name", "host_type"]]
-        ]
-
-        self.module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_if=required_if)
+        self.module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
         self.check_mode = self.module.check_mode
         args = self.module.params
         self.group = args['group']
         self.ports = args['ports']
         self.force_port = args['force_port']
         self.name = args['name']
-        self.host_type_index = args['host_type_index']
         self.state = args['state']
         self.ssid = args['ssid']
         self.url = args['api_url']
         self.user = args['api_username']
         self.pwd = args['api_password']
         self.certs = args['validate_certs']
-        self.post_body = dict()
 
+        self.post_body = dict()
         self.all_hosts = list()
+        self.host_obj = dict()
         self.newPorts = list()
         self.portsForUpdate = list()
-        self.force_port_update = False
+        self.portsForRemoval = list()
 
-        log_path = args['log_path']
+        # Update host type with the corresponding index
+        host_type = args['host_type_index']
+        if host_type:
+            host_type = host_type.lower()
+            if host_type in [key.lower() for key in list(self.HOST_TYPE_INDEXES.keys())]:
+                self.host_type_index = self.HOST_TYPE_INDEXES[host_type]
+            elif host_type.isdigit():
+                self.host_type_index = int(args['host_type_index'])
+            else:
+                self.module.fail_json(msg="host_type must be either a host type name or host type index found integer"
+                                          " the documentation.")
 
         # logging setup
         self._logger = logging.getLogger(self.__class__.__name__)
-
-        if log_path:
+        if args['log_path']:
             logging.basicConfig(
-                level=logging.DEBUG, filename=log_path, filemode='w',
+                level=logging.DEBUG, filename=args['log_path'], filemode='w',
                 format='%(relativeCreated)dms %(levelname)s %(module)s.%(funcName)s:%(lineno)d\n %(message)s')
 
         if not self.url.endswith('/'):
             self.url += '/'
 
+        # Ensure when state==present then host_type_index is defined
+        if self.state == "present" and self.host_type_index is None:
+            self.module.fail_json(msg="Host_type_index is required when state=='present'. Array Id: [%s]" % self.ssid)
+
         # Fix port representation if they are provided with colons
         if self.ports is not None:
             for port in self.ports:
-                if port['type'] != 'iscsi':
-                    port['port'] = port['port'].replace(':', '')
+                port['label'] = port['label'].lower()
+                port['type'] = port['type'].lower()
+                port['port'] = port['port'].lower()
 
-    @property
+                # Determine whether address is 16-byte WWPN and, if so, remove
+                if re.match(r'^(0x)?[0-9a-f]{16}$', port['port'].replace(':', '')):
+                    port['port'] = port['port'].replace(':', '').replace('0x', '')
+
     def valid_host_type(self):
+        host_types = None
         try:
             (rc, host_types) = request(self.url + 'storage-systems/%s/host-types' % self.ssid, url_password=self.pwd,
                                        url_username=self.user, validate_certs=self.certs, headers=HEADERS)
@@ -242,22 +259,65 @@ class Host(object):
         except IndexError:
             self.module.fail_json(msg="There is no host type with index %s" % self.host_type_index)
 
-    @property
-    def host_ports_available(self):
-        """Determine if the hostPorts requested have already been assigned"""
+    def assigned_host_ports(self, apply_unassigning=False):
+        """Determine if the hostPorts requested have already been assigned and return list of required used ports."""
+        used_host_ports = {}
         for host in self.all_hosts:
             if host['label'] != self.name:
                 for host_port in host['hostSidePorts']:
                     for port in self.ports:
-                        if (port['port'] == host_port['address'] or port['label'] == host_port['label']):
+                        if port['port'] == host_port["address"] or port['label'] == host_port['label']:
                             if not self.force_port:
-                                self.module.fail_json(
-                                    msg="There are no host ports available OR there are not enough unassigned host ports")
+                                self.module.fail_json(msg="There are no host ports available OR there are not enough"
+                                                          " unassigned host ports")
                             else:
-                                return False
-        return True
+                                # Determine port reference
+                                port_ref = [port["hostPortRef"] for port in host["ports"]
+                                            if port["hostPortName"] == host_port["address"]]
+                                port_ref.extend([port["initiatorRef"] for port in host["initiators"]
+                                                 if port["nodeName"]["iscsiNodeName"] == host_port["address"]])
 
-    @property
+                                # Create dictionary of hosts containing list of port references
+                                if host["hostRef"] not in used_host_ports.keys():
+                                    used_host_ports.update({host["hostRef"]: port_ref})
+                                else:
+                                    used_host_ports[host["hostRef"]].extend(port_ref)
+            else:
+                for host_port in host['hostSidePorts']:
+                    for port in self.ports:
+                        if ((host_port['label'] == port['label'] and host_port['address'] != port['port']) or
+                                (host_port['label'] != port['label'] and host_port['address'] == port['port'])):
+                            if not self.force_port:
+                                self.module.fail_json(msg="There are no host ports available OR there are not enough"
+                                                          " unassigned host ports")
+                            else:
+                                # Determine port reference
+                                port_ref = [port["hostPortRef"] for port in host["ports"]
+                                            if port["hostPortName"] == host_port["address"]]
+                                port_ref.extend([port["initiatorRef"] for port in host["initiators"]
+                                                 if port["nodeName"]["iscsiNodeName"] == host_port["address"]])
+
+                                # Create dictionary of hosts containing list of port references
+                                if host["hostRef"] not in used_host_ports.keys():
+                                    used_host_ports.update({host["hostRef"]: port_ref})
+                                else:
+                                    used_host_ports[host["hostRef"]].extend(port_ref)
+
+        # Unassign assigned ports
+        if apply_unassigning:
+            for host_ref in used_host_ports.keys():
+                try:
+                    rc, resp = request(self.url + 'storage-systems/%s/hosts/%s' % (self.ssid, host_ref),
+                                       url_username=self.user, url_password=self.pwd, headers=HEADERS,
+                                       validate_certs=self.certs, method='POST',
+                                       data=json.dumps({"portsToRemove": used_host_ports[host_ref]}))
+                except Exception as err:
+                    self.module.fail_json(msg="Failed to unassign host port. Host Id [%s]. Array Id [%s]. Ports [%s]."
+                                              " Error [%s]." % (self.host_obj['id'], self.ssid,
+                                                                used_host_ports[host_ref], to_native(err)))
+
+        return used_host_ports
+
     def group_id(self):
         if self.group:
             try:
@@ -277,12 +337,13 @@ class Host(object):
             # Return the value equivalent of no group
             return "0000000000000000000000000000000000000000"
 
-    @property
     def host_exists(self):
         """Determine if the requested host exists
         As a side effect, set the full list of defined hosts in 'all_hosts', and the target host in 'host_obj'.
         """
+        match = False
         all_hosts = list()
+
         try:
             (rc, all_hosts) = request(self.url + 'storage-systems/%s/hosts' % self.ssid, url_password=self.pwd,
                                       url_username=self.user, validate_certs=self.certs, headers=HEADERS)
@@ -290,104 +351,65 @@ class Host(object):
             self.module.fail_json(
                 msg="Failed to determine host existence. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
-        self.all_hosts = all_hosts
-
         # Augment the host objects
         for host in all_hosts:
+            for port in host['hostSidePorts']:
+                port['type'] = port['type'].lower()
+                port['address'] = port['address'].lower()
+                port['label'] = port['label'].lower()
+
             # Augment hostSidePorts with their ID (this is an omission in the API)
-            host_side_ports = host['hostSidePorts']
-            initiators = dict((port['label'], port['id']) for port in host['initiators'])
             ports = dict((port['label'], port['id']) for port in host['ports'])
-            ports.update(initiators)
-            for port in host_side_ports:
-                if port['label'] in ports:
-                    port['id'] = ports[port['label']]
+            ports.update((port['label'], port['id']) for port in host['initiators'])
 
-        try:  # Try to grab the host object
-            self.host_obj = list(filter(lambda host: host['label'] == self.name, all_hosts))[0]
-            return True
-        except IndexError:
-            # Host with the name passed in does not exist
-            return False
+            for host_side_port in host['hostSidePorts']:
+                if host_side_port['label'] in ports:
+                    host_side_port['id'] = ports[host_side_port['label']]
 
-    @property
+            if host['label'] == self.name:
+                self.host_obj = host
+                match = True
+
+        self.all_hosts = all_hosts
+        return match
+
     def needs_update(self):
         """Determine whether we need to update the Host object
         As a side effect, we will set the ports that we need to update (portsForUpdate), and the ports we need to add
         (newPorts), on self.
-        :return:
         """
-        needs_update = False
-
-        if self.host_obj['clusterRef'] != self.group_id or self.host_obj['hostTypeIndex'] != self.host_type_index:
+        changed = False
+        if (self.host_obj["clusterRef"].lower() != self.group_id().lower() or
+                self.host_obj["hostTypeIndex"] != self.host_type_index):
             self._logger.info("Either hostType or the clusterRef doesn't match, an update is required.")
-            needs_update = True
+            changed = True
+        current_host_ports = dict((port["id"], {"type": port["type"], "port": port["address"], "label": port["label"]})
+                                  for port in self.host_obj["hostSidePorts"])
 
         if self.ports:
-            self._logger.debug("Determining if ports need to be updated.")
-            # Find the names of all defined ports
-            port_names = set(port['label'] for port in self.host_obj['hostSidePorts'])
-            port_addresses = set(port['address'] for port in self.host_obj['hostSidePorts'])
+            for port in self.ports:
+                for current_host_port_id in current_host_ports.keys():
+                    if port == current_host_ports[current_host_port_id]:
+                        current_host_ports.pop(current_host_port_id)
+                        break
+                    elif port["port"] == current_host_ports[current_host_port_id]["port"]:
+                        if self.port_on_diff_host(port) and not self.force_port:
+                            self.module.fail_json(msg="The port you specified [%s] is associated with a different host."
+                                                      " Specify force_port as True or try a different port spec" % port)
 
-            # If we have ports defined and there are no ports on the host object, we need an update
-            if not self.host_obj['hostSidePorts']:
-                needs_update = True
-            for arg_port in self.ports:
-                # First a quick check to see if the port is mapped to a different host
-                if not self.port_on_diff_host(arg_port):
-                    # The port (as defined), currently does not exist
-                    if arg_port['label'] not in port_names:
-                        needs_update = True
-                        # This port has not been defined on the host at all
-                        if arg_port['port'] not in port_addresses:
-                            self.newPorts.append(arg_port)
-                        # A port label update has been requested
-                        else:
-                            self.portsForUpdate.append(arg_port)
-                    # The port does exist, does it need to be updated?
-                    else:
-                        for obj_port in self.host_obj['hostSidePorts']:
-                            if arg_port['label'] == obj_port['label']:
-                                # Confirmed that port arg passed in exists on the host
-                                # port_id = self.get_port_id(obj_port['label'])
-                                if arg_port['type'] != obj_port['type']:
-                                    needs_update = True
-                                    self.portsForUpdate.append(arg_port)
-                                if 'iscsiChapSecret' in arg_port:
-                                    # No way to know the current secret attr, so always return True just in case
-                                    needs_update = True
-                                    self.portsForUpdate.append(arg_port)
+                        if (port["label"] != current_host_ports[current_host_port_id]["label"] or
+                                port["type"] != current_host_ports[current_host_port_id]["type"]):
+                            current_host_ports.pop(current_host_port_id)
+                            self.portsForUpdate.append({"portRef": current_host_port_id, "port": port["port"],
+                                                        "label": port["label"], "hostRef": self.host_obj["hostRef"]})
+                            break
                 else:
-                    # If the user wants the ports to be reassigned, do it
-                    if self.force_port:
-                        self.force_port_update = True
-                        needs_update = True
-                    else:
-                        self.module.fail_json(
-                            msg="The port you specified:\n%s\n is associated with a different host. Specify force_port"
-                                " as True or try a different port spec" % arg_port
-                        )
-        self._logger.debug("Is an update required ?=%s", needs_update)
-        return needs_update
+                    self.newPorts.append(port)
 
-    def get_ports_on_host(self):
-        """Retrieve the hostPorts that are defined on the target host
-        :return: a list of hostPorts with their labels and ids
-        Example:
-        [
-            {
-                'name': 'hostPort1',
-                'id': '0000000000000000000000'
-            }
-        ]
-        """
-        ret = dict()
-        for host in self.all_hosts:
-            if host['name'] == self.name:
-                ports = host['hostSidePorts']
-                for port in ports:
-                    ret[port['address']] = {'label': port['label'], 'id': port['id'], 'address': port['address']}
-        return ret
+            self.portsForRemoval = list(current_host_ports.keys())
+            changed = any([self.newPorts, self.portsForUpdate, self.portsForRemoval, changed])
+
+        return changed
 
     def port_on_diff_host(self, arg_port):
         """ Checks to see if a passed in port arg is present on a different host """
@@ -401,68 +423,22 @@ class Host(object):
                         return True
         return False
 
-    def get_port(self, label, address):
-        for host in self.all_hosts:
-            for port in host['hostSidePorts']:
-                if port['label'] == label or port['address'] == address:
-                    return port
-
-    def reassign_ports(self, apply=True):
-        post_body = dict(
-            portsToUpdate=dict()
-        )
-
-        for port in self.ports:
-            if self.port_on_diff_host(port):
-                host_port = self.get_port(port['label'], port['port'])
-                post_body['portsToUpdate'].update(dict(
-                    portRef=host_port['id'],
-                    hostRef=self.host_obj['id'],
-                    label=port['label']
-                    # Doesn't yet address port identifier or chap secret
-                ))
-
-        self._logger.info("reassign_ports: %s", pformat(post_body))
-
-        if apply:
-            try:
-                (rc, self.host_obj) = request(
-                    self.url + 'storage-systems/%s/hosts/%s' % (self.ssid, self.host_obj['id']),
-                    url_username=self.user, url_password=self.pwd, headers=HEADERS,
-                    validate_certs=self.certs, method='POST', data=json.dumps(post_body))
-            except Exception as err:
-                self.module.fail_json(
-                    msg="Failed to reassign host port. Host Id [%s]. Array Id [%s]. Error [%s]." % (
-                        self.host_obj['id'], self.ssid, to_native(err)))
-
-        return post_body
-
     def update_host(self):
-        self._logger.debug("Beginning the update for host=%s.", self.name)
+        self._logger.info("Beginning the update for host=%s.", self.name)
 
         if self.ports:
+
+            # Remove ports that need reassigning from their current host.
+            self.assigned_host_ports(apply_unassigning=True)
+
+            self.post_body["portsToUpdate"] = self.portsForUpdate
+            self.post_body["ports"] = self.newPorts
             self._logger.info("Requested ports: %s", pformat(self.ports))
-            if self.host_ports_available or self.force_port:
-                self.reassign_ports(apply=True)
-                # Make sure that only ports that aren't being reassigned are passed into the ports attr
-                host_ports = self.get_ports_on_host()
-                ports_for_update = list()
-                self._logger.info("Ports on host: %s", pformat(host_ports))
-                for port in self.portsForUpdate:
-                    if port['port'] in host_ports:
-                        defined_port = host_ports.get(port['port'])
-                        defined_port.update(port)
-                        defined_port['portRef'] = defined_port['id']
-                        ports_for_update.append(defined_port)
-                self._logger.info("Ports to update: %s", pformat(ports_for_update))
-                self._logger.info("Ports to define: %s", pformat(self.newPorts))
-                self.post_body['portsToUpdate'] = ports_for_update
-                self.post_body['ports'] = self.newPorts
         else:
-            self._logger.debug("No host ports were defined.")
+            self._logger.info("No host ports were defined.")
 
         if self.group:
-            self.post_body['groupId'] = self.group_id
+            self.post_body['groupId'] = self.group_id()
 
         self.post_body['hostType'] = dict(index=self.host_type_index)
 
@@ -482,46 +458,36 @@ class Host(object):
 
     def create_host(self):
         self._logger.info("Creating host definition.")
-        needs_reassignment = False
+
+        # Remove ports that need reassigning from their current host.
+        self.assigned_host_ports(apply_unassigning=True)
+
+        # needs_reassignment = False
         post_body = dict(
             name=self.name,
             hostType=dict(index=self.host_type_index),
-            groupId=self.group_id,
+            groupId=self.group_id(),
         )
+
         if self.ports:
-            # Check that all supplied port args are valid
-            if self.host_ports_available:
-                self._logger.info("The host-ports requested are available.")
-                post_body.update(ports=self.ports)
-            elif not self.force_port:
-                self.module.fail_json(
-                    msg="You supplied ports that are already in use."
-                        " Supply force_port to True if you wish to reassign the ports")
-            else:
-                needs_reassignment = True
+            post_body.update(ports=self.ports)
 
         api = self.url + "storage-systems/%s/hosts" % self.ssid
         self._logger.info('POST => url=%s, body=%s', api, pformat(post_body))
 
-        if not (self.host_exists and self.check_mode):
-            try:
-                (rc, self.host_obj) = request(api, method='POST',
-                                              url_username=self.user, url_password=self.pwd, validate_certs=self.certs,
-                                              data=json.dumps(post_body), headers=HEADERS)
-            except Exception as err:
-                self.module.fail_json(
-                    msg="Failed to create host. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
-        else:
-            payload = self.build_success_payload(self.host_obj)
-            self.module.exit_json(changed=False,
-                                  msg="Host already exists. Id [%s]. Host [%s]." % (self.ssid, self.name), **payload)
-
-        self._logger.info("Created host, beginning port re-assignment.")
-        if needs_reassignment:
-            self.reassign_ports()
+        if not self.check_mode:
+            if not self.host_exists():
+                try:
+                    (rc, self.host_obj) = request(api, method='POST', url_username=self.user, url_password=self.pwd, validate_certs=self.certs,
+                                                  data=json.dumps(post_body), headers=HEADERS)
+                except Exception as err:
+                    self.module.fail_json(
+                        msg="Failed to create host. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
+            else:
+                payload = self.build_success_payload(self.host_obj)
+                self.module.exit_json(changed=False, msg="Host already exists. Id [%s]. Host [%s]." % (self.ssid, self.name), **payload)
 
         payload = self.build_success_payload(self.host_obj)
-
         self.module.exit_json(changed=True, msg='Host created.', **payload)
 
     def remove_host(self):
@@ -547,17 +513,17 @@ class Host(object):
 
     def apply(self):
         if self.state == 'present':
-            if self.host_exists:
-                if self.needs_update and self.valid_host_type:
+            if self.host_exists():
+                if self.needs_update() and self.valid_host_type():
                     self.update_host()
                 else:
                     payload = self.build_success_payload(self.host_obj)
                     self.module.exit_json(changed=False, msg="Host already present; no changes required.", **payload)
-            elif self.valid_host_type:
+            elif self.valid_host_type():
                 self.create_host()
         else:
             payload = self.build_success_payload()
-            if self.host_exists:
+            if self.host_exists():
                 self.remove_host()
                 self.module.exit_json(changed=True, msg="Host removed.", **payload)
             else:

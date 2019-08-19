@@ -26,6 +26,11 @@
 # Copyright (c) the OpenSSL contributors
 # For more details, search for the function _OID_MAP.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+from distutils.version import LooseVersion
 
 try:
     import OpenSSL
@@ -36,11 +41,43 @@ except ImportError:
     pass
 
 try:
+    import cryptography
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend as cryptography_backend
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
     from cryptography.hazmat.primitives import hashes
     import ipaddress
+
+    # Older versions of cryptography (< 2.1) do not have __hash__ functions for
+    # general name objects (DNSName, IPAddress, ...), while providing overloaded
+    # equality and string representation operations. This makes it impossible to
+    # use them in hash-based data structures such as set or dict. Since we are
+    # actually doing that in openssl_certificate, and potentially in other code,
+    # we need to monkey-patch __hash__ for these classes to make sure our code
+    # works fine.
+    if LooseVersion(cryptography.__version__) < LooseVersion('2.1'):
+        # A very simply hash function which relies on the representation
+        # of an object to be implemented. This is the case since at least
+        # cryptography 1.0, see
+        # https://github.com/pyca/cryptography/commit/7a9abce4bff36c05d26d8d2680303a6f64a0e84f
+        def simple_hash(self):
+            return hash(repr(self))
+
+        # The hash functions for the following types were added for cryptography 2.1:
+        # https://github.com/pyca/cryptography/commit/fbfc36da2a4769045f2373b004ddf0aff906cf38
+        x509.DNSName.__hash__ = simple_hash
+        x509.DirectoryName.__hash__ = simple_hash
+        x509.GeneralName.__hash__ = simple_hash
+        x509.IPAddress.__hash__ = simple_hash
+        x509.OtherName.__hash__ = simple_hash
+        x509.RegisteredID.__hash__ = simple_hash
+
+        if LooseVersion(cryptography.__version__) < LooseVersion('1.2'):
+            # The hash functions for the following types were added for cryptography 1.2:
+            # https://github.com/pyca/cryptography/commit/b642deed88a8696e5f01ce6855ccf89985fc35d0
+            # https://github.com/pyca/cryptography/commit/d1b5681f6db2bde7a14625538bd7907b08dfb486
+            x509.RFC822Name.__hash__ = simple_hash
+            x509.UniformResourceIdentifier.__hash__ = simple_hash
 except ImportError:
     # Error handled in the calling module.
     pass
@@ -168,7 +205,7 @@ def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, 
         elif backend == 'cryptography':
             try:
                 result = load_pem_private_key(priv_key_detail,
-                                              passphrase,
+                                              None if passphrase is None else to_bytes(passphrase),
                                               cryptography_backend())
             except TypeError as dummy:
                 raise OpenSSLBadPassphraseError('Wrong or empty passphrase provided for private key')
@@ -1470,6 +1507,7 @@ _OID_MAP = {
 
 _OID_LOOKUP = dict()
 _NORMALIZE_NAMES = dict()
+_NORMALIZE_NAMES_SHORT = dict()
 
 for dotted, names in _OID_MAP.items():
     for name in names:
@@ -1479,6 +1517,7 @@ for dotted, names in _OID_MAP.items():
                 .format(name, dotted, _OID_LOOKUP[name])
             )
         _NORMALIZE_NAMES[name] = names[0]
+        _NORMALIZE_NAMES_SHORT[name] = names[-1]
         _OID_LOOKUP[name] = dotted
 for alias, original in [('userID', 'userId')]:
     if alias in _NORMALIZE_NAMES:
@@ -1487,15 +1526,19 @@ for alias, original in [('userID', 'userId')]:
             .format(alias, original, _OID_LOOKUP[alias])
         )
     _NORMALIZE_NAMES[alias] = original
+    _NORMALIZE_NAMES_SHORT[alias] = _NORMALIZE_NAMES_SHORT[original]
     _OID_LOOKUP[alias] = _OID_LOOKUP[original]
 
 
-def pyopenssl_normalize_name(name):
+def pyopenssl_normalize_name(name, short=False):
     nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(name))
     if nid != 0:
         b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
         name = to_text(OpenSSL._util.ffi.string(b_name))
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 # #####################################################################################
@@ -1661,11 +1704,14 @@ def cryptography_name_to_oid(name):
     return x509.oid.ObjectIdentifier(dotted)
 
 
-def cryptography_oid_to_name(oid):
+def cryptography_oid_to_name(oid, short=False):
     dotted_string = oid.dotted_string
     names = _OID_MAP.get(dotted_string)
     name = names[0] if names else oid._name
-    return _NORMALIZE_NAMES.get(name, name)
+    if short:
+        return _NORMALIZE_NAMES_SHORT.get(name, name)
+    else:
+        return _NORMALIZE_NAMES.get(name, name)
 
 
 def cryptography_get_name(name):
@@ -1689,10 +1735,10 @@ def cryptography_get_name(name):
     raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
 
 
-def _get_hex(bytes):
-    if bytes is None:
-        return bytes
-    data = binascii.hexlify(bytes)
+def _get_hex(bytesstr):
+    if bytesstr is None:
+        return bytesstr
+    data = binascii.hexlify(bytesstr)
     data = to_text(b':'.join(data[i:i + 2] for i in range(0, len(data), 2)))
     return data
 

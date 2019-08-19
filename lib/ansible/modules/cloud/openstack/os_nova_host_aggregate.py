@@ -167,6 +167,9 @@ def main():
             if aggregate is None:
                 changed = False
             else:
+                if hosts:
+                    for h in hosts:
+                        cloud.remove_host_from_aggregate(aggregate.id, h)
                 cloud.delete_aggregate(aggregate.id)
                 changed = True
             module.exit_json(changed=changed)

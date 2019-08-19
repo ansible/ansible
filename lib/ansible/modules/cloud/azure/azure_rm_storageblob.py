@@ -17,11 +17,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_storageblob
-short_description: Manage blob containers and blob objects.
+short_description: Manage blob containers and blob objects
 version_added: "2.1"
 description:
-    - Create, update and delete blob containers and blob objects. Use to upload a file and store it as a blob object,
-      or download a blob object to a file.
+    - Create, update and delete blob containers and blob objects.
+    - Use to upload a file and store it as a blob object, or download a blob object to a file.
 options:
     storage_account_name:
         description:
@@ -37,7 +37,7 @@ options:
             - blob_name
     blob_type:
         description:
-            - Type of Blob Object.
+            - Type of blob object.
         default: block
         choices:
             - block
@@ -51,7 +51,7 @@ options:
             - container_name
     content_type:
         description:
-            - Set the blob content-type header. For example, 'image/png'.
+            - Set the blob content-type header. For example C(image/png).
     cache_control:
         description:
             - Set the blob cache-control header.
@@ -74,8 +74,7 @@ options:
             - destination
     force:
         description:
-            - Overwrite existing blob or file when uploading or downloading. Force deletion of a container
-              that contains blobs.
+            - Overwrite existing blob or file when uploading or downloading. Force deletion of a container that contains blobs.
         type: bool
         default: no
     resource_group:
@@ -91,23 +90,23 @@ options:
             - source
     state:
         description:
-            - Assert the state of a container or blob.
+            - State of a container or blob.
             - Use state C(absent) with a container value only to delete a container. Include a blob value to remove
-              a specific blob. A container will not be deleted, if it contains blobs. Use the force option to override,
+              a specific blob. A container will not be deleted, if it contains blobs. Use the I(force) option to override,
               deleting the container and all associated blobs.
             - Use state C(present) to create or update a container and upload or download a blob. If the container
               does not exist, it will be created. If it exists, it will be updated with configuration options. Provide
               a blob name and either src or dest to upload or download. Provide a src path to upload and a dest path
               to download. If a blob (uploading) or a file (downloading) already exists, it will not be overwritten
-              unless the force parameter is true.
+              unless I(force=true).
         default: present
         choices:
             - absent
             - present
     public_access:
         description:
-            - Determine a container's level of public access. By default containers are private. Can only be set at
-              time of container creation.
+            - A container's level of public access. By default containers are private.
+            - Can only be set at time of container creation.
         choices:
             - container
             - blob
@@ -117,8 +116,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -151,7 +150,8 @@ EXAMPLES = '''
 
 RETURN = '''
 blob:
-    description: Facts about the current state of the blob.
+    description:
+        - Facts about the current state of the blob.
     returned: when a blob is operated on
     type: dict
     sample: {
@@ -170,7 +170,8 @@ blob:
         "type": "BlockBlob"
     }
 container:
-    description: Facts about the current state of the selected container.
+    description:
+        - Facts about the current state of the selected container.
     returned: always
     type: dict
     sample: {

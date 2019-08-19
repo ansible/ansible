@@ -1,5 +1,9 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 
 import pytest
@@ -28,4 +32,5 @@ def test_create_volume_on_invalid_docker_version(mocker, capfd):
     out, dummy = capfd.readouterr()
     results = json.loads(out)
     assert results['failed']
-    assert 'Error: Docker SDK for Python version is 1.8.0. Minimum version required is 1.10.0.' in results['msg']
+    assert 'Error: Docker SDK for Python version is 1.8.0 ' in results['msg']
+    assert 'Minimum version required is 1.10.0.' in results['msg']

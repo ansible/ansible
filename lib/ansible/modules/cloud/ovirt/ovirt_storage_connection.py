@@ -133,7 +133,9 @@ class StorageConnectionModule(BaseModule):
         return otypes.StorageConnection(
             address=self.param('address'),
             path=self.param('path'),
-            nfs_version=self.param('nfs_version'),
+            nfs_version=otypes.NfsVersion(
+                self.param('nfs_version')
+            ) if self.param('nfs_version') is not None else None,
             nfs_timeo=self.param('nfs_timeout'),
             nfs_retrans=self.param('nfs_retrans'),
             mount_options=self.param('mount_options'),
@@ -187,7 +189,7 @@ class StorageConnectionModule(BaseModule):
         return (
             equal(self.param('address'), entity.address) and
             equal(self.param('path'), entity.path) and
-            equal(self.param('nfs_version'), entity.nfs_version) and
+            equal(self.param('nfs_version'), str(entity.nfs_version)) and
             equal(self.param('nfs_timeout'), entity.nfs_timeo) and
             equal(self.param('nfs_retrans'), entity.nfs_retrans) and
             equal(self.param('mount_options'), entity.mount_options) and

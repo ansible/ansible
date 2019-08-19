@@ -167,7 +167,22 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config as get_cli_config
+
+
+def get_config(module, flags):
+
+    cfg = get_cli_config(module, flags)
+    config = cfg.strip() if cfg else ""
+    if config.startswith("display"):
+        configs = config.split("\n")
+        if len(configs) > 1:
+            return "\n".join(configs[1:])
+        else:
+            return ""
+    else:
+        return config
 
 
 class Stp(object):
@@ -219,17 +234,14 @@ class Stp(object):
     def cli_get_stp_config(self):
         """ Cli get stp configuration """
 
-        regular = "| include stp"
-
-        flags = list()
-        flags.append(regular)
+        flags = [r"| section include #\s*\n\s*stp", r"| section exclude #\s*\n+\s*stp process \d+"]
         self.stp_cfg = get_config(self.module, flags)
 
     def cli_get_interface_stp_config(self):
         """ Cli get interface's stp configuration """
 
         if self.interface:
-            regular = "| ignore-case section include ^interface %s$" % self.interface
+            regular = r"| ignore-case section include ^#\s+interface %s\s+" % self.interface.replace(" ", "")
             flags = list()
             flags.append(regular)
             tmp_cfg = get_config(self.module, flags)
@@ -399,7 +411,8 @@ class Stp(object):
                 self.existing["bpdu_protection"] = "disable"
 
         if self.tc_protection:
-            if "stp tc-protection" in self.stp_cfg:
+            pre_cfg = self.stp_cfg.split("\n")
+            if "stp tc-protection" in pre_cfg:
                 self.cur_cfg["tc_protection"] = "enable"
                 self.existing["tc_protection"] = "enable"
             else:
@@ -513,7 +526,8 @@ class Stp(object):
                 self.end_state["bpdu_protection"] = "disable"
 
         if self.tc_protection:
-            if "stp tc-protection" in self.stp_cfg:
+            pre_cfg = self.stp_cfg.split("\n")
+            if "stp tc-protection" in pre_cfg:
                 self.end_state["tc_protection"] = "enable"
             else:
                 self.end_state["tc_protection"] = "disable"
@@ -545,17 +559,20 @@ class Stp(object):
             else:
                 self.end_state["cost"] = tmp_value[0][1]
 
-        if self.root_protection:
+        if self.root_protection or self.loop_protection:
             if "stp root-protection" in self.interface_stp_cfg:
                 self.end_state["root_protection"] = "enable"
             else:
                 self.end_state["root_protection"] = "disable"
 
-        if self.loop_protection:
             if "stp loop-protection" in self.interface_stp_cfg:
                 self.end_state["loop_protection"] = "enable"
             else:
                 self.end_state["loop_protection"] = "disable"
+
+        if self.existing == self.end_state:
+            self.changed = False
+            self.updates_cmd = list()
 
     def present_stp(self):
         """ Present stp configuration """

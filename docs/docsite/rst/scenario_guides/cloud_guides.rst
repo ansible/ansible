@@ -15,6 +15,7 @@ The guides in this section cover using Ansible with a range of public cloud plat
    guide_gce
    guide_azure
    guide_online
+   guide_oracle
    guide_packet
    guide_rax
    guide_scaleway

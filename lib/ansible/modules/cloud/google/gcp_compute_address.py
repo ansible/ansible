@@ -56,26 +56,28 @@ options:
     - present
     - absent
     default: present
+    type: str
   address:
     description:
     - The static external IP address represented by this resource. Only IPv4 is supported.
       An address may only be specified for INTERNAL address types. The IP address
       must be inside the specified subnetwork, if any.
     required: false
+    type: str
   address_type:
     description:
     - The type of address to reserve, either INTERNAL or EXTERNAL.
     - If unspecified, defaults to EXTERNAL.
+    - 'Some valid choices include: "INTERNAL", "EXTERNAL"'
     required: false
     default: EXTERNAL
+    type: str
     version_added: 2.7
-    choices:
-    - INTERNAL
-    - EXTERNAL
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. The name must be 1-63 characters long, and comply with
@@ -84,16 +86,16 @@ options:
       be a lowercase letter, and all following characters must be a dash, lowercase
       letter, or digit, except the last character, which cannot be a dash.
     required: true
+    type: str
   network_tier:
     description:
     - 'The networking tier used for configuring this address. This field can take
       the following values: PREMIUM or STANDARD. If this field is not specified, it
       is assumed to be PREMIUM.'
+    - 'Some valid choices include: "PREMIUM", "STANDARD"'
     required: false
+    type: str
     version_added: 2.8
-    choices:
-    - PREMIUM
-    - STANDARD
   subnetwork:
     description:
     - The URL of the subnetwork in which to reserve the address. If an IP address
@@ -106,12 +108,14 @@ options:
       to a gcp_compute_subnetwork task and then set this subnetwork field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
     version_added: 2.7
   region:
     description:
     - URL of the region where the regional address resides.
     - This field is not applicable to global addresses.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/beta/addresses)'
@@ -216,10 +220,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             address=dict(type='str'),
-            address_type=dict(default='EXTERNAL', type='str', choices=['INTERNAL', 'EXTERNAL']),
+            address_type=dict(default='EXTERNAL', type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
+            network_tier=dict(type='str'),
             subnetwork=dict(type='dict'),
             region=dict(required=True, type='str'),
         )
@@ -262,7 +266,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="Address cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

@@ -30,7 +30,7 @@ command -v pip
 pip --version
 pip list --disable-pip-version-check
 
-export PATH="test/runner:${PATH}"
+export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
 
 if [ "${JOB_TRIGGERED_BY_NAME:-}" == "nightly-trigger" ]; then
@@ -81,6 +81,13 @@ function cleanup
             stub=""
         fi
 
+        # use python 3.7 for coverage to avoid running out of memory during coverage xml processing
+        # only use it for coverage to avoid the additional overhead of setting up a virtual environment for a potential no-op job
+        virtualenv --python /usr/bin/python3.7 ~/ansible-venv
+        set +ux
+        . ~/ansible-venv/bin/activate
+        set -ux
+
         # shellcheck disable=SC2086
         ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
@@ -126,4 +133,5 @@ fi
 
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
+"test/utils/shippable/check_matrix.py"
 "test/utils/shippable/${script}.sh" "${test}"

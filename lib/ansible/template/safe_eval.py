@@ -42,10 +42,15 @@ def safe_eval(expr, locals=None, include_exceptions=False):
 
     # define certain JSON types
     # eg. JSON booleans are unknown to python eval()
-    JSON_TYPES = {
+    OUR_GLOBALS = {
+        '__builtins__': {},  # avoid global builtins as per eval docs
         'false': False,
         'null': None,
         'true': True,
+        # also add back some builtins we do need
+        'True': True,
+        'False': False,
+        'None': None
     }
 
     # this is the whitelist of AST nodes we are going to
@@ -138,7 +143,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of builtins done in CleansingNodeVisitor
-        result = eval(compiled, JSON_TYPES, dict(locals))
+        result = eval(compiled, OUR_GLOBALS, dict(locals))
 
         if include_exceptions:
             return (result, None)

@@ -14,7 +14,7 @@
 #   - You can enter hostnames or IP addresses
 #   - A hostname/IP can be a member of multiple groups
 
-# Ex 1: Ungrouped hosts, put them in 'all' or 'ungrouped' group
+# Ex 1: Ungrouped hosts, put them in 'all' or 'ungrouped' group, defines 4 hosts, one with 2 variables
 ##all:
 ##  hosts:
 ##      green.example.com:
@@ -24,35 +24,46 @@
 ##      192.168.100.1:
 ##      192.168.100.10:
 
-# Ex 2: A collection of hosts belonging to the 'webservers' group
-##  children:
-##    webservers:
-##      hosts:
-##        alpha.example.org:
-##        beta.example.org:
-##        192.168.1.100:
-##        192.168.1.110:
+# Ex 2: A collection of hosts belonging to the 'webservers' group, with shared group var
+##webservers:
+##  hosts:
+##     alpha.example.org:
+##     beta.example.org:
+##     192.168.1.100:
+##     192.168.1.110:
+##  vars:
+##    http_port: 8080
 
 # Ex 3: You can create hosts using ranges and add children groups and vars to a group
 # The child group can define anything you would normally add to a group.
-# webservers is added as a child group of testing. gamma.example.org is added
-# to the existing webservers group. All references to webservers will
-# get alpha.example.org, beta.example.org, gamma.example.org, 192.168.1.100
-# and 192.168.1.110. References to testing will get all of those hosts plus
-# any host matching www[001:006].example.com
+# Hosts in child groups inherit all variables from parent, parents include all hosts in child groups.
+# webservers is added as a child group of testing, so all gamma hosts (1-3) are added
+# to the 'webservers' group, including gamma3, which is defined in the tree of another parent group.
+# All references to webservers will get any hosts defined under webservers.
+# References to testing will get all of those hosts plus any host matching www[001:006].example.com
 
-##    testing:
-##      hosts:
-##        www[001:006].example.com:
-##      vars:
-##        testing1: value1
-##      children:
-##        webservers:
-##            hosts:
-##                gamma.example.org:
+##webservers:
+##  hosts:
+##    gamma1.example.org:
+##    gamma2.example.org:
+##testing:
+##  hosts:
+##    www[001:006].example.com:
+##  vars:
+##    testing1: value1
+##  children:
+##    webservers:
+##other:
+##  children:
+##    webservers:
+##      gamma3.example.org
+
+# From above, the testing group contains: gamma1.example.org gamma2.example.org gamma3.example.org www001.example.com www002.example.com www003.example.com www004.example.com www005.example.com www006.example.com
 
 # Ex 4: all vars
 # keeping within 'all' group you can define common 'all' vars here with lowest precedence
 
+
+##all:
 ##  vars:
 ##      commontoall: thisvar

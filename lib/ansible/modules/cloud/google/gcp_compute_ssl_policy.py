@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -61,34 +63,31 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   profile:
     description:
     - Profile specifies the set of SSL features that can be used by the load balancer
       when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`,
       `RESTRICTED`, or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable
       must be specified in the `customFeatures` field.
+    - 'Some valid choices include: "COMPATIBLE", "MODERN", "RESTRICTED", "CUSTOM"'
     required: false
-    choices:
-    - COMPATIBLE
-    - MODERN
-    - RESTRICTED
-    - CUSTOM
+    type: str
   min_tls_version:
     description:
     - The minimum version of SSL protocol that can be used by the clients to establish
       a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`,
       `TLS_1_2`.
+    - 'Some valid choices include: "TLS_1_0", "TLS_1_1", "TLS_1_2"'
     required: false
-    choices:
-    - TLS_1_0
-    - TLS_1_1
-    - TLS_1_2
+    type: str
   custom_features:
     description:
     - A list of features enabled when the selected profile is CUSTOM. The method returns
       the set of features that can be specified in this list. This field must be empty
       if the profile is not CUSTOM.
     required: false
+    type: list
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)'
@@ -96,7 +95,7 @@ notes:
 '''
 
 EXAMPLES = '''
-- name: create a ssl policy
+- name: create a SSL policy
   gcp_compute_ssl_policy:
     name: test_object
     profile: CUSTOM
@@ -209,8 +208,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            profile=dict(type='str', choices=['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']),
-            min_tls_version=dict(type='str', choices=['TLS_1_0', 'TLS_1_1', 'TLS_1_2']),
+            profile=dict(type='str'),
+            min_tls_version=dict(type='str'),
             custom_features=dict(type='list', elements='str'),
         )
     )

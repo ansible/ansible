@@ -44,9 +44,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#image'"
 - name: verify that image was created
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -58,7 +57,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a image that already exists
   gcp_compute_image:
@@ -73,7 +72,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#image'"
 #----------------------------------------------------------
 - name: delete a image
   gcp_compute_image:
@@ -88,9 +86,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that image was deleted
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -102,7 +99,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a image that does not exist
   gcp_compute_image:
@@ -117,7 +114,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

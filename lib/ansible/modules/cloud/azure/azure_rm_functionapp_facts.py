@@ -19,14 +19,14 @@ module: azure_rm_functionapp_facts
 version_added: "2.4"
 short_description: Get Azure Function App facts
 description:
-    - Get facts for one Azure Function App or all Function Apps within a resource group
+    - Get facts for one Azure Function App or all Function Apps within a resource group.
 options:
     name:
         description:
-            - Only show results for a specific Function App
+            - Only show results for a specific Function App.
     resource_group:
         description:
-            - Limit results to a resource group. Required when filtering by name
+            - Limit results to a resource group. Required when filtering by name.
         aliases:
             - resource_group_name
     tags:
@@ -37,7 +37,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Thomas Stringer (@trstringer)"
+    - Thomas Stringer (@trstringer)
 '''
 
 EXAMPLES = '''
@@ -58,7 +58,8 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_functionapps:
-    description: List of Azure Function Apps dicts
+    description:
+        - List of Azure Function Apps dicts.
     returned: always
     type: list
     example:

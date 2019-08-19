@@ -321,12 +321,12 @@ def main():
             to_ip=dict(type='str', default='any', aliases=['dest', 'to']),
             to_port=dict(type='str', aliases=['port']),
             proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp', 'gre', 'igmp']),
-            app=dict(type='str', aliases=['name']),
+            name=dict(type='str', aliases=['app']),
             comment=dict(type='str'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
-            ['app', 'proto', 'logging'],
+            ['name', 'proto', 'logging'],
         ],
         required_one_of=([command_keys]),
         required_by=dict(
@@ -445,12 +445,14 @@ def main():
                 execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
-            extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)
+            extract = re.search(r'Logging: (on|off)(?: \(([a-z]+)\))?', pre_state)
             if extract:
                 current_level = extract.group(2)
                 current_on_off_value = extract.group(1)
                 if value != "off":
-                    if value != "on" and (value != current_level or current_on_off_value == "off"):
+                    if current_on_off_value == "off":
+                        changed = True
+                    elif value != "on" and value != current_level:
                         changed = True
                 elif current_on_off_value != "off":
                     changed = True
@@ -494,7 +496,7 @@ def main():
                 if relative_to_cmd == 'zero':
                     insert_to = params['insert']
                 else:
-                    (_, numbered_state, _) = module.run_command([ufw_bin, 'status', 'numbered'])
+                    (dummy, numbered_state, dummy) = module.run_command([ufw_bin, 'status', 'numbered'])
                     numbered_line_re = re.compile(R'^\[ *([0-9]+)\] ')
                     lines = [(numbered_line_re.match(line), '(v6)' in line) for line in numbered_state.splitlines()]
                     lines = [(int(matcher.group(1)), ipv6) for (matcher, ipv6) in lines if matcher]
@@ -522,11 +524,11 @@ def main():
 
             for (key, template) in [('from_ip', "from %s"), ('from_port', "port %s"),
                                     ('to_ip', "to %s"), ('to_port', "port %s"),
-                                    ('proto', "proto %s"), ('app', "app '%s'")]:
+                                    ('proto', "proto %s"), ('name', "app '%s'")]:
                 value = params[key]
                 cmd.append([value, template % (value)])
 
-            ufw_major, ufw_minor, _ = ufw_version()
+            ufw_major, ufw_minor, dummy = ufw_version()
             # comment is supported only in ufw version after 0.35
             if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
                 cmd.append([params['comment'], "comment '%s'" % params['comment']])

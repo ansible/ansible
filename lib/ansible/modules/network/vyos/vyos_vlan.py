@@ -144,7 +144,6 @@ def map_obj_to_commands(updates, module):
         name = w['name']
         address = w['address']
         state = w['state']
-        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(vlan_id, have)
 
@@ -209,7 +208,6 @@ def map_params_to_obj(module):
 
 def map_config_to_obj(module):
     objs = []
-    interfaces = list()
 
     output = run_commands(module, 'show interfaces')
     lines = output[0].strip().splitlines()[3:]

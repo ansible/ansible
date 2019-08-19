@@ -1,0 +1,2 @@
+minor_changes:
+  - ovirt4 inventory - Updated the dynamic inventory script for Python 3 support

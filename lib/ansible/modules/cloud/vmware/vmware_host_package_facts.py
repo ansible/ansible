@@ -33,11 +33,13 @@ options:
     - Name of the cluster.
     - Package facts about each ESXi server will be returned for given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - Package facts about this ESXi server will be returned.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -114,7 +116,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     vmware_host_package_config = VmwarePackageManager(module)

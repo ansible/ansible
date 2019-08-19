@@ -91,7 +91,7 @@
     name: "changed-{{ hcloud_ssh_key_name }}"
     labels:
       key: value
-      test: 123
+      test: "val123"
   register: result
 - name: test update ssh key  with other labels
   assert:

@@ -63,13 +63,21 @@ options:
 '''
 
 EXAMPLES = '''
-- rollbar_deployment:
+  - name: Rollbar deployment notification
+    rollbar_deployment:
     token: AAAAAA
     environment: staging
     user: ansible
     revision: '4.2'
     rollbar_user: admin
     comment: Test Deploy
+
+  - name: Notify rollbar about current git revision deployment by current user
+    rollbar_deployment:
+    token: "{{ rollbar_access_token }}"
+    environment: production
+    revision: "{{ lookup('pipe', 'git rev-parse HEAD') }}"
+    user: "{{ lookup('env', 'USER') }}"
 '''
 import traceback
 

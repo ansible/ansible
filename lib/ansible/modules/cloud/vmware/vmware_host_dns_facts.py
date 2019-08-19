@@ -34,10 +34,12 @@ options:
     description:
     - Name of the cluster from which the ESXi host belong to.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname to gather facts from.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -72,7 +74,7 @@ hosts_dns_facts:
                     "ip_address": [
                         "8.8.8.8"
                     ],
-                    "search_doamin": [
+                    "search_domain": [
                         "localdomain"
                     ],
                     "virtual_nic_device": "vmk0"
@@ -101,7 +103,7 @@ class VmwareDnsFactsManager(PyVmomi):
             host_facts['host_name'] = dns_config.hostName
             host_facts['domain_name'] = dns_config.domainName
             host_facts['ip_address'] = [ip for ip in dns_config.address]
-            host_facts['search_doamin'] = [domain for domain in dns_config.searchDomain]
+            host_facts['search_domain'] = [domain for domain in dns_config.searchDomain]
             hosts_facts[host.name] = host_facts
         return hosts_facts
 

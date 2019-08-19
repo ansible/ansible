@@ -1,41 +1,13 @@
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-- name: start vcsim with no folders
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Clusters from vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
-  register: clusterlist
-
-- debug: var=vcsim_instance
-- debug: var=clusterlist
-
 - name: Create VM with CDROM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: CDROM-Test
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusterlist['json'][0]|basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: vm
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
     resource_pool: Resources
     guest_id: centos64Guest
     hardware:
@@ -45,10 +17,10 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: "{{ ds2 }}"
     cdrom:
       type: iso
-      iso_path: "[LocalDS_0] base.iso"
+      iso_path: "[{{ ds1 }}] centos.iso"
   register: cdrom_vm
 
 - debug: var=cdrom_vm
@@ -62,15 +34,16 @@
 - name: Update CDROM to iso for the new VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: CDROM-Test
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "vm"
+    name: test_vm1
+    datastore: "{{ ds2 }}"
+    datacenter: "{{ dc1 }}"
     cdrom:
       type: iso
-      iso_path: "[LocalDS_0] base_new.iso"
+      iso_path: "[{{ ds1 }}] fedora.iso"
     state: present
   register: cdrom_vm
 
@@ -85,12 +58,12 @@
 - name: Update CDROM to client for the new VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: CDROM-Test
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: vm
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
     cdrom:
       type: client
     state: present
@@ -104,15 +77,28 @@
       - "cdrom_vm.failed == false"
       - "cdrom_vm.changed == true"
 
+- name: clone vm
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm2
+    template: test_vm1
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: vm
+    convert: thin
+
 - name: Update CDROM to none for the new VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: CDROM-Test
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: vm
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
     cdrom:
       type: none
     state: present
@@ -129,13 +115,13 @@
 - name: Create VM with multiple disks and a CDROM - GitHub issue 38679
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: CDROM-Test-38679
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusterlist['json'][0].split('/')[-1] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: vm
+    name: test_vm3
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
     resource_pool: Resources
     guest_id: centos64Guest
     hardware:
@@ -145,16 +131,16 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: "{{ ds2 }}"
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: "{{ ds2 }}"
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: "{{ ds2 }}"
     cdrom:
       type: iso
-      iso_path: "[LocalDS_0] base.iso"
+      iso_path: "[{{ ds1 }}] fedora.iso"
   register: cdrom_vm
 
 - debug: var=cdrom_vm
@@ -167,41 +153,40 @@
 
 # VCSIM fails with invalidspec exception but real vCenter PASS testcase
 # Commenting this testcase till the time
-#- name: Again create VM with multiple disks and a CDROM - GitHub issue 38679
-#  vmware_guest:
-#    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
-#    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-#    name: CDROM-Test-38679
-#    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
-#    cluster: "{{ clusterlist['json'][0] }}"
-#    resource_pool: Resources
-#    guest_id: centos64Guest
-#    hardware:
-#      memory_mb: 512
-#      num_cpus: 1
-#      scsi: paravirtual
-#    disk:
-#    - size_mb: 128
-#      type: thin
-#      datastore: LocalDS_0
-#    - size_mb: 128
-#      type: thin
-#      datastore: LocalDS_0
-#    - size_mb: 128
-#      type: thin
-#      datastore: LocalDS_0
-#    cdrom:
-#      type: iso
-#      iso_path: "[LocalDS_0] base.iso"
-#  register: cdrom_vm
-
-#- debug: var=cdrom_vm
-
-#- name: assert the VM was created
-#  assert:
-#    that:
-#      - "cdrom_vm.failed == false"
-#      - "cdrom_vm.changed == false"
+- when: vcsim is not defined
+  block:
+    - name: Again create VM with multiple disks and a CDROM - GitHub issue 38679
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        folder: "{{ f0 }}"
+        name: test_vm3
+        datacenter: "{{ dc1 }}"
+        cluster: "{{ ccr1 }}"
+        resource_pool: Resources
+        guest_id: centos64Guest
+        hardware:
+          memory_mb: 512
+          num_cpus: 1
+          scsi: paravirtual
+        disk:
+        - size_mb: 128
+          type: thin
+          datastore: "{{ ds2 }}"
+        - size_mb: 128
+          type: thin
+          datastore: "{{ ds2 }}"
+        - size_mb: 128
+          type: thin
+          datastore: "{{ ds2 }}"
+        cdrom:
+          type: iso
+          iso_path: "[{{ ds1 }}] base.iso"
+      register: cdrom_vm
+    - debug: var=cdrom_vm
+    - name: assert the VM was created
+      assert:
+        that:
+          - cdrom_vm is changed

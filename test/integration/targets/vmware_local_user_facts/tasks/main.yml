@@ -4,42 +4,35 @@
 
 # Commenting local user testcases as older vcsim docker image
 # does not support this.
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_esxi_instance: true
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+    # Local user manager works only with standalone ESXi server
+    - &user_fact_data
+      name: Gather facts about users
+      vmware_local_user_facts:
+        hostname: "{{ esxi1 }}"
+        username: "{{ esxi_user }}"
+        password: "{{ esxi_password }}"
+        validate_certs: False
+      register: all_user_facts
 
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
+    - name: ensure user facts are gathered
+      assert:
+        that:
+            - not all_user_facts.changed
+            - all_user_facts.local_user_facts is defined
 
-# Local user manager works only with standalone ESXi server
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?esx=1
-  register: vcsim_instance
+    - <<: *user_fact_data
+      name: Gather facts about users in check mode
+      check_mode: yes
 
-- debug:
-    var: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: Gather facts about users
-  vmware_local_user_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
-    validate_certs: False
-  register: all_user_facts
-
-- name: ensure user facts are gathered
-  assert:
-    that:
-        - not all_user_facts.changed
-        - all_user_facts.local_user_facts is defined
+    - name: ensure user facts are gathered
+      assert:
+        that:
+            - not all_user_facts.changed
+            - all_user_facts.local_user_facts is defined

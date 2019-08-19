@@ -5,6 +5,7 @@
             "Action": [
                 "iam:GetGroup",
                 "iam:GetInstanceProfile",
+                "iam:CreateInstanceProfile",
                 "iam:GetPolicy",
                 "iam:GetPolicyVersion",
                 "iam:GetRole",
@@ -32,7 +33,9 @@
                 "iam:CreateRole",
                 "iam:DeleteRole",
                 "iam:DetachRolePolicy",
-                "iam:PassRole"
+                "iam:PassRole",
+                "iam:UpdateAssumeRolePolicy",
+                "sts:AssumeRole"
              ],
             "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
             "Effect": "Allow",
@@ -62,7 +65,6 @@
             "Effect": "Allow",
             "Sid": "AllowReplacementOfSpecificInstanceProfiles"
         },
-
         {
             "Sid": "AllowWAFusage",
             "Action": "waf:*",
@@ -90,6 +92,42 @@
             "Resource": [
                 "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-testing*"
             ]
+        },
+        {
+            "Sid": "AllowAccessToUnspecifiedKMSResources",
+            "Effect": "Allow",
+            "Action": [
+                "kms:CancelKeyDeletion",
+                "kms:CreateAlias",
+                "kms:CreateGrant",
+                "kms:CreateKey",
+                "kms:DeleteAlias",
+                "kms:Describe*",
+                "kms:DisableKey",
+                "kms:EnableKey",
+                "kms:GenerateRandom",
+                "kms:Get*",
+                "kms:List*",
+                "kms:RetireGrant",
+                "kms:ScheduleKeyDeletion",
+                "kms:TagResource",
+                "kms:UntagResource",
+                "kms:UpdateGrant",
+                "kms:UpdateKeyDescription"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToServerCertificates",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListServerCertificates",
+                "iam:UploadServerCertificate",
+                "iam:UpdateServerCertificate",
+                "iam:DeleteServerCertificate",
+                "iam:GetServerCertificate"
+            ],
+            "Resource": "*"
         }
     ]
 }

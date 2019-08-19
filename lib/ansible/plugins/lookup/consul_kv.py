@@ -31,6 +31,11 @@ DOCUMENTATION = """
       index:
         description:
           - If the key has a value with the specified index then this is returned allowing access to historical values.
+      datacenter:
+        default: None
+        description:
+          - Retrieve the key from a consul datatacenter other than the default for the consul host.
+        version_added: "2.9"
       token:
         description: The acl token to allow access to restricted values.
       host:
@@ -144,7 +149,8 @@ class LookupModule(LookupBase):
                 results = consul_api.kv.get(params['key'],
                                             token=params['token'],
                                             index=params['index'],
-                                            recurse=params['recurse'])
+                                            recurse=params['recurse'],
+                                            dc=params['datacenter'])
                 if results[1]:
                     # responds with a single or list of result maps
                     if isinstance(results[1], list):
@@ -165,7 +171,8 @@ class LookupModule(LookupBase):
             'key': params[0],
             'token': None,
             'recurse': False,
-            'index': None
+            'index': None,
+            'datacenter': None
         }
 
         # parameters specified?

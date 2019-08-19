@@ -519,13 +519,30 @@ def resp_delete_project_hook(url, request):
 
 
 '''
-HOOK API
+RUNNER API
 '''
 
 
 @urlmatch(scheme="http", netloc="localhost", path="/api/v4/runners/all", method="get")
-def resp_find_runners(url, request):
+def resp_find_runners_all(url, request):
     headers = {'content-type': 'application/json'}
+    content = ('[{"active": true,"description": "test-1-20150125","id": 1,'
+               '"is_shared": false,"ip_address": "127.0.0.1","name": null,'
+               '"online": true,"status": "online"},{"active": true,'
+               '"description": "test-2-20150125","id": 2,"ip_address": "127.0.0.1",'
+               '"is_shared": false,"name": null,"online": false,"status": "offline"}]')
+    content = content.encode("utf-8")
+    return response(200, content, headers, None, 5, request)
+
+
+@urlmatch(scheme="http", netloc="localhost", path="/api/v4/runners", method="get")
+def resp_find_runners_list(url, request):
+    headers = {'content-type': 'application/json',
+               "X-Page": 1,
+               "X-Next-Page": 2,
+               "X-Per-Page": 1,
+               "X-Total-Pages": 1,
+               "X-Total": 2}
     content = ('[{"active": true,"description": "test-1-20150125","id": 1,'
                '"is_shared": false,"ip_address": "127.0.0.1","name": null,'
                '"online": true,"status": "online"},{"active": true,'

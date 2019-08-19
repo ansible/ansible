@@ -1,6 +1,8 @@
 # coding=utf-8
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 try:
     from unittest import mock
@@ -9,9 +11,7 @@ except ImportError:
 
 from ansible.module_utils.netapp import NetAppESeriesModule
 from ansible.modules.storage.netapp.netapp_e_volume import NetAppESeriesVolume
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
-
-__metaclass__ = type
+from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 
 class NetAppESeriesVolumeTest(ModuleTestCase):
@@ -158,7 +158,40 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
                                   "diskPool": False,
                                   "id": "04000000600A098000A4B28D00000FBD5C2F7F19",
                                   "name": "database_storage_pool"}]
-    REQUEST_FUNC = "ansible.modules.storage.netapp.netapp_e_volume.NetAppESeriesVolume.request"
+
+    GET_LONG_LIVED_OPERATION_RESPONSE = [
+        {"returnCode": "ok",
+         "longLivedOpsProgress": [
+             {"volAction": "initializing", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B9D1000037315D494C6F", "pending": False, "percentComplete": 1, "timeToCompletion": 20},
+              "format": None, "volCreation": None, "volDeletion": None},
+             {"volAction": "initializing", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B28D00003D2C5D494C87", "pending": False, "percentComplete": 0, "timeToCompletion": 18},
+              "volCreation": None, "volDeletion": None}]},
+        {"returnCode": "ok",
+         "longLivedOpsProgress": [
+             {"volAction": "complete", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B9D1000037315D494C6F", "pending": False, "percentComplete": 1, "timeToCompletion": 20},
+              "format": None, "volCreation": None, "volDeletion": None},
+             {"volAction": "initializing", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B28D00003D2C5D494C87", "pending": False, "percentComplete": 0, "timeToCompletion": 18},
+              "volCreation": None, "volDeletion": None}]},
+        {"returnCode": "ok",
+         "longLivedOpsProgress": [
+             {"volAction": "initializing", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B9D1000037315D494C6F", "pending": False, "percentComplete": 1, "timeToCompletion": 20},
+              "format": None, "volCreation": None, "volDeletion": None},
+             {"volAction": "complete", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B28D00003D2C5D494C87", "pending": False, "percentComplete": 0, "timeToCompletion": 18},
+              "volCreation": None, "volDeletion": None}]},
+        {"returnCode": "ok",
+         "longLivedOpsProgress": [
+             {"volAction": "complete", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B9D1000037315D494C6F", "pending": False, "percentComplete": 1, "timeToCompletion": 20},
+              "format": None, "volCreation": None, "volDeletion": None},
+             {"volAction": "complete", "reconstruct": None, "volExpansion": None, "volAndCapExpansion": None,
+              "init": {"volumeRef": "02000000600A098000A4B28D00003D2C5D494C87", "pending": False, "percentComplete": 0, "timeToCompletion": 18},
+              "volCreation": None, "volDeletion": None}]}]
 
     WORKLOAD_GET_RESPONSE = [{"id": "4200000001000000000000000000000000000000", "name": "general_workload_1",
                               "workloadAttributes": [{"key": "profileId", "value": "Other_1"}]},
@@ -176,6 +209,10 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
                                                      {"key": "security", "value": "private"},
                                                      {"key": "location", "value": "global"},
                                                      {"key": "profileId", "value": "ansible_workload_4"}]}]
+
+    REQUEST_FUNC = "ansible.modules.storage.netapp.netapp_e_volume.NetAppESeriesVolume.request"
+    GET_VOLUME_FUNC = "ansible.modules.storage.netapp.netapp_e_volume.NetAppESeriesVolume.get_volume"
+    SLEEP_FUNC = "ansible.modules.storage.netapp.netapp_e_volume.sleep"
 
     def _set_args(self, args=None):
         module_args = self.REQUIRED_PARAMS.copy()
@@ -267,6 +304,67 @@ class NetAppESeriesVolumeTest(ModuleTestCase):
                 self._set_args({"state": "present", "name": "Matthew", "storage_pool_name": "pool", "size": 100})
                 volume_object = NetAppESeriesVolume()
                 volume_object.get_volume()
+
+    def tests_wait_for_volume_availability_pass(self):
+        """Ensure wait_for_volume_availability completes as expected."""
+        self._set_args({"state": "present", "name": "NewVolume", "storage_pool_name": "employee_data_storage_pool", "size": 100,
+                        "wait_for_initialization": True})
+        volume_object = NetAppESeriesVolume()
+        with mock.patch(self.SLEEP_FUNC, return_value=None):
+            with mock.patch(self.GET_VOLUME_FUNC, side_effect=[False, False, True]):
+                volume_object.wait_for_volume_availability()
+
+    def tests_wait_for_volume_availability_fail(self):
+        """Ensure wait_for_volume_availability throws the expected exceptions."""
+        self._set_args({"state": "present", "name": "NewVolume", "storage_pool_name": "employee_data_storage_pool", "size": 100,
+                        "wait_for_initialization": True})
+        volume_object = NetAppESeriesVolume()
+        volume_object.get_volume = lambda: False
+        with self.assertRaisesRegexp(AnsibleFailJson, "Timed out waiting for the volume"):
+            with mock.patch(self.SLEEP_FUNC, return_value=None):
+                volume_object.wait_for_volume_availability()
+
+    def tests_wait_for_volume_action_pass(self):
+        """Ensure wait_for_volume_action completes as expected."""
+        self._set_args({"state": "present", "name": "NewVolume", "storage_pool_name": "employee_data_storage_pool", "size": 100,
+                        "wait_for_initialization": True})
+        volume_object = NetAppESeriesVolume()
+        volume_object.volume_detail = {"id": "02000000600A098000A4B9D1000037315D494C6F",
+                                       "storageVolumeRef": "02000000600A098000A4B9D1000037315DXXXXXX"}
+        with mock.patch(self.SLEEP_FUNC, return_value=None):
+            with mock.patch(self.REQUEST_FUNC, side_effect=[(200, self.GET_LONG_LIVED_OPERATION_RESPONSE[0]),
+                                                            (200, self.GET_LONG_LIVED_OPERATION_RESPONSE[1]),
+                                                            (200, self.GET_LONG_LIVED_OPERATION_RESPONSE[2]),
+                                                            (200, self.GET_LONG_LIVED_OPERATION_RESPONSE[3])]):
+                volume_object.wait_for_volume_action()
+
+        self._set_args({"state": "present", "name": "NewVolume", "storage_pool_name": "employee_data_storage_pool", "size": 100,
+                        "wait_for_initialization": True})
+        volume_object = NetAppESeriesVolume()
+        volume_object.volume_detail = {"id": "02000000600A098000A4B9D1000037315DXXXXXX",
+                                       "storageVolumeRef": "02000000600A098000A4B9D1000037315D494C6F"}
+        with mock.patch(self.SLEEP_FUNC, return_value=None):
+            with mock.patch(self.REQUEST_FUNC, side_effect=[(200, self.GET_LONG_LIVED_OPERATION_RESPONSE[0]),
+                                                            (200, self.GET_LONG_LIVED_OPERATION_RESPONSE[1]),
+                                                            (200, self.GET_LONG_LIVED_OPERATION_RESPONSE[2]),
+                                                            (200, self.GET_LONG_LIVED_OPERATION_RESPONSE[3])]):
+                volume_object.wait_for_volume_action()
+
+    def tests_wait_for_volume_action_fail(self):
+        """Ensure wait_for_volume_action throws the expected exceptions."""
+        self._set_args({"state": "present", "name": "NewVolume", "storage_pool_name": "employee_data_storage_pool", "size": 100,
+                        "wait_for_initialization": True})
+        volume_object = NetAppESeriesVolume()
+        volume_object.volume_detail = {"id": "02000000600A098000A4B9D1000037315DXXXXXX",
+                                       "storageVolumeRef": "02000000600A098000A4B9D1000037315D494C6F"}
+        with mock.patch(self.SLEEP_FUNC, return_value=None):
+            with self.assertRaisesRegexp(AnsibleFailJson, "Failed to get volume expansion progress."):
+                with mock.patch(self.REQUEST_FUNC, return_value=Exception()):
+                    volume_object.wait_for_volume_action()
+
+            with self.assertRaisesRegexp(AnsibleFailJson, "Expansion action failed to complete."):
+                with mock.patch(self.REQUEST_FUNC, return_value=(200, self.GET_LONG_LIVED_OPERATION_RESPONSE[0])):
+                    volume_object.wait_for_volume_action(timeout=300)
 
     def test_get_storage_pool_pass(self):
         """Evaluate the get_storage_pool method."""

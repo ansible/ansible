@@ -27,12 +27,14 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0)."
-      - "Be aware that packages are not always named the same and this module will not 'translate' them per distro."
+      - Package name, or package specifier with version.
+      - Syntax varies with package manager. For example C(name-1.0) or C(name=1.0).
+      - Package names also vary with package manager; this module will not "translate" them per distro. For example C(libyaml-dev), C(libyaml-devel).
     required: true
   state:
     description:
-      - Whether to install (C(present)), or remove (C(absent)) a package. Other states depend on the underlying package module, i.e C(latest).
+      - Whether to install (C(present)), or remove (C(absent)) a package.
+      - You can use other states like C(latest) ONLY if they are supported by the underlying package module(s) executed.
     required: true
   use:
     description:

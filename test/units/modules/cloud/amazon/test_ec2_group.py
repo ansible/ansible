@@ -1,5 +1,3 @@
-import pytest
-
 from ansible.modules.cloud.amazon import ec2_group as group_module
 
 
@@ -73,8 +71,8 @@ def test_validate_ip():
     ips = [
         ('1.1.1.1/24', '1.1.1.0/24'),
         ('192.168.56.101/16', '192.168.0.0/16'),
-        # 64 bits make 8 octets, or 4 hextets
-        ('1203:8fe0:fe80:b897:8990:8a7c:99bf:323d/64', '1203:8fe0:fe80:b897::/64'),
+        # Don't modify IPv6 CIDRs, AWS supports /128 and device ranges
+        ('1203:8fe0:fe80:b897:8990:8a7c:99bf:323d/128', '1203:8fe0:fe80:b897:8990:8a7c:99bf:323d/128'),
     ]
 
     for ip, net in ips:

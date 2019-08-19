@@ -1,0 +1,36 @@
+- block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: True
+
+    - name: create t3.nano with cpu options (fails gracefully)
+      ec2_instance:
+        state: present
+        name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        instance_type: t3.nano
+        cpu_options:
+            core_count: 1
+            threads_per_core: 1
+        <<: *aws_connection_info
+      register: ec2_instance_cpu_options_creation
+      ignore_errors: yes
+
+    - name: check that graceful error message is returned when creation with cpu_options and old botocore
+      assert:
+        that:
+          - ec2_instance_cpu_options_creation.failed
+          - 'ec2_instance_cpu_options_creation.msg == "cpu_options is only supported with botocore >= 1.10.16"'
+
+  always:
+    - name: cleanup t3.nano in case graceful failure was in fact a graceful success
+      ec2_instance:
+        state: absent
+        name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
+        <<: *aws_connection_info
+      ignore_errors: yes

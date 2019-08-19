@@ -21,8 +21,8 @@
     that:
       - check_ssl_is_used is failed
       - >
-          'Could not establish a secure connection' in check_ssl_is_used.module_stderr
-          or 'OpenSSL.SSL.Error' in check_ssl_is_used.module_stderr
+          'Could not establish a secure connection' in (check_ssl_is_used.module_stderr + check_ssl_is_used.module_stdout)
+          or 'OpenSSL.SSL.Error' in (check_ssl_is_used.module_stderr + check_ssl_is_used.module_stdout)
         # 'Could not establish a secure connection': when pyOpenSSL isn't available
         # 'OpenSSL.SSL.Error': with pyOpenSSL, see https://github.com/urllib3/urllib3/pull/1517
 

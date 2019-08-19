@@ -100,7 +100,7 @@ updates:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config, ce_argument_spec
 
 
 class SnmpContact(object):
@@ -140,6 +140,22 @@ class SnmpContact(object):
             self.module.fail_json(
                 msg='Error: The len of contact is 0.')
 
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def get_proposed(self):
         """ Get proposed state """
 
@@ -154,8 +170,9 @@ class SnmpContact(object):
         tmp_cfg = self.cli_get_config()
         if tmp_cfg:
             temp_data = tmp_cfg.split(r"contact ")
-            self.cur_cfg["contact"] = temp_data[1]
-            self.existing["contact"] = temp_data[1]
+            if len(temp_data) > 1:
+                self.cur_cfg["contact"] = temp_data[1]
+                self.existing["contact"] = temp_data[1]
 
     def get_end_state(self):
         """ Get end state """
@@ -163,7 +180,8 @@ class SnmpContact(object):
         tmp_cfg = self.cli_get_config()
         if tmp_cfg:
             temp_data = tmp_cfg.split(r"contact ")
-            self.end_state["contact"] = temp_data[1]
+            if len(temp_data) > 1:
+                self.end_state["contact"] = temp_data[1]
 
     def cli_load_config(self, commands):
         """ Load configure by cli """
@@ -177,7 +195,7 @@ class SnmpContact(object):
         regular = "| include snmp | include contact"
         flags = list()
         flags.append(regular)
-        tmp_cfg = get_config(self.module, flags)
+        tmp_cfg = self.get_config(flags)
 
         return tmp_cfg
 

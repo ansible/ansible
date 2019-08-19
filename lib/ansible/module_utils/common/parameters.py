@@ -28,7 +28,7 @@ PASS_VARS = {
     'module_name': ('_name', None),
     'no_log': ('no_log', False),
     'remote_tmp': ('_remote_tmp', None),
-    'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p']),
+    'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
     'string_conversion_action': ('_string_conversion_action', 'warn'),
@@ -112,9 +112,13 @@ def list_deprecations(argument_spec, params):
     return deprecations
 
 
-def handle_aliases(argument_spec, params):
+def handle_aliases(argument_spec, params, alias_warnings=None):
     """Return a two item tuple. The first is a dictionary of aliases, the second is
-    a list of legal inputs."""
+    a list of legal inputs.
+
+    If a list is provided to the alias_warnings parameter, it will be filled with tuples
+    (option, alias) in every case where both an option and its alias are specified.
+    """
 
     legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
     aliases_results = {}  # alias:canon
@@ -135,6 +139,8 @@ def handle_aliases(argument_spec, params):
             legal_inputs.append(alias)
             aliases_results[alias] = k
             if alias in params:
+                if k in params and alias_warnings is not None:
+                    alias_warnings.append((k, alias))
                 params[k] = params[alias]
 
     return aliases_results, legal_inputs

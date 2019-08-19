@@ -84,16 +84,17 @@ Tip: Sometimes you'll get back a variable that's a string and you'll want to do 
 
 .. note:: the above example requires the lsb_release package on the target host in order to return the 'lsb major_release' fact.
 
-Variables defined in the playbooks or inventory can also be used.  An example may be the execution of a task based on a variable's boolean value::
+Variables defined in the playbooks or inventory can also be used, just make sure to apply the `|bool` filter to non boolean variables (ex: string variables with content like 'yes', 'on', '1', 'true').  An example may be the execution of a task based on a variable's boolean value::
 
     vars:
       epic: true
+      monumental: "yes"
 
 Then a conditional execution might look like::
 
     tasks:
         - shell: echo "This certainly is epic!"
-          when: epic
+          when: epic or monumental|bool
 
 or::
 
@@ -117,7 +118,7 @@ As the examples show, you don't need to use `{{ }}` to use variables inside cond
 
 Loops and Conditionals
 ``````````````````````
-Combining `when` with loops (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+Combining `when` with loops (see :ref:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
@@ -173,7 +174,7 @@ Or with a role::
            when: ansible_facts['os_family'] == 'Debian'
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
-In many cases the ``group_by`` module (see :doc:`modules`) can be a more streamlined way to accomplish the same thing; see
+In many cases the :ref:`group_by module <group_by_module>` can be a more streamlined way to accomplish the same thing; see
 :ref:`os_variance`.
 
 When a conditional is used with ``include_*`` tasks instead of imports, it is applied `only` to the include task itself and not
@@ -241,7 +242,7 @@ As a reminder, the various YAML files contain just keys and values::
     somethingelse: 42
 
 How does this work?  For Red Hat operating systems ('CentOS', for example), the first file Ansible tries to import
-is 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. If no files in 
+is 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. If no files in
 the list were found, an error is raised.
 
 On Debian, Ansible first looks for 'vars/Debian.yml' instead of 'vars/RedHat.yml', before
@@ -329,7 +330,7 @@ You may check the registered variable's string contents for emptiness::
             register: contents
 
           - name: check contents for emptiness
-            debug: 
+            debug:
               msg: "Directory is empty"
             when: contents.stdout == ""
 

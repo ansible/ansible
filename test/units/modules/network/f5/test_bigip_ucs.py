@@ -127,9 +127,11 @@ class TestV1Manager(unittest.TestCase):
     def test_ucs_default_present(self, *args):
         set_module_args(dict(
             ucs="/root/bigip.localhost.localdomain.ucs",
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

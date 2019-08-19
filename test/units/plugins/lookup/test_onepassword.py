@@ -95,7 +95,8 @@ MOCK_ENTRIES = [
                     {
                         'name': 'password',
                         'value': 'vauxhall'
-                    }
+                    },
+                    {},
                 ]
             }
         }
@@ -105,8 +106,8 @@ MOCK_ENTRIES = [
 
 def get_mock_query_generator(require_field=None):
     def _process_field(field, section_title=None):
-        field_name = field.get('name', field.get('t'))
-        field_value = field.get('value', field.get('v'))
+        field_name = field.get('name', field.get('t', ''))
+        field_value = field.get('value', field.get('v', ''))
 
         if require_field is None or field_name == require_field:
             return entry, query, section_title, field_name, field_value

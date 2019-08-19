@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """Make sure the data in BOTMETA.yml is valid"""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import glob
 import os
@@ -12,8 +14,6 @@ from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
 
-list_string_types = list(string_types)
-
 
 def main():
     """Validate BOTMETA"""
@@ -25,9 +25,11 @@ def main():
     except yaml.error.MarkedYAMLError as ex:
         print('%s:%d:%d: YAML load failed: %s' % (path, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
         sys.exit()
-    except Exception as ex:
+    except Exception as ex:  # pylint: disable=broad-except
         print('%s:%d:%d: YAML load failed: %s' % (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
         sys.exit()
+
+    list_string_types = list(string_types)
 
     files_schema = Any(
         Schema(*string_types),

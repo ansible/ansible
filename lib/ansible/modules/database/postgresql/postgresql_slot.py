@@ -78,22 +78,10 @@ options:
 notes:
 - Physical replication slots were introduced to PostgreSQL with version 9.4,
   while logical replication slots were added beginning with version 10.0.
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-
-requirements:
-- psycopg2
 
 author:
 - John Scalia (@jscalia)
-- Andew Klychkov (@Andersson007)
+- Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
 '''
 
@@ -142,15 +130,19 @@ queries:
 '''
 
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, get_pg_version, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 
 
 # ===========================================
@@ -182,8 +174,7 @@ class PgSlot(object):
 
         if kind == 'physical':
             # Check server version (needs for immedately_reserverd needs 9.6+):
-            ver = get_pg_version(self.cursor)
-            if ver < 96000:
+            if self.cursor.connection.server_version < 96000:
                 query = "SELECT pg_create_physical_replication_slot('%s')" % self.name
 
             else:
@@ -192,38 +183,21 @@ class PgSlot(object):
         elif kind == 'logical':
             query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (self.name, output_plugin)
 
-        self.changed = self.__exec_sql(query, ddl=True)
+        self.changed = exec_sql(self, query, ddl=True)
 
     def drop(self):
         if not self.exists:
             return False
 
         query = "SELECT pg_drop_replication_slot('%s')" % self.name
-        self.changed = self.__exec_sql(query, ddl=True)
+        self.changed = exec_sql(self, query, ddl=True)
 
     def __slot_exists(self):
         query = "SELECT slot_type FROM pg_replication_slots WHERE slot_name = '%s'" % self.name
-        res = self.__exec_sql(query, add_to_executed=False)
+        res = exec_sql(self, query, add_to_executed=False)
         if res:
             self.exists = True
             self.kind = res[0][0]
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-        except psycopg2.ProgrammingError as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
 
 
 # ===========================================
@@ -248,53 +222,29 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
-    db = module.params["db"]
     name = module.params["name"]
     slot_type = module.params["slot_type"]
     immediately_reserve = module.params["immediately_reserve"]
     state = module.params["state"]
-    ssl_rootcert = module.params["ca_cert"]
     output_plugin = module.params["output_plugin"]
-    session_role = module.params["session_role"]
 
     if immediately_reserve and slot_type == 'logical':
         module.fail_json(msg="Module parameters immediately_reserve and slot_type=logical are mutually exclusive")
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "db": "database",
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "sslmode": "ssl_mode",
-        "ca_cert": "ssl_rootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '')
+    # When slot_type is logical and parameter db is not passed,
+    # the default database will be used to create the slot and
+    # the user should know about this.
+    # When the slot type is physical,
+    # it doesn't matter which database will be used
+    # because physical slots are global objects.
+    if slot_type == 'logical':
+        warn_db_default = True
+    else:
+        warn_db_default = False
 
-    # if a login_unix_socket is specified, incorporate it here
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and ssl_rootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
-
-    db_connection = connect_to_db(module, kw, autocommit=True)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
+    conn_params = get_conn_params(module, module.params, warn_db_default=warn_db_default)
+    db_connection = connect_to_db(module, conn_params, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##################################
     # Create an object and do main job
@@ -321,6 +271,7 @@ def main():
 
         changed = pg_slot.changed
 
+    db_connection.close()
     module.exit_json(changed=changed, name=name, queries=pg_slot.executed_queries)
 
 

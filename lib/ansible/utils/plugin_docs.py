@@ -50,14 +50,20 @@ def add_fragments(doc, filename, fragment_loader):
     # Allow the module to specify a var other than DOCUMENTATION
     # to pull the fragment from, using dot notation as a separator
     for fragment_slug in fragments:
+        fallback_name = None
         fragment_slug = fragment_slug.lower()
         if '.' in fragment_slug:
-            fragment_name, fragment_var = fragment_slug.split('.', 1)
+            fallback_name = fragment_slug
+            fragment_name, fragment_var = fragment_slug.rsplit('.', 1)
             fragment_var = fragment_var.upper()
         else:
             fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
 
         fragment_class = fragment_loader.get(fragment_name)
+        if fragment_class is None and fallback_name:
+            fragment_class = fragment_loader.get(fallback_name)
+            fragment_var = 'DOCUMENTATION'
+
         if fragment_class is None:
             raise AnsibleAssertionError('fragment_class is None')
 

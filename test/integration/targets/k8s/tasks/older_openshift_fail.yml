@@ -1,4 +1,4 @@
-    - python_requirements_facts:
+    - python_requirements_info:
         dependencies:
           - openshift==0.6.0
           - kubernetes==6.0.0
@@ -25,9 +25,6 @@
           - "'Failed to import the required Python library (openshift >= 0.7.2)' in k8s_append_hash.msg"
           - "'. This is required for append_hash.' in k8s_append_hash.msg"
 
-    # merge_type
-    - include_tasks: crd.yml
-
     # validate
     - name: attempt to use validate with older openshift
       k8s:
@@ -49,3 +46,24 @@
         that:
           - k8s_validate is failed
           - "k8s_validate.msg == 'openshift >= 0.8.0 is required for validate'"
+
+    # apply
+    - name: attempt to use apply with older openshift
+      k8s:
+        definition:
+          metadata:
+            name: config-map-test
+            namespace: "{{ playbook_namespace }}"
+          apiVersion: v1
+          kind: ConfigMap
+          data:
+            hello: world
+        apply: yes
+      ignore_errors: yes
+      register: k8s_apply
+
+    - name: assert that apply fails gracefully
+      assert:
+        that:
+          - k8s_apply is failed
+          - "k8s_apply.msg.startswith('Failed to import the required Python library (openshift >= 0.9.0)')"

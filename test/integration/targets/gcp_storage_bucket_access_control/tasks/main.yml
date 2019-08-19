@@ -45,7 +45,6 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'storage#bucketAccessControl'"
 # ----------------------------------------------------------------------------
 - name: create a bucket access control that already exists
   gcp_storage_bucket_access_control:
@@ -61,7 +60,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'storage#bucketAccessControl'"
 #----------------------------------------------------------
 - name: delete a bucket access control
   gcp_storage_bucket_access_control:
@@ -77,7 +75,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 # ----------------------------------------------------------------------------
 - name: delete a bucket access control that does not exist
   gcp_storage_bucket_access_control:
@@ -93,7 +90,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

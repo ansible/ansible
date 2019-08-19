@@ -31,6 +31,8 @@ def is_chroot(module=None):
                     rc, out, err = module.run_command(cmd)
                     if 'btrfs' in out:
                         fs_root_ino = 256
+                    elif 'xfs' in out:
+                        fs_root_ino = 128
 
             is_chroot = (my_root.st_ino != fs_root_ino)
 

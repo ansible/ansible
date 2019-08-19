@@ -30,8 +30,8 @@ description:
 version_added: "2.4"
 options:
   eos_use_sessions:
-    type: int
-    default: 1
+    type: boolean
+    default: yes
     description:
       - Specifies if sessions should be used on remote host or not
     env:
@@ -83,12 +83,12 @@ class Cliconf(CliconfBase):
         operations = self.get_device_operations()
         self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
-        if (commit is False) and (not self.supports_sessions):
+        if (commit is False) and (not self.supports_sessions()):
             raise ValueError('check mode is not supported without configuration session')
 
         resp = {}
         session = None
-        if self.supports_sessions:
+        if self.supports_sessions():
             session = 'ansible_%s' % int(time.time())
             resp.update({'session': session})
             self.send_command('configure session %s' % session)
@@ -125,7 +125,7 @@ class Cliconf(CliconfBase):
 
         resp['request'] = requests
         resp['response'] = results
-        if self.supports_sessions:
+        if self.supports_sessions():
             out = self.send_command('show session-config diffs')
             if out:
                 resp['diff'] = out.strip()
@@ -138,17 +138,17 @@ class Cliconf(CliconfBase):
             self.send_command('end')
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def commit(self):
         self.send_command('commit')
 
     def discard_changes(self, session=None):
         commands = ['end']
-        if self.supports_sessions:
+        if self.supports_sessions():
             # to close session gracefully execute abort in top level session prompt.
             commands.extend(['configure session %s' % session, 'abort'])
 
@@ -213,22 +213,18 @@ class Cliconf(CliconfBase):
         diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         return diff
 
-    @property
     def supports_sessions(self):
-        use_session = self.get_option('eos_use_sessions')
-        try:
-            use_session = int(use_session)
-        except ValueError:
-            pass
-
-        if not bool(use_session):
+        if not self.get_option('eos_use_sessions'):
             self._session_support = False
         else:
             if self._session_support:
                 return self._session_support
 
-            response = self.get('show configuration sessions')
-            self._session_support = 'error' not in response
+            try:
+                self.get('show configuration sessions')
+                self._session_support = True
+            except AnsibleConnectionFailure:
+                self._session_support = False
 
         return self._session_support
 
@@ -247,26 +243,31 @@ class Cliconf(CliconfBase):
 
         device_info['network_os_hostname'] = data['hostname']
 
-        reply = self.get('bash timeout 5 cat /mnt/flash/boot-config')
-        match = re.search(r'SWI=(.+)$', reply, re.M)
-        if match:
-            device_info['network_os_image'] = match.group(1)
+        try:
+            reply = self.get('bash timeout 5 cat /mnt/flash/boot-config')
+
+            match = re.search(r'SWI=(.+)$', reply, re.M)
+            if match:
+                device_info['network_os_image'] = match.group(1)
+        except AnsibleConnectionFailure:
+            # This requires enable mode to run
+            self._connection.queue_message('vvv', "Unable to gather network_os_image without enable mode")
 
         return device_info
 
     def get_device_operations(self):
         return {
             'supports_diff_replace': True,
-            'supports_commit': True if self.supports_sessions else False,
+            'supports_commit': bool(self.supports_sessions()),
             'supports_rollback': False,
             'supports_defaults': False,
-            'supports_onbox_diff': True if self.supports_sessions else False,
+            'supports_onbox_diff': bool(self.supports_sessions()),
             'supports_commit_comment': False,
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
-            'supports_generate_diff': False if self.supports_sessions else True,
-            'supports_replace': True if self.supports_sessions else False
+            'supports_generate_diff': not bool(self.supports_sessions()),
+            'supports_replace': bool(self.supports_sessions()),
         }
 
     def get_option_values(self):

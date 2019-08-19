@@ -1,0 +1,52 @@
+# Test code for the vmware evc mode module.
+# Copyright: (c) 2019, Michael Tipton <mike () ibeta.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_datacenter: true
+
+  - name: add cluster
+    vmware_cluster:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter_name: "{{ dc1 }}"
+      cluster_name: test_cluster_0001
+      state: present
+
+  - &evc_enable_data
+    name: Enable EVC mode on vCenter Cluster
+    vmware_evc_mode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter_name: "{{ dc1 }}"
+      cluster_name: test_cluster_0001
+      evc_mode: intel-broadwell
+      state: present
+
+  - <<: *evc_enable_data
+    name: Enable EVC mode on vCenter cluster in check mode
+    check_mode: yes
+
+  - &evc_disable_data
+    name: Disable EVC mode on vCenter Cluster
+    vmware_evc_mode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter_name: "{{ dc1 }}"
+      cluster_name: test_cluster_0001
+      evc_mode: intel-broadwell
+      state: absent
+
+  - <<: *evc_disable_data
+    name: Disable EVC mode on vCenter Cluster in check mode
+    check_mode: yes

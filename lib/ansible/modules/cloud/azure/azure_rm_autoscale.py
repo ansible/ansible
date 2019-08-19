@@ -17,177 +17,199 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_autoscale
 version_added: "2.7"
-short_description: Manage Azure autoscale setting.
+short_description: Manage Azure autoscale setting
 description:
     - Create, delete an autoscale setting.
 options:
     target:
         description:
-        - The identifier of the resource to apply autoscale setting.
-        - It could be the resource id string.
-        - It also could be a dict contains the C(name), C(subscription_id), C(namespace), C(types), C(resource_group) of the resource.
+            - The identifier of the resource to apply autoscale setting.
+            - It could be the resource id string.
+            - It also could be a dict contains the C(name), C(subscription_id), C(namespace), C(types), C(resource_group) of the resource.
     resource_group:
         required: true
-        description: resource group of the resource.
+        description:
+            - Resource group of the resource.
     enabled:
         type: bool
-        description: Specifies whether automatic scaling is enabled for the resource.
+        description:
+            - Specifies whether automatic scaling is enabled for the resource.
         default: true
     profiles:
         description:
-        - The collection of automatic scaling profiles that specify different scaling parameters for different time periods.
-        - A maximum of 20 profiles can be specified.
+            - The collection of automatic scaling profiles that specify different scaling parameters for different time periods.
+            - A maximum of 20 profiles can be specified.
         suboptions:
             name:
                 required: true
-                description: the name of the profile.
+                description:
+                    - The name of the profile.
             count:
                 required: true
                 description:
-                - The number of instances that will be set if metrics are not available for evaluation.
-                - The default is only used if the current instance count is lower than the default.
+                    - The number of instances that will be set if metrics are not available for evaluation.
+                    - The default is only used if the current instance count is lower than the default.
             min_count:
-                description: the minimum number of instances for the resource.
+                description:
+                    - The minimum number of instances for the resource.
             max_count:
-                description: the maximum number of instances for the resource.
+                description:
+                    - The maximum number of instances for the resource.
+                    - The actual maximum number of instances is limited by the cores that are available in the subscription.
             recurrence_frequency:
                 default: None
                 description:
-                - How often the schedule profile should take effect.
-                - If this value is Week, meaning each week will have the same set of profiles.
-                - This element is not used if the FixedDate element is used.
+                    - How often the schedule profile should take effect.
+                    - If this value is C(Week), meaning each week will have the same set of profiles.
+                    - This element is not used if the FixedDate element is used.
                 choices:
-                - None
-                - Second
-                - Minute
-                - Hour
-                - Day
-                - Week
-                - Month
-                - Year
+                    - None
+                    - Second
+                    - Minute
+                    - Hour
+                    - Day
+                    - Week
+                    - Month
+                    - Year
             recurrence_timezone:
                 description:
-                - The timezone of repeating times at which this profile begins.
-                - This element is not used if the FixedDate element is used.
+                    - The timezone of repeating times at which this profile begins.
+                    - This element is not used if the FixedDate element is used.
             recurrence_days:
                 description:
-                - The days of repeating times at which this profile begins.
-                - This element is not used if the FixedDate element is used.
+                    - The days of repeating times at which this profile begins.
+                    - This element is not used if the FixedDate element is used.
             recurrence_hours:
                 description:
-                - The hours of repeating times at which this profile begins.
-                - This element is not used if the FixedDate element is used.
+                    - The hours of repeating times at which this profile begins.
+                    - This element is not used if the FixedDate element is used.
             recurrence_mins:
                 description:
-                - The mins of repeating times at which this profile begins.
-                - This element is not used if the FixedDate element is used.
+                    - The mins of repeating times at which this profile begins.
+                    - This element is not used if the FixedDate element is used.
             fixed_date_timezone:
                 description:
-                - The specific date-time timezone for the profile.
-                - This element is not used if the Recurrence element is used.
+                    - The specific date-time timezone for the profile.
+                    - This element is not used if the Recurrence element is used.
             fixed_date_start:
                 description:
-                - The specific date-time start for the profile.
-                - This element is not used if the Recurrence element is used.
+                    - The specific date-time start for the profile.
+                    - This element is not used if the Recurrence element is used.
             fixed_date_end:
                 description:
-                - The specific date-time end for the profile.
-                - This element is not used if the Recurrence element is used.
+                    - The specific date-time end for the profile.
+                    - This element is not used if the Recurrence element is used.
             rules:
                 description:
-                - The collection of rules that provide the triggers and parameters for the scaling action.
-                - A maximum of 10 rules can be specified.
+                    - The collection of rules that provide the triggers and parameters for the scaling action.
+                    - A maximum of 10 rules can be specified.
                 suboptions:
                     time_aggregation:
                         default: Average
-                        description: How the data that is collected should be combined over time.
+                        description:
+                            - How the data that is collected should be combined over time.
                         choices:
-                        - Average
-                        - Minimum
-                        - Maximum
-                        - Total
-                        - Count
+                            - Average
+                            - Minimum
+                            - Maximum
+                            - Total
+                            - Count
                     time_window:
                         required: true
                         description:
-                        - The range of time(minutes) in which instance data is collected.
-                        - This value must be greater than the delay in metric collection, which can vary from resource-to-resource.
-                        - Must be between 5 ~ 720.
+                            - The range of time(minutes) in which instance data is collected.
+                            - This value must be greater than the delay in metric collection, which can vary from resource-to-resource.
+                            - Must be between 5 ~ 720.
                     direction:
-                        description: Whether the scaling action increases or decreases the number of instances.
+                        description:
+                            - Whether the scaling action increases or decreases the number of instances.
                         choices:
-                        - Increase
-                        - Decrease
+                            - Increase
+                            - Decrease
                     metric_name:
                         required: true
-                        description: The name of the metric that defines what the rule monitors.
+                        description:
+                            - The name of the metric that defines what the rule monitors.
                     metric_resource_uri:
-                        description: The resource identifier of the resource the rule monitors.
+                        description:
+                            - The resource identifier of the resource the rule monitors.
                     value:
                         description:
-                        - The number of instances that are involved in the scaling action.
-                        - This value must be 1 or greater.
+                            - The number of instances that are involved in the scaling action.
+                            - This value must be 1 or greater.
                     operator:
                         default: GreaterThan
-                        description: The operator that is used to compare the metric data and the threshold.
+                        description:
+                            - The operator that is used to compare the metric data and the threshold.
                         choices:
-                        - Equals
-                        - NotEquals
-                        - GreaterThan
-                        - GreaterThanOrEqual
-                        - LessThan
-                        - LessThanOrEqual
+                            - Equals
+                            - NotEquals
+                            - GreaterThan
+                            - GreaterThanOrEqual
+                            - LessThan
+                            - LessThanOrEqual
                     cooldown:
                         description:
-                        - The amount of time (minutes) to wait since the last scaling action before this action occurs.
-                        - It must be between 1 ~ 10080.
+                            - The amount of time (minutes) to wait since the last scaling action before this action occurs.
+                            - It must be between 1 ~ 10080.
                     time_grain:
                         required: true
                         description:
-                        - The granularity(minutes) of metrics the rule monitors.
-                        - Must be one of the predefined values returned from metric definitions for the metric.
-                        - Must be between 1 ~ 720.
+                            - The granularity(minutes) of metrics the rule monitors.
+                            - Must be one of the predefined values returned from metric definitions for the metric.
+                            - Must be between 1 ~ 720.
                     statistic:
                         default: Average
-                        description: How the metrics from multiple instances are combined.
+                        description:
+                            - How the metrics from multiple instances are combined.
                         choices:
-                        - Average
-                        - Min
-                        - Max
-                        - Sum
+                            - Average
+                            - Min
+                            - Max
+                            - Sum
                     threshold:
                         default: 70
-                        description: The threshold of the metric that triggers the scale action.
+                        description:
+                            - The threshold of the metric that triggers the scale action.
                     type:
-                        description:  The type of action that should occur when the scale rule fires.
+                        description:
+                            - The type of action that should occur when the scale rule fires.
                         choices:
-                        - PercentChangeCount
-                        - ExactCount
-                        - ChangeCount
+                            - PercentChangeCount
+                            - ExactCount
+                            - ChangeCount
     notifications:
-        description: the collection of notifications.
+        description:
+            - The collection of notifications.
         suboptions:
             custom_emails:
-                description: the custom e-mails list. This value can be null or empty, in which case this attribute will be ignored.
+                description:
+                    - The custom e-mails list. This value can be null or empty, in which case this attribute will be ignored.
             send_to_subscription_administrator:
                 type: bool
-                description: A value indicating whether to send email to subscription administrator.
+                description:
+                    - A value indicating whether to send email to subscription administrator.
             webhooks:
-                description: The list of webhook notifications service uri.
+                description:
+                    - The list of webhook notifications service uri.
             send_to_subscription_co_administrators:
                 type: bool
-                description: A value indicating whether to send email to subscription co-administrators.
+                description:
+                    - A value indicating whether to send email to subscription co-administrators.
     state:
         default: present
-        description: Assert the state of the virtual network. Use C(present) to create or update and C(absent) to delete.
+        description:
+            - Assert the state of the virtual network. Use C(present) to create or update and C(absent) to delete.
         choices:
-        - present
-        - absent
+            - present
+            - absent
     location:
-        description: location of the resource.
+        description:
+            - location of the resource.
     name:
         required: true
-        description: name of the resource.
+        description:
+            - name of the resource.
 
 
 extends_documentation_fragment:
@@ -195,7 +217,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 

@@ -1,0 +1,3 @@
+bugfixes:
+- gather_facts - Prevent gather_facts from being verbose, just like is done
+  in the normal action plugin for setup (https://github.com/ansible/ansible/issues/58310)

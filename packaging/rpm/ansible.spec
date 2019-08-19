@@ -64,7 +64,7 @@ Requires: python-setuptools
 Requires: python-six
 %endif
 
-# SuSE/openSuSE
+# SUSE/openSUSE
 %if 0%{?suse_version}
 BuildRequires: python-devel
 BuildRequires: python-setuptools

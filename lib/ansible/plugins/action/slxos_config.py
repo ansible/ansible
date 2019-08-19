@@ -22,8 +22,6 @@ __metaclass__ = type
 import re
 
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
-from ansible.module_utils._text import to_text
-from ansible.module_utils.network.common.backup import write_backup, handle_template
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
 

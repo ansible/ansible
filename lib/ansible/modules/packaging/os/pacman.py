@@ -171,9 +171,18 @@ def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
     lines = pacman_output.split('\n')
     for line in lines:
-        if 'Version' in line:
+        if line.startswith('Version '):
             return line.split(':')[1].strip()
     return None
+
+
+def get_name(module, pacman_output):
+    """Take pacman -Qi or pacman -Si output and get the package name"""
+    lines = pacman_output.split('\n')
+    for line in lines:
+        if line.startswith('Name '):
+            return line.split(':')[1].strip()
+    module.fail_json(msg="get_name: fail to retrieve package name from pacman output")
 
 
 def query_package(module, pacman_path, name, state="present"):
@@ -186,6 +195,12 @@ def query_package(module, pacman_path, name, state="present"):
         if lrc != 0:
             # package is not installed locally
             return False, False, False
+        else:
+            # a non-zero exit code doesn't always mean the package is installed
+            # for example, if the package name queried is "provided" by another package
+            installed_name = get_name(module, lstdout)
+            if installed_name != name:
+                return False, False, False
 
         # get the version installed locally (if any)
         lversion = get_version(lstdout)
@@ -230,7 +245,10 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile(r'([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        # Match lines of `pacman -Qu` output of the form:
+        #   (package name) (before version-release) -> (after version-release)
+        # e.g., "ansible 2.7.1-1 -> 2.7.2-1"
+        regex = re.compile(r'([\w+\-.@]+) (\S+-\S+) -> (\S+-\S+)')
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))

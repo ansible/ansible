@@ -8,6 +8,7 @@
 Function New-TempFile {
     Param ([string]$path, [string]$prefix, [string]$suffix, [string]$type, [bool]$checkmode)
     $temppath = $null
+    $curerror = $null
     $attempt = 0
 
     # Since we don't know if the file already exists, we try 5 times with a random name
@@ -26,13 +27,13 @@ Function New-TempFile {
             }
         } Catch {
             $temppath = $null
-            $error = $_
+            $curerror = $_
         }
     } until (($null -ne $temppath) -or ($attempt -ge 5))
 
     # If it fails 5 times, something is wrong and we have to report the details
     if ($null -eq $temppath) {
-        $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($error.Exception.Message)", $error)
+        $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($curerror.Exception.Message)", $curerror)
     }
 
     return $temppath.ToString()

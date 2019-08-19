@@ -1,19 +1,19 @@
 ---
 - name: 'Create disk image'
   command: >
-    dd if=/dev/zero of={{ ansible_user_dir }}/ansible_testing/img-gquota bs=1M count=20
+    dd if=/dev/zero of={{ remote_tmp_dir }}/img-gquota bs=1M count=20
 
 - name: 'Create XFS filesystem'
   filesystem:
-    dev: '{{ ansible_user_dir }}/ansible_testing/img-gquota'
+    dev: '{{ remote_tmp_dir }}/img-gquota'
     fstype: xfs
 
 - block:
     - name: 'Mount filesystem'
       mount:
-        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
-        src: '{{ ansible_user_dir }}/ansible_testing/img-gquota'
-        path: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        src: '{{ remote_tmp_dir }}/img-gquota'
+        path: '{{ remote_tmp_dir }}/gquota'
         fstype: xfs
         opts: gquota
         state: mounted
@@ -25,7 +25,7 @@
         bhard: '{{ gquota_default_bhard }}'
         isoft: '{{ gquota_default_isoft }}'
         ihard: '{{ gquota_default_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
         rtbsoft: '{{ gquota_default_rtbsoft }}'
         rtbhard: '{{ gquota_default_rtbhard }}'
         type: group
@@ -49,7 +49,7 @@
         bhard: '{{ gquota_group_bhard }}'
         isoft: '{{ gquota_group_isoft }}'
         ihard: '{{ gquota_group_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
         name: xfsquotauser
         rtbsoft: '{{ gquota_group_rtbsoft }}'
         rtbhard: '{{ gquota_group_rtbhard }}'
@@ -74,7 +74,7 @@
         bhard: '{{ gquota_default_bhard }}'
         isoft: '{{ gquota_default_isoft }}'
         ihard: '{{ gquota_default_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
         rtbsoft: '{{ gquota_default_rtbsoft }}'
         rtbhard: '{{ gquota_default_rtbhard }}'
         type: group
@@ -92,7 +92,7 @@
         bhard: '{{ gquota_group_bhard }}'
         isoft: '{{ gquota_group_isoft }}'
         ihard: '{{ gquota_group_ihard }}'
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
         name: xfsquotauser
         rtbsoft: '{{ gquota_group_rtbsoft }}'
         rtbhard: '{{ gquota_group_rtbhard }}'
@@ -107,7 +107,7 @@
 
     - name: 'Reset default group limits'
       xfs_quota:
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
         state: absent
         type: group
       become: True
@@ -126,7 +126,7 @@
 
     - name: 'Reset group limits for xfsquotauser'
       xfs_quota:
-        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
         name: xfsquotauser
         state: absent
         type: group
@@ -147,12 +147,12 @@
   always:
     - name: 'Unmount filesystem'
       mount:
-        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
-        path: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        path: '{{ remote_tmp_dir }}/gquota'
         state: unmounted
       become: True
 
     - name: Remove disk image
       file:
-        path: '{{ ansible_user_dir }}/ansible_testing/img-gquota'
+        path: '{{ remote_tmp_dir }}/img-gquota'
         state: absent

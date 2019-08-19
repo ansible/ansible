@@ -497,31 +497,45 @@ class VMwareHost(PyVmomi):
         Function to return Host connection specification
         Returns: host connection specification
         """
+        # Get the thumbprint of the SSL certificate
+        if self.fetch_ssl_thumbprint and self.esxi_ssl_thumbprint == '':
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            if self.module.params['proxy_host']:
+                sock.connect((
+                    self.module.params['proxy_host'],
+                    self.module.params['proxy_port']))
+                command = "CONNECT %s:443 HTTP/1.0\r\n\r\n" % (self.esxi_hostname)
+                sock.send(command.encode())
+                buf = sock.recv(8192).decode()
+                if buf.split()[1] != '200':
+                    self.module.fail_json(msg="Failed to connect to the proxy")
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                der_cert_bin = ctx.wrap_socket(sock, server_hostname=self.esxi_hostname).getpeercert(True)
+                sock.close()
+            else:
+                wrapped_socket = ssl.wrap_socket(sock)
+                try:
+                    wrapped_socket.connect((self.esxi_hostname, 443))
+                except socket.error as socket_error:
+                    self.module.fail_json(msg="Cannot connect to host : %s" % socket_error)
+                else:
+                    der_cert_bin = wrapped_socket.getpeercert(True)
+                    wrapped_socket.close()
+
+            thumb_sha1 = self.format_number(hashlib.sha1(der_cert_bin).hexdigest())
+            sslThumbprint = thumb_sha1
+        else:
+            sslThumbprint = self.esxi_ssl_thumbprint
+
         host_connect_spec = vim.host.ConnectSpec()
+        host_connect_spec.sslThumbprint = sslThumbprint
         host_connect_spec.hostName = self.esxi_hostname
         host_connect_spec.userName = self.esxi_username
         host_connect_spec.password = self.esxi_password
         host_connect_spec.force = self.force_connection
-        # Get the thumbprint of the SSL certificate
-        if self.fetch_ssl_thumbprint and self.esxi_ssl_thumbprint == '':
-            # We need to grab the thumbprint manually because it's not included in
-            # the task error via an SSLVerifyFault exception anymore
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
-            wrapped_socket = ssl.wrap_socket(sock)
-            try:
-                wrapped_socket.connect((self.esxi_hostname, 443))
-            except socket.error as socket_error:
-                self.module.fail_json(msg="Cannot connect to host : %s" % socket_error)
-            else:
-                der_cert_bin = wrapped_socket.getpeercert(True)
-                # thumb_md5 = hashlib.md5(der_cert_bin).hexdigest()
-                thumb_sha1 = self.format_number(hashlib.sha1(der_cert_bin).hexdigest())
-                # thumb_sha256 = hashlib.sha256(der_cert_bin).hexdigest()
-            wrapped_socket.close()
-            host_connect_spec.sslThumbprint = thumb_sha1
-        else:
-            host_connect_spec.sslThumbprint = self.esxi_ssl_thumbprint
         return host_connect_spec
 
     @staticmethod

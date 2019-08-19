@@ -110,14 +110,12 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from copy import deepcopy
 
-HAS_AVI = True
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession, AviCredentials
-    from avi.sdk.utils.ansible_utils import (
-        avi_obj_cmp, cleanup_absent_fields, ansible_return,
-        AviCheckModeResponse)
+        avi_common_argument_spec, avi_obj_cmp, cleanup_absent_fields,
+        ansible_return, AviCheckModeResponse, HAS_AVI)
+    from ansible.module_utils.network.avi.avi_api import (
+        ApiSession, AviCredentials)
 except ImportError:
     HAS_AVI = False
 
@@ -238,10 +236,9 @@ def main():
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
-
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or ansible>=2.8 is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     api_creds = AviCredentials()
     api_creds.update_from_ansible_module(module)

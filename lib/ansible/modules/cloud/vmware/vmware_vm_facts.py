@@ -18,9 +18,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_vm_facts
-short_description: Return basic facts pertaining to a vSphere virtual machine guest
+short_description: Return basic facts pertaining to a VMware machine guest
 description:
-- Return basic facts pertaining to a vSphere virtual machine guest.
+- Return basic facts pertaining to a vSphere or ESXi virtual machine guest.
 - Cluster name as fact is added in version 2.7.
 version_added: '2.0'
 author:
@@ -28,7 +28,7 @@ author:
 - Abhijeet Kasurde (@Akasurde)
 - Fedor Vompe (@sumkincpp)
 notes:
-- Tested on vSphere 5.5 and vSphere 6.5
+- Tested on ESXi 6.7, vSphere 5.5 and vSphere 6.5
 - From 2.8 and onwards, facts are returned as list of dict instead of dict.
 requirements:
 - python >= 2.6
@@ -50,6 +50,21 @@ options:
       default: no
       type: bool
       version_added: 2.8
+    folder:
+      description:
+        - Specify a folder location of VMs to gather facts from.
+        - 'Examples:'
+        - '   folder: /ha-datacenter/vm'
+        - '   folder: ha-datacenter/vm'
+        - '   folder: /datacenter1/vm'
+        - '   folder: datacenter1/vm'
+        - '   folder: /datacenter1/vm/folder1'
+        - '   folder: datacenter1/vm/folder1'
+        - '   folder: /folder1/datacenter1/vm'
+        - '   folder: folder1/datacenter1/vm'
+        - '   folder: /folder1/datacenter1/vm/folder2'
+      type: str
+      version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -150,7 +165,6 @@ from ansible.module_utils.vmware import PyVmomi, get_all_objs, vmware_argument_s
 class VmwareVmFacts(PyVmomi):
     def __init__(self, module):
         super(VmwareVmFacts, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
     def get_vm_attributes(self, vm):
         return dict((x.name, v.value) for x in self.custom_field_mgr
@@ -161,7 +175,14 @@ class VmwareVmFacts(PyVmomi):
         """
         Get all virtual machines and related configurations information
         """
-        virtual_machines = get_all_objs(self.content, [vim.VirtualMachine])
+        folder = self.params.get('folder')
+        folder_obj = None
+        if folder:
+            folder_obj = self.content.searchIndex.FindByInventoryPath(folder)
+            if not folder_obj:
+                self.module.fail_json(msg="Failed to find folder specified by %(folder)s" % self.params)
+
+        virtual_machines = get_all_objs(self.content, [vim.VirtualMachine], folder=folder_obj)
         _virtual_machines = []
 
         for vm in virtual_machines:
@@ -234,6 +255,7 @@ def main():
     argument_spec.update(
         vm_type=dict(type='str', choices=['vm', 'all', 'template'], default='all'),
         show_attribute=dict(type='bool', default='no'),
+        folder=dict(type='str'),
     )
 
     module = AnsibleModule(

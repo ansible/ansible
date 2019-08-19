@@ -12,7 +12,6 @@
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
-#   make pyflakes, make pep8 -- source code checks
 
 ########################################################
 # variable section
@@ -33,7 +32,7 @@ ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is 
 endif
 
 PYTHON=python
-GENERATE_CLI = $(PYTHON) docs/bin/generate_man.py
+GENERATE_CLI = hacking/build-ansible.py generate-man
 
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
@@ -51,7 +50,7 @@ RELEASE ?= 1
 
 # Get the branch information from git
 ifneq ($(shell which git),)
-GIT_DATE := $(shell git log -n 1 --format="%ai")
+GIT_DATE := $(shell git log -n 1 --format="%ci")
 GIT_HASH := $(shell git log -n 1 --format="%h")
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.\/]//g')
 GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
@@ -60,7 +59,7 @@ GITINFO = ""
 endif
 
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
-DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
+DATE := $(shell date -j -r $(shell git log -n 1 --format="%ct") +%Y%m%d%H%M)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
@@ -171,18 +170,6 @@ authors:
 # recently than %.1. (Implicitly runs the %.1.rst recipe)
 %.1: %.1.rst lib/ansible/release.py
 	$(ASCII2MAN)
-
-.PHONY: loc
-loc:
-	sloccount lib library bin
-
-.PHONY: pep8
-pep8:
-	$(ANSIBLE_TEST) sanity --test pep8 --python $(PYTHON_VERSION) $(TEST_FLAGS)
-
-.PHONY: pyflakes
-pyflakes:
-	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
 
 .PHONY: clean
 clean:

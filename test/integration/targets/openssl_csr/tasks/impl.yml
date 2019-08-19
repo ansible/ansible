@@ -249,7 +249,15 @@
     cipher: auto
     select_crypto_backend: cryptography
 
-- name: Generate publickey - PEM format
+- name: Generate CSR with privatekey passphrase
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_1
+
+- name: Generate CSR (failed passphrase 1)
   openssl_csr:
     path: '{{ output_dir }}/csr_pw1.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
@@ -258,7 +266,7 @@
   ignore_errors: yes
   register: passphrase_error_1
 
-- name: Generate publickey - PEM format
+- name: Generate CSR (failed passphrase 2)
   openssl_csr:
     path: '{{ output_dir }}/csr_pw2.csr'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
@@ -267,7 +275,7 @@
   ignore_errors: yes
   register: passphrase_error_2
 
-- name: Generate publickey - PEM format
+- name: Generate CSR (failed passphrase 3)
   openssl_csr:
     path: '{{ output_dir }}/csr_pw3.csr'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'

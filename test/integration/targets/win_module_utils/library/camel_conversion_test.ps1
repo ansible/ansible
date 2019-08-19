@@ -40,7 +40,6 @@ foreach ($entry in $output_dict.GetEnumerator()) {
     $key = $entry.Name
     $value = $entry.Value
 
-    $type = $value.GetType()
     if ($value -is [Hashtable]) {
         Assert-Equals -actual $key -expected "inner_hash_table"
         foreach ($inner_hash in $value.GetEnumerator()) {

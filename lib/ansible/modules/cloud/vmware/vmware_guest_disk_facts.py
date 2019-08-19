@@ -36,14 +36,22 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is required parameter, if parameter C(uuid) is not supplied.
+     - This is required parameter, if parameter C(uuid) or C(moid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is required parameter, if parameter C(name) is not supplied.
+     - This is required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -62,12 +70,12 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
-     - '   folder: vm/folder2'
-     - '   folder: folder2'
+     type: str
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
      required: True
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -93,6 +101,17 @@ EXAMPLES = '''
     name: VM_225
   delegate_to: localhost
   register: disk_facts
+
+- name: Gather disk facts from virtual machine using moid
+  vmware_guest_disk_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: ha-datacenter
+    validate_certs: no
+    moid: vm-42
+  delegate_to: localhost
+  register: disk_facts
 '''
 
 RETURN = """
@@ -112,7 +131,9 @@ guest_disk_facts:
             "backing_uuid": "200C3A00-f82a-97af-02ff-62a595f0020a",
             "capacity_in_bytes": 10485760,
             "capacity_in_kb": 10240,
+            "controller_bus_number": 0,
             "controller_key": 1000,
+            "controller_type": "paravirtual",
             "key": 2000,
             "label": "Hard disk 1",
             "summary": "10,240 KB",
@@ -128,7 +149,9 @@ guest_disk_facts:
             "backing_uuid": null,
             "capacity_in_bytes": 15728640,
             "capacity_in_kb": 15360,
+            "controller_bus_number": 0,
             "controller_key": 1000,
+            "controller_type": "paravirtual",
             "key": 2001,
             "label": "Hard disk 3",
             "summary": "15,360 KB",
@@ -160,9 +183,29 @@ class PyVmomiHelper(PyVmomi):
         Returns: A list of dict containing disks information
 
         """
+        controller_facts = dict()
         disks_facts = dict()
         if vm_obj is None:
             return disks_facts
+
+        controller_types = {
+            vim.vm.device.VirtualLsiLogicController: 'lsilogic',
+            vim.vm.device.ParaVirtualSCSIController: 'paravirtual',
+            vim.vm.device.VirtualBusLogicController: 'buslogic',
+            vim.vm.device.VirtualLsiLogicSASController: 'lsilogicsas',
+            vim.vm.device.VirtualIDEController: 'ide'
+        }
+
+        controller_index = 0
+        for controller in vm_obj.config.hardware.device:
+            if isinstance(controller, tuple(controller_types.keys())):
+                controller_facts[controller_index] = dict(
+                    key=controller.key,
+                    controller_type=controller_types[type(controller)],
+                    bus_number=controller.busNumber,
+                    devices=controller.device
+                )
+                controller_index += 1
 
         disk_index = 0
         for disk in vm_obj.config.hardware.device:
@@ -231,6 +274,12 @@ class PyVmomiHelper(PyVmomi):
                     disks_facts[disk_index]['backing_split'] = bool(disk.backing.split)
                     disks_facts[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
                     disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                for controller_index in range(len(controller_facts)):
+                    if controller_facts[controller_index]['key'] == disks_facts[disk_index]['controller_key']:
+                        disks_facts[disk_index]['controller_bus_number'] = controller_facts[controller_index]['bus_number']
+                        disks_facts[disk_index]['controller_type'] = controller_facts[controller_index]['controller_type']
+
                 disk_index += 1
         return disks_facts
 
@@ -240,13 +289,16 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=[['name', 'uuid']],
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ],
         supports_check_mode=True,
     )
 
@@ -268,7 +320,8 @@ def main():
     else:
         # We unable to find the virtual machine user specified
         # Bail out
-        module.fail_json(msg="Unable to gather disk facts for non-existing VM %s" % (module.params.get('uuid') or module.params.get('name')))
+        vm_id = (module.params.get('uuid') or module.params.get('moid') or module.params.get('name'))
+        module.fail_json(msg="Unable to gather disk facts for non-existing VM %s" % vm_id)
 
 
 if __name__ == '__main__':

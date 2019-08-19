@@ -18,6 +18,8 @@ def get_all_pkg_managers():
 
 class PkgMgr(with_metaclass(ABCMeta, object)):
 
+    warnings = []
+
     @abstractmethod
     def is_available(self):
         # This method is supposed to return True/False if the package manager is currently installed/usable

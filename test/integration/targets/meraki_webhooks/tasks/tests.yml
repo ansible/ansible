@@ -1,0 +1,273 @@
+# Test code for the Meraki Webhook module
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+
+  - name: Create test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      type: appliance
+
+  - name: Create webhook with check mode
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+      url: https://webhook.site/8eb5b76f-b167-4cb8-9fc4-42621b724244
+      shared_secret: shhhdonttellanyone
+    check_mode: yes
+    register: create_one_check
+
+  - debug:
+      var: create_one_check
+
+  - assert:
+      that:
+        - create_one_check is changed
+        - create_one_check.data is defined
+
+  - name: Create webhook
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+      url: https://webhook.site/8eb5b76f-b167-4cb8-9fc4-42621b724244
+      shared_secret: shhhdonttellanyone
+    register: create_one
+
+  - debug:
+      var: create_one
+
+  - assert:
+      that:
+        - create_one is changed
+        - create_one.data is defined
+
+  - set_fact:
+      webhook_id: '{{create_one.data.id}}'
+
+  - name: Query one webhook
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+    register: query_one
+
+  - debug:
+      var: query_one
+
+  - assert:
+      that:
+        - query_one.data is defined
+
+  - name: Query one webhook with id
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      webhook_id: '{{webhook_id}}'
+    register: query_one_id
+
+  - debug:
+      var: query_one_id
+
+  - assert:
+      that:
+        - query_one_id.data is defined
+
+  - name: Update webhook with check mode
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+      url: https://webhook.site/8eb5b76f-b167-4cb8-9fc4-42621b724244
+      shared_secret: shhhdonttellanyonehere
+    check_mode: yes
+    register: update_check
+
+  - assert:
+      that:
+        - update_check is changed
+        - update_check.data is defined
+
+  - name: Update webhook
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+      url: https://webhook.site/8eb5b76f-b167-4cb8-9fc4-42621b724244
+      shared_secret: shhhdonttellanyonehere
+    register: update
+
+  - debug:
+      var: update
+
+  - assert:
+      that:
+        - update is changed
+        - update.data is defined
+
+  - name: Update webhook with idempotency
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+      url: https://webhook.site/8eb5b76f-b167-4cb8-9fc4-42621b724244
+      shared_secret: shhhdonttellanyonehere
+    register: update_idempotent
+
+  - debug:
+      var: update_idempotent
+
+  - assert:
+      that:
+        - update_idempotent is not changed
+        - update_idempotent.data is defined
+
+  - name: Update webhook with id
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      webhook_id: '{{webhook_id}}'
+      name: Test_Hook
+      url: https://webhook.site/8eb5b76f-b167-4cb8-9fc4-42621b724244
+      shared_secret: shhhdonttellanyonehereid
+    register: update_id
+
+  - debug:
+      var: update_id
+
+  - assert:
+      that:
+        - update_id is changed
+        - update_id.data is defined
+
+  - name: Test webhook
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      test: test
+      url: https://webhook.site/8eb5b76f-b167-4cb8-9fc4-42621b724244
+    register: webhook_test
+
+  - debug:
+      var: webhook_test
+
+  - set_fact:
+      test_id: '{{webhook_test.data.id}}'
+
+  - name: Get webhook status
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      test: status
+      test_id: '{{test_id}}'
+    register: webhook_test_status
+
+  - debug:
+      var: webhook_test_status
+
+  - assert:
+      that:
+        - webhook_test_status.data is defined
+
+  - name: Query all webhooks
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+    register: query_all
+
+  - debug:
+      var: query_all
+
+  - name: Delete webhook invalid webhook
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook_Invalid
+    check_mode: yes
+    register: delete_invalid
+    ignore_errors: yes
+
+  - debug:
+      var: delete_invalid
+
+  - assert:
+      that:
+        - 'delete_invalid.msg == "There is no webhook with the name Test_Hook_Invalid"'
+
+  - name: Delete webhook in check mode
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+    check_mode: yes
+    register: delete_check
+
+  - debug:
+      var: delete_check
+
+  - assert:
+      that:
+        - delete_check is changed
+
+  - name: Delete webhook
+    meraki_webhook:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      name: Test_Hook
+    register: delete
+
+  - debug:
+      var: delete
+
+  - assert:
+      that:
+        - delete is changed
+
+  always:
+  #############################################################################
+  # Tear down starts here
+  #############################################################################
+  - name: Delete test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'

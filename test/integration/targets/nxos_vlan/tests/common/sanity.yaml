@@ -16,12 +16,19 @@
     when: platform is search('N5K|N7K')
 
   - name: "Enable feature vn segment"
-    nxos_config: 
+    nxos_config:
       commands:
         - feature vn-segment-vlan-based
       match: none
       provider: "{{ connection }}"
     when: platform is search('N9K')
+
+  - name: vlan teardown
+    nxos_vlan: &vlan_teardown
+      vlan_range: "2-200"
+      provider: "{{ connection }}"
+      state: absent
+    ignore_errors: yes
 
   - name: Ensure a range of VLANs are present on the switch
     nxos_vlan: &conf_vlan
@@ -127,7 +134,6 @@
   - assert: *false
     when: platform is search('N3K|N7K')
 
-# Uncomment this once the get_capabilities() work on nxapi as well
   - name: Change mode
     nxos_vlan: &mode1
       vlan_id: 50
@@ -219,15 +225,12 @@
       nxos_vlan: *remint
       ignore_errors: yes
 
-    - name: remove vlans
-      nxos_vlan:
-        vlan_range: "2-10,20,50,55-60,100-150"
-        provider: "{{ connection }}"
-        state: absent
+    - name: vlan teardown final
+      nxos_vlan: *vlan_teardown
       ignore_errors: yes
 
     - name: "Disable feature vn segement"
-      nxos_feature: 
+      nxos_feature:
         feature: vn-segment-vlan-based
         provider: "{{ connection }}"
         state: disabled

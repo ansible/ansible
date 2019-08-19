@@ -19,7 +19,7 @@ module: azure_rm_appserviceplan_facts
 
 version_added: "2.7"
 
-short_description: Get azure app service plan facts.
+short_description: Get azure app service plan facts
 
 description:
     - Get facts for a specific app service plan or all app service plans in a resource group, or all app service plan in current subscription.
@@ -39,7 +39,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu (@yungezz)"
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
@@ -49,7 +49,7 @@ EXAMPLES = '''
         name: myAppServicePlan
 
     - name: Get azure_rm_appserviceplan_facts for app service plan in resource group
-      azure_rm_webapp_facts:
+      azure_rm_appserviceplan_facts:
         resource_group: myResourceGroup
 
     - name: Get facts for app service plan with tags

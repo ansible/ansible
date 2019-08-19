@@ -236,7 +236,7 @@ CE_MERGE_SNMP_V3_GROUP_TAIL = """
           </snmpv3Group>
         </snmpv3Groups>
       </snmp>
-    </filter>
+    </config>
 """
 # create snmp v3 group
 CE_CREATE_SNMP_V3_GROUP_HEADER = """
@@ -251,7 +251,7 @@ CE_CREATE_SNMP_V3_GROUP_TAIL = """
           </snmpv3Group>
         </snmpv3Groups>
       </snmp>
-    </filter>
+    </config>
 """
 # delete snmp v3 group
 CE_DELETE_SNMP_V3_GROUP_HEADER = """
@@ -266,7 +266,7 @@ CE_DELETE_SNMP_V3_GROUP_TAIL = """
           </snmpv3Group>
         </snmpv3Groups>
       </snmp>
-    </filter>
+    </config>
 """
 
 
@@ -344,7 +344,7 @@ class SnmpCommunity(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                community_info = root.findall("data/snmp/communitys/community")
+                community_info = root.findall("snmp/communitys/community")
                 if community_info:
                     for tmp in community_info:
                         tmp_dict = dict()
@@ -355,35 +355,63 @@ class SnmpCommunity(object):
                         result["community_info"].append(tmp_dict)
 
                 if result["community_info"]:
+                    community_name_list = list()
                     for tmp in result["community_info"]:
                         if "communityName" in tmp.keys():
-                            need_cfg = True
+                            community_name_list.append(tmp["communityName"])
 
-                        if "accessRight" in tmp.keys():
-                            if state == "present":
-                                if tmp["accessRight"] != access_right:
-                                    need_cfg = True
+                    if community_name not in community_name_list:
+                        need_cfg = True
+                    else:
+                        need_cfg_bool = True
+
+                        for tmp in result["community_info"]:
+                            if tmp["communityName"] == community_name:
+
+                                cfg_bool_list = list()
+
+                                if access_right:
+                                    if "accessRight" in tmp.keys():
+                                        need_cfg_access = False
+                                        if tmp["accessRight"] != access_right:
+                                            need_cfg_access = True
+                                    else:
+                                        need_cfg_access = True
+
+                                    cfg_bool_list.append(need_cfg_access)
+
+                                if acl_number:
+                                    if "aclNumber" in tmp.keys():
+                                        need_cfg_acl = False
+                                        if tmp["aclNumber"] != acl_number:
+                                            need_cfg_acl = True
+                                    else:
+                                        need_cfg_acl = True
+
+                                    cfg_bool_list.append(need_cfg_acl)
+
+                                if community_mib_view:
+                                    if "mibViewName" in tmp.keys():
+                                        need_cfg_mib = False
+                                        if tmp["mibViewName"] != community_mib_view:
+                                            need_cfg_mib = True
+                                    else:
+                                        need_cfg_mib = True
+                                    cfg_bool_list.append(need_cfg_mib)
+
+                                if True not in cfg_bool_list:
+                                    need_cfg_bool = False
+
+                        if state == "present":
+                            if not need_cfg_bool:
+                                need_cfg = False
                             else:
-                                if tmp["accessRight"] == access_right:
-                                    need_cfg = True
-
-                        if acl_number:
-                            if "aclNumber" in tmp.keys():
-                                if state == "present":
-                                    if tmp["aclNumber"] != acl_number:
-                                        need_cfg = True
-                                else:
-                                    if tmp["aclNumber"] == acl_number:
-                                        need_cfg = True
-
-                        if community_mib_view:
-                            if "mibViewName" in tmp.keys():
-                                if state == "present":
-                                    if tmp["mibViewName"] != community_mib_view:
-                                        need_cfg = True
-                                else:
-                                    if tmp["mibViewName"] == community_mib_view:
-                                        need_cfg = True
+                                need_cfg = True
+                        else:
+                            if not need_cfg_bool:
+                                need_cfg = True
+                            else:
+                                need_cfg = False
 
         result["need_cfg"] = need_cfg
         return result
@@ -464,7 +492,7 @@ class SnmpCommunity(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                group_info = root.findall("data/snmp/snmpv3Groups/snmpv3Group")
+                group_info = root.findall("snmp/snmpv3Groups/snmpv3Group")
                 if group_info:
                     for tmp in group_info:
                         tmp_dict = dict()
@@ -476,58 +504,83 @@ class SnmpCommunity(object):
                         result["group_info"].append(tmp_dict)
 
                 if result["group_info"]:
+                    group_name_list = list()
+
                     for tmp in result["group_info"]:
                         if "groupName" in tmp.keys():
-                            if state == "present":
-                                if tmp["groupName"] != group_name:
-                                    need_cfg = True
+                            group_name_list.append(tmp["groupName"])
+                    if group_name not in group_name_list:
+                        if state == "present":
+                            need_cfg = True
+                        else:
+                            need_cfg = False
+                    else:
+                        need_cfg_bool = True
+                        for tmp in result["group_info"]:
+                            if tmp["groupName"] == group_name:
+
+                                cfg_bool_list = list()
+
+                                if security_level:
+                                    if "securityLevel" in tmp.keys():
+                                        need_cfg_group = False
+                                        if tmp["securityLevel"] != security_level:
+                                            need_cfg_group = True
+                                    else:
+                                        need_cfg_group = True
+
+                                    cfg_bool_list.append(need_cfg_group)
+
+                                if acl_number:
+                                    if "aclNumber" in tmp.keys():
+                                        need_cfg_acl = False
+                                        if tmp["aclNumber"] != acl_number:
+                                            need_cfg_acl = True
+                                    else:
+                                        need_cfg_acl = True
+
+                                    cfg_bool_list.append(need_cfg_acl)
+
+                                if read_view:
+                                    if "readViewName" in tmp.keys():
+                                        need_cfg_read = False
+                                        if tmp["readViewName"] != read_view:
+                                            need_cfg_read = True
+                                    else:
+                                        need_cfg_read = True
+                                    cfg_bool_list.append(need_cfg_read)
+
+                                if write_view:
+                                    if "writeViewName" in tmp.keys():
+                                        need_cfg_write = False
+                                        if tmp["writeViewName"] != write_view:
+                                            need_cfg_write = True
+                                    else:
+                                        need_cfg_write = True
+                                    cfg_bool_list.append(need_cfg_write)
+
+                                if notify_view:
+                                    if "notifyViewName" in tmp.keys():
+                                        need_cfg_notify = False
+                                        if tmp["notifyViewName"] != notify_view:
+                                            need_cfg_notify = True
+                                    else:
+                                        need_cfg_notify = True
+                                    cfg_bool_list.append(need_cfg_notify)
+
+                                if True not in cfg_bool_list:
+                                    need_cfg_bool = False
+
+                        if state == "present":
+                            if not need_cfg_bool:
+                                need_cfg = False
                             else:
-                                if tmp["groupName"] == group_name:
-                                    need_cfg = True
-
-                        if "securityLevel" in tmp.keys():
-                            if state == "present":
-                                if tmp["securityLevel"] != security_level:
-                                    need_cfg = True
+                                need_cfg = True
+                        else:
+                            if not need_cfg_bool:
+                                need_cfg = True
                             else:
-                                if tmp["securityLevel"] == security_level:
-                                    need_cfg = True
-
-                        if acl_number:
-                            if "aclNumber" in tmp.keys():
-                                if state == "present":
-                                    if tmp["aclNumber"] != acl_number:
-                                        need_cfg = True
-                                else:
-                                    if tmp["aclNumber"] == acl_number:
-                                        need_cfg = True
-
-                        if read_view:
-                            if "readViewName" in tmp.keys():
-                                if state == "present":
-                                    if tmp["readViewName"] != read_view:
-                                        need_cfg = True
-                                else:
-                                    if tmp["readViewName"] == read_view:
-                                        need_cfg = True
-
-                        if write_view:
-                            if "writeViewName" in tmp.keys():
-                                if state == "present":
-                                    if tmp["writeViewName"] != write_view:
-                                        need_cfg = True
-                                else:
-                                    if tmp["writeViewName"] == write_view:
-                                        need_cfg = True
-
-                        if notify_view:
-                            if "notifyViewName" in tmp.keys():
-                                if state == "present":
-                                    if tmp["notifyViewName"] != notify_view:
-                                        need_cfg = True
-                                else:
-                                    if tmp["notifyViewName"] == notify_view:
-                                        need_cfg = True
+                                need_cfg = False
 
         result["need_cfg"] = need_cfg
         return result
@@ -892,16 +945,17 @@ def main():
     end_tmp = dict()
     for item in snmp_community_rst:
         if item != "need_cfg":
-            exist_tmp[item] = snmp_community_rst[item]
+            end_tmp[item] = snmp_community_rst[item]
+            end_tmp[item] = snmp_community_rst[item]
     if end_tmp:
         end_state["snmp community"] = end_tmp
-    # state exist snmp v3 group config
+    # state end snmp v3 group config
     snmp_v3_group_rst = snmp_community_obj.check_snmp_v3_group_args(
         module=module)
     end_tmp = dict()
     for item in snmp_v3_group_rst:
         if item != "need_cfg":
-            exist_tmp[item] = snmp_v3_group_rst[item]
+            end_tmp[item] = snmp_v3_group_rst[item]
     if end_tmp:
         end_state["snmp v3 group"] = end_tmp
 

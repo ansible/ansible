@@ -1,0 +1,2 @@
+bugfixes:
+  - combine filter - Validate that undefined variables aren't used (https://github.com/ansible/ansible/issues/55810).

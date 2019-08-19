@@ -93,7 +93,8 @@ options:
       - Additionally, if a checksum is passed to this parameter, and the file exist under
         the C(dest) location, the I(destination_checksum) would be calculated, and if
         checksum equals I(destination_checksum), the file download would be skipped
-        (unless C(force) is true).
+        (unless C(force) is true). If the checksum does not equal I(destination_checksum),
+        the destination file is deleted.
     type: str
     default: ''
     version_added: "2.0"
@@ -222,7 +223,7 @@ EXAMPLES = r'''
     dest: /tmp/afilecopy.txt
 
 - name: < Fetch file that requires authentication.
-        username/password only availabe since 2.8, in older versions you ned to use url_username/url_password
+        username/password only availabe since 2.8, in older versions you need to use url_username/url_password
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf

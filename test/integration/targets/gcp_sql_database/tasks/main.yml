@@ -52,9 +52,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'sql#database'"
 - name: verify that database was created
-  gcp_sql_database_facts:
+  gcp_sql_database_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -65,7 +64,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "\"{{resource_name}}\" in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "\"{{resource_name}}\" in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a database that already exists
   gcp_sql_database:
@@ -81,7 +80,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'sql#database'"
 #----------------------------------------------------------
 - name: delete a database
   gcp_sql_database:
@@ -97,9 +95,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that database was deleted
-  gcp_sql_database_facts:
+  gcp_sql_database_info:
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -110,7 +107,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "\"{{resource_name}}\" not in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "\"{{resource_name}}\" not in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a database that does not exist
   gcp_sql_database:
@@ -126,7 +123,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

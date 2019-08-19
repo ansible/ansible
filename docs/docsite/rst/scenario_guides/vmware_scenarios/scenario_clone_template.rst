@@ -73,7 +73,7 @@ Caveats
 
 - Hosts in the ESXi cluster must have access to the datastore that the template resides on.
 - Multiple templates with the same name will cause module failures.
-- In order to utilize Guest Customization, VMWare Tools must be installed on the template. For Linux, the ``open-vm-tools`` package is recommended, and it requires that ``Perl`` be installed.
+- In order to utilize Guest Customization, VMware Tools must be installed on the template. For Linux, the ``open-vm-tools`` package is recommended, and it requires that ``Perl`` be installed.
 
 
 Example Description

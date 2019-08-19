@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -61,14 +63,14 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   proxy_header:
     description:
     - Specifies the type of proxy header to append before sending data to the backend,
       either NONE or PROXY_V1. The default is NONE.
+    - 'Some valid choices include: "NONE", "PROXY_V1"'
     required: false
-    choices:
-    - NONE
-    - PROXY_V1
+    type: str
   service:
     description:
     - A reference to the BackendService resource.
@@ -78,6 +80,7 @@ options:
       name-of-resource` to a gcp_compute_backend_service task and then set this service
       field to "{{ name-of-resource }}"'
     required: true
+    type: dict
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/targetTcpProxies)'
@@ -116,7 +119,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-targettcpproxy
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     protocol: TCP
@@ -126,7 +129,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a target tcp proxy
+- name: create a target TCP proxy
   gcp_compute_target_tcp_proxy:
     name: test_object
     proxy_header: PROXY_V1
@@ -197,7 +200,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
+            proxy_header=dict(type='str'),
             service=dict(required=True, type='dict'),
         )
     )

@@ -22,11 +22,6 @@ description:
 - Allows for creation, management, and visibility into static routes within Meraki.
 
 options:
-    auth_key:
-        description:
-        - Authentication key provided by the dashboard.
-        - Required if environmental variable MERAKI_KEY is not set.
-        type: str
     state:
         description:
         - Create or modify an organization.
@@ -40,14 +35,6 @@ options:
     net_id:
         description:
         - ID number of a network.
-        type: str
-    org_name:
-        description:
-        - Name of organization associated to a network.
-        type: str
-    org_id:
-        description:
-        - ID of organization associated to a network.
         type: str
     name:
         description:
@@ -328,9 +315,9 @@ def main():
     org_id = meraki.params['org_id']
     if not org_id:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    nets = meraki.get_nets(org_id=org_id)
     net_id = meraki.params['net_id']
     if net_id is None:
+        nets = meraki.get_nets(org_id=org_id)
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
 
     if meraki.params['state'] == 'query':
@@ -363,6 +350,8 @@ def main():
                 path = meraki.construct_path('update', net_id=net_id, custom={'route_id': meraki.params['route_id']})
                 meraki.result['data'] = meraki.request(path, method="PUT", payload=json.dumps(payload))
                 meraki.result['changed'] = True
+            else:
+                meraki.result['data'] = existing_route
         else:
             if module.check_mode:
                 meraki.result['data'] = payload

@@ -62,7 +62,7 @@ options:
     curve:
         description:
             - Note that not all curves are supported by all versions of C(cryptography).
-            - For maximal interoperability, C(secp384r1) or C(secp256k1) should be used.
+            - For maximal interoperability, C(secp384r1) or C(secp256r1) should be used.
             - We use the curve names as defined in the
               L(IANA registry for TLS,https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8).
         type: str
@@ -71,6 +71,7 @@ options:
             - secp521r1
             - secp224r1
             - secp192r1
+            - secp256r1
             - secp256k1
             - brainpoolP256r1
             - brainpoolP384r1
@@ -103,7 +104,9 @@ options:
         version_added: "2.4"
     cipher:
         description:
-            - The cipher to encrypt the private key. (cipher can be found by running `openssl list-cipher-algorithms`)
+            - The cipher to encrypt the private key. (Valid values can be found by
+              running `openssl list -cipher-algorithms` or `openssl list-cipher-algorithms`,
+              depending on your OpenSSL version.)
             - When using the C(cryptography) backend, use C(auto).
         type: str
         version_added: "2.4"
@@ -176,7 +179,7 @@ curve:
     description: Elliptic curve used to generate the TLS/SSL private key.
     returned: changed or success, and I(type) is C(ECC)
     type: str
-    sample: secp256k1
+    sample: secp256r1
 filename:
     description: Path to the generated TLS/SSL private key file.
     returned: changed or success
@@ -267,7 +270,6 @@ else:
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.six import string_types
 
 
 class PrivateKeyError(crypto_utils.OpenSSLObjectError):
@@ -452,6 +454,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         self._add_curve('secp521r1', 'SECP521R1')
         self._add_curve('secp224r1', 'SECP224R1')
         self._add_curve('secp192r1', 'SECP192R1')
+        self._add_curve('secp256r1', 'SECP256R1')
         self._add_curve('secp256k1', 'SECP256K1')
         self._add_curve('brainpoolP256r1', 'BrainpoolP256R1', deprecated=True)
         self._add_curve('brainpoolP384r1', 'BrainpoolP384R1', deprecated=True)
@@ -484,7 +487,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
             self.module.fail_json(msg='Your cryptography version does not support Ed448')
 
     def _generate_private_key_data(self):
-        format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
+        export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
         try:
             if self.type == 'RSA':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
@@ -499,16 +502,16 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 )
             if CRYPTOGRAPHY_HAS_X25519_FULL and self.type == 'X25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey.generate()
-                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+                export_format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if self.type == 'ECC' and self.curve in self.curves:
                 if self.curves[self.curve]['deprecated']:
                     self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.curve))
@@ -516,7 +519,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
                     curve=self.curves[self.curve]['create'](self.size),
                     backend=self.cryptography_backend
                 )
-        except cryptography.exceptions.UnsupportedAlgorithm as e:
+        except cryptography.exceptions.UnsupportedAlgorithm as dummy:
             self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
         # Select key encryption
@@ -530,7 +533,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         # Serialize key
         return self.privatekey.private_bytes(
             encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
-            format=format,
+            format=export_format,
             encryption_algorithm=encryption_algorithm
         )
 
@@ -611,8 +614,8 @@ def main():
                 'DSA', 'ECC', 'Ed25519', 'Ed448', 'RSA', 'X25519', 'X448'
             ]),
             curve=dict(type='str', choices=[
-                'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256k1',
-                'brainpoolP256r1', 'brainpoolP384r1', 'brainpoolP512r1',
+                'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256r1',
+                'secp256k1', 'brainpoolP256r1', 'brainpoolP384r1', 'brainpoolP512r1',
                 'sect571k1', 'sect409k1', 'sect283k1', 'sect233k1', 'sect163k1',
                 'sect571r1', 'sect409r1', 'sect283r1', 'sect233r1', 'sect163r2',
             ]),
@@ -669,11 +672,13 @@ def main():
     try:
         if backend == 'pyopenssl':
             if not PYOPENSSL_FOUND:
-                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                 exception=PYOPENSSL_IMP_ERR)
             private_key = PrivateKeyPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:
-                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                 exception=CRYPTOGRAPHY_IMP_ERR)
             private_key = PrivateKeyCryptography(module)
 
         if private_key.state == 'present':

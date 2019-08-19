@@ -58,22 +58,50 @@ options:
   pkl_dest:
     description:
       - Destination (remote) IP address used for peer keepalive link
+      - pkl_dest is required whenever pkl options are used.
   pkl_vrf:
     description:
       - VRF used for peer keepalive link
+      - The VRF must exist on the device before using pkl_vrf.
+      - "(Note) 'default' is an overloaded term: Default vrf context for pkl_vrf is 'management'; 'pkl_vrf: default' refers to the literal 'default' rib."
     default: management
   peer_gw:
     description:
       - Enables/Disables peer gateway
     type: bool
+  # TBD: no support for peer_gw_exclude_gw
+  # peer_gw_exclude_gw:
+  #   description:
+  #     - Range of VLANs to be excluded from peer-gateway
+  #   type: str
   auto_recovery:
     description:
-      - Enables/Disables auto recovery
+      - Enables/Disables auto recovery on platforms that support disable
+      - timers are not modifiable with this attribute
+      - mutually exclusive with auto_recovery_reload_delay
     type: bool
+  auto_recovery_reload_delay:
+    description:
+      - Manages auto-recovery reload-delay timer in seconds
+      - mutually exclusive with auto_recovery
+    type: str
+    version_added: "2.9"
   delay_restore:
     description:
       - manages delay restore command and config value in seconds
     type: str
+  delay_restore_interface_vlan:
+    description:
+      - manages delay restore interface-vlan command and config value in seconds
+      - not supported on all platforms
+    type: str
+    version_added: "2.9"
+  delay_restore_orphan_port:
+    description:
+      - manages delay restore orphan-port command and config value in seconds
+      - not supported on all platforms
+    type: str
+    version_added: "2.9"
   state:
     description:
       - Manages desired state of the resource
@@ -135,15 +163,21 @@ CONFIG_ARGS = {
     'role_priority': 'role priority {role_priority}',
     'system_priority': 'system-priority {system_priority}',
     'delay_restore': 'delay restore {delay_restore}',
+    'delay_restore_interface_vlan': 'delay restore interface-vlan {delay_restore_interface_vlan}',
+    'delay_restore_orphan_port': 'delay restore orphan-port {delay_restore_orphan_port}',
     'peer_gw': '{peer_gw} peer-gateway',
     'auto_recovery': '{auto_recovery} auto-recovery',
+    'auto_recovery_reload_delay': 'auto-recovery reload-delay {auto_recovery_reload_delay}',
 }
 
 PARAM_TO_DEFAULT_KEYMAP = {
     'delay_restore': '60',
+    'delay_restore_interface_vlan': '10',
+    'delay_restore_orphan_port': '0',
     'role_priority': '32667',
     'system_priority': '32667',
     'peer_gw': False,
+    'auto_recovery_reload_delay': 240,
 }
 
 
@@ -201,7 +235,7 @@ def get_vpc(module):
 
     vpc = {}
     if domain != 'not configured':
-        run = get_config(module, flags=['vpc'])
+        run = get_config(module, flags=['vpc all'])
         if run:
             vpc['domain'] = domain
             for key in PARAM_TO_DEFAULT_KEYMAP.keys():
@@ -215,28 +249,60 @@ def get_vpc(module):
                 if 'system-priority' in each:
                     line = each.split()
                     vpc['system_priority'] = line[-1]
-                if 'delay restore' in each:
+                if re.search(r'delay restore \d+', each):
                     line = each.split()
                     vpc['delay_restore'] = line[-1]
-                if 'no auto-recovery' in each:
-                    vpc['auto_recovery'] = False
-                elif 'auto-recovery' in each:
-                    vpc['auto_recovery'] = True
-                if 'peer-gateway' in each:
-                    vpc['peer_gw'] = True
-                if 'peer-keepalive destination' in each:
+                if 'delay restore interface-vlan' in each:
                     line = each.split()
-                    vpc['pkl_dest'] = line[2]
-                    vpc['pkl_vrf'] = 'management'
-                    if 'source' in each:
-                        vpc['pkl_src'] = line[4]
-                        if 'vrf' in each:
-                            vpc['pkl_vrf'] = line[6]
-                    else:
-                        if 'vrf' in each:
-                            vpc['pkl_vrf'] = line[4]
-
+                    vpc['delay_restore_interface_vlan'] = line[-1]
+                if 'delay restore orphan-port' in each:
+                    line = each.split()
+                    vpc['delay_restore_orphan_port'] = line[-1]
+                if 'auto-recovery' in each:
+                    vpc['auto_recovery'] = False if 'no ' in each else True
+                    line = each.split()
+                    vpc['auto_recovery_reload_delay'] = line[-1]
+                if 'peer-gateway' in each:
+                    vpc['peer_gw'] = False if 'no ' in each else True
+                if 'peer-keepalive destination' in each:
+                    # destination is reqd; src & vrf are optional
+                    m = re.search(r'destination (?P<pkl_dest>[\d.]+)'
+                                  r'(?:.* source (?P<pkl_src>[\d.]+))*'
+                                  r'(?:.* vrf (?P<pkl_vrf>\S+))*',
+                                  each)
+                    if m:
+                        for pkl in m.groupdict().keys():
+                            if m.group(pkl):
+                                vpc[pkl] = m.group(pkl)
     return vpc
+
+
+def pkl_dependencies(module, delta, existing):
+    """peer-keepalive dependency checking.
+    1. 'destination' is required with all pkl configs.
+    2. If delta has optional pkl keywords present, then all optional pkl
+       keywords in existing must be added to delta, otherwise the device cli
+       will remove those values when the new config string is issued.
+    3. The desired behavior for this set of properties is to merge changes;
+       therefore if an optional pkl property exists on the device but not
+       in the playbook, then that existing property should be retained.
+    Example:
+      CLI:       peer-keepalive dest 10.1.1.1 source 10.1.1.2 vrf orange
+      Playbook:  {pkl_dest: 10.1.1.1, pkl_vrf: blue}
+      Result:    peer-keepalive dest 10.1.1.1 source 10.1.1.2 vrf blue
+    """
+    pkl_existing = [i for i in existing.keys() if i.startswith('pkl')]
+    for pkl in pkl_existing:
+        param = module.params.get(pkl)
+        if not delta.get(pkl):
+            if param and param == existing[pkl]:
+                # delta is missing this param because it's idempotent;
+                # however another pkl command has changed; therefore
+                # explicitly add it to delta so that the cli retains it.
+                delta[pkl] = existing[pkl]
+            elif param is None and existing[pkl]:
+                # retain existing pkl commands even if not in playbook
+                delta[pkl] = existing[pkl]
 
 
 def get_commands_to_config_vpc(module, vpc, domain, existing):
@@ -249,7 +315,7 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         pkl_command = 'peer-keepalive destination {pkl_dest}'.format(**vpc)
         if 'pkl_src' in vpc:
             pkl_command += ' source {pkl_src}'.format(**vpc)
-        if 'pkl_vrf' in vpc and vpc['pkl_vrf'] != 'management':
+        if 'pkl_vrf' in vpc:
             pkl_command += ' vrf {pkl_vrf}'.format(**vpc)
         commands.append(pkl_command)
 
@@ -288,13 +354,18 @@ def main():
         pkl_vrf=dict(required=False),
         peer_gw=dict(required=False, type='bool'),
         auto_recovery=dict(required=False, type='bool'),
+        auto_recovery_reload_delay=dict(required=False, type='str'),
         delay_restore=dict(required=False, type='str'),
+        delay_restore_interface_vlan=dict(required=False, type='str'),
+        delay_restore_orphan_port=dict(required=False, type='str'),
         state=dict(choices=['absent', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
+    mutually_exclusive = [('auto_recovery', 'auto_recovery_reload_delay')]
     module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -309,14 +380,21 @@ def main():
     pkl_vrf = module.params['pkl_vrf']
     peer_gw = module.params['peer_gw']
     auto_recovery = module.params['auto_recovery']
+    auto_recovery_reload_delay = module.params['auto_recovery_reload_delay']
     delay_restore = module.params['delay_restore']
+    delay_restore_interface_vlan = module.params['delay_restore_interface_vlan']
+    delay_restore_orphan_port = module.params['delay_restore_orphan_port']
     state = module.params['state']
 
     args = dict(domain=domain, role_priority=role_priority,
                 system_priority=system_priority, pkl_src=pkl_src,
                 pkl_dest=pkl_dest, pkl_vrf=pkl_vrf, peer_gw=peer_gw,
                 auto_recovery=auto_recovery,
-                delay_restore=delay_restore)
+                auto_recovery_reload_delay=auto_recovery_reload_delay,
+                delay_restore=delay_restore,
+                delay_restore_interface_vlan=delay_restore_interface_vlan,
+                delay_restore_orphan_port=delay_restore_orphan_port,
+                )
 
     if not pkl_dest:
         if pkl_src:
@@ -341,11 +419,14 @@ def main():
     if state == 'present':
         delta = {}
         for key, value in proposed.items():
-            if str(value).lower() == 'default':
+            if str(value).lower() == 'default' and key != 'pkl_vrf':
+                # 'default' is a reserved word for vrf
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)
             if existing.get(key) != value:
                 delta[key] = value
+
         if delta:
+            pkl_dependencies(module, delta, existing)
             command = get_commands_to_config_vpc(module, delta, domain, existing)
             commands.append(command)
     elif state == 'absent':

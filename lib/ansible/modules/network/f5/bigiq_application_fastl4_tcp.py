@@ -53,6 +53,7 @@ options:
   inbound_virtual:
     description:
       - Settings to configure the virtual which will receive the inbound connection.
+    type: dict
     suboptions:
       address:
         description:
@@ -72,8 +73,8 @@ options:
           - The port that the virtual listens for connections on.
           - When creating a new application, if this parameter is not specified, the
             default value of C(8080) will be used.
+        type: str
         default: 8080
-    type: dict
   service_environment:
     description:
       - Specifies the name of service environment that the application will be

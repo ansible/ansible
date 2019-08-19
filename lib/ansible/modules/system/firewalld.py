@@ -175,7 +175,7 @@ EXAMPLES = r'''
 
 - name: Redirect port 443 to 8443 with Rich Rule
   firewalld:
-    rich_rule: rule forward-port port=443 protocol=tcp to-port=8443
+    rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
     zone: public
     permanent: yes
     immediate: yes
@@ -706,10 +706,12 @@ def main():
         modification_count += 1
     if masquerade is not None:
         modification_count += 1
+    if source is not None:
+        modification_count += 1
 
     if modification_count > 1:
         module.fail_json(
-            msg='can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, or interface at once'
+            msg='can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, interface or source at once'
         )
     elif modification_count > 0 and desired_state in ['absent', 'present']:
         module.fail_json(

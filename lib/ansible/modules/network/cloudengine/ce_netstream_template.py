@@ -138,8 +138,41 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import load_config
+from ansible.module_utils.network.cloudengine.ce import get_connection, rm_config_prefix
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
+
+
+def get_config(module, flags):
+
+    """Retrieves the current config from the device or cache
+    """
+    flags = [] if flags is None else flags
+    if isinstance(flags, str):
+        flags = [flags]
+    elif not isinstance(flags, list):
+        flags = []
+
+    cmd = 'display current-configuration '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+    conn = get_connection(module)
+    rc, out, err = conn.exec_command(cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+    cfg = str(out).strip()
+    # remove default configuration prefix '~'
+    for flag in flags:
+        if "include-default" in flag:
+            cfg = rm_config_prefix(cfg)
+            break
+    if cfg.startswith('display'):
+        lines = cfg.split('\n')
+        if len(lines) > 1:
+            return '\n'.join(lines[1:])
+        else:
+            return ''
+    return cfg
 
 
 class NetstreamTemplate(object):
@@ -291,6 +324,9 @@ class NetstreamTemplate(object):
                 tmp_value = re.findall(r'collect interface (.*)', self.netstream_cfg)
                 if tmp_value:
                     self.end_state["collect_interface"] = tmp_value
+        if self.end_state == self.existing:
+            self.changed = False
+            self.updates_cmd = list()
 
     def present_netstream(self):
         """ Present netstream configuration """
@@ -309,7 +345,7 @@ class NetstreamTemplate(object):
             need_create_record = True
 
         if self.description:
-            cmd = "description %s" % self.description
+            cmd = "description %s" % self.description.strip()
             if not self.netstream_cfg or cmd not in self.netstream_cfg:
                 cmds.append(cmd)
                 self.updates_cmd.append(cmd)

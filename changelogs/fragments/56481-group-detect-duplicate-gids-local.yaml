@@ -1,0 +1,2 @@
+bugfixes:
+  - group - properly detect duplicate GIDs when local=yes (https://github.com/ansible/ansible/issues/56481)

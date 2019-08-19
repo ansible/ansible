@@ -36,7 +36,8 @@ options:
   content:
     description:
     - When used instead of C(src), sets the contents of a file directly to the specified value.
-    - For advanced formatting or if C(content) contains a variable, use the C(template) module.
+    - Works only when C(dest) is a file. Creates the file if it does not exist.
+    - For advanced formatting or if C(content) contains a variable, use the M(template) module.
     type: str
     version_added: '1.1'
   dest:
@@ -167,14 +168,14 @@ EXAMPLES = r'''
   copy:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: /usr/sbin/visudo -cf %s
+    validate: /usr/sbin/visudo -csf %s
 
 - name: Copy a "sudoers" file on the remote machine for editing
   copy:
     src: /etc/sudoers
     dest: /etc/sudoers.edit
     remote_src: yes
-    validate: /usr/sbin/visudo -cf %s
+    validate: /usr/sbin/visudo -csf %s
 
 - name: Copy using inline content
   copy:

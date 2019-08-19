@@ -1,7 +1,6 @@
 # Copyright (c) 2018 Antoine Catton
 # MIT License (see licenses/MIT-license.txt or https://opensource.org/licenses/MIT)
 import copy
-import json
 
 import pytest
 

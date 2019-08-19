@@ -6,8 +6,6 @@ import json
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from units.compat import mock
 from units.compat import unittest
-from units.compat.builtins import BUILTINS
-from units.compat.mock import mock_open, patch
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError

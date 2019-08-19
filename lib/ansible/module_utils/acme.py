@@ -30,6 +30,7 @@ import traceback
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils.six.moves.urllib.parse import unquote
 
 try:
     import cryptography
@@ -230,13 +231,13 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
         if asn1_oid_curve == 'prime256v1' or nist_curve == 'p-256':
             bits = 256
             alg = 'ES256'
-            hash = 'sha256'
+            hashalg = 'sha256'
             point_size = 32
             curve = 'P-256'
         elif asn1_oid_curve == 'secp384r1' or nist_curve == 'p-384':
             bits = 384
             alg = 'ES384'
-            hash = 'sha384'
+            hashalg = 'sha384'
             point_size = 48
             curve = 'P-384'
         elif asn1_oid_curve == 'secp521r1' or nist_curve == 'p-521':
@@ -244,13 +245,13 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
             # https://github.com/letsencrypt/boulder/issues/2217
             bits = 521
             alg = 'ES512'
-            hash = 'sha512'
+            hashalg = 'sha512'
             point_size = 66
             curve = 'P-521'
         else:
             return 'unknown elliptic curve: %s / %s' % (asn1_oid_curve, nist_curve), {}
-        bytes = (bits + 7) // 8
-        if len(pub_hex) != 2 * bytes:
+        num_bytes = (bits + 7) // 8
+        if len(pub_hex) != 2 * num_bytes:
             return 'bad elliptic curve point (%s / %s)' % (asn1_oid_curve, nist_curve), {}
         return None, {
             'key_file': key_file,
@@ -259,10 +260,10 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
             'jwk': {
                 "kty": "EC",
                 "crv": curve,
-                "x": nopad_b64(pub_hex[:bytes]),
-                "y": nopad_b64(pub_hex[bytes:]),
+                "x": nopad_b64(pub_hex[:num_bytes]),
+                "y": nopad_b64(pub_hex[num_bytes:]),
             },
-            'hash': hash,
+            'hash': hashalg,
             'point_size': point_size,
         }
 
@@ -362,13 +363,13 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
         if pk.curve.name == 'secp256r1':
             bits = 256
             alg = 'ES256'
-            hash = 'sha256'
+            hashalg = 'sha256'
             point_size = 32
             curve = 'P-256'
         elif pk.curve.name == 'secp384r1':
             bits = 384
             alg = 'ES384'
-            hash = 'sha384'
+            hashalg = 'sha384'
             point_size = 48
             curve = 'P-384'
         elif pk.curve.name == 'secp521r1':
@@ -376,12 +377,12 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             # https://github.com/letsencrypt/boulder/issues/2217
             bits = 521
             alg = 'ES512'
-            hash = 'sha512'
+            hashalg = 'sha512'
             point_size = 66
             curve = 'P-521'
         else:
             return 'unknown elliptic curve: {0}'.format(pk.curve.name), {}
-        bytes = (bits + 7) // 8
+        num_bytes = (bits + 7) // 8
         return None, {
             'key_obj': key,
             'type': 'ec',
@@ -389,10 +390,10 @@ def _parse_key_cryptography(module, key_file=None, key_content=None):
             'jwk': {
                 "kty": "EC",
                 "crv": curve,
-                "x": nopad_b64(_convert_int_to_bytes(bytes, pk.x)),
-                "y": nopad_b64(_convert_int_to_bytes(bytes, pk.y)),
+                "x": nopad_b64(_convert_int_to_bytes(num_bytes, pk.x)),
+                "y": nopad_b64(_convert_int_to_bytes(num_bytes, pk.y)),
             },
-            'hash': hash,
+            'hash': hashalg,
             'point_size': point_size,
         }
     else:
@@ -403,16 +404,16 @@ def _sign_request_cryptography(module, payload64, protected64, key_data):
     sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
     if isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
         padding = cryptography.hazmat.primitives.asymmetric.padding.PKCS1v15()
-        hash = cryptography.hazmat.primitives.hashes.SHA256()
-        signature = key_data['key_obj'].sign(sign_payload, padding, hash)
+        hashalg = cryptography.hazmat.primitives.hashes.SHA256
+        signature = key_data['key_obj'].sign(sign_payload, padding, hashalg())
     elif isinstance(key_data['key_obj'], cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
         if key_data['hash'] == 'sha256':
-            hash = cryptography.hazmat.primitives.hashes.SHA256
+            hashalg = cryptography.hazmat.primitives.hashes.SHA256
         elif key_data['hash'] == 'sha384':
-            hash = cryptography.hazmat.primitives.hashes.SHA384
+            hashalg = cryptography.hazmat.primitives.hashes.SHA384
         elif key_data['hash'] == 'sha512':
-            hash = cryptography.hazmat.primitives.hashes.SHA512
-        ecdsa = cryptography.hazmat.primitives.asymmetric.ec.ECDSA(hash())
+            hashalg = cryptography.hazmat.primitives.hashes.SHA512
+        ecdsa = cryptography.hazmat.primitives.asymmetric.ec.ECDSA(hashalg())
         r, s = cryptography.hazmat.primitives.asymmetric.utils.decode_dss_signature(key_data['key_obj'].sign(sign_payload, ecdsa))
         rr = _pad_hex(r, 2 * key_data['point_size'])
         ss = _pad_hex(s, 2 * key_data['point_size'])
@@ -930,3 +931,13 @@ def set_crypto_backend(module):
         module.debug('Using cryptography backend (library version {0})'.format(CRYPTOGRAPHY_VERSION))
     else:
         module.debug('Using OpenSSL binary backend')
+
+
+def process_links(info, callback):
+    '''
+    Process link header, calls callback for every link header with the URL and relation as options.
+    '''
+    if 'link' in info:
+        link = info['link']
+        for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
+            callback(unquote(url), relation)

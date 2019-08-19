@@ -1,4 +1,4 @@
 Windows Support
 ===============
 
-This page has been split up and moved to the new section :doc:`windows`.
+This page has been split up and moved to the new section :ref:`windows`.

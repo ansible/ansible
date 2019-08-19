@@ -78,7 +78,7 @@ EXAMPLES = """
     msg: "{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}"
 
 - name: Create an alphanumeric password
-  debug: msg="{{ lookup('passwordstore', 'example/test create=true nosymbols=true) }}"
+  debug: msg="{{ lookup('passwordstore', 'example/test create=true nosymbols=true') }}"
 
 - name: Return the value for user in the KV pair user, username
   debug:

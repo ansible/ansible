@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_roledefinition
 version_added: "2.8"
-short_description: Manage Azure Role Definition.
+short_description: Manage Azure Role Definition
 description:
     - Create, update and delete instance of Azure Role Definition.
 
@@ -48,26 +48,28 @@ options:
                     - List of denied data actions.
                 type: list
     assignable_scopes:
-        description: List of assignable scope of this definition.
+        description:
+            - List of assignable scopes of this definition.
     scope:
-        description: The scope of the role definition.
+        description:
+            - The scope of the role definition.
     description:
         description:
             - The role definition description.
     state:
-      description:
-        - Assert the state of the role definition.
-        - Use 'present' to create or update a role definition and 'absent' to delete it.
-      default: present
-      choices:
-        - absent
-        - present
+        description:
+            - Assert the state of the role definition.
+            - Use C(present) to create or update a role definition; use C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -87,7 +89,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Id of current role definition.
+    description:
+        - ID of current role definition.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/roleDefinitionId"
@@ -274,7 +277,7 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
 
     # build scope
     def build_scope(self):
-        subscription_scope = '/subscription/' + self.subscription_id
+        subscription_scope = '/subscriptions/' + self.subscription_id
         if self.scope is None:
             return subscription_scope
         return self.scope

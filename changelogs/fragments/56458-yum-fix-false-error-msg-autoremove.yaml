@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - Fix false error message about autoremove not being supported (https://github.com/ansible/ansible/issues/56458)

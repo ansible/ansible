@@ -47,12 +47,14 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Resource name of the repository, of the form projects/{{project}}/repos/{{repo}}.
     - The repo name may contain slashes. eg, projects/myproject/repos/name/with/slash
       .
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/source-repositories/docs/reference/rest/v1/projects.repos)'
@@ -62,7 +64,7 @@ notes:
 EXAMPLES = '''
 - name: create a repository
   gcp_sourcerepo_repository:
-    name: projects/test_project/repos/test_object
+    name: test_object
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
@@ -95,6 +97,7 @@ size:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
 import json
+import re
 
 ################################################################################
 # Main
@@ -142,7 +145,8 @@ def create(module, link):
 
 
 def update(module, link):
-    module.fail_json(msg="Repository cannot be edited")
+    delete(module, self_link(module))
+    create(module, collection(module))
 
 
 def delete(module, link):
@@ -151,7 +155,7 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {u'name': module.params.get('name')}
+    request = {u'name': name_pattern(module.params.get('name'), module)}
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -166,7 +170,7 @@ def fetch_resource(module, link, allow_not_found=True):
 
 
 def self_link(module):
-    return "https://sourcerepo.googleapis.com/v1/{name}".format(**module.params)
+    return "https://sourcerepo.googleapis.com/v1/projects/{project}/repos/{name}".format(**module.params)
 
 
 def collection(module):
@@ -215,7 +219,19 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'name': module.params.get('name'), u'url': response.get(u'url'), u'size': response.get(u'size')}
+    return {u'name': name_pattern(module.params.get('name'), module), u'url': response.get(u'url'), u'size': response.get(u'size')}
+
+
+def name_pattern(name, module):
+    if name is None:
+        return
+
+    regex = r"projects/.*/repos/.*"
+
+    if not re.match(regex, name):
+        name = "projects/{project}/repos/{name}".format(**module.params)
+
+    return name
 
 
 if __name__ == '__main__':

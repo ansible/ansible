@@ -61,9 +61,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#forwardingRule'"
 - name: verify that forwarding_rule was created
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -76,7 +75,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a forwarding rule that already exists
   gcp_compute_forwarding_rule:
@@ -95,7 +94,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#forwardingRule'"
 #----------------------------------------------------------
 - name: delete a forwarding rule
   gcp_compute_forwarding_rule:
@@ -114,9 +112,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that forwarding_rule was deleted
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
       filters:
          - name = {{ resource_name }}
       region: us-west1
@@ -129,7 +126,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a forwarding rule that does not exist
   gcp_compute_forwarding_rule:
@@ -148,7 +145,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

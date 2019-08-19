@@ -4,6 +4,9 @@
 
 # FILE LOOKUP
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: make a new file to read
   copy: dest={{output_dir}}/foo.txt mode=0644 content="bar"
 
@@ -188,23 +191,24 @@
 
 - name: set variable that clashes
   set_fact:
-      LOGNAME: foobar
+      PATH: foobar
 
 
-- name: get LOGNAME environment var value
-  shell: echo {{ '$LOGNAME' }}
-  register: known_var_value
-
-- name: do the lookup for env LOGNAME
+- name: get PATH environment var value
   set_fact:
-    test_val: "{{ lookup('env', 'LOGNAME') }}"
+    known_var_value: "{{ lookup('pipe', 'echo $PATH') }}"
+
+- name: do the lookup for env PATH
+  set_fact:
+    test_val: "{{ lookup('env', 'PATH') }}"
 
 - debug: var=test_val
 
 - name: compare values
   assert:
     that:
-        - "test_val == known_var_value.stdout"
+        - "test_val != ''"
+        - "test_val == known_var_value"
 
 
 - name: set with_dict
@@ -231,7 +235,7 @@
 - assert:
     that:
       - "url_invalid_cert.failed"
-      - "'Error validating the server' in url_invalid_cert.msg or ( url_invalid_cert.msg is search('hostname .* doesn.t match .*'))"
+      - "'Error validating the server' in url_invalid_cert.msg or 'Hostname mismatch' in url_invalid_cert.msg or ( url_invalid_cert.msg is search('hostname .* doesn.t match .*'))"
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:
@@ -243,7 +247,7 @@
       - "'{{ badssl_host_substring }}' in web_data"
 
 - name: Test cartesian lookup
-  debug: var={{item}}
+  debug: var=item
   with_cartesian:
     - ["A", "B", "C"]
     - ["1", "2", "3"]
@@ -296,9 +300,9 @@
 
 - name: Test that we can give a list of values to var and receive a list of values back
   set_fact:
-    var_host_info: '{{ query("vars", "ansible_host", "ansible_user") }}'
+    var_host_info: '{{ query("vars", "ansible_host", "ansible_connection") }}'
 
 - assert:
     that:
       - 'var_host_info[0] == ansible_host'
-      - 'var_host_info[1] == ansible_user'
+      - 'var_host_info[1] == ansible_connection'

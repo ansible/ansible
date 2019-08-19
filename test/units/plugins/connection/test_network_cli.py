@@ -21,10 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import time
 import json
-
-from io import StringIO
 
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
@@ -114,14 +111,16 @@ class TestConnectionClass(unittest.TestCase):
         self.assertEqual(out, b'command response')
         mock_send.assert_called_with(command=b'command')
 
-    def test_network_cli_send(self):
+    @patch("ansible.plugins.connection.network_cli.Connection._get_terminal_std_re")
+    @patch("ansible.plugins.connection.network_cli.Connection._connect")
+    def test_network_cli_send(self, mocked_connect, mocked_terminal_re):
+
         pc = PlayContext()
         pc.network_os = 'ios'
         conn = connection_loader.get('network_cli', pc, '/dev/null')
 
         mock__terminal = MagicMock()
-        mock__terminal.terminal_stdout_re = [re.compile(b'device#')]
-        mock__terminal.terminal_stderr_re = [re.compile(b'^ERROR')]
+        mocked_terminal_re.side_effect = [[re.compile(b'^ERROR')], [re.compile(b'device#')]]
         conn._terminal = mock__terminal
 
         mock__shell = MagicMock()
@@ -134,14 +133,14 @@ class TestConnectionClass(unittest.TestCase):
         """
 
         mock__shell.recv.side_effect = [response, None]
-        output = conn.send(b'command', None, None, None)
+        output = conn.send(b'command')
 
         mock__shell.sendall.assert_called_with(b'command\r')
         self.assertEqual(to_text(conn._command_response), 'command response')
 
         mock__shell.reset_mock()
         mock__shell.recv.side_effect = [b"ERROR: error message device#"]
-
+        mocked_terminal_re.side_effect = [[re.compile(b'^ERROR')], [re.compile(b'device#')]]
         with self.assertRaises(AnsibleConnectionFailure) as exc:
-            conn.send(b'command', None, None, None)
+            conn.send(b'command')
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')

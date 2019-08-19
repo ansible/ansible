@@ -23,20 +23,10 @@ version_added: '2.8'
 options:
   db:
     description:
-    - Name of database to connect.
+    - Name of a database to connect to.
     type: str
     aliases:
     - login_db
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module. If
-  the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -46,7 +36,7 @@ EXAMPLES = r'''
 # PostgreSQL ping dbsrv server from the shell:
 # ansible dbsrv -m postgresql_ping
 
-# In the example below you need to generate sertificates previously.
+# In the example below you need to generate certificates previously.
 # See https://www.postgresql.org/docs/current/libpq-ssl.html for more information.
 - name: PostgreSQL ping dbsrv server using not default credentials and ssl
   postgresql_ping:
@@ -71,18 +61,20 @@ server_version:
   sample: { major: 10, minor: 1 }
 '''
 
-
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 
 
 # ===========================================
@@ -103,7 +95,7 @@ class PgPing(object):
 
     def get_pg_version(self):
         query = "SELECT version()"
-        raw = self.__exec_sql(query)[0][0]
+        raw = exec_sql(self, query, add_to_executed=False)[0][0]
         if raw:
             self.is_available = True
             raw = raw.split()[1].split('.')
@@ -112,19 +104,6 @@ class PgPing(object):
                 minor=int(raw[1]),
             )
 
-    def __exec_sql(self, query):
-        try:
-            self.cursor.execute(query)
-            res = self.cursor.fetchall()
-            if res:
-                return res
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-            self.cursor.close()
-        except Exception as e:
-            self.module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
-
-        return False
 
 # ===========================================
 # Module execution.
@@ -141,35 +120,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
-    sslrootcert = module.params["ca_cert"]
-
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
-                             'to user the ca_cert parameter')
-
     # Set some default values:
     cursor = False
     db_connection = False
@@ -179,16 +129,11 @@ def main():
         server_version=dict(),
     )
 
-    try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least '
-                                 'version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
+    db_connection = connect_to_db(module, conn_params, fail_on_conn=False)
+
+    if db_connection is not None:
+        cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Do job:
     pg_ping = PgPing(module, cursor)

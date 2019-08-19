@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerinstance_facts
 version_added: "2.8"
-short_description: Get Azure Container Instance facts.
+short_description: Get Azure Container Instance facts
 description:
     - Get facts of Container Instance.
 
@@ -37,7 +37,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

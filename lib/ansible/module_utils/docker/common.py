@@ -16,13 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 import os
+import platform
 import re
+import sys
 from datetime import timedelta
 from distutils.version import LooseVersion
 
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.parse import urlparse
@@ -70,6 +76,16 @@ try:
     HAS_DOCKER_SSLADAPTER = True
 except ImportError:
     HAS_DOCKER_SSLADAPTER = False
+
+
+try:
+    from requests.exceptions import RequestException
+except ImportError:
+    # Either docker-py is no longer using requests, or docker-py isn't around either,
+    # or docker-py's dependency requests is missing. In any case, define an exception
+    # class RequestException so that our code doesn't break.
+    class RequestException(Exception):
+        pass
 
 
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
@@ -121,10 +137,19 @@ if not HAS_DOCKER_PY:
 
 
 def is_image_name_id(name):
-    """Checks whether the given image name is in fact an image ID (hash)."""
+    """Check whether the given image name is in fact an image ID (hash)."""
     if re.match('^sha256:[0-9a-fA-F]{64}$', name):
         return True
     return False
+
+
+def is_valid_tag(tag, allow_empty=False):
+    """Check whether the given string is a valid docker tag name."""
+    if not tag:
+        return allow_empty
+    # See here ("Extended description") for a definition what tags can be:
+    # https://docs.docker.com/engine/reference/commandline/tag/
+    return bool(re.match('^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$', tag))
 
 
 def sanitize_result(data):
@@ -258,7 +283,7 @@ DOCKERPYUPGRADE_SWITCH_TO_DOCKER = "Try `pip uninstall docker-py` followed by `p
 DOCKERPYUPGRADE_UPGRADE_DOCKER = "Use `pip install --upgrade docker` to upgrade."
 DOCKERPYUPGRADE_RECOMMEND_DOCKER = ("Use `pip install --upgrade docker-py` to upgrade. "
                                     "Hint: if you do not need Python 2.6 support, try "
-                                    "`pip uninstall docker-py` instead followed by `pip install docker`.")
+                                    "`pip uninstall docker-py` instead, followed by `pip install docker`.")
 
 
 class AnsibleDockerClient(Client):
@@ -303,19 +328,21 @@ class AnsibleDockerClient(Client):
             self.fail("Cannot have both the docker-py and docker python modules (old and new version of Docker "
                       "SDK for Python) installed together as they use the same namespace and cause a corrupt "
                       "installation. Please uninstall both packages, and re-install only the docker-py or docker "
-                      "python module. It is recommended to install the docker module if no support for Python 2.6 "
-                      "is required. Please note that simply uninstalling one of the modules can leave the other "
-                      "module in a broken state.")
+                      "python module (for %s's Python %s). It is recommended to install the docker module if no "
+                      "support for Python 2.6 is required. Please note that simply uninstalling one of the modules "
+                      "can leave the other module in a broken state." % (platform.node(), sys.executable))
 
         if not HAS_DOCKER_PY:
             if NEEDS_DOCKER_PY2:
-                msg = "Failed to import docker (Docker SDK for Python) - %s. Try `pip install docker`."
+                msg = missing_required_lib("Docker SDK for Python: docker")
+                msg = msg + ", for example via `pip install docker`. The error was: %s"
             else:
-                msg = "Failed to import docker or docker-py (Docker SDK for Python) - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)."
+                msg = missing_required_lib("Docker SDK for Python: docker (Python >= 2.7) or docker-py (Python 2.6)")
+                msg = msg + ", for example via `pip install docker` or `pip install docker-py` (Python 2.6). The error was: %s"
             self.fail(msg % HAS_DOCKER_ERROR)
 
         if self.docker_py_version < LooseVersion(min_docker_version):
-            msg = "Error: Docker SDK for Python version is %s. Minimum version required is %s. "
+            msg = "Error: Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s."
             if not NEEDS_DOCKER_PY2:
                 # The minimal required version is < 2.0 (and the current version as well).
                 # Advertise docker (instead of docker-py) for non-Python-2.6 users.
@@ -324,7 +351,7 @@ class AnsibleDockerClient(Client):
                 msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
             else:
                 msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
-            self.fail(msg % (docker_version, min_docker_version))
+            self.fail(msg % (docker_version, platform.node(), sys.executable, min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -332,14 +359,14 @@ class AnsibleDockerClient(Client):
 
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
+            self.docker_api_version_str = self.version()['ApiVersion']
         except APIError as exc:
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
 
+        self.docker_api_version = LooseVersion(self.docker_api_version_str)
         if min_docker_api_version is not None:
-            self.docker_api_version_str = self.version()['ApiVersion']
-            self.docker_api_version = LooseVersion(self.docker_api_version_str)
             if self.docker_api_version < LooseVersion(min_docker_api_version):
                 self.fail('Docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
@@ -477,14 +504,14 @@ class AnsibleDockerClient(Client):
                         msg = 'Docker API version is %s. Minimum version required is %s to %s.'
                         msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
                     elif not support_docker_py:
-                        msg = "Docker SDK for Python version is %s. Minimum version required is %s to %s. "
+                        msg = "Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s to %s. "
                         if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
                             msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
                         elif self.docker_py_version < LooseVersion('2.0.0'):
                             msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
                         else:
                             msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
-                        msg = msg % (docker_version, data['docker_py_version'], usg)
+                        msg = msg % (docker_version, platform.node(), sys.executable, data['docker_py_version'], usg)
                     else:
                         # should not happen
                         msg = 'Cannot %s with your configuration.' % (usg, )
@@ -531,16 +558,16 @@ class AnsibleDockerClient(Client):
 
         return result
 
-    def get_network(self, name=None, id=None):
+    def get_network(self, name=None, network_id=None):
         '''
         Lookup a network and return the inspection results.
         '''
-        if name is None and id is None:
+        if name is None and network_id is None:
             return None
 
         result = None
 
-        if id is None:
+        if network_id is None:
             try:
                 for network in self.networks():
                     self.log("testing network: %s" % (network['Name']))
@@ -556,12 +583,12 @@ class AnsibleDockerClient(Client):
                 self.fail("Error retrieving network list: %s" % exc)
 
         if result is not None:
-            id = result['Id']
+            network_id = result['Id']
 
-        if id is not None:
+        if network_id is not None:
             try:
-                self.log("Inspecting network Id %s" % id)
-                result = self.inspect_network(id)
+                self.log("Inspecting network Id %s" % network_id)
+                result = self.inspect_network(network_id)
                 self.log("Completed network inspection")
             except NotFound as dummy:
                 return None
@@ -579,7 +606,7 @@ class AnsibleDockerClient(Client):
 
         self.log("Find image %s:%s" % (name, tag))
         images = self._image_lookup(name, tag)
-        if len(images) == 0:
+        if not images:
             # In API <= 1.20 seeing 'docker.io/<name>' as the name of images pulled from docker hub
             registry, repo_name = auth.resolve_repository_name(name)
             if registry == 'docker.io':
@@ -587,12 +614,12 @@ class AnsibleDockerClient(Client):
                 # isn't found in some cases (#41509)
                 self.log("Check for docker.io image: %s" % repo_name)
                 images = self._image_lookup(repo_name, tag)
-                if len(images) == 0 and repo_name.startswith('library/'):
+                if not images and repo_name.startswith('library/'):
                     # Sometimes library/xxx images are not found
                     lookup = repo_name[len('library/'):]
                     self.log("Check for docker.io image: %s" % lookup)
                     images = self._image_lookup(lookup, tag)
-                if len(images) == 0:
+                if not images:
                     # Last case: if docker.io wasn't there, it can be that
                     # the image wasn't found either (#15586)
                     lookup = "%s/%s" % (registry, repo_name)
@@ -612,18 +639,18 @@ class AnsibleDockerClient(Client):
         self.log("Image %s:%s not found." % (name, tag))
         return None
 
-    def find_image_by_id(self, id):
+    def find_image_by_id(self, image_id):
         '''
         Lookup an image (by ID) and return the inspection results.
         '''
-        if not id:
+        if not image_id:
             return None
 
-        self.log("Find image %s (by ID)" % id)
+        self.log("Find image %s (by ID)" % image_id)
         try:
-            inspection = self.inspect_image(id)
+            inspection = self.inspect_image(image_id)
         except Exception as exc:
-            self.fail("Error inspecting image ID %s - %s" % (id, str(exc)))
+            self.fail("Error inspecting image ID %s - %s" % (image_id, str(exc)))
         return inspection
 
     def _image_lookup(self, name, tag):
@@ -639,10 +666,12 @@ class AnsibleDockerClient(Client):
         images = response
         if tag:
             lookup = "%s:%s" % (name, tag)
+            lookup_digest = "%s@%s" % (name, tag)
             images = []
             for image in response:
                 tags = image.get('RepoTags')
-                if tags and lookup in tags:
+                digests = image.get('RepoDigests')
+                if (tags and lookup in tags) or (digests and lookup_digest in digests):
                     images = [image]
                     break
         return images
@@ -696,7 +725,7 @@ class AnsibleDockerClient(Client):
         elif isinstance(result, string_types) and result:
             self.module.warn('Docker warning: {0}'.format(result))
 
-    def inspect_distribution(self, image):
+    def inspect_distribution(self, image, **kwargs):
         '''
         Get image digest by directly calling the Docker API when running Docker SDK < 4.0.0
         since prior versions did not support accessing private repositories.
@@ -709,7 +738,7 @@ class AnsibleDockerClient(Client):
                     self._url('/distribution/{0}/json', image),
                     headers={'X-Registry-Auth': header}
                 ), json=True)
-        return super(AnsibleDockerClient, self).inspect_distribution(image)
+        return super(AnsibleDockerClient, self).inspect_distribution(image, **kwargs)
 
 
 def compare_dict_allow_more_present(av, bv):
@@ -724,22 +753,22 @@ def compare_dict_allow_more_present(av, bv):
     return True
 
 
-def compare_generic(a, b, method, type):
+def compare_generic(a, b, method, datatype):
     '''
-    Compare values a and b as described by method and type.
+    Compare values a and b as described by method and datatype.
 
     Returns ``True`` if the values compare equal, and ``False`` if not.
 
     ``a`` is usually the module's parameter, while ``b`` is a property
     of the current object. ``a`` must not be ``None`` (except for
-    ``type == 'value'``).
+    ``datatype == 'value'``).
 
     Valid values for ``method`` are:
     - ``ignore`` (always compare as equal);
     - ``strict`` (only compare if really equal)
     - ``allow_more_present`` (allow b to have elements which a does not have).
 
-    Valid values for ``type`` are:
+    Valid values for ``datatype`` are:
     - ``value``: for simple values (strings, numbers, ...);
     - ``list``: for ``list``s or ``tuple``s where order matters;
     - ``set``: for ``list``s, ``tuple``s or ``set``s where order does not
@@ -758,7 +787,7 @@ def compare_generic(a, b, method, type):
             return True
         # Otherwise, not equal for values, and equal
         # if the other is empty for set/list/dict
-        if type == 'value':
+        if datatype == 'value':
             return False
         # For allow_more_present, allow a to be None
         if method == 'allow_more_present' and a is None:
@@ -766,9 +795,9 @@ def compare_generic(a, b, method, type):
         # Otherwise, the iterable object which is not None must have length 0
         return len(b if a is None else a) == 0
     # Do proper comparison (both objects not None)
-    if type == 'value':
+    if datatype == 'value':
         return a == b
-    elif type == 'list':
+    elif datatype == 'list':
         if method == 'strict':
             return a == b
         else:
@@ -780,19 +809,19 @@ def compare_generic(a, b, method, type):
                     return False
                 i += 1
             return True
-    elif type == 'dict':
+    elif datatype == 'dict':
         if method == 'strict':
             return a == b
         else:
             return compare_dict_allow_more_present(a, b)
-    elif type == 'set':
+    elif datatype == 'set':
         set_a = set(a)
         set_b = set(b)
         if method == 'strict':
             return set_a == set_b
         else:
             return set_b >= set_a
-    elif type == 'set(dict)':
+    elif datatype == 'set(dict)':
         for av in a:
             found = False
             for bv in b:
@@ -980,3 +1009,10 @@ def parse_healthcheck(healthcheck):
         return None, True
 
     return result, False
+
+
+def omit_none_from_dict(d):
+    """
+    Return a copy of the dictionary with all keys with value None omitted.
+    """
+    return dict((k, v) for (k, v) in d.items() if v is not None)

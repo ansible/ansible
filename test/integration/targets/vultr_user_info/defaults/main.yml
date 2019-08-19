@@ -1,0 +1,10 @@
+---
+vultr_resource_prefix: "vultr-test-prefix"
+user_name: "{{ vultr_resource_prefix }}_user"
+user_email: mytestuser-{{ vultr_resource_prefix }}@example.com
+user_password: "{{ vultr_resource_prefix }}aP4ssw0rd!"
+user_acls:
+  - upgrade
+  - dns
+  - manage_users
+  - subscriptions

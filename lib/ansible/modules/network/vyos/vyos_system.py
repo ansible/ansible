@@ -26,7 +26,7 @@ DOCUMENTATION = """
 ---
 module: "vyos_system"
 version_added: "2.3"
-author: "Nathaniel Case (@qalthos)"
+author: "Nathaniel Case (@Qalthos)"
 short_description: Run `set system` commands on VyOS devices
 description:
   - Runs one or more commands on remote devices running VyOS.
@@ -201,7 +201,7 @@ def main():
 
     if commands:
         commit = not module.check_mode
-        response = load_config(module, commands, commit=commit)
+        load_config(module, commands, commit=commit)
         result['changed'] = True
 
     module.exit_json(**result)

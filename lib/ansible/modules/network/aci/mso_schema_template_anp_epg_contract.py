@@ -81,7 +81,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Add a contract to an EPG
-  mso_schema_template_anp_epg:
+  mso_schema_template_anp_epg_contract:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -96,7 +96,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a Contract
-  mso_schema_template_anp_epg:
+  mso_schema_template_anp_epg_contract:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -110,7 +110,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a specific Contract
-  mso_schema_template_anp_epg:
+  mso_schema_template_anp_epg_contract:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -125,7 +125,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all Contracts
-  mso_schema_template_anp_epg:
+  mso_schema_template_anp_epg_contract:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -214,8 +214,7 @@ def main():
         contract_ref = mso.contract_ref(**contract)
         if (contract_ref, contract['type']) in contracts:
             contract_idx = contracts.index((contract_ref, contract['type']))
-            # FIXME: Changes based on index are DANGEROUS
-            contract_path = '/templates/{0}/anps/{1}/epgs/{2}/contractRelationships/{3}'.format(template, anp, epg, contract_idx)
+            contract_path = '/templates/{0}/anps/{1}/epgs/{2}/contractRelationships/{3}'.format(template, anp, epg, contract)
             mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships'][contract_idx]
 
     if state == 'query':

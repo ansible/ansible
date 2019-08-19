@@ -48,15 +48,18 @@ options:
     - present
     - absent
     default: present
+    type: str
   address:
     description:
     - The static external IP address represented by this resource.
     required: false
+    type: str
     version_added: 2.8
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -66,25 +69,54 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   ip_version:
     description:
     - The IP Version that will be used by this address. Valid options are `IPV4` or
       `IPV6`. The default value is `IPV4`.
+    - 'Some valid choices include: "IPV4", "IPV6"'
     required: false
-    choices:
-    - IPV4
-    - IPV6
+    type: str
+  prefix_length:
+    description:
+    - The prefix length of the IP range. If not present, it means the address field
+      is a single IP address.
+    - This field is not applicable to addresses with addressType=EXTERNAL.
+    required: false
+    type: int
+    version_added: 2.9
   address_type:
     description:
     - The type of the address to reserve, default is EXTERNAL.
     - "* EXTERNAL indicates public/external single IP address."
     - "* INTERNAL indicates internal IP ranges belonging to some network."
+    - 'Some valid choices include: "EXTERNAL", "INTERNAL"'
     required: false
     default: EXTERNAL
+    type: str
     version_added: 2.8
-    choices:
-    - EXTERNAL
-    - INTERNAL
+  purpose:
+    description:
+    - The purpose of the resource. For global internal addresses it can be * VPC_PEERING
+      - for peer networks This should only be set when using an Internal address.
+    - 'Some valid choices include: "VPC_PEERING"'
+    required: false
+    type: str
+    version_added: 2.9
+  network:
+    description:
+    - The URL of the network in which to reserve the IP range. The IP range must be
+      in RFC1918 space. The network cannot be deleted if there are any reserved IP
+      ranges referring to it.
+    - This should only be set when using an Internal address.
+    - 'This field represents a link to a Network resource in GCP. It can be specified
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
+    required: false
+    type: dict
+    version_added: 2.9
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/globalAddresses)'
@@ -143,6 +175,13 @@ region:
   - A reference to the region where the regional address resides.
   returned: success
   type: str
+prefixLength:
+  description:
+  - The prefix length of the IP range. If not present, it means the address field
+    is a single IP address.
+  - This field is not applicable to addresses with addressType=EXTERNAL.
+  returned: success
+  type: int
 addressType:
   description:
   - The type of the address to reserve, default is EXTERNAL.
@@ -150,6 +189,20 @@ addressType:
   - "* INTERNAL indicates internal IP ranges belonging to some network."
   returned: success
   type: str
+purpose:
+  description:
+  - The purpose of the resource. For global internal addresses it can be * VPC_PEERING
+    - for peer networks This should only be set when using an Internal address.
+  returned: success
+  type: str
+network:
+  description:
+  - The URL of the network in which to reserve the IP range. The IP range must be
+    in RFC1918 space. The network cannot be deleted if there are any reserved IP ranges
+    referring to it.
+  - This should only be set when using an Internal address.
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -175,8 +228,11 @@ def main():
             address=dict(type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
-            address_type=dict(default='EXTERNAL', type='str', choices=['EXTERNAL', 'INTERNAL']),
+            ip_version=dict(type='str'),
+            prefix_length=dict(type='int'),
+            address_type=dict(default='EXTERNAL', type='str'),
+            purpose=dict(type='str'),
+            network=dict(type='dict'),
         )
     )
 
@@ -217,7 +273,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="GlobalAddress cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):
@@ -232,7 +289,10 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'ipVersion': module.params.get('ip_version'),
+        u'prefixLength': module.params.get('prefix_length'),
         u'addressType': module.params.get('address_type'),
+        u'purpose': module.params.get('purpose'),
+        u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -305,14 +365,17 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'ipVersion': response.get(u'ipVersion'),
         u'region': response.get(u'region'),
+        u'prefixLength': response.get(u'prefixLength'),
         u'addressType': response.get(u'addressType'),
+        u'purpose': response.get(u'purpose'),
+        u'network': response.get(u'network'),
     }
 
 
 def region_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/%s".format(**params) % name
     return name

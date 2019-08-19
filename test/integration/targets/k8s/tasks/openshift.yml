@@ -2,8 +2,9 @@
 - name: Create a project
   k8s:
     name: testing
-    kind: project
+    kind: Project
     api_version: v1
+    apply: no
   register: output
 
 - name: show output

@@ -19,7 +19,7 @@ module: azure_rm_loadbalancer_facts
 
 version_added: "2.4"
 
-short_description: Get load balancer facts.
+short_description: Get load balancer facts
 
 description:
     - Get facts for a specific load balancer or all load balancers.
@@ -30,7 +30,7 @@ options:
             - Limit results to a specific resource group.
     resource_group:
         description:
-            - The resource group to search for the desired load balancer
+            - The resource group to search for the desired load balancer.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -39,7 +39,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Thomas Stringer (@trstringer)"
+    - Thomas Stringer (@trstringer)
 '''
 
 EXAMPLES = '''
@@ -63,7 +63,8 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_loadbalancers:
-    description: List of load balancer dicts.
+    description:
+        - List of load balancer dicts.
     returned: always
     type: list
 '''

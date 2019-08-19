@@ -19,7 +19,7 @@ module: azure_rm_servicebus_facts
 
 version_added: "2.8"
 
-short_description: Get servicebus facts.
+short_description: Get servicebus facts
 
 description:
     - Get facts for a specific servicebus or all servicebus in a resource group or subscription.
@@ -39,7 +39,7 @@ options:
             - Servicebus namespace name.
             - A namespace is a scoping container for all messaging components.
             - Multiple queues and topics can reside within a single namespace, and namespaces often serve as application containers.
-            - Required when C(type) is not C(namespace).
+            - Required when I(type=namespace).
     type:
         description:
             - Type of the resource.
@@ -51,18 +51,18 @@ options:
     topic:
         description:
             - Topic name.
-            - Required when C(type) is C(subscription).
+            - Required when I(type=subscription).
     show_sas_policies:
         description:
             - Whether to show the SAS policies.
-            - Not support when C(type) is C(subscription).
+            - Not support when I(type=subscription).
             - Note if enable this option, the facts module will raise two more HTTP call for each resources, need more network overhead.
         type: bool
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -95,148 +95,176 @@ EXAMPLES = '''
 '''
 RETURN = '''
 servicebuses:
-    description: List of servicebus dicts.
+    description:
+        - List of servicebus dicts.
     returned: always
-    type: list
+    type: complex
     contains:
         id:
             description:
-                -  Resource Id
+                - Resource ID.
+            returned: always
             type: str
             sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.ServiceBus/
                      namespaces/bar/topics/baz/subscriptions/qux"
         name:
             description:
-                -  Resource name
+                - Resource name.
+            returned: always
             type: str
             sample: qux
         location:
             description:
-                -  The Geo-location where the resource lives.
+                - The Geo-location where the resource lives.
+            returned: always
             type: str
             sample: eastus
         namespace:
             description:
-                - Namespace name of the queue or topic, subscription.
+                - I(namespace) name of the C(queue) or C(topic), C(subscription).
+            returned: always
             type: str
             sample: bar
         topic:
             description:
                 - Topic name of a subscription.
+            returned: always
             type: str
             sample: baz
         tags:
             description:
-                -  Resource tags.
-            type: str
+                - Resource tags.
+            returned: always
+            type: dict
             sample: {env: sandbox}
         sku:
             description:
-                -  Properties of namespace's sku.
+                - Properties of namespace's SKU.
+            returned: always
             type: str
             sample: Standard
         provisioning_state:
             description:
-                -  Provisioning state of the namespace.
+                - Provisioning state of the namespace.
+            returned: always
             type: str
             sample: Succeeded
         service_bus_endpoint:
             description:
-                -  Endpoint you can use to perform Service Bus operations.
+                - Endpoint you can use to perform Service Bus operations.
+            returned: always
             type: str
             sample: "https://bar.servicebus.windows.net:443/"
         metric_id:
             description:
-                -  Identifier for Azure Insights metrics of namespace.
+                - Identifier for Azure Insights metrics of namespace.
+            returned: always
             type: str
             sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX:bar"
         type:
             description:
-                - Resource type
+                - Resource type.
                 - Namespace is a scoping container for all messaging components.
                 - Queue enables you to store messages until the receiving application is available to receive and process them.
                 - Topic and subscriptions enable 1:n relationships between publishers and subscribers.
-            sample: "Microsoft.ServiceBus/Namespaces/Topics"
+            returned: always
             type: str
+            sample: "Microsoft.ServiceBus/Namespaces/Topics"
         created_at:
             description:
                 - Exact time the message was created.
-            sample: "2019-01-25 02:46:55.543953+00:00"
+            returned: always
             type: str
+            sample: "2019-01-25 02:46:55.543953+00:00"
         updated_at:
             description:
                 - The exact time the message was updated.
+            returned: always
             type: str
             sample: "2019-01-25 02:46:55.543953+00:00"
         accessed_at:
             description:
-                - Last time the message was sent, or a request was received, for this topic.
+                - Last time the message was sent, or a request was received for this topic.
+            returned: always
             type: str
             sample: "2019-01-25 02:46:55.543953+00:00"
         subscription_count:
             description:
                 - Number of subscriptions under a topic.
+            returned: always
             type: int
             sample: 1
         count_details:
             description:
                 - Message count deatils.
-            type: dict
+            returned: always
+            type: complex
             contains:
                 active_message_count:
                     description:
-                        - Number of active messages in the queue, topic, or subscription.
+                        - Number of active messages in the C(queue), C(topic), or C(subscription).
+                    returned: always
                     type: int
                     sample: 0
                 dead_letter_message_count:
                     description:
                         - Number of messages that are dead lettered.
+                    returned: always
                     type: int
                     sample: 0
                 scheduled_message_count:
                     description:
                         - Number of scheduled messages.
+                    returned: always
                     type: int
                     sample: 0
                 transfer_message_count:
                     description:
-                        - Number of messages transferred to another queue, topic, or subscription.
+                        - Number of messages transferred to another C(queue), C(topic), or C(subscription).
+                    returned: always
                     type: int
                     sample: 0
                 transfer_dead_letter_message_count:
                     description:
                         - Number of messages transferred into dead letters.
+                    returned: always
                     type: int
                     sample: 0
         support_ordering:
             description:
-                - Value that indicates whether the topic supports ordering.
+                - Value that indicates whether the C(topic) supports ordering.
+            returned: always
             type: bool
             sample: true
         status:
             description:
               - The status of a messaging entity.
+            returned: always
             type: str
             sample: active
         requires_session:
             description:
-                - A value that indicates whether the  queue or topic supports the concept of sessions.
+                - A value that indicates whether the C(queue) or C(topic) supports the concept of sessions.
+            returned: always
             type: bool
             sample: true
         requires_duplicate_detection:
             description:
-               - A value indicating if this queue or topic requires duplicate detection.
+               - A value indicating if this C(queue) or C(topic) requires duplicate detection.
+            returned: always
             type: bool
             sample: true
         max_size_in_mb:
             description:
-                - Maximum size of the queue or topic in megabytes, which is the size of the memory allocated for the topic.
+                - Maximum size of the C(queue) or C(topic) in megabytes, which is the size of the memory allocated for the C(topic).
+            returned: always
             type: int
             sample: 5120
         max_delivery_count:
             description:
                 - The maximum delivery count.
                 - A message is automatically deadlettered after this number of deliveries.
+            returned: always
             type: int
             sample: 10
         lock_duration_in_seconds:
@@ -244,37 +272,44 @@ servicebuses:
                 - ISO 8601 timespan duration of a peek-lock.
                 - The amount of time that the message is locked for other receivers.
                 - The maximum value for LockDuration is 5 minutes.
+            returned: always
             type: int
             sample: 60
         forward_to:
             description:
-                - Queue or topic name to forward the messages
+                - C(queue) or C(topic) name to forward the messages.
+            returned: always
             type: str
             sample: quux
         forward_dead_lettered_messages_to:
             description:
-                - Queue or topic name to forward the Dead Letter message
+                - C(queue) or C(topic) name to forward the Dead Letter message.
+            returned: always
             type: str
             sample: corge
         enable_partitioning:
             description:
-                - Value that indicates whether the queue or topic to be partitioned across multiple message brokers is enabled.
+                - Value that indicates whether the C(queue) or C(topic) to be partitioned across multiple message brokers is enabled.
+            returned: always
             type: bool
             sample: true
         enable_express:
             description:
                 - Value that indicates whether Express Entities are enabled.
                 - An express topic holds a message in memory temporarily before writing it to persistent storage.
+            returned: always
             type: bool
             sample: true
         enable_batched_operations:
             description:
                 - Value that indicates whether server-side batched operations are enabled.
+            returned: always
             type: bool
             sample: true
         duplicate_detection_time_in_seconds:
             description:
                 - ISO 8601 timeSpan structure that defines the duration of the duplicate detection history.
+            returned: always
             type: int
             sample: 600
         default_message_time_to_live_seconds:
@@ -282,40 +317,47 @@ servicebuses:
                 - ISO 8061 Default message timespan to live value.
                 - This is the duration after which the message expires, starting from when the message is sent to Service Bus.
                 - This is the default value used when TimeToLive is not set on a message itself.
+            returned: always
             type: int
             sample: 0
         dead_lettering_on_message_expiration:
             description:
-                - A value that indicates whether this  queue or topic has dead letter support when a message expires.
+                - A value that indicates whether this C(queue) or C(topic) has dead letter support when a message expires.
+            returned: always
             type: int
             sample: 0
         dead_lettering_on_filter_evaluation_exceptions:
             description:
                 - Value that indicates whether a subscription has dead letter support on filter evaluation exceptions.
+            returned: always
             type: int
             sample: 0
         auto_delete_on_idle_in_seconds:
             description:
                 - ISO 8061 timeSpan idle interval after which the  queue or topic is automatically deleted.
                 - The minimum duration is 5 minutes.
+            returned: always
             type: int
             sample: true
         size_in_bytes:
             description:
-                - The size of the queue or topic, in bytes.
+                - The size of the C(queue) or C(topic) in bytes.
+            returned: always
             type: int
             sample: 0
         message_count:
             description:
                 - Number of messages.
+            returned: always
             type: int
             sample: 10
         sas_policies:
             description:
                 - Dict of SAS policies.
-                - Will not be returned until C(show_sas_policy) set
+                - Will not be returned until I(show_sas_policy) set.
+            returned: always
             type: dict
-            sample:  '{
+            sample:  {
                         "testpolicy1": {
                             "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/
                                    foo/providers/Microsoft.ServiceBus/namespaces/bar/queues/qux/authorizationRules/testpolicy1",
@@ -332,7 +374,7 @@ servicebuses:
                             "rights": "listen_send",
                             "type": "Microsoft.ServiceBus/Namespaces/Queues/AuthorizationRules"
                         }
-                     }'
+                     }
 '''
 
 try:

@@ -115,10 +115,10 @@ end_state:
     type: dict
     sample: {nve_interface_name": "Nve1", nve_mode": "mode-l3", "source_ip": "0.0.0.0"}
 '''
-
+import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, get_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_VNI_BD_INFO = """
 <filter type="subtree">
@@ -366,18 +366,6 @@ class VxlanTunnel(object):
         if "<ok/>" not in xml_str:
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
 
-    def get_current_config(self, vni_id, peer_ip_list):
-        """get current configuration"""
-
-        flags = list()
-        exp = " | include vni "
-        exp += vni_id
-        exp += " head-end peer-list "
-        for peer_ip in peer_ip_list:
-            exp += "| exclude %s " % peer_ip
-        flags.append(exp)
-        return get_config(self.module, flags)
-
     def get_vni2bd_dict(self):
         """ get vni2bd attributes dict."""
 
@@ -393,7 +381,7 @@ class VxlanTunnel(object):
         # get vni to bridge domain id info
         root = ElementTree.fromstring(xml_str)
         vni2bd_info["vni2BdInfos"] = list()
-        vni2bds = root.findall("data/nvo3/nvo3Vni2Bds/nvo3Vni2Bd")
+        vni2bds = root.findall("nvo3/nvo3Vni2Bds/nvo3Vni2Bd")
 
         if vni2bds:
             for vni2bd in vni2bds:
@@ -430,7 +418,8 @@ class VxlanTunnel(object):
 
         # get nve info
         root = ElementTree.fromstring(xml_str)
-        nvo3 = root.find("data/nvo3/nvo3Nves/nvo3Nve")
+
+        nvo3 = root.find("nvo3/nvo3Nves/nvo3Nve")
         if nvo3:
             for nve in nvo3:
                 if nve.tag in ["srcAddr", "ifName", "nveType"]:
@@ -440,7 +429,7 @@ class VxlanTunnel(object):
         nve_info["vni_peer_protocols"] = list()
 
         vni_members = root.findall(
-            "data/nvo3/nvo3Nves/nvo3Nve/vniMembers/vniMember")
+            "nvo3/nvo3Nves/nvo3Nve/vniMembers/vniMember")
         if vni_members:
             for member in vni_members:
                 vni_dict = dict()
@@ -451,15 +440,22 @@ class VxlanTunnel(object):
 
         # get vni peer address ip info
         nve_info["vni_peer_ips"] = list()
-        vni_peers = root.findall(
-            "data/nvo3/nvo3Nves/nvo3Nve/vniMembers/vniMember/nvo3VniPeers/nvo3VniPeer")
-        if vni_peers:
-            for peer_address in vni_peers:
-                vni_peer_dict = dict()
-                for ele in peer_address:
-                    if ele.tag in ["vniId", "peerAddr"]:
-                        vni_peer_dict[ele.tag] = ele.text
-                nve_info["vni_peer_ips"].append(vni_peer_dict)
+
+        re_find = re.findall(r'<vniId>(.*?)</vniId>\s*'
+                             r'<protocol>(.*?)</protocol>\s*'
+                             r'<nvo3VniPeers>(.*?)</nvo3VniPeers>', xml_str)
+
+        if re_find:
+            for vni_peers in re_find:
+                vni_info = dict()
+                vni_peer = re.findall(r'<peerAddr>(.*?)</peerAddr>', vni_peers[2])
+                if vni_peer:
+                    vni_info["vniId"] = vni_peers[0]
+                    vni_peer_list = list()
+                    for peer in vni_peer:
+                        vni_peer_list.append(peer)
+                    vni_info["peerAddr"] = vni_peer_list
+                nve_info["vni_peer_ips"].append(vni_info)
 
         return nve_info
 
@@ -563,7 +559,7 @@ class VxlanTunnel(object):
             return False
         if self.nve_info["ifName"] == nve_name:
             for member in self.nve_info["vni_peer_ips"]:
-                if member["vniId"] == vni_id and member["peerAddr"] == peer_ip:
+                if member["vniId"] == vni_id and peer_ip in member["peerAddr"]:
                     return True
         return False
 
@@ -572,16 +568,25 @@ class VxlanTunnel(object):
 
         if not self.nve_info:
             return True
-        for peer_ip in peer_ip_list:
-            if self.nve_info["ifName"] == nve_name:
-                if not self.nve_info["vni_peer_ips"]:
+
+        if self.nve_info["ifName"] == nve_name:
+            if not self.nve_info["vni_peer_ips"]:
+                return True
+
+            nve_peer_info = list()
+            for nve_peer in self.nve_info["vni_peer_ips"]:
+                if nve_peer["vniId"] == vni_id:
+                    nve_peer_info.append(nve_peer)
+
+            if not nve_peer_info:
+                return True
+
+            nve_peer_list = nve_peer_info[0]["peerAddr"]
+            for peer in peer_ip_list:
+                if peer not in nve_peer_list:
                     return True
-                for member in self.nve_info["vni_peer_ips"]:
-                    if member["vniId"] != vni_id:
-                        return True
-                    elif member["vniId"] == vni_id and member["peerAddr"] != peer_ip:
-                        return True
-        return False
+
+            return False
 
     def config_merge_vni2bd(self, bd_id, vni_id):
         """config vni to bd id"""
@@ -602,7 +607,10 @@ class VxlanTunnel(object):
             recv_xml = set_nc_config(self.module, cfg_xml)
             self.check_response(recv_xml, "MERGE_MODE")
             self.updates_cmd.append("interface %s" % nve_name)
-            self.updates_cmd.append("mode l3")
+            if mode == "mode-l3":
+                self.updates_cmd.append("mode l3")
+            else:
+                self.updates_cmd.append("undo mode l3")
             self.changed = True
 
     def config_merge_source_ip(self, nve_name, source_ip):
@@ -705,7 +713,17 @@ class VxlanTunnel(object):
         for peer_ip in peer_ip_list:
             if not self.is_vni_peer_list_exist(nve_name, vni_id, peer_ip):
                 self.module.fail_json(msg='Error: The %s does not exist' % peer_ip)
-        config = self.get_current_config(vni_id, peer_ip_list)
+
+        config = False
+
+        nve_peer_info = list()
+        for nve_peer in self.nve_info["vni_peer_ips"]:
+            if nve_peer["vniId"] == vni_id:
+                nve_peer_info = nve_peer.get("peerAddr")
+        for peer in nve_peer_info:
+            if peer not in peer_ip_list:
+                config = True
+
         if not config:
             cfg_xml = CE_NC_DELETE_VNI_PEER_ADDRESS_IP_HEAD % (
                 nve_name, vni_id)

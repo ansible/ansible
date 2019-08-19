@@ -227,7 +227,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
         def _check_pkey_passphrase():
             if self.privatekey_passphrase:
                 try:
-                    crypto_utils.load_privatekey(self.path,
+                    crypto_utils.load_privatekey(self.privatekey_path,
                                                  self.privatekey_passphrase)
                 except crypto.Error:
                     return False

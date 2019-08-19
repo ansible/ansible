@@ -81,7 +81,7 @@ class BecomeModule(BecomeBase):
         if not cmd:
             return cmd
 
-        become = self._get_option('become_exe') or self.name
-        flags = self.get_option('flags') or ''
+        become = self.get_option('become_exe') or self.name
+        flags = self.get_option('become_flags') or ''
         user = self.get_option('become_user') or ''
-        return '%s shell -q %s %s@ %s' % (become, flags, user, cmd)
+        return '%s -q shell %s %s@ %s' % (become, flags, user, cmd)

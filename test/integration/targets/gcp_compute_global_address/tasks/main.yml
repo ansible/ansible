@@ -33,9 +33,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#address'"
 - name: verify that global_address was created
-  gcp_compute_global_address_facts:
+  gcp_compute_global_address_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -47,7 +46,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a global address that already exists
   gcp_compute_global_address:
@@ -61,7 +60,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#address'"
 #----------------------------------------------------------
 - name: delete a global address
   gcp_compute_global_address:
@@ -75,9 +73,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that global_address was deleted
-  gcp_compute_global_address_facts:
+  gcp_compute_global_address_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -89,7 +86,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a global address that does not exist
   gcp_compute_global_address:
@@ -103,4 +100,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_autoscale_facts
 version_added: "2.7"
-short_description: Get Azure Auto Scale Setting facts.
+short_description: Get Azure Auto Scale Setting facts
 description:
     - Get facts of Auto Scale Setting.
 
@@ -37,7 +37,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 

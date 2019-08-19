@@ -22,8 +22,8 @@ description:
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-  - This module does not support running commands in configuration mode.
-    Please use M(aireos_config) to configure WLC devices.
+  - Commands run in configuration mode with this module are not
+    idempotent. Please use M(aireos_config) to configure WLC devices.
 extends_documentation_fragment: aireos
 options:
   commands:
@@ -143,9 +143,9 @@ def parse_commands(module, warnings):
                 'executing `%s`' % item['command']
             )
         elif item['command'].startswith('conf'):
-            module.fail_json(
-                msg='aireos_command does not support running config mode '
-                    'commands.  Please use aireos_config instead'
+            warnings.append(
+                'commands run in config mode with aireos_command are not '
+                'idempotent.  Please use aireos_config instead'
             )
     return commands
 

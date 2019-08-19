@@ -39,13 +39,13 @@ Function Add-Route {
   if (!($Route)){
     try {
       # Find Interface Index
-      $InterfaceIndex = Find-NetRoute -RemoteIPAddress $Gateway | Select -First 1 -ExpandProperty InterfaceIndex
+      $InterfaceIndex = Find-NetRoute -RemoteIPAddress $Gateway | Select-Object -First 1 -ExpandProperty InterfaceIndex
 
       # Add network route
-      New-NetRoute -DestinationPrefix $Destination -NextHop $Gateway -InterfaceIndex $InterfaceIndex -RouteMetric $Metric -ErrorAction Stop -WhatIf:$CheckMode|out-null 
+      New-NetRoute -DestinationPrefix $Destination -NextHop $Gateway -InterfaceIndex $InterfaceIndex -RouteMetric $Metric -ErrorAction Stop -WhatIf:$CheckMode|out-null
       $result.changed = $true
       $result.output = "Route added"
-      
+
     }
     catch {
       $ErrorMessage = $_.Exception.Message
@@ -55,7 +55,7 @@ Function Add-Route {
   else {
     $result.output = "Static route already exists"
   }
-  
+
 }
 
 Function Remove-Route {
@@ -69,7 +69,7 @@ Function Remove-Route {
   if ($Route){
     try {
 
-      Remove-NetRoute -DestinationPrefix $Destination -Confirm:$false -ErrorAction Stop -WhatIf:$CheckMode 
+      Remove-NetRoute -DestinationPrefix $Destination -Confirm:$false -ErrorAction Stop -WhatIf:$CheckMode
       $result.changed = $true
       $result.output = "Route removed"
     }
@@ -84,7 +84,7 @@ Function Remove-Route {
 
 }
 
-# Set gateway if null 
+# Set gateway if null
 if(!($gateway)){
   $gateway = "0.0.0.0"
 }

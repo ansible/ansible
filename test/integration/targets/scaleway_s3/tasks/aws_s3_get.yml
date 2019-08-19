@@ -1,8 +1,7 @@
-- name: Create a destination local file
+- name: Create a destination file
   tempfile:
     state: file
     suffix: temp
-  delegate_to: localhost
   register: tempfile_dst
 
 - name: Get from bucket

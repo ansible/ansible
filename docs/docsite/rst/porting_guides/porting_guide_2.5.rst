@@ -143,7 +143,7 @@ Ansible fact namespacing
 Ansible facts, which have historically been written to names like ``ansible_*``
 in the main facts namespace, have been placed in their own new namespace,
 ``ansible_facts.*`` For example, the fact ``ansible_distribution`` is now best
-queried through the variable structure ``ansible_facts.distribution``. 
+queried through the variable structure ``ansible_facts.distribution``.
 
 A new configuration variable, ``inject_facts_as_vars``, has been added to
 ansible.cfg. Its default setting, 'True', keeps the 2.4 behavior of facts
@@ -274,7 +274,7 @@ other non-iterable types returned by a plugin were accepted without error or war
 Lookup
 -------
 
-A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :doc:`lookup <../plugins/lookup>` page for more details.
+A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :ref:`lookup <lookup_plugins>` page for more details.
 
 
 Porting custom scripts
@@ -389,4 +389,4 @@ If your module uses shared module utilities, you must update all references. For
    from ansible.module_utils.network.vyos.vyos import get_config, load_config
 
 
-See the module utilities developer guide see :ref:`appendix_module_utilities` for more information.
+See the module utilities developer guide see :ref:`developing_module_utilities` for more information.

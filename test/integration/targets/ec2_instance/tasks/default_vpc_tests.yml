@@ -1,0 +1,66 @@
+- block:
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: true
+    - name: Make instance in a default subnet of the VPC
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-default-vpc"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        wait: false
+        <<: *aws_connection_info
+      register: in_default_vpc
+
+    - name: Make instance in a default subnet of the VPC(check mode)
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-default-vpc-checkmode"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+      check_mode: yes
+
+    - name: "fact presented ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-default-vpc"
+        <<: *aws_connection_info
+      register: presented_instance_fact
+
+    - name: "fact checkmode ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-default-vpc-checkmode"
+        <<: *aws_connection_info
+      register: checkmode_instance_fact
+
+    - name: "Confirm whether the check mode is working normally."
+      assert:
+        that:
+          - "{{ presented_instance_fact.instances | length }} > 0"
+          - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+    - name: Terminate instance
+      ec2:
+        instance_ids: "{{ in_default_vpc.instance_ids }}"
+        state: absent
+        <<: *aws_connection_info
+
+  always:
+    - name: Terminate test-default-vpc instance
+      ec2:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-default-vpc"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes

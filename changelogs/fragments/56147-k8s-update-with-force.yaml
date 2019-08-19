@@ -1,0 +1,2 @@
+bugfixes:
+  - k8s - resource updates applied with force work correctly now

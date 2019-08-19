@@ -13,9 +13,9 @@ Additional features allow for tuning the orders in which things complete, and as
 
 This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
-You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.
+You should also consult the :ref:`module documentation<modules_by_category>` section. Modules like :ref:`ec2_elb<ec2_elb_module>`, :ref:`nagios<nagios_module>`, :ref:`bigip_pool<bigip_pool_module>`, and other :ref:`network_modules` dovetail neatly with the concepts mentioned here.
 
-You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
+You'll also want to read up on :ref:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
 
 Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
 
@@ -130,7 +130,7 @@ In the above example, if more than 3 of the 10 servers in the group were to fail
 
 .. note::
 
-     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort
      when 2 of the systems failed, the percentage should be set at 49 rather than 50.
 
 .. _delegation:
@@ -158,7 +158,7 @@ Using this with the 'serial' keyword to control the number of hosts executing at
         delegate_to: 127.0.0.1
 
       - name: actual steps would go here
-        yum: 
+        yum:
           name: acme-web-stack
           state: latest
 
@@ -273,10 +273,13 @@ As always with delegation, the action will be executed on the delegated host, bu
 .. note::
      When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
      If it's crucial that the task is run only once regardless of "serial" mode, use
-     :code:`when: inventory_hostname == ansible_play_hosts[0]` construct.
+     :code:`when: inventory_hostname == ansible_play_hosts_all[0]` construct.
 
 .. note::
     Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
+
+.. note::
+    If you want to avoid the default behaviour of setting the fact for all hosts, set `delegate_facts: True` for the specific task or block.
 
 .. _local_playbooks:
 
@@ -298,8 +301,8 @@ use the default remote connection type::
       connection: local
 
 .. note::
-    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not  
-    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in           
+    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not
+    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in
     host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
 
 
@@ -330,14 +333,14 @@ For datacenter "A", the playbook can be written this way::
       tasks:
       - name: 'shutting down datacenter [ A ]'
         command: /usr/bin/disable-dc
-    
+
     - hosts: frontends_dc_a
       tasks:
       - name: 'stopping service'
         command: /usr/bin/stop-software
       - name: 'updating software'
         command: /usr/bin/upgrade-software
-    
+
     - hosts: load_balancers_dc_a
       tasks:
       - name: 'Starting datacenter [ A ]'
@@ -348,7 +351,7 @@ In this example Ansible will start the software upgrade on the front ends only i
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
@@ -356,5 +359,3 @@ In this example Ansible will start the software upgrade on the front ends only i
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

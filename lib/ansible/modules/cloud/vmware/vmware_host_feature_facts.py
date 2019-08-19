@@ -31,10 +31,12 @@ options:
     description:
     - Name of the cluster from all host systems to be used for facts gathering.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname to gather facts from.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
