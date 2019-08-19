@@ -54,7 +54,7 @@ options:
         to a given subset. Possible values for this argument include
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
-    choices: ['all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces']
+    choices: ['all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces', 'vlans', '!vlans']
     version_added: "2.9"
 """
 

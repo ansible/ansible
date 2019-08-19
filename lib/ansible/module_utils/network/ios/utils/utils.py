@@ -39,7 +39,7 @@ def dict_to_set(sample_dict):
                         for key, value in iteritems(each):
                             if isinstance(value, list):
                                 each[key] = tuple(value)
-                        li.extend(tuple(each.items()))
+                        li.append(tuple(each.items()))
                     v = tuple(li)
                 else:
                     v = tuple(v)
