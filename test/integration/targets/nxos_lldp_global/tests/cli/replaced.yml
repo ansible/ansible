@@ -37,7 +37,7 @@
           - "result.changed == true"
           - "'lldp timer 35' in result.commands"
           - "'lldp tlv-select power-management' in result.commands"
-          - "'lldp portid-subtype 0' in result.commands"
+          - "'no lldp portid-subtype 1' in result.commands"
           - "'no lldp tlv-select system-name' in result.commands"
           - "'no lldp tlv-select system-description' in result.commands"
           - "'no lldp tlv-select dcbxp' in result.commands"

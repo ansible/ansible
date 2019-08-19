@@ -33,8 +33,8 @@
     - assert:
         that:
           - "ansible_facts.network_resources.lldp_global == result.before"
-          - "'lldp holdtime 120' in result.commands"
-          - "'lldp timer 30' in result.commands"
+          - "'no lldp holdtime 125' in result.commands"
+          - "'no lldp timer 32' in result.commands"
           - "'lldp tlv-select dcbxp' in result.commands"
           - "'lldp tlv-select system-description' in result.commands"
           - "result.changed == true "
@@ -45,7 +45,7 @@
 
     - assert:
         that:
-          - "ansible_facts.network_resources.lldp_global == {} "
+          - "ansible_facts.network_resources == {} "
 
     - name: Idempotence - deleted
       nxos_lldp_global: *deleted

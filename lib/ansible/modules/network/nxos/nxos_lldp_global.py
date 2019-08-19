@@ -21,16 +21,17 @@
 #   builder template.
 #
 #############################################
-
 """
 The module file for nxos_lldp_global
 """
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'network'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'network'
+}
 
 DOCUMENTATION = """
 ---
@@ -40,7 +41,8 @@ short_description: Configure and manage Link Layer Discovery Protocol(LLDP) attr
 description: This module configures and manages the Link Layer Discovery Protocol(LLDP) attributes on NX-OS platforms.
 author: Adharsh Srivats Rangarajan (@adharshsrivatsr)
 notes:
-  - Tested against <network_os> 7.3.(0)D1(1) on VIRL
+  - Tested against NxOS 7.3.(0)D1(1) on VIRL
+  - The LLDP feature needs to be enabled before using this module
 options:
   config:
     description:
@@ -223,9 +225,8 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['lldp holdtime 125', 'lldp reinit 4', 'no lldp tlv-select system-name']
 """
-
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.argspec.lldp_global.lldp_global import Lldp_globalArgs

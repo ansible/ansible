@@ -9,14 +9,11 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
 import re
 from copy import deepcopy
+
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.argspec.lldp_global.lldp_global import Lldp_globalArgs
-
 
 class Lldp_globalFacts(object):
     """ The nxos lldp_global fact class
@@ -47,20 +44,16 @@ class Lldp_globalFacts(object):
 
         if not data:
             data = connection.get('show running-config | include lldp')
-
+        
         objs = {}
         objs = self.render_config(self.generated_spec, data)
-
         ansible_facts['ansible_network_resources'].pop('lldp_global', None)
         facts = {}
         if objs:
             params = utils.validate_config(self.argument_spec, {'config': objs})
             facts['lldp_global'] = params['config']
             facts = utils.remove_empties(facts)
-        else:
-            facts['lldp_global'] = {}
-
-        ansible_facts['ansible_network_resources'].update(facts)
+        ansible_facts['ansible_network_resources'].update((facts))
         return ansible_facts
 
     def render_config(self, spec, conf):
@@ -74,39 +67,28 @@ class Lldp_globalFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        data = re.split('\n', conf)
-        if len(data) > 1:
-            for key in data:
-                words = key.split()
-                if len(words) > 0 and len(words) < 4:
-                    if 'holdtime' in words[1]:
-                        config['holdtime'] = words[2]
-                    elif 'reinit' in words[1]:
-                        config['reinit'] = words[2]
-                    elif 'timer' in words[1]:
-                        config['timer'] = words[2]
-                    elif 'portid-subtype' in words[1]:
-                        config['port_id'] = words[2]
-                elif len(words) > 3:
-                    if 'dcbxp' in words[3]:
-                        config['tlv_select']['dcbxp'] = False
-                    elif 'management-address' in words[3]:
-                        if 'v4' in words[4]:
-                            config['tlv_select']['management_address']['v4'] = False
-                        elif 'v6' in words[4]:
-                            config['tlv_select']['management_address']['v6'] = False
-                    elif 'port' in words[3]:
-                        if 'description' in words[3]:
-                            config['tlv_select']['port']['description'] = False
-                        if 'vlan' in words[3]:
-                            config['tlv_select']['port']['vlan'] = False
-                    elif 'power' in words[3]:
-                        config['tlv_select']['power_management'] = False
-                    elif 'system' in words[3]:
-                        if 'name' in words[3]:
-                            config['tlv_select']['system']['name'] = False
-                        elif 'capabilities' in words[3]:
-                            config['tlv_select']['system']['capabilities'] = False
-                        elif 'description' in words[3]:
-                            config['tlv_select']['system']['description'] = False
+        conf = re.split('\n',conf)
+        for command in conf:
+            param = re.search(r'(.*)lldp (\w+(-?)\w+)',command) #get the word after 'lldp'
+            if param:
+                key2 = re.search(r'%s(.*)' % param.group(2),command) #get the nested-dict/value for that param
+                key2 = key2.group(1).strip()
+                key1 = param.group(2).replace('-','_')
+                
+                if key1 == 'portid_subtype':
+                    key1 = 'port_id'
+                    config[key1]=key2
+                elif key1 == 'tlv_select':
+                    key2 = key2.split()
+                    key2[0]=key2[0].replace('-','_')
+                    if len(key2)==1:
+                        if 'port' in key2[0] or 'system' in key2[0]: #nested dicts
+                            key2 = key2[0].split('_')
+                            config[key1][key2[0]][key2[1]] = False # config[tlv_select][system][name]=False
+                        else:
+                            config[key1][key2[0]] = False #config[tlv_select][dcbxp]=False
+                    else:
+                        config[key1][key2[0]][key2[1]]=False #config[tlv_select][management_address][v6]=False
+                else:
+                    config[key1]=key2 #config[reinit]=4
         return utils.remove_empties(config)
