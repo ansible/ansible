@@ -5157,7 +5157,6 @@ lib/ansible/modules/network/vyos/_vyos_l3_interface.py validate-modules:E326
 lib/ansible/modules/network/vyos/_vyos_l3_interface.py validate-modules:E337
 lib/ansible/modules/network/vyos/_vyos_l3_interface.py validate-modules:E338
 lib/ansible/modules/network/vyos/_vyos_l3_interface.py validate-modules:E340
-<<<<<<< HEAD
 lib/ansible/modules/network/vyos/_vyos_linkagg.py future-import-boilerplate
 lib/ansible/modules/network/vyos/_vyos_linkagg.py metaclass-boilerplate
 lib/ansible/modules/network/vyos/_vyos_linkagg.py validate-modules:E322
