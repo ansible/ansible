@@ -206,6 +206,7 @@ from ansible.module_utils.ec2 import compare_aws_tags
 import base64
 import hashlib
 import traceback
+import re
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError, ValidationError, ParamValidationError
@@ -213,33 +214,41 @@ except ImportError:
     pass  # protected by AnsibleAWSModule
 
 
-def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
-    """return the account id we are currently working on
+def get_account_info(module, region=None, endpoint=None, **aws_connect_kwargs):
+    """return the account information (account id and partition) we are currently working on
 
-    get_account_id tries too find out the account that we are working
+    get_account_info tries too find out the account that we are working
     on.  It's not guaranteed that this will be easy so we try in
     several different ways.  Giving either IAM or STS privileges to
     the account should be enough to permit this.
     """
     account_id = None
+    partition = None
     try:
         sts_client = boto3_conn(module, conn_type='client', resource='sts',
                                 region=region, endpoint=endpoint, **aws_connect_kwargs)
-        account_id = sts_client.get_caller_identity().get('Account')
+        caller_id = sts_client.get_caller_identity()
+        account_id = caller_id.get('Account')
+        partition = caller_id.get('Arn').split(':')[1]
     except ClientError:
         try:
             iam_client = boto3_conn(module, conn_type='client', resource='iam',
                                     region=region, endpoint=endpoint, **aws_connect_kwargs)
-            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+            arn, partition, service, reg, account_id, resource = iam_client.get_user()['User']['Arn'].split(':')
         except ClientError as e:
             if (e.response['Error']['Code'] == 'AccessDenied'):
                 except_msg = to_native(e.message)
-                account_id = except_msg.search(r"arn:aws:iam::([0-9]{12,32}):\w+/").group(1)
+                m = except_msg.search(r"arn:(aws(-([a-z\-]+))?):iam::([0-9]{12,32}):\w+/")
+                account_id = m.group(4)
+                partition = m.group(1)
             if account_id is None:
                 module.fail_json_aws(e, msg="getting account information")
+            if partition is None:
+                module.fail_json_aws(e, msg="getting account information: partition")
         except Exception as e:
             module.fail_json_aws(e, msg="getting account information")
-    return account_id
+
+    return account_id, partition
 
 
 def get_current_function(connection, function_name, qualifier=None):
@@ -377,12 +386,12 @@ def main():
         module.fail_json_aws(e, msg="Trying to connect to AWS")
 
     if state == 'present':
-        if role.startswith('arn:aws:iam'):
+        if re.match(r'^arn:aws(-([a-z\-]+))?:iam', role):
             role_arn = role
         else:
             # get account ID and assemble ARN
-            account_id = get_account_id(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
+            account_id, partition = get_account_info(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            role_arn = 'arn:{0}:iam::{1}:role/{2}'.format(partition, account_id, role)
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
