@@ -117,4 +117,3 @@ def list_diff_want_only(want_list, have_list):
     else:
         diff = [i for i in have_list + want_list if i in want_list and i not in have_list]
     return diff
-
