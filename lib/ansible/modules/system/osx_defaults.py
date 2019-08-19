@@ -70,7 +70,7 @@ options:
     default: present
   path:
     description:
-      - The path in which to search for C(osx_defaults).
+      - The path in which to search for C(defaults).
     type: str
     default: /usr/bin:/usr/local/bin
 notes:
