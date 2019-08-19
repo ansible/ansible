@@ -69,6 +69,15 @@ options:
         - The ID of the the table.
         required: false
         type: str
+  clustering:
+    description:
+    - One or more fields on which data should be clustered. Only top-level, non-repeated,
+      simple-type fields are supported. When you cluster a table using multiple columns,
+      the order of columns you specify is important. The order of the specified columns
+      determines the sort order of the data.
+    required: false
+    type: list
+    version_added: 2.9
   description:
     description:
     - A user-friendly description of the dataset.
@@ -90,6 +99,13 @@ options:
     - Name of the table.
     required: false
     type: str
+  num_rows:
+    description:
+    - The number of rows of data in this table, excluding any data in the streaming
+      buffer.
+    required: false
+    type: int
+    version_added: 2.9
   view:
     description:
     - The view definition.
@@ -130,6 +146,16 @@ options:
         - Number of milliseconds for which to keep the storage for a partition.
         required: false
         type: int
+      field:
+        description:
+        - If not set, the table is partitioned by pseudo column, referenced via either
+          '_PARTITIONTIME' as TIMESTAMP type, or '_PARTITIONDATE' as DATE type. If
+          field is specified, the table is instead partitioned by this field. The
+          field must be a top-level TIMESTAMP or DATE field. Its mode must be NULLABLE
+          or REQUIRED.
+        required: false
+        type: str
+        version_added: 2.9
       type:
         description:
         - The only type supported is DAY, which will generate one partition per day.
@@ -485,6 +511,14 @@ tableReference:
       - The ID of the the table.
       returned: success
       type: str
+clustering:
+  description:
+  - One or more fields on which data should be clustered. Only top-level, non-repeated,
+    simple-type fields are supported. When you cluster a table using multiple columns,
+    the order of columns you specify is important. The order of the specified columns
+    determines the sort order of the data.
+  returned: success
+  type: list
 creationTime:
   description:
   - The time when this dataset was created, in milliseconds since the epoch.
@@ -543,6 +577,12 @@ numRows:
     buffer.
   returned: success
   type: int
+requirePartitionFilter:
+  description:
+  - If set to true, queries over this table require a partition filter that can be
+    used for partition elimination to be specified.
+  returned: success
+  type: bool
 type:
   description:
   - Describes the table type.
@@ -588,6 +628,14 @@ timePartitioning:
       - Number of milliseconds for which to keep the storage for a partition.
       returned: success
       type: int
+    field:
+      description:
+      - If not set, the table is partitioned by pseudo column, referenced via either
+        '_PARTITIONTIME' as TIMESTAMP type, or '_PARTITIONDATE' as DATE type. If field
+        is specified, the table is instead partitioned by this field. The field must
+        be a top-level TIMESTAMP or DATE field. Its mode must be NULLABLE or REQUIRED.
+      returned: success
+      type: str
     type:
       description:
       - The only type supported is DAY, which will generate one partition per day.
@@ -916,10 +964,12 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             table_reference=dict(type='dict', options=dict(dataset_id=dict(type='str'), project_id=dict(type='str'), table_id=dict(type='str'))),
+            clustering=dict(type='list', elements='str'),
             description=dict(type='str'),
             friendly_name=dict(type='str'),
             labels=dict(type='dict'),
             name=dict(type='str'),
+            num_rows=dict(type='int'),
             view=dict(
                 type='dict',
                 options=dict(
@@ -929,7 +979,7 @@ def main():
                     ),
                 ),
             ),
-            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), type=dict(type='str'))),
+            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), field=dict(type='str'), type=dict(type='str'))),
             schema=dict(
                 type='dict',
                 options=dict(
@@ -1069,10 +1119,12 @@ def resource_to_request(module):
     request = {
         u'kind': 'bigquery#table',
         u'tableReference': TableTablereference(module.params.get('table_reference', {}), module).to_request(),
+        u'clustering': module.params.get('clustering'),
         u'description': module.params.get('description'),
         u'friendlyName': module.params.get('friendly_name'),
         u'labels': module.params.get('labels'),
         u'name': module.params.get('name'),
+        u'numRows': module.params.get('num_rows'),
         u'view': TableView(module.params.get('view', {}), module).to_request(),
         u'timePartitioning': TableTimepartitioning(module.params.get('time_partitioning', {}), module).to_request(),
         u'schema': TableSchema(module.params.get('schema', {}), module).to_request(),
@@ -1145,6 +1197,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'tableReference': TableTablereference(response.get(u'tableReference', {}), module).from_response(),
+        u'clustering': response.get(u'clustering'),
         u'creationTime': response.get(u'creationTime'),
         u'description': response.get(u'description'),
         u'friendlyName': response.get(u'friendlyName'),
@@ -1156,6 +1209,7 @@ def response_to_hash(module, response):
         u'numBytes': response.get(u'numBytes'),
         u'numLongTermBytes': response.get(u'numLongTermBytes'),
         u'numRows': response.get(u'numRows'),
+        u'requirePartitionFilter': response.get(u'requirePartitionFilter'),
         u'type': response.get(u'type'),
         u'view': TableView(response.get(u'view', {}), module).from_response(),
         u'timePartitioning': TableTimepartitioning(response.get(u'timePartitioning', {}), module).from_response(),
@@ -1251,10 +1305,14 @@ class TableTimepartitioning(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'expirationMs': self.request.get('expiration_ms'), u'type': self.request.get('type')})
+        return remove_nones_from_dict(
+            {u'expirationMs': self.request.get('expiration_ms'), u'field': self.request.get('field'), u'type': self.request.get('type')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'expirationMs': self.request.get(u'expirationMs'), u'type': self.request.get(u'type')})
+        return remove_nones_from_dict(
+            {u'expirationMs': self.request.get(u'expirationMs'), u'field': self.request.get(u'field'), u'type': self.request.get(u'type')}
+        )
 
 
 class TableStreamingbuffer(object):

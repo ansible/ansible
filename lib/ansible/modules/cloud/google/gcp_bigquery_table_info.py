@@ -86,6 +86,14 @@ resources:
           - The ID of the the table.
           returned: success
           type: str
+    clustering:
+      description:
+      - One or more fields on which data should be clustered. Only top-level, non-repeated,
+        simple-type fields are supported. When you cluster a table using multiple
+        columns, the order of columns you specify is important. The order of the specified
+        columns determines the sort order of the data.
+      returned: success
+      type: list
     creationTime:
       description:
       - The time when this dataset was created, in milliseconds since the epoch.
@@ -144,6 +152,12 @@ resources:
         buffer.
       returned: success
       type: int
+    requirePartitionFilter:
+      description:
+      - If set to true, queries over this table require a partition filter that can
+        be used for partition elimination to be specified.
+      returned: success
+      type: bool
     type:
       description:
       - Describes the table type.
@@ -189,6 +203,15 @@ resources:
           - Number of milliseconds for which to keep the storage for a partition.
           returned: success
           type: int
+        field:
+          description:
+          - If not set, the table is partitioned by pseudo column, referenced via
+            either '_PARTITIONTIME' as TIMESTAMP type, or '_PARTITIONDATE' as DATE
+            type. If field is specified, the table is instead partitioned by this
+            field. The field must be a top-level TIMESTAMP or DATE field. Its mode
+            must be NULLABLE or REQUIRED.
+          returned: success
+          type: str
         type:
           description:
           - The only type supported is DAY, which will generate one partition per
@@ -523,12 +546,7 @@ def main():
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/bigquery']
 
-    items = fetch_list(module, collection(module))
-    if items.get('tables'):
-        items = items.get('tables')
-    else:
-        items = []
-    return_value = {'resources': items}
+    return_value = {'resources': fetch_list(module, collection(module))}
     module.exit_json(**return_value)
 
 
@@ -538,8 +556,7 @@ def collection(module):
 
 def fetch_list(module, link):
     auth = GcpSession(module, 'bigquery')
-    response = auth.get(link)
-    return return_if_object(module, response)
+    return auth.list(link, return_if_object, array_name='tables')
 
 
 def return_if_object(module, response):
