@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_monitorlogprofile
 version_added: "2.9"
-short_description: Manage Azure Monitor log profile.
+short_description: Manage Azure Monitor log profile
 description:
     - Create, update and delete instance of Azure Monitor log profile.
 
@@ -32,11 +32,12 @@ options:
             - Resource location.
         type: str
     locations:
-        description: List of regions for which Activity Log events should be stored.
+        description:
+            - List of regions for which Activity Log events should be stored.
         type: list
     categories:
         description:
-            - List of categories of logs. These categories are created as is convinient to  user. Some Values are Write, Delete and/or Action.
+            - List of categories of logs. These categories are created as is convenient to  user. Some Values are C(Write), C(Delete) and/or C(Action).
         type: list
     retention_policy:
         description:
@@ -44,38 +45,40 @@ options:
         type: dict
         suboptions:
             enabled:
-                description: Whether the retention policy is enabled.
+                description:
+                    - Whether the retention policy is enabled.
                 type: bool
             days:
-                description: The number of days for the retention. A value of 0 will retain the events indefinitely.
+                description:
+                    - The number of days for the retention. A value of 0 will retain the events indefinitely.
                 type: int
     service_bus_rule_id:
         description:
-            - The service bus rule  ID of  the service bus namespace in which you would like to have Event Hubs created for streaming in the Activity Log.
-            - format like {serice_bus_resource_id}/authorizationrules{key_name}.
+            - The service bus rule  ID of the service bus namespace in which you would like to have Event Hubs created for streaming in the Activity Log.
+            - Format like {service_bus_resource_id}/authorizationrules{key_name}.
         type: str
     storage_account:
         description:
             - The storage account to which send the Activity Log.
-            - It could be a resource id.
-            - It could be a dict containing resource_grorup and name.
+            - It could be a resource ID.
+            - It could be a dict containing I(resource_grorup) and I(name).
         type: raw
     state:
-      description:
-        - Assert the state of the log profile.
-        - Use C(present) to create or update a log profile and C(absent) to delete it.
-      default: present
-      type: str
-      choices:
-        - absent
-        - present
+        description:
+            - Assert the state of the log profile.
+            - Use C(present) to create or update a log profile and C(absent) to delete it.
+        default: present
+        type: str
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -106,7 +109,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Id of the log profile.
+    description:
+        - ID of the log profile.
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/microsoft.insights/logprofiles/myProfile
