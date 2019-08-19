@@ -149,7 +149,7 @@ options:
                             - email
             id:
                 description:
-                    - ID.
+                    - Id of this entry for configuring antispam black/white lists.
                 required: true
                 type: int
             name:
