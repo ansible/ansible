@@ -514,29 +514,30 @@ class Templar:
         self.available_variables = variables
 
     @contextmanager
-    def set_temporary_context(self, start_string=None, end_string=None, variables=None, searchpath=None):
+    def set_temporary_context(self, **kwargs):
         """Context manager used to set temporary templating context, without having to worry about resetting
         original values afterward
+
+        Use a keyword that maps to the attr you are setting. Applies to ``self.environment`` by default, to
+        set context on another object, it must be in ``mapping``.
         """
-        o_start = self.environment.variable_start_string
-        o_end = self.environment.variable_end_string
-        o_vars = self.available_variables
-        o_searchpath = self.environment.loader.searchpath
-        if start_string is not None:
-            self.environment.variable_start_string = start_string
-        if end_string is not None:
-            self.environment.variable_end_string = end_string
-        if variables is not None:
-            self.available_variables = variables
-        if searchpath is not None:
-            self.environment.loader.searchpath = searchpath
+        mapping = {
+            'available_variables': self,
+            'searchpath': self.environment.loader,
+        }
+        original = {}
+
+        for key, value in kwargs.items():
+            obj = mapping.get(key, self.environment)
+            original[key] = getattr(obj, key)
+            setattr(obj, key, value)
 
         yield
 
-        self.environment.variable_start_string = o_start
-        self.environment.variable_end_string = o_end
-        self.available_variables = o_vars
-        self.environment.loader.searchpath = o_searchpath
+        for key in kwargs:
+            obj = mapping.get(key, self.environment)
+            setattr(obj, key, original[key])
+
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
                  convert_data=True, static_vars=None, cache=True, disable_lookups=False):
