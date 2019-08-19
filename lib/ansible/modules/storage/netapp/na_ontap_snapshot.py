@@ -63,6 +63,7 @@ options:
   vserver:
     description:
     - The Vserver name
+    required: true
 '''
 EXAMPLES = """
     - name: create SnapShot
@@ -173,6 +174,7 @@ class NetAppOntapSnapshot(object):
         snapshot_info_obj = netapp_utils.zapi.NaElement("snapshot-info")
         snapshot_info_obj.add_new_child("name", snapshot_name)
         snapshot_info_obj.add_new_child("volume", self.parameters['volume'])
+        snapshot_info_obj.add_new_child("vserver", self.parameters['vserver'])
         query.add_child_elem(snapshot_info_obj)
         snapshot_obj.add_child_elem(query)
         result = self.server.invoke_successfully(snapshot_obj, True)
@@ -243,6 +245,7 @@ class NetAppOntapSnapshot(object):
         query = netapp_utils.zapi.NaElement("query")
         snapshot_info_obj = netapp_utils.zapi.NaElement("snapshot-info")
         snapshot_info_obj.add_new_child("name", self.parameters['snapshot'])
+        snapshot_info_obj.add_new_child("vserver", self.parameters['vserver'])
         query.add_child_elem(snapshot_info_obj)
         snapshot_obj.add_child_elem(query)
 
