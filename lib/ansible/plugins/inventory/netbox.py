@@ -293,7 +293,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 return device_lookup["config_context"]
         except Exception:
             return
-    
+
     def extract_interface_ip(self, interface_id):
         try:
             url = self.api_endpoint + "/api/ipam/ip-addresses/?limit=0&interface_id=" + str(interface_id)
@@ -323,7 +323,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_manufacturer(self, host):
         try:
-            return ([self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]] 
+            return ([self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]]
                     if self.use_slugs else [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]])
         except Exception:
             return
