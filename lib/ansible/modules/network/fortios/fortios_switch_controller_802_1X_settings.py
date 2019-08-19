@@ -87,11 +87,11 @@ options:
                     - no-action
             max_reauth_attempt:
                 description:
-                    - Maximum number of authentication attempts (0 - 15, default = 3).
+                    - Maximum number of authentication attempts (0 - 15).
                 type: int
             reauth_period:
                 description:
-                    - Period of time to allow for reauthentication (1 - 1440 sec, default = 60, 0 = disable reauthentication).
+                    - Period of time to allow for reauthentication (1 - 1440 sec, 0 = disable reauthentication).
                 type: int
 '''
 
