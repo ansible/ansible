@@ -223,6 +223,15 @@ options:
         - Full or partial URL of the accelerator type resource to expose to this instance.
         required: false
         type: str
+  hostname:
+    description:
+    - The hostname of the instance to be created. The specified hostname must be RFC1035
+      compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+      when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+      when using zonal DNS.
+    required: false
+    type: str
+    version_added: 2.9
   labels:
     description:
     - Labels to apply to this instance. A list of key->value pairs.
@@ -707,6 +716,14 @@ guestAccelerators:
       - Full or partial URL of the accelerator type resource to expose to this instance.
       returned: success
       type: str
+hostname:
+  description:
+  - The hostname of the instance to be created. The specified hostname must be RFC1035
+    compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+    when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+    when using zonal DNS.
+  returned: success
+  type: str
 id:
   description:
   - The unique identifier for the resource. This identifier is defined by the server.
@@ -996,6 +1013,7 @@ def main():
                 ),
             ),
             guest_accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
+            hostname=dict(type='str'),
             labels=dict(type='dict'),
             metadata=dict(type='dict'),
             machine_type=dict(type='str'),
@@ -1114,6 +1132,7 @@ def resource_to_request(module):
         u'deletionProtection': module.params.get('deletion_protection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(module.params.get('guest_accelerators', []), module).to_request(),
+        u'hostname': module.params.get('hostname'),
         u'labels': module.params.get('labels'),
         u'metadata': module.params.get('metadata'),
         u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params),
@@ -1200,6 +1219,7 @@ def response_to_hash(module, response):
         u'deletionProtection': response.get(u'deletionProtection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(response.get(u'guestAccelerators', []), module).from_response(),
+        u'hostname': response.get(u'hostname'),
         u'id': response.get(u'id'),
         u'labelFingerprint': response.get(u'labelFingerprint'),
         u'labels': response.get(u'labels'),
@@ -1250,7 +1270,11 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return decode_response(fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance'), module)
+    response = fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance')
+    if response:
+        return decode_response(response, module)
+    else:
+        return {}
 
 
 def wait_for_completion(status, op_result, module):
