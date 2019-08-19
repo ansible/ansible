@@ -203,6 +203,9 @@ options:
     create_subject_key_identifier:
         description:
             - Create the Subject Key Identifier from the public key.
+            - "Please note that commercial CAs can ignore the value, respectively use a value of
+               their own choice instead. Specifying this option is mostly useful for self-signed
+               certificates or for own CAs."
             - Note that this is only supported if the C(cryptography) backend is used!
         type: bool
         default: no
@@ -211,6 +214,9 @@ options:
         description:
             - The subject key identifier as a hex string, where two bytes are separated by colons.
             - "Example: C(00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33)"
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
             - Note that this option can only be used if I(create_subject_key_identifier) is C(no).
             - Note that this is only supported if the C(cryptography) backend is used!
         type: str
@@ -220,6 +226,9 @@ options:
             - The authority key identifier as a hex string, where two bytes are separated by colons.
             - "Example: C(00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33)"
             - If specified, I(authority_cert_issuer) must also be specified.
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
             - Note that this is only supported if the C(cryptography) backend is used!
             - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
@@ -232,6 +241,9 @@ options:
               C(otherName) and the ones specific to your CA)
             - "Example: C(DNS:ca.example.org)"
             - If specified, I(authority_key_identifier) must also be specified.
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
             - Note that this is only supported if the C(cryptography) backend is used!
             - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
@@ -241,6 +253,9 @@ options:
         description:
             - The authority cert serial number.
             - Note that this is only supported if the C(cryptography) backend is used!
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
             - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
         type: int
