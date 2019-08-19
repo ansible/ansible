@@ -93,6 +93,13 @@ EXAMPLES = r'''
     state: present
 
 - osx_defaults:
+    domain: /Library/Preferences/com.apple.SoftwareUpdate
+    key: AutomaticCheckEnabled
+    type: int
+    value: 1
+  become: yes
+
+- osx_defaults:
     domain: com.apple.screensaver
     host: currentHost
     key: showClock
