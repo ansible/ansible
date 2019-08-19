@@ -47,54 +47,54 @@ notes:
   - This module works with connection C(network_cli).
     See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
-config:
-  description: A dictionary of VLANs options
-  type: list
-  elements: dict
-  suboptions:
-    name:
-      description:
-      - Ascii name of the VLAN.
-      - NOTE, I(name) should not be named/appended with I(default) as it is reserved for device default vlans.
-      type: str
-    vlan_id:
-      description:
-      - ID of the VLAN. Range 1-4094
-      type: int
-      required: True
-    mtu:
-      description:
-      - VLAN Maximum Transmission Unit.
-      - Refer to vendor documentation for valid values.
-      type: int
-    state:
-      description:
-      - Operational state of the VLAN
-      type: str
-      choices:
-      - active
-      - suspend
-    remote_span:
-      description:
-      - Configure as Remote SPAN VLAN
-      type: bool
-    shutdown:
-      description:
-      - Shutdown VLAN switching.
-      type: str
-      choices:
-      - enabled
-      - disabled
-state:
-  description:
-  - The state the configuration should be left in
-  type: str
-  choices:
-  - merged
-  - replaced
-  - overridden
-  - deleted
-  default: merged
+  config:
+    description: A dictionary of VLANs options
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description:
+        - Ascii name of the VLAN.
+        - NOTE, I(name) should not be named/appended with I(default) as it is reserved for device default vlans.
+        type: str
+      vlan_id:
+        description:
+        - ID of the VLAN. Range 1-4094
+        type: int
+        required: True
+      mtu:
+        description:
+        - VLAN Maximum Transmission Unit.
+        - Refer to vendor documentation for valid values.
+        type: int
+      state:
+        description:
+        - Operational state of the VLAN
+        type: str
+        choices:
+        - active
+        - suspend
+      remote_span:
+        description:
+        - Configure as Remote SPAN VLAN
+        type: bool
+      shutdown:
+        description:
+        - Shutdown VLAN switching.
+        type: str
+        choices:
+        - enabled
+        - disabled
+  state:
+    description:
+    - The state the configuration should be left in
+    type: str
+    choices:
+    - merged
+    - replaced
+    - overridden
+    - deleted
+    default: merged
 """
 EXAMPLES = """
 ---
