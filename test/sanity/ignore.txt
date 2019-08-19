@@ -3694,6 +3694,7 @@ lib/ansible/modules/network/fortios/fortios_config.py validate-modules:E337
 lib/ansible/modules/network/fortios/fortios_firewall_DoS_policy.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_firewall_DoS_policy6.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_firewall_policy.py validate-modules:E326
+lib/ansible/modules/network/fortios/fortios_firewall_sniffer.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_firewall_ssl_ssh_profile.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_firewall_ssl_ssh_profile.py validate-modules:E337
 lib/ansible/modules/network/fortios/fortios_firewall_ttl_policy.py validate-modules:E337
