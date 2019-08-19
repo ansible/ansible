@@ -136,6 +136,10 @@ import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.netapp_elementsw_module import NaElementSWModule
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
+try:
+    import solidfire.common
+except ImportError:
+    HAS_SF_SDK = False
 
 
 class ElementSWAccessGroup(object):
@@ -218,7 +222,7 @@ class ElementSWAccessGroup(object):
         try:
             account_id = self.elementsw_helper.account_exists(self.account_id)
             return account_id
-        except Exception:
+        except solidfire.common.ApiServerError:
             return None
 
     def get_volume_id(self):
@@ -299,10 +303,9 @@ class ElementSWAccessGroup(object):
         update_group = False
 
         if self.account_id is not None:
-            self.account_id_valid = self.get_account_id()
-
+            self.account_id = self.get_account_id()
         if self.state == 'present' and self.volumes is not None:
-            if self.account_id_valid:
+            if self.account_id:
                 self.volumes = self.get_volume_id()
             else:
                 self.module.fail_json(msg='Error: Specified account id %s does not exist ' % self.account_id)
@@ -320,10 +323,15 @@ class ElementSWAccessGroup(object):
                 # If state - present, check for any parameter of exising group needs modification.
                 if self.volumes is not None and len(self.volumes) > 0:
                     # Compare the volume list
-                    for volumeID in group_detail.volumes:
-                        if volumeID not in self.volumes:
-                            update_group = True
-                            changed = True
+                    if not group_detail.volumes:
+                        # If access group does not have any volume attached
+                        update_group = True
+                        changed = True
+                    else:
+                        for volumeID in group_detail.volumes:
+                            if volumeID not in self.volumes:
+                                update_group = True
+                                changed = True
 
                 elif self.initiators is not None and group_detail.initiators != self.initiators:
                     update_group = True
