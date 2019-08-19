@@ -164,13 +164,7 @@ EXAMPLES = '''
 
 RETURN = '''
 transfer_status:
-    description: Whether a file was transferred.
-                 When file_pull is True it can be set to the following states.
-                 "Received: File copied/pulled to nxos device from remote scp server."
-                 "No Transfer"
-                 When file_pull is False it can be set to the following states.
-                 "Sent: File copied to remote device."
-                 "No Transfer: File already copied to remote device."
+    description: Whether a file was transferred to the nxos device.
     returned: success
     type: str
     sample: 'Sent'
