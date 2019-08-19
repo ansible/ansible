@@ -299,7 +299,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if self.interfaces:
                 url = self.api_endpoint + "/api/dcim/interfaces/?limit=0&device_id=" + str(host["id"])
                 interfaces_lookup = self._fetch_information(url)
-                wanted_keys = ['description', 'enabled', 'lag', 'name', 'mode', 'tagged_vlans', 'untagged_vlan', 'tags']
+                wanted_keys = ['description', 'enabled', 'lag', 'name', 'mode', 'tagged_vlans', 'untagged_vlan', 'tags', 'form_factor', 'count_ipaddresses']
                 interfaces_short = []
                 for interface_lookup in interfaces_lookup['results']:
                     interfaces_short.append(dict((k, interface_lookup[k]) for k in wanted_keys if k in interface_lookup))
@@ -309,7 +309,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_manufacturer(self, host):
         try:
-            return [self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]] if self.use_slugs else [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
+            return ([self.manufacturers_slug_lookup[host["device_type"]["manufacturer"]["id"]]]
+                    if self.use_slugs else [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]])
         except Exception:
             return
 
