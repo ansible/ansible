@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -21,6 +21,9 @@ description:
   - This will configure both login and motd banners on network devices.
     It allows playbooks to add or remove
     banner text from the active running configuration.
+deprecated:
+    removed_in: "2.13"
+    alternative: Use platform-specific "[netos]_banner" module
 extends_documentation_fragment: network_agnostic
 options:
   banner:
