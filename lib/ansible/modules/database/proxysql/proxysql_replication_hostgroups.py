@@ -33,9 +33,8 @@ options:
       - Text field that can be used for any purposed defined by the user.
   check_type:
     description:
-      - Variable checked when executing a read only check.
+      - Variable checked when executing a read only check. Requires proxysql >= 2.0.1.
     choices: ["read_only", "super_read_only", "innodb_read_only"]
-    default: read_only
     version_added: 2.9
   state:
     description:
@@ -99,10 +98,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
+from packaging import version
 
 # ===========================================
 # proxysql module specific support methods.
@@ -149,7 +148,7 @@ def load_config_to_runtime(cursor):
 
 class ProxySQLReplicationHostgroup(object):
 
-    def __init__(self, module):
+    def __init__(self, module, proxysql_version):
         self.state = module.params["state"]
         self.save_to_disk = module.params["save_to_disk"]
         self.load_to_runtime = module.params["load_to_runtime"]
@@ -157,6 +156,8 @@ class ProxySQLReplicationHostgroup(object):
         self.reader_hostgroup = module.params["reader_hostgroup"]
         self.comment = module.params["comment"]
         self.check_type = module.params["check_type"]
+        self.support_check_type = version.parse(
+            proxysql_version) >= version.parse("2.0.1")
 
     def check_repl_group_config(self, cursor, keys):
         query_string = \
@@ -170,9 +171,12 @@ class ProxySQLReplicationHostgroup(object):
              self.reader_hostgroup]
 
         if self.comment and not keys:
-            query_string += "\n  AND comment = %s AND check_type = %s"
+            query_string += "\n  AND comment = %s"
             query_data.append(self.comment)
-            query_data.append(self.check_type)
+
+            if self.support_check_type and self.check_type:
+                query_string += " AND check_type = %s"
+                query_data.append(self.check_type)
 
         cursor.execute(query_string, query_data)
         check_count = cursor.fetchone()
@@ -194,35 +198,60 @@ class ProxySQLReplicationHostgroup(object):
         return repl_group
 
     def create_repl_group_config(self, cursor):
-        query_string = \
-            """INSERT INTO mysql_replication_hostgroups (
-               writer_hostgroup,
-               reader_hostgroup,
-               comment,
-               check_type)
-               VALUES (%s, %s, %s, %s)"""
+        if self.support_check_type and self.check_type:
+            query_string = \
+                """INSERT INTO mysql_replication_hostgroups (
+                writer_hostgroup,
+                reader_hostgroup,
+                comment,
+                check_type)
+                VALUES (%s, %s, %s, %s)"""
 
-        query_data = \
-            [self.writer_hostgroup,
-             self.reader_hostgroup,
-             self.comment or '',
-             self.check_type]
+            query_data = \
+                [self.writer_hostgroup,
+                self.reader_hostgroup,
+                self.comment or '',
+                self.check_type]
+        else:
+            query_string = \
+                """INSERT INTO mysql_replication_hostgroups (
+                writer_hostgroup,
+                reader_hostgroup,
+                comment)
+                VALUES (%s, %s, %s)"""
+
+            query_data = \
+                [self.writer_hostgroup,
+                 self.reader_hostgroup,
+                 self.comment or '']
 
         cursor.execute(query_string, query_data)
         return True
 
     def update_repl_group_config(self, cursor):
-        query_string = \
-            """UPDATE mysql_replication_hostgroups
-               SET comment = %s, check_type = %s
-               WHERE writer_hostgroup = %s
-                 AND reader_hostgroup = %s"""
+        if self.support_check_type and self.check_type:
+            query_string = \
+                """UPDATE mysql_replication_hostgroups
+                SET comment = %s, check_type = %s
+                WHERE writer_hostgroup = %s
+                    AND reader_hostgroup = %s"""
 
-        query_data = \
-            [self.comment,
-             self.check_type,
-             self.writer_hostgroup,
-             self.reader_hostgroup]
+            query_data = \
+                [self.comment,
+                self.check_type,
+                self.writer_hostgroup,
+                self.reader_hostgroup]
+        else:
+            query_string = \
+                """UPDATE mysql_replication_hostgroups
+                SET comment = %s
+                WHERE writer_hostgroup = %s
+                    AND reader_hostgroup = %s"""
+
+            query_data = \
+                [self.comment,
+                 self.writer_hostgroup,
+                 self.reader_hostgroup]
 
         cursor.execute(query_string, query_data)
         return True
@@ -309,7 +338,7 @@ def main():
             writer_hostgroup=dict(required=True, type='int'),
             reader_hostgroup=dict(required=True, type='int'),
             comment=dict(type='str'),
-            check_type=dict(type='str', default="read_only", choices=[
+            check_type=dict(type='str', choices=[
                 "read_only",
                 "super_read_only",
                 "innodb_read_only"]),
@@ -338,8 +367,12 @@ def main():
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
+    cursor.execute("select version();")
+    raw_version = cursor.fetchone()
+    proxysql_version = raw_version['version()'].split("-")
 
-    proxysql_repl_group = ProxySQLReplicationHostgroup(module)
+    proxysql_repl_group = ProxySQLReplicationHostgroup(
+        module, proxysql_version[0])
     result = {}
 
     result['state'] = proxysql_repl_group.state
