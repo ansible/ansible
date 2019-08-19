@@ -1,0 +1,93 @@
+---
+merged:
+  before:
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "channel-group 1 mode active"
+    - "interface GigabitEthernet0/2"
+    - "channel-group 1 mode passive"
+
+  after:
+    - name: GigabitEthernet0/0
+    - members:
+      - member: GigabitEthernet0/1
+        mode: active
+      - member: GigabitEthernet0/2
+        mode: passive
+      name: Port-channel1
+
+replaced:
+  before:
+    - name: GigabitEthernet0/0
+    - members:
+      - member: GigabitEthernet0/1
+        mode: active
+      - member: GigabitEthernet0/2
+        mode: passive
+      name: Port-channel1
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "channel-group 2 mode active"
+    - "interface GigabitEthernet0/2"
+    - "channel-group 40 mode active"
+
+  after:
+    - name: GigabitEthernet0/0
+    - members:
+      - member: GigabitEthernet0/1
+        mode: active
+      name: Port-channel2
+    - members:
+      - member: GigabitEthernet0/2
+        mode: active
+      name: Port-channel40
+
+overridden:
+  before:
+    - name: GigabitEthernet0/0
+    - members:
+      - member: GigabitEthernet0/1
+        mode: active
+      - member: GigabitEthernet0/2
+        mode: passive
+      name: Port-channel1
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no channel-group"
+    - "interface GigabitEthernet0/2"
+    - "channel-group 10 mode passive"
+
+  after:
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - members:
+      - member: GigabitEthernet0/2
+        mode: passive
+      name: Port-channel10
+
+deleted:
+  before:
+    - name: GigabitEthernet0/0
+    - members:
+      - member: GigabitEthernet0/1
+        mode: active
+      - member: GigabitEthernet0/2
+        mode: passive
+      name: Port-channel1
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no channel-group"
+    - "interface GigabitEthernet0/2"
+    - "no channel-group"
+
+  after:
+    - name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
