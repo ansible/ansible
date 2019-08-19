@@ -1117,7 +1117,11 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return decode_response(fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceTemplate'), module)
+    response = fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceTemplate')
+    if response:
+        return decode_response(response, module)
+    else:
+        return {}
 
 
 def wait_for_completion(status, op_result, module):
