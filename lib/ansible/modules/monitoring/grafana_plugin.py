@@ -21,7 +21,7 @@ version_added: "2.5"
 short_description: Manage Grafana plugins via grafana-cli
 description:
   - Install and remove Grafana plugins.
-  - See L(https://grafana.com/docs/plugins/installation/) for upstream documentation.
+  - See U(https://grafana.com/docs/plugins/installation/) for upstream documentation.
 options:
   name:
     description:
@@ -38,14 +38,14 @@ options:
   grafana_repo:
     description:
       - URL to the Grafana plugin repository.
-      - "If omitted, grafana-cli will use the default value: L(https://grafana.com/api/plugins)."
+      - "If omitted, grafana-cli will use the default value: U(https://grafana.com/api/plugins)."
   grafana_plugin_url:
     description:
-      - Full URL to the plugin zip file instead of downloading the file from L(https://grafana.com/api/plugins).
+      - Full URL to the plugin zip file instead of downloading the file from U(https://grafana.com/api/plugins).
       - Requires grafana 4.6.x or later.
   state:
     description:
-      - Defines whether the plugin should be installed.
+      - Whether the plugin should be installed.
     choices:
       - present
       - absent
@@ -64,7 +64,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 version:
-  description: version of the installed/removed plugin.
+  description: version of the installed/removed/updated plugin.
   type: str
   returned: always
 '''
