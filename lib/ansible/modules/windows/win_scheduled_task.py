@@ -501,6 +501,14 @@ EXAMPLES = r'''
     password: password
     update_password: no
 
+- name: Update Local Security Policy to allow users to run scheduled tasks
+  win_user_right:
+    name: SeBatchLogonRight
+    users:
+    - LocalUser
+    - DOMAIN\NetworkUser
+    action: add
+
 - name: Disable a task that already exists
   win_scheduled_task:
     name: TaskToDisable
