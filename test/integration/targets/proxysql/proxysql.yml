@@ -1,6 +1,0 @@
----
-- hosts: proxysql
-  gather_facts: False
-
-  roles: 
-    - proxysql_replication_hostgroups

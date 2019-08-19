@@ -1,7 +1,0 @@
-[proxysql]
-127.0.0.1
-
-[proxysql:vars]
-ansible_ssh_user=root
-ansible_ssh_pass=proxysql
-ansible_port=2222
