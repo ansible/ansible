@@ -16,11 +16,6 @@ description:
      - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
 version_added: "2.3"
 options:
-  mode:
-    description:
-    - Grant or deny access.
-    default: grant
-    choices: [ grant, deny ]
   alias:
     description: An alias for a key. For safety, even though KMS does not require keys
       to have an alias, this module expects all new keys to be given an alias
@@ -38,24 +33,54 @@ options:
     required: false
     aliases:
       - key_arn
-  role_name:
+  policy_mode:
     description:
-    - Role to allow/deny access. One of C(role_name) or C(role_arn) are required.
+    - (deprecated) Grant or deny access.
+    - Used for modifying the Key Policy rather than modifying a grant and only
+      works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
+    default: grant
+    choices: [ grant, deny ]
+    aliases:
+    - mode
+  policy_role_name:
+    description:
+    - (deprecated) Role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - Used for modifying the Key Policy rather than modifying a grant and only
+      works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     required: false
-  role_arn:
+    aliases:
+    - role_name
+  policy_role_arn:
     description:
-    - ARN of role to allow/deny access. One of C(role_name) or C(role_arn) are required.
+    - (deprecated) ARN of role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - Used for modifying the Key Policy rather than modifying a grant and only
+      works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     required: false
-  grant_types:
+    aliases:
+    - role_arn
+  policy_grant_types:
     description:
-    - List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin". Required when C(mode=grant).
+    - (deprecated) List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin". Required when C(policy_mode=grant).
+    - Used for modifying the Key Policy rather than modifying a grant and only
+      works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     required: false
-  clean_invalid_entries:
+    aliases:
+    - grant_types
+  policy_clean_invalid_entries:
     description:
-    - If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
+    - (deprecated) If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
     - Only cleans if changes are being made.
+    - Used for modifying the Key Policy rather than modifying a grant and only
+      works on the default policy created through the AWS Console.
+    - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
     type: bool
     default: true
+    aliases:
+    - clean_invalid_entries
   state:
     description: Whether a key should be present or absent. Note that making an
       existing key absent only schedules a key for deletion.  Passing a key that
@@ -118,19 +143,21 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
+# Managing the KMS IAM Policy via policy_mode and policy_grant_types is fragile
+# and has been deprecated in favour of the policy option.
 - name: grant user-style access to production secrets
   aws_kms:
   args:
-    mode: grant
     alias: "alias/my_production_secrets"
-    role_name: "prod-appServerRole-1R5AQG2BSEL6L"
-    grant_types: "role,role grant"
+    policy_mode: grant
+    policy_role_name: "prod-appServerRole-1R5AQG2BSEL6L"
+    policy_grant_types: "role,role grant"
 - name: remove access to production secrets from role
   aws_kms:
   args:
-    mode: deny
     alias: "alias/my_production_secrets"
-    role_name: "prod-appServerRole-1R5AQG2BSEL6L"
+    policy_mode: deny
+    policy_role_name: "prod-appServerRole-1R5AQG2BSEL6L"
 
 # Create a new KMS key
 - aws_kms:
@@ -741,7 +768,7 @@ def get_arn_from_role_name(iam, rolename):
     raise Exception('could not find arn for name {0}.'.format(rolename))
 
 
-def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clean_invalid_entries=True):
+def do_policy_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clean_invalid_entries=True):
     ret = {}
     keyret = kms.get_key_policy(KeyId=keyarn, PolicyName='default')
     policy = json.loads(keyret['Policy'])
@@ -836,12 +863,12 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            mode=dict(choices=['grant', 'deny'], default='grant'),
             alias=dict(aliases=['key_alias']),
-            role_name=dict(),
-            role_arn=dict(),
-            grant_types=dict(type='list'),
-            clean_invalid_entries=dict(type='bool', default=True),
+            policy_mode=dict(aliases=['mode'], choices=['grant', 'deny'], default='grant'),
+            policy_role_name=dict(aliases=['role_name']),
+            policy_role_arn=dict(aliases=['role_arn']),
+            policy_grant_types=dict(aliases=['grant_types'], type='list'),
+            policy_clean_invalid_entries=dict(aliases=['clean_invalid_entries'], type='bool', default=True),
             key_id=dict(aliases=['key_arn']),
             description=dict(),
             enabled=dict(type='bool', default=True),
@@ -861,27 +888,32 @@ def main():
     )
 
     result = {}
-    mode = module.params['mode']
+    mode = module.params['policy_mode']
 
     kms = module.client('kms')
     iam = module.client('iam')
 
-    if module.params['grant_types'] or mode == 'deny':
-        if module.params['role_name'] and not module.params['role_arn']:
-            module.params['role_arn'] = get_arn_from_role_name(iam, module.params['role_name'])
-        if not module.params['role_arn']:
-            module.fail_json(msg='role_arn or role_name is required to {0}'.format(module.params['mode']))
+    if module.params.get('policy_grant_types') or mode == 'deny':
+        module.deprecate('Managing the KMS IAM Policy via policy_mode and policy_grant_types is fragile'
+                         ' and has been deprecated in favour of the policy option.', version='2.13')
+        if module.params.get('policy_role_name') and not module.params.get('policy_role_arn'):
+            module.params['policy_role_arn'] = get_arn_from_role_name(iam, module.params['policy_role_name'])
+        if not module.params.get('policy_role_arn'):
+            module.fail_json(msg='policy_role_arn or policy_role_name is required to {0}'.format(module.params['policy_mode']))
 
         # check the grant types for 'grant' only.
         if mode == 'grant':
-            for g in module.params['grant_types']:
+            for g in module.params['policy_grant_types']:
                 if g not in statement_label:
                     module.fail_json(msg='{0} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'],
-                       mode=mode,
-                       dry_run=module.check_mode,
-                       clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_policy_grant(kms,
+                              module.params['policy_key_arn'],
+                              module.params['policy_role_arn'],
+                              module.params['policy_grant_types'],
+                              mode=mode,
+                              dry_run=module.check_mode,
+                              clean_invalid_entries=module.params['policy_clean_invalid_entries'])
         result.update(ret)
 
         module.exit_json(**result)
