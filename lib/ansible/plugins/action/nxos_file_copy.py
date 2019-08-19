@@ -25,6 +25,7 @@ import sys
 import time
 import traceback
 import uuid
+import six
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
@@ -86,7 +87,7 @@ class ActionModule(ActionBase):
             type_ok = False
             type = argument_spec[key]['type']
             if type == 'str':
-                if isinstance(playvals[key], basestring):
+                if isinstance(playvals[key], six.string_types):
                     type_ok = True
             elif type == 'int':
                 if isinstance(playvals[key], int):
