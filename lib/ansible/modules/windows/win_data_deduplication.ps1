@@ -105,7 +105,7 @@ function Set-DataDedupJobSettings ($volume, $settings) {
 
 # Install required feature
 $feature_name = "FS-Data-Deduplication"
-if(!$check_mode) {
+if( -not $check_mode) {
   $feature = Install-WindowsFeature -Name $feature_name
 
   if ($feature.RestartNeeded -eq 'Yes') {
