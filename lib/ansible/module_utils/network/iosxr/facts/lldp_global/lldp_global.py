@@ -14,12 +14,10 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import re
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.iosxr.argspec.lldp_global.lldp_global import Lldp_globalArgs
-from ansible.module_utils.network.iosxr.utils.utils import flatten_dict
 
 
 class Lldp_globalFacts(object):
