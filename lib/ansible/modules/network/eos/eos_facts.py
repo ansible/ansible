@@ -47,8 +47,8 @@ options:
         can also be used with an initial C(M(!)) to specify that a
         specific subset should not be collected.
     required: false
-    choices: ['all', '!all', 'interfaces', '!interfaces', 'vlans', '!vlans']
     type: list
+    choices: ['all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces', 'vlans', '!vlans']
     version_added: "2.9"
 """
 
@@ -80,10 +80,10 @@ EXAMPLES = """
     gather_network_resources:
       - interfaces
 
-- name: Gather interfaces resource and minimal legacy facts
+- name: Gather all resource facts and minimal legacy facts
   eos_facts:
     gather_subset: min
-    gather_network_resources: interfaces
+    gather_network_resources: all
 """
 
 RETURN = """

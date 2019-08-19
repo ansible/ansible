@@ -13,6 +13,8 @@ CHOICES = [
     '!all',
     'interfaces',
     '!interfaces',
+    'l2_interfaces',
+    '!l2_interfaces',
     'vlans',
     '!vlans',
 ]

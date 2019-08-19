@@ -1,0 +1,31 @@
+---
+- name: Reset state
+  cli_config:
+    config: |
+      interface Ethernet1
+         switchport access vlan 20
+         no switchport trunk native vlan
+         no switchport trunk allowed vlan
+      interface Ethernet2
+         no switchport access vlan
+         switchport trunk native vlan 20
+         switchport mode trunk
+  become: yes
+
+- eos_facts:
+    gather_network_resources: l2_interfaces
+  become: yes
+
+- set_fact:
+    expected_config:
+      - name: Ethernet1
+        access:
+          vlan: 20
+      - name: Ethernet2
+        trunk:
+          native_vlan: 20
+      - name: Management1
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(expected_config) == []"
