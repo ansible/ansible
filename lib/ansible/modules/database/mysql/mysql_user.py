@@ -403,7 +403,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, plugin, plugin_h
         # Handle plugin authentication
 
         if plugin:
-            cursor.execute("SELECT plugin, authentication_string FROM mysql.user WHERE user = %s AND host = %s", (user, host))```
+            cursor.execute("SELECT plugin, authentication_string FROM mysql.user WHERE user = %s AND host = %s", (user, host))
             current_plugin = cursor.fetchone()
 
             update = False
@@ -711,7 +711,7 @@ def main():
             try:
                 if update_password == 'always':
                     changed, msg = user_mod(cursor, user, host, host_all, password, encrypted, plugin, plugin_hash_string, plugin_auth_string,
-                                       priv, append_privs, module)
+                                            priv, append_privs, module)
                 else:
                     changed, msg = user_mod(cursor, user, host, host_all, None, encrypted, plugin, plugin_hash_string, plugin_auth_string,
                                        priv, append_privs, module)
