@@ -8,3 +8,9 @@
       no lacp port-priority
       interface GigabitEthernet 0/2
       no lacp port-priority
+      interface Port-channel 10
+      no lacp fast-switchover
+      no lacp max-bundle
+      interface Port-channel 40
+      no lacp fast-switchover
+      no lacp max-bundle

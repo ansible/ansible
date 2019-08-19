@@ -67,9 +67,8 @@ class Lacp_InterfacesFacts(object):
         if objs:
             facts['lacp_interfaces'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
-
             for cfg in params['config']:
-                facts['lacp_interfaces'].append(cfg)
+                facts['lacp_interfaces'].append(utils.remove_empties(cfg))
         ansible_facts['ansible_network_resources'].update(facts)
 
         return ansible_facts
@@ -90,10 +89,14 @@ class Lacp_InterfacesFacts(object):
         if get_interface_type(intf) == 'unknown':
             return {}
 
-        if intf.startswith('Gi'):
-            config['name'] = normalize_interface(intf)
-
-            port_priority = utils.parse_conf_arg(conf, 'lacp port-priority')
-            config['port_priority'] = port_priority
+        config['name'] = normalize_interface(intf)
+        port_priority = utils.parse_conf_arg(conf, 'lacp port-priority')
+        max_bundle = utils.parse_conf_arg(conf, 'lacp max-bundle')
+        if port_priority:
+            config['port_priority'] = int(port_priority)
+        if 'lacp fast-switchover' in conf:
+            config['fast_switchover'] = True
+        if max_bundle:
+            config['max_bundle'] = int(max_bundle)
 
         return utils.remove_empties(config)

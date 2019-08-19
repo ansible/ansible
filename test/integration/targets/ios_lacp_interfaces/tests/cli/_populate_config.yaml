@@ -1,5 +1,5 @@
 ---
-- name: Setup
+- name: Populate Config
   cli_config:
     config: "{{ lines }}"
   vars:
@@ -8,3 +8,8 @@
       lacp port-priority 30
       interface GigabitEthernet 0/2
       lacp port-priority 20
+      interface Port-channel 10
+      lacp fast-switchover
+      lacp max-bundle 2
+      interface Port-channel 40
+      lacp max-bundle 5

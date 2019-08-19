@@ -25,6 +25,7 @@
 """
 The arg spec for the ios_lacp_interfaces module
 """
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -38,7 +39,9 @@ class Lacp_InterfacesArgs(object):
 
     argument_spec = {'config': {'elements': 'dict',
                                 'options': {'name': {'required': True, 'type': 'str'},
-                                            'port_priority': {'type': 'str'}},
+                                            'port_priority': {'type': 'int'},
+                                            'fast_switchover': {'type': 'bool'},
+                                            'max_bundle': {'type': 'int'}},
                                 'type': 'list'},
                      'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
                                'default': 'merged',

@@ -12,20 +12,20 @@
         state: deleted
       register: result
 
-    - name: Assert that the before dicts were correctly generated
+    - name: Assert that correct set of commands were generated
       assert:
         that:
-          - "{{ populate == result['before'] }}"
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
 
-    - name: Assert that the correct set of commands were generated
+    - name: Assert that before dicts are correctly generated
       assert:
         that:
-          - "{{ deleted['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+          - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
 
-    - name: Assert that the after dicts were correctly generated
+    - name: Assert that after dict is correctly generated
       assert:
         that:
-          - "{{ deleted['after'] == result['after'] }}"
+          - "{{ deleted['after'] | symmetric_difference(result['after']) | length == 0 }}"
 
     - name: Delete LACP attributes for all configured interfaces (IDEMPOTENT)
       ios_lacp_interfaces: *deleted
@@ -35,11 +35,7 @@
       assert:
         that:
           - "result.changed == false"
-
-    - name: Assert that the before dicts were correctly generated
-      assert:
-        that:
-          - "{{ deleted['after'] == result['before'] }}"
+  when: ansible_net_version != "15.6(2)T"
 
   always:
     - include_tasks: _remove_config.yaml

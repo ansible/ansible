@@ -1,4 +1,4 @@
-#
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -35,9 +35,6 @@ ANSIBLE_METADATA = {
     'supported_by': 'network'
 }
 
-NETWORK_OS = "ios"
-RESOURCE = "lacp_interfaces"
-COPYRIGHT = "Copyright 2019 Red Hat"
 
 DOCUMENTATION = """
 ---
@@ -47,7 +44,9 @@ short_description: Manage Link Aggregation Control Protocol (LACP) on Cisco IOS 
 description: This module provides declarative management of LACP on Cisco IOS network devices lacp_interfaces.
 author: Sumit Jaiswal (@justjais)
 notes:
-  - Tested against Cisco IOSv Version 15.2 on VIRL
+  - Tested against Cisco IOSv Version 15.2 on VIRL.
+  - This module works with connection C(network_cli),
+    See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
   config:
       description: A dictionary of LACP lacp_interfaces option
@@ -61,9 +60,18 @@ options:
           required: True
         port_priority:
           description:
-          - LACP priority on this interface. Range 0-65535.
+          - LACP priority on this interface.
+          - Refer to vendor documentation for valid port values.
           type: int
-          required: True
+        fast_switchover:
+          description:
+          - LACP fast switchover supported on this port channel.
+          type: bool
+        max_bundle:
+          description:
+          - LACP maximum number of ports to bundle in this port channel.
+          - Refer to vendor documentation for valid port values.
+          type: int
   state:
     description:
     - The state the configuration should be left in
@@ -75,7 +83,152 @@ options:
     - deleted
     default: merged
 """
+
 EXAMPLES = """
+
+# Using merged
+#
+# Before state:
+# -------------
+#
+# vios#show running-config | section ^interface
+# interface Port-channel10
+# interface Port-channel20
+# interface Port-channel30
+# interface GigabitEthernet0/1
+#  shutdown
+# interface GigabitEthernet0/2
+#  shutdown
+# interface GigabitEthernet0/3
+#  shutdown
+
+- name: Merge provided configuration with device configuration
+  ios_lacp_interfaces:
+    config:
+      - name: GigabitEthernet0/1
+        port_priority: 10
+      - name: GigabitEthernet0/2
+        port_priority: 20
+      - name: GigabitEthernet0/3
+        port_priority: 30
+      - name: Port-channel10
+        fast_switchover: True
+        max_bundle: 5
+    state: merged
+
+# After state:
+# ------------
+#
+# vios#show running-config | section ^interface
+# interface Port-channel10
+#  lacp fast-switchover
+#  lacp max-bundle 5
+# interface Port-channel20
+# interface Port-channel30
+# interface GigabitEthernet0/1
+#  shutdown
+#  lacp port-priority 10
+# interface GigabitEthernet0/2
+#  shutdown
+#  lacp port-priority 20
+# interface GigabitEthernet0/3
+#  shutdown
+#  lacp port-priority 30
+
+# Using overridden
+#
+# Before state:
+# -------------
+#
+# vios#show running-config | section ^interface
+# interface Port-channel10
+#  lacp fast-switchover
+# interface Port-channel20
+# interface Port-channel30
+# interface GigabitEthernet0/1
+#  shutdown
+#  lacp port-priority 10
+# interface GigabitEthernet0/2
+#  shutdown
+#  lacp port-priority 20
+# interface GigabitEthernet0/3
+#  shutdown
+#  lacp port-priority 30
+
+- name: Override device configuration of all lacp_interfaces with provided configuration
+  ios_lacp_interfaces:
+    config:
+      - name: GigabitEthernet0/1
+        port_priority: 20
+      - name: Port-channel10
+        max_bundle: 2
+    state: overridden
+
+# After state:
+# ------------
+#
+# vios#show running-config | section ^interface
+# interface Port-channel10
+#  lacp max-bundle 2
+# interface Port-channel20
+# interface Port-channel30
+# interface GigabitEthernet0/1
+#  shutdown
+#  lacp port-priority 20
+# interface GigabitEthernet0/2
+#  shutdown
+# interface GigabitEthernet0/3
+#  shutdown
+
+# Using replaced
+#
+# Before state:
+# -------------
+#
+# vios#show running-config | section ^interface
+# interface Port-channel10
+#  lacp max-bundle 5
+# interface Port-channel20
+# interface Port-channel30
+# interface GigabitEthernet0/1
+#  shutdown
+#  lacp port-priority 10
+# interface GigabitEthernet0/2
+#  shutdown
+#  lacp port-priority 20
+# interface GigabitEthernet0/3
+#  shutdown
+#  lacp port-priority 30
+
+- name: Replaces device configuration of listed lacp_interfaces with provided configuration
+  ios_lacp_interfaces:
+    config:
+      - name: GigabitEthernet0/3
+        port_priority: 40
+      - name: Port-channel10
+        fast_switchover: True
+        max_bundle: 2
+    state: replaced
+
+# After state:
+# ------------
+#
+# vios#show running-config | section ^interface
+# interface Port-channel10
+#  lacp fast-switchover
+#  lacp max-bundle 2
+# interface Port-channel20
+# interface Port-channel30
+# interface GigabitEthernet0/1
+#  shutdown
+#  lacp port-priority 10
+# interface GigabitEthernet0/2
+#  shutdown
+#  lacp port-priority 20
+# interface GigabitEthernet0/3
+#  shutdown
+#  lacp port-priority 40
+
 # Using Deleted
 #
 # Before state:
@@ -118,15 +271,17 @@ EXAMPLES = """
 #  shutdown
 #  lacp port-priority 30
 
-# Using Deleted
+# Using Deleted without any config passed
+# "(NOTE: This will delete all of configured LLDP module attributes)"
 #
 # Before state:
 # -------------
 #
 # vios#show running-config | section ^interface
 # interface Port-channel10
-#  flowcontrol receive on
+#  lacp fast-switchover
 # interface Port-channel20
+#  lacp max-bundle 2
 # interface Port-channel30
 # interface GigabitEthernet0/1
 #  shutdown
@@ -155,139 +310,6 @@ EXAMPLES = """
 #  shutdown
 # interface GigabitEthernet0/3
 #  shutdown
-
-# Using merged
-#
-# Before state:
-# -------------
-#
-# vios#show running-config | section ^interface
-# interface Port-channel10
-# interface Port-channel20
-# interface Port-channel30
-# interface GigabitEthernet0/1
-#  shutdown
-# interface GigabitEthernet0/2
-#  shutdown
-# interface GigabitEthernet0/3
-#  shutdown
-
-- name: Merge provided configuration with device configuration
-  ios_lacp_interfaces:
-    config:
-      - name: GigabitEthernet0/1
-        port_priority: 10
-      - name: GigabitEthernet0/2
-        port_priority: 20
-      - name: GigabitEthernet0/3
-        port_priority: 30
-    state: merged
-
-# After state:
-# ------------
-#
-# vios#show running-config | section ^interface
-# interface Port-channel10
-#  flowcontrol receive on
-# interface Port-channel20
-# interface Port-channel30
-# interface GigabitEthernet0/1
-#  shutdown
-#  lacp port-priority 10
-# interface GigabitEthernet0/2
-#  shutdown
-#  lacp port-priority 20
-# interface GigabitEthernet0/3
-#  shutdown
-#  lacp port-priority 30
-
-# Using overridden
-#
-# Before state:
-# -------------
-#
-# vios#show running-config | section ^interface
-# interface Port-channel10
-#  flowcontrol receive on
-# interface Port-channel20
-# interface Port-channel30
-# interface GigabitEthernet0/1
-#  shutdown
-#  lacp port-priority 10
-# interface GigabitEthernet0/2
-#  shutdown
-#  lacp port-priority 20
-# interface GigabitEthernet0/3
-#  shutdown
-#  lacp port-priority 30
-
-- name: Override device configuration of all lacp_interfaces with provided configuration
-  ios_lacp_interfaces:
-    config:
-      - name: GigabitEthernet0/1
-        port_priority: 20
-    state: overridden
-
-# After state:
-# ------------
-#
-# vios#show running-config | section ^interface
-# interface Port-channel10
-#  flowcontrol receive on
-# interface Port-channel20
-# interface Port-channel30
-# interface GigabitEthernet0/1
-#  shutdown
-#  lacp port-priority 20
-# interface GigabitEthernet0/2
-#  shutdown
-# interface GigabitEthernet0/3
-#  shutdown
-
-# Using replaced
-#
-# Before state:
-# -------------
-#
-# vios#show running-config | section ^interface
-# interface Port-channel10
-#  flowcontrol receive on
-# interface Port-channel20
-# interface Port-channel30
-# interface GigabitEthernet0/1
-#  shutdown
-#  lacp port-priority 10
-# interface GigabitEthernet0/2
-#  shutdown
-#  lacp port-priority 20
-# interface GigabitEthernet0/3
-#  shutdown
-#  lacp port-priority 30
-
-- name: Replaces device configuration of listed lacp_interfaces with provided configuration
-  ios_lacp_interfaces:
-    config:
-      - name: GigabitEthernet0/3
-        port_priority: 40
-    state: replaced
-
-# After state:
-# ------------
-#
-# vios#show running-config | section ^interface
-# interface Port-channel10
-#  flowcontrol receive on
-# interface Port-channel20
-# interface Port-channel30
-# interface GigabitEthernet0/1
-#  shutdown
-#  lacp port-priority 10
-# interface GigabitEthernet0/2
-#  shutdown
-#  lacp port-priority 20
-# interface GigabitEthernet0/3
-#  shutdown
-#  lacp port-priority 40
 
 """
 

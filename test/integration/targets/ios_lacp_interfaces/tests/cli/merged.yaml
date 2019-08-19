@@ -9,27 +9,31 @@
       ios_lacp_interfaces: &merged
         config:
           - name: GigabitEthernet0/1
-            port_priority: 10
+            port_priority: 30
           - name: GigabitEthernet0/2
             port_priority: 20
+          - name: Port-channel10
+            fast_switchover: True
+            max_bundle: 2
         state: merged
       register: result
-
-    - name: Assert that before dicts were correctly generated
-      assert:
-        that: "{{ merged['before'] == result['before'] }}"
 
     - name: Assert that correct set of commands were generated
       assert:
         that:
-          - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
 
-    - name: Assert that after dicts was correctly generated
+    - name: Assert that before dicts are correctly generated
       assert:
         that:
-          - "{{ merged['after'] == result['after'] }}"
+          - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
 
-    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Merge the provided configuration with the exisiting running configuration (IDEMPOTENT)
       ios_lacp_interfaces: *merged
       register: result
 
@@ -37,10 +41,7 @@
       assert:
         that:
           - "result['changed'] == false"
+  when: ansible_net_version != "15.6(2)T"
 
-    - name: Assert that before dicts were correctly generated
-      assert:
-        that:
-          - "{{ merged['after'] == result['before']}}"
   always:
     - include_tasks: _remove_config.yaml
