@@ -151,7 +151,7 @@ options:
                             - all
             id:
                 description:
-                    - ID.
+                    - Id of the entry for this configuration of the AntiSpam banned word list.
                 required: true
                 type: int
             name:
