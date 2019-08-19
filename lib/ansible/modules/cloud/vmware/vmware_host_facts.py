@@ -110,6 +110,7 @@ ansible_facts:
         "ansible_distribution_build": "4887370",
         "ansible_distribution_version": "6.5.0",
         "ansible_hostname": "10.76.33.100",
+        "ansible_in_maintenance_mode": true,
         "ansible_interfaces": [
             "vmk0"
         ],
@@ -123,6 +124,7 @@ ansible_facts:
         "ansible_product_name": "KVM",
         "ansible_product_serial": "NA",
         "ansible_system_vendor": "Red Hat",
+        "ansible_uptime": 1791680,
         "ansible_vmk0": {
             "device": "vmk0",
             "ipv4": {
@@ -277,6 +279,8 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_product_serial': sn,
             'ansible_bios_date': self.host.hardware.biosInfo.releaseDate,
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
+            'ansible_uptime': self.host.summary.quickStats.uptime,
+            'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
         }
         return facts
 
