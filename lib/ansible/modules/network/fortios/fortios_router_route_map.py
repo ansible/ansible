@@ -190,8 +190,7 @@ options:
                         suboptions:
                             as:
                                 description:
-                                    - "AS number (0 - 42949672). NOTE: Use quotes for repeating numbers, e.g.: "1 1 2"
-                    "
+                                    - AS number (0 - 42949672).
                                 required: true
                                 type: str
                     set_aspath_action:
@@ -256,7 +255,7 @@ options:
                         suboptions:
                             community:
                                 description:
-                                    - "AA:NN."
+                                    - Set the target extended community (in decimal notation) of a BGP route.
                                 required: true
                                 type: str
                     set_extcommunity_soo:
