@@ -568,7 +568,7 @@ def missing_required_lib(library, reason=None, url=None):
         msg += " See %s for more info." % url
 
     msg += (" Please read module documentation and install in the appropriate location."
-            " If the library is installed, but Ansible is using the wrong Python interpreter,"
+            " If the required library is installed, but Ansible is using the wrong Python interpreter,"
             " please consult the documentation on ansible_python_interpreter")
     return msg
 
