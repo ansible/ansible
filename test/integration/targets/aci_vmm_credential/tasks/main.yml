@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -8,42 +8,5 @@
     msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
   when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
 
-# REMOVE credential
-- name: Remove credential (check_mode)
-  aci_vmm_credential: &credential_absent
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: '{{ aci_output_level | default("info") }}'
-    domain: ansible_test
-    credential: ansible_test
-    description: ansible_test
-    credential_username: ansible_test
-    credential_password: ansible_test
-    vm_provider: vmware
-    state: absent
-  check_mode: yes
-  register: cm_remove_credential
-
-# ADD credential
-- name: Add credential (check_mode)
-  aci_vmm_credential: &credential_present
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: '{{ aci_output_level | default("info") }}'
-    domain: ansible_test
-    credential: ansible_test
-    description: ansible_test
-    credential_username: ansible_test
-    credential_password: ansible_test
-    vm_provider: vmware
-    state: present
-  check_mode: yes
-  register: cm_add_credential
+- include_tasks: vmware.yml
+  when: vmware is not defined or vmware
