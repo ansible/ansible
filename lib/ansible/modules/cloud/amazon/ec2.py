@@ -600,7 +600,7 @@ def find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone=None):
     for res in reservations:
         if hasattr(res, 'instances'):
             for inst in res.instances:
-                if inst.state == 'terminated':
+                if inst.state == 'terminated' or inst.state == 'shutting-down':
                     continue
                 instances.append(inst)
 
