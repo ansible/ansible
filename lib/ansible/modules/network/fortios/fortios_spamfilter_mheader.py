@@ -130,7 +130,7 @@ options:
                             - disable
             id:
                 description:
-                    - ID.
+                    - Identification of this config for MIME header.
                 required: true
                 type: int
             name:
