@@ -95,7 +95,7 @@ options:
                     - disable
             undefinedhost:
                 description:
-                    - Select action to take on packets with IP/MAC addresses not in the binding list (default = block).
+                    - Select action to take on packets with IP/MAC addresses not in the binding list.
                 type: str
                 choices:
                     - allow
