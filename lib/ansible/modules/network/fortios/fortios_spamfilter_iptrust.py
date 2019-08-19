@@ -123,7 +123,7 @@ options:
                             - disable
             id:
                 description:
-                    - ID.
+                    - Id of the spamfilter iptrust entry.
                 required: true
                 type: int
             name:
