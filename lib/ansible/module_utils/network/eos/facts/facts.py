@@ -14,6 +14,7 @@ from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.eos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.eos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.eos.facts.l2_interfaces.l2_interfaces import L2_interfacesFacts
+from ansible.module_utils.network.eos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.eos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.eos.facts.legacy.base import Default, Hardware, Config, Interfaces
 
