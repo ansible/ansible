@@ -17,7 +17,6 @@ from .config import (
 
 from .util import (
     display,
-    ANSIBLE_ROOT,
     ANSIBLE_SOURCE_ROOT,
     remove_tree,
     is_subdir,
@@ -78,14 +77,6 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
             # include collections content for testing
             files.extend((os.path.join(data_context().content.root, path), os.path.join(data_context().content.collection.directory, path))
                          for path in data_context().content.all_files())
-
-    # these files need to be migrated to the ansible-test data directory
-    hack_files_to_keep = (
-        'test/integration/inventory',
-    )
-
-    # temporary solution to include files not yet present in the ansible-test data directory
-    files.extend([(os.path.join(ANSIBLE_ROOT, path), path) for path in hack_files_to_keep])
 
     for callback in data_context().payload_callbacks:
         callback(files)

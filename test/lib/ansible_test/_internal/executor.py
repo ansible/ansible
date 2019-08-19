@@ -130,6 +130,10 @@ from .integration import (
     integration_test_config_file,
     setup_common_temp_dir,
     VARS_FILE_RELATIVE,
+    get_inventory_relative_path,
+    INTEGRATION_DIR_RELATIVE,
+    check_inventory,
+    delegate_inventory,
 )
 
 from .data import (
@@ -375,35 +379,36 @@ def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
     """
-    filename = 'test/integration/inventory'
+    inventory_relative_path = get_inventory_relative_path(args)
+    inventory_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, os.path.basename(inventory_relative_path))
 
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets)
-    command_integration_filtered(args, internal_targets, all_targets, filename)
+    command_integration_filtered(args, internal_targets, all_targets, inventory_path)
 
 
 def command_network_integration(args):
     """
     :type args: NetworkIntegrationConfig
     """
-    default_filename = 'test/integration/inventory.networking'
-    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(default_filename)) + '.template'
+    inventory_relative_path = get_inventory_relative_path(args)
+    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
     if args.inventory:
-        filename = os.path.join('test/integration', args.inventory)
+        inventory_path = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE, args.inventory)
     else:
-        filename = default_filename
+        inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 
-    if not args.explain and not args.platform and not os.path.exists(filename):
-        if args.inventory:
-            filename = os.path.abspath(filename)
-
+    if not args.explain and not args.platform and not os.path.isfile(inventory_path):
         raise ApplicationError(
             'Inventory not found: %s\n'
             'Use --inventory to specify the inventory path.\n'
             'Use --platform to provision resources and generate an inventory file.\n'
-            'See also inventory template: %s' % (filename, template_path)
+            'See also inventory template: %s' % (inventory_path, template_path)
         )
+
+    check_inventory(args, inventory_path)
+    delegate_inventory(args, inventory_path)
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
@@ -432,16 +437,16 @@ def command_network_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
 
-        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+        display.info('>>> Inventory: %s\n%s' % (inventory_path, inventory.strip()), verbosity=3)
 
         if not args.explain:
-            with open(filename, 'w') as inventory_fd:
+            with open(inventory_path, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets, filename)
+        command_integration_filtered(args, internal_targets, all_targets, inventory_path)
         success = True
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -562,11 +567,24 @@ def command_windows_integration(args):
     """
     :type args: WindowsIntegrationConfig
     """
-    filename = 'test/integration/inventory.winrm'
-    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(filename)) + '.template'
+    inventory_relative_path = get_inventory_relative_path(args)
+    template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
-    if not args.explain and not args.windows and not os.path.isfile(filename):
-        raise ApplicationError('Use the --windows option or provide an inventory file (see %s).' % template_path)
+    if args.inventory:
+        inventory_path = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE, args.inventory)
+    else:
+        inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
+
+    if not args.explain and not args.windows and not os.path.isfile(inventory_path):
+        raise ApplicationError(
+            'Inventory not found: %s\n'
+            'Use --inventory to specify the inventory path.\n'
+            'Use --windows to provision resources and generate an inventory file.\n'
+            'See also inventory template: %s' % (inventory_path, template_path)
+        )
+
+    check_inventory(args, inventory_path)
+    delegate_inventory(args, inventory_path)
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
@@ -594,10 +612,10 @@ def command_windows_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
 
-        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+        display.info('>>> Inventory: %s\n%s' % (inventory_path, inventory.strip()), verbosity=3)
 
         if not args.explain:
-            with open(filename, 'w') as inventory_fd:
+            with open(inventory_path, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
         use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in internal_targets)
@@ -661,7 +679,7 @@ def command_windows_integration(args):
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets, filename, pre_target=pre_target,
+        command_integration_filtered(args, internal_targets, all_targets, inventory_path, pre_target=pre_target,
                                      post_target=post_target)
         success = True
     finally:

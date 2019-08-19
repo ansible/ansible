@@ -390,6 +390,10 @@ def parse_args():
                                      action='append',
                                      help='windows version').completer = complete_windows
 
+    windows_integration.add_argument('--inventory',
+                                     metavar='PATH',
+                                     help='path to inventory used for tests')
+
     units = subparsers.add_parser('units',
                                   parents=[test],
                                   help='unit tests')

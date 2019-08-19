@@ -265,6 +265,7 @@ class WindowsIntegrationConfig(IntegrationConfig):
         super(WindowsIntegrationConfig, self).__init__(args, 'windows-integration')
 
         self.windows = args.windows  # type: t.List[str]
+        self.inventory = args.inventory  # type: str
 
         if self.windows:
             self.allow_destructive = True
