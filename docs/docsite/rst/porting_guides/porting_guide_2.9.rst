@@ -242,7 +242,10 @@ Noteworthy module changes
 Plugins
 =======
 
-No notable changes
+Removed Lookup Plugins
+----------------------
+
+* ``redis_kv`` use :ref:`redis <redis_lookup>` instead.
 
 
 Porting custom scripts
