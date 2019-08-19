@@ -164,7 +164,7 @@ class Vultr:
                 data = urllib.parse.urlencode(data_encoded) + data_list
 
         retry_max_delay = self.api_config['api_retry_max_delay']
-        randint = random.randint(0, 1000) / 1000.0
+        randomness = random.randint(0, 1000) / 1000.0
 
         for retry in range(0, self.api_config['api_retries']):
             response, info = fetch_url(
@@ -181,9 +181,9 @@ class Vultr:
 
             # Vultr has a rate limiting requests per second, try to be polite
             # Use exponential backoff plus a little bit of randomness
-            delay = 2 ** retry + randint
+            delay = 2 ** retry + randomness
             if delay > retry_max_delay:
-                delay = retry_max_delay + randint
+                delay = retry_max_delay + randomness
             time.sleep(delay)
 
         else:
