@@ -530,7 +530,8 @@ class Templar:
         for key, value in kwargs.items():
             obj = mapping.get(key, self.environment)
             original[key] = getattr(obj, key)
-            setattr(obj, key, value)
+            if value is not None:
+                setattr(obj, key, value)
 
         yield
 
