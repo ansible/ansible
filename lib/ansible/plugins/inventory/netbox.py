@@ -297,7 +297,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_interfaces(self, host):
         try:
             if self.interfaces:
-                url = self.api_endpoint + "/api/dcim/interfaces/?device_id=" + str(host["id"])
+                url = self.api_endpoint + "/api/dcim/interfaces/?limit=0&device_id=" + str(host["id"])
                 interfaces_lookup = self._fetch_information(url)
                 wanted_keys = ['description', 'enabled', 'lag', 'name', 'mode', 'tagged_vlans', 'untagged_vlan', 'tags']
                 interfaces_short = []
@@ -475,7 +475,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def _fill_sites_vlans_group_variables(self, site_id):
         try:
-            url = self.api_endpoint + "/api/ipam/vlans/?site_id=" + str(site_id)
+            url = self.api_endpoint + "/api/ipam/vlans/?limit=0&site_id=" + str(site_id)
             vlans_lookup = self._fetch_information(url)
             wanted_keys = ['description', 'group', 'name', 'role', 'status', 'vid', 'tenant', 'tags']
             vlans_short = []
