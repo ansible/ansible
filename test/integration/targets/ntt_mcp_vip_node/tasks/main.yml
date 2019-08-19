@@ -1,0 +1,139 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create an IPv6 VIP Node
+    ntt_mcp_vip_node:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myNode2
+      description: "My Node 2"
+      ip_address: "2607:f480:211:1277:7987:dc35:2824:d6ea"
+      health_monitor: "CCDEFAULT.Icmp"
+      status: DISABLED
+      connection_limit: 50000
+      connection_rate_limit: 2000
+      state: present
+    register: node
+    tags:
+      - create_ipv6
+
+  - debug:
+      var: node
+    tags:
+      - create_ipv6
+
+  - name: Create an IPv4 VIP Node
+    ntt_mcp_vip_node:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myNode1
+      description: "My Node 1"
+      ip_address: "10.1.77.6"
+      health_monitor: "CCDEFAULT.Icmp"
+      connection_limit: 40000
+      connection_rate_limit: 3000
+      state: present
+    register: node
+    tags:
+      - create_ipv4
+
+  - debug:
+      var: node
+    tags:
+      - create_ipv4
+
+  - name: Create a duplicate IPv4 VIP Node
+    ntt_mcp_vip_node:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myNode1
+      description: "My Node 1"
+      ip_address: "10.1.77.6"
+      health_monitor: "CCDEFAULT.Icmp"
+      connection_limit: 40000
+      connection_rate_limit: 3000
+      state: present
+    register: node
+    tags:
+      - create_duplicate
+
+  - debug:
+      var: node
+    tags:
+      - create_duplicate
+
+  - name: Create an invalid VIP Node
+    ntt_mcp_vip_node:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myNode_invalid
+      description: "My invalid Node"
+      ip_address: "10.1.77.6"
+      health_monitor: "CCDEFAULT.Icmp"
+      connection_limit: 400000
+      connection_rate_limit: 30000
+      state: present
+    register: node
+    tags:
+      - create_invalid
+
+  - debug:
+      var: node
+    tags:
+      - create_invalid
+
+  - name: Update a VIP Node - remove health monitor
+    ntt_mcp_vip_node:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myNode2
+      description: "My New Node 2"
+      no_health_monitor: True
+      status: ENABLED
+      state: present
+    register: node
+    tags:
+      - update
+
+  - debug:
+      var: node
+    tags:
+      - update
+
+  - name: Delete a Node
+    ntt_mcp_vip_node:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myNode2
+      state: absent
+    register: node
+    tags:
+      - delete
+
+  - debug:
+      var: node
+    tags:
+      - delete
+
+  - name: Delete a non-existent Node
+    ntt_mcp_vip_node:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+      state: absent
+    register: node
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: node
+    tags:
+      - delete_noexist

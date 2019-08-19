@@ -1,0 +1,76 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: List all SNAT Exclusion
+      ntt_mcp_snat_info:
+        region: na
+        datacenter: NA12
+        network_domain: myCND
+      register: snat
+      tags:
+        - list
+
+    - debug:
+        var: snat
+      tags:
+        - list
+
+    - name: Get a SNAT Exclusion by UUID
+      ntt_mcp_snat_info:
+        region: na
+        datacenter: NA12
+        network_domain: myCND
+      register: snat
+      tags:
+        - get_by_id
+
+    - debug:
+        var: snat
+      tags:
+        - get_by_id
+
+    - name: Get a SNAT Exclusion by UUID
+      ntt_mcp_snat_info:
+        region: na
+        datacenter: NA12
+        network_domain: myCND
+        id: "{{snat.data.snat[0].id}}"
+      register: snat
+      tags:
+        - get_by_id
+
+    - debug:
+        var: snat
+      tags:
+        - get_by_id
+
+    - name: Get a SNAT Exclusion by CIDR
+      ntt_mcp_snat_info:
+        region: na
+        datacenter: NA12
+        network_domain: myCND
+        cidr: "172.16.0.0/12"
+      register: snat
+      tags:
+        - get_by_cidr
+
+    - debug:
+        var: snat
+      tags:
+        - get_by_cidr
+
+    - name: Get a SNAT Exclusion that doesn't exist
+      ntt_mcp_snat_info:
+        region: na
+        datacenter: NA12
+        network_domain: myCND
+        id: xyz
+      register: snat
+      tags:
+        - get_noexist
+
+    - debug:
+        var: snat
+      tags:
+        - get_noexist

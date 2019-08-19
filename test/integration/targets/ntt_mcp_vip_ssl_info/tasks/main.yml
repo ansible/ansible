@@ -1,0 +1,157 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all SSL Certificates
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: ssl
+    tags:
+      - list_certs
+
+  - debug:
+      var: ssl
+    tags:
+      - list_certs
+
+  - name: List all SSL Chains
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      type: chain
+    register: ssl
+    tags:
+      - list_chains
+
+  - debug:
+      var: ssl
+    tags:
+      - list_chains
+
+  - name: List all SSL Offload Profiles
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      type: profile
+    register: ssl
+    tags:
+      - list_profiles
+
+  - debug:
+      var: ssl
+    tags:
+      - list_profiles
+
+  - name: Get a SSL Certificate by name
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_existing_cert
+    register: ssl
+    tags:
+      - get_cert_by_name
+
+  - debug:
+      var: ssl
+    tags:
+      - get_cert_by_name
+
+  - name: Get a SSL Chain by name
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_existing_chain
+      type: chain
+    register: ssl
+    tags:
+      - get_chain_by_name
+
+  - debug:
+      var: ssl
+    tags:
+      - get_chain_by_name
+
+  - name: Get a SSL Profile by name
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile_2
+      type: profile
+    register: ssl
+    tags:
+      - get_profile_by_name
+
+  - debug:
+      var: ssl
+    tags:
+      - get_profile_by_name
+
+  - name: Get a SSL Certificate by ID
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: a26fe93b-0261-459d-ab1d-4f52acd40118
+    register: ssl
+    tags:
+      - get_cert_by_id
+
+  - debug:
+      var: ssl
+    tags:
+      - get_cert_by_id
+
+  - name: Get a SSL Chain by ID
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: 8aef6ca6-0cf6-449d-8e97-a7f3976ddd7d
+      type: chain
+    register: ssl
+    tags:
+      - get_chain_by_id
+
+  - debug:
+      var: ssl
+    tags:
+      - get_chain_by_id
+
+  - name: Get a SSL Profile by ID
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: a2db0d6c-ef1c-4679-8d93-c481d5535fe2
+      type: profile
+    register: ssl
+    tags:
+      - get_profile_by_id
+
+  - debug:
+      var: ssl
+    tags:
+      - get_profile_by_id
+
+  - name: Get a non-existent SSL Profile by name
+    ntt_mcp_vip_ssl_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+      type: profile
+    register: ssl
+    tags:
+      - get_profile_noexist
+
+  - debug:
+      var: ssl
+    tags:
+      - get_profile_noexist
