@@ -22,7 +22,9 @@ class FactsArgs(object):  # pylint: disable=R0903
         'l3_interfaces',
         '!l3_interfaces',
         'lag_interfaces',
-        '!lag_interfaces'
+        '!lag_interfaces',
+        'lldp_global',
+        '!lldp_global'
     ]
 
     argument_spec = {
