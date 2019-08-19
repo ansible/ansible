@@ -180,7 +180,7 @@ authority_key_identifier:
     version_added: "2.9"
 authority_cert_issuer:
     description:
-        - The CSR's authority cert issuer as a list of strings.
+        - The CSR's authority cert issuer as a list of general names.
         - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: list
