@@ -39,9 +39,9 @@ class VlansArgs(object):
 
     argument_spec = {'config': {'elements': 'dict',
                                 'options': {'name': {'type': 'str'},
-                                            'vlan_id': {'required': True, 'type': int},
-                                            'mtu': {'type': int},
-                                            'remote_span': {'type': bool},
+                                            'vlan_id': {'required': True, 'type': 'int'},
+                                            'mtu': {'type': 'int'},
+                                            'remote_span': {'type': 'bool'},
                                             'state': {'type': 'str', 'choices': ['active', 'suspend']},
                                             'shutdown': {'type': 'str', 'choices': ['enabled', 'disabled']}},
                                 'type': 'list'},
