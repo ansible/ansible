@@ -9,6 +9,11 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 import re
 from copy import deepcopy
 
@@ -99,7 +104,7 @@ class Lag_interfacesFacts(object):
             if channel_group:
                 channel_group = channel_group.split(' ')
                 id = channel_group[0]
-                config['name'] = 'Port-channel{}'.format(str(id))
+                config['name'] = 'Port-channel{0}'.format(str(id))
                 if 'mode' in channel_group:
                     mode = channel_group[2]
                     member_config.update({'mode': mode})
