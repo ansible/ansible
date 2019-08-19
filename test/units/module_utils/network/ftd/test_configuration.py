@@ -317,7 +317,8 @@ class TestBaseConfigurationResource(object):
                                  ("6.2.3", "name:object_name"),
                                  ("6.3.0", "name:object_name"),
                                  ("6.4.0", "fts~object_name")
-                             ])
+                             ]
+                             )
     def test_stringify_name_filter(self, test_api_version, expected_result, connection_mock):
         filters = {"name": "object_name"}
 
