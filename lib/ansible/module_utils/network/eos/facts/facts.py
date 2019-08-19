@@ -13,6 +13,7 @@ __metaclass__ = type
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.eos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.eos.facts.interfaces.interfaces import InterfacesFacts
+from ansible.module_utils.network.eos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.eos.facts.legacy.base import Default, Hardware, Config, Interfaces
 
 
@@ -24,6 +25,7 @@ FACT_LEGACY_SUBSETS = dict(
 )
 FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
+    vlans=VlansFacts,
 )
 
 
