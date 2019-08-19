@@ -594,6 +594,7 @@ Example: Handle remote host multiple login menu prompts with host variables
     ansible_terminal_initial_prompt_checkall: True
 
 To handle multiple login menu prompts:
+
 * The values of ``ansible_terminal_initial_prompt`` and ``ansible_terminal_initial_answer`` should be a list.
 * The prompt sequence should match the answer sequence.
 * The value of ``ansible_terminal_initial_prompt_checkall`` should be set to ``True``.
