@@ -240,8 +240,8 @@ valid_at:
     type: dict
 subject_key_identifier:
     description:
-        - The CSR's subject key identifier.
-        - The identifier is returned in hexadecial, with C(:) used to separate bytes.
+        - The certificate's subject key identifier.
+        - The identifier is returned in hexadecimal, with C(:) used to separate bytes.
         - Is C(none) if the C(SubjectKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: str
@@ -249,8 +249,8 @@ subject_key_identifier:
     version_added: "2.9"
 authority_key_identifier:
     description:
-        - The CSR's authority key identifier.
-        - The identifier is returned in hexadecial, with C(:) used to separate bytes.
+        - The certificate's authority key identifier.
+        - The identifier is returned in hexadecimal, with C(:) used to separate bytes.
         - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: str
@@ -258,7 +258,7 @@ authority_key_identifier:
     version_added: "2.9"
 authority_cert_issuer:
     description:
-        - The CSR's authority cert issuer as a list of strings.
+        - The certificate's authority cert issuer as a list of strings.
         - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: list
@@ -266,7 +266,7 @@ authority_cert_issuer:
     version_added: "2.9"
 authority_cert_serial_number:
     description:
-        - The CSR's authority cert serial number.
+        - The certificate's authority cert serial number.
         - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: int

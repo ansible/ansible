@@ -163,7 +163,7 @@ public_key_fingerprints:
 subject_key_identifier:
     description:
         - The CSR's subject key identifier.
-        - The identifier is returned in hexadecial, with C(:) used to separate bytes.
+        - The identifier is returned in hexadecimal, with C(:) used to separate bytes.
         - Is C(none) if the C(SubjectKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: str
@@ -172,7 +172,7 @@ subject_key_identifier:
 authority_key_identifier:
     description:
         - The CSR's authority key identifier.
-        - The identifier is returned in hexadecial, with C(:) used to separate bytes.
+        - The identifier is returned in hexadecimal, with C(:) used to separate bytes.
         - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: str
