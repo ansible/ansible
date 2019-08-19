@@ -6,7 +6,9 @@
       - name: Ethernet1
         trunk:
           native_vlan: 20
-          trunk_allowed_vlans: 5-10,15
+          trunk_allowed_vlans:
+            - 5-10
+            - "15"
 
 - eos_facts:
     gather_network_resources: l2_interfaces
