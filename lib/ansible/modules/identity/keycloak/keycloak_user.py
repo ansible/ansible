@@ -50,9 +50,9 @@ options:
 
     attributes:
         description:
-            – a dictionary with the key and the value to put in keycloak.
-            Keycloak will always return the value in a list of one element.
-            Keys and values are converted into string.
+            - a dictionary with the key and the value to put in keycloak.
+              Keycloak will always return the value in a list of one element.
+              Keys and values are converted into string.
         required: false
         type: dict
 
@@ -94,8 +94,13 @@ options:
 
     required_actions:
         description:
-            - a list of actions to be done by the user
-            - each element must be in the choices
+            - a list of actions to be done by the user after the account creation
+            - the possible actions are
+              - C(UPDATE_PROFILE), an update of the profile,
+              - C(VERIFY_EMAIL), an email is sent to the address with a link to click,
+              - C(UPDATE_PASSWORD), update the default password,
+              - C(CONFIGURE_TOTP), user must configure a one-time password generator on their mobile
+                device using either the Free OTP or Google Authenticator application.
         choices: [ UPDATE_PROFILE, VERIFY_EMAIL, UPDATE_PASSWORD, CONFIGURE_TOTP ]
         aliases: [ requiredActions ]
         type: list
