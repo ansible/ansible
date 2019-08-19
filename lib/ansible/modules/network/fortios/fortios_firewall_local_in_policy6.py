@@ -89,7 +89,7 @@ options:
         suboptions:
             action:
                 description:
-                    - Action performed on traffic matching the policy (default = deny).
+                    - Action performed on traffic matching the policy.
                 type: str
                 choices:
                     - accept
