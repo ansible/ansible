@@ -112,7 +112,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import get_config, load_config, run_commands
+from ansible.module_utils.network.ios.ios import load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 
