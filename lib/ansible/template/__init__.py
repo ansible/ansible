@@ -529,23 +529,19 @@ class Templar:
 
         for key, value in kwargs.items():
             obj = mapping.get(key, self.environment)
-            original[key] = getattr(obj, key)
-            if value is not None:
-                try:
-                    setattr(obj, key, value)
-                except AttributeError:
-                    # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
-                    pass
-
-        yield
-
-        for key in kwargs:
-            obj = mapping.get(key, self.environment)
             try:
-                setattr(obj, key, original[key])
+                original[key] = getattr(obj, key)
+                if value is not None:
+                    setattr(obj, key, value)
             except AttributeError:
                 # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
                 pass
+
+        yield
+
+        for key in original:
+            obj = mapping.get(key, self.environment)
+            setattr(obj, key, original[key])
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
                  convert_data=True, static_vars=None, cache=True, disable_lookups=False):
