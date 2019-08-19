@@ -25,7 +25,7 @@ Playbook
 Command Line
 ============
 
-* The location of the Galaxy token file has changed from ``~/.ansible_galaxy`` to ``~/.ansible/galaxy_token``, this can be configurable with the :ref:`galaxy_token_path` config.
+* The location of the Galaxy token file has changed from ``~/.ansible_galaxy`` to ``~/.ansible/galaxy_token``. You can configure both path and file name with the :ref:`galaxy_token_path` config.
 
 
 Deprecated

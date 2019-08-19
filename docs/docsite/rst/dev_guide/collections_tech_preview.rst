@@ -435,7 +435,7 @@ case form of the server identifier and ``{{ key }}`` is the key to define. For e
 ``release_galaxy`` by setting ``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token``.
 
 For operations where only one Galaxy server is used, i.e. ``publish``, ``info``, ``login`` then the first entry in the
-``server_list`` is used unless an explicit server was passed in as a command lin argument.
+``server_list`` is used unless an explicit server was passed in as a command line argument.
 
 .. note::
     Once a collection is found, any of its requirements are only searched within the same Galaxy instance as the parent
