@@ -191,6 +191,65 @@ options:
       - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
     vars:
       - name: ansible_persistent_log_messages
+  terminal_stdout_re:
+    type: list
+    elements: dict
+    description:
+      - A single regex pattern or a sequence of patterns along with optional flags
+        to match the command prompt from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
+    vars:
+      - name: ansible_terminal_stdout_re
+  terminal_stderr_re:
+    type: list
+    elements: dict
+    description:
+      - This option provides the regex pattern and optional flags to match the
+        error string from the received response chunk. This option
+        accepts C(pattern) and C(flags) keys. The value of C(pattern) is a python
+        regex pattern to match the response and the value of C(flags) is the value
+        accepted by I(flags) argument of I(re.compile) python method to control
+        the way regex is matched with the response, for example I('re.I').
+    vars:
+      - name: ansible_terminal_stderr_re
+  terminal_initial_prompt:
+    type: list
+    description:
+      - A single regex pattern or a sequence of patterns to evaluate the expected
+        prompt at the time of initial login to the remote host.
+    vars:
+      - name: ansible_terminal_initial_prompt
+  terminal_initial_answer:
+    type: list
+    description:
+      - The answer to reply with if the C(terminal_initial_prompt) is matched. The value can be a single answer
+        or a list of answers for multiple terminal_initial_prompt. In case the login menu has
+        multiple prompts the sequence of the prompt and excepted answer should be in same order and the value
+        of I(terminal_prompt_checkall) should be set to I(True) if all the values in C(terminal_initial_prompt) are
+        expected to be matched and set to I(False) if any one login prompt is to be matched.
+    vars:
+      - name: ansible_terminal_initial_answer
+  terminal_initial_prompt_checkall:
+    type: boolean
+    description:
+      - By default the value is set to I(False) and any one of the prompts mentioned in C(terminal_initial_prompt)
+        option is matched it won't check for other prompts. When set to I(True) it will check for all the prompts
+        mentioned in C(terminal_initial_prompt) option in the given order and all the prompts
+        should be received from remote host if not it will result in timeout.
+    default: False
+    vars:
+      - name: ansible_terminal_initial_prompt_checkall
+  terminal_inital_prompt_newline:
+    type: boolean
+    description:
+      - This boolean flag, that when set to I(True) will send newline in the response if any of values
+        in I(terminal_initial_prompt) is matched.
+    default: True
+    vars:
+      - name: ansible_terminal_initial_prompt_newline
 """
 
 import getpass
@@ -338,11 +397,12 @@ class Connection(NetworkConnectionBase):
 
             self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
 
-            self.receive(
-                prompts=self._terminal.terminal_initial_prompt,
-                answer=self._terminal.terminal_initial_answer,
-                newline=self._terminal.terminal_inital_prompt_newline
-            )
+            terminal_initial_prompt = self.get_option('terminal_initial_prompt') or self._terminal.terminal_initial_prompt
+            terminal_initial_answer = self.get_option('terminal_initial_answer') or self._terminal.terminal_initial_answer
+            newline = self.get_option('terminal_inital_prompt_newline') or self._terminal.terminal_inital_prompt_newline
+            check_all = self.get_option('terminal_initial_prompt_checkall') or False
+
+            self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
             self.queue_message('vvvv', 'firing event: on_open_shell()')
             self._terminal.on_open_shell()
@@ -385,6 +445,10 @@ class Connection(NetworkConnectionBase):
         handled = False
         command_prompt_matched = False
         matched_prompt_window = window_count = 0
+
+        # set terminal regex values for command prompt and errors in response
+        self._terminal_stderr_re = self._get_terminal_std_re('terminal_stderr_re')
+        self._terminal_stdout_re = self._get_terminal_std_re('terminal_stdout_re')
 
         cache_socket_timeout = self._ssh_shell.gettimeout()
         command_timeout = self.get_option('persistent_command_timeout')
@@ -463,8 +527,10 @@ class Connection(NetworkConnectionBase):
             if prompt_len != answer_len:
                 raise AnsibleConnectionFailure("Number of prompts (%s) is not same as that of answers (%s)" % (prompt_len, answer_len))
         try:
-            self._history.append(command)
-            self._ssh_shell.sendall(b'%s\r' % command)
+            cmd = b'%s\r' % command
+            self._history.append(cmd)
+            self._ssh_shell.sendall(cmd)
+            self._log_messages('send command: %s' % cmd)
             if sendonly:
                 return
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
@@ -513,7 +579,7 @@ class Connection(NetworkConnectionBase):
             single_prompt = True
         if not isinstance(answer, list):
             answer = [answer]
-        prompts_regex = [re.compile(r, re.I) for r in prompts]
+        prompts_regex = [re.compile(to_bytes(r), re.I) for r in prompts]
         for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
@@ -557,13 +623,14 @@ class Connection(NetworkConnectionBase):
         '''
         errored_response = None
         is_error_message = False
-        for regex in self._terminal.terminal_stderr_re:
+
+        for regex in self._terminal_stderr_re:
             if regex.search(response):
                 is_error_message = True
 
                 # Check if error response ends with command prompt if not
                 # receive it buffered prompt
-                for regex in self._terminal.terminal_stdout_re:
+                for regex in self._terminal_stdout_re:
                     match = regex.search(response)
                     if match:
                         errored_response = response
@@ -573,7 +640,7 @@ class Connection(NetworkConnectionBase):
                         break
 
         if not is_error_message:
-            for regex in self._terminal.terminal_stdout_re:
+            for regex in self._terminal_stdout_re:
                 match = regex.search(response)
                 if match:
                     self._matched_pattern = regex.pattern
@@ -604,3 +671,23 @@ class Connection(NetworkConnectionBase):
         self.close()
         self._connect()
         self.close()
+
+    def _get_terminal_std_re(self, option):
+        terminal_std_option = self.get_option(option)
+        terminal_std_re = []
+
+        if terminal_std_option:
+            for item in terminal_std_option:
+                if "pattern" not in item:
+                    raise AnsibleConnectionFailure("'pattern' is a required key for option '%s',"
+                                                   " received option value is %s" % (option, item))
+                pattern = br"%s" % to_bytes(item['pattern'])
+                flag = item.get('flags', 0)
+                if flag:
+                    flag = getattr(re, flag.split('.')[1])
+                terminal_std_re.append(re.compile(pattern, flag))
+        else:
+            # To maintain backward compatibility
+            terminal_std_re = getattr(self._terminal, option)
+
+        return terminal_std_re
