@@ -322,10 +322,11 @@ class InventoryCLI(CLI):
             if context.CLIARGS['filter'] is None or context.CLIARGS['filter'] in key:  # Apply filter if provided
                 if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
                     prefix = '[{}] {} : '.format(InventoryCLI._colorize_entity(values[0][0], source_entities, max_width), key)
+                    prefix_nocolor = '[{}] {} : '.format(InventoryCLI._colorize_entity(values[0][0], source_entities, max_width, force_nocolor=True), key)
                     value_pretty = pformat(values[0][1]).split('\n')
 
                     # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : in that case, indent the remaining ones.
-                    result.extend([prefix + line if index == 0 else " " * len(prefix) + line for index, line in enumerate(value_pretty)])
+                    result.extend([prefix + line if index == 0 else " " * len(prefix_nocolor) + line for index, line in enumerate(value_pretty)])
 
                 else:  # There was several candidates, display the winning one first, and then all of them in order (starting with the winning one) along with their source
                     prefix = '[{}] {} : '.format('+' * max_width, key)
@@ -337,19 +338,25 @@ class InventoryCLI(CLI):
                     local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
                     for entity, value in values:
                         prefix = '----[{}] : '.format(InventoryCLI._colorize_entity(entity, source_entities, local_max_width))
+                        prefix_nocolor = '----[{}] : '.format(InventoryCLI._colorize_entity(entity, source_entities, local_max_width, force_nocolor=True))
                         value_pretty = pformat(value).split('\n')
 
-                        result.extend([prefix + line if index == 0 else " " * len(prefix) + line for index, line in enumerate(value_pretty)])
+                        result.extend([prefix + line if index == 0 else " " * len(prefix_nocolor) + line for index, line in enumerate(value_pretty)])
         return '\n'.join(result)
 
     @staticmethod
-    def _colorize_entity(entity, all_entities, max_width):
+    def _colorize_entity(entity, all_entities, max_width, force_nocolor=False):
         ''' Colorize a Host or Group object in a deterministic way. Returns a colorized string (or not colorized, this is handled in ansible.utils.color) '''
         colors = ['blue', 'green', 'cyan', 'red', 'purple', 'yellow', 'magenta']  # Colors from ansible.utils.color.codeCodes
         color_index = all_entities.index(entity) % len(colors)
 
+        if force_nocolor:
+            entity_str = str(entity)
+        else:
+            entity_str = stringc(str(entity), colors[color_index])
+
         padding = max_width - len(str(entity))
-        return ' ' * padding + stringc(str(entity), colors[color_index])
+        return ' ' * padding + entity_str
 
     def _get_group(self, gname):
         group = self.inventory.groups.get(gname)
