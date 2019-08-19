@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #
 # This file is part of Ansible
 #
@@ -87,7 +86,7 @@ class ActionModule(ActionBase):
             type_ok = False
             type = argument_spec[key]['type']
             if type == 'str':
-                if isinstance(playvals[key], str) or isinstance(playvals[key], unicode):
+                if isinstance(playvals[key], basestring):
                     type_ok = True
             elif type == 'int':
                 if isinstance(playvals[key], int):
@@ -290,7 +289,7 @@ class ActionModule(ActionBase):
             # 13) - Copy completed without issues
             possible_outcomes = ['yes',
                                  '(?i)Password',
-                                 '#\s',
+                                 r'#\s',
                                  'file existing with this name',
                                  'timed out.*#',
                                  '(?i)No space.*#',

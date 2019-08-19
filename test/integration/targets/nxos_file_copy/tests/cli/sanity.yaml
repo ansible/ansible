@@ -47,7 +47,7 @@
     nxos_command: *remove_file
     register: result
 
-  - name: "Copy {{ test_source_file }} file from Ansible controller to bootflash as {{ test_destination_file }}"
+  - name: "Copy {{ test_source_file }} file from Ansible controller to bootflash renamed as {{ test_destination_file }}"
     nxos_file_copy: &copy_file_different_name
       remote_file: "{{ test_destination_file }}"
       local_file: "./{{ test_source_file }}"
@@ -57,7 +57,7 @@
 
   - assert: *true
 
-  - name: "Idempotence - Copy {{ test_source_file }} file from Ansible controller to bootflash as {{ test_destination_file }}"
+  - name: "Idempotence - Copy {{ test_source_file }} file from Ansible controller to bootflash renamed as {{ test_destination_file }}"
     nxos_file_copy: *copy_file_different_name
     register: result
 

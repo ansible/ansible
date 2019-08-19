@@ -94,14 +94,6 @@ options:
     type: bool
     default: False
     version_added: "2.9"
-  file_pull_compact:
-    description:
-      - When file_pull is True, this is used to compact nxos image files.
-        This option can only be used with nxos image files.
-      - When (file_pull is False), this is not used.
-    type: bool
-    default: False
-    version_added: "2.9"
   file_pull_kstack:
     description:
       - When file_pull is True, this can be used to speed up file copies when
@@ -171,19 +163,35 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-# When file_pull is True
-  changed: true
-  copy_cmd: "copy scp://username@fileserver.example.com/images/nxos.9.2.1.bin bootflash:/nxos.9.2.1.bin vrf management"
-  file_system: "bootflash:"
-  local_file: "bootflash:/nxos.9.2.1.bin"
-  remote_file: "/images/nxos.9.2.1.bin"
-  remote_scp_server: "fileserver.example.com"
-  transfer_status: "Received: File copied/pulled to nxos device from remote scp server."
-
-# When file_pull is False
-  changed": true
-  file_system: "bootflash:"
-  local_file: "./network-integration.cfg"
-  remote_file: "network-integration.cfg"
-  transfer_status: "Sent: File copied to remote device."
+transfer_status:
+    description: Whether a file was transferred.
+                 When file_pull is True it can be set to the following states.
+                   "Received: File copied/pulled to nxos device from remote scp server."
+                   "No Transfer"
+                 When file_pull is False it can be set to the following states.
+                   "Sent: File copied to remote device."
+                   "No Transfer: File already copied to remote device."
+    returned: success
+    type: str
+    sample: 'Sent'
+local_file:
+    description: The path of the local file.
+    returned: success
+    type: str
+    sample: '/path/to/local/file'
+remote_file:
+    description: The path of the remote file.
+    returned: success
+    type: str
+    sample: '/path/to/remote/file'
+remote_scp_server:
+    description: The name of the scp server when file_pull is True.
+    returned: success
+    type: str
+    sample: 'fileserver.example.com'
+changed:
+    description: Indicates wheather or not the file was copied.
+    returned: success
+    type: bool
+    sample: true
 '''
