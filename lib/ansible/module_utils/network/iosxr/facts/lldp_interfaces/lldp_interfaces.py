@@ -19,7 +19,6 @@ from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.iosxr.argspec.lldp_interfaces.lldp_interfaces import Lldp_interfacesArgs
-from ansible.module_utils.six import iteritems
 
 
 class Lldp_interfacesFacts(object):

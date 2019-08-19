@@ -29,7 +29,6 @@
 import json
 import re
 from difflib import Differ
-from copy import deepcopy
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
