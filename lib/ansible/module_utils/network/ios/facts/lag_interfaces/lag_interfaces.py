@@ -43,9 +43,6 @@ class Lag_interfacesFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if connection:  # just for linting purposes, remove
-            pass
-
         objs = []
 
         if not data:

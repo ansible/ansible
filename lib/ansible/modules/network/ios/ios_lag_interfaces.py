@@ -47,51 +47,52 @@ notes:
   - This module works with connection C(network_cli).
     See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
-config:
-  description: A list of link aggregation group configurations.
-  type: list
-  elements: dict
-  suboptions:
-    name:
+  config:
+    description: A list of link aggregation group configurations.
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description:
+        - ID of Ethernet Channel of interfaces.
+        - Refer to vendor documentation for valid port values.
+        type: str
+        required: True
+      members:
+        description:
+        - Interface options for the link aggregation group.
+        type: list
+        suboptions:
+          member:
+            description:
+            - Interface member of the link aggregation group.
+            type: str
+          mode:
+            description:
+            - Etherchannel Mode of the interface for link aggregation.
+            type: str
+            choices:
+            - 'auto'
+            - 'on'
+            - 'desirable'
+            - 'active'
+            - 'passive'
+          link:
+            description:
+            - Assign a link identifier used for load-balancing.
+            - Refer to vendor documentation for valid values.
+            - NOTE, parameter only supported on Cisco IOS XE platform.
+            type: int
+    state:
       description:
-      - ID of Ethernet Channel of interfaces.
-      - Refer to vendor documentation for valid port values.
-      type: int
-      required: True
-    members:
-      description:
-      - Interface options for the link aggregation group.
-      suboptions:
-        member:
-          description:
-          - Interface member of the link aggregation group.
-          type: str
-        mode:
-          description:
-          - Etherchannel Mode of the interface for link aggregation.
-          type: str
-          choices:
-          - auto
-          - on
-          - desirable
-          - active
-          - passive
-        link:
-          description:
-          - Assign a link identifier used for load-balancing.
-          - Refer to vendor documentation for valid values.
-          - NOTE, parameter only supported on Cisco IOS XE platform.
-          type: int
-  state:
-    description:
-    - The state the configuration should be left in
-    type: str
-    choices:
-    - merged
-    - replaced
-    - overridden
-    - deleted
-    default: merged
+      - The state the configuration should be left in
+      type: str
+      choices:
+      - merged
+      - replaced
+      - overridden
+      - deleted
+      default: merged
 """
 
 EXAMPLES = """
@@ -360,7 +361,7 @@ commands:
   description: The set of commands pushed to the remote device
   returned: always
   type: list
-  sample: ['interface GigabitEthernet0/1', 'command 2', 'command 3']
+  sample: ['interface GigabitEthernet0/1', 'channel-group 1 mode active']
 """
 
 from ansible.module_utils.basic import AnsibleModule
