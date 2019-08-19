@@ -27,6 +27,7 @@ description:
 deprecated:
     removed_in: "2.13"
     alternative: Use platform-specific "[netos]_system" module
+    why: Updated modules released with more functionality
 extends_documentation_fragment: network_agnostic
 options:
   hostname:
