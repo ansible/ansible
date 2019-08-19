@@ -18,7 +18,7 @@ description:
 - Manage virtual domain credential profiles on Cisco ACI fabrics.
 version_added: '2.8'
 options:
-  credential:
+  name:
     description:
     - Name of the credential profile.
     type: str
@@ -78,7 +78,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     domain: vmware_dom
     description: secure credential
-    credential: vCenterCredential
+    name: vCenterCredential
     credential_username: vCenterUsername
     credential_password: vCenterPassword
     vm_provider: vmware
@@ -90,7 +90,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     domain: vmware_dom
-    credential: myCredential
+    name: myCredential
     vm_provider: vmware
     state: absent
 
@@ -100,7 +100,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     domain: vmware_dom
-    credential: vCenterCredential
+    name: vCenterCredential
     vm_provider: vmware
     state: query
   delegate_to: localhost
@@ -240,11 +240,11 @@ VM_PROVIDER_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        credential=dict(type='str', aliases=['credential_name', 'credential_profile']),
+        name=dict(type='str', aliases=['credential_name', 'credential_profile']),
         credential_password=dict(type='str'),
         credential_username=dict(type='str'),
         description=dict(type='str', aliases=['descr']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware'])
     )
@@ -258,7 +258,7 @@ def main():
         ],
     )
 
-    credential = module.params['credential']
+    name = module.params['name']
     credential_password = module.params['credential_password']
     credential_username = module.params['credential_username']
     description = module.params['description']
@@ -267,11 +267,11 @@ def main():
     vm_provider = module.params['vm_provider']
 
     credential_class = 'vmmUsrAccP'
-    usracc_mo = 'uni/vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING[vm_provider], domain, credential)
-    usracc_rn = 'vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING[vm_provider], domain, credential)
+    usracc_mo = 'uni/vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING[vm_provider], domain, name)
+    usracc_rn = 'vmmp-{0}/dom-{1}/usracc-{2}'.format(VM_PROVIDER_MAPPING[vm_provider], domain, name)
 
     # Ensure that querying all objects works when only domain is provided
-    if credential is None:
+    if name is None:
         usracc_mo = None
 
     aci = ACIModule(module)
@@ -280,7 +280,7 @@ def main():
             aci_class=credential_class,
             aci_rn=usracc_rn,
             module_object=usracc_mo,
-            target_filter={'name': domain, 'usracc': credential},
+            target_filter={'name': domain, 'usracc': name},
         ),
     )
 
@@ -291,7 +291,7 @@ def main():
             aci_class=credential_class,
             class_config=dict(
                 descr=description,
-                name=credential,
+                name=name,
                 pwd=credential_password,
                 usr=credential_username
             ),
