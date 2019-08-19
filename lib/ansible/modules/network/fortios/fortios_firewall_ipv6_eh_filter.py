@@ -81,53 +81,53 @@ options:
         suboptions:
             auth:
                 description:
-                    - Enable/disable blocking packets with the Authentication header (default = disable).
+                    - Enable/disable blocking packets with the Authentication header.
                 type: str
                 choices:
                     - enable
                     - disable
             dest_opt:
                 description:
-                    - Enable/disable blocking packets with Destination Options headers (default = disable).
+                    - Enable/disable blocking packets with Destination Options headers.
                 type: str
                 choices:
                     - enable
                     - disable
             fragment:
                 description:
-                    - Enable/disable blocking packets with the Fragment header (default = disable).
+                    - Enable/disable blocking packets with the Fragment header.
                 type: str
                 choices:
                     - enable
                     - disable
             hdopt_type:
                 description:
-                    - Block specific Hop-by-Hop and/or Destination Option types (max. 7 types, each between 0 and 255, default = 0).
+                    - Block specific Hop-by-Hop and/or Destination Option types (max. 7 types, each between 0 and 255).
                 type: int
             hop_opt:
                 description:
-                    - Enable/disable blocking packets with the Hop-by-Hop Options header (default = disable).
+                    - Enable/disable blocking packets with the Hop-by-Hop Options header.
                 type: str
                 choices:
                     - enable
                     - disable
             no_next:
                 description:
-                    - Enable/disable blocking packets with the No Next header (default = disable)
+                    - Enable/disable blocking packets with the No Next header.
                 type: str
                 choices:
                     - enable
                     - disable
             routing:
                 description:
-                    - Enable/disable blocking packets with Routing headers (default = enable).
+                    - Enable/disable blocking packets with Routing headers.
                 type: str
                 choices:
                     - enable
                     - disable
             routing_type:
                 description:
-                    - Block specific Routing header types (max. 7 types, each between 0 and 255, default =  0).
+                    - Block specific Routing header types (max. 7 types, each between 0 and 255).
                 type: int
 '''
 
