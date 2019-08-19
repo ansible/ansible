@@ -62,7 +62,9 @@ EXAMPLES = r'''
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
-    options: SYSTEM=LDAP,registry=LDAP
+    attrs:
+      SYSTEM: LDAP
+      registry: LDAP
     state: present
     mode: '0644'
 
@@ -70,16 +72,17 @@ EXAMPLES = r'''
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
-    options: logintimes=:0800-1700
+    attrs: 
+      logintimes: 0800-1700
     state: present
 
-- name: Remove registry option from stanza
+- name: Remove registry attribute from stanza
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
-    options:
-    - SYSTEM=LDAP
-    - registry=
+    attrs:
+      SYSTEM: LDAP
+      registry: null
     state: present
 '''
 
