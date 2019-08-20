@@ -210,8 +210,8 @@
     - cm_query_credential.current.0.vmmUsrAccP.attributes.name == 'vmm_cred'
     - nm_query_credential.current.0.vmmUsrAccP.attributes.name == 'vmm_cred'
     - nm_query_fake_credential.current == []
-    - cm_query_all_credential.current.8.vmmUsrAccP.attributes.name == 'vmm_cred'
-    - nm_query_all_credential.current.8.vmmUsrAccP.attributes.name == 'vmm_cred'
+    - cm_query_all_credential.current.0.vmmUsrAccP.attributes.name == 'vmm_cred'
+    - nm_query_all_credential.current.0.vmmUsrAccP.attributes.name == 'vmm_cred'
 
 - name: Remove credential (check_mode)
   aci_vmm_credential: *credential_absent
