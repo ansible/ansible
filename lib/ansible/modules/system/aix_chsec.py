@@ -130,54 +130,62 @@ def attrs2dict(attrs):
     return return_dict
 
 
-def do_stanza(module, filename, stanza, attrs, state='present'):
-    lssec_command = module.get_bin_path('lssec', required=True)
+def set_attr_value(module, filename, stanza, attr, value):
+    '''Sets the selected file/stanza/attr=value.  Only returns True '''
     chsec_command = module.get_bin_path('chsec', required=True)
+    cmd = [chsec_command, '-f', filename, '-s', stanza, '-a', '='.join([attr, value])]
+    rc, stdout, stderr = module.run_command(cmd)
+    if rc != 0:
+        msg = 'Failed to run chsec command: ' + ' '.join(cmd)
+        module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
+    return True
 
+
+def get_current_attr_value(module, filename, stanza, attr):
+    ''' Given single filename/stanza/attr, returns str(attr_value)'''
+    lssec_command = module.get_bin_path('lssec', required=True)
+    cmd = [lssec_command, '-c', '-f', filename, '-s', stanza, '-a', attr]
+    rc, stdout, stderr = module.run_command(cmd)
+    if rc != 0:
+        msg = 'Failed to run lssec command: ' + ' '.join(cmd)
+        module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
+    # Strip off whitespace and double-quotation marks that are sometimes added
+    lssec_out = stdout.splitlines()[1].split(':')[1].strip('\\\"\n ')
+    return lssec_out
+
+
+def do_stanza(module, filename, stanza, attrs, state='present'):
+    ''' Returns (bool(changed), dict(msg)) '''
+    attrs = attrs2dict(attrs)
     return_msg = {}
     changed = 0
 
+    for attr, tgt_value in attrs.items():
     if state == 'absent':
-        # We need to rip out the entire stanza.
-        # Not sure how to do this, or if it's even possible
-        pass
-
-    elif state == 'present':
-        attrs = attrs2dict(attrs)
-        for k, v in attrs.items():
+            # 'absent' sets all of the given attrs to None, regardless of given value
+            tgt_value = ''
             # Start our msg dict for this key+value
             msg = {
-                'target_value': v,
+            'desired_value': tgt_value,
                 'status': 'unchanged',
             }
-            # Check current values
-            cmd = [lssec_command, '-c', '-f', filename, '-s', stanza, '-a', k]
-            rc, stdout, stderr = module.run_command(cmd)
-            if rc != 0:
-                msg = 'Failed to run lssec command: ' + ' '.join(cmd)
-                module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
-            lssec_out = stdout.splitlines()[1].split(':')[1].strip('\\\"\n ')
+        curr_value = get_current_attr_value(module, filename, stanza, attr)
             msg.update({
-                'incoming_value': lssec_out,
+            'existing_value': curr_value,
             })
-            if lssec_out != v:
+        if curr_value != tgt_value:
                 # Change the value of the attr
-                cmd = [chsec_command, '-f', filename, '-s', stanza, '-a', '='.join([k, v])]
                 if module.check_mode:
                     msg.update({"check_mode": True})
                 else:
-                    rc, stdout, stderr = module.run_command(cmd)
-                    if rc != 0:
-                        msg = 'Failed to run chsec command: ' + ' '.join(cmd)
-                        module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
+                set_attr_value(module, filename, stanza, attr, tgt_value)
                 msg.update({
-                    'outgoing_value': v,
+                # 'outgoing_value': tgt_value,
                     'status': 'changed',
                 })
                 changed += 1
-            return_msg[k] = msg
-
-    return bool(changed), msg
+        return_msg[attr] = msg
+    return (bool(changed), return_msg)
 
 
 def main():
