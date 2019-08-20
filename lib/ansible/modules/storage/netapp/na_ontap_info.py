@@ -24,11 +24,13 @@ requirements:
     - netapp_lib
 options:
     state:
+        type: str
         description:
             - Returns "info"
         default: "info"
         choices: ['info']
     gather_subset:
+        type: list
         description:
             - When supplied, this argument will restrict the information collected
                 to a given subset.  Possible values for this argument include
@@ -589,7 +591,7 @@ def main():
 
     argument_spec = netapp_utils.na_ontap_host_argument_spec()
     argument_spec.update(dict(
-        state=dict(default='info', choices=['info']),
+        state=dict(type='str', default='info', choices=['info']),
         gather_subset=dict(default=['all'], type='list'),
     ))
 
