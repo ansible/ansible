@@ -91,11 +91,7 @@ EXAMPLES = r'''
     state: present
 '''
 
-RETURN = r'''
-tbd:
-    fill: this
-    out: please.
-'''
+RETURN = r''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -161,29 +157,29 @@ def do_stanza(module, filename, stanza, attrs, state='present'):
     changed = 0
 
     for attr, tgt_value in attrs.items():
-    if state == 'absent':
+        if state == 'absent':
             # 'absent' sets all of the given attrs to None, regardless of given value
             tgt_value = ''
-            # Start our msg dict for this key+value
-            msg = {
+        # Start our msg dict for this key+value
+        msg = {
             'desired_value': tgt_value,
-                'status': 'unchanged',
-            }
+            'status': 'unchanged',
+        }
         curr_value = get_current_attr_value(module, filename, stanza, attr)
-            msg.update({
+        msg.update({
             'existing_value': curr_value,
-            })
+        })
         if curr_value != tgt_value:
-                # Change the value of the attr
-                if module.check_mode:
-                    msg.update({"check_mode": True})
-                else:
+            # Change the value of the attr
+            if module.check_mode:
+                msg.update({"check_mode": True})
+            else:
                 set_attr_value(module, filename, stanza, attr, tgt_value)
-                msg.update({
+            msg.update({
                 # 'outgoing_value': tgt_value,
-                    'status': 'changed',
-                })
-                changed += 1
+                'status': 'changed',
+            })
+            changed += 1
         return_msg[attr] = msg
     return (bool(changed), return_msg)
 
