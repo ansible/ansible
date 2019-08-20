@@ -16,14 +16,16 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_location_facts
+module: hcloud_location_info
 
-short_description: Gather facts about your Hetzner Cloud locations.
+short_description: Gather infos about your Hetzner Cloud locations.
 
 version_added: "2.8"
 
 description:
-    - Gather facts about your Hetzner Cloud locations.
+    - Gather infos about your Hetzner Cloud locations.
+    - This module was called C(hcloud_location_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_location_facts).
+      Note that the M(hcloud_location_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_location_info)!
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -41,18 +43,18 @@ extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud location facts
-  local_action:
-    module: hcloud_location_facts
+- name: Gather hcloud location infos
+  hcloud_location_info:
+  register: output
 
-- name: Print the gathered facts
+- name: Print the gathered infos
   debug:
-    var: ansible_facts.hcloud_location_facts
+    var: output
 """
 
 RETURN = """
-hcloud_location_facts:
-    description: The location facts as list
+hcloud_location_info:
+    description: The location infos as list
     returned: always
     type: complex
     contains:
@@ -93,15 +95,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudLocationFacts(Hcloud):
+class AnsibleHcloudLocationInfo(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_location_facts")
-        self.hcloud_location_facts = None
+        Hcloud.__init__(self, module, "hcloud_location_info")
+        self.hcloud_location_info = None
 
     def _prepare_result(self):
         tmp = []
 
-        for location in self.hcloud_location_facts:
+        for location in self.hcloud_location_info:
             if location is not None:
                 tmp.append({
                     "id": to_native(location.id),
@@ -115,15 +117,15 @@ class AnsibleHcloudLocationFacts(Hcloud):
     def get_locations(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_location_facts = [self.client.locations.get_by_id(
+                self.hcloud_location_info = [self.client.locations.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("name") is not None:
-                self.hcloud_location_facts = [self.client.locations.get_by_name(
+                self.hcloud_location_info = [self.client.locations.get_by_name(
                     self.module.params.get("name")
                 )]
             else:
-                self.hcloud_location_facts = self.client.locations.get_all()
+                self.hcloud_location_info = self.client.locations.get_all()
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -141,15 +143,26 @@ class AnsibleHcloudLocationFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudLocationFacts.define_module()
+    module = AnsibleHcloudLocationInfo.define_module()
 
-    hcloud = AnsibleHcloudLocationFacts(module)
+    is_old_facts = module._name == 'hcloud_location_facts'
+    if is_old_facts:
+        module.deprecate("The 'hcloud_location_info' module has been renamed to 'hcloud_location_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
+
+    hcloud = AnsibleHcloudLocationInfo(module)
     hcloud.get_locations()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_location_facts': result['hcloud_location_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts)
+    if is_old_facts:
+        ansible_info = {
+            'hcloud_location_facts': result['hcloud_location_info']
+        }
+        module.exit_json(ansible_s=ansible_info)
+    else:
+        ansible_info = {
+            'hcloud_location_info': result['hcloud_location_info']
+        }
+        module.exit_json(**ansible_info)
 
 
 if __name__ == "__main__":
