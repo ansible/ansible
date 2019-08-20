@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_system_resource_limits
-short_description: Configure resource limits in Fortinet's FortiOS and FortiGate.
+short_description: Configure resource limits in Fortinet's FortiOS (FOS) and FortiGate.
 description:
     - This module is able to configure a FortiGate or FortiOS device by allowing the
       user to set and modify system feature and resource_limits category.
@@ -361,6 +361,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI.
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
