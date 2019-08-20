@@ -3,20 +3,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import fnmatch
+import glob
 import os
 import re
 import subprocess
 import sys
 import tarfile
 import tempfile
-
-
-def assemble_files_in_repository():
-    """All of the files in the repository"""
-    file_list = []
-    for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        file_list.append(path)
-    return file_list
 
 
 def assemble_files_to_ship(complete_file_list):
@@ -34,6 +27,9 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
         'test/sanity/code-smell/botmeta.*',
+        'test/utils/*',
+        'test/utils/*/*',
+        'test/utils/*/*/*',
         '.git*',
         # Consciously left out
         'examples/playbooks/*',
@@ -43,6 +39,7 @@ def assemble_files_to_ship(complete_file_list):
     ignore_files = frozenset((
         # Developer-only tools
         'changelogs/config.yaml',
+        'changelogs/.changes.yaml',
         'hacking/README.md',
         'hacking/ansible-profile',
         'hacking/cgroup_perf_recap_graph.py',
@@ -57,7 +54,6 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/test-module.py',
         '.cherry_picker.toml',
         '.mailmap',
-        'shippable.yml',
         # Possibly should be included
         'examples/scripts/uptime.py',
         'examples/DOCUMENTATION.yml',
@@ -73,11 +69,23 @@ def assemble_files_to_ship(complete_file_list):
     ))
 
     # These files are generated and then intentionally added to the sdist
-    generated_files = (
+
+    # Manpages
+    manpages = ['docs/man/man1/ansible.1']
+    for dirname, dummy, files in os.walk('bin'):
+        for filename in files:
+            path = os.path.join(dirname, filename)
+            if os.path.islink(path):
+                if os.readlink(path) == 'ansible':
+                    manpages.append('docs/man/man1/%s.1' % filename)
+
+    # Misc
+    misc_generated_files = [
         'SYMLINK_CACHE.json',
         'PKG-INFO',
-    )
-    shipped_files = list(generated_files)
+    ]
+
+    shipped_files = manpages + misc_generated_files
 
     for path in complete_file_list:
         if path not in ignore_files:
@@ -115,9 +123,20 @@ def assemble_files_to_install(complete_file_list):
     return pkg_data_files
 
 
-def create_sdist(tmp_dir):
+def clean_repository():
+    """Clean the repository of past build artifacts"""
     _dummy = subprocess.Popen(
-        ['python', 'setup.py', 'sdist', '--dist-dir=%s' % tmp_dir],
+        ['make', 'clean'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    ).communicate()
+
+
+def create_sdist(tmp_dir):
+    """Create an sdist in the repository"""
+    _dummy = subprocess.Popen(
+        ['make', 'snapshot', 'SDIST_DIR=%s' % tmp_dir],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
@@ -135,6 +154,7 @@ def create_sdist(tmp_dir):
 
 
 def extract_sdist(sdist_path, tmp_dir):
+    """Untar the sdist"""
     # Untar the sdist from the tmp_dir
     with tarfile.open(os.path.join(tmp_dir, sdist_path), 'r|*') as sdist:
         sdist.extractall(path=tmp_dir)
@@ -156,73 +176,150 @@ def extract_sdist(sdist_path, tmp_dir):
     return os.path.join(tmp_dir, tmp_dir_files[0])
 
 
+def install_sdist(tmp_dir, sdist_dir):
+    """Install the extracted sdist into the temporary directory"""
+    stdout, _dummy = subprocess.Popen(
+        ['python', 'setup.py', 'install', '--root=%s' % tmp_dir],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        cwd=os.path.join(tmp_dir, sdist_dir),
+    ).communicate()
+
+    # Determine the prefix for the installed files
+    match = re.search('^creating (%s/.*?/(?:site|dist)-packages)/ansible$' %
+                        tmp_dir, stdout, flags=re.M)
+    return match.group(1)
+
+
+def check_sdist_contains_expected(sdist_dir, to_ship_files):
+    """Check that the files we expect to ship are present in the sdist"""
+    results = []
+    for filename in to_ship_files:
+        path = os.path.join(sdist_dir, filename)
+        if not os.path.exists(path):
+            results.append('%s: File was not added to sdist' % filename)
+
+    # Also changelog
+    changelog_files = glob.glob(os.path.join(sdist_dir, 'changelogs/CHANGELOG-v2.[0-9]*.rst'))
+    if not changelog_files:
+        results.append('changelogs/CHANGELOG-v2.*.rst: Changelog file was not added to the sdist')
+    elif len(changelog_files) > 1:
+        results.append('changelogs/CHANGELOG-v2.*.rst: Too many changelog files: %s'
+                       % changelog_files)
+
+    return results
+
+
+def check_sdist_files_are_wanted(sdist_dir, to_ship_files):
+    """Check that all files in the sdist are desired"""
+    results = []
+    for dirname, dummy, files in os.walk(sdist_dir):
+        dirname = os.path.relpath(dirname, start=sdist_dir)
+        if dirname == '.':
+            dirname = ''
+
+        for filename in files:
+            path = os.path.join(dirname, filename)
+            if path not in to_ship_files:
+                if fnmatch.fnmatch(path, 'changelogs/CHANGELOG-v2.[0-9]*.rst'):
+                    # changelog files are expected
+                    continue
+
+                # FIXME: ansible-test doesn't pass the paths of symlinks to us so we aren't
+                # checking those
+                if not os.path.islink(os.path.join(sdist_dir, path)):
+                    results.append('%s: File in sdist was not in the repository' % path)
+
+    return results
+
+
+def check_installed_contains_expected(install_dir, to_install_files):
+    """Check that all the files we expect to be installed are"""
+    results = []
+    for filename in to_install_files:
+        path = os.path.join(install_dir, filename)
+        if not os.path.exists(path):
+            results.append('%s: File not installed' % os.path.join('lib', filename))
+
+    return results
+
+
+EGG_RE = re.compile('ansible[^/]+\\.egg-info/(PKG-INFO|SOURCES.txt|'
+                    'dependency_links.txt|not-zip-safe|requires.txt|top_level.txt)$')
+
+
+def check_installed_files_are_wanted(install_dir, to_install_files):
+    """Check that all installed files were desired"""
+    results = []
+
+    for dirname, dummy, files in os.walk(install_dir):
+        dirname = os.path.relpath(dirname, start=install_dir)
+        if dirname == '.':
+            dirname = ''
+
+        for filename in files:
+            # If this is a byte code cache, look for the python file's name
+            directory = dirname
+            if filename.endswith('.pyc') or filename.endswith('.pyo'):
+                # Remove the trailing "o" or c"
+                filename = filename[:-1]
+
+                if directory.endswith('%s__pycache__' % os.path.sep):
+                    # Python3 byte code cache, look for the basename of
+                    # __pycache__/__init__.cpython-36.py
+                    segments = filename.rsplit('.', 2)
+                    if len(segments) >= 3:
+                        filename = segments[0] + segments[2]
+                        directory = os.path.dirname(directory)
+
+            path = os.path.join(directory, filename)
+
+            # Test that the file was listed for installation
+            if path not in to_install_files:
+                # FIXME: ansible-test doesn't pass the paths of symlinks to us so we
+                # aren't checking those
+                if not os.path.islink(os.path.join(install_dir, path)):
+                    if not EGG_RE.match(path):
+                        results.append('%s: File was installed but was not supposed to be' % path)
+
+    return results
+
+
 def main():
-    complete_file_list = assemble_files_in_repository()
+    """All of the files in the repository"""
+    # We may run this after docs sanity tests so clean the repository first
+    clean_repository()
+
+    complete_file_list = []
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
+        complete_file_list.append(path)
+
     to_ship_files = assemble_files_to_ship(complete_file_list)
     to_install_files = assemble_files_to_install(complete_file_list)
 
+    results = []
     with tempfile.TemporaryDirectory() as tmp_dir:
         sdist_path = create_sdist(tmp_dir)
         sdist_dir = extract_sdist(sdist_path, tmp_dir)
 
         # Check that the files that are supposed to be in the sdist are there
-        for filename in to_ship_files:
-            path = os.path.join(sdist_dir, filename)
-            if not os.path.exists(path):
-                print('%s: File was not added to sdist' % filename)
+        results.extend(check_sdist_contains_expected(sdist_dir, to_ship_files))
 
         # Check that the files that are in the sdist are in the repository
-        for dirname, directories, files in os.walk(sdist_dir):
-            dirname = os.path.relpath(dirname, start=sdist_dir)
-            if dirname == '.':
-                dirname = ''
+        results.extend(check_sdist_files_are_wanted(sdist_dir, to_ship_files))
 
-            for filename in files:
-                path = os.path.join(dirname, filename)
-                if path not in to_ship_files:
-                    # FIXME: ansible-test doesn't pass the paths of symlinks to us so we can't check those
-                    if not os.path.islink(os.path.join(sdist_dir, path)):
-                        print('%s: File in sdist was not in the repository' % path)
-
-        # python setup.py install from the sdist
-        stdout, _dummy = subprocess.Popen(
-            ['python', 'setup.py', 'install', '--root=%s' % tmp_dir],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-            cwd=os.path.join(tmp_dir, sdist_dir),
-        ).communicate()
-
-        # Determine the prefix for the installed files
-        match = re.search('^creating (%s/.*?/(?:site|dist)-packages)/ansible$' %
-                          tmp_dir, stdout, flags=re.M)
-        install_dir = match.group(1)
+        # install the sdist
+        install_dir = install_sdist(tmp_dir, sdist_dir)
 
         # Check that the files that are supposed to be installed are there
-        for filename in to_install_files:
-            path = os.path.join(install_dir, filename)
-            if not os.path.exists(path):
-                print('%s: File not installed' % os.path.join('lib', filename))
+        results.extend(check_installed_contains_expected(install_dir, to_install_files))
 
-        # Check that the files that are installed are supposed to be
-        EGG_RE = re.compile('ansible[^/]+\\.egg-info/(PKG-INFO|SOURCES.txt|'
-                            'dependency_links.txt|not-zip-safe|requires.txt|top_level.txt)$')
-        for dirname, directories, files in os.walk(install_dir):
-            dirname = os.path.relpath(dirname, start=install_dir)
-            if dirname == '.':
-                dirname = ''
+        # Check that the files that are installed are supposed to be installed
+        results.extend(check_installed_files_are_wanted(install_dir, to_install_files))
 
-            for filename in files:
-                path = os.path.join(dirname, filename)
-                # If this is a byte code cache, look for the basename
-                if path.endswith('.pyc') or path.endswith('.pyo'):
-                    path = path[:-1]
-
-                if path not in to_install_files:
-                    # FIXME: ansible-test doesn't pass the paths of symlinks to us so we can't check those
-                    if not os.path.islink(os.path.join(install_dir, path)):
-                        if not EGG_RE.match(path):
-                            print('%s: File was installed but was not supposed to' % path)
+    for message in results:
+        print(message)
 
 
 if __name__ == '__main__':
