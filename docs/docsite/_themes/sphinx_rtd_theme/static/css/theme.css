@@ -226,9 +226,6 @@ big, small {
     html, body, section {
     background: none !important;
 }
-.wy-nav-content {
-    position: relative!important;
-}
 * {
     box-shadow: none !important;
     text-shadow: none !important;
@@ -253,10 +250,7 @@ img {
     max-width: 100% !important;
 }
 @page {
-    margin: 20px!important;
-}
-.DocSite-nav {
-    display: none!important;
+    margin: .5cm;
 }
 p, h2, .rst-content .toctree-wrapper p.caption, h3 {
     orphans: 3;
@@ -278,7 +272,6 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
 .clearfix:after {
     clear: both;
 }
-
 /*!
  *  Font Awesome 4.7.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
@@ -346,10 +339,10 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
 .fa-pull-right {
     float: right;
 }
-.fa.fa-pull-left, .wy-menu-vertical li span.fa-pull-left.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-left.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-left.toctree-expand, .rst-content .fa-pull-left.admonition-title, .rst-content h1 .fa-pull-left.headerlink, .rst-content h2 .fa-pull-left.headerlink, .rst-content h3 .fa-pull-left.headerlink, .rst-content h4 .fa-pull-left.headerlink, .rst-content h5 .fa-pull-left.headerlink, .rst-content h6 .fa-pull-left.headerlink, .rst-content dl dt .fa-pull-left.headerlink, .rst-content p.caption .fa-pull-left.headerlink, .rst-content table>caption .fa-pull-left.headerlink, .rst-content tt.download span.fa-pull-left:first-child, .rst-content code.download span.fa-pull-left:first-child, .fa-pull-left.icon {
+.fa.fa-pull-left, .wy-menu-vertical li span.fa-pull-left.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-left.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-left.toctree-expand, .rst-content .fa-pull-left.admonition-title, .rst-content h1 .fa-pull-left.headerlink, .rst-content h2 .fa-pull-left.headerlink, .rst-content h3 .fa-pull-left.headerlink, .rst-content h4 .fa-pull-left.headerlink, .rst-content h5 .fa-pull-left.headerlink, .rst-content h6 .fa-pull-left.headerlink, .rst-content dl dt .fa-pull-left.headerlink, .rst-content p.caption .fa-pull-left.headerlink, .rst-content table>caption .fa-pull-left.headerlink, .rst-content .code-block-caption .fa-pull-left.headerlink, .rst-content tt.download span.fa-pull-left:first-child, .rst-content code.download span.fa-pull-left:first-child, .fa-pull-left.icon {
     margin-right: .3em;
 }
-.fa.fa-pull-right, .wy-menu-vertical li span.fa-pull-right.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-right.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-right.toctree-expand, .rst-content .fa-pull-right.admonition-title, .rst-content h1 .fa-pull-right.headerlink, .rst-content h2 .fa-pull-right.headerlink, .rst-content h3 .fa-pull-right.headerlink, .rst-content h4 .fa-pull-right.headerlink, .rst-content h5 .fa-pull-right.headerlink, .rst-content h6 .fa-pull-right.headerlink, .rst-content dl dt .fa-pull-right.headerlink, .rst-content p.caption .fa-pull-right.headerlink, .rst-content table>caption .fa-pull-right.headerlink, .rst-content tt.download span.fa-pull-right:first-child, .rst-content code.download span.fa-pull-right:first-child, .fa-pull-right.icon {
+.fa.fa-pull-right, .wy-menu-vertical li span.fa-pull-right.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-right.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-right.toctree-expand, .rst-content .fa-pull-right.admonition-title, .rst-content h1 .fa-pull-right.headerlink, .rst-content h2 .fa-pull-right.headerlink, .rst-content h3 .fa-pull-right.headerlink, .rst-content h4 .fa-pull-right.headerlink, .rst-content h5 .fa-pull-right.headerlink, .rst-content h6 .fa-pull-right.headerlink, .rst-content dl dt .fa-pull-right.headerlink, .rst-content p.caption .fa-pull-right.headerlink, .rst-content table>caption .fa-pull-right.headerlink, .rst-content .code-block-caption .fa-pull-right.headerlink, .rst-content tt.download span.fa-pull-right:first-child, .rst-content code.download span.fa-pull-right:first-child, .fa-pull-right.icon {
     margin-left: .3em;
 }
 .pull-right {
@@ -358,10 +351,10 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
 .pull-left {
     float: left;
 }
-.fa.fa-pull-left, .wy-menu-vertical li span.fa-pull-left.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-left.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-left.toctree-expand, .rst-content .fa-pull-left.admonition-title, .rst-content h1 .fa-pull-left.headerlink, .rst-content h2 .fa-pull-left.headerlink, .rst-content h3 .fa-pull-left.headerlink, .rst-content h4 .fa-pull-left.headerlink, .rst-content h5 .fa-pull-left.headerlink, .rst-content h6 .fa-pull-left.headerlink, .rst-content dl dt .fa-pull-left.headerlink, .rst-content p.caption .fa-pull-left.headerlink, .rst-content table>caption .fa-pull-left.headerlink, .rst-content .code-block-caption .fa-pull-left.headerlink, .rst-content tt.download span.fa-pull-left:first-child, .rst-content code.download span.fa-pull-left:first-child, .fa-pull-left.icon {
+.fa.pull-left, .wy-menu-vertical li span.pull-left.toctree-expand, .wy-menu-vertical li.on a span.pull-left.toctree-expand, .wy-menu-vertical li.current>a span.pull-left.toctree-expand, .rst-content .pull-left.admonition-title, .rst-content h1 .pull-left.headerlink, .rst-content h2 .pull-left.headerlink, .rst-content h3 .pull-left.headerlink, .rst-content h4 .pull-left.headerlink, .rst-content h5 .pull-left.headerlink, .rst-content h6 .pull-left.headerlink, .rst-content dl dt .pull-left.headerlink, .rst-content p.caption .pull-left.headerlink, .rst-content table>caption .pull-left.headerlink, .rst-content .code-block-caption .pull-left.headerlink, .rst-content tt.download span.pull-left:first-child, .rst-content code.download span.pull-left:first-child, .pull-left.icon {
     margin-right: .3em;
 }
-.fa.fa-pull-right, .wy-menu-vertical li span.fa-pull-right.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-right.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-right.toctree-expand, .rst-content .fa-pull-right.admonition-title, .rst-content h1 .fa-pull-right.headerlink, .rst-content h2 .fa-pull-right.headerlink, .rst-content h3 .fa-pull-right.headerlink, .rst-content h4 .fa-pull-right.headerlink, .rst-content h5 .fa-pull-right.headerlink, .rst-content h6 .fa-pull-right.headerlink, .rst-content dl dt .fa-pull-right.headerlink, .rst-content p.caption .fa-pull-right.headerlink, .rst-content table>caption .fa-pull-right.headerlink, .rst-content .code-block-caption .fa-pull-right.headerlink, .rst-content tt.download span.fa-pull-right:first-child, .rst-content code.download span.fa-pull-right:first-child, .fa-pull-right.icon {
+.fa.pull-right, .wy-menu-vertical li span.pull-right.toctree-expand, .wy-menu-vertical li.on a span.pull-right.toctree-expand, .wy-menu-vertical li.current>a span.pull-right.toctree-expand, .rst-content .pull-right.admonition-title, .rst-content h1 .pull-right.headerlink, .rst-content h2 .pull-right.headerlink, .rst-content h3 .pull-right.headerlink, .rst-content h4 .pull-right.headerlink, .rst-content h5 .pull-right.headerlink, .rst-content h6 .pull-right.headerlink, .rst-content dl dt .pull-right.headerlink, .rst-content p.caption .pull-right.headerlink, .rst-content table>caption .pull-right.headerlink, .rst-content .code-block-caption .pull-right.headerlink, .rst-content tt.download span.pull-right:first-child, .rst-content code.download span.pull-right:first-child, .pull-right.icon {
     margin-left: .3em;
 }
 .fa-spin {
@@ -3148,9 +3141,6 @@ html {
     margin-bottom: 0;
     display: none;
 }
-.wy-menu-vertical .local-toc li ul {
-    display: block;
-}
 .wy-menu-vertical li ul li a {
     margin-bottom: 0;
     color: #d9d9d9;
@@ -3653,7 +3643,6 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 }
 .rst-content pre.literal-block, .rst-content div[class^='highlight'] {
     border: 1px solid #e1e4e5;
-    padding: 0px;
     overflow-x: auto;
     margin: 1px 0 24px 0;
 }
@@ -3752,7 +3741,6 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 }
 .rst-content .align-center {
     margin: auto;
-    display: block;
 }
 .rst-content .align-center:not(table) {
     display: block;
@@ -4002,7 +3990,6 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     .rst-content .sidebar {
     width: 100%}
 }
-
 span[id*='MathJax-Span'] {
     color: #404040;
 }
