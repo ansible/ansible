@@ -292,10 +292,10 @@ Similarly to the output of the ``items2dict`` filter mentioned above, these filt
 
 Which turns::
 
-    list_one:
+    keys_list:
       - one
       - two
-    list_two:
+    values_list:
       - apple
       - orange
 
