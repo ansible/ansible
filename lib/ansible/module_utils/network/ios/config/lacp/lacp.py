@@ -170,7 +170,7 @@ class Lacp(ConfigBase):
         diff = want_dict - have_dict
 
         if diff:
-            cmd = 'lacp system-priority {}'.format(want.get('system').get('priority'))
+            cmd = 'lacp system-priority {0}'.format(want.get('system').get('priority'))
             self._add_command_to_config_list(cmd, commands)
 
         return commands
