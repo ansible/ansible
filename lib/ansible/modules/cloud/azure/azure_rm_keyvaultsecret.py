@@ -207,7 +207,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
         secret_bundle = self.client.get_secret(self.keyvault_uri, name, version)
         if secret_bundle:
             secret_id = KeyVaultId.parse_secret_id(secret_bundle.id)
-            return dict(secret_id = secret_id.id, secret_value = secret_bundle.value)
+            return dict(secret_id=secret_id.id, secret_value=secret_bundle.value)
         return None
 
     def create_update_secret(self, name, secret, tags):
