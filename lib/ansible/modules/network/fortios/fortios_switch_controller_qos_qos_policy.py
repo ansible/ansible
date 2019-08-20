@@ -76,6 +76,7 @@ options:
         description:
             - Indicates whether to create or remove the object.
         type: str
+        required: true
         choices:
             - present
             - absent
@@ -276,7 +277,7 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
