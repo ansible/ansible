@@ -413,9 +413,11 @@ following entries like so:
     token=my_token
 
 .. note::
-    The ``server_list`` entry is ignored if ``--server`` was used as a command line argument and only the the cmd
-    argument server is used. Also the ``--api-key`` argument is not applied to any of these servers, it is only applied
-    if no server list is defined or ``--server`` is used.
+    You can use the ``--server`` command line argument to select an explicit Galaxy server in the ``server_list`` and
+    the value of this arg should match the name of the server. If the value of ``--server`` is not a pre-defined server
+    in ``ansible.cfg`` then the value specified will be the URL used to access that server and all pre-defined servers
+    are ignored. Also the ``--api-key`` argument is not applied to any of the pre-defined servers, it is only applied
+    if no server list is defined or a URL was specified by ``--server``.
 
 
 The :ref:`galaxy_server_list` option is a list of server identifiers in a prioritized order. When searching for a

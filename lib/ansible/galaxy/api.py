@@ -83,7 +83,9 @@ class GalaxyAPI(object):
         if token:
             return {'Authorization': "Token %s" % token}
         elif self.username:
-            b64_val = base64.b64encode("%s:%s" % (self.username, self.password or ''))
+            token = "%s:%s" % (to_text(self.username, errors='surrogate_or_strict'),
+                               to_text(self.password, errors='surrogate_or_strict', nonstring='passthru') or '')
+            b64_val = base64.b64encode(to_bytes(token, encoding='utf-8', errors='surrogate_or_strict'))
             return {'Authorization': "Basic %s" % to_text(b64_val)}
         elif required:
             raise AnsibleError("No access token or username set. A token can be set with --api-key, with "

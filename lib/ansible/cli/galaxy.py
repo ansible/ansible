@@ -313,23 +313,31 @@ class GalaxyCLI(CLI):
             }
         server_def = [('url', True), ('username', False), ('password', False), ('token', False)]
 
+        config_servers = []
+        for server_key in (C.GALAXY_SERVER_LIST or []):
+            # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
+            # section [galaxy_server.<server>] for the values url, username, password, and token.
+            config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
+            defs = AnsibleLoader(yaml.safe_dump(config_dict)).get_single_data()
+            C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
+
+            server_options = C.config.get_plugin_options('galaxy_server', server_key)
+            token_val = server_options['token'] or NoTokenSentinel
+            server_options['token'] = GalaxyToken(token=token_val)
+            config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
+
         cmd_server = context.CLIARGS['api_server']
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
         if cmd_server:
-            # Cmd args take precedence over the config entry
-            self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token))
+            # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
+            # entry, otherwise create a new API entry for the server specified.
+            config_server = next((s for s in config_servers if s.name == cmd_server), None)
+            if config_server:
+                self.api_servers.append(config_server)
+            else:
+                self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token))
         else:
-            for server_key in (C.GALAXY_SERVER_LIST or []):
-                # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
-                # section [galaxy_server.<server>] for the values url, username, password, and token.
-                config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
-                defs = AnsibleLoader(yaml.safe_dump(config_dict)).get_single_data()
-                C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
-
-                server_options = C.config.get_plugin_options('galaxy_server', server_key)
-                token_val = server_options['token'] or NoTokenSentinel
-                server_options['token'] = GalaxyToken(token=token_val)
-                self.api_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
+            self.api_servers = config_servers
 
         # Default to C.GALAXY_SERVER if no servers were defined
         if len(self.api_servers) == 0:
