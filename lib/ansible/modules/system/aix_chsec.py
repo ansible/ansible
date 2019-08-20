@@ -91,36 +91,71 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 
+def attrs2dict(attrs):
+    """ Given any of the possible module attr formats, return them as a dict. """
+    """
+    eg: Can take data as either a dict, a list, or a string.
+        - Dict:     { "SYSTEM": "LDAP", "registry": "LDAP" }
+        - List:     [ "SYSTEM=LDAP", "registry=LDAP" ]
+        - String:   "SYSTEM=LDAP,registry=LDAP"
+    All of these will return the dict (nothing changes for dicts):
+        { 'SYSTEM': 'LDAP', 'registry': 'LDAP' }
+    """
+    return_dict = {}
+    if type(attrs) == str:
+        # Assume we have this: 
+        #   "SYSTEM=LDAP,registry=LDAP"
+        # Split it into a string, like this:
+        #   [ "SYSTEM=LDAP", "registry=LDAP" ]
+        attrs = [x.strip() for x in attrs.split(',')]
+    if type(attrs) == list:
+        # Assume it's a list of key:values, so
+        #   [ "SYSTEM=LDAP", "registry=LDAP" ]
+        # Take each attr and split it into a key:value dict and update return_dict
+        #   { "SYSTEM": "LDAP", "registry":"LDAP" }
+        for element in attrs:
+            k, v = element.split('=')
+            return_dict.update({k: v})
+    if type(attrs) == dict:
+        return_dict.update(attrs)
+    return return_dict
 
-def do_stanza(module, filename, stanza, options, state='present'):
 
-    chsec_command = module.get_bin_path('chsec', True)
+def do_stanza(module, filename, stanza, attrs, state='present'):
+    chsec_command = module.get_bin_path('chsec', required=True)
+    lssec_command = module.get_bin_path('lssec', required=True)
 
-    def arguments_generator(options):
-        for element in options:
-            yield '-a'
-            yield element
+    msg = {}
+    changed = 0
 
-    command = [chsec_command, '-f', filename, '-s', '%s' % stanza]
-    options = list(arguments_generator(options))
+    if state == 'absent':
+        # We need to rip out the entire stanza.
+        # Not sure how to do this, or if it's even possible
+        pass
 
-    if state == 'present':
-        command += options
-        rc, stdout, stderr = module.run_command(command)
+    elif state == 'present':
+        attrs = attrs2dict(attrs)
+        for k, v in attrs.items():
+            # Check current values
+            cmd = [lssec_command, '-c', '-f', filename, '-s', stanza, '-a', k]
+            rc, stdout, stderr = module.run_command(cmd)
         if rc != 0:
-            module.fail_json(msg='Failed to run chsec command (present).', rc=rc, stdout=stdout, stderr=stderr)
+                msg='Failed to run lssec command: ' + ' '.join(cmd)
+                module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
+            lssec_out = stdout.splitlines()[1].split(':')[1].strip('\\\"\n ')
+            if lssec_out == v:
+                # Nothing to change.. make this better in the future
+                #msg.extend('Nochange '+k+'='+v)
+                msg.update({k: { 'value': v, 'status': 'unchanged' } })
+                continue
         else:
-            msg = 'stanza added'
-            changed = True
-    elif state == 'absent':
-        # remove values from keys to enable chsec delete mode
-        command += [s[:1 + s.find('=')] or s for s in options]
-        rc, stdout, stderr = module.run_command(command)
+                cmd = [chsec_command, '-f', filename, '-s', stanza, '-a', '='.join([k,v])]
+                rc, stdout, stderr = module.run_command(cmd)
         if rc != 0:
-            module.fail_json(msg='Failed to run chsec command (absent).', rc=rc, stdout=stdout, stderr=stderr)
-        else:
-            msg = 'stanza removed'
-            changed = True
+                    msg='Failed to run chsec command: ' + ' '.join(cmd)
+                    module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
+                msg.update({k: { 'value': v, 'status': 'changed' } })
+                changed += 1
 
     return changed, msg
 
