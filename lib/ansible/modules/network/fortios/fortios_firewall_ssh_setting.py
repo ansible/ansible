@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_ssh_setting
 short_description: SSH proxy settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall_ssh feature and setting category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall_ssh feature and setting category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,64 +41,83 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip adress.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     firewall_ssh_setting:
         description:
             - SSH proxy settings.
         default: null
+        type: dict
         suboptions:
             caname:
                 description:
                     - CA certificate used by SSH Inspection. Source firewall.ssh.local-ca.name.
-            host-trusted-checking:
+                type: str
+            host_trusted_checking:
                 description:
                     - Enable/disable host trusted checking.
+                type: str
                 choices:
                     - enable
                     - disable
-            hostkey-dsa1024:
+            hostkey_dsa1024:
                 description:
                     - DSA certificate used by SSH proxy. Source firewall.ssh.local-key.name.
-            hostkey-ecdsa256:
+                type: str
+            hostkey_ecdsa256:
                 description:
                     - ECDSA nid256 certificate used by SSH proxy. Source firewall.ssh.local-key.name.
-            hostkey-ecdsa384:
+                type: str
+            hostkey_ecdsa384:
                 description:
                     - ECDSA nid384 certificate used by SSH proxy. Source firewall.ssh.local-key.name.
-            hostkey-ecdsa521:
+                type: str
+            hostkey_ecdsa521:
                 description:
                     - ECDSA nid384 certificate used by SSH proxy. Source firewall.ssh.local-key.name.
-            hostkey-ed25519:
+                type: str
+            hostkey_ed25519:
                 description:
                     - ED25519 hostkey used by SSH proxy. Source firewall.ssh.local-key.name.
-            hostkey-rsa2048:
+                type: str
+            hostkey_rsa2048:
                 description:
                     - RSA certificate used by SSH proxy. Source firewall.ssh.local-key.name.
-            untrusted-caname:
+                type: str
+            untrusted_caname:
                 description:
                     - Untrusted CA certificate used by SSH Inspection. Source firewall.ssh.local-ca.name.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -111,6 +127,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: SSH proxy settings.
     fortios_firewall_ssh_setting:
@@ -121,14 +138,14 @@ EXAMPLES = '''
       https: "False"
       firewall_ssh_setting:
         caname: "<your_own_value> (source firewall.ssh.local-ca.name)"
-        host-trusted-checking: "enable"
-        hostkey-dsa1024: "myhostname (source firewall.ssh.local-key.name)"
-        hostkey-ecdsa256: "myhostname (source firewall.ssh.local-key.name)"
-        hostkey-ecdsa384: "myhostname (source firewall.ssh.local-key.name)"
-        hostkey-ecdsa521: "myhostname (source firewall.ssh.local-key.name)"
-        hostkey-ed25519: "myhostname (source firewall.ssh.local-key.name)"
-        hostkey-rsa2048: "myhostname (source firewall.ssh.local-key.name)"
-        untrusted-caname: "<your_own_value> (source firewall.ssh.local-ca.name)"
+        host_trusted_checking: "enable"
+        hostkey_dsa1024: "myhostname (source firewall.ssh.local-key.name)"
+        hostkey_ecdsa256: "myhostname (source firewall.ssh.local-key.name)"
+        hostkey_ecdsa384: "myhostname (source firewall.ssh.local-key.name)"
+        hostkey_ecdsa521: "myhostname (source firewall.ssh.local-key.name)"
+        hostkey_ed25519: "myhostname (source firewall.ssh.local-key.name)"
+        hostkey_rsa2048: "myhostname (source firewall.ssh.local-key.name)"
+        untrusted_caname: "<your_own_value> (source firewall.ssh.local-ca.name)"
 '''
 
 RETURN = '''
@@ -191,14 +208,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -206,13 +225,13 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_ssh_setting_data(json):
-    option_list = ['caname', 'host-trusted-checking', 'hostkey-dsa1024',
-                   'hostkey-ecdsa256', 'hostkey-ecdsa384', 'hostkey-ecdsa521',
-                   'hostkey-ed25519', 'hostkey-rsa2048', 'untrusted-caname']
+    option_list = ['caname', 'host_trusted_checking', 'hostkey_dsa1024',
+                   'hostkey_ecdsa256', 'hostkey_ecdsa384', 'hostkey_ecdsa521',
+                   'hostkey_ed25519', 'hostkey_rsa2048', 'untrusted_caname']
     dictionary = {}
 
     for attribute in option_list:
@@ -222,49 +241,66 @@ def filter_firewall_ssh_setting_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_ssh_setting(data, fos):
     vdom = data['vdom']
     firewall_ssh_setting_data = data['firewall_ssh_setting']
-    filtered_data = filter_firewall_ssh_setting_data(firewall_ssh_setting_data)
+    filtered_data = underscore_to_hyphen(filter_firewall_ssh_setting_data(firewall_ssh_setting_data))
+
     return fos.set('firewall.ssh',
                    'setting',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall_ssh(data, fos):
-    login(data)
 
-    methodlist = ['firewall_ssh_setting']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_ssh_setting']:
+        resp = firewall_ssh_setting(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "firewall_ssh_setting": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "caname": {"required": False, "type": "str"},
-                "host-trusted-checking": {"required": False, "type": "str",
+                "host_trusted_checking": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "hostkey-dsa1024": {"required": False, "type": "str"},
-                "hostkey-ecdsa256": {"required": False, "type": "str"},
-                "hostkey-ecdsa384": {"required": False, "type": "str"},
-                "hostkey-ecdsa521": {"required": False, "type": "str"},
-                "hostkey-ed25519": {"required": False, "type": "str"},
-                "hostkey-rsa2048": {"required": False, "type": "str"},
-                "untrusted-caname": {"required": False, "type": "str"}
+                "hostkey_dsa1024": {"required": False, "type": "str"},
+                "hostkey_ecdsa256": {"required": False, "type": "str"},
+                "hostkey_ecdsa384": {"required": False, "type": "str"},
+                "hostkey_ecdsa521": {"required": False, "type": "str"},
+                "hostkey_ed25519": {"required": False, "type": "str"},
+                "hostkey_rsa2048": {"required": False, "type": "str"},
+                "untrusted_caname": {"required": False, "type": "str"}
 
             }
         }
@@ -272,15 +308,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall_ssh(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall_ssh(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall_ssh(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
