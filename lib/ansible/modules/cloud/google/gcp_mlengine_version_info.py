@@ -79,12 +79,6 @@ resources:
       - The description specified for the version when it was created.
       returned: success
       type: str
-    isDefault:
-      description:
-      - If true, this version will be used to handle prediction requests that do not
-        specify a version.
-      returned: success
-      type: bool
     deploymentUri:
       description:
       - The Cloud Storage location of the trained model used to create the version.
@@ -192,6 +186,12 @@ resources:
       - The model that this version belongs to.
       returned: success
       type: dict
+    isDefault:
+      description:
+      - If true, this version will be used to handle prediction requests that do not
+        specify a version.
+      returned: success
+      type: bool
 '''
 
 ################################################################################
