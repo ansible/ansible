@@ -1,7 +1,7 @@
 ---
 # these are extra tests for psrp that aren't covered under test/integration/targets/connection/*
 - name: test out psrp specific tests
-  hosts: winrm
+  hosts: windows
   serial: 1
   gather_facts: no
 
