@@ -287,7 +287,7 @@ class Lldp_interfaces(ConfigBase):
                 if want_dict['country_code'] != have_dict['country_code']:
                     commands.append(
                         self._compute_command(
-                          set_cmd + location_type, 'country-code', str(want_dict['country_code'])
+                            set_cmd + location_type, 'country-code', str(want_dict['country_code'])
                         )
                     )
             else:
@@ -330,9 +330,7 @@ class Lldp_interfaces(ConfigBase):
                     only_in_have = key_value_in_dict(key, value, want_dict)
                     if not only_in_have:
                         commands.append(
-                            self._compute_command(
-                                del_cmd, location_type, key, str(value), remove=True
-                            )
+                            self._compute_command(del_cmd + location_type, key, str(value), True)
                         )
             else:
                 commands.append(
@@ -371,8 +369,9 @@ class Lldp_interfaces(ConfigBase):
             obj_in_have = search_dict_tv_in_list(ca_type, ca_value, have, 'ca_type', 'ca_value')
             if not obj_in_have:
                 commands.append(
-                    self._compute_command(key=name + ' location civic-based ca-type',attrib=str(
-                    ca_type) + ' ca-value', value=ca_value)
+                    self._compute_command(
+                        key=name + ' location civic-based ca-type',
+                        attrib=str(ca_type) + ' ca-value', value=ca_value)
                 )
         return commands
 
