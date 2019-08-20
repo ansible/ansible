@@ -943,7 +943,7 @@ def get_diff_final_resource(client, module, security_group):
                         format_rule['user_id_group_pairs'][0].pop(k)
             final_rules.append(format_rule)
             # Order final rules consistently
-            final_rules.sort(key=lambda x: json.dumps(x, sort_keys=True))
+            final_rules = json.loads(json.dumps(final_rules, sort_keys=True))
         return final_rules
     security_group_ingress = security_group.get('ip_permissions', [])
     specified_ingress = module.params['rules']
