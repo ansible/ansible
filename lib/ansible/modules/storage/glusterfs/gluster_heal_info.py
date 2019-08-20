@@ -14,12 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: gluster_heal_facts
-short_description: Gather facts about self-heal or rebalance status
+module: gluster_heal_info
+short_description: Gather information on self-heal or rebalance status
 author: "Devyani Kota (@devyanikota)"
 version_added: "2.8"
 description:
   - Gather facts about either self-heal or rebalance status.
+  - This module was called C(gluster_heal_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(gluster_heal_info) module no longer returns C(ansible_facts)!
 options:
   name:
     description:
@@ -39,7 +41,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Gather self-heal facts about all gluster hosts in the cluster
-  gluster_heal_facts:
+  gluster_heal_info:
     name: test_volume
     status_filter: self-heal
   register: self_heal_status
@@ -47,7 +49,7 @@ EXAMPLES = '''
     var: self_heal_status
 
 - name: Gather rebalance facts about all gluster hosts in the cluster
-  gluster_heal_facts:
+  gluster_heal_info:
     name: test_volume
     status_filter: rebalance
   register: rebalance_status
@@ -164,6 +166,10 @@ def main():
             status_filter=dict(type='str', default='self-heal', choices=['self-heal', 'rebalance']),
         ),
     )
+    is_old_facts = module._name == 'gluster_heal_facts'
+    if is_old_facts:
+        module.deprecate("The 'gluster_heal_facts' module has been renamed to 'gluster_heal_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     glusterbin = module.get_bin_path('gluster', True)
     required_version = "3.2"
@@ -188,7 +194,10 @@ def main():
     facts = {}
     facts['glusterfs'] = {'volume': volume_name, 'status_filter': status_filter, 'heal_info': heal_info, 'rebalance': rebalance_status}
 
-    module.exit_json(ansible_facts=facts)
+    if is_old_facts:
+        module.exit_json(ansible_facts=facts)
+    else:
+        module.exit_json(**facts)
 
 
 if __name__ == '__main__':
