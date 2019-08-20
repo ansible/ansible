@@ -88,16 +88,15 @@ options:
                     - disable
             cert_cache_capacity:
                 description:
-                    - Maximum capacity of the host certificate cache (0 - 500, default = 200).
+                    - Maximum capacity of the host certificate cache (0 - 500).
                 type: int
             cert_cache_timeout:
                 description:
-                    - Time limit to keep certificate cache (1 - 120 min, default = 10).
+                    - Time limit to keep certificate cache (1 - 120 min).
                 type: int
             kxp_queue_threshold:
                 description:
-                    - Maximum length of the CP KXP queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512, default =
-                       16).
+                    - Maximum length of the CP KXP queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512).
                 type: int
             no_matching_cipher_action:
                 description:
@@ -108,19 +107,19 @@ options:
                     - drop
             proxy_connect_timeout:
                 description:
-                    - Time limit to make an internal connection to the appropriate proxy process (1 - 60 sec, default = 30).
+                    - Time limit to make an internal connection to the appropriate proxy process (1 - 60 sec).
                 type: int
             session_cache_capacity:
                 description:
-                    - Capacity of the SSL session cache (--Obsolete--) (1 - 1000, default = 500).
+                    - Capacity of the SSL session cache (--Obsolete--) (1 - 1000).
                 type: int
             session_cache_timeout:
                 description:
-                    - Time limit to keep SSL session state (1 - 60 min, default = 20).
+                    - Time limit to keep SSL session state (1 - 60 min).
                 type: int
             ssl_dh_bits:
                 description:
-                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation (default = 2048).
+                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation.
                 type: str
                 choices:
                     - 768
@@ -129,8 +128,7 @@ options:
                     - 2048
             ssl_queue_threshold:
                 description:
-                    - Maximum length of the CP SSL queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512, default =
-                       32).
+                    - Maximum length of the CP SSL queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512).
                 type: int
             ssl_send_empty_frags:
                 description:
