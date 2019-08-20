@@ -78,7 +78,7 @@ EXAMPLES = r'''
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
-    attrs: 
+    attrs:
       logintimes: :0800-1700
     state: present
 
@@ -93,12 +93,16 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+tbd:
+    fill: this
+    out: please.
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def attrs2dict(attrs):
-    """ Given any of the possible module attr formats, return them as a dict. """
+    """ Given any of the possible module 'attr' formats, return them as a dict. """
     """
     eg: Can take data as either a dict, a list, or a string.
         - Dict:     { "SYSTEM": "LDAP", "registry": "LDAP" }
@@ -109,13 +113,13 @@ def attrs2dict(attrs):
     """
     return_dict = {}
     if type(attrs) == str:
-        # Assume we have this: 
+        # Assume we have this:
         #   "SYSTEM=LDAP,registry=LDAP"
-        # Split it into a string, like this:
+        # Split it into a list of strings, like this:
         #   [ "SYSTEM=LDAP", "registry=LDAP" ]
         attrs = [x.strip() for x in attrs.split(',')]
     if type(attrs) == list:
-        # Assume it's a list of key:values, so
+        # Assume it's a list of key=values, so
         #   [ "SYSTEM=LDAP", "registry=LDAP" ]
         # Take each attr and split it into a key:value dict and update return_dict
         #   { "SYSTEM": "LDAP", "registry":"LDAP" }
@@ -128,10 +132,10 @@ def attrs2dict(attrs):
 
 
 def do_stanza(module, filename, stanza, attrs, state='present'):
-    chsec_command = module.get_bin_path('chsec', required=True)
     lssec_command = module.get_bin_path('lssec', required=True)
+    chsec_command = module.get_bin_path('chsec', required=True)
 
-    msg = {}
+    return_msg = {}
     changed = 0
 
     if state == 'absent':
@@ -142,28 +146,39 @@ def do_stanza(module, filename, stanza, attrs, state='present'):
     elif state == 'present':
         attrs = attrs2dict(attrs)
         for k, v in attrs.items():
+            # Start our msg dict for this key+value
+            msg = {
+                'target_value': v,
+                'status': 'unchanged',
+            }
             # Check current values
             cmd = [lssec_command, '-c', '-f', filename, '-s', stanza, '-a', k]
             rc, stdout, stderr = module.run_command(cmd)
-        if rc != 0:
-                msg='Failed to run lssec command: ' + ' '.join(cmd)
+            if rc != 0:
+                msg = 'Failed to run lssec command: ' + ' '.join(cmd)
                 module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
             lssec_out = stdout.splitlines()[1].split(':')[1].strip('\\\"\n ')
-            if lssec_out == v:
-                # Nothing to change.. make this better in the future
-                #msg.extend('Nochange '+k+'='+v)
-                msg.update({k: { 'value': v, 'status': 'unchanged' } })
-                continue
-        else:
-                cmd = [chsec_command, '-f', filename, '-s', stanza, '-a', '='.join([k,v])]
-                rc, stdout, stderr = module.run_command(cmd)
-        if rc != 0:
-                    msg='Failed to run chsec command: ' + ' '.join(cmd)
-                    module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
-                msg.update({k: { 'value': v, 'status': 'changed' } })
+            msg.update({
+                'incoming_value': lssec_out,
+            })
+            if lssec_out != v:
+                # Change the value of the attr
+                cmd = [chsec_command, '-f', filename, '-s', stanza, '-a', '='.join([k, v])]
+                if module.check_mode:
+                    msg.update({"check_mode": True})
+                else:
+                    rc, stdout, stderr = module.run_command(cmd)
+                    if rc != 0:
+                        msg = 'Failed to run chsec command: ' + ' '.join(cmd)
+                        module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
+                msg.update({
+                    'outgoing_value': v,
+                    'status': 'changed',
+                })
                 changed += 1
+            return_msg[k] = msg
 
-    return changed, msg
+    return bool(changed), msg
 
 
 def main():
@@ -175,7 +190,7 @@ def main():
             attrs=dict(type='raw', required=True, aliases=['options']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     result = dict(
