@@ -21,10 +21,10 @@ DOCUMENTATION = r'''
 ---
 module: aix_chsec
 short_description: Modify AIX stanza files
-version_added: '2.8'
+version_added: '2.9'
 description:
 - Modify stanza attributes to AIX config files using the C(chsec) command.
-attrs:
+options:
   path:
     description:
       - Path to the stanza file.
@@ -46,8 +46,8 @@ attrs:
     - If set to C(present) all given attrs values will be set.
     - If set to C(absent) all attrs provided will be un-set, regardless of value provided.
     - NB: This does not remove the entire stanza, only the provided attrs will be removed.
-    - To remove an attribute from the stanza set to C(present) and set key to an empty value (key=).
-    - All rules, allowed file-stanza combos or allowed files for the C(chsec) command also applies here.
+    - To remove a single attribute from the stanza set to C(present) and set key to an empty value (key=).
+    - All rules, allowed file-stanza combos, and allowed files for the AIX C(chsec) command apply here.
     type: str
     choices: [ absent, present ]
     default: present
