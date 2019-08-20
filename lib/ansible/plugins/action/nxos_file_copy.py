@@ -299,7 +299,7 @@ class ActionModule(ActionBase):
                                  'file existing with this name',
                                  'timed out',
                                  '(?i)No space.*#',
-                                 '(?i)Permission denied',
+                                 '(?i)Permission denied.*#',
                                  '(?i)No such file.*#',
                                  '.*Invalid command.*#',
                                  'Compaction is not supported on this platform.*#',
