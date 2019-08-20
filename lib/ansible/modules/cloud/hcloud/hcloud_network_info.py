@@ -91,7 +91,6 @@ hcloud_network_info:
             description: Labels of the network
             returned: always
             type: dict
-      
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -134,18 +133,18 @@ class AnsibleHcloudNetworkInfo(Hcloud):
                 servers = []
                 for server in network.servers:
                     prepared_server = {
-                    "id": to_native(server.id),
-                    "name": to_native(server.name),
-                    "ipv4_address": to_native(server.public_net.ipv4.ip),
-                    "ipv6": to_native(server.public_net.ipv6.ip),
-                    "image": to_native(server.image.name),
-                    "server_type": to_native(server.server_type.name),
-                    "datacenter": to_native(server.datacenter.name),
-                    "location": to_native(server.datacenter.location.name),
-                    "rescue_enabled": server.rescue_enabled,
-                    "backup_window": to_native(server.backup_window),
-                    "labels": server.labels,
-                    "status": to_native(server.status),
+                        "id": to_native(server.id),
+                        "name": to_native(server.name),
+                        "ipv4_address": to_native(server.public_net.ipv4.ip),
+                        "ipv6": to_native(server.public_net.ipv6.ip),
+                        "image": to_native(server.image.name),
+                        "server_type": to_native(server.server_type.name),
+                        "datacenter": to_native(server.datacenter.name),
+                        "location": to_native(server.datacenter.location.name),
+                        "rescue_enabled": server.rescue_enabled,
+                        "backup_window": to_native(server.backup_window),
+                        "labels": server.labels,
+                        "status": to_native(server.status),
                     }
                     servers.append(prepared_server)
 
