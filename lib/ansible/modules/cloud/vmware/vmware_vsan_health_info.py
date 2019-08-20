@@ -58,6 +58,7 @@ EXAMPLES = '''
 RETURN = '''
 vsan_health_info:
     description: vSAN cluster health info
+    returned: on success
     type: dict
     sample: {
         "_vimtype": "vim.cluster.VsanClusterHealthSummary",
@@ -119,6 +120,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec, find_cluster_by_name
+
 
 def main():
     argument_spec = vmware_argument_spec()
