@@ -11,7 +11,7 @@ cd ../connection
 # https://unix.stackexchange.com/questions/499958/why-does-scps-strict-filename-checking-reject-quoted-last-component-but-not-oth
 # https://github.com/openssh/openssh-portable/commit/391ffc4b9d31fa1f4ad566499fef9176ff8a07dc
 INVENTORY="${OUTPUT_DIR}/test_connection.inventory" ./test.sh \
-    -e target_hosts=windows-ssh \
+    -e target_hosts=windows \
     -e action_prefix=win_ \
     -e local_tmp=/tmp/ansible-local \
     -e remote_tmp=c:/windows/temp/ansible-remote \

@@ -18,7 +18,7 @@ ansible -i ../../inventory.winrm windows \
     "$@"
 
 # Need to flush the connection to ensure we get a new shell for the next tests
-ansible -i "${OUTPUT_DIR}/test_connection.inventory" windows-ssh \
+ansible -i "${OUTPUT_DIR}/test_connection.inventory" windows \
     -m meta -a "reset_connection" \
     "$@"
 
@@ -44,7 +44,7 @@ ansible -i ../../inventory.winrm windows \
     -a "path=HKLM:\\\\SOFTWARE\\\\OpenSSH name=DefaultShell data=C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe" \
     "$@"
 
-ansible -i "${OUTPUT_DIR}/test_connection.inventory" windows-ssh \
+ansible -i "${OUTPUT_DIR}/test_connection.inventory" windows \
     -m meta -a "reset_connection" \
     "$@"
 
