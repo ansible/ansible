@@ -172,18 +172,18 @@ def main():
         supports_check_mode=False,
     )
 
-    path = module.params['path']
-    stanza = module.params['stanza']
-    options = module.params['options']
-    state = module.params['state']
-
     result = dict(
         changed=False,
+        msg={},
     )
 
-    result['changed'], result['msg'] = do_stanza(module, path, stanza, options, state)
+    path = module.params['path']
+    stanza = module.params['stanza']
+    attrs = module.params['attrs']
+    state = module.params['state']
 
-    # Mission complete
+    result['changed'], result['msg'] = do_stanza(module, path, stanza, attrs, state)
+
     module.exit_json(**result)
 
 
