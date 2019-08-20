@@ -122,6 +122,10 @@ options:
     - Region where the regional interconnect attachment resides.
     required: true
     type: str
+  admin_enabled:
+    description:
+    - Whether the VLAN attachment is enabled or disabled.  When using PARTNER type
+      this will Pre-Activate the interconnect attachment.
 extends_documentation_fragment: gcp
 '''
 
@@ -261,6 +265,9 @@ vlanTag8021q:
     PARTNER type this will be managed upstream.
   returned: success
   type: int
+adminEnabled:
+  description:
+  - Whether the VLAN attachment is enabled or disabled.
 region:
   description:
   - Region where the regional interconnect attachment resides.
@@ -297,6 +304,7 @@ def main():
             candidate_subnets=dict(type='list', elements='str'),
             vlan_tag8021q=dict(type='int'),
             region=dict(required=True, type='str'),
+            admin_enabled=dict(type='bool', default=False)
         )
     )
 
@@ -357,6 +365,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'candidateSubnets': module.params.get('candidate_subnets'),
         u'vlanTag8021q': module.params.get('vlan_tag8021q'),
+        u'adminEnabled': module.params.get('admin_enabled'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -439,6 +448,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'candidateSubnets': response.get(u'candidateSubnets'),
         u'vlanTag8021q': response.get(u'vlanTag8021q'),
+        u'adminEnabled': response.get(u'adminEnabled')
     }
 
 
