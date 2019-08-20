@@ -269,9 +269,9 @@ will be the version displayed everywhere in Galaxy; however, users will still be
 
 Collection versions use `Sematic Versioning <https://semver.org/>` for version numbers. Please read the official documentation for details and examples. In summary:
 
-* Increment major (ex. x in `x.y.z`) version number for an incompatible API change.
-* Increment minor (ex. y in `x.y.z`) version number for new functionality in a backwards compatible manner.
-* Increment patch (ex. z in `x.y.z`) version number for backwards compatible bug fixes.
+* Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
+* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner.
+* Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
 
 Migrating Ansible content to a collection
 =========================================
