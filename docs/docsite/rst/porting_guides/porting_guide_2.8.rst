@@ -69,6 +69,78 @@ Command line facts
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
 
 
+Conditionals
+------------
+
+Starting in version 2.8, Ansible will warn if a non-boolean is provided for when statements since they may change in behavior. Some contrasting behavior is outlined below. The ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` can be set to false to start using the new behavior. In 2.10 the default for the setting will be changed from true to false but users will continue to be able to opt out of the behavior until 2.12, at which point it will be deprecated.
+
+Consider::
+
+    vars:
+      teardown: 'false'
+
+    tasks:
+      - include_tasks: teardown.yml
+        when: teardown
+
+      - include_tasks: provision.yml
+        when: not teardown
+
+While the toggle is set to true ``when: teardown`` and ``when: not teardown`` are both evaluated as false. When the toggle is set to false ``when: teardown`` is evaluated as true and ``when: not teardown`` is evaluated as false because ``teardown`` is a (truthy) string, not a boolean. Use the ``bool`` filter to evaluate the string 'false' as false::
+
+    vars:
+      teardown: 'false'
+
+    tasks:
+      - include_tasks: teardown.yml
+        when: teardown | bool
+
+      - include_tasks: provision.yml
+        when: not teardown | bool
+
+If you are using subkeys, strings are already respected and not treated as booleans. If you want a subkey that's a string to be evaluated as a boolean you need to use the ``bool`` filter. Consider this case where ``when: complex_variable['subkey']`` and ``when: not complex_variable['subkey']`` are evaluated as true and false respectively, both with and without use of the toggle::
+
+    vars:
+      complex_variable:
+        subkey: 'false'
+
+    tasks:
+      - debug:
+        when: complex_variable['subkey']
+
+      - debug:
+        when: not complex_variable['subkey']
+
+While this setting is true, variables are also double-interpolated unexpectedly::
+
+    vars:
+      double_interpolated: 'bare_variable'
+      bare_variable: false
+
+    tasks:
+      - debug:
+        when: double_interpolated
+
+When bare variables are enabled, ``when: double_interpolated`` evaluates to the variable ``bare_variable`` which is false. If the variable ``bare_variable`` is undefined, the conditional fails. When the toggle is set to false it is evaluated as the string 'bare_variable', which is true. Use curly braces for double interpolation instead of bare variables::
+
+    vars:
+      double_interpolated: "{{ other_variable }}"
+      other_variable: false
+
+You can still use lists and dictionaries as conditionals based on the truthiness of whether or not they are empty::
+
+    vars:
+      my_dictionary: {'key': 'value'}
+      my_list: ['item']
+
+Both ``when: my_dictionary`` and ``when: my_list`` will continue to be true regardless of the toggle. If they are empty data structures they will continue to be evaluated as false. Note that using the ``bool`` filter with a populated or empty list or dictionary will result in false. Instead, you may want to use the ``length`` filter instead if you cannot opt into the new behavior or silence the warning::
+
+    tasks:
+      - debug:
+        when: my_list | length > 0
+      - debug:
+        when: my_dictionary | length > 0
+
 Python Interpreter Discovery
 ============================
 
