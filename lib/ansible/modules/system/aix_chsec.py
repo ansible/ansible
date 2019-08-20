@@ -73,7 +73,7 @@ EXAMPLES = r'''
     path: /etc/security/user
     stanza: ldapuser
     attrs: 
-      logintimes: 0800-1700
+      logintimes: :0800-1700
     state: present
 
 - name: Remove registry attribute from stanza
