@@ -16,13 +16,15 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_floating_ip_facts
+module: hcloud_floating_ip_info
 
-short_description: Gather facts about the Hetzner Cloud Floating IPs.
+short_description: Gather infos about the Hetzner Cloud Floating IPs.
 
 version_added: "2.8"
 description:
     - Gather facts about your Hetzner Cloud Floating IPs.
+    - This module was called C(hcloud_floating_ip_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_floating_ip_facts).
+      Note that the M(hcloud_floating_ip_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_floating_ip_info)!
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -40,17 +42,17 @@ extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud Floating ip facts
-  local_action:
-    module: hcloud_floating_ip_facts
-- name: Print the gathered facts
+- name: Gather hcloud Floating ip infos
+  hcloud_floating_ip_info:
+  register: output
+- name: Print the gathered infos
   debug:
-    var: ansible_facts.hcloud_floating_ip_facts
+    var: output
 """
 
 RETURN = """
-hcloud_floating_ip_facts:
-    description: The Floating ip facts as list
+hcloud_floating_ip_info:
+    description: The Floating ip infos as list
     returned: always
     type: complex
     contains:
@@ -100,15 +102,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudFloatingIPFacts(Hcloud):
+class AnsibleHcloudFloatingIPInfo(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_floating_ip_facts")
-        self.hcloud_floating_ip_facts = None
+        Hcloud.__init__(self, module, "hcloud_floating_ip_info")
+        self.hcloud_floating_ip_info = None
 
     def _prepare_result(self):
         tmp = []
 
-        for floating_ip in self.hcloud_floating_ip_facts:
+        for floating_ip in self.hcloud_floating_ip_info:
             if floating_ip is not None:
                 server_name = None
                 if floating_ip.server is not None:
@@ -128,14 +130,14 @@ class AnsibleHcloudFloatingIPFacts(Hcloud):
     def get_floating_ips(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_floating_ip_facts = [self.client.floating_ips.get_by_id(
+                self.hcloud_floating_ip_info = [self.client.floating_ips.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("label_selector") is not None:
-                self.hcloud_floating_ip_facts = self.client.floating_ips.get_all(
+                self.hcloud_floating_ip_info = self.client.floating_ips.get_all(
                     label_selector=self.module.params.get("label_selector"))
             else:
-                self.hcloud_floating_ip_facts = self.client.floating_ips.get_all()
+                self.hcloud_floating_ip_info = self.client.floating_ips.get_all()
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -153,16 +155,27 @@ class AnsibleHcloudFloatingIPFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudFloatingIPFacts.define_module()
+    module = AnsibleHcloudFloatingIPInfo.define_module()
 
-    hcloud = AnsibleHcloudFloatingIPFacts(module)
+    is_old_facts = module._name == 'hcloud_floating_ip_facts'
+    if is_old_facts:
+        module.deprecate("The 'hcloud_floating_ip_facts' module has been renamed to 'hcloud_floating_ip_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
+
+    hcloud = AnsibleHcloudFloatingIPInfo(module)
 
     hcloud.get_floating_ips()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_floating_ip_facts': result['hcloud_floating_ip_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts)
+    if is_old_facts:
+        ansible_info = {
+            'hcloud_floating_ip_facts': result['hcloud_floating_ip_info']
+        }
+        module.exit_json(ansible_facts=ansible_info)
+    else:
+        ansible_info = {
+            'hcloud_floating_ip_info': result['hcloud_floating_ip_info']
+        }
+        module.exit_json(**ansible_info)
 
 
 if __name__ == "__main__":
