@@ -15,6 +15,8 @@ CHOICES = [
     '!interfaces',
     'l2_interfaces',
     '!l2_interfaces',
+    'lacp',
+    '!lacp',
     'lag_interfaces',
     '!lag_interfaces',
     'vlans',
