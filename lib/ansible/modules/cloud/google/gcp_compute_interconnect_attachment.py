@@ -126,6 +126,8 @@ options:
     description:
     - Whether the VLAN attachment is enabled or disabled.  When using PARTNER type
       this will Pre-Activate the interconnect attachment.
+    required: false
+    type: bool
 extends_documentation_fragment: gcp
 '''
 
@@ -268,6 +270,8 @@ vlanTag8021q:
 adminEnabled:
   description:
   - Whether the VLAN attachment is enabled or disabled.
+  returned: success
+  type: bool
 region:
   description:
   - Region where the regional interconnect attachment resides.
