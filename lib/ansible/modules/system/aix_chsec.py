@@ -39,13 +39,13 @@ options:
   attrs:
     description:
     - A list of key/value pairs
-    type: list
+    type: raw
     aliases: [ options ]
   state:
     description:
     - If set to C(present) all given attrs values will be set.
     - If set to C(absent) all attrs provided will be un-set, regardless of value provided.
-    - NB: This does not remove the entire stanza, only the provided attrs will be removed.
+    - NB, this does not remove the entire stanza, only the provided attrs will be removed.
     - To remove a single attribute from the stanza set to C(present) and set key to an empty value (key=).
     - All rules, allowed file-stanza combos, and allowed files for the AIX C(chsec) command apply here.
     type: str
