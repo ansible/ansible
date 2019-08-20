@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: zabbix_valuemap
 short_description: Create/update/delete Zabbix value maps
 description:
-    - This module allows you to create, modify and delete Zabbix actions.
+    - This module allows you to create, modify and delete Zabbix value maps.
 version_added: "2.9"
 author:
     - "Ruben Tsirunyan (@rubentsirunyan)"
@@ -123,8 +123,8 @@ def check_if_valuemap_exists(module, zbx, name):
         name: Zabbix valuemap name
 
     Returns:
-        tuple: First element is True if valuemap exisits and False otherwise.
-               Second element is a dicionary of valuemap object if it exists.
+        tuple: First element is True if valuemap exists and False otherwise.
+               Second element is a dictionary of valuemap object if it exists.
     """
     try:
         valuemap_list = zbx.valuemap.get({
