@@ -40,7 +40,7 @@ DOCUMENTATION = """
 module: eos_lldp_global
 version_added: 2.9
 short_description: Manage Global Link Layer Discovery Protocol (LLDP) settings on Arista EOS devices.
-description: 
+description:
   - This module manages Global Link Layer Discovery Protocol (LLDP) settings on Arista EOS devices.
 author: Nathaniel Case (@Qalthos)
 options:
@@ -66,15 +66,15 @@ options:
         type: dict
         suboptions:
           link_aggregation:
-            description: 
+            description:
               - Enable or disable link aggregation TLV.
             type: bool
           management_address:
-            description: 
+            description:
               - Enable or disable management address TLV.
             type: bool
           max_frame_size:
-            description: 
+            description:
               - Enable or disable maximum frame size TLV.
             type: bool
           port_description:
@@ -114,8 +114,8 @@ EXAMPLES = """
 # lldp timer 3000
 # lldp holdtime 100
 # lldp reinit 5
-# no lldp tlv-select management-address disable
-# no lldp tlv-select system-description disable
+# no lldp tlv-select management-address
+# no lldp tlv-select system-description
 
 - name: Merge provided LLDP configuration with the existing configuration
   eos_lldp_global:
@@ -149,8 +149,8 @@ EXAMPLES = """
 # lldp timer 3000
 # lldp holdtime 100
 # lldp reinit 5
-# no lldp tlv-select management-address disable
-# no lldp tlv-select system-description disable
+# no lldp tlv-select management-address
+# no lldp tlv-select system-description
 
 - name: Replace existing LLDP device configuration with provided configuration
   eos_lldp_global:
@@ -182,8 +182,8 @@ EXAMPLES = """
 # lldp timer 3000
 # lldp holdtime 100
 # lldp reinit 5
-# no lldp tlv-select management-address disable
-# no lldp tlv-select system-description disable
+# no lldp tlv-select management-address
+# no lldp tlv-select system-description
 
 - name: Delete existing LLDP configurations from the device
   eos_lldp_global:
