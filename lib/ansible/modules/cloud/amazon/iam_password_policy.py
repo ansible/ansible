@@ -145,9 +145,10 @@ class IAMConnection(object):
             RequireUppercaseCharacters=require_uppercase,
             RequireLowercaseCharacters=require_lowercase,
             AllowUsersToChangePassword=allow_pw_change,
-            PasswordReusePrevention=pw_reuse_prevent,
             HardExpiry=pw_expire
         )
+        if pw_reuse_prevent:
+            update_parameters.update(PasswordReusePrevention=pw_reuse_prevent)
         if pw_max_age:
             update_parameters.update(MaxPasswordAge=pw_max_age)
 
