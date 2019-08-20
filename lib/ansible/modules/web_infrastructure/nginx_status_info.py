@@ -23,10 +23,12 @@ version_added: "2.9"
 author: "René Moser (@resmo)"
 options:
   url:
+    type: str
     description:
       - URL of the nginx status.
     required: true
   timeout:
+    type: int
     description:
       - HTTP connection timeout in seconds.
     required: false
@@ -145,7 +147,7 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            url=dict(required=True),
+            url=dict(type='str', required=True),
             timeout=dict(type='int', default=10),
         ),
         supports_check_mode=True,

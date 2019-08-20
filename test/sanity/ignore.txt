@@ -5873,8 +5873,6 @@ lib/ansible/modules/web_infrastructure/jenkins_script.py validate-modules:E337
 lib/ansible/modules/web_infrastructure/jira.py validate-modules:E322
 lib/ansible/modules/web_infrastructure/jira.py validate-modules:E337
 lib/ansible/modules/web_infrastructure/jira.py validate-modules:E338
-lib/ansible/modules/web_infrastructure/nginx_status_facts.py validate-modules:E337
-lib/ansible/modules/web_infrastructure/nginx_status_facts.py validate-modules:E338
 lib/ansible/modules/web_infrastructure/rundeck_acl_policy.py pylint:blacklisted-name
 lib/ansible/modules/web_infrastructure/rundeck_acl_policy.py validate-modules:E337
 lib/ansible/modules/web_infrastructure/rundeck_project.py validate-modules:E337
