@@ -11,7 +11,7 @@ necessary to bring the current configuration to it's desired end-state is
 created
 """
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import dict_diff, to_list
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
@@ -41,7 +41,7 @@ class Lldp_global(ConfigBase):
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         lldp_global_facts = facts['ansible_network_resources'].get('lldp_global')
         if not lldp_global_facts:
-            return []
+            return {}
         return lldp_global_facts
 
     def execute_module(self):
@@ -79,7 +79,7 @@ class Lldp_global(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        want = self._module.params['config']
+        want = self._module.params['config'] or {}
         have = existing_lldp_global_facts
         resp = self.set_state(want, have)
         return to_list(resp)
@@ -94,59 +94,69 @@ class Lldp_global(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
-        if state == 'overridden':
-            kwargs = {}
-            commands = self._state_overridden(**kwargs)
-        elif state == 'deleted':
-            kwargs = {}
-            commands = self._state_deleted(**kwargs)
+        if state == 'deleted':
+            commands = state_deleted(want, have)
         elif state == 'merged':
-            kwargs = {}
-            commands = self._state_merged(**kwargs)
+            commands = state_merged(want, have)
         elif state == 'replaced':
-            kwargs = {}
-            commands = self._state_replaced(**kwargs)
-        return commands
-    @staticmethod
-    def _state_replaced(**kwargs):
-        """ The command generator when state is replaced
-
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = []
+            commands = state_replaced(want, have)
         return commands
 
-    @staticmethod
-    def _state_overridden(**kwargs):
-        """ The command generator when state is overridden
 
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = []
-        return commands
+def state_replaced(want, have):
+    """ The command generator when state is replaced
 
-    @staticmethod
-    def _state_merged(**kwargs):
-        """ The command generator when state is merged
+    :rtype: A list
+    :returns: the commands necessary to migrate the current configuration
+              to the desired configuration
+    """
+    commands = set()
+    # merged and deleted are likely to emit duplicate tlv-select commands
+    commands.update(state_merged(want, have))
+    commands.update(state_deleted(want, have))
 
-        :rtype: A list
-        :returns: the commands necessary to merge the provided into
-                  the current configuration
-        """
-        commands = []
-        return commands
+    return list(commands)
 
-    @staticmethod
-    def _state_deleted(**kwargs):
-        """ The command generator when state is deleted
 
-        :rtype: A list
-        :returns: the commands necessary to remove the current configuration
-                  of the provided objects
-        """
-        commands = []
-        return commands
+def state_merged(want, have):
+    """ The command generator when state is merged
+
+    :rtype: A list
+    :returns: the commands necessary to merge the provided into
+              the current configuration
+    """
+    commands = []
+    to_set = dict_diff(have, want)
+    tlv_options = to_set.pop("tlv_select", {})
+    for key, value in to_set.items():
+        commands.append("lldp {0} {1}".format(key, value))
+    for key, value in tlv_options.items():
+        device_option = key.replace("_", "-")
+        if value is True:
+            commands.append("lldp tlv-select {0}".format(device_option))
+        elif value is False:
+            commands.append("no lldp tlv-select {0}".format(device_option))
+
+    return commands
+
+
+def state_deleted(want, have):
+    """ The command generator when state is deleted
+
+    :rtype: A list
+    :returns: the commands necessary to remove the current configuration
+              of the provided objects
+    """
+    commands = []
+    to_remove = dict_diff(want, have)
+    tlv_options = to_remove.pop("tlv_select", {})
+    for key in to_remove:
+        commands.append("no lldp {0}".format(key))
+    for key, value in tlv_options.items():
+        device_option = key.replace("_", "-")
+        if value is False:
+            commands.append("lldp tlv-select {0}".format(device_option))
+        elif value is True:
+            commands.append("no lldp tlv-select {0}".format(device_option))
+
+    return commands
