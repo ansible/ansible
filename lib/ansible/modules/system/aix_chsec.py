@@ -150,7 +150,7 @@ def get_current_attr_value(module, filename, stanza, attr):
     return lssec_out
 
 
-def do_stanza(module, filename, stanza, attrs, state='present'):
+def do_stanza(module, filename, stanza, attrs, state):
     ''' Returns (bool(changed), dict(msg)) '''
     attrs = attrs2dict(attrs)
     return_msg = {}
