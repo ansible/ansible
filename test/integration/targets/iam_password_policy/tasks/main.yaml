@@ -62,6 +62,22 @@
       that:
         - result.changed
 
+  # Test for regression of #59102
+  - name: update iam password policy without expiry
+    iam_password_policy:
+      state: present
+      min_pw_length: 15
+      require_symbols: true
+      require_numbers: true
+      require_uppercase: true
+      require_lowercase: true
+      allow_pw_change: true
+    register: result
+
+  - name: assert that changes were made
+    assert:
+      that:
+        - result.changed
 
   - name: remove iam password policy
     iam_password_policy:
