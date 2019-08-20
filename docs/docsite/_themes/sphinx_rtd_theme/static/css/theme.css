@@ -173,10 +173,10 @@ td {
     vertical-align: top;
 }
 .chromeframe {
-    margin: 0.2em 0;
+    margin: .2em 0;
     background: #ccc;
     color: #000;
-    padding: 0.2em 0;
+    padding: .2em 0;
 }
 .ir {
     display: block;
@@ -266,7 +266,7 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
     page-break-after: avoid;
 }
 }
-.fa:before, .wy-menu-vertical li span.toctree-expand:before, .wy-menu-vertical li.on a span.toctree-expand:before, .wy-menu-vertical li.current>a span.toctree-expand:before, .rst-content .admonition-title:before, .rst-content h1 .headerlink:before, .rst-content h2 .headerlink:before, .rst-content h3 .headerlink:before, .rst-content h4 .headerlink:before, .rst-content h5 .headerlink:before, .rst-content h6 .headerlink:before, .rst-content dl dt .headerlink:before, .rst-content p.caption .headerlink:before, .rst-content table>caption .headerlink:before, .rst-content tt.download span:first-child:before, .rst-content code.download span:first-child:before, .icon:before, .wy-dropdown .caret:before, .wy-inline-validate.wy-inline-validate-success .wy-input-context:before, .wy-inline-validate.wy-inline-validate-danger .wy-input-context:before, .wy-inline-validate.wy-inline-validate-warning .wy-input-context:before, .wy-inline-validate.wy-inline-validate-info .wy-input-context:before, .wy-alert, .rst-content .note, .rst-content .attention, .rst-content .caution, .rst-content .danger, .rst-content .error, .rst-content .hint, .rst-content .important, .rst-content .tip, .rst-content .warning, .rst-content .seealso, .rst-content .admonition-todo, .rst-content .admonition, .btn, input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="date"], input[type="month"], input[type="time"], input[type="datetime"], input[type="datetime-local"], input[type="week"], input[type="number"], input[type="search"], input[type="tel"], input[type="color"], select, textarea, .wy-menu-vertical li.on a, .wy-menu-vertical li.current>a, .wy-side-nav-search>a, .wy-side-nav-search .wy-dropdown>a, .wy-nav-top a {
+.fa:before, .wy-menu-vertical li span.toctree-expand:before, .wy-menu-vertical li.on a span.toctree-expand:before, .wy-menu-vertical li.current>a span.toctree-expand:before, .rst-content .admonition-title:before, .rst-content h1 .headerlink:before, .rst-content h2 .headerlink:before, .rst-content h3 .headerlink:before, .rst-content h4 .headerlink:before, .rst-content h5 .headerlink:before, .rst-content h6 .headerlink:before, .rst-content dl dt .headerlink:before, .rst-content p.caption .headerlink:before, .rst-content table>caption .headerlink:before, .rst-content .code-block-caption .headerlink:before, .rst-content tt.download span:first-child:before, .rst-content code.download span:first-child:before, .icon:before, .wy-dropdown .caret:before, .wy-inline-validate.wy-inline-validate-success .wy-input-context:before, .wy-inline-validate.wy-inline-validate-danger .wy-input-context:before, .wy-inline-validate.wy-inline-validate-warning .wy-input-context:before, .wy-inline-validate.wy-inline-validate-info .wy-input-context:before, .wy-alert, .rst-content .note, .rst-content .attention, .rst-content .caution, .rst-content .danger, .rst-content .error, .rst-content .hint, .rst-content .important, .rst-content .tip, .rst-content .warning, .rst-content .seealso, .rst-content .admonition-todo, .rst-content .admonition, .btn, input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="date"], input[type="month"], input[type="time"], input[type="datetime"], input[type="datetime-local"], input[type="week"], input[type="number"], input[type="search"], input[type="tel"], input[type="color"], select, textarea, .wy-menu-vertical li.on a, .wy-menu-vertical li.current>a, .wy-side-nav-search>a, .wy-side-nav-search .wy-dropdown>a, .wy-nav-top a {
     -webkit-font-smoothing: antialiased;
 }
 .clearfix {
@@ -289,7 +289,7 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
     font-weight: normal;
     font-style: normal;
 }
-.fa, .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.current>a span.toctree-expand, .rst-content .admonition-title, .rst-content h1 .headerlink, .rst-content h2 .headerlink, .rst-content h3 .headerlink, .rst-content h4 .headerlink, .rst-content h5 .headerlink, .rst-content h6 .headerlink, .rst-content dl dt .headerlink, .rst-content p.caption .headerlink, .rst-content table>caption .headerlink, .rst-content tt.download span:first-child, .rst-content code.download span:first-child, .icon {
+.fa, .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.current>a span.toctree-expand, .rst-content .admonition-title, .rst-content h1 .headerlink, .rst-content h2 .headerlink, .rst-content h3 .headerlink, .rst-content h4 .headerlink, .rst-content h5 .headerlink, .rst-content h6 .headerlink, .rst-content dl dt .headerlink, .rst-content p.caption .headerlink, .rst-content table>caption .headerlink, .rst-content .code-block-caption .headerlink, .rst-content tt.download span:first-child, .rst-content code.download span:first-child, .icon {
     display: inline-block;
     font: normal normal normal 14px/1 FontAwesome;
     font-size: inherit;
@@ -298,7 +298,7 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
     -moz-osx-font-smoothing: grayscale;
 }
 .fa-lg {
-    font-size: 1.33333em;
+    font-size: 1.3333333333em;
     line-height: .75em;
     vertical-align: -15%}
 .fa-2x {
@@ -314,12 +314,12 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
     font-size: 5em;
 }
 .fa-fw {
-    width: 1.28571em;
+    width: 1.2857142857em;
     text-align: center;
 }
 .fa-ul {
     padding-left: 0;
-    margin-left: 2.14286em;
+    margin-left: 2.1428571429em;
     list-style-type: none;
 }
 .fa-ul>li {
@@ -327,13 +327,13 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
 }
 .fa-li {
     position: absolute;
-    left: -2.14286em;
-    width: 2.14286em;
-    top: .14286em;
+    left: -2.1428571429em;
+    width: 2.1428571429em;
+    top: .1428571429em;
     text-align: center;
 }
 .fa-li.fa-lg {
-    left: -1.85714em;
+    left: -1.8571428571em;
 }
 .fa-border {
     padding: .2em .25em .15em;
@@ -358,10 +358,10 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
 .pull-left {
     float: left;
 }
-.fa.pull-left, .wy-menu-vertical li span.pull-left.toctree-expand, .wy-menu-vertical li.on a span.pull-left.toctree-expand, .wy-menu-vertical li.current>a span.pull-left.toctree-expand, .rst-content .pull-left.admonition-title, .rst-content h1 .pull-left.headerlink, .rst-content h2 .pull-left.headerlink, .rst-content h3 .pull-left.headerlink, .rst-content h4 .pull-left.headerlink, .rst-content h5 .pull-left.headerlink, .rst-content h6 .pull-left.headerlink, .rst-content dl dt .pull-left.headerlink, .rst-content p.caption .pull-left.headerlink, .rst-content table>caption .pull-left.headerlink, .rst-content tt.download span.pull-left:first-child, .rst-content code.download span.pull-left:first-child, .pull-left.icon {
+.fa.fa-pull-left, .wy-menu-vertical li span.fa-pull-left.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-left.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-left.toctree-expand, .rst-content .fa-pull-left.admonition-title, .rst-content h1 .fa-pull-left.headerlink, .rst-content h2 .fa-pull-left.headerlink, .rst-content h3 .fa-pull-left.headerlink, .rst-content h4 .fa-pull-left.headerlink, .rst-content h5 .fa-pull-left.headerlink, .rst-content h6 .fa-pull-left.headerlink, .rst-content dl dt .fa-pull-left.headerlink, .rst-content p.caption .fa-pull-left.headerlink, .rst-content table>caption .fa-pull-left.headerlink, .rst-content .code-block-caption .fa-pull-left.headerlink, .rst-content tt.download span.fa-pull-left:first-child, .rst-content code.download span.fa-pull-left:first-child, .fa-pull-left.icon {
     margin-right: .3em;
 }
-.fa.pull-right, .wy-menu-vertical li span.pull-right.toctree-expand, .wy-menu-vertical li.on a span.pull-right.toctree-expand, .wy-menu-vertical li.current>a span.pull-right.toctree-expand, .rst-content .pull-right.admonition-title, .rst-content h1 .pull-right.headerlink, .rst-content h2 .pull-right.headerlink, .rst-content h3 .pull-right.headerlink, .rst-content h4 .pull-right.headerlink, .rst-content h5 .pull-right.headerlink, .rst-content h6 .pull-right.headerlink, .rst-content dl dt .pull-right.headerlink, .rst-content p.caption .pull-right.headerlink, .rst-content table>caption .pull-right.headerlink, .rst-content tt.download span.pull-right:first-child, .rst-content code.download span.pull-right:first-child, .pull-right.icon {
+.fa.fa-pull-right, .wy-menu-vertical li span.fa-pull-right.toctree-expand, .wy-menu-vertical li.on a span.fa-pull-right.toctree-expand, .wy-menu-vertical li.current>a span.fa-pull-right.toctree-expand, .rst-content .fa-pull-right.admonition-title, .rst-content h1 .fa-pull-right.headerlink, .rst-content h2 .fa-pull-right.headerlink, .rst-content h3 .fa-pull-right.headerlink, .rst-content h4 .fa-pull-right.headerlink, .rst-content h5 .fa-pull-right.headerlink, .rst-content h6 .fa-pull-right.headerlink, .rst-content dl dt .fa-pull-right.headerlink, .rst-content p.caption .fa-pull-right.headerlink, .rst-content table>caption .fa-pull-right.headerlink, .rst-content .code-block-caption .fa-pull-right.headerlink, .rst-content tt.download span.fa-pull-right:first-child, .rst-content code.download span.fa-pull-right:first-child, .fa-pull-right.icon {
     margin-left: .3em;
 }
 .fa-spin {
@@ -1816,10 +1816,10 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
     overflow: visible;
     clip: auto;
 }
-.fa, .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.current>a span.toctree-expand, .rst-content .admonition-title, .rst-content h1 .headerlink, .rst-content h2 .headerlink, .rst-content h3 .headerlink, .rst-content h4 .headerlink, .rst-content h5 .headerlink, .rst-content h6 .headerlink, .rst-content dl dt .headerlink, .rst-content p.caption .headerlink, .rst-content table>caption .headerlink, .rst-content tt.download span:first-child, .rst-content code.download span:first-child, .icon, .wy-dropdown .caret, .wy-inline-validate.wy-inline-validate-success .wy-input-context, .wy-inline-validate.wy-inline-validate-danger .wy-input-context, .wy-inline-validate.wy-inline-validate-warning .wy-input-context, .wy-inline-validate.wy-inline-validate-info .wy-input-context {
+.fa, .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.current>a span.toctree-expand, .rst-content .admonition-title, .rst-content h1 .headerlink, .rst-content h2 .headerlink, .rst-content h3 .headerlink, .rst-content h4 .headerlink, .rst-content h5 .headerlink, .rst-content h6 .headerlink, .rst-content dl dt .headerlink, .rst-content p.caption .headerlink, .rst-content table>caption .headerlink, .rst-content .code-block-caption .headerlink, .rst-content tt.download span:first-child, .rst-content code.download span:first-child, .icon, .wy-dropdown .caret, .wy-inline-validate.wy-inline-validate-success .wy-input-context, .wy-inline-validate.wy-inline-validate-danger .wy-input-context, .wy-inline-validate.wy-inline-validate-warning .wy-input-context, .wy-inline-validate.wy-inline-validate-info .wy-input-context {
     font-family: inherit;
 }
-.fa:before, .wy-menu-vertical li span.toctree-expand:before, .wy-menu-vertical li.on a span.toctree-expand:before, .wy-menu-vertical li.current>a span.toctree-expand:before, .rst-content .admonition-title:before, .rst-content h1 .headerlink:before, .rst-content h2 .headerlink:before, .rst-content h3 .headerlink:before, .rst-content h4 .headerlink:before, .rst-content h5 .headerlink:before, .rst-content h6 .headerlink:before, .rst-content dl dt .headerlink:before, .rst-content p.caption .headerlink:before, .rst-content table>caption .headerlink:before, .rst-content tt.download span:first-child:before, .rst-content code.download span:first-child:before, .icon:before, .wy-dropdown .caret:before, .wy-inline-validate.wy-inline-validate-success .wy-input-context:before, .wy-inline-validate.wy-inline-validate-danger .wy-input-context:before, .wy-inline-validate.wy-inline-validate-warning .wy-input-context:before, .wy-inline-validate.wy-inline-validate-info .wy-input-context:before {
+.fa:before, .wy-menu-vertical li span.toctree-expand:before, .wy-menu-vertical li.on a span.toctree-expand:before, .wy-menu-vertical li.current>a span.toctree-expand:before, .rst-content .admonition-title:before, .rst-content h1 .headerlink:before, .rst-content h2 .headerlink:before, .rst-content h3 .headerlink:before, .rst-content h4 .headerlink:before, .rst-content h5 .headerlink:before, .rst-content h6 .headerlink:before, .rst-content dl dt .headerlink:before, .rst-content p.caption .headerlink:before, .rst-content table>caption .headerlink:before, .rst-content .code-block-caption .headerlink:before, .rst-content tt.download span:first-child:before, .rst-content code.download span:first-child:before, .icon:before, .wy-dropdown .caret:before, .wy-inline-validate.wy-inline-validate-success .wy-input-context:before, .wy-inline-validate.wy-inline-validate-danger .wy-input-context:before, .wy-inline-validate.wy-inline-validate-warning .wy-input-context:before, .wy-inline-validate.wy-inline-validate-info .wy-input-context:before {
     font-family: "FontAwesome";
     display: inline-block;
     font-style: normal;
@@ -1827,29 +1827,29 @@ h2, .rst-content .toctree-wrapper p.caption, h3 {
     line-height: 1;
     text-decoration: inherit;
 }
-a .fa, a .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li a span.toctree-expand, .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.current>a span.toctree-expand, a .rst-content .admonition-title, .rst-content a .admonition-title, a .rst-content h1 .headerlink, .rst-content h1 a .headerlink, a .rst-content h2 .headerlink, .rst-content h2 a .headerlink, a .rst-content h3 .headerlink, .rst-content h3 a .headerlink, a .rst-content h4 .headerlink, .rst-content h4 a .headerlink, a .rst-content h5 .headerlink, .rst-content h5 a .headerlink, a .rst-content h6 .headerlink, .rst-content h6 a .headerlink, a .rst-content dl dt .headerlink, .rst-content dl dt a .headerlink, a .rst-content p.caption .headerlink, .rst-content p.caption a .headerlink, a .rst-content table>caption .headerlink, .rst-content table>caption a .headerlink, a .rst-content tt.download span:first-child, .rst-content tt.download a span:first-child, a .rst-content code.download span:first-child, .rst-content code.download a span:first-child, a .icon {
+a .fa, a .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li a span.toctree-expand, .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.current>a span.toctree-expand, a .rst-content .admonition-title, .rst-content a .admonition-title, a .rst-content h1 .headerlink, .rst-content h1 a .headerlink, a .rst-content h2 .headerlink, .rst-content h2 a .headerlink, a .rst-content h3 .headerlink, .rst-content h3 a .headerlink, a .rst-content h4 .headerlink, .rst-content h4 a .headerlink, a .rst-content h5 .headerlink, .rst-content h5 a .headerlink, a .rst-content h6 .headerlink, .rst-content h6 a .headerlink, a .rst-content dl dt .headerlink, .rst-content dl dt a .headerlink, a .rst-content p.caption .headerlink, .rst-content p.caption a .headerlink, a .rst-content table>caption .headerlink, .rst-content table>caption a .headerlink, a .rst-content .code-block-caption .headerlink, .rst-content .code-block-caption a .headerlink, a .rst-content tt.download span:first-child, .rst-content tt.download a span:first-child, a .rst-content code.download span:first-child, .rst-content code.download a span:first-child, a .icon {
     display: inline-block;
     text-decoration: inherit;
 }
-.btn .fa, .btn .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li .btn span.toctree-expand, .btn .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.on a .btn span.toctree-expand, .btn .wy-menu-vertical li.current>a span.toctree-expand, .wy-menu-vertical li.current>a .btn span.toctree-expand, .btn .rst-content .admonition-title, .rst-content .btn .admonition-title, .btn .rst-content h1 .headerlink, .rst-content h1 .btn .headerlink, .btn .rst-content h2 .headerlink, .rst-content h2 .btn .headerlink, .btn .rst-content h3 .headerlink, .rst-content h3 .btn .headerlink, .btn .rst-content h4 .headerlink, .rst-content h4 .btn .headerlink, .btn .rst-content h5 .headerlink, .rst-content h5 .btn .headerlink, .btn .rst-content h6 .headerlink, .rst-content h6 .btn .headerlink, .btn .rst-content dl dt .headerlink, .rst-content dl dt .btn .headerlink, .btn .rst-content p.caption .headerlink, .rst-content p.caption .btn .headerlink, .btn .rst-content table>caption .headerlink, .rst-content table>caption .btn .headerlink, .btn .rst-content tt.download span:first-child, .rst-content tt.download .btn span:first-child, .btn .rst-content code.download span:first-child, .rst-content code.download .btn span:first-child, .btn .icon, .nav .fa, .nav .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li .nav span.toctree-expand, .nav .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.on a .nav span.toctree-expand, .nav .wy-menu-vertical li.current>a span.toctree-expand, .wy-menu-vertical li.current>a .nav span.toctree-expand, .nav .rst-content .admonition-title, .rst-content .nav .admonition-title, .nav .rst-content h1 .headerlink, .rst-content h1 .nav .headerlink, .nav .rst-content h2 .headerlink, .rst-content h2 .nav .headerlink, .nav .rst-content h3 .headerlink, .rst-content h3 .nav .headerlink, .nav .rst-content h4 .headerlink, .rst-content h4 .nav .headerlink, .nav .rst-content h5 .headerlink, .rst-content h5 .nav .headerlink, .nav .rst-content h6 .headerlink, .rst-content h6 .nav .headerlink, .nav .rst-content dl dt .headerlink, .rst-content dl dt .nav .headerlink, .nav .rst-content p.caption .headerlink, .rst-content p.caption .nav .headerlink, .nav .rst-content table>caption .headerlink, .rst-content table>caption .nav .headerlink, .nav .rst-content tt.download span:first-child, .rst-content tt.download .nav span:first-child, .nav .rst-content code.download span:first-child, .rst-content code.download .nav span:first-child, .nav .icon {
+.btn .fa, .btn .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li .btn span.toctree-expand, .btn .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.on a .btn span.toctree-expand, .btn .wy-menu-vertical li.current>a span.toctree-expand, .wy-menu-vertical li.current>a .btn span.toctree-expand, .btn .rst-content .admonition-title, .rst-content .btn .admonition-title, .btn .rst-content h1 .headerlink, .rst-content h1 .btn .headerlink, .btn .rst-content h2 .headerlink, .rst-content h2 .btn .headerlink, .btn .rst-content h3 .headerlink, .rst-content h3 .btn .headerlink, .btn .rst-content h4 .headerlink, .rst-content h4 .btn .headerlink, .btn .rst-content h5 .headerlink, .rst-content h5 .btn .headerlink, .btn .rst-content h6 .headerlink, .rst-content h6 .btn .headerlink, .btn .rst-content dl dt .headerlink, .rst-content dl dt .btn .headerlink, .btn .rst-content p.caption .headerlink, .rst-content p.caption .btn .headerlink, .btn .rst-content table>caption .headerlink, .rst-content table>caption .btn .headerlink, .btn .rst-content .code-block-caption .headerlink, .rst-content .code-block-caption .btn .headerlink, .btn .rst-content tt.download span:first-child, .rst-content tt.download .btn span:first-child, .btn .rst-content code.download span:first-child, .rst-content code.download .btn span:first-child, .btn .icon, .nav .fa, .nav .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li .nav span.toctree-expand, .nav .wy-menu-vertical li.on a span.toctree-expand, .wy-menu-vertical li.on a .nav span.toctree-expand, .nav .wy-menu-vertical li.current>a span.toctree-expand, .wy-menu-vertical li.current>a .nav span.toctree-expand, .nav .rst-content .admonition-title, .rst-content .nav .admonition-title, .nav .rst-content h1 .headerlink, .rst-content h1 .nav .headerlink, .nav .rst-content h2 .headerlink, .rst-content h2 .nav .headerlink, .nav .rst-content h3 .headerlink, .rst-content h3 .nav .headerlink, .nav .rst-content h4 .headerlink, .rst-content h4 .nav .headerlink, .nav .rst-content h5 .headerlink, .rst-content h5 .nav .headerlink, .nav .rst-content h6 .headerlink, .rst-content h6 .nav .headerlink, .nav .rst-content dl dt .headerlink, .rst-content dl dt .nav .headerlink, .nav .rst-content p.caption .headerlink, .rst-content p.caption .nav .headerlink, .nav .rst-content table>caption .headerlink, .rst-content table>caption .nav .headerlink, .nav .rst-content .code-block-caption .headerlink, .rst-content .code-block-caption .nav .headerlink, .nav .rst-content tt.download span:first-child, .rst-content tt.download .nav span:first-child, .nav .rst-content code.download span:first-child, .rst-content code.download .nav span:first-child, .nav .icon {
     display: inline;
 }
-.btn .fa.fa-large, .btn .wy-menu-vertical li span.fa-large.toctree-expand, .wy-menu-vertical li .btn span.fa-large.toctree-expand, .btn .rst-content .fa-large.admonition-title, .rst-content .btn .fa-large.admonition-title, .btn .rst-content h1 .fa-large.headerlink, .rst-content h1 .btn .fa-large.headerlink, .btn .rst-content h2 .fa-large.headerlink, .rst-content h2 .btn .fa-large.headerlink, .btn .rst-content h3 .fa-large.headerlink, .rst-content h3 .btn .fa-large.headerlink, .btn .rst-content h4 .fa-large.headerlink, .rst-content h4 .btn .fa-large.headerlink, .btn .rst-content h5 .fa-large.headerlink, .rst-content h5 .btn .fa-large.headerlink, .btn .rst-content h6 .fa-large.headerlink, .rst-content h6 .btn .fa-large.headerlink, .btn .rst-content dl dt .fa-large.headerlink, .rst-content dl dt .btn .fa-large.headerlink, .btn .rst-content p.caption .fa-large.headerlink, .rst-content p.caption .btn .fa-large.headerlink, .btn .rst-content table>caption .fa-large.headerlink, .rst-content table>caption .btn .fa-large.headerlink, .btn .rst-content tt.download span.fa-large:first-child, .rst-content tt.download .btn span.fa-large:first-child, .btn .rst-content code.download span.fa-large:first-child, .rst-content code.download .btn span.fa-large:first-child, .btn .fa-large.icon, .nav .fa.fa-large, .nav .wy-menu-vertical li span.fa-large.toctree-expand, .wy-menu-vertical li .nav span.fa-large.toctree-expand, .nav .rst-content .fa-large.admonition-title, .rst-content .nav .fa-large.admonition-title, .nav .rst-content h1 .fa-large.headerlink, .rst-content h1 .nav .fa-large.headerlink, .nav .rst-content h2 .fa-large.headerlink, .rst-content h2 .nav .fa-large.headerlink, .nav .rst-content h3 .fa-large.headerlink, .rst-content h3 .nav .fa-large.headerlink, .nav .rst-content h4 .fa-large.headerlink, .rst-content h4 .nav .fa-large.headerlink, .nav .rst-content h5 .fa-large.headerlink, .rst-content h5 .nav .fa-large.headerlink, .nav .rst-content h6 .fa-large.headerlink, .rst-content h6 .nav .fa-large.headerlink, .nav .rst-content dl dt .fa-large.headerlink, .rst-content dl dt .nav .fa-large.headerlink, .nav .rst-content p.caption .fa-large.headerlink, .rst-content p.caption .nav .fa-large.headerlink, .nav .rst-content table>caption .fa-large.headerlink, .rst-content table>caption .nav .fa-large.headerlink, .nav .rst-content tt.download span.fa-large:first-child, .rst-content tt.download .nav span.fa-large:first-child, .nav .rst-content code.download span.fa-large:first-child, .rst-content code.download .nav span.fa-large:first-child, .nav .fa-large.icon {
-    line-height: 0.9em;
+.btn .fa.fa-large, .btn .wy-menu-vertical li span.fa-large.toctree-expand, .wy-menu-vertical li .btn span.fa-large.toctree-expand, .btn .rst-content .fa-large.admonition-title, .rst-content .btn .fa-large.admonition-title, .btn .rst-content h1 .fa-large.headerlink, .rst-content h1 .btn .fa-large.headerlink, .btn .rst-content h2 .fa-large.headerlink, .rst-content h2 .btn .fa-large.headerlink, .btn .rst-content h3 .fa-large.headerlink, .rst-content h3 .btn .fa-large.headerlink, .btn .rst-content h4 .fa-large.headerlink, .rst-content h4 .btn .fa-large.headerlink, .btn .rst-content h5 .fa-large.headerlink, .rst-content h5 .btn .fa-large.headerlink, .btn .rst-content h6 .fa-large.headerlink, .rst-content h6 .btn .fa-large.headerlink, .btn .rst-content dl dt .fa-large.headerlink, .rst-content dl dt .btn .fa-large.headerlink, .btn .rst-content p.caption .fa-large.headerlink, .rst-content p.caption .btn .fa-large.headerlink, .btn .rst-content table>caption .fa-large.headerlink, .rst-content table>caption .btn .fa-large.headerlink, .btn .rst-content .code-block-caption .fa-large.headerlink, .rst-content .code-block-caption .btn .fa-large.headerlink, .btn .rst-content tt.download span.fa-large:first-child, .rst-content tt.download .btn span.fa-large:first-child, .btn .rst-content code.download span.fa-large:first-child, .rst-content code.download .btn span.fa-large:first-child, .btn .fa-large.icon, .nav .fa.fa-large, .nav .wy-menu-vertical li span.fa-large.toctree-expand, .wy-menu-vertical li .nav span.fa-large.toctree-expand, .nav .rst-content .fa-large.admonition-title, .rst-content .nav .fa-large.admonition-title, .nav .rst-content h1 .fa-large.headerlink, .rst-content h1 .nav .fa-large.headerlink, .nav .rst-content h2 .fa-large.headerlink, .rst-content h2 .nav .fa-large.headerlink, .nav .rst-content h3 .fa-large.headerlink, .rst-content h3 .nav .fa-large.headerlink, .nav .rst-content h4 .fa-large.headerlink, .rst-content h4 .nav .fa-large.headerlink, .nav .rst-content h5 .fa-large.headerlink, .rst-content h5 .nav .fa-large.headerlink, .nav .rst-content h6 .fa-large.headerlink, .rst-content h6 .nav .fa-large.headerlink, .nav .rst-content dl dt .fa-large.headerlink, .rst-content dl dt .nav .fa-large.headerlink, .nav .rst-content p.caption .fa-large.headerlink, .rst-content p.caption .nav .fa-large.headerlink, .nav .rst-content table>caption .fa-large.headerlink, .rst-content table>caption .nav .fa-large.headerlink, .nav .rst-content .code-block-caption .fa-large.headerlink, .rst-content .code-block-caption .nav .fa-large.headerlink, .nav .rst-content tt.download span.fa-large:first-child, .rst-content tt.download .nav span.fa-large:first-child, .nav .rst-content code.download span.fa-large:first-child, .rst-content code.download .nav span.fa-large:first-child, .nav .fa-large.icon {
+    line-height: .9em;
 }
-.btn .fa.fa-spin, .btn .wy-menu-vertical li span.fa-spin.toctree-expand, .wy-menu-vertical li .btn span.fa-spin.toctree-expand, .btn .rst-content .fa-spin.admonition-title, .rst-content .btn .fa-spin.admonition-title, .btn .rst-content h1 .fa-spin.headerlink, .rst-content h1 .btn .fa-spin.headerlink, .btn .rst-content h2 .fa-spin.headerlink, .rst-content h2 .btn .fa-spin.headerlink, .btn .rst-content h3 .fa-spin.headerlink, .rst-content h3 .btn .fa-spin.headerlink, .btn .rst-content h4 .fa-spin.headerlink, .rst-content h4 .btn .fa-spin.headerlink, .btn .rst-content h5 .fa-spin.headerlink, .rst-content h5 .btn .fa-spin.headerlink, .btn .rst-content h6 .fa-spin.headerlink, .rst-content h6 .btn .fa-spin.headerlink, .btn .rst-content dl dt .fa-spin.headerlink, .rst-content dl dt .btn .fa-spin.headerlink, .btn .rst-content p.caption .fa-spin.headerlink, .rst-content p.caption .btn .fa-spin.headerlink, .btn .rst-content table>caption .fa-spin.headerlink, .rst-content table>caption .btn .fa-spin.headerlink, .btn .rst-content tt.download span.fa-spin:first-child, .rst-content tt.download .btn span.fa-spin:first-child, .btn .rst-content code.download span.fa-spin:first-child, .rst-content code.download .btn span.fa-spin:first-child, .btn .fa-spin.icon, .nav .fa.fa-spin, .nav .wy-menu-vertical li span.fa-spin.toctree-expand, .wy-menu-vertical li .nav span.fa-spin.toctree-expand, .nav .rst-content .fa-spin.admonition-title, .rst-content .nav .fa-spin.admonition-title, .nav .rst-content h1 .fa-spin.headerlink, .rst-content h1 .nav .fa-spin.headerlink, .nav .rst-content h2 .fa-spin.headerlink, .rst-content h2 .nav .fa-spin.headerlink, .nav .rst-content h3 .fa-spin.headerlink, .rst-content h3 .nav .fa-spin.headerlink, .nav .rst-content h4 .fa-spin.headerlink, .rst-content h4 .nav .fa-spin.headerlink, .nav .rst-content h5 .fa-spin.headerlink, .rst-content h5 .nav .fa-spin.headerlink, .nav .rst-content h6 .fa-spin.headerlink, .rst-content h6 .nav .fa-spin.headerlink, .nav .rst-content dl dt .fa-spin.headerlink, .rst-content dl dt .nav .fa-spin.headerlink, .nav .rst-content p.caption .fa-spin.headerlink, .rst-content p.caption .nav .fa-spin.headerlink, .nav .rst-content table>caption .fa-spin.headerlink, .rst-content table>caption .nav .fa-spin.headerlink, .nav .rst-content tt.download span.fa-spin:first-child, .rst-content tt.download .nav span.fa-spin:first-child, .nav .rst-content code.download span.fa-spin:first-child, .rst-content code.download .nav span.fa-spin:first-child, .nav .fa-spin.icon {
+.btn .fa.fa-spin, .btn .wy-menu-vertical li span.fa-spin.toctree-expand, .wy-menu-vertical li .btn span.fa-spin.toctree-expand, .btn .rst-content .fa-spin.admonition-title, .rst-content .btn .fa-spin.admonition-title, .btn .rst-content h1 .fa-spin.headerlink, .rst-content h1 .btn .fa-spin.headerlink, .btn .rst-content h2 .fa-spin.headerlink, .rst-content h2 .btn .fa-spin.headerlink, .btn .rst-content h3 .fa-spin.headerlink, .rst-content h3 .btn .fa-spin.headerlink, .btn .rst-content h4 .fa-spin.headerlink, .rst-content h4 .btn .fa-spin.headerlink, .btn .rst-content h5 .fa-spin.headerlink, .rst-content h5 .btn .fa-spin.headerlink, .btn .rst-content h6 .fa-spin.headerlink, .rst-content h6 .btn .fa-spin.headerlink, .btn .rst-content dl dt .fa-spin.headerlink, .rst-content dl dt .btn .fa-spin.headerlink, .btn .rst-content p.caption .fa-spin.headerlink, .rst-content p.caption .btn .fa-spin.headerlink, .btn .rst-content table>caption .fa-spin.headerlink, .rst-content table>caption .btn .fa-spin.headerlink, .btn .rst-content .code-block-caption .fa-spin.headerlink, .rst-content .code-block-caption .btn .fa-spin.headerlink, .btn .rst-content tt.download span.fa-spin:first-child, .rst-content tt.download .btn span.fa-spin:first-child, .btn .rst-content code.download span.fa-spin:first-child, .rst-content code.download .btn span.fa-spin:first-child, .btn .fa-spin.icon, .nav .fa.fa-spin, .nav .wy-menu-vertical li span.fa-spin.toctree-expand, .wy-menu-vertical li .nav span.fa-spin.toctree-expand, .nav .rst-content .fa-spin.admonition-title, .rst-content .nav .fa-spin.admonition-title, .nav .rst-content h1 .fa-spin.headerlink, .rst-content h1 .nav .fa-spin.headerlink, .nav .rst-content h2 .fa-spin.headerlink, .rst-content h2 .nav .fa-spin.headerlink, .nav .rst-content h3 .fa-spin.headerlink, .rst-content h3 .nav .fa-spin.headerlink, .nav .rst-content h4 .fa-spin.headerlink, .rst-content h4 .nav .fa-spin.headerlink, .nav .rst-content h5 .fa-spin.headerlink, .rst-content h5 .nav .fa-spin.headerlink, .nav .rst-content h6 .fa-spin.headerlink, .rst-content h6 .nav .fa-spin.headerlink, .nav .rst-content dl dt .fa-spin.headerlink, .rst-content dl dt .nav .fa-spin.headerlink, .nav .rst-content p.caption .fa-spin.headerlink, .rst-content p.caption .nav .fa-spin.headerlink, .nav .rst-content table>caption .fa-spin.headerlink, .rst-content table>caption .nav .fa-spin.headerlink, .nav .rst-content .code-block-caption .fa-spin.headerlink, .rst-content .code-block-caption .nav .fa-spin.headerlink, .nav .rst-content tt.download span.fa-spin:first-child, .rst-content tt.download .nav span.fa-spin:first-child, .nav .rst-content code.download span.fa-spin:first-child, .rst-content code.download .nav span.fa-spin:first-child, .nav .fa-spin.icon {
     display: inline-block;
 }
-.btn.fa:before, .wy-menu-vertical li span.btn.toctree-expand:before, .rst-content .btn.admonition-title:before, .rst-content h1 .btn.headerlink:before, .rst-content h2 .btn.headerlink:before, .rst-content h3 .btn.headerlink:before, .rst-content h4 .btn.headerlink:before, .rst-content h5 .btn.headerlink:before, .rst-content h6 .btn.headerlink:before, .rst-content dl dt .btn.headerlink:before, .rst-content p.caption .btn.headerlink:before, .rst-content table>caption .btn.headerlink:before, .rst-content tt.download span.btn:first-child:before, .rst-content code.download span.btn:first-child:before, .btn.icon:before {
-    opacity: 0.5;
-    -webkit-transition: opacity 0.05s ease-in;
-    -moz-transition: opacity 0.05s ease-in;
-    transition: opacity 0.05s ease-in;
+.btn.fa:before, .wy-menu-vertical li span.btn.toctree-expand:before, .rst-content .btn.admonition-title:before, .rst-content h1 .btn.headerlink:before, .rst-content h2 .btn.headerlink:before, .rst-content h3 .btn.headerlink:before, .rst-content h4 .btn.headerlink:before, .rst-content h5 .btn.headerlink:before, .rst-content h6 .btn.headerlink:before, .rst-content dl dt .btn.headerlink:before, .rst-content p.caption .btn.headerlink:before, .rst-content table>caption .btn.headerlink:before, .rst-content .code-block-caption .btn.headerlink:before, .rst-content tt.download span.btn:first-child:before, .rst-content code.download span.btn:first-child:before, .btn.icon:before {
+    opacity: .5;
+    -webkit-transition: opacity .05s ease-in;
+    -moz-transition: opacity .05s ease-in;
+    transition: opacity .05s ease-in;
 }
-.btn.fa:hover:before, .wy-menu-vertical li span.btn.toctree-expand:hover:before, .rst-content .btn.admonition-title:hover:before, .rst-content h1 .btn.headerlink:hover:before, .rst-content h2 .btn.headerlink:hover:before, .rst-content h3 .btn.headerlink:hover:before, .rst-content h4 .btn.headerlink:hover:before, .rst-content h5 .btn.headerlink:hover:before, .rst-content h6 .btn.headerlink:hover:before, .rst-content dl dt .btn.headerlink:hover:before, .rst-content p.caption .btn.headerlink:hover:before, .rst-content table>caption .btn.headerlink:hover:before, .rst-content tt.download span.btn:first-child:hover:before, .rst-content code.download span.btn:first-child:hover:before, .btn.icon:hover:before {
+.btn.fa:hover:before, .wy-menu-vertical li span.btn.toctree-expand:hover:before, .rst-content .btn.admonition-title:hover:before, .rst-content h1 .btn.headerlink:hover:before, .rst-content h2 .btn.headerlink:hover:before, .rst-content h3 .btn.headerlink:hover:before, .rst-content h4 .btn.headerlink:hover:before, .rst-content h5 .btn.headerlink:hover:before, .rst-content h6 .btn.headerlink:hover:before, .rst-content dl dt .btn.headerlink:hover:before, .rst-content p.caption .btn.headerlink:hover:before, .rst-content table>caption .btn.headerlink:hover:before, .rst-content .code-block-caption .btn.headerlink:hover:before, .rst-content tt.download span.btn:first-child:hover:before, .rst-content code.download span.btn:first-child:hover:before, .btn.icon:hover:before {
     opacity: 1;
 }
-.btn-mini .fa:before, .btn-mini .wy-menu-vertical li span.toctree-expand:before, .wy-menu-vertical li .btn-mini span.toctree-expand:before, .btn-mini .rst-content .admonition-title:before, .rst-content .btn-mini .admonition-title:before, .btn-mini .rst-content h1 .headerlink:before, .rst-content h1 .btn-mini .headerlink:before, .btn-mini .rst-content h2 .headerlink:before, .rst-content h2 .btn-mini .headerlink:before, .btn-mini .rst-content h3 .headerlink:before, .rst-content h3 .btn-mini .headerlink:before, .btn-mini .rst-content h4 .headerlink:before, .rst-content h4 .btn-mini .headerlink:before, .btn-mini .rst-content h5 .headerlink:before, .rst-content h5 .btn-mini .headerlink:before, .btn-mini .rst-content h6 .headerlink:before, .rst-content h6 .btn-mini .headerlink:before, .btn-mini .rst-content dl dt .headerlink:before, .rst-content dl dt .btn-mini .headerlink:before, .btn-mini .rst-content p.caption .headerlink:before, .rst-content p.caption .btn-mini .headerlink:before, .btn-mini .rst-content table>caption .headerlink:before, .rst-content table>caption .btn-mini .headerlink:before, .btn-mini .rst-content tt.download span:first-child:before, .rst-content tt.download .btn-mini span:first-child:before, .btn-mini .rst-content code.download span:first-child:before, .rst-content code.download .btn-mini span:first-child:before, .btn-mini .icon:before {
+.btn-mini .fa:before, .btn-mini .wy-menu-vertical li span.toctree-expand:before, .wy-menu-vertical li .btn-mini span.toctree-expand:before, .btn-mini .rst-content .admonition-title:before, .rst-content .btn-mini .admonition-title:before, .btn-mini .rst-content h1 .headerlink:before, .rst-content h1 .btn-mini .headerlink:before, .btn-mini .rst-content h2 .headerlink:before, .rst-content h2 .btn-mini .headerlink:before, .btn-mini .rst-content h3 .headerlink:before, .rst-content h3 .btn-mini .headerlink:before, .btn-mini .rst-content h4 .headerlink:before, .rst-content h4 .btn-mini .headerlink:before, .btn-mini .rst-content h5 .headerlink:before, .rst-content h5 .btn-mini .headerlink:before, .btn-mini .rst-content h6 .headerlink:before, .rst-content h6 .btn-mini .headerlink:before, .btn-mini .rst-content dl dt .headerlink:before, .rst-content dl dt .btn-mini .headerlink:before, .btn-mini .rst-content p.caption .headerlink:before, .rst-content p.caption .btn-mini .headerlink:before, .btn-mini .rst-content table>caption .headerlink:before, .rst-content table>caption .btn-mini .headerlink:before, .btn-mini .rst-content .code-block-caption .headerlink:before, .rst-content .code-block-caption .btn-mini .headerlink:before, .btn-mini .rst-content tt.download span:first-child:before, .rst-content tt.download .btn-mini span:first-child:before, .btn-mini .rst-content code.download span:first-child:before, .rst-content code.download .btn-mini span:first-child:before, .btn-mini .icon:before {
     font-size: 14px;
     vertical-align: -15%}
 .wy-alert, .rst-content .note, .rst-content .attention, .rst-content .caution, .rst-content .danger, .rst-content .error, .rst-content .hint, .rst-content .important, .rst-content .tip, .rst-content .warning, .rst-content .seealso, .rst-content .admonition-todo, .rst-content .admonition {
@@ -1924,9 +1924,9 @@ a .fa, a .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li a span.t
     height: 0;
     line-height: 56px;
     overflow: hidden;
-    -webkit-transition: all 0.3s ease-in;
-    -moz-transition: all 0.3s ease-in;
-    transition: all 0.3s ease-in;
+    -webkit-transition: all .3s ease-in;
+    -moz-transition: all .3s ease-in;
+    transition: all .3s ease-in;
 }
 .wy-tray-container li.wy-tray-item-success {
     background: #27AE60;
@@ -1994,9 +1994,9 @@ button[disabled] {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    -webkit-transition: all 0.1s linear;
-    -moz-transition: all 0.1s linear;
-    transition: all 0.1s linear;
+    -webkit-transition: all .1s linear;
+    -moz-transition: all .1s linear;
+    transition: all .1s linear;
 }
 .btn-hover {
     background: #2e8ece;
@@ -2021,7 +2021,7 @@ button[disabled] {
     background-image: none;
     filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
     filter: alpha(opacity=40);
-    opacity: 0.4;
+    opacity: .4;
     cursor: not-allowed;
     box-shadow: none;
 }
@@ -2029,7 +2029,7 @@ button[disabled] {
     background-image: none;
     filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
     filter: alpha(opacity=40);
-    opacity: 0.4;
+    opacity: .4;
     cursor: not-allowed;
     box-shadow: none;
 }
@@ -2037,7 +2037,7 @@ button[disabled] {
     background-image: none;
     filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
     filter: alpha(opacity=40);
-    opacity: 0.4;
+    opacity: .4;
     cursor: not-allowed;
     box-shadow: none;
 }
@@ -2294,7 +2294,7 @@ input, select, textarea {
 .wy-control-group .wy-form-full {
     float: left;
     display: block;
-    margin-right: 2.35765%;
+    margin-right: 2.3576515979%;
     width: 100%;
     margin-right: 0;
 }
@@ -2304,8 +2304,8 @@ input, select, textarea {
 .wy-control-group .wy-form-halves {
     float: left;
     display: block;
-    margin-right: 2.35765%;
-    width: 48.82117%}
+    margin-right: 2.3576515979%;
+    width: 48.821174201%}
 .wy-control-group .wy-form-halves:last-child {
     margin-right: 0;
 }
@@ -2318,8 +2318,8 @@ input, select, textarea {
 .wy-control-group .wy-form-thirds {
     float: left;
     display: block;
-    margin-right: 2.35765%;
-    width: 31.76157%}
+    margin-right: 2.3576515979%;
+    width: 31.7615656014%}
 .wy-control-group .wy-form-thirds:last-child {
     margin-right: 0;
 }
@@ -2340,7 +2340,7 @@ input, select, textarea {
     width: 100%}
 .wy-form-message-inline {
     display: inline-block;
-    padding-left: 0.3em;
+    padding-left: .3em;
     color: #666;
     vertical-align: middle;
     font-size: 90%}
@@ -2377,9 +2377,9 @@ input[type="text"], input[type="password"], input[type="email"], input[type="url
     font-family: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
     box-shadow: inset 0 1px 3px #ddd;
     border-radius: 0;
-    -webkit-transition: border 0.3s linear;
-    -moz-transition: border 0.3s linear;
-    transition: border 0.3s linear;
+    -webkit-transition: border .3s linear;
+    -moz-transition: border .3s linear;
+    transition: border .3s linear;
 }
 input[type="datetime-local"] {
     padding: .34375em .625em;
@@ -2445,9 +2445,9 @@ select, textarea {
     border: 1px solid #ccc;
     font-size: 80%;
     box-shadow: inset 0 1px 3px #ddd;
-    -webkit-transition: border 0.3s linear;
-    -moz-transition: border 0.3s linear;
-    transition: border 0.3s linear;
+    -webkit-transition: border .3s linear;
+    -moz-transition: border .3s linear;
+    transition: border .3s linear;
 }
 select {
     border: 1px solid #ccc;
@@ -2516,9 +2516,9 @@ input[type="radio"][disabled], input[type="checkbox"][disabled] {
     height: 12px;
     border-radius: 4px;
     background: #ccc;
-    -webkit-transition: all 0.2s ease-in-out;
-    -moz-transition: all 0.2s ease-in-out;
-    transition: all 0.2s ease-in-out;
+    -webkit-transition: all .2s ease-in-out;
+    -moz-transition: all .2s ease-in-out;
+    transition: all .2s ease-in-out;
 }
 .wy-switch:after {
     position: absolute;
@@ -2530,9 +2530,9 @@ input[type="radio"][disabled], input[type="checkbox"][disabled] {
     background: #999;
     left: -3px;
     top: -3px;
-    -webkit-transition: all 0.2s ease-in-out;
-    -moz-transition: all 0.2s ease-in-out;
-    transition: all 0.2s ease-in-out;
+    -webkit-transition: all .2s ease-in-out;
+    -moz-transition: all .2s ease-in-out;
+    transition: all .2s ease-in-out;
 }
 .wy-switch span {
     position: absolute;
@@ -2551,7 +2551,7 @@ input[type="radio"][disabled], input[type="checkbox"][disabled] {
 }
 .wy-switch.disabled {
     cursor: not-allowed;
-    opacity: 0.8;
+    opacity: .8;
 }
 .wy-control-group.wy-control-group-error .wy-form-message, .wy-control-group.wy-control-group-error>label {
     color: #E74C3C;
@@ -2632,21 +2632,21 @@ input[type="radio"][disabled], input[type="checkbox"][disabled] {
 }
 @media only screen and (max-width: 480px) {
     .wy-form button[type="submit"] {
-    margin: 0.7em 0 0;
+    margin: .7em 0 0;
 }
 .wy-form input[type="text"], .wy-form input[type="password"], .wy-form input[type="email"], .wy-form input[type="url"], .wy-form input[type="date"], .wy-form input[type="month"], .wy-form input[type="time"], .wy-form input[type="datetime"], .wy-form input[type="datetime-local"], .wy-form input[type="week"], .wy-form input[type="number"], .wy-form input[type="search"], .wy-form input[type="tel"], .wy-form input[type="color"] {
-    margin-bottom: 0.3em;
+    margin-bottom: .3em;
     display: block;
 }
 .wy-form label {
-    margin-bottom: 0.3em;
+    margin-bottom: .3em;
     display: block;
 }
 .wy-form input[type="password"], .wy-form input[type="email"], .wy-form input[type="url"], .wy-form input[type="date"], .wy-form input[type="month"], .wy-form input[type="time"], .wy-form input[type="datetime"], .wy-form input[type="datetime-local"], .wy-form input[type="week"], .wy-form input[type="number"], .wy-form input[type="search"], .wy-form input[type="tel"], .wy-form input[type="color"] {
     margin-bottom: 0;
 }
 .wy-form-aligned .wy-control-group label {
-    margin-bottom: 0.3em;
+    margin-bottom: .3em;
     text-align: left;
     display: block;
     width: 100%}
@@ -2886,7 +2886,7 @@ code, .rst-content tt, .rst-content code {
     border: solid 1px #e1e4e5;
     font-size: 75%;
     padding: 0 5px;
-    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     color: #E74C3C;
     overflow-x: auto;
 }
@@ -2983,6 +2983,9 @@ code.code-large, .rst-content tt.code-large {
     display: none;
 }
 }
+html {
+    font-size: 16px;
+}
 .wy-affix {
     position: fixed;
     top: 1.618em;
@@ -3021,19 +3024,16 @@ code.code-large, .rst-content tt.code-large {
     width: 300px;
 }
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
-    margin-bottom: 80px;
+    color: #3a7ca8;
     height: 32px;
     display: inline-block;
     line-height: 32px;
     padding: 0 1.618em;
-    margin-bottom: 0;
-    margin-left: -15px;
-    ;
+    margin: 12px 0 0 0;
     display: block;
     font-weight: bold;
     text-transform: uppercase;
-    font-size: 80%;
-    color: #6f6f6f;
+    font-size: 85%;
     white-space: nowrap;
 }
 .wy-menu-vertical ul {
@@ -3051,6 +3051,7 @@ code.code-large, .rst-content tt.code-large {
 .wy-menu-vertical li.current a {
     color: gray;
     border-right: solid 1px #c9c9c9;
+    padding: .4045em 2.427em;
 }
 .wy-menu-vertical li.current a:hover {
     background: #d6d6d6;
@@ -3094,6 +3095,9 @@ code.code-large, .rst-content tt.code-large {
 .wy-menu-vertical li.toctree-l1.current>a {
     border-bottom: solid 1px #c9c9c9;
     border-top: solid 1px #c9c9c9;
+}
+.wy-menu-vertical li.toctree-l2 a, .wy-menu-vertical li.toctree-l3 a, .wy-menu-vertical li.toctree-l4 a {
+    color: #404040;
 }
 .wy-menu-vertical li.toctree-l1.current li.toctree-l2>ul, .wy-menu-vertical li.toctree-l2.current li.toctree-l3>ul {
     display: none;
@@ -3149,7 +3153,7 @@ code.code-large, .rst-content tt.code-large {
 }
 .wy-menu-vertical li ul li a {
     margin-bottom: 0;
-    color: #b3b3b3;
+    color: #d9d9d9;
     font-weight: normal;
 }
 .wy-menu-vertical a {
@@ -3159,14 +3163,14 @@ code.code-large, .rst-content tt.code-large {
     display: block;
     position: relative;
     font-size: 90%;
-    color: #b3b3b3;
+    color: #d9d9d9;
 }
 .wy-menu-vertical a:hover {
     background-color: #4e4a4a;
     cursor: pointer;
 }
 .wy-menu-vertical a:hover span.toctree-expand {
-    color: #b3b3b3;
+    color: #d9d9d9;
 }
 .wy-menu-vertical a:active {
     background-color: #2980B9;
@@ -3178,12 +3182,13 @@ code.code-large, .rst-content tt.code-large {
 }
 .wy-side-nav-search {
     display: block;
-    padding: 4px;
-    margin-bottom: .4px;
+    width: 300px;
+    padding: .809em;
+    margin-bottom: .809em;
     z-index: 200;
-    background-color: #5bbdbf;
+    background-color: #2980B9;
     text-align: center;
-    padding: 4px;
+    padding: .809em;
     display: block;
     color: #fcfcfc;
     margin-bottom: .809em;
@@ -3269,12 +3274,11 @@ code.code-large, .rst-content tt.code-large {
     background: #fcfcfc;
 }
 .wy-grid-for-nav {
-    position: relative;
+    position: absolute;
     width: 100%;
     height: 100%}
 .wy-nav-side {
     position: fixed;
-    float: left;
     top: 0;
     bottom: 0;
     left: 0;
@@ -3283,12 +3287,14 @@ code.code-large, .rst-content tt.code-large {
     overflow-x: hidden;
     overflow-y: hidden;
     min-height: 100%;
+    color: #9b9b9b;
     background: #343131;
-    z-index: 0;
-    margin-top: 0px;
+    z-index: 200;
+    /* Ansible - keeps left-nav from overwriting Documentation title */
     top: 45px;
 }
 .wy-side-scroll {
+/* Ansible - causes side scrollbar to disappear    width: 320px; */
     position: relative;
     overflow-x: hidden;
     overflow-y: scroll;
@@ -3378,7 +3384,7 @@ footer p {
 }
 footer span.commit code, footer span.commit .rst-content tt, .rst-content footer span.commit tt {
     padding: 0px;
-    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     font-size: 1em;
     background: none;
     border: none;
@@ -3422,6 +3428,8 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 #search-results .context {
     color: gray;
     font-size: 90%}
+/* Ansible -has strange effect of changing permalink to P image .genindextable li>ul {
+        margin-left: 24px; */
 @media screen and (max-width: 768px) {
     .wy-body-for-nav {
     background: #fcfcfc;
@@ -3486,7 +3494,6 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     width: 300px;
     color: #fcfcfc;
     background: #1f1d1d;
-    border-top: solid 10px #343131;
     font-family: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
     z-index: 400;
 }
@@ -3513,7 +3520,7 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 .rst-versions .rst-current-version:after {
     clear: both;
 }
-.rst-versions .rst-current-version .fa, .rst-versions .rst-current-version .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li .rst-versions .rst-current-version span.toctree-expand, .rst-versions .rst-current-version .rst-content .admonition-title, .rst-content .rst-versions .rst-current-version .admonition-title, .rst-versions .rst-current-version .rst-content h1 .headerlink, .rst-content h1 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h2 .headerlink, .rst-content h2 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h3 .headerlink, .rst-content h3 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h4 .headerlink, .rst-content h4 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h5 .headerlink, .rst-content h5 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h6 .headerlink, .rst-content h6 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content dl dt .headerlink, .rst-content dl dt .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content p.caption .headerlink, .rst-content p.caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content table>caption .headerlink, .rst-content table>caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content tt.download span:first-child, .rst-content tt.download .rst-versions .rst-current-version span:first-child, .rst-versions .rst-current-version .rst-content code.download span:first-child, .rst-content code.download .rst-versions .rst-current-version span:first-child, .rst-versions .rst-current-version .icon {
+.rst-versions .rst-current-version .fa, .rst-versions .rst-current-version .wy-menu-vertical li span.toctree-expand, .wy-menu-vertical li .rst-versions .rst-current-version span.toctree-expand, .rst-versions .rst-current-version .rst-content .admonition-title, .rst-content .rst-versions .rst-current-version .admonition-title, .rst-versions .rst-current-version .rst-content h1 .headerlink, .rst-content h1 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h2 .headerlink, .rst-content h2 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h3 .headerlink, .rst-content h3 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h4 .headerlink, .rst-content h4 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h5 .headerlink, .rst-content h5 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content h6 .headerlink, .rst-content h6 .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content dl dt .headerlink, .rst-content dl dt .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content p.caption .headerlink, .rst-content p.caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content table>caption .headerlink, .rst-content table>caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content .code-block-caption .headerlink, .rst-content .code-block-caption .rst-versions .rst-current-version .headerlink, .rst-versions .rst-current-version .rst-content tt.download span:first-child, .rst-content tt.download .rst-versions .rst-current-version span:first-child, .rst-versions .rst-current-version .rst-content code.download span:first-child, .rst-content code.download .rst-versions .rst-current-version span:first-child, .rst-versions .rst-current-version .icon {
     color: #fcfcfc;
 }
 .rst-versions .rst-current-version .fa-book, .rst-versions .rst-current-version .icon-book {
@@ -3529,6 +3536,11 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 .rst-versions .rst-current-version.rst-active-old-version {
     background-color: #F1C40F;
     color: #000;
+}
+.rst-versions.shift-up {
+    height: auto;
+    max-height: 100%;
+    overflow-y: scroll;
 }
 .rst-versions.shift-up .rst-other-versions {
     display: block;
@@ -3563,7 +3575,7 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     left: auto;
     border: none;
     max-width: 300px;
-}
+    max-height: 90%}
 .rst-versions.rst-badge .icon-book {
     float: none;
 }
@@ -3631,6 +3643,14 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     line-height: 24px;
     margin-bottom: 24px;
 }
+.rst-content pre.literal-block {
+    white-space: pre;
+    margin: 0;
+    padding: 12px 12px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
+    display: block;
+    overflow: auto;
+}
 .rst-content pre.literal-block, .rst-content div[class^='highlight'] {
     border: 1px solid #e1e4e5;
     padding: 0px;
@@ -3638,6 +3658,7 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     margin: 1px 0 24px 0;
 }
 .rst-content pre.literal-block div[class^='highlight'], .rst-content div[class^='highlight'] div[class^='highlight'] {
+    padding: 0px;
     border: none;
     margin: 0;
 }
@@ -3647,19 +3668,33 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     border-right: solid 1px #e6e9ea;
     margin: 0;
     padding: 12px 12px;
-    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
+    user-select: none;
+    pointer-events: none;
 }
 .rst-content div[class^='highlight'] pre {
     white-space: pre;
     margin: 0;
     padding: 12px 12px;
-    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
     display: block;
     overflow: auto;
 }
+.rst-content div[class^='highlight'] pre .hll {
+    display: block;
+    margin: 0 -12px;
+    padding: 0 12px;
+}
 .rst-content pre.literal-block, .rst-content div[class^='highlight'] pre, .rst-content .linenodiv pre {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     font-size: 12px;
-    line-height: normal;
+    line-height: 1.4;
+}
+.rst-content .code-block-caption {
+    font-style: italic;
+    font-size: 85%;
+    line-height: 1;
+    padding: 1em 0;
+    text-align: center;
 }
 @media print {
     .rst-content .codeblock, .rst-content div[class^='highlight'], .rst-content div[class^='highlight'] pre {
@@ -3688,9 +3723,13 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 .rst-content .section ol p, .rst-content .section ul p {
     margin-bottom: 12px;
 }
+.rst-content .section ol p:last-child, .rst-content .section ul p:last-child {
+    margin-bottom: 24px;
+}
 .rst-content .line-block {
     margin-left: 0px;
     margin-bottom: 24px;
+    line-height: 24px;
 }
 .rst-content .line-block .line-block {
     margin-left: 24px;
@@ -3715,15 +3754,18 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     margin: auto;
     display: block;
 }
-.rst-content h1 .headerlink, .rst-content h2 .headerlink, .rst-content .toctree-wrapper p.caption .headerlink, .rst-content h3 .headerlink, .rst-content h4 .headerlink, .rst-content h5 .headerlink, .rst-content h6 .headerlink, .rst-content dl dt .headerlink, .rst-content p.caption .headerlink, .rst-content table>caption .headerlink {
+.rst-content .align-center:not(table) {
+    display: block;
+}
+.rst-content h1 .headerlink, .rst-content h2 .headerlink, .rst-content .toctree-wrapper p.caption .headerlink, .rst-content h3 .headerlink, .rst-content h4 .headerlink, .rst-content h5 .headerlink, .rst-content h6 .headerlink, .rst-content dl dt .headerlink, .rst-content p.caption .headerlink, .rst-content table>caption .headerlink, .rst-content .code-block-caption .headerlink {
     visibility: hidden;
     font-size: 14px;
 }
-.rst-content h1 .headerlink:after, .rst-content h2 .headerlink:after, .rst-content .toctree-wrapper p.caption .headerlink:after, .rst-content h3 .headerlink:after, .rst-content h4 .headerlink:after, .rst-content h5 .headerlink:after, .rst-content h6 .headerlink:after, .rst-content dl dt .headerlink:after, .rst-content p.caption .headerlink:after, .rst-content table>caption .headerlink:after {
+.rst-content h1 .headerlink:after, .rst-content h2 .headerlink:after, .rst-content .toctree-wrapper p.caption .headerlink:after, .rst-content h3 .headerlink:after, .rst-content h4 .headerlink:after, .rst-content h5 .headerlink:after, .rst-content h6 .headerlink:after, .rst-content dl dt .headerlink:after, .rst-content p.caption .headerlink:after, .rst-content table>caption .headerlink:after, .rst-content .code-block-caption .headerlink:after {
     content: "";
     font-family: FontAwesome;
 }
-.rst-content h1:hover .headerlink:after, .rst-content h2:hover .headerlink:after, .rst-content .toctree-wrapper p.caption:hover .headerlink:after, .rst-content h3:hover .headerlink:after, .rst-content h4:hover .headerlink:after, .rst-content h5:hover .headerlink:after, .rst-content h6:hover .headerlink:after, .rst-content dl dt:hover .headerlink:after, .rst-content p.caption:hover .headerlink:after, .rst-content table>caption:hover .headerlink:after {
+.rst-content h1:hover .headerlink:after, .rst-content h2:hover .headerlink:after, .rst-content .toctree-wrapper p.caption:hover .headerlink:after, .rst-content h3:hover .headerlink:after, .rst-content h4:hover .headerlink:after, .rst-content h5:hover .headerlink:after, .rst-content h6:hover .headerlink:after, .rst-content dl dt:hover .headerlink:after, .rst-content p.caption:hover .headerlink:after, .rst-content table>caption:hover .headerlink:after, .rst-content .code-block-caption:hover .headerlink:after {
     visibility: visible;
 }
 .rst-content table>caption .headerlink:after {
@@ -3759,6 +3801,7 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     background: #F1C40F;
     display: inline-block;
     font-weight: bold;
+  /* Ansible - remove so highlight indenting is correct  padding: 0 6px; */
 }
 .rst-content .footnote-reference, .rst-content .citation-reference {
     vertical-align: baseline;
@@ -3793,11 +3836,21 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 .rst-content .wy-table-responsive.citation:last-child, .rst-content .wy-table-responsive.footnote:last-child {
     margin-bottom: 24px;
 }
+.rst-content table.docutils th {
+    border-color: #e1e4e5;
+}
+.rst-content table.docutils td .last, .rst-content table.docutils td .last :last-child {
+    margin-bottom: 0;
+}
 .rst-content table.field-list {
     border: none;
 }
 .rst-content table.field-list td {
     border: none;
+}
+.rst-content table.field-list td p {
+    font-size: inherit;
+    line-height: inherit;
 }
 .rst-content table.field-list td>strong {
     display: inline-block;
@@ -3812,6 +3865,7 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 }
 .rst-content tt, .rst-content tt, .rst-content code {
     color: #000;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     padding: 2px 5px;
 }
 .rst-content tt big, .rst-content tt em, .rst-content tt big, .rst-content code big, .rst-content tt em, .rst-content code em {
@@ -3825,6 +3879,9 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
     font-weight: bold;
     color: #404040;
 }
+.rst-content pre, .rst-content kbd, .rst-content samp {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
+}
 .rst-content a tt, .rst-content a tt, .rst-content a code {
     color: #2980B9;
 }
@@ -3833,12 +3890,14 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 }
 .rst-content dl dt {
     font-weight: bold;
+    margin-bottom: 12px;
 }
 .rst-content dl p, .rst-content dl table, .rst-content dl ul, .rst-content dl ol {
     margin-bottom: 12px !important;
 }
 .rst-content dl dd {
     margin: 0 0 12px 24px;
+    line-height: 24px;
 }
 .rst-content dl:not(.docutils) {
     margin-bottom: 24px;
@@ -3951,50 +4010,44 @@ span[id*='MathJax-Span'] {
     text-align: center;
 }
 @font-face {
-    font-family: "Inconsolata";
-    font-style: normal;
+    font-family: "Lato";
+    src: url("../fonts/Lato/lato-regular.eot");
+    src: url("../fonts/Lato/lato-regular.eot?#iefix") format("embedded-opentype"), url("../fonts/Lato/lato-regular.woff2") format("woff2"), url("../fonts/Lato/lato-regular.woff") format("woff"), url("../fonts/Lato/lato-regular.ttf") format("truetype");
     font-weight: 400;
-    src: local("Inconsolata"), local("Inconsolata-Regular"), url(../fonts/Inconsolata-Regular.ttf) format("truetype");
+    font-style: normal;
 }
 @font-face {
-    font-family: "Inconsolata";
-    font-style: normal;
+    font-family: "Lato";
+    src: url("../fonts/Lato/lato-bold.eot");
+    src: url("../fonts/Lato/lato-bold.eot?#iefix") format("embedded-opentype"), url("../fonts/Lato/lato-bold.woff2") format("woff2"), url("../fonts/Lato/lato-bold.woff") format("woff"), url("../fonts/Lato/lato-bold.ttf") format("truetype");
     font-weight: 700;
-    src: local("Inconsolata Bold"), local("Inconsolata-Bold"), url(../fonts/Inconsolata-Bold.ttf) format("truetype");
+    font-style: normal;
 }
 @font-face {
     font-family: "Lato";
-    font-style: normal;
-    font-weight: 400;
-    src: local("Lato Regular"), local("Lato-Regular"), url(../fonts/Lato-Regular.ttf) format("truetype");
-}
-@font-face {
-    font-family: "Lato";
-    font-style: normal;
+    src: url("../fonts/Lato/lato-bolditalic.eot");
+    src: url("../fonts/Lato/lato-bolditalic.eot?#iefix") format("embedded-opentype"), url("../fonts/Lato/lato-bolditalic.woff2") format("woff2"), url("../fonts/Lato/lato-bolditalic.woff") format("woff"), url("../fonts/Lato/lato-bolditalic.ttf") format("truetype");
     font-weight: 700;
-    src: local("Lato Bold"), local("Lato-Bold"), url(../fonts/Lato-Bold.ttf) format("truetype");
-}
-@font-face {
-    font-family: "Lato";
     font-style: italic;
-    font-weight: 400;
-    src: local("Lato Italic"), local("Lato-Italic"), url(../fonts/Lato-Italic.ttf) format("truetype");
 }
 @font-face {
     font-family: "Lato";
+    src: url("../fonts/Lato/lato-italic.eot");
+    src: url("../fonts/Lato/lato-italic.eot?#iefix") format("embedded-opentype"), url("../fonts/Lato/lato-italic.woff2") format("woff2"), url("../fonts/Lato/lato-italic.woff") format("woff"), url("../fonts/Lato/lato-italic.ttf") format("truetype");
+    font-weight: 400;
     font-style: italic;
-    font-weight: 700;
-    src: local("Lato Bold Italic"), local("Lato-BoldItalic"), url(../fonts/Lato-BoldItalic.ttf) format("truetype");
 }
 @font-face {
     font-family: "Roboto Slab";
     font-style: normal;
     font-weight: 400;
-    src: local("Roboto Slab Regular"), local("RobotoSlab-Regular"), url(../fonts/RobotoSlab-Regular.ttf) format("truetype");
+    src: url("../fonts/RobotoSlab/roboto-slab.eot");
+    src: url("../fonts/RobotoSlab/roboto-slab-v7-regular.eot?#iefix") format("embedded-opentype"), url("../fonts/RobotoSlab/roboto-slab-v7-regular.woff2") format("woff2"), url("../fonts/RobotoSlab/roboto-slab-v7-regular.woff") format("woff"), url("../fonts/RobotoSlab/roboto-slab-v7-regular.ttf") format("truetype");
 }
 @font-face {
     font-family: "Roboto Slab";
     font-style: normal;
     font-weight: 700;
-    src: local("Roboto Slab Bold"), local("RobotoSlab-Bold"), url(../fonts/RobotoSlab-Bold.ttf) format("truetype");
+    src: url("../fonts/RobotoSlab/roboto-slab-v7-bold.eot");
+    src: url("../fonts/RobotoSlab/roboto-slab-v7-bold.eot?#iefix") format("embedded-opentype"), url("../fonts/RobotoSlab/roboto-slab-v7-bold.woff2") format("woff2"), url("../fonts/RobotoSlab/roboto-slab-v7-bold.woff") format("woff"), url("../fonts/RobotoSlab/roboto-slab-v7-bold.ttf") format("truetype");
 }
