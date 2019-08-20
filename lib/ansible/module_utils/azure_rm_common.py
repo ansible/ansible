@@ -40,16 +40,16 @@ AZURE_COMMON_ARGS = dict(
 )
 
 AZURE_CREDENTIAL_ENV_MAPPING = dict(
-    profile='AZURE_PROFILE',
-    subscription_id='AZURE_SUBSCRIPTION_ID',
-    client_id='AZURE_CLIENT_ID',
-    secret='AZURE_SECRET',
-    tenant='AZURE_TENANT',
-    ad_user='AZURE_AD_USER',
-    password='AZURE_PASSWORD',
-    cloud_environment='AZURE_CLOUD_ENVIRONMENT',
-    cert_validation_mode='AZURE_CERT_VALIDATION_MODE',
-    adfs_authority_url='AZURE_ADFS_AUTHORITY_URL'
+    profile=['AZURE_PROFILE','AZURE_PROFILE_ID','AZURE_CLIENT_PROFILE'],
+    subscription_id=['AZURE_SUBSCRIPTION_ID','AZURE_SUBSCRIPTION'],
+    client_id=['AZURE_CLIENT_ID','AZURE_CLIENT'],
+    secret=['AZURE_SECRET','AZURE_SECRET_ID','AZURE_CLIENT_SECRET'],
+    tenant=['AZURE_TENANT','AZURE_TENANT_ID'],
+    ad_user=['AZURE_AD_USER','AZURE_AD_USER_ID'],
+    password=['AZURE_PASSWORD','AZURE_AD_PASSWORD'],
+    cloud_environment=['AZURE_CLOUD_ENVIRONMENT'],
+    cert_validation_mode=['AZURE_CERT_VALIDATION_MODE'],
+    adfs_authority_url=['AZURE_ADFS_AUTHORITY_URL']
 )
 
 # FUTURE: this should come from the SDK or an external location.
@@ -477,9 +477,9 @@ class AzureRMModuleBase(object):
 
     def parse_resource_to_dict(self, resource):
         '''
-        Return a dict of the give resource, which contains name and resource group.
+        Return a dict of the given resource, which contains the name and resource group.
 
-        :param resource: It can be a resource name, id or a dict contains name and resource group.
+        :param resource: It can be a resource name, id or a dict containing name and resource group.
         '''
         resource_dict = parse_resource_id(resource) if not isinstance(resource, dict) else resource
         resource_dict['resource_group'] = resource_dict.get('resource_group', self.resource_group)
@@ -1270,7 +1270,10 @@ class AzureRMAuth(object):
     def _get_msi_credentials(self, subscription_id_param=None, **kwargs):
         client_id = kwargs.get('client_id', None)
         credentials = MSIAuthentication(client_id=client_id)
-        subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
+        for env_var in AZURE_CREDENTIAL_ENV_MAPPING['subscription_id']:
+            subscription_id = subscription_id_param or os.environ.get(env_var, None)
+            if subscription_id:
+                break
         if not subscription_id:
             try:
                 # use the first subscription of the MSI
@@ -1298,8 +1301,11 @@ class AzureRMAuth(object):
 
     def _get_env_credentials(self):
         env_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
-            env_credentials[attribute] = os.environ.get(env_variable, None)
+        for attribute, env_variables in AZURE_CREDENTIAL_ENV_MAPPING.items():
+            for env_variable in env_variables:
+                env_credentials[attribute] = os.environ.get(env_variable, None)
+                if env_credentials[attribute]:
+                    break
 
         if env_credentials['profile']:
             credentials = self._get_profile(env_credentials['profile'])
@@ -1316,8 +1322,8 @@ class AzureRMAuth(object):
         self.log('Getting credentials')
 
         arg_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
-            arg_credentials[attribute] = params.get(attribute, None)
+        for key in AZURE_CREDENTIAL_ENV_MAPPING:
+            arg_credentials[key] = params.get(key, None)
 
         auth_source = params.get('auth_source', None)
         if not auth_source:
