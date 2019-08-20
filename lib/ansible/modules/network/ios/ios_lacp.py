@@ -43,24 +43,24 @@ short_description: Manage Global Link Aggregation Control Protocol (LACP) on Cis
 description: This module provides declarative management of Global LACP on Cisco IOS network devices.
 author: Sumit Jaiswal (@justjais)
 notes:
-  - 'Tested against Cisco IOSv Version 15.2 on VIRL
+  - Tested against Cisco IOSv Version 15.2 on VIRL
   - This module works with connection C(network_cli),
     See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
   config:
-      description: The provided configurations.
-      type: dict
-      suboptions:
-        system:
-          description: This option sets the default system parameters for LACP.
-          type: dict
-          suboptions:
-            priority:
-              description:
-              - LACP priority for the system.
-              - Refer to vendor documentation for valid values.
-              type: int
-              required: True
+    description: The provided configurations.
+    type: dict
+    suboptions:
+      system:
+        description: This option sets the default system parameters for LACP.
+        type: dict
+        suboptions:
+          priority:
+            description:
+            - LACP priority for the system.
+            - Refer to vendor documentation for valid values.
+            type: int
+            required: True
   state:
     description:
     - The state the configuration should be left in
@@ -116,7 +116,7 @@ EXAMPLES = """
 # vios#show lacp sys-id
 # 123, 5e00.0000.8000
 
-# Using Deleted 
+# Using Deleted
 #
 # Before state:
 # -------------

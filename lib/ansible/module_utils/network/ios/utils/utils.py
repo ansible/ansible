@@ -39,7 +39,7 @@ def dict_to_set(sample_dict):
                         for key, value in iteritems(each):
                             if isinstance(value, list):
                                 each[key] = tuple(value)
-                        li.append(tuple(each.items()))
+                        li.append(tuple(iteritems(each)))
                     v = tuple(li)
                 else:
                     v = tuple(v)
@@ -48,10 +48,10 @@ def dict_to_set(sample_dict):
                 for key, value in iteritems(v):
                     if isinstance(value, list):
                         v[key] = tuple(value)
-                li.extend(tuple(v.items()))
+                li.extend(tuple(iteritems(v)))
                 v = tuple(li)
             test_dict.update({k: v})
-    return_set = set(tuple(test_dict.items()))
+    return_set = set(tuple(iteritems(test_dict)))
     return return_set
 
 
