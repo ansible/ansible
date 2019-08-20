@@ -101,7 +101,7 @@ options:
                 type: str
             mapped_port:
                 description:
-                    - Mapped server service port (1 - 65535, default = 80).
+                    - Mapped server service port (1 - 65535).
                 type: int
             name:
                 description:
@@ -110,7 +110,7 @@ options:
                 type: str
             port:
                 description:
-                    - Server service port (1 - 65535, default = 443).
+                    - Server service port (1 - 65535).
                 type: int
             ssl_algorithm:
                 description:
@@ -122,7 +122,7 @@ options:
                     - low
             ssl_cert:
                 description:
-                    - Name of certificate for SSL connections to this server (default = "Fortinet_CA_SSL"). Source vpn.certificate.local.name.
+                    - Name of certificate for SSL connections to this server. Source vpn.certificate.local.name.
                 type: str
             ssl_client_renegotiation:
                 description:
@@ -134,7 +134,7 @@ options:
                     - secure
             ssl_dh_bits:
                 description:
-                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation (default = 2048).
+                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation.
                 type: str
                 choices:
                     - 768
