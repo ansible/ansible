@@ -27,7 +27,7 @@ description:
 attrs:
   path:
     description:
-    - Path to the stanza file.
+      - Path to the stanza file.
     type: path
     required: true
     aliases: [ dest ]
@@ -37,20 +37,20 @@ attrs:
     type: str
     required: true
   attrs:
-     description:
+    description:
     - A list of key/value pairs
-     type: list
-     aliases: [ options ]
+    type: list
+    aliases: [ options ]
   state:
-     description:
-     - If set to C(present) all given attrs values will be set.
-     - If set to C(absent) all attrs provided will be un-set, regardless of value provided.
-       - NB: This does not remove the entire stanza, only the provided attrs will be removed.
-     - To remove an attribute from the stanza set to C(present) and set key to an empty value (key=).
-     - All rules, allowed file-stanza combos or allowed files for the C(chsec) command also applies here.
-     type: str
-     choices: [ absent, present ]
-     default: present
+    description:
+    - If set to C(present) all given attrs values will be set.
+    - If set to C(absent) all attrs provided will be un-set, regardless of value provided.
+    - NB: This does not remove the entire stanza, only the provided attrs will be removed.
+    - To remove an attribute from the stanza set to C(present) and set key to an empty value (key=).
+    - All rules, allowed file-stanza combos or allowed files for the C(chsec) command also applies here.
+    type: str
+    choices: [ absent, present ]
+    default: present
 seealso:
 - name: The chsec manual page from the IBM Knowledge Center
   description: Changes the attributes in the security stanza files.
@@ -107,13 +107,13 @@ def attrs2dict(attrs):
         { 'SYSTEM': 'LDAP', 'registry': 'LDAP' }
     """
     return_dict = {}
-    if type(attrs) == str:
+    if isinstance(attrs, str):
         # Assume we have this:
         #   "SYSTEM=LDAP,registry=LDAP"
         # Split it into a list of strings, like this:
         #   [ "SYSTEM=LDAP", "registry=LDAP" ]
         attrs = [x.strip() for x in attrs.split(',')]
-    if type(attrs) == list:
+    if isinstance(attrs, list):
         # Assume it's a list of key=values, so
         #   [ "SYSTEM=LDAP", "registry=LDAP" ]
         # Take each attr and split it into a key:value dict and update return_dict
@@ -121,7 +121,7 @@ def attrs2dict(attrs):
         for element in attrs:
             k, v = element.split('=')
             return_dict.update({k: v})
-    if type(attrs) == dict:
+    if isinstance(attrs, dict):
         return_dict.update(attrs)
     return return_dict
 
