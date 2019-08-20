@@ -82,3 +82,8 @@
     assert:
       that:
         - not result.changed
+  always:
+  - name: remove iam password policy
+    iam_password_policy:
+      state: absent
+    register: result
