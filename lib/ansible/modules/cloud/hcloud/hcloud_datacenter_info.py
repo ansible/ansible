@@ -16,13 +16,15 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_datacenter_facts
+module: hcloud_datacenter_info
 
-short_description: Gather facts about the Hetzner Cloud datacenters.
+short_description: Gather info about the Hetzner Cloud datacenters.
 
 version_added: "2.8"
 description:
-    - Gather facts about your Hetzner Cloud datacenters.
+    - Gather info about your Hetzner Cloud datacenters.
+    - This module was called C(hcloud_datacenter_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_datacenter_facts).
+      Note that the M(hcloud_datacenter_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_datacenter_info)!
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -40,32 +42,35 @@ extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud datacenter facts
-  local_action:
-    module: hcloud_datacenter_facts
-- name: Print the gathered facts
+- name: Gather hcloud datacenter info
+  hcloud_datacenter_info:
+  register: output
+- name: Print the gathered info
   debug:
-    var: ansible_facts.hcloud_datacenter_facts
+    var: output
 """
 
 RETURN = """
-hcloud_datacenter_facts:
-    description: The datacenter facts as list
+hcloud_datacenter_info:
+    description:
+      - The datacenter info as list
+      - This module was called C(hcloud_datacenter_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_datacenter_facts).
+        Note that the M(hcloud_datacenter_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_datacenter_info)!
     returned: always
     type: complex
     contains:
         id:
-            description: Numeric identifier of the location
+            description: Numeric identifier of the datacenter
             returned: always
             type: int
             sample: 1937415
         name:
-            description: Name of the location
+            description: Name of the datacenter
             returned: always
             type: str
             sample: fsn1-dc8
         description:
-            description: Detail description of the location
+            description: Detail description of the datacenter
             returned: always
             type: str
             sample: Falkenstein DC 8
@@ -91,15 +96,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudDatacenterFacts(Hcloud):
+class AnsibleHcloudDatacenterInfo(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_datacenter_facts")
-        self.hcloud_datacenter_facts = None
+        Hcloud.__init__(self, module, "hcloud_datacenter_info")
+        self.hcloud_datacenter_info = None
 
     def _prepare_result(self):
         tmp = []
 
-        for datacenter in self.hcloud_datacenter_facts:
+        for datacenter in self.hcloud_datacenter_info:
             if datacenter is not None:
                 tmp.append({
                     "id": to_native(datacenter.id),
@@ -113,15 +118,15 @@ class AnsibleHcloudDatacenterFacts(Hcloud):
     def get_datacenters(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_datacenter_facts = [self.client.datacenters.get_by_id(
+                self.hcloud_datacenter_info = [self.client.datacenters.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("name") is not None:
-                self.hcloud_datacenter_facts = [self.client.datacenters.get_by_name(
+                self.hcloud_datacenter_info = [self.client.datacenters.get_by_name(
                     self.module.params.get("name")
                 )]
             else:
-                self.hcloud_datacenter_facts = self.client.datacenters.get_all()
+                self.hcloud_datacenter_info = self.client.datacenters.get_all()
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -139,16 +144,26 @@ class AnsibleHcloudDatacenterFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudDatacenterFacts.define_module()
+    module = AnsibleHcloudDatacenterInfo.define_module()
 
-    hcloud = AnsibleHcloudDatacenterFacts(module)
+    is_old_facts = module._name == 'hcloud_datacenter_facts'
+    if is_old_facts:
+        module.deprecate("The 'hcloud_datacenter_facts' module has been renamed to 'hcloud_datacenter_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
+    hcloud = AnsibleHcloudDatacenterInfo(module)
 
     hcloud.get_datacenters()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_datacenter_facts': result['hcloud_datacenter_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts)
+    if is_old_facts:
+        ansible_info = {
+            'hcloud_datacenter_facts': result['hcloud_datacenter_info']
+        }
+        module.exit_json(ansible_facts=ansible_info)
+    else:
+        ansible_info = {
+            'hcloud_datacenter_info': result['hcloud_datacenter_info']
+        }
+        module.exit_json(**ansible_info)
 
 
 if __name__ == "__main__":
