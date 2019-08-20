@@ -43,11 +43,16 @@ def g_connect(method):
         if not self.initialized:
             display.vvvv("Initial connection to galaxy_server: %s" % self.api_server)
             server_version = self._get_server_api_version()
+
             if server_version not in self.SUPPORTED_VERSIONS:
                 raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
 
             self.baseurl = _urljoin(self.api_server, "api", server_version)
+
+            available_api_versions = self.get_available_api_versions()
             self.version = server_version  # for future use
+            self.available_api_versions = available_api_versions
+
             display.vvvv("Base API: %s" % self.baseurl)
             self.initialized = True
         return method(self, *args, **kwargs)
@@ -74,6 +79,7 @@ class GalaxyAPI(object):
         self.baseurl = None
         self.version = None
         self.initialized = False
+        self.available_api_versions = {}
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
@@ -123,10 +129,29 @@ class GalaxyAPI(object):
         except Exception as e:
             raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
 
-        if 'current_version' not in data:
-            raise AnsibleError("missing required 'current_version' from server response (%s)" % url)
+        available_versions = data.get('available_versions',
+                                      {'v1': '/api/v1',
+                                       'v2': '/api/v2'})
 
-        return data['current_version']
+        return available_versions
+
+    def get_available_api_versions(self):
+        url = _urljoin(self.api_server, "api")
+        try:
+            return_data = open_url(url, validate_certs=self.validate_certs)
+        except Exception as e:
+            raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
+
+        try:
+            data = json.loads(to_text(return_data.read(), errors='surrogate_or_strict'))
+        except Exception as e:
+            raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
+
+        available_versions = data.get('available_versions',
+                                      {'v1': '/api/v1',
+                                       'v2': '/api/v2'})
+
+        return available_versions
 
     @g_connect
     def authenticate(self, github_token):

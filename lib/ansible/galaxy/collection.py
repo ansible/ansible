@@ -312,6 +312,10 @@ class CollectionRequirement:
             collection_url_paths = [api.api_server, 'api', 'v2', 'collections', namespace, name, 'versions']
             headers = api._auth_header(required=False)
 
+            if 'v3' in api.available_api_versions:
+                # /api/v3/ exists, use it
+                collection_url_paths[2] = 'v3'
+
             is_single = False
             if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
                     requirement.startswith('!=')):
@@ -325,10 +329,11 @@ class CollectionRequirement:
             try:
                 resp = json.load(open_url(n_collection_url, validate_certs=api.validate_certs, headers=headers))
             except urllib_error.HTTPError as err:
+
                 if err.code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s" % (collection, api.name, api.api_server))
                     continue
-                raise
+                _handle_http_error(err, api, 'Error fetching info for %s from %s (%s)' % (collection, api.name, api.api_server))
 
             if is_single:
                 galaxy_info = resp
@@ -336,13 +341,24 @@ class CollectionRequirement:
                 versions = [resp['version']]
             else:
                 versions = []
+
+                results_key = 'results'
+                if 'v3' in api.available_api_versions:
+                    results_key = 'data'
+
                 while True:
                     # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
                     # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
-                    versions += [v['version'] for v in resp['results'] if StrictVersion.version_re.match(v['version'])]
-                    if resp['next'] is None:
+                    versions += [v['version'] for v in resp[results_key] if StrictVersion.version_re.match(v['version'])]
+
+                    next_link = resp.get('next', None)
+                    if 'v3' in api.available_api_versions:
+                        next_link = resp['links']['next']
+
+                    if next_link is None:
                         break
-                    resp = json.load(open_url(to_native(resp['next'], errors='surrogate_or_strict'),
+
+                    resp = json.load(open_url(to_native(next_link, errors='surrogate_or_strict'),
                                               validate_certs=api.validate_certs, headers=headers))
 
             display.vvv("Collection '%s' obtained from server %s %s" % (collection, api.name, api.api_server))
@@ -409,28 +425,23 @@ def publish_collection(collection_path, api, wait, timeout):
 
     display.display("Publishing collection artifact '%s' to %s %s" % (collection_path, api.name, api.api_server))
 
+    headers = {}
+    headers.update(api._auth_header())
+
     n_url = _urljoin(api.api_server, 'api', 'v2', 'collections')
+    if 'v3' in api.available_api_versions:
+        n_url = _urljoin(api.api_server, 'api', 'v3', 'artifacts', 'collections')
 
     data, content_type = _get_mime_data(b_collection_path)
-    headers = {
+    headers.update({
         'Content-type': content_type,
         'Content-length': len(data),
-    }
-    headers.update(api._auth_header())
+    })
 
     try:
         resp = json.load(open_url(n_url, data=data, headers=headers, method='POST', validate_certs=api.validate_certs))
     except urllib_error.HTTPError as err:
-        try:
-            err_info = json.load(err)
-        except (AttributeError, ValueError):
-            err_info = {}
-
-        code = to_native(err_info.get('code', 'Unknown'))
-        message = to_native(err_info.get('message', 'Unknown error returned by Galaxy server.'))
-
-        raise AnsibleError("Error when publishing collection (HTTP Code: %d, Message: %s Code: %s)"
-                           % (err.code, message, code))
+        _handle_http_error(err, api, "Error when publishing collection to %s (%s)" % (api.name, api.api_server))
 
     import_uri = resp['task']
     if wait:
@@ -1016,3 +1027,33 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
             os.makedirs(b_parent_dir)
 
         shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
+
+
+def _handle_http_error(http_error, api, context_error_message):
+    try:
+        err_info = json.load(http_error)
+    except (AttributeError, ValueError):
+        err_info = {}
+
+    if 'v3' in api.available_api_versions:
+        message_lines = []
+        errors = err_info.get('errors', None)
+
+        if not errors:
+            errors = [{'detail': 'Unknown error returned by Galaxy server.',
+                       'code': 'Unknown'}]
+
+        for error in errors:
+            error_msg = error.get('detail') or error.get('title') or 'Unknown error returned by Galaxy server.'
+            error_code = error.get('code') or 'Unknown'
+            message_line = "(HTTP Code: %d, Message: %s Code: %s)" % (http_error.code, error_msg, error_code)
+            message_lines.append(message_line)
+
+        full_error_msg = "%s %s" % (context_error_message, ', '.join(message_lines))
+    else:
+        code = to_native(err_info.get('code', 'Unknown'))
+        message = to_native(err_info.get('message', 'Unknown error returned by Galaxy server.'))
+        full_error_msg = "%s (HTTP Code: %d, Message: %s Code: %s)" \
+            % (context_error_message, http_error.code, message, code)
+
+    raise AnsibleError(full_error_msg)

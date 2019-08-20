@@ -445,9 +445,8 @@ def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
     assert mock_display.mock_calls[0][1][0] == "Publishing collection artifact '%s' to %s %s" \
         % (artifact_path, galaxy_server.name, galaxy_server.api_server)
     assert mock_display.mock_calls[1][1][0] == \
-        "Collection has been pushed to the Galaxy server %s %s, not waiting until import has completed due to " \
-        "--no-wait being set. Import task results can be found at %s"\
-        % (galaxy_server.name, galaxy_server.api_server, fake_import_uri)
+        "Collection has been pushed to the Galaxy server %s %s, not waiting until import has completed due to --no-wait " \
+        "being set. Import task results can be found at %s" % (galaxy_server.name, galaxy_server.api_server, fake_import_uri)
 
 
 def test_publish_dont_validate_cert(galaxy_server, collection_artifact):
@@ -467,7 +466,8 @@ def test_publish_failure(galaxy_server, collection_artifact):
 
     mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 500, 'msg', {}, StringIO())
 
-    expected = 'Error when publishing collection (HTTP Code: 500, Message: Unknown error returned by Galaxy ' \
+    expected = 'Error when publishing collection to test_server (https://galaxy.ansible.com) ' \
+               '(HTTP Code: 500, Message: Unknown error returned by Galaxy ' \
                'server. Code: Unknown)'
     with pytest.raises(AnsibleError, match=re.escape(expected)):
         collection.publish_collection(artifact_path, galaxy_server, True, 0)
@@ -479,12 +479,19 @@ def test_publish_failure_with_json_info(galaxy_server, collection_artifact):
     return_content = StringIO(u'{"message":"Galaxy error message","code":"GWE002"}')
     mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 503, 'msg', {}, return_content)
 
-    expected = 'Error when publishing collection (HTTP Code: 503, Message: Galaxy error message Code: GWE002)'
+    expected = 'Error when publishing collection to test_server (https://galaxy.ansible.com) ' \
+               '(HTTP Code: 503, Message: Galaxy error message Code: GWE002)'
     with pytest.raises(AnsibleError, match=re.escape(expected)):
         collection.publish_collection(artifact_path, galaxy_server, True, 0)
 
 
-def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
+@pytest.mark.parametrize("api_version", [
+    ('v2',),
+    ('v3',)
+])
+def test_publish_with_wait(api_version, galaxy_server, collection_artifact, monkeypatch):
+    galaxy_server.available_api_versions = {api_version: ''}
+
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
@@ -515,7 +522,12 @@ def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
                                                'Galaxy server %s %s' % (galaxy_server.name, galaxy_server.api_server)
 
 
-def test_publish_with_wait_timeout(galaxy_server, collection_artifact, monkeypatch):
+@pytest.mark.parametrize("api_version,exp_api_url", [
+    ('v2', '/api/v2/collections/'),
+    ('v3', '/api/v3/artifacts/collections/')
+])
+def test_publish_with_wait_timeout(api_version, exp_api_url, galaxy_server, collection_artifact, monkeypatch):
+    galaxy_server.available_api_versions = {api_version: ''}
     monkeypatch.setattr(time, 'sleep', MagicMock())
 
     mock_vvv = MagicMock()
@@ -727,6 +739,63 @@ def test_publish_with_wait_and_failure_and_no_error(galaxy_server, collection_ar
 
     assert mock_err.call_count == 1
     assert mock_err.mock_calls[0][1][0] == 'Galaxy import error message: Some error'
+
+
+def test_publish_failure_v3_with_json_info_409_conflict(galaxy_server, collection_artifact):
+    galaxy_server.available_api_versions = {'v3': ''}
+    artifact_path, mock_open = collection_artifact
+
+    error_response = {
+        "errors": [
+            {
+                "code": "conflict.collection_exists",
+                "detail": 'Collection "testing-ansible_testing_content-4.0.4" already exists.',
+                "title": "Conflict.",
+                "status": "409",
+            },
+        ]
+    }
+
+    return_content = StringIO(to_text(json.dumps(error_response)))
+    mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 409, 'msg', {}, return_content)
+
+    expected = 'Error when publishing collection to test_server (https://galaxy.ansible.com) ' \
+               '(HTTP Code: 409, Message: Collection "testing-ansible_testing_content-4.0.4"' \
+               ' already exists. Code: conflict.collection_exists)'
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        collection.publish_collection(artifact_path, galaxy_server, True, 0)
+
+
+def test_publish_failure_v3_with_json_info_multiple_errors(galaxy_server, collection_artifact):
+    galaxy_server.available_api_versions = {'v3': ''}
+    artifact_path, mock_open = collection_artifact
+
+    error_response = {
+        "errors": [
+            {
+                "code": "conflict.collection_exists",
+                "detail": 'Collection "mynamespace-mycollection-4.1.1" already exists.',
+                "title": "Conflict.",
+                "status": "400",
+            },
+            {
+                "code": "quantum_improbability",
+                "title": "Random(?) quantum improbability.",
+                "source": {"parameter": "the_arrow_of_time"},
+                "meta": {"remediation": "Try again before"}
+            },
+        ]
+    }
+
+    return_content = StringIO(to_text(json.dumps(error_response)))
+    mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 400, 'msg', {}, return_content)
+
+    expected = 'Error when publishing collection to test_server (https://galaxy.ansible.com) ' \
+               '(HTTP Code: 400, Message: Collection "mynamespace-mycollection-4.1.1"' \
+               ' already exists. Code: conflict.collection_exists),' \
+               ' (HTTP Code: 400, Message: Random(?) quantum improbability. Code: quantum_improbability)'
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        collection.publish_collection(artifact_path, galaxy_server, True, 0)
 
 
 def test_find_existing_collections(tmp_path_factory, monkeypatch):
