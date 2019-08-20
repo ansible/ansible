@@ -49,7 +49,7 @@ options:
     description:
       - "Package name to run the equivalent of yum list --show-duplicates <package> against. In addition to listing packages,
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
-      - parameters is mutually exclusive with C(name), 
+      - Parameters is mutually exclusive with C(name)
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
