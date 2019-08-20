@@ -177,9 +177,15 @@ class ActionModule(ActionBase):
         body = self.conn.exec_command(command)
 
         match = re.search(r'(\d+) bytes free', body)
-        bytes_free = match.group(1)
+        if match:
+            bytes_free = match.group(1)
+            return int(bytes_free)
 
-        return int(bytes_free)
+        match = re.search(r'No such file or directory', body)
+        if match:
+            raise AnsibleError('Invalid nxos filesystem {0}'.format(file_system))
+        else:
+            raise AnsibleError('Unable to determine size of filesystem {0}'.format(file_system))
 
     def enough_space(self, file, file_system):
         flash_size = self.get_flash_size(file_system)
@@ -273,32 +279,38 @@ class ActionModule(ActionBase):
             # Possible outcomes key:
             # 0) - Are you sure you want to continue connecting (yes/no)
             # 1) - Password: or @servers's password:
-            # 2) - nxos_router_prompt#
-            # 3) - Warning: There is already a file existing with this name. Do you want to overwrite (y/n)?[n]
-            # 4) - Timeout conditions
-            # 5) - No space on nxos device file_system
-            # 6) - Username/Password or file permission issues
-            # 7) - File does not exist on remote scp server
-            # 8) - pexpect timeout
-            # 9) - invalid nxos command
-            # 10) - compact option not supported
-            # 11) - compaction attempt failed
-            # 12) - other failures like attempting to compact non image file
-            # 13) - Copy completed without issues
+            # 2) - Warning: There is already a file existing with this name. Do you want to overwrite (y/n)?[n]
+            # 3) - Timeout conditions
+            # 4) - No space on nxos device file_system
+            # 5) - Username/Password or file permission issues
+            # 6) - File does not exist on remote scp server
+            # 7) - invalid nxos command
+            # 8) - compact option not supported
+            # 9) - compaction attempt failed
+            # 10) - other failures like attempting to compact non image file
+            # 11) - failure to resolve hostname
+            # 12) - Too many authentication failures
+            # 13) - Copy to / from this server not permitted
+            # 14) - Copy completed without issues
+            # 15) - nxos_router_prompt#
+            # 16) - pexpect timeout
             possible_outcomes = ['yes',
                                  '(?i)Password',
-                                 r'#\s',
                                  'file existing with this name',
-                                 'timed out.*#',
+                                 'timed out',
                                  '(?i)No space.*#',
                                  '(?i)Permission denied',
                                  '(?i)No such file.*#',
-                                 pexpect.TIMEOUT,
                                  '.*Invalid command.*#',
                                  'Compaction is not supported on this platform.*#',
                                  'Compact of.*failed.*#',
                                  '(?i)Failed.*#',
-                                 '(?i)Copy complete.*#']
+                                 '(?i)Could not resolve hostname',
+                                 '(?i)Too many authentication failures',
+                                 '(?i)Copying to\/from this server name is not permitted',
+                                 '(?i)Copy complete',
+                                 r'#\s',
+                                 pexpect.TIMEOUT]
             index = session.expect(possible_outcomes, timeout=timeout)
             # Each index maps to items in possible_outcomes
             if index == 0:
@@ -308,25 +320,25 @@ class ActionModule(ActionBase):
                 outcome['password_prompt_detected'] = True
                 return outcome
             elif index == 2:
-                outcome['final_prompt_detected'] = True
-                return outcome
-            elif index == 3:
                 outcome['existing_file_with_same_name'] = True
                 return outcome
-            elif index in [4, 5, 6, 7, 9, 10, 11, 12]:
+            elif index in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]:
                 before = session.before.strip().replace(' \x08', '')
                 after = session.after.strip().replace(' \x08', '')
                 outcome['error'] = True
                 outcome['error_data'] = 'COMMAND {0} ERROR {1}'.format(before, after)
                 return outcome
-            elif index == 8:
+            elif index == 14:
+                outcome['copy_complete'] = True
+                return outcome
+            elif index == 15:
+                outcome['final_prompt_detected'] = True
+                return outcome
+            elif index == 16:
                 # The before property will contain all text up to the expected string pattern.
                 # The after string will contain the text that was matched by the expected pattern.
                 outcome['expect_timeout'] = True
                 outcome['error_data'] = 'Expect Timeout error occured: BEFORE {0} AFTER {1}'.format(session.before, session.after)
-                return outcome
-            elif index == 13:
-                outcome['copy_complete'] = True
                 return outcome
             else:
                 outcome['error'] = True
