@@ -124,14 +124,9 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.vmware_rest_client import VmwareRestClient
-try:
-    from com.vmware.vapi.std_client import DynamicID
-except ImportError:
-    pass
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_datacenter_by_name, find_cluster_by_name
+from ansible.module_utils.vmware_rest_client import VmwareRestClient
 
 
 class VmwreClusterFactsManager(PyVmomi):
@@ -174,33 +169,6 @@ class VmwreClusterFactsManager(PyVmomi):
                 cluster_objs.append(child)
         return cluster_objs
 
-    def get_tags_for_object(self, dobj):
-        """
-        Return tags associated with an object
-        Args:
-            dobj: Dynamic object
-        Returns: List of tags associated with the given object
-        """
-        vmware_client = VmwareRestClient(self.module)
-
-        cluster_dynamic_obj = DynamicID(type='ClusterComputeResource', id=dobj._moId)
-        self.tag_service = vmware_client.api_client.tagging.Tag
-        self.tag_association_svc = vmware_client.api_client.tagging.TagAssociation
-        self.category_service = vmware_client.api_client.tagging.Category
-
-        tag_ids = self.tag_association_svc.list_attached_tags(cluster_dynamic_obj)
-        tags = []
-        for tag_id in tag_ids:
-            tag_obj = self.tag_service.get(tag_id)
-            tags.append({
-                'id': tag_obj.id,
-                'category_name': self.category_service.get(tag_obj.category_id).name,
-                'name': tag_obj.name,
-                'description': tag_obj.description,
-                'category_id': tag_obj.category_id,
-            })
-        return tags
-
     def gather_cluster_facts(self):
         """
         Gather facts about cluster
@@ -242,7 +210,8 @@ class VmwreClusterFactsManager(PyVmomi):
 
             tag_info = []
             if self.params.get('show_tag'):
-                tag_info = self.get_tags_for_object(cluster)
+                vmware_client = VmwareRestClient(self.module)
+                tag_info = vmware_client.get_tags_for_cluster(cluster_mid=cluster._moId)
 
             results['clusters'][cluster.name] = dict(
                 enable_ha=das_config.enabled,
