@@ -119,8 +119,8 @@ EXAMPLES = r'''
 
 - name: Insert/Update configuration using a local file and validate it
   blockinfile:
-    block: "{{ lookup('file', './local/ssh_config') }}"
-    dest: /etc/ssh/ssh_config
+    block: "{{ lookup('file', './local/sshd_config') }}"
+    dest: /etc/ssh/sshd_config
     backup: yes
     validate: /usr/sbin/sshd -T -f %s
 
