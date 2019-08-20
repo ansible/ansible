@@ -112,6 +112,69 @@
         that:
           - sns_topic_update_policy.changed
 
+    - name: add delivery policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        delivery_policy:
+            http:
+              defaultHealthyRetryPolicy:
+                minDelayTarget: 20
+                maxDelayTarget: 20
+                numRetries: 3
+                numMaxDelayRetries: 0
+                numNoDelayRetries: 0
+                numMinDelayRetries: 0
+                backoffFunction: 'linear'
+      register: sns_topic_add_delivery_policy
+
+    - name: assert that adding delivery policy worked
+      assert:
+        that:
+          - sns_topic_add_delivery_policy.changed
+
+    - name: rerun same delivery policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        delivery_policy:
+            http:
+              defaultHealthyRetryPolicy:
+                minDelayTarget: 20
+                maxDelayTarget: 20
+                numRetries: 3
+                numMaxDelayRetries: 0
+                numNoDelayRetries: 0
+                numMinDelayRetries: 0
+                backoffFunction: 'linear'
+      register: sns_topic_rerun_delivery_policy
+
+    - name: assert that rerunning delivery_policy had no effect
+      assert:
+        that:
+          - not sns_topic_rerun_delivery_policy.changed
+
+    - name: rerun a slightly different delivery policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        delivery_policy:
+            http:
+              defaultHealthyRetryPolicy:
+                minDelayTarget: 40
+                maxDelayTarget: 40
+                numRetries: 6
+                numMaxDelayRetries: 0
+                numNoDelayRetries: 0
+                numMinDelayRetries: 0
+                backoffFunction: 'linear'
+      register: sns_topic_rerun_delivery_policy
+
+    - name: assert that rerunning delivery_policy worked
+      assert:
+        that:
+          - sns_topic_rerun_delivery_policy.changed
+
     - name: create temp dir
       tempfile:
         state: directory
