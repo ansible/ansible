@@ -106,7 +106,7 @@ options:
           - NAT translation method.
         type: str
         choices: ['hide', 'static']
-      tags:
+  tags:
     description:
       - Collection of tag identifiers.
     type: list
