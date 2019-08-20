@@ -21,7 +21,7 @@ options:
     host:
         description:
         - Hostname for Meraki dashboard.
-        - Only useful for internal Meraki developers.
+        - Can be used to access regional Meraki environments, such as China.
         type: str
         default: api.meraki.com
     use_proxy:
