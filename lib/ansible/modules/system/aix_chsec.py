@@ -43,8 +43,9 @@ attrs:
      aliases: [ options ]
   state:
      description:
-     - If set to C(absent) the whole stanza incl. all given attrs will be removed.
-     - If set to C(present) stanza incl.attrs will be added.
+     - If set to C(present) all given attrs values will be set.
+     - If set to C(absent) all attrs provided will be un-set, regardless of value provided.
+       - NB: This does not remove the entire stanza, only the provided attrs will be removed.
      - To remove an attribute from the stanza set to C(present) and set key to an empty value (key=).
      - All rules, allowed file-stanza combos or allowed files for the C(chsec) command also applies here.
      type: str
@@ -53,9 +54,13 @@ attrs:
 seealso:
 - name: The chsec manual page from the IBM Knowledge Center
   description: Changes the attributes in the security stanza files.
-  link: https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.cmds1/chsec.htm
+  link: https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/c_commands/chsec.html
+- name: The lssec manual page from the IBM Knowledge Center
+  description: Lists attributes in the security stanza files.
+  link: https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/l_commands/lssec.html
 author:
 - Christian Tremel (@flynn1973)
+- David Little (@d-little)
 '''
 
 EXAMPLES = r'''
