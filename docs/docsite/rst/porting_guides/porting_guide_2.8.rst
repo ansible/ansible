@@ -62,12 +62,10 @@ Beginning in version 2.8, Ansible will warn if a module expects a string, but a 
 
 This behavior can be changed to be an error or to be ignored by setting the ``ANSIBLE_STRING_CONVERSION_ACTION`` environment variable, or by setting the ``string_conversion_action`` configuration in the ``defaults`` section of ``ansible.cfg``.
 
-
 Command line facts
 ------------------
 
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
-
 
 Conditionals
 ------------
