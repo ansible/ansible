@@ -24,6 +24,7 @@ version_added: 2.0
 author:
     - Joseph Callen (@jcpowermac)
     - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
+    - Christian Neugum (@digifuchsi)
 notes:
     - Tested on vSphere 5.5
     - Tested on vSphere 6.5
@@ -103,6 +104,8 @@ options:
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
+            - '- C(active_uplinks) (list): List of active uplinks for portgroup. Leave unset for default.'
+            - '- C(standby_uplinks) (list): List of standby uplinks for portgroup. Leave unset for default.'
         required: False
         version_added: '2.5'
         default: {
@@ -291,6 +294,12 @@ class VMwareDvsPortgroup(PyVmomi):
         teamingPolicy.reversePolicy = vim.BoolPolicy(value=self.module.params['teaming_policy']['inbound_policy'])
         teamingPolicy.notifySwitches = vim.BoolPolicy(value=self.module.params['teaming_policy']['notify_switches'])
         teamingPolicy.rollingOrder = vim.BoolPolicy(value=self.module.params['teaming_policy']['rolling_order'])
+        if self.module.params['teaming_policy']['active_uplinks'] or self.module.params['teaming_policy']['standby_uplinks']:
+            teamingPolicy.uplinkPortOrder = vim.dvs.VmwareDistributedVirtualSwitch.UplinkPortOrderPolicy()
+            if self.module.params['teaming_policy']['active_uplinks']:
+                teamingPolicy.uplinkPortOrder.activeUplinkPort = self.module.params['teaming_policy']['active_uplinks']
+            if self.module.params['teaming_policy']['standby_uplinks']:
+                teamingPolicy.uplinkPortOrder.standbyUplinkPort = self.module.params['teaming_policy']['standby_uplinks']
         config.defaultPortConfig.uplinkTeamingPolicy = teamingPolicy
 
         # PG policy (advanced_policy)
@@ -389,7 +398,9 @@ def main():
                                                  'loadbalance_loadbased',
                                                  'failover_explicit',
                                              ],
-                                             )
+                                             ),
+                    active_uplinks=dict(type='list'),
+                    standby_uplinks=dict(type='list')
                 ),
                 default=dict(
                     inbound_policy=False,
