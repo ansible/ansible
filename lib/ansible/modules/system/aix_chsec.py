@@ -38,7 +38,7 @@ attrs:
     required: true
   attrs:
      description:
-     - A list of key/value pairs, e.g. C(key: val,key: val).
+    - A list of key/value pairs
      type: list
      aliases: [ options ]
   state:
