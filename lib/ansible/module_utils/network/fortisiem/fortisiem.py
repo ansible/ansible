@@ -46,7 +46,7 @@ import xml.dom.minidom
 import re
 
 
-# BEGIN HANDLER CLASSES
+# BEGIN HANDLER CLASSEs
 
 
 class FortiSIEMHandler(object):
