@@ -1,6 +1,0 @@
-Requirement already satisfied: pyopenssl in ./venv/lib/python3.6/site-packages (19.0.0)
-Requirement already satisfied: cryptography>=2.3 in ./venv/lib/python3.6/site-packages (from pyopenssl) (2.7)
-Requirement already satisfied: six>=1.5.2 in ./venv/lib/python3.6/site-packages (from pyopenssl) (1.12.0)
-Requirement already satisfied: cffi!=1.11.3,>=1.8 in ./venv/lib/python3.6/site-packages (from cryptography>=2.3->pyopenssl) (1.12.3)
-Requirement already satisfied: asn1crypto>=0.21.0 in ./venv/lib/python3.6/site-packages (from cryptography>=2.3->pyopenssl) (0.24.0)
-Requirement already satisfied: pycparser in ./venv/lib/python3.6/site-packages (from cffi!=1.11.3,>=1.8->cryptography>=2.3->pyopenssl) (2.19)
