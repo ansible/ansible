@@ -63,15 +63,15 @@ def filter_dict_having_none_value(want, have):
     test_dict['name'] = want.get('name')
     diff_ip = False
     want_ip = ''
-    for k, v in want.items():
+    for k, v in iteritems(want):
         if isinstance(v, dict):
-            for key, value in v.items():
+            for key, value in iteritems(v):
                 if value is None:
                     dict_val = have.get(k).get(key)
                     test_key_dict.update({key: dict_val})
                 test_dict.update({k: test_key_dict})
         if isinstance(v, list):
-            for key, value in v[0].items():
+            for key, value in iteritems(v[0]):
                 if value is None:
                     dict_val = have.get(k).get(key)
                     test_key_dict.update({key: dict_val})
