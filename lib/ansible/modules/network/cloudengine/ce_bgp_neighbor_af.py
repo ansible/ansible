@@ -2006,10 +2006,10 @@ class BgpNeighborAf(object):
             else:
                 if self.exist_nexthop_configure != "null":
                     if self.exist_nexthop_configure == "local":
-                        cmd = "undo peer % next-hop-local" % remote_address
+                        cmd = "undo peer %s next-hop-local" % remote_address
                         cmds.append(cmd)
                     elif self.exist_nexthop_configure == "invariable":
-                        cmd = "undo peer % next-hop-invariable" % remote_address
+                        cmd = "undo peer %s next-hop-invariable" % remote_address
                         cmds.append(cmd)
         preferred_value = module.params['preferred_value']
         if preferred_value:
@@ -2116,8 +2116,7 @@ class BgpNeighborAf(object):
         if route_limit_idle_timeout:
             conf_str += "<routeLimitIdleTimeout>%s</routeLimitIdleTimeout>" % route_limit_idle_timeout
 
-            cmd = "peer %s %s %s %s idle-timeout %s" % (remote_address, route_limit_sign, route_limit,
-                                                                 route_limit_percent, route_limit_idle_timeout)
+            cmd = "peer %s %s %s %s idle-timeout %s" % (remote_address, route_limit_sign, route_limit, route_limit_percent, route_limit_idle_timeout)
             cmds.append(cmd)
 
         rt_updt_interval = module.params['rt_updt_interval']
