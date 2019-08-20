@@ -23,7 +23,7 @@ module: aix_chsec
 short_description: Modify AIX stanza files
 version_added: '2.8'
 description:
-- Modify stanzas to AIX config files using the C(chsec) command.
+- Modify stanza attributes to AIX config files using the C(chsec) command.
 attrs:
   path:
     description:
@@ -40,6 +40,7 @@ attrs:
      description:
      - A list of key/value pairs, e.g. C(key: val,key: val).
      type: list
+     aliases: [ options ]
   state:
      description:
      - If set to C(absent) the whole stanza incl. all given attrs will be removed.
@@ -166,7 +167,7 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['dest']),
             stanza=dict(type='str', required=True),
-            attrs=dict(type='raw', required=True),
+            attrs=dict(type='raw', required=True, aliases=['options']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=False,
