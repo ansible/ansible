@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import is_masklen, to_netmask
 
 
 def remove_command_from_config_list(interface, cmd, commands):
@@ -60,12 +61,33 @@ def filter_dict_having_none_value(want, have):
     test_dict = dict()
     test_key_dict = dict()
     test_dict['name'] = want.get('name')
+    diff_ip = False
+    want_ip = ''
     for k, v in iteritems(want):
         if isinstance(v, dict):
             for key, value in iteritems(v):
                 if value is None:
                     dict_val = have.get(k).get(key)
                     test_key_dict.update({key: dict_val})
+                test_dict.update({k: test_key_dict})
+        if isinstance(v, list):
+            for key, value in iteritems(v[0]):
+                if value is None:
+                    dict_val = have.get(k).get(key)
+                    test_key_dict.update({key: dict_val})
+                # below conditions checks are added to check if
+                # secondary IP is configured, if yes then delete
+                # the already configured IP if want and have IP
+                # is different else if it's same no need to delete
+                if isinstance(value, str):
+                    want_ip = value.split('/')
+                have_ip = have.get('ipv4')
+                if len(want_ip) > 1 and have_ip:
+                    have_ip = have_ip[0]['address'].split(' ')[0]
+                    if have_ip != want_ip[0]:
+                        diff_ip = True
+                if key == 'secondary' and value is True and diff_ip is True:
+                    test_key_dict.update({key: value})
                 test_dict.update({k: test_key_dict})
         if v is None:
             val = have.get(k)
@@ -84,6 +106,37 @@ def remove_duplicate_interface(commands):
             set_cmd.append(each)
 
     return set_cmd
+
+
+def validate_ipv4(value, module):
+    if value:
+        address = value.split('/')
+        if len(address) != 2:
+            module.fail_json(msg='address format is <ipv4 address>/<mask>, got invalid format {0}'.format(value))
+
+        if not is_masklen(address[1]):
+            module.fail_json(msg='invalid value for mask: {0}, mask should be in range 0-32'.format(address[1]))
+
+
+def validate_ipv6(value, module):
+    if value:
+        address = value.split('/')
+        if len(address) != 2:
+            module.fail_json(msg='address format is <ipv6 address>/<mask>, got invalid format {0}'.format(value))
+        else:
+            if not 0 <= int(address[1]) <= 128:
+                module.fail_json(msg='invalid value for mask: {0}, mask should be in range 0-128'.format(address[1]))
+
+
+def validate_n_expand_ipv4(module, want):
+    # Check if input IPV4 is valid IP and expand IPV4 with its subnet mask
+    ip_addr_want = want.get('address')
+    validate_ipv4(ip_addr_want, module)
+    ip = ip_addr_want.split('/')
+    if len(ip) == 2:
+        ip_addr_want = '{0} {1}'.format(ip[0], to_netmask(ip[1]))
+
+    return ip_addr_want
 
 
 def normalize_interface(name):
@@ -116,7 +169,7 @@ def normalize_interface(name):
     elif name.lower().startswith('lo'):
         if_type = 'loopback'
     elif name.lower().startswith('po'):
-        if_type = 'port-channel'
+        if_type = 'Port-channel'
     elif name.lower().startswith('nv'):
         if_type = 'nve'
     elif name.lower().startswith('twe'):
@@ -161,7 +214,7 @@ def get_interface_type(interface):
     elif interface.upper().startswith('LO'):
         return 'loopback'
     elif interface.upper().startswith('PO'):
-        return 'port-channel'
+        return 'Port-channel'
     elif interface.upper().startswith('NV'):
         return 'nve'
     elif interface.upper().startswith('TWE'):
