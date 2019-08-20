@@ -239,6 +239,9 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``gcp_tpu_node_facts`` module was renamed to :ref:`gcp_tpu_node_info <gcp_tpu_node_info_module>`.
 * The ``gcpubsub_facts`` module was renamed to :ref:`gcpubsub_info <gcpubsub_info_module>`.
 * The ``github_webhook_facts`` module was renamed to :ref:`github_webhook_info <github_webhook_info_module>`.
+* The ``gluster_heal_facts`` module was renamed to :ref:`gluster_heal_info <gluster_heal_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``hpilo_facts`` module was renamed to :ref:`hpilo_info <hpilo_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
