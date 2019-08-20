@@ -794,7 +794,7 @@ class BgpNeighborAf(object):
             conf_str = CE_GET_BGP_PEER_AF_HEADER % (
                 vrf_name, af_type, remote_address) + "<nextHopConfigure></nextHopConfigure>" + CE_GET_BGP_PEER_AF_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
-
+            self.exist_nexthop_configure = "null"
             if "<data/>" in recv_xml:
                 need_cfg = True
             else:
@@ -802,6 +802,7 @@ class BgpNeighborAf(object):
                     r'.*<nextHopConfigure>(.*)</nextHopConfigure>.*', recv_xml)
 
                 if re_find:
+                    self.exist_nexthop_configure = re_find[0]
                     result["nexthop_configure"] = re_find
                     result["vrf_name"] = vrf_name
                     result["af_type"] = af_type
@@ -1637,7 +1638,7 @@ class BgpNeighborAf(object):
         adv_add_path_num = module.params['adv_add_path_num']
         if adv_add_path_num:
 
-            if int(orftype) < 2 or int(orftype) > 64:
+            if int(adv_add_path_num) < 2 or int(adv_add_path_num) > 64:
                 module.fail_json(
                     msg='Error: The value of adv_add_path_num %s is out of [2 - 64].' % adv_add_path_num)
 
@@ -1773,14 +1774,28 @@ class BgpNeighborAf(object):
         cmds = []
         cmd = af_type
         if af_type == "ipv4uni":
-            cmd = "ipv4-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv4-family unicast"
+            else:
+                cmd = "ipv4-family vpn-instance %s" % vrf_name
         elif af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv6-family unicast"
+            else:
+                cmd = "ipv6-family vpn-instance %s" % vrf_name
+        elif af_type == "evpn":
+            cmd = "l2vpn-family evpn"
+        elif af_type == "ipv4vpn":
+            cmd = "ipv4-family vpnv4"
+        elif af_type == "ipv6vpn":
+            cmd = "ipv6-family vpnv6"
         cmds.append(cmd)
-        cmd = "peer %s" % remote_address
-        cmds.append(cmd)
+        if vrf_name == "_public_":
+            cmd = "peer %s enable" % remote_address
+        else:
+            cmd = "peer %s" % remote_address
 
         return cmds
 
@@ -1803,13 +1818,28 @@ class BgpNeighborAf(object):
         cmds = []
         cmd = af_type
         if af_type == "ipv4uni":
-            cmd = "ipv4-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv4-family unicast"
+            else:
+                cmd = "ipv4-family vpn-instance %s" % vrf_name
         elif af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv6-family unicast"
+            else:
+                cmd = "ipv6-family vpn-instance %s" % vrf_name
+        elif af_type == "evpn":
+            cmd = "l2vpn-family evpn"
+        elif af_type == "ipv4vpn":
+            cmd = "ipv4-family vpnv4"
+        elif af_type == "ipv6vpn":
+            cmd = "ipv6-family vpnv6"
         cmds.append(cmd)
-        cmd = "peer %s" % remote_address
+        if vrf_name == "_public_":
+            cmd = "peer %s enable" % remote_address
+        else:
+            cmd = "peer %s" % remote_address
         cmds.append(cmd)
 
         return cmds
@@ -1833,13 +1863,28 @@ class BgpNeighborAf(object):
         cmds = []
         cmd = af_type
         if af_type == "ipv4uni":
-            cmd = "ipv4-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv4-family unicast"
+            else:
+                cmd = "ipv4-family vpn-instance %s" % vrf_name
         elif af_type == "ipv4multi":
             cmd = "ipv4-family multicast"
         elif af_type == "ipv6uni":
-            cmd = "ipv6-family unicast"
+            if vrf_name == "_public_":
+                cmd = "ipv6-family unicast"
+            else:
+                cmd = "ipv6-family vpn-instance %s" % vrf_name
+        elif af_type == "evpn":
+            cmd = "l2vpn-family evpn"
+        elif af_type == "ipv4vpn":
+            cmd = "ipv4-family vpnv4"
+        elif af_type == "ipv6vpn":
+            cmd = "ipv6-family vpnv6"
         cmds.append(cmd)
-        cmd = "undo peer %s" % remote_address
+        if vrf_name == "_public_":
+            cmd = "undo peer %s enable" % remote_address
+        else:
+            cmd = "undo peer %s" % remote_address
         cmds.append(cmd)
 
         return cmds
@@ -1958,7 +2003,14 @@ class BgpNeighborAf(object):
             elif nexthop_configure == "invariable":
                 cmd = "peer %s next-hop-invariable" % remote_address
                 cmds.append(cmd)
-
+            else:
+                if self.exist_nexthop_configure != "null":
+                    if self.exist_nexthop_configure == "local":
+                        cmd = "undo peer % next-hop-local" % remote_address
+                        cmds.append(cmd)
+                    elif self.exist_nexthop_configure == "invariable":
+                        cmd = "undo peer % next-hop-invariable" % remote_address
+                        cmds.append(cmd)
         preferred_value = module.params['preferred_value']
         if preferred_value:
             conf_str += "<preferredValue>%s</preferredValue>" % preferred_value
@@ -2001,9 +2053,15 @@ class BgpNeighborAf(object):
             conf_str += "<publicAsOnlyReplace>%s</publicAsOnlyReplace>" % public_as_only_replace
 
             if public_as_only_replace == "true":
-                cmd = "peer %s public-as-only force replace" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "peer %s public-as-only force replace" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "peer %s public-as-only limited replace" % remote_address
             else:
-                cmd = "undo peer %s public-as-only force replace" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "undo peer %s public-as-only force replace" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "undo peer %s public-as-only limited replace" % remote_address
             cmds.append(cmd)
 
         public_as_only_skip_peer_as = module.params[
@@ -2012,23 +2070,32 @@ class BgpNeighborAf(object):
             conf_str += "<publicAsOnlySkipPeerAs>%s</publicAsOnlySkipPeerAs>" % public_as_only_skip_peer_as
 
             if public_as_only_skip_peer_as == "true":
-                cmd = "peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "peer %s public-as-only limited include-peer-as" % remote_address
             else:
-                cmd = "undo peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_force != "no_use":
+                    cmd = "undo peer %s public-as-only force include-peer-as" % remote_address
+                if public_as_only_limited != "no_use":
+                    cmd = "undo peer %s public-as-only limited include-peer-as" % remote_address
             cmds.append(cmd)
 
+        route_limit_sign = "route_limit"
+        if af_type == "evpn":
+            route_limit_sign = "mac_limit"
         route_limit = module.params['route_limit']
         if route_limit:
             conf_str += "<routeLimit>%s</routeLimit>" % route_limit
 
-            cmd = "peer %s route-limit %s" % (remote_address, route_limit)
+            cmd = "peer %s %s %s" % (remote_address, route_limit_sign, route_limit)
             cmds.append(cmd)
 
         route_limit_percent = module.params['route_limit_percent']
         if route_limit_percent:
             conf_str += "<routeLimitPercent>%s</routeLimitPercent>" % route_limit_percent
 
-            cmd = "peer %s route-limit %s %s" % (remote_address, route_limit, route_limit_percent)
+            cmd = "peer %s %s %s %s" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
             cmds.append(cmd)
 
         route_limit_type = module.params['route_limit_type']
@@ -2036,20 +2103,20 @@ class BgpNeighborAf(object):
             conf_str += "<routeLimitType>%s</routeLimitType>" % route_limit_type
 
             if route_limit_type == "alertOnly":
-                cmd = "peer %s route-limit %s %s alert-only" % (remote_address, route_limit, route_limit_percent)
+                cmd = "peer %s %s %s %s alert-only" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
                 cmds.append(cmd)
             elif route_limit_type == "idleForever":
-                cmd = "peer %s route-limit %s %s idle-forever" % (remote_address, route_limit, route_limit_percent)
+                cmd = "peer %s %s %s %s idle-forever" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
                 cmds.append(cmd)
             elif route_limit_type == "idleTimeout":
-                cmd = "peer %s route-limit %s %s idle-timeout" % (remote_address, route_limit, route_limit_percent)
+                cmd = "peer %s %s %s %s idle-timeout" % (remote_address, route_limit_sign, route_limit, route_limit_percent)
                 cmds.append(cmd)
 
         route_limit_idle_timeout = module.params['route_limit_idle_timeout']
         if route_limit_idle_timeout:
             conf_str += "<routeLimitIdleTimeout>%s</routeLimitIdleTimeout>" % route_limit_idle_timeout
 
-            cmd = "peer %s route-limit %s %s idle-timeout %s" % (remote_address, route_limit,
+            cmd = "peer %s %s %s %s idle-timeout %s" % (remote_address, route_limit_sign, route_limit,
                                                                  route_limit_percent, route_limit_idle_timeout)
             cmds.append(cmd)
 
@@ -2106,14 +2173,14 @@ class BgpNeighborAf(object):
         if import_pref_filt_name:
             conf_str += "<importPrefFiltName>%s</importPrefFiltName>" % import_pref_filt_name
 
-            cmd = "peer %s filter-policy %s import" % (remote_address, import_pref_filt_name)
+            cmd = "peer %s ip-prefix %s import" % (remote_address, import_pref_filt_name)
             cmds.append(cmd)
 
         export_pref_filt_name = module.params['export_pref_filt_name']
         if export_pref_filt_name:
             conf_str += "<exportPrefFiltName>%s</exportPrefFiltName>" % export_pref_filt_name
 
-            cmd = "peer %s filter-policy %s export" % (remote_address, export_pref_filt_name)
+            cmd = "peer %s ip-prefix %s export" % (remote_address, export_pref_filt_name)
             cmds.append(cmd)
 
         import_as_path_filter = module.params['import_as_path_filter']
@@ -2149,15 +2216,19 @@ class BgpNeighborAf(object):
         import_acl_name_or_num = module.params['import_acl_name_or_num']
         if import_acl_name_or_num:
             conf_str += "<importAclNameOrNum>%s</importAclNameOrNum>" % import_acl_name_or_num
-
-            cmd = "peer %s filter-policy %s import" % (remote_address, import_acl_name_or_num)
+            if import_acl_name_or_num.isdigit():
+                cmd = "peer %s filter-policy %s import" % (remote_address, import_acl_name_or_num)
+            else:
+                cmd = "peer %s filter-policy acl-name %s import" % (remote_address, import_acl_name_or_num)
             cmds.append(cmd)
 
         export_acl_name_or_num = module.params['export_acl_name_or_num']
         if export_acl_name_or_num:
             conf_str += "<exportAclNameOrNum>%s</exportAclNameOrNum>" % export_acl_name_or_num
-
-            cmd = "peer %s filter-policy %s export" % (remote_address, export_acl_name_or_num)
+            if export_acl_name_or_num.isdigit():
+                cmd = "peer %s filter-policy %s export" % (remote_address, export_acl_name_or_num)
+            else:
+                cmd = "peer %s filter-policy acl-name %s export" % (remote_address, export_acl_name_or_num)
             cmds.append(cmd)
 
         ipprefix_orf_enable = module.params['ipprefix_orf_enable']
@@ -2217,13 +2288,11 @@ class BgpNeighborAf(object):
                 cmd += "peer %s default-route-advertise" % remote_address
             else:
                 cmd += "undo peer %s default-route-advertise" % remote_address
-            cmds.append(cmd)
 
         default_rt_adv_policy = module.params['default_rt_adv_policy']
         if default_rt_adv_policy:
             conf_str += "<defaultRtAdvPolicy>%s</defaultRtAdvPolicy>" % default_rt_adv_policy
-            cmd = " route-policy %s" % default_rt_adv_policy
-            cmds.append(cmd)
+            cmd += " route-policy %s" % default_rt_adv_policy
 
         default_rt_match_mode = module.params['default_rt_match_mode']
         if default_rt_match_mode:
@@ -2234,27 +2303,25 @@ class BgpNeighborAf(object):
             elif default_rt_match_mode == "matchany":
                 cmd += " conditional-route-match-any"
 
-            if cmd:
-                cmds.append(cmd)
+        if cmd:
+            cmds.append(cmd)
 
         add_path_mode = module.params['add_path_mode']
         if add_path_mode:
             conf_str += "<addPathMode>%s</addPathMode>" % add_path_mode
             if add_path_mode == "receive":
-                cmd += " add-path receive"
+                cmd = "peer %s capability-advertise add-path receive" % remote_address
             elif add_path_mode == "send":
-                cmd += " add-path send"
+                cmd = "peer %s capability-advertise add-path send" % remote_address
             elif add_path_mode == "both":
-                cmd += " add-path both"
-            if cmd:
-                cmds.append(cmd)
+                cmd = "peer %s capability-advertise add-path both" % remote_address
+            cmds.append(cmd)
 
         adv_add_path_num = module.params['adv_add_path_num']
         if adv_add_path_num:
             conf_str += "<advAddPathNum>%s</advAddPathNum>" % adv_add_path_num
-            cmd += " advertise add-path path-number %s" % adv_add_path_num
-            if cmd:
-                cmds.append(cmd)
+            cmd = "peer %s advertise add-path path-number %s" % (remote_address, adv_add_path_num)
+            cmds.append(cmd)
         origin_as_valid = module.params['origin_as_valid']
         if origin_as_valid != 'no_use':
             conf_str += "<originAsValid>%s</originAsValid>" % origin_as_valid
@@ -2585,6 +2652,9 @@ def main():
             end_tmp[item] = bgp_peer_af_other_rst[item]
     if end_tmp:
         end_state["bgp neighbor af other"] = end_tmp
+    if end_state == existing:
+        changed = False
+        updates = list()
 
     results = dict()
     results['proposed'] = proposed
