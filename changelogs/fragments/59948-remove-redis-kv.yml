@@ -1,0 +1,2 @@
+removed_features:
+- redis_kv - Remove deprecated lookup plugin (https://github.com/ansible/ansible/issues/59948)
