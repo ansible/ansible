@@ -195,7 +195,8 @@ class NetAppOntapIgroup(object):
         :rtype: dict
         """
         igroup_info = netapp_utils.zapi.NaElement('igroup-get-iter')
-        attributes = dict(query={'initiator-group-info': {'initiator-group-name': name}})
+        attributes = dict(query={'initiator-group-info': {'initiator-group-name': name,
+                                                          'vserver': self.parameters['vserver']}})
         igroup_info.translate_struct(attributes)
         result, current = None, None
 
