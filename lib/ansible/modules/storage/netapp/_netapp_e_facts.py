@@ -8,11 +8,15 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 module: netapp_e_facts
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favour of C(_info) module.
+  alternative: Use M(netapp_e_info) instead.
 short_description: NetApp E-Series retrieve facts about NetApp E-Series storage arrays
 description:
     - The netapp_e_facts module returns a collection of facts regarding NetApp E-Series storage arrays.

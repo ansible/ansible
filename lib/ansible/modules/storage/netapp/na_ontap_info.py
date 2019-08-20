@@ -12,14 +12,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'certified'}
 
 DOCUMENTATION = '''
-module: na_ontap_gather_facts
+module: na_ontap_gather_info
 author: Piotr Olczak (@dprts) <polczak@redhat.com>
 extends_documentation_fragment:
     - netapp.na_ontap
 short_description: NetApp information gatherer
 description:
     - This module allows you to gather various information about ONTAP configuration
-version_added: "2.7"
+version_added: "2.9"
 requirements:
     - netapp_lib
 options:
@@ -30,7 +30,7 @@ options:
         choices: ['info']
     gather_subset:
         description:
-            - When supplied, this argument will restrict the facts collected
+            - When supplied, this argument will restrict the information collected
                 to a given subset.  Possible values for this argument include
                 "aggregate_info", "cluster_node_info", "igroup_info", "lun_info", "net_dns_info",
                 "net_ifgrp_info",
@@ -43,29 +43,33 @@ options:
                 with an initial C(M(!)) to specify that a specific subset should
                 not be collected.
             - nvme is supported with ONTAP 9.4 onwards.
-            - use "help" to get a list of supported facts for your system.
+            - use "help" to get a list of supported information for your system.
         default: "all"
         version_added: 2.8
 '''
 
 EXAMPLES = '''
 - name: Get NetApp info (Password Authentication)
-  na_ontap_gather_facts:
+  na_ontap_gather_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
     password: "admins_password"
+  register: ontap_info
 - debug:
-    var: ontap_facts
-- name: Limit Fact Gathering to Aggregate Information
-  na_ontap_gather_facts:
+    msg: "{{ ontap_info.ontap_info }}"
+
+- name: Limit Info Gathering to Aggregate Information
+  na_ontap_gather_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
     password: "admins_password"
     gather_subset: "aggregate_info"
-- name: Limit Fact Gathering to Volume and Lun Information
-  na_ontap_gather_facts:
+  register: ontap_info
+
+- name: Limit Info Gathering to Volume and Lun Information
+  na_ontap_gather_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
@@ -73,8 +77,10 @@ EXAMPLES = '''
     gather_subset:
       - volume_info
       - lun_info
-- name: Gather all facts except for volume and lun information
-  na_ontap_gather_facts:
+  register: ontap_info
+
+- name: Gather all info except for volume and lun information
+  na_ontap_gather_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
@@ -82,15 +88,16 @@ EXAMPLES = '''
     gather_subset:
       - "!volume_info"
       - "!lun_info"
+  register: ontap_info
 '''
 
 RETURN = '''
-ontap_facts:
+ontap_info:
     description: Returns various information about NetApp cluster configuration
     returned: always
     type: dict
     sample: '{
-        "ontap_facts": {
+        "ontap_info": {
             "aggregate_info": {...},
             "cluster_node_info": {...},
             "net_dns_info": {...},
@@ -133,8 +140,8 @@ except ImportError:
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 
-class NetAppONTAPGatherFacts(object):
-    '''Class with gather facts methods'''
+class NetAppONTAPGatherInfo(object):
+    '''Class with gather info methods'''
 
     def __init__(self, module):
         self.module = module
@@ -144,7 +151,7 @@ class NetAppONTAPGatherFacts(object):
         # for starting this
         # min_version identifies the ontapi version which supports this ZAPI
         # use 0 if it is supported since 9.1
-        self.fact_subsets = {
+        self.info_subsets = {
             'net_dns_info': {
                 'method': self.get_generic_get_iter,
                 'kwargs': {
@@ -423,7 +430,7 @@ class NetAppONTAPGatherFacts(object):
         try:
             net_port_info = self.netapp_info['net_port_info']
         except KeyError:
-            net_port_info_calls = self.fact_subsets['net_port_info']
+            net_port_info_calls = self.info_subsets['net_port_info']
             net_port_info = net_port_info_calls['method'](**net_port_info_calls['kwargs'])
         interfaces = net_port_info.keys()
 
@@ -490,7 +497,7 @@ class NetAppONTAPGatherFacts(object):
 
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
-        netapp_utils.ems_log_event("na_ontap_gather_facts", cserver)
+        netapp_utils.ems_log_event("na_ontap_gather_info", cserver)
 
         self.netapp_info['ontap_version'] = self.ontapi()
 
@@ -499,7 +506,7 @@ class NetAppONTAPGatherFacts(object):
             self.netapp_info['help'] = sorted(run_subset)
         else:
             for subset in run_subset:
-                call = self.fact_subsets[subset]
+                call = self.info_subsets[subset]
                 self.netapp_info[subset] = call['method'](**call['kwargs'])
 
         return self.netapp_info
@@ -509,7 +516,7 @@ class NetAppONTAPGatherFacts(object):
 
         runable_subsets = set()
         exclude_subsets = set()
-        usable_subsets = [key for key in self.fact_subsets.keys() if version >= self.fact_subsets[key]['min_version']]
+        usable_subsets = [key for key in self.info_subsets.keys() if version >= self.info_subsets[key]['min_version']]
         if 'help' in gather_subset:
             return usable_subsets
         for subset in gather_subset:
@@ -525,7 +532,7 @@ class NetAppONTAPGatherFacts(object):
                 exclude = False
 
             if subset not in usable_subsets:
-                if subset not in self.fact_subsets.keys():
+                if subset not in self.info_subsets.keys():
                     self.module.fail_json(msg='Bad subset: %s' % subset)
                 self.module.fail_json(msg='Remote system at version %s does not support %s' %
                                       (version, subset))
@@ -601,10 +608,10 @@ def main():
     gather_subset = module.params['gather_subset']
     if gather_subset is None:
         gather_subset = ['all']
-    gf_obj = NetAppONTAPGatherFacts(module)
+    gf_obj = NetAppONTAPGatherInfo(module)
     gf_all = gf_obj.get_all(gather_subset)
     result = {'state': state, 'changed': False}
-    module.exit_json(ansible_facts={'ontap_facts': gf_all}, **result)
+    module.exit_json(ontap_info=gf_all, **result)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 # (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-''' unit tests for ONTAP Ansible module na_ontap_gather_facts '''
+''' unit tests for ONTAP Ansible module na_ontap_info '''
 
 from __future__ import print_function
 import json
@@ -14,10 +14,10 @@ from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 import ansible.module_utils.netapp as netapp_utils
 
-from ansible.modules.storage.netapp.na_ontap_gather_facts import main as gather_facts_main
-from ansible.modules.storage.netapp.na_ontap_gather_facts import __finditem as gather_facts_finditem
-from ansible.modules.storage.netapp.na_ontap_gather_facts \
-    import NetAppONTAPGatherFacts as gather_facts_module  # module under test
+from ansible.modules.storage.netapp.na_ontap_info import main as info_main
+from ansible.modules.storage.netapp.na_ontap_info import __finditem as info_finditem
+from ansible.modules.storage.netapp.na_ontap_info \
+    import NetAppONTAPGatherInfo as info_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
     pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
@@ -119,15 +119,15 @@ class TestMyModule(unittest.TestCase):
             'password': 'password',
         }
 
-    def get_gather_facts_mock_object(self, kind=None):
+    def get_info_mock_object(self, kind=None):
         """
-        Helper method to return an na_ontap_gather_facts object
+        Helper method to return an na_ontap_info object
         """
         module = basic.AnsibleModule(
             argument_spec=netapp_utils.na_ontap_host_argument_spec(),
             supports_check_mode=True
         )
-        obj = gather_facts_module(module)
+        obj = info_module(module)
         obj.netapp_info = dict()
         if kind is None:
             obj.server = MockONTAPConnection()
@@ -139,14 +139,14 @@ class TestMyModule(unittest.TestCase):
         ''' required arguments are reported as errors '''
         with pytest.raises(AnsibleFailJson) as exc:
             set_module_args({})
-            self.get_gather_facts_mock_object()
+            self.get_info_mock_object()
         print('Info: %s' % exc.value.args[0]['msg'])
 
     @patch('ansible.module_utils.netapp.ems_log_event')
     def test_ensure_command_called(self, mock_ems_log):
         ''' calling get_all will raise a KeyError exception '''
         set_module_args(self.mock_args())
-        my_obj = self.get_gather_facts_mock_object('vserver')
+        my_obj = self.get_info_mock_object('vserver')
         with pytest.raises(KeyError) as exc:
             my_obj.get_all(['net_interface_info'])
         if sys.version_info >= (2, 7):
@@ -157,7 +157,7 @@ class TestMyModule(unittest.TestCase):
     def test_get_generic_get_iter(self, mock_ems_log):
         '''calling get_generic_get_iter will return expected dict'''
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('net_port')
+        obj = self.get_info_mock_object('net_port')
         result = obj.get_generic_get_iter(
             'net-port-get-iter',
             attribute='net-port-info',
@@ -167,7 +167,7 @@ class TestMyModule(unittest.TestCase):
         assert result.get('node_0:port_0')
         assert result.get('node_1:port_1')
 
-    @patch('ansible.modules.storage.netapp.na_ontap_gather_facts.NetAppONTAPGatherFacts.get_all')
+    @patch('ansible.modules.storage.netapp.na_ontap_info.NetAppONTAPGatherInfo.get_all')
     def test_main(self, get_all):
         '''test main method.'''
         set_module_args(self.mock_args())
@@ -176,17 +176,17 @@ class TestMyModule(unittest.TestCase):
                 {'vserver_login_banner_info': 'test_vserver_login_banner_info', 'vserver_info': 'test_vserver_info'}}
         ]
         with pytest.raises(AnsibleExitJson) as exc:
-            gather_facts_main()
+            info_main()
         assert exc.value.args[0]['state'] == 'info'
 
-    @patch('ansible.modules.storage.netapp.na_ontap_gather_facts.NetAppONTAPGatherFacts.get_generic_get_iter')
+    @patch('ansible.modules.storage.netapp.na_ontap_info.NetAppONTAPGatherInfo.get_generic_get_iter')
     def test_get_ifgrp_info(self, get_generic_get_iter):
         '''test get_ifgrp_info with empty ifgrp_info'''
         set_module_args(self.mock_args())
         get_generic_get_iter.side_effect = [
             {}
         ]
-        obj = self.get_gather_facts_mock_object()
+        obj = self.get_info_mock_object()
         obj.netapp_info['net_port_info'] = {}
         result = obj.get_ifgrp_info()
         assert result == {}
@@ -194,7 +194,7 @@ class TestMyModule(unittest.TestCase):
     def test_ontapi_error(self):
         '''test ontapi will raise zapi error'''
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('zapi_error')
+        obj = self.get_info_mock_object('zapi_error')
         with pytest.raises(AnsibleFailJson) as exc:
             obj.ontapi()
         assert exc.value.args[0]['msg'] == 'Error calling API system-get-ontapi-version: NetApp API failed. Reason - test:error'
@@ -202,7 +202,7 @@ class TestMyModule(unittest.TestCase):
     def test_call_api_error(self):
         '''test call_api will raise zapi error'''
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('zapi_error')
+        obj = self.get_info_mock_object('zapi_error')
         with pytest.raises(AnsibleFailJson) as exc:
             obj.call_api('nvme-get-iter')
         assert exc.value.args[0]['msg'] == 'Error calling API nvme-get-iter: NetApp API failed. Reason - test:error'
@@ -211,33 +211,33 @@ class TestMyModule(unittest.TestCase):
         '''test __find_item return expected key value'''
         obj = {"A": 1, "B": {"C": {"D": 2}}}
         key = "D"
-        result = gather_facts_finditem(obj, key)
+        result = info_finditem(obj, key)
         assert result == 2
 
     def test_subset_return_all_complete(self):
         ''' Check all returns all of the entries if version is high enough '''
         version = '140'         # change this if new ZAPIs are supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         subset = obj.get_subset(['all'], version)
-        assert set(obj.fact_subsets.keys()) == subset
+        assert set(obj.info_subsets.keys()) == subset
 
     def test_subset_return_all_partial(self):
         ''' Check all returns a subset of the entries if version is low enough '''
         version = '120'         # low enough so that some ZAPIs are not supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         subset = obj.get_subset(['all'], version)
-        all_keys = obj.fact_subsets.keys()
+        all_keys = obj.info_subsets.keys()
         assert set(all_keys) > subset
-        supported_keys = filter(lambda key: obj.fact_subsets[key]['min_version'] <= version, all_keys)
+        supported_keys = filter(lambda key: obj.info_subsets[key]['min_version'] <= version, all_keys)
         assert set(supported_keys) == subset
 
     def test_subset_return_one(self):
         ''' Check single entry returns one '''
         version = '120'         # low enough so that some ZAPIs are not supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         subset = obj.get_subset(['net_interface_info'], version)
         assert len(subset) == 1
 
@@ -245,7 +245,7 @@ class TestMyModule(unittest.TestCase):
         ''' Check that more than one entry returns the same number '''
         version = '120'         # low enough so that some ZAPIs are not supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         subset_entries = ['net_interface_info', 'net_port_info']
         subset = obj.get_subset(subset_entries, version)
         assert len(subset) == len(subset_entries)
@@ -254,7 +254,7 @@ class TestMyModule(unittest.TestCase):
         ''' Check that a bad subset entry will error out '''
         version = '120'         # low enough so that some ZAPIs are not supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         with pytest.raises(AnsibleFailJson) as exc:
             subset = obj.get_subset(['net_interface_info', 'my_invalid_subset'], version)
         print('Info: %s' % exc.value.args[0]['msg'])
@@ -265,7 +265,7 @@ class TestMyModule(unittest.TestCase):
         version = '120'         # low enough so that some ZAPIs are not supported
         key = 'nvme_info'       # only supported starting at 140
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         with pytest.raises(AnsibleFailJson) as exc:
             subset = obj.get_subset(['net_interface_info', key], version)
         print('Info: %s' % exc.value.args[0]['msg'])
@@ -276,7 +276,7 @@ class TestMyModule(unittest.TestCase):
         ''' Check usable subset can be empty '''
         version = '!'   # lower then 0, so that no ZAPI is supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         subset = obj.get_subset(['all'], version)
         assert len(subset) == 0
 
@@ -284,28 +284,28 @@ class TestMyModule(unittest.TestCase):
         ''' Check !x returns all of the entries except x if version is high enough '''
         version = '140'         # change this if new ZAPIs are supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         subset = obj.get_subset(['!net_interface_info'], version)
-        assert len(obj.fact_subsets.keys()) == len(subset) + 1
+        assert len(obj.info_subsets.keys()) == len(subset) + 1
         subset.add('net_interface_info')
-        assert set(obj.fact_subsets.keys()) == subset
+        assert set(obj.info_subsets.keys()) == subset
 
     def test_subset_return_all_expect_three(self):
         ''' Check !x,!y,!z returns all of the entries except x, y, z if version is high enough '''
         version = '140'         # change this if new ZAPIs are supported
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         subset = obj.get_subset(['!net_interface_info', '!nvme_info', '!ontap_version'], version)
-        assert len(obj.fact_subsets.keys()) == len(subset) + 3
+        assert len(obj.info_subsets.keys()) == len(subset) + 3
         subset.update(['net_interface_info', 'nvme_info', 'ontap_version'])
-        assert set(obj.fact_subsets.keys()) == subset
+        assert set(obj.info_subsets.keys()) == subset
 
     def test_subset_return_none_with_exclusion(self):
         ''' Check usable subset can be empty with !x '''
         version = '!'   # lower then 0, so that no ZAPI is supported
         key = 'net_interface_info'
         set_module_args(self.mock_args())
-        obj = self.get_gather_facts_mock_object('vserver')
+        obj = self.get_info_mock_object('vserver')
         with pytest.raises(AnsibleFailJson) as exc:
             subset = obj.get_subset(['!' + key], version)
         print('Info: %s' % exc.value.args[0]['msg'])
