@@ -26,26 +26,33 @@
 The arg spec for the eos_lldp_global module
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-class Lldp_globalArgs(object):  # pylint: disable=R0903
+
+class Lldp_globalArgs(object):
     """The arg spec for the eos_lldp_global module
     """
 
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'options': {'holdtime': {'type': 'int'},
-                        'reinit': {'type': 'int'},
-                        'timer': {'type': 'int'},
-                        'tlv_select': {'options': {'link_aggregation': {'type': 'bool'},
-                                                   'management_address': {'type': 'bool'},
-                                                   'max_frame_size': {'type': 'bool'},
-                                                   'port_description': {'type': 'bool'},
-                                                   'system_capabilities': {'type': 'bool'},
-                                                   'system_description': {'type': 'bool'},
-                                                   'system_name': {'type': 'bool'}},
-                                       'type': 'dict'}},
+    argument_spec = {
+        'config': {
+            'options': {
+                'holdtime': {'type': 'int'},
+                'reinit': {'type': 'int'},
+                'timer': {'type': 'int'},
+                'tlv_select': {
+                    'options': {
+                        'link_aggregation': {'type': 'bool'},
+                        'management_address': {'type': 'bool'},
+                        'max_frame_size': {'type': 'bool'},
+                        'port_description': {'type': 'bool'},
+                        'system_capabilities': {'type': 'bool'},
+                        'system_description': {'type': 'bool'},
+                        'system_name': {'type': 'bool'}},
+                    'type': 'dict'}},
             'type': 'dict'},
- 'state': {'choices': ['merged', 'replaced', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+        'state': {'choices': ['merged', 'replaced', 'deleted'], 'default': 'merged', 'type': 'str'}
+    }

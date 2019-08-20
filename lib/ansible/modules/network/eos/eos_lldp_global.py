@@ -201,12 +201,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -214,7 +216,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['lldp holdtime 100', 'no lldp timer', 'lldp tlv-select system-description']
 """
 
 
