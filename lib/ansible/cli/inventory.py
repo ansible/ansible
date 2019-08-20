@@ -337,8 +337,8 @@ class InventoryCLI(CLI):
 
                     local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
                     for entity, value in values:
-                        prefix = '----[{}] : '.format(InventoryCLI._colorize_entity(entity, source_entities, local_max_width))
-                        prefix_nocolor = '----[{}] : '.format(InventoryCLI._colorize_entity(entity, source_entities, local_max_width, force_nocolor=True))
+                        prefix = '{}|{} : '.format('-' * (max_width + 3), InventoryCLI._colorize_entity(entity, source_entities, local_max_width))
+                        prefix_nocolor = '{}|{} : '.format('-' * (max_width + 3), InventoryCLI._colorize_entity(entity, source_entities, local_max_width, force_nocolor=True))
                         value_pretty = pformat(value).split('\n')
 
                         result.extend([prefix + line if index == 0 else " " * len(prefix_nocolor) + line for index, line in enumerate(value_pretty)])
