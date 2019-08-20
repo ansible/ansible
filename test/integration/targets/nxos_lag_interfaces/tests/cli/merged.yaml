@@ -10,7 +10,7 @@
     feature: lacp
 
 - name: Setup
-  nxos_config: &cleanup
+  nxos_config:
     lines:
       - "no channel-group"
     parents: "{{ item }}"
@@ -56,7 +56,14 @@
 
   always:
   - name: Teardown
-    nxos_config: *cleanup
+    nxos_config:
+      lines:
+        - "no channel-group"
+      parents: "{{ item }}"
+    ignore_errors: yes
+    loop:
+      - "interface {{ test_int1 }}"
+      - "interface {{ test_int2 }}"
 
   - name: Disable feature lacp
     nxos_feature:
