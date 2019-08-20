@@ -36,6 +36,13 @@ def _find_symlinks(topdir, extension=''):
     Maintained symlinks exist in the bin dir or are modules which have
     aliases.  Our heuristic is that they are a link in a certain path which
     point to a file in the same directory.
+
+    .. warn::
+
+        We want the symlinks in :file:`bin/` that link into :file:`lib/ansible/*` (currently,
+        :command:`ansible`, :command:`ansible-test`, and :command:`ansible-connection`) to become
+        real files on install.  Updates to the heuristic here *must not* add them to the symlink
+        cache.
     """
     symlinks = defaultdict(list)
     for base_path, dirs, files in os.walk(topdir):
