@@ -321,21 +321,21 @@ class PluginLoader:
 
         acr = AnsibleCollectionRef.from_fqcr(fq_name, plugin_type)
 
-        resource = acr.resource
+        n_resource = to_native(acr.resource, errors='strict')
 
         if extension:
-            resource += extension
+            n_resource += extension
 
-        pkg = sys.modules.get(acr.python_package_name)
+        pkg = sys.modules.get(acr.n_python_package_name)
         if not pkg:
             # FIXME: there must be cheaper/safer way to do this
-            pkg = import_module(acr.python_package_name)
+            pkg = import_module(acr.n_python_package_name)
 
         # if the package is one of our flatmaps, we need to consult its loader to find the path, since the file could be
         # anywhere in the tree
         if hasattr(pkg, '__loader__') and isinstance(pkg.__loader__, AnsibleFlatMapLoader):
             try:
-                file_path = pkg.__loader__.find_file(acr.resource)
+                file_path = pkg.__loader__.find_file(n_resource)
                 return to_text(file_path)
             except IOError:
                 # this loader already takes care of extensionless files, so if we didn't find it, just bail
@@ -343,15 +343,15 @@ class PluginLoader:
 
         pkg_path = os.path.dirname(pkg.__file__)
 
-        resource_path = os.path.join(pkg_path, resource)
+        n_resource_path = os.path.join(pkg_path, n_resource)
 
         # FIXME: and is file or file link or ...
-        if os.path.exists(resource_path):
-            return to_text(resource_path)
+        if os.path.exists(n_resource_path):
+            return to_text(n_resource_path)
 
         # look for any matching extension in the package location (sans filter)
         ext_blacklist = ['.pyc', '.pyo']
-        found_files = [f for f in glob.iglob(os.path.join(pkg_path, resource) + '.*') if os.path.isfile(f) and os.path.splitext(f)[1] not in ext_blacklist]
+        found_files = [f for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*') if os.path.isfile(f) and os.path.splitext(f)[1] not in ext_blacklist]
 
         if not found_files:
             return None

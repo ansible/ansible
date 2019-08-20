@@ -267,14 +267,15 @@ class AnsibleFlatMapLoader(object):
 
 class AnsibleCollectionRef:
     # FUTURE: introspect plugin loaders to get these dynamically?
-    VALID_REF_TYPES = frozenset(['action', 'become', 'cache', 'callback', 'cliconf', 'connection', 'doc_fragments',
-                                 'filter', 'httpapi', 'inventory', 'lookup', 'module_utils', 'modules', 'netconf',
-                                 'role', 'shell', 'strategy', 'terminal', 'test', 'vars'])
+    VALID_REF_TYPES = frozenset(to_text(r) for r in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection',
+                                                     'doc_fragments', 'filter', 'httpapi', 'inventory', 'lookup',
+                                                     'module_utils', 'modules', 'netconf', 'role', 'shell', 'strategy',
+                                                     'terminal', 'test', 'vars'])
 
     # FIXME: tighten this up to match Python identifier reqs, etc
     VALID_COLLECTION_NAME_RE = re.compile(to_text(r'^(\w+)\.(\w+)$'))
     VALID_SUBDIRS_RE = re.compile(to_text(r'^\w+(\.\w+)*$'))
-    VALID_FQCR_RE = re.compile(to_text(r'^\w+\.\w+\.\w+(\.\w+)*$'))  # can have N included subdirs as well
+    VALID_FQCR_RE = re.compile(to_text(r'^\w+\.\w+\.\w+(\.\w+)*$'))  # can have 0-N included subdirs as well
 
     def __init__(self, collection_name, subdirs, resource, ref_type):
         """
@@ -284,10 +285,14 @@ class AnsibleCollectionRef:
         :param resource: the name of the resource being references (eg, 'mymodule', 'someaction', 'a_role')
         :param ref_type: the type of the reference, eg 'module', 'role', 'doc_fragment'
         """
-        # FIXME: text type strings
+        collection_name = to_text(collection_name, errors='strict')
+        if subdirs is not None:
+            subdirs = to_text(subdirs, errors='strict')
+        resource = to_text(resource, errors='strict')
+        ref_type = to_text(ref_type, errors='strict')
 
         if not self.is_valid_collection_name(collection_name):
-            raise ValueError('invalid collection name (must be of the form namespace.collection): {0}'.format(collection_name))
+            raise ValueError('invalid collection name (must be of the form namespace.collection): {0}'.format(to_native(collection_name)))
 
         if ref_type not in self.VALID_REF_TYPES:
             raise ValueError('invalid collection ref_type: {0}'.format(ref_type))
@@ -295,30 +300,30 @@ class AnsibleCollectionRef:
         self.collection = collection_name
         if subdirs:
             if not re.match(self.VALID_SUBDIRS_RE, subdirs):
-                raise ValueError('invalid subdirs entry: {0} (must be empty/None or of the form subdir1.subdir2)'.format(subdirs))
+                raise ValueError('invalid subdirs entry: {0} (must be empty/None or of the form subdir1.subdir2)'.format(to_native(subdirs)))
             self.subdirs = subdirs
         else:
-            self.subdirs = ''
+            self.subdirs = u''
 
         self.resource = resource
         self.ref_type = ref_type
 
-        package_components = ['ansible_collections', self.collection]
+        package_components = [u'ansible_collections', self.collection]
 
-        if self.ref_type == 'role':
-            package_components.append('roles')
+        if self.ref_type == u'role':
+            package_components.append(u'roles')
         else:
             # we assume it's a plugin
-            package_components += ['plugins', self.ref_type]
+            package_components += [u'plugins', self.ref_type]
 
         if self.subdirs:
             package_components.append(self.subdirs)
 
-        if self.ref_type == 'role':
+        if self.ref_type == u'role':
             # roles are their own resource
             package_components.append(self.resource)
 
-        self.python_package_name = '.'.join(package_components)
+        self.n_python_package_name = to_native('.'.join(package_components))
 
     @staticmethod
     def from_fqcr(ref, ref_type):
@@ -337,21 +342,22 @@ class AnsibleCollectionRef:
         if not AnsibleCollectionRef.is_valid_fqcr(ref):
             raise ValueError('{0} is not a valid collection reference'.format(to_native(ref)))
 
-        ref = to_text(ref)
+        ref = to_text(ref, errors='strict')
+        ref_type = to_text(ref_type, errors='strict')
 
-        resource_splitname = ref.rsplit('.', 1)
+        resource_splitname = ref.rsplit(u'.', 1)
         package_remnant = resource_splitname[0]
         resource = resource_splitname[1]
 
         # split the left two components of the collection package name off, anything remaining is plugin-type
         # specific subdirs to be added back on below the plugin type
-        package_splitname = package_remnant.split('.', 2)
+        package_splitname = package_remnant.split(u'.', 2)
         if len(package_splitname) == 3:
             subdirs = package_splitname[2]
         else:
-            subdirs = ''
+            subdirs = u''
 
-        collection_name = '.'.join(package_splitname[0:2])
+        collection_name = u'.'.join(package_splitname[0:2])
 
         return AnsibleCollectionRef(collection_name, subdirs, resource, ref_type)
 
@@ -375,10 +381,15 @@ class AnsibleCollectionRef:
         :param legacy_plugin_dir_name: PluginLoader dir name (eg, 'action_plugins', 'library')
         :return: the corresponding plugin ref_type (eg, 'action', 'role')
         """
-        plugin_type = legacy_plugin_dir_name.replace('_plugins', '')
+        legacy_plugin_dir_name = to_text(legacy_plugin_dir_name)
 
-        if plugin_type == 'library':
-            plugin_type = 'modules'
+        plugin_type = legacy_plugin_dir_name.replace(u'_plugins', u'')
+
+        if plugin_type == u'library':
+            plugin_type = u'modules'
+
+        if plugin_type not in AnsibleCollectionRef.VALID_REF_TYPES:
+            raise ValueError('{0} cannot be mapped to a valid collection ref type'.format(to_native(legacy_plugin_dir_name)))
 
         return plugin_type
 
@@ -429,11 +440,11 @@ def get_collection_role_path(role_name, collection_list=None):
             # FIXME: error handling/logging; need to catch any import failures and move along
 
             # FIXME: this line shouldn't be necessary, but py2 pkgutil.get_data is delegating back to built-in loader when it shouldn't
-            pkg = import_module(acr.python_package_name)
+            pkg = import_module(acr.n_python_package_name)
 
             if pkg is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
-                path = os.path.dirname(to_bytes(sys.modules[acr.python_package_name].__file__, errors='surrogate_or_strict'))
+                path = os.path.dirname(to_bytes(sys.modules[acr.n_python_package_name].__file__, errors='surrogate_or_strict'))
                 return role, to_text(path, errors='surrogate_or_strict'), collection_name
 
         except IOError:

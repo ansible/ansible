@@ -333,7 +333,7 @@ class JinjaPluginIntercept(MutableMapping):
 
         # FIXME: error handling for bogus plugin name, bogus impl, bogus filter/test
 
-        pkg = import_module(acr.python_package_name)
+        pkg = import_module(acr.n_python_package_name)
 
         parent_prefix = acr.collection
 

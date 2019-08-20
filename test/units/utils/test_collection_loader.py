@@ -149,13 +149,13 @@ def test_fqcr_parsing_valid(ref, ref_type, expected_collection,
     assert r.collection == expected_collection
     assert r.subdirs == expected_subdirs
     assert r.resource == expected_resource
-    assert r.python_package_name == expected_python_pkg_name
+    assert r.n_python_package_name == expected_python_pkg_name
 
     r = AnsibleCollectionRef.try_parse_fqcr(ref, ref_type)
     assert r.collection == expected_collection
     assert r.subdirs == expected_subdirs
     assert r.resource == expected_resource
-    assert r.python_package_name == expected_python_pkg_name
+    assert r.n_python_package_name == expected_python_pkg_name
 
 
 @pytest.mark.parametrize(
@@ -195,7 +195,7 @@ def test_collectionref_components_valid(name, subdirs, resource, ref_type, pytho
 
     assert x.resource == resource
     assert x.ref_type == ref_type
-    assert x.python_package_name == python_pkg_name
+    assert x.n_python_package_name == python_pkg_name
 
 
 @pytest.mark.parametrize(
