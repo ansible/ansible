@@ -73,9 +73,11 @@
   always:
   - name: teardown1
     nxos_config: *cleanup1
+    ignore_errors: yes
 
   - name: teardown2
     nxos_config: *cleanup2
+    ignore_errors: yes
 
   - name: disable feature lacp
     nxos_feature:
