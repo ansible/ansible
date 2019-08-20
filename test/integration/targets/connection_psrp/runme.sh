@@ -6,7 +6,6 @@ set -eux
 ansible -i ../../inventory.winrm localhost \
     -m template \
     -a "src=test_connection.inventory.j2 dest=${OUTPUT_DIR}/test_connection.inventory" \
-    -e "test_shell_type=cmd" \
     "$@"
 
 python.py -m pip install pypsrp
