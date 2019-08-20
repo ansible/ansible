@@ -33,33 +33,49 @@ from ansible.utils.display import Display
 display = Display()
 
 
+class NoTokenSentinel(object):
+    """ Represents an ansible.cfg server with not token defined (will ignore cmdline and GALAXY_TOKEN_PATH. """
+    def __new__(cls, *args, **kwargs):
+        return cls
+
+
 class GalaxyToken(object):
     ''' Class to storing and retrieving local galaxy token '''
 
-    def __init__(self):
-        self.b_file = to_bytes(C.GALAXY_TOKEN_PATH)
-        self.config = yaml.safe_load(self.__open_config_for_read())
-        if not self.config:
-            self.config = {}
+    def __init__(self, token=None):
+        self.b_file = to_bytes(C.GALAXY_TOKEN_PATH, errors='surrogate_or_strict')
+        # Done so the config file is only opened when set/get/save is called
+        self._config = None
+        self._token = token
 
-    def __open_config_for_read(self):
+    @property
+    def config(self):
+        if not self._config:
+            self._config = self._read()
 
-        f = None
+        # Prioritise the token passed into the constructor
+        if self._token:
+            self._config['token'] = None if self._token is NoTokenSentinel else self._token
+
+        return self._config
+
+    def _read(self):
         action = 'Opened'
         if not os.path.isfile(self.b_file):
             # token file not found, create and chomd u+rw
-            f = open(self.b_file, 'w')
-            f.close()
+            open(self.b_file, 'w').close()
             os.chmod(self.b_file, S_IRUSR | S_IWUSR)  # owner has +rw
             action = 'Created'
 
-        f = open(self.b_file, 'r')
+        with open(self.b_file, 'r') as f:
+            config = yaml.safe_load(f)
+
         display.vvv('%s %s' % (action, to_text(self.b_file)))
 
-        return f
+        return config or {}
 
     def set(self, token):
-        self.config['token'] = token
+        self._token = token
         self.save()
 
     def get(self):
