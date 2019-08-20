@@ -2,10 +2,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import contextlib
 import fnmatch
 import glob
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -123,19 +125,37 @@ def assemble_files_to_install(complete_file_list):
     return pkg_data_files
 
 
-def clean_repository():
-    """Clean the repository of past build artifacts"""
-    _dummy = subprocess.Popen(
-        ['make', 'clean'],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    ).communicate()
+@contextlib.contextmanager
+def clean_repository(file_list):
+    """Copy the repository to clean it of artifacts"""
+    # Create a tempdir that will be the clean repo
+    with tempfile.TemporaryDirectory() as repo_root:
+        directories = set((repo_root + os.path.sep,))
+
+        for filename in file_list:
+            # Determine if we need to create the directory
+            directory = os.path.dirname(filename)
+            dest_dir = os.path.join(repo_root, directory)
+            if dest_dir not in directories:
+                os.makedirs(dest_dir)
+
+                # Keep track of all the directories that now exist
+                path_components = directory.split(os.path.sep)
+                path = repo_root
+                for component in path_components:
+                    path = os.path.join(path, component)
+                    if path not in directories:
+                        directories.add(path)
+
+            # Copy the file
+            shutil.copy2(filename, dest_dir, follow_symlinks=False)
+
+        yield repo_root
 
 
 def create_sdist(tmp_dir):
     """Create an sdist in the repository"""
-    _dummy = subprocess.Popen(
+    dummy = subprocess.Popen(
         ['make', 'snapshot', 'SDIST_DIR=%s' % tmp_dir],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -188,7 +208,7 @@ def install_sdist(tmp_dir, sdist_dir):
 
     # Determine the prefix for the installed files
     match = re.search('^creating (%s/.*?/(?:site|dist)-packages)/ansible$' %
-                        tmp_dir, stdout, flags=re.M)
+                      tmp_dir, stdout, flags=re.M)
     return match.group(1)
 
 
@@ -270,7 +290,7 @@ def check_installed_files_are_wanted(install_dir, to_install_files):
                     # __pycache__/__init__.cpython-36.py
                     segments = filename.rsplit('.', 2)
                     if len(segments) >= 3:
-                        filename = '.'.join(segments[0], segments[2])
+                        filename = '.'.join((segments[0], segments[2]))
                         directory = os.path.dirname(directory)
 
             path = os.path.join(directory, filename)
@@ -286,40 +306,61 @@ def check_installed_files_are_wanted(install_dir, to_install_files):
     return results
 
 
+def _find_symlinks():
+    symlink_list = []
+    for dirname, directories, filenames in os.walk('.'):
+        for filename in filenames:
+            path = os.path.join(dirname, filename)
+            # Strip off "./" from the front
+            path = path[2:]
+            if os.path.islink(path):
+                symlink_list.append(path)
+
+    return symlink_list
+
+
 def main():
     """All of the files in the repository"""
-    # We may run this after docs sanity tests so clean the repository first
-    clean_repository()
-
     complete_file_list = []
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         complete_file_list.append(path)
 
-    to_ship_files = assemble_files_to_ship(complete_file_list)
-    to_install_files = assemble_files_to_install(complete_file_list)
+    # ansible-test isn't currently passing symlinks to us so construct those ourselves for now
+    for filename in _find_symlinks():
+        if filename not in complete_file_list:
+            # For some reason ansible-test is passing us lib/ansible/module_utils/ansible_release.py
+            # which is a symlink even though it doesn't pass any others
+            complete_file_list.append(filename)
 
-    results = []
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        sdist_path = create_sdist(tmp_dir)
-        sdist_dir = extract_sdist(sdist_path, tmp_dir)
+    # We may run this after docs sanity tests so get a clean repository to run in
+    with clean_repository(complete_file_list) as clean_repo_dir:
+        os.chdir(clean_repo_dir)
 
-        # Check that the files that are supposed to be in the sdist are there
-        results.extend(check_sdist_contains_expected(sdist_dir, to_ship_files))
+        to_ship_files = assemble_files_to_ship(complete_file_list)
+        to_install_files = assemble_files_to_install(complete_file_list)
 
-        # Check that the files that are in the sdist are in the repository
-        results.extend(check_sdist_files_are_wanted(sdist_dir, to_ship_files))
+        results = []
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            sdist_path = create_sdist(tmp_dir)
+            sdist_dir = extract_sdist(sdist_path, tmp_dir)
 
-        # install the sdist
-        install_dir = install_sdist(tmp_dir, sdist_dir)
+            # Check that the files that are supposed to be in the sdist are there
+            results.extend(check_sdist_contains_expected(sdist_dir, to_ship_files))
 
-        # Check that the files that are supposed to be installed are there
-        results.extend(check_installed_contains_expected(install_dir, to_install_files))
+            # Check that the files that are in the sdist are in the repository
+            results.extend(check_sdist_files_are_wanted(sdist_dir, to_ship_files))
 
-        # Check that the files that are installed are supposed to be installed
-        results.extend(check_installed_files_are_wanted(install_dir, to_install_files))
+            # install the sdist
+            install_dir = install_sdist(tmp_dir, sdist_dir)
 
-    for message in results:
-        print(message)
+            # Check that the files that are supposed to be installed are there
+            results.extend(check_installed_contains_expected(install_dir, to_install_files))
+
+            # Check that the files that are installed are supposed to be installed
+            results.extend(check_installed_files_are_wanted(install_dir, to_install_files))
+
+        for message in results:
+            print(message)
 
 
 if __name__ == '__main__':
