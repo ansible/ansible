@@ -35,7 +35,6 @@ except ImportError:
     VSPHERE_IMP_ERR = traceback.format_exc()
     HAS_VSPHERE = False
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 
@@ -128,7 +127,7 @@ class VmwareRestClient(object):
 
         return client
 
-    def get_tags_for_object(self, tag_service, tag_assoc_svc, dobj):
+    def get_tags_for_object(self, tag_service=None, tag_assoc_svc=None, dobj=None):
         """
         Return list of tag objects associated with an object
         Args:
@@ -137,13 +136,89 @@ class VmwareRestClient(object):
             tag_assoc_svc: Tag Association object
         Returns: List of tag objects associated with the given object
         """
-        tag_ids = tag_assoc_svc.list_attached_tags(dobj)
+        # This method returns list of tag objects only,
+        # Please use get_tags_for_dynamic_obj for more object details
         tags = []
+        if not dobj:
+            return tags
+
+        if not tag_service:
+            tag_service = self.api_client.tagging.Tag
+
+        if not tag_assoc_svc:
+            tag_assoc_svc = self.api_client.tagging.TagAssociation
+
+        tag_ids = tag_assoc_svc.list_attached_tags(dobj)
+
         for tag_id in tag_ids:
             tags.append(tag_service.get(tag_id))
+
         return tags
 
-    def get_vm_tags(self, tag_service, tag_association_svc, vm_mid=None):
+    def get_tags_for_dynamic_obj(self, mid=None, type=None):
+        """
+        Return list of tag object details associated with object
+        Args:
+            mid: Dynamic object for specified object
+            type: Type of DynamicID to lookup
+
+        Returns: List of tag object details associated with the given object
+
+        """
+        tags = []
+        if mid is None:
+            return tags
+        dynamic_managed_object = DynamicID(type=type, id=mid)
+
+        temp_tags_model = self.get_tags_for_object(dynamic_managed_object)
+
+        category_service = self.api_client.tagging.Category
+
+        for tag_obj in temp_tags_model:
+            tags.append({
+                'id': tag_obj.id,
+                'category_name': category_service.get(tag_obj.category_id).name,
+                'name': tag_obj.name,
+                'description': tag_obj.description,
+                'category_id': tag_obj.category_id,
+            })
+
+        return tags
+
+    def get_tags_for_cluster(self, cluster_mid=None):
+        """
+        Return list of tag object associated with cluster
+        Args:
+            cluster_mid: Dynamic object for cluster
+
+        Returns: List of tag object associated with the given cluster
+
+        """
+        return self.get_tags_for_dynamic_obj(mid=cluster_mid, type='ClusterComputeResource')
+
+    def get_tags_for_hostsystem(self, hostsystem_mid=None):
+        """
+        Return list of tag object associated with host system
+        Args:
+            hostsystem_mid: Dynamic object for host system
+
+        Returns: List of tag object associated with the given host system
+
+        """
+        return self.get_tags_for_dynamic_obj(mid=hostsystem_mid, type='HostSystem')
+
+    def get_tags_for_vm(self, vm_mid=None):
+        """
+        Return list of tag object associated with virtual machine
+        Args:
+            vm_mid: Dynamic object for virtual machine
+
+        Returns: List of tag object associated with the given virtual machine
+
+        """
+        return self.get_tags_for_dynamic_obj(mid=vm_mid, type='VirtualMachine')
+
+    def get_vm_tags(self, tag_service=None, tag_association_svc=None, vm_mid=None):
         """
         Return list of tag name associated with virtual machine
         Args:
@@ -154,14 +229,18 @@ class VmwareRestClient(object):
         Returns: List of tag names associated with the given virtual machine
 
         """
+        # This API returns just names of tags
+        # Please use get_tags_for_vm for more tag object details
         tags = []
         if vm_mid is None:
             return tags
         dynamic_managed_object = DynamicID(type='VirtualMachine', id=vm_mid)
 
         temp_tags_model = self.get_tags_for_object(tag_service, tag_association_svc, dynamic_managed_object)
-        for t in temp_tags_model:
-            tags.append(t.name)
+
+        for tag_obj in temp_tags_model:
+            tags.append(tag_obj.name)
+
         return tags
 
     @staticmethod

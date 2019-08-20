@@ -65,6 +65,12 @@ options:
         - '   folder: /folder1/datacenter1/vm/folder2'
       type: str
       version_added: 2.9
+    show_tag:
+      description:
+        - Tags related to virtual machine are shown if set to C(True).
+      default: False
+      type: bool
+      version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -105,20 +111,40 @@ EXAMPLES = r'''
     var: vm_facts.virtual_machines
 
 - name: Get UUID from given VM Name
-  vmware_vm_facts:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    vm_type: vm
-  delegate_to: localhost
-  register: vm_facts
+  block:
+    - name: Get virtual machine facts
+      vmware_vm_facts:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        folder: "/datacenter/vm/folder"
+      delegate_to: localhost
+      register: vm_facts
 
-- debug:
-    msg: "{{ item.uuid }}"
-  with_items:
-    - "{{ vm_facts.virtual_machines | json_query(query) }}"
-  vars:
-    query: "[?guest_name=='DC0_H0_VM0']"
+    - debug:
+        msg: "{{ item.uuid }}"
+      with_items:
+        - "{{ vm_facts.virtual_machines | json_query(query) }}"
+      vars:
+        query: "[?guest_name=='DC0_H0_VM0']"
+
+- name: Get Tags from given VM Name
+  block:
+    - name: Get virtual machine facts
+      vmware_vm_facts:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        folder: "/datacenter/vm/folder"
+      delegate_to: localhost
+      register: vm_facts
+
+    - debug:
+        msg: "{{ item.tags }}"
+      with_items:
+        - "{{ vm_facts.virtual_machines | json_query(query) }}"
+      vars:
+        query: "[?guest_name=='DC0_H0_VM0']"
 '''
 
 RETURN = r'''
@@ -148,7 +174,16 @@ virtual_machines:
         },
         "attributes": {
             "job": "backup-prepare"
-        }
+        },
+        "tags": [
+            {
+                "category_id": "urn:vmomi:InventoryServiceCategory:b316cc45-f1a9-4277-811d-56c7e7975203:GLOBAL",
+                "category_name": "cat_0001",
+                "description": "",
+                "id": "urn:vmomi:InventoryServiceTag:43737ec0-b832-4abf-abb1-fd2448ce3b26:GLOBAL",
+                "name": "tag_0001"
+            }
+        ]
     }
   ]
 '''
@@ -160,11 +195,16 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, get_all_objs, vmware_argument_spec, _get_vm_prop
+from ansible.module_utils.vmware_rest_client import VmwareRestClient
 
 
 class VmwareVmFacts(PyVmomi):
     def __init__(self, module):
         super(VmwareVmFacts, self).__init__(module)
+
+    def get_tag_facts(self, vm_dynamic_obj):
+        vmware_client = VmwareRestClient(self.module)
+        return vmware_client.get_tags_for_vm(vm_id=vm_dynamic_obj._moId)
 
     def get_vm_attributes(self, vm):
         return dict((x.name, v.value) for x in self.custom_field_mgr
@@ -226,6 +266,10 @@ class VmwareVmFacts(PyVmomi):
             if self.module.params.get('show_attribute'):
                 vm_attributes = self.get_vm_attributes(vm)
 
+            vm_tags = list()
+            if self.module.params.get('show_tag'):
+                vm_tags = self.get_tag_facts(vm)
+
             virtual_machine = {
                 "guest_name": summary.config.name,
                 "guest_fullname": summary.config.guestFullName,
@@ -236,7 +280,8 @@ class VmwareVmFacts(PyVmomi):
                 "vm_network": net_dict,
                 "esxi_hostname": esxi_hostname,
                 "cluster": cluster_name,
-                "attributes": vm_attributes
+                "attributes": vm_attributes,
+                "tags": vm_tags
             }
 
             vm_type = self.module.params.get('vm_type')
@@ -255,6 +300,7 @@ def main():
     argument_spec.update(
         vm_type=dict(type='str', choices=['vm', 'all', 'template'], default='all'),
         show_attribute=dict(type='bool', default='no'),
+        show_tag=dict(type='bool', default=False),
         folder=dict(type='str'),
     )
 
