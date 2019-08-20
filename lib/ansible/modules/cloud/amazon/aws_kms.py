@@ -688,7 +688,7 @@ def update_key(connection, module, key):
 
     # make results consistent with kms_facts
     result = get_key_details(connection, module, key['key_id'])
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
+    module.exit_json(changed=changed, **result)
 
 
 def create_key(connection, module):
@@ -725,7 +725,7 @@ def create_key(connection, module):
 
     # make results consistent with kms_facts
     result = get_key_details(connection, module, key['key_id'])
-    module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
+    module.exit_json(changed=True, **result)
 
 
 def delete_key(connection, module, key):
@@ -739,7 +739,7 @@ def delete_key(connection, module, key):
             module.fail_json_aws(e, msg="Failed to schedule key for deletion")
 
     result = get_key_details(connection, module, key['key_id'])
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
+    module.exit_json(changed=changed, **result)
 
 
 def get_arn_from_kms_alias(kms, aliasname):
@@ -774,7 +774,7 @@ def do_policy_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=Tru
     policy = json.loads(keyret['Policy'])
 
     changes_needed = {}
-    assert_policy_shape(policy)
+    # assert_policy_shape(policy)
     had_invalid_entries = False
     for statement in policy['Statement']:
         for granttype in ['role', 'role grant', 'admin']:
@@ -855,7 +855,7 @@ def assert_policy_shape(policy):
             errors.append('Policy is missing {0}.'.format(statementtype))
 
     if len(errors):
-        raise Exception('Problems asserting policy shape. Cowardly refusing to modify it: {0}'.format(' '.join(errors)))
+        raise Exception('Problems asserting policy shape. Cowardly refusing to modify it: {0}'.format(' '.join(errors)) + "\n" + str(policy))
     return None
 
 
@@ -893,6 +893,18 @@ def main():
     kms = module.client('kms')
     iam = module.client('iam')
 
+    all_keys = get_kms_facts(kms, module)
+    key_id = module.params.get('key_id')
+    alias = module.params.get('alias')
+    if alias.startswith('alias/'):
+        alias = alias[6:]
+    if key_id:
+        filtr = ('key-id', key_id)
+    elif module.params.get('alias'):
+        filtr = ('alias', alias)
+
+    candidate_keys = [key for key in all_keys if key_matches_filter(key, filtr)]
+
     if module.params.get('policy_grant_types') or mode == 'deny':
         module.deprecate('Managing the KMS IAM Policy via policy_mode and policy_grant_types is fragile'
                          ' and has been deprecated in favour of the policy option.', version='2.13')
@@ -908,7 +920,7 @@ def main():
                     module.fail_json(msg='{0} is an unknown grant type.'.format(g))
 
         ret = do_policy_grant(kms,
-                              module.params['policy_key_arn'],
+                              candidate_keys[0]['key_arn'],
                               module.params['policy_role_arn'],
                               module.params['policy_grant_types'],
                               mode=mode,
@@ -918,15 +930,6 @@ def main():
 
         module.exit_json(**result)
     else:
-        all_keys = get_kms_facts(kms, module)
-        key_id = module.params.get('key_id')
-        alias = module.params.get('alias')
-        if key_id:
-            filtr = ('key-id', key_id)
-        elif module.params.get('alias'):
-            filtr = ('alias', alias)
-
-        candidate_keys = [key for key in all_keys if key_matches_filter(key, filtr)]
 
         if module.params.get('state') == 'present':
             if candidate_keys:

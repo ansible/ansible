@@ -108,14 +108,9 @@
       no_log: True
 
     - name: get ARN of calling user
-      command: "{{ ansible_python_interpreter }} -c 'import boto3, json; sts = boto3.client(\"sts\"); print json.dumps(sts.get_caller_identity())'"
-      changed_when: False
+      aws_caller_info:
       environment: "{{ aws_environment }}"
-      register: sts_get_caller_results
-
-    - name: set caller_arn
-      set_fact:
-        caller_arn: "{{ (sts_get_caller_results.stdout|from_json).Arn }}"
+      register: aws_caller_info
 
     - name: Allow the IAM role to use a specific Encryption Context
       aws_kms:
@@ -130,7 +125,7 @@
         grants:
           - name: test_grant
             grantee_principal: "{{ iam_role_result.iam_role.arn }}"
-            retiring_principal: "{{ caller_arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
             constraints:
               encryption_context_equals:
                 environment: test
@@ -157,7 +152,7 @@
         grants:
           - name: another_grant
             grantee_principal: "{{ iam_role_result.iam_role.arn }}"
-            retiring_principal: "{{ caller_arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
             constraints:
               encryption_context_equals:
                 Environment: second
@@ -184,7 +179,7 @@
         grants:
           - name: another_grant
             grantee_principal: "{{ iam_role_result.iam_role.arn }}"
-            retiring_principal: "{{ caller_arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
             constraints:
               encryption_context_equals:
                 Environment: second
@@ -212,7 +207,7 @@
         grants:
           - name: third_grant
             grantee_principal: "{{ iam_role_result.iam_role.arn }}"
-            retiring_principal: "{{ caller_arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
             constraints:
               encryption_context_equals:
                 environment: third
@@ -239,7 +234,7 @@
         grants:
           - name: third_grant
             grantee_principal: "{{ iam_role_result.iam_role.arn }}"
-            retiring_principal: "{{ caller_arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
             constraints:
               encryption_context_subset:
                 environment: third
