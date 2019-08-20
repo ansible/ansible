@@ -122,6 +122,8 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * vcenter_extension_facts use :ref:`vcenter_extension_info <vcenter_extension_info_module>` instead.
 
+* vertica_facts use :ref:`vertica_info <vertica_info_module>` instead.
+
 * vmware_about_facts use :ref:`vmware_about_info <vmware_about_info_module>` instead.
 
 * vmware_category_facts use :ref:`vmware_category_info <vmware_category_info_module>` instead.
