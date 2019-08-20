@@ -41,6 +41,9 @@ module: vyos_lldp_interfaces
 version_added: 2.9
 short_description: Manages attributes of lldp interfaces on VyOS devices.
 description: This module manages attributes of lldp interfaces on VyOS network devices.
+notes:
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli)
 author:
    - Rohit Thakur (@rohitthakur2590)
 options:
@@ -158,19 +161,17 @@ EXAMPLES = """
 # before": []
 #
 #    "commands": [
-#        "set service lldp interface eth1 location civic-based country-code US",
-#        "set service lldp interface eth1 location civic-based ca-type 0 ca-value ENGLISH",
-#        "set service lldp interface eth1 location civic-based country-code US",
-#        "set service lldp interface eth1 location civic-based ca-type 0 ca-value ENGLISH",
+#        "set service lldp interface eth1 location civic-based country-code 'US'",
+#        "set service lldp interface eth1 location civic-based ca-type 0 ca-value 'ENGLISH'",
 #        "set service lldp interface eth1",
-#        "set service lldp interface eth2 location coordinate-based latitude 33.524449N",
-#        "set service lldp interface eth2 location coordinate-based altitude 2200",
-#        "set service lldp interface eth2 location coordinate-based datum WGS84",
-#        "set service lldp interface eth2 location coordinate-based longitude 222.267255W",
-#        "set service lldp interface eth2 location coordinate-based latitude 33.524449N",
-#        "set service lldp interface eth2 location coordinate-based altitude 2200",
-#        "set service lldp interface eth2 location coordinate-based datum WGS84",
-#        "set service lldp interface eth2 location coordinate-based longitude 222.267255W",
+#        "set service lldp interface eth2 location coordinate-based latitude '33.524449N'",
+#        "set service lldp interface eth2 location coordinate-based altitude '2200'",
+#        "set service lldp interface eth2 location coordinate-based datum 'WGS84'",
+#        "set service lldp interface eth2 location coordinate-based longitude '222.267255W'",
+#        "set service lldp interface eth2 location coordinate-based latitude '33.524449N'",
+#        "set service lldp interface eth2 location coordinate-based altitude '2200'",
+#        "set service lldp interface eth2 location coordinate-based datum 'WGS84'",
+#        "set service lldp interface eth2 location coordinate-based longitude '222.267255W'",
 #        "set service lldp interface eth2"
 #
 # "after": [
@@ -281,15 +282,15 @@ EXAMPLES = """
 #
 #    "commands": [
 #        "delete service lldp interface eth2 location",
-#        "set service lldp interface eth2 disable",
-#        "set service lldp interface eth2 location civic-based country-code US",
-#        "set service lldp interface eth2 location civic-based ca-type 0 ca-value ENGLISH",
+#        "set service lldp interface eth2 'disable'",
+#        "set service lldp interface eth2 location civic-based country-code 'US'",
+#        "set service lldp interface eth2 location civic-based ca-type 0 ca-value 'ENGLISH'",
 #        "delete service lldp interface eth1 location",
-#        "set service lldp interface eth1 disable",
-#        "set service lldp interface eth1 location coordinate-based latitude 33.524449N",
-#        "set service lldp interface eth1 location coordinate-based altitude 2200",
-#        "set service lldp interface eth1 location coordinate-based datum WGS84",
-#        "set service lldp interface eth1 location coordinate-based longitude 222.267255W"
+#        "set service lldp interface eth1 'disable'",
+#        "set service lldp interface eth1 location coordinate-based latitude '33.524449N'",
+#        "set service lldp interface eth1 location coordinate-based altitude '2200'",
+#        "set service lldp interface eth1 location coordinate-based datum 'WGS84'",
+#        "set service lldp interface eth1 location coordinate-based longitude '222.267255W'"
 #    ]
 #
 #    "after": [
@@ -475,7 +476,9 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample:
+    - "set service lldp interface eth2 'disable'"
+    - "delete service lldp interface eth1 location"
 """
 
 
@@ -490,7 +493,10 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=Lldp_interfacesArgs.argument_spec,
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'overridden', ('config',))]
+    module = AnsibleModule(argument_spec=Lldp_interfacesArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
     result = Lldp_interfaces(module).execute_module()

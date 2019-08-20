@@ -35,6 +35,7 @@
   assert:
     that:
       - "result.changed == false"
+      - "result.commands|length == 0"
 
 - name: Assert that the before dicts were correctly generated
   assert:

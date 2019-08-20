@@ -48,7 +48,7 @@ class Lldp_interfaces(ConfigBase):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
-        :returns: Th      e current configuration as a dictionary
+        :returns: The current configuration as a dictionary
         """
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset,
                                                          self.gather_network_resources)
@@ -205,7 +205,6 @@ class Lldp_interfaces(ConfigBase):
         commands = []
         have = {}
         lldp_name = want['name']
-
         params = Lldp_interfaces.params
 
         commands.extend(self._add_location(lldp_name, want, have))
@@ -216,27 +215,29 @@ class Lldp_interfaces(ConfigBase):
                     commands.extend(self._add_location(lldp_name, want, have))
                 elif attrib == 'enable':
                     if not value:
-                        commands.append(Lldp_interfaces.set_cmd + lldp_name + ' disable ')
+                        commands.append(
+                            self._compute_command(lldp_name, value='disable')
+                        )
                 else:
-                    commands.append(Lldp_interfaces.set_cmd + lldp_name)
+                    commands.append(
+                        self._compute_command(lldp_name)
+                    )
 
         return commands
 
     def _purge_attribs(self, have):
         commands = []
-        name = have['name']
-        commands.append(Lldp_interfaces.del_cmd + ' ' + name)
+        commands.append(
+            self._compute_command(have['name'], remove=True)
+        )
         return commands
 
     def _render_del_commands(self, want, have):
         commands = []
-
-        lldp_name = have['name']
         params = Lldp_interfaces.params
-
         for attrib in params:
             if attrib == 'location':
-                commands.extend(self._update_location(lldp_name, want, have))
+                commands.extend(self._update_location(have['name'], want, have))
         return commands
 
     def _configure_status(self, name, want_item, have_item):
@@ -247,16 +248,20 @@ class Lldp_interfaces(ConfigBase):
             temp_have_item = True
         if want_item['enable'] != temp_have_item:
             if want_item['enable']:
-                commands.append(Lldp_interfaces.del_cmd + name + ' disable')
+                commands.append(
+                    self._compute_command(name, value='disable', remove=True)
+                )
             else:
-                commands.append(Lldp_interfaces.set_cmd + name + ' disable')
+                commands.append(
+                    self._compute_command(name, value='disable')
+                )
         return commands
 
     def _add_location(self, name, want_item, have_item):
         commands = []
         have_dict = {}
         have_ca = {}
-        set_cmd = Lldp_interfaces.set_cmd + name + ' location '
+        set_cmd = name + ' location '
         want_location_type = want_item.get('location') or {}
         have_location_type = have_item.get('location') or {}
 
@@ -268,7 +273,9 @@ class Lldp_interfaces(ConfigBase):
             updates = dict_diff(have_dict, want_dict)
             for key, value in iteritems(updates):
                 if value:
-                    commands.append(set_cmd + location_type + ' ' + key + ' ' + str(value))
+                    commands.append(
+                        self._compute_command(set_cmd + location_type, key, str(value))
+                    )
 
         elif want_location_type['civic_based']:
             location_type = 'civic-based'
@@ -279,25 +286,38 @@ class Lldp_interfaces(ConfigBase):
                 have_ca = have_dict.get('ca_info') or []
                 if want_dict['country_code'] != have_dict['country_code']:
                     commands.append(
-                        set_cmd + location_type + ' country-code ' + str(want_dict['country_code'])
+                        self._compute_command(
+                          set_cmd + location_type, 'country-code', str(want_dict['country_code'])
+                        )
                     )
             else:
                 commands.append(
-                    set_cmd + location_type + ' country-code ' + str(want_dict['country_code']))
+                    self._compute_command(
+                        set_cmd + location_type, 'country-code', str(want_dict['country_code'])
+                    )
+                )
             commands.extend(self._add_civic_address(name, want_ca, have_ca))
 
         elif want_location_type['elin']:
             location_type = 'elin'
             if is_dict_element_present(have_location_type, 'elin'):
                 if want_location_type.get('elin') != have_location_type.get('elin'):
-                    commands.append(set_cmd + location_type + ' ' + str(want_location_type['elin']))
+                    commands.append(
+                        self._compute_command(
+                            set_cmd + location_type, value=str(want_location_type['elin'])
+                        )
+                    )
             else:
-                commands.append(set_cmd + location_type + ' ' + str(want_location_type['elin']))
+                commands.append(
+                    self._compute_command(
+                        set_cmd + location_type, value=str(want_location_type['elin'])
+                    )
+                )
         return commands
 
     def _update_location(self, name, want_item, have_item):
         commands = []
-        del_cmd = Lldp_interfaces.del_cmd + name + ' location'
+        del_cmd = name + ' location'
         want_location_type = want_item.get('location') or {}
         have_location_type = have_item.get('location') or {}
 
@@ -309,9 +329,15 @@ class Lldp_interfaces(ConfigBase):
                 for key, value in iteritems(have_dict):
                     only_in_have = key_value_in_dict(key, value, want_dict)
                     if not only_in_have:
-                        commands.append(del_cmd + ' ' + location_type + ' ' + key + ' ' + str(value))
+                        commands.append(
+                            self._compute_command(
+                                del_cmd, location_type, key, str(value), remove=True
+                            )
+                        )
             else:
-                commands.append(del_cmd)
+                commands.append(
+                    self._compute_command(del_cmd, remove=True)
+                )
 
         elif want_location_type['civic_based']:
             want_dict = want_location_type.get('civic_based') or {}
@@ -321,14 +347,20 @@ class Lldp_interfaces(ConfigBase):
                 have_ca = have_dict.get('ca_info')
                 commands.extend(self._update_civic_address(name, want_ca, have_ca))
             else:
-                commands.append(del_cmd)
+                commands.append(
+                    self._compute_command(del_cmd, remove=True)
+                )
 
         else:
             if is_dict_element_present(have_location_type, 'elin'):
                 if want_location_type.get('elin') != have_location_type.get('elin'):
-                    commands.append(del_cmd)
+                    commands.append(
+                        self._compute_command(del_cmd, remove=True)
+                    )
             else:
-                commands.append(del_cmd)
+                commands.append(
+                    self._compute_command(del_cmd, remove=True)
+                )
         return commands
 
     def _add_civic_address(self, name, want, have):
@@ -338,8 +370,10 @@ class Lldp_interfaces(ConfigBase):
             ca_value = item['ca_value']
             obj_in_have = search_dict_tv_in_list(ca_type, ca_value, have, 'ca_type', 'ca_value')
             if not obj_in_have:
-                commands.append(Lldp_interfaces.set_cmd + name + ' location civic-based ca-type ' + str(
-                    ca_type) + ' ca-value ' + ca_value)
+                commands.append(
+                    self._compute_command(key=name + ' location civic-based ca-type',attrib=str(
+                    ca_type) + ' ca-value', value=ca_value)
+                )
         return commands
 
     def _update_civic_address(self, name, want, have):
@@ -350,5 +384,20 @@ class Lldp_interfaces(ConfigBase):
             in_want = search_dict_tv_in_list(ca_type, ca_value, want, 'ca_type', 'ca_value')
             if not in_want:
                 commands.append(
-                    Lldp_interfaces.del_cmd + name + ' location civic-based ca-type ' + str(ca_type))
+                    self._compute_command(
+                        name, 'location civic-based ca-type', str(ca_type), remove=True
+                    )
+                )
         return commands
+
+    def _compute_command(self, key, attrib=None, value=None, remove=False):
+        if remove:
+            cmd = 'delete service lldp interface '
+        else:
+            cmd = 'set service lldp interface '
+        cmd += (key)
+        if attrib:
+            cmd += (' ' + attrib)
+        if value:
+            cmd += (" '" + value + "'")
+        return cmd

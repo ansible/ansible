@@ -67,7 +67,6 @@ def diff_list_of_dicts(want, have):
     return diff
 
 
-<<<<<<< HEAD
 def get_lst_diff_for_dicts(want, have, lst):
     """
     This function generates a list containing values
@@ -121,8 +120,17 @@ def list_diff_want_only(want_list, have_list):
     return diff
 
 
-def search_dict_tv_in_list(type, value, lst, key1, key2):
-    obj = next((item for item in lst if item[key1] == type and item[key2] == value), None)
+def search_dict_tv_in_list(d_val1, d_val2, lst, key1, key2):
+    """
+    This function return the dict object if it exist in list.
+    :param d_val1:
+    :param d_val2:
+    :param lst:
+    :param key1:
+    :param key2:
+    :return:
+    """
+    obj = next((item for item in lst if item[key1] == d_val1 and item[key2] == d_val2), None)
     if obj:
         return obj
     else:
@@ -130,6 +138,13 @@ def search_dict_tv_in_list(type, value, lst, key1, key2):
 
 
 def key_value_in_dict(have_key, have_value, want_dict):
+    """
+    This function checks whether the key and values exist in dict
+    :param have_key:
+    :param have_value:
+    :param want_dict:
+    :return:
+    """
     for key, value in iteritems(want_dict):
         if key == have_key and value == have_value:
             return True
@@ -137,6 +152,12 @@ def key_value_in_dict(have_key, have_value, want_dict):
 
 
 def is_dict_element_present(dict, key):
+    """
+    This function checks whether the key is present in dict.
+    :param dict:
+    :param key:
+    :return:
+    """
     for item in dict:
         if item == key:
             return True
