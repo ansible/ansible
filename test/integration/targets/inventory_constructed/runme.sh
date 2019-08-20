@@ -14,7 +14,7 @@ grep '@separatorhostvalue1' out.txt
 grep '@separatoritem0' out.txt
 grep '@separatorkey0separatorvalue0' out.txt
 
-ANSIBLE_KEYED_GROUPS_LEADING_SEPARATOR=False ansible-inventory -i static_inventory.yml -i constructed.yml --graph | tee out.txt
+ansible-inventory -i static_inventory.yml -i no_leading_separator_constructed.yml --graph | tee out.txt
 
 grep '@hostvalue1' out.txt
 grep '@item0' out.txt

@@ -47,8 +47,6 @@ options:
       - Set this option to False to omit the leading underscore (or other separator) if no prefix is given.
       - If the group name is derived from a mapping the separator is still used to concatenate the items.
       - To not use a separator in the group name at all, set the separator for the keyed group to an empty string instead.
-    env:
-      - name: ANSIBLE_KEYED_GROUPS_LEADING_SEPARATOR
     type: boolean
     default: True
     version_added: '2.11'
