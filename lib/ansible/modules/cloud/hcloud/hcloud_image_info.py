@@ -16,14 +16,16 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_image_facts
+module: hcloud_image_info
 
-short_description: Gather facts about your Hetzner Cloud images.
+short_description: Gather infos about your Hetzner Cloud images.
 
 version_added: "2.8"
 
 description:
-    - Gather facts about your Hetzner Cloud images.
+    - Gather infos about your Hetzner Cloud images.
+    - This module was called C(hcloud_location_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_location_facts).
+      Note that the M(hcloud_image_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_image_info)!
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -46,22 +48,23 @@ options:
             - The label selector for the images you want to get.
         default: system
         choices: [ system, snapshot, backup ]
+        type: str
 extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud image facts
-  local_action:
-    module: hcloud_image_facts
+- name: Gather hcloud image infos
+  hcloud_image_info:
+  register: output
 
-- name: Print the gathered facts
+- name: Print the gathered infos
   debug:
-    var: ansible_facts.hcloud_image_facts
+    var: output
 """
 
 RETURN = """
-hcloud_image_facts:
-    description: The image facts as list
+hcloud_image_info:
+    description: The image infos as list
     returned: always
     type: complex
     contains:
@@ -116,15 +119,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudImageFacts(Hcloud):
+class AnsibleHcloudImageImages(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_image_facts")
-        self.hcloud_image_facts = None
+        Hcloud.__init__(self, module, "hcloud_image_info")
+        self.hcloud_image_info = None
 
     def _prepare_result(self):
         tmp = []
 
-        for image in self.hcloud_image_facts:
+        for image in self.hcloud_image_info:
             if image is not None:
                 tmp.append({
                     "id": to_native(image.id),
@@ -138,14 +141,14 @@ class AnsibleHcloudImageFacts(Hcloud):
                 })
         return tmp
 
-    def get_servers(self):
+    def get_images(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_image_facts = [self.client.images.get_by_id(
+                self.hcloud_image_info = [self.client.images.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("name") is not None:
-                self.hcloud_image_facts = [self.client.images.get_by_name(
+                self.hcloud_image_info = [self.client.images.get_by_name(
                     self.module.params.get("name")
                 )]
             else:
@@ -158,7 +161,7 @@ class AnsibleHcloudImageFacts(Hcloud):
                 if image_type:
                     params["type"] = image_type
 
-                self.hcloud_image_facts = self.client.images.get_all(**params)
+                self.hcloud_image_info = self.client.images.get_all(**params)
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -170,7 +173,7 @@ class AnsibleHcloudImageFacts(Hcloud):
                 id={"type": "int"},
                 name={"type": "str"},
                 label_selector={"type": "str"},
-                type={"choices": ["system", "snapshot", "backup"], "default": "system"},
+                type={"choices": ["system", "snapshot", "backup"], "default": "system", "type": "str"},
                 **Hcloud.base_module_arguments()
             ),
             supports_check_mode=True,
@@ -178,15 +181,27 @@ class AnsibleHcloudImageFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudImageFacts.define_module()
+    module = AnsibleHcloudImageImages.define_module()
 
-    hcloud = AnsibleHcloudImageFacts(module)
-    hcloud.get_servers()
+    is_old_facts = module._name == 'hcloud_image_facts'
+    if is_old_facts:
+        module.deprecate("The 'hcloud_image_info' module has been renamed to 'hcloud_image_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
+
+    hcloud = AnsibleHcloudImageImages(module)
+    hcloud.get_images()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_image_facts': result['hcloud_image_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts)
+
+    if is_old_facts:
+        ansible_info = {
+            'hcloud_imagen_facts': result['hcloud_image_info']
+        }
+        module.exit_json(ansible_s=ansible_info)
+    else:
+        ansible_info = {
+            'hcloud_image_info': result['hcloud_image_info']
+        }
+        module.exit_json(**ansible_info)
 
 
 if __name__ == "__main__":
