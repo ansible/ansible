@@ -63,6 +63,7 @@
     - name: create a VPC
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
+        ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
         <<: *aws_connection_info
@@ -78,6 +79,7 @@
       assert:
         that:
           - '"cidr_block" in result.vpc'
+          - '"ipv6_cidr_block_association_set" in result.vpc'
           - '"classic_link_enabled" in result.vpc'
           - '"dhcp_options_id" in result.vpc'
           - '"id" in result.vpc'
@@ -99,6 +101,7 @@
     - name: test check mode creating an identical VPC
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
+        ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: yes
