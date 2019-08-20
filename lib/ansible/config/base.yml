@@ -1344,6 +1344,18 @@ GALAXY_SERVER:
   ini:
   - {key: server, section: galaxy}
   yaml: {key: galaxy.server}
+GALAXY_SERVER_LIST:
+  description:
+  - A list of Galaxy servers to use when installing a collection.
+  - The value corresponds to the config ini header ``[galaxy_server.{{item}}]`` which defines the server details.
+  - 'See :ref:`galaxy_server_config` for more details on how to define a Galaxy server.'
+  - The order of servers in this list is used to as the order in which a collection is resolved.
+  - Setting this config option will ignore the :ref:`galaxy_server` config option.
+  env: [{name: ANSIBLE_GALAXY_SERVER_LIST}]
+  ini:
+  - {key: server_list, section: galaxy}
+  type: list
+  version_added: "2.9"
 GALAXY_TOKEN:
   default: null
   description: "GitHub personal access token"
@@ -1358,6 +1370,7 @@ GALAXY_TOKEN_PATH:
   ini:
   - {key: token_path, section: galaxy}
   type: path
+  version_added: "2.9"
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True
