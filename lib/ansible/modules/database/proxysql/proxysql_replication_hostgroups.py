@@ -102,7 +102,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
-from packaging import version
+from distutils.version import LooseVersion
 
 # ===========================================
 # proxysql module specific support methods.
@@ -157,8 +157,8 @@ class ProxySQLReplicationHostgroup(object):
         self.reader_hostgroup = module.params["reader_hostgroup"]
         self.comment = module.params["comment"]
         self.check_type = module.params["check_type"]
-        self.support_check_type = version.parse(
-            proxysql_version) >= version.parse("2.0.1")
+        self.support_check_type = LooseVersion(
+            proxysql_version) >= LooseVersion("2.0.1")
 
     def check_repl_group_config(self, cursor, keys):
         query_string = \
@@ -330,7 +330,7 @@ def main():
             writer_hostgroup=dict(required=True, type='int'),
             reader_hostgroup=dict(required=True, type='int'),
             comment=dict(type='str'),
-            check_type=dict(type='str', choices=[
+            check_type=dict(default="read_only", type='str', choices=[
                 "read_only",
                 "super_read_only",
                 "innodb_read_only"]),
@@ -361,10 +361,10 @@ def main():
         )
     cursor.execute("select version();")
     raw_version = cursor.fetchone()
-    proxysql_version = raw_version['version()'].split("-")
+    proxysql_version = raw_version['version()']
 
     proxysql_repl_group = ProxySQLReplicationHostgroup(
-        module, proxysql_version[0])
+        module, proxysql_version)
     result = {}
 
     result['state'] = proxysql_repl_group.state
