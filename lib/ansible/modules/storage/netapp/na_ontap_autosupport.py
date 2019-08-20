@@ -64,7 +64,8 @@ options:
     version_added: 2.8
   proxy_url:
     description:
-    - specify an HTTP or HTTPS proxy if the 'transport' parameter is set to HTTP or HTTPS and your organization uses a proxy
+    - specify an HTTP or HTTPS proxy if the 'transport' parameter is set to HTTP or HTTPS and your organization uses a proxy.
+    - If authentication is required, use the format "username:password@host:port".
     version_added: 2.8
   hostname_in_subject:
     description:
@@ -89,6 +90,26 @@ EXAMPLES = """
         mail_hosts: 1.2.3.4,5.6.7.8
         support: False
         post_url: url/1.0/post
+
+    - name: Modify autosupport proxy_url with password
+      na_ontap_autosupport:
+        hostname: "{{ hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: present
+        node_name: test
+        transport: https
+        proxy_url: username:password@host.com:8000
+
+    - name: Modify autosupport proxy_url without password
+      na_ontap_autosupport:
+        hostname: "{{ hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: present
+        node_name: test
+        transport: https
+        proxy_url: username@host.com:8000
 
     - name: Disable autosupport
       na_ontap_autosupport:
