@@ -1,0 +1,42 @@
+---
+- debug:
+      msg: "START Merged ios_lacp state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge provided configuration system LACP
+      ios_lacp: &merged
+        config:
+          system:
+            priority: 10
+        state: merged
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] == result['before'] }}"
+
+    - name: Merge provided configuration system LACP (IDEMPOTENT)
+      ios_lacp: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+  when: ansible_net_version != "15.6(2)T"
+
+  always:
+    - include_tasks: _remove_config.yaml
