@@ -16,14 +16,14 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_network_facts
+module: hcloud_network_info
 
-short_description: Gather facts about your Hetzner Cloud servers.
+short_description: Gather info about your Hetzner Cloud networks.
 
-version_added: "2.8"
+version_added: "2.9"
 
 description:
-    - Gather facts about your Hetzner Cloud servers.
+    - Gather info about your Hetzner Cloud networks.
 
 author:
     - Christopher Schmitt (@cschmitt-hcloud)
@@ -45,18 +45,18 @@ extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud network facts
+- name: Gather hcloud network info
   local_action:
-    module: hcloud_network_facts
+    module: hcloud_network_info
 
-- name: Print the gathered facts
+- name: Print the gathered info
   debug:
-    var: ansible_facts.hcloud_network_facts
+    var: hcloud_network_info
 """
 
 RETURN = """
-hcloud_network_facts:
-    description: The network facts as list
+hcloud_network_info:
+    description: The network info as list
     returned: always
     type: complex
     contains:
@@ -69,7 +69,7 @@ hcloud_network_facts:
             description: Name of the network
             returned: always
             type: str
-            sample: my-server
+            sample: awsome-network
         ip_range:
             description: Ip range of the network
             returned: always
@@ -78,23 +78,19 @@ hcloud_network_facts:
         subnets:
             description: subnets belongig to the network
             returned: always
-            type: str
-            sample: cx11
+            type: complex
         routes:
             description: Routes belonging to the network
             returned: always
-            type: str
-            sample: 116.203.104.109
+            type: complex
         servers:
             description: Servers attached to the network
             returned: always
-            type: str
-            sample: 2a01:4f8:1c1c:c140::/64
+            type: complex
         labels:
             description: Labels of the network
             returned: always
-            type: str
-            sample: fsn1-dc14
+            type: dict
       
 """
 
@@ -108,15 +104,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudNetworkFacts(Hcloud):
+class AnsibleHcloudNetworkInfo(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_network_facts")
-        self.hcloud_network_facts = None
+        Hcloud.__init__(self, module, "hcloud_network_info")
+        self.hcloud_network_info = None
 
     def _prepare_result(self):
         tmp = []
 
-        for network in self.hcloud_network_facts:
+        for network in self.hcloud_network_info:
             if network is not None:
                 subnets = []
                 for subnet in network.subnets:
@@ -167,18 +163,18 @@ class AnsibleHcloudNetworkFacts(Hcloud):
     def get_networks(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_network_facts = [self.client.networks.get_by_id(
+                self.hcloud_network_info = [self.client.networks.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("name") is not None:
-                self.hcloud_network_facts = [self.client.networks.get_by_name(
+                self.hcloud_network_info = [self.client.networks.get_by_name(
                     self.module.params.get("name")
                 )]
             elif self.module.params.get("label_selector") is not None:
-                self.hcloud_network_facts = self.client.networks.get_all(
+                self.hcloud_network_info = self.client.networks.get_all(
                     label_selector=self.module.params.get("label_selector"))
             else:
-                self.hcloud_network_facts = self.client.networks.get_all()
+                self.hcloud_network_info = self.client.networks.get_all()
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -197,15 +193,15 @@ class AnsibleHcloudNetworkFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudNetworkFacts.define_module()
+    module = AnsibleHcloudNetworkInfo.define_module()
 
-    hcloud = AnsibleHcloudNetworkFacts(module)
+    hcloud = AnsibleHcloudNetworkInfo(module)
     hcloud.get_networks()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_network_facts': result['hcloud_network_facts']
+    info = {
+        'hcloud_network_info': result['hcloud_network_info']
     }
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(**info)
 
 
 if __name__ == "__main__":
