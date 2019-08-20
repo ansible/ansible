@@ -33,8 +33,9 @@ options:
       - Text field that can be used for any purposed defined by the user.
   check_type:
     description:
-      - Variable checked when executing a read only check. Requires proxysql >= 2.0.1.
+      - Variable checked when executing a read only check. Requires proxysql >= 2.0.1. Otherwise it has no effect.
     choices: ["read_only", "super_read_only", "innodb_read_only"]
+    default: read_only
     version_added: 2.9
   state:
     description:
@@ -166,15 +167,14 @@ class ProxySQLReplicationHostgroup(object):
                WHERE writer_hostgroup = %s
                  AND reader_hostgroup = %s"""
 
-        query_data = \
-            [self.writer_hostgroup,
-             self.reader_hostgroup]
+        query_data = [self.writer_hostgroup,
+                      self.reader_hostgroup]
 
         if self.comment and not keys:
             query_string += "\n  AND comment = %s"
             query_data.append(self.comment)
 
-            if self.support_check_type and self.check_type:
+            if self.support_check_type:
                 query_string += " AND check_type = %s"
                 query_data.append(self.check_type)
 
@@ -189,16 +189,15 @@ class ProxySQLReplicationHostgroup(object):
                WHERE writer_hostgroup = %s
                  AND reader_hostgroup = %s"""
 
-        query_data = \
-            [self.writer_hostgroup,
-             self.reader_hostgroup]
+        query_data = [self.writer_hostgroup,
+                      self.reader_hostgroup]
 
         cursor.execute(query_string, query_data)
         repl_group = cursor.fetchone()
         return repl_group
 
     def create_repl_group_config(self, cursor):
-        if self.support_check_type and self.check_type:
+        if self.support_check_type:
             query_string = \
                 """INSERT INTO mysql_replication_hostgroups (
                 writer_hostgroup,
@@ -207,11 +206,10 @@ class ProxySQLReplicationHostgroup(object):
                 check_type)
                 VALUES (%s, %s, %s, %s)"""
 
-            query_data = \
-                [self.writer_hostgroup,
-                self.reader_hostgroup,
-                self.comment or '',
-                self.check_type]
+            query_data = [self.writer_hostgroup,
+                          self.reader_hostgroup,
+                          self.comment or '',
+                          self.check_type]
         else:
             query_string = \
                 """INSERT INTO mysql_replication_hostgroups (
@@ -220,27 +218,22 @@ class ProxySQLReplicationHostgroup(object):
                 comment)
                 VALUES (%s, %s, %s)"""
 
-            query_data = \
-                [self.writer_hostgroup,
-                 self.reader_hostgroup,
-                 self.comment or '']
+            query_data = [self.writer_hostgroup,
+                          self.reader_hostgroup,
+                          self.comment or '']
 
         cursor.execute(query_string, query_data)
         return True
 
     def update_repl_group_config(self, cursor):
-        if self.support_check_type and self.check_type:
+        if self.support_check_type:
             query_string = \
                 """UPDATE mysql_replication_hostgroups
                 SET comment = %s, check_type = %s
                 WHERE writer_hostgroup = %s
                     AND reader_hostgroup = %s"""
 
-            query_data = \
-                [self.comment,
-                self.check_type,
-                self.writer_hostgroup,
-                self.reader_hostgroup]
+            query_data = [self.comment, self.check_type, self.writer_hostgroup, self.reader_hostgroup]
         else:
             query_string = \
                 """UPDATE mysql_replication_hostgroups
@@ -248,10 +241,9 @@ class ProxySQLReplicationHostgroup(object):
                 WHERE writer_hostgroup = %s
                     AND reader_hostgroup = %s"""
 
-            query_data = \
-                [self.comment,
-                 self.writer_hostgroup,
-                 self.reader_hostgroup]
+            query_data = [self.comment,
+                          self.writer_hostgroup,
+                          self.reader_hostgroup]
 
         cursor.execute(query_string, query_data)
         return True
