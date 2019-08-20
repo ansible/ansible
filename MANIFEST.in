@@ -2,7 +2,12 @@ include README.rst
 include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
+include shippable.yml
 include bin/ansible-test
+recursive-include docs *
+exclude docs/docsite/rst_warnings
+recursive-exclude docs/docsite/_build *
+recursive-exclude docs/docsite/extensions *.pyc *.pyo
 include examples/hosts
 include examples/ansible.cfg
 include examples/scripts/ConfigureRemotingForAnsible.ps1
@@ -13,20 +18,18 @@ recursive-include lib/ansible/module_utils/powershell *.psm1
 recursive-include lib/ansible/modules/windows *.ps1
 recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep
 recursive-include lib/ansible/config/ *.yml
-recursive-include docs *
 recursive-include licenses *
 recursive-include packaging *
-recursive-include test/cache *
+recursive-include test/cache .keep
 recursive-include test/integration *
 recursive-include test/legacy *
 recursive-exclude test/lib/ansible_test *.pyc *.pyo *.bak *.orig *~ *.swp
 recursive-include test/lib/ansible_test/config *.template
 recursive-include test/lib/ansible_test/_data *
 recursive-include test/lib/ansible_test/tests *
-recursive-include test/results *
+recursive-include test/results .keep
 recursive-include test/sanity *
 recursive-include test/units *
-recursive-include test/utils *
 include Makefile
 include MANIFEST.in
 include changelogs/CHANGELOG*.rst
