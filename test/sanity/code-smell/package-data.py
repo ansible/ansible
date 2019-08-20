@@ -270,7 +270,7 @@ def check_installed_files_are_wanted(install_dir, to_install_files):
                     # __pycache__/__init__.cpython-36.py
                     segments = filename.rsplit('.', 2)
                     if len(segments) >= 3:
-                        filename = segments[0] + segments[2]
+                        filename = '.'.join(segments[0], segments[2])
                         directory = os.path.dirname(directory)
 
             path = os.path.join(directory, filename)
