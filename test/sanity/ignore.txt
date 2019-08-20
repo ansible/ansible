@@ -5390,7 +5390,7 @@ lib/ansible/modules/remote_management/foreman/_foreman.py validate-modules:E337
 lib/ansible/modules/remote_management/foreman/_katello.py validate-modules:E337
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py validate-modules:E326
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py validate-modules:E337
-lib/ansible/modules/remote_management/hpilo/hpilo_facts.py validate-modules:E337
+lib/ansible/modules/remote_management/hpilo/hpilo_info.py validate-modules:E337
 lib/ansible/modules/remote_management/hpilo/hponcfg.py validate-modules:E337
 lib/ansible/modules/remote_management/imc/imc_rest.py validate-modules:E337
 lib/ansible/modules/remote_management/intersight/intersight_rest_api.py validate-modules:E337

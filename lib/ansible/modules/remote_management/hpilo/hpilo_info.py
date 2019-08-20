@@ -15,15 +15,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: hpilo_facts
+module: hpilo_info
 version_added: "2.3"
 author: Dag Wieers (@dagwieers)
-short_description: Gather facts through an HP iLO interface
+short_description: Gather information through an HP iLO interface
 description:
-- This module gathers facts for a specific system using its HP iLO interface.
-  These facts include hardware and network related information useful
+- This module gathers information on a specific system using its HP iLO interface.
+  These information includes hardware and network related information useful
   for provisioning (e.g. macaddress, uuid).
-- This module requires the hpilo python module.
+- This module requires the C(hpilo) python module.
+- This module was called C(hpilo_facts) before Ansible 2.9, returning C(ansible_facts).
+  Note that the M(hpilo_info) module no longer returns C(ansible_facts)!
 options:
   host:
     description:
@@ -52,20 +54,21 @@ notes:
 
 EXAMPLES = r'''
 # Task to gather facts from a HP iLO interface only if the system is an HP server
-- hpilo_facts:
+- hpilo_info:
     host: YOUR_ILO_ADDRESS
     login: YOUR_ILO_LOGIN
     password: YOUR_ILO_PASSWORD
   when: cmdb_hwmodel.startswith('HP ')
   delegate_to: localhost
+  register: results
 
 - fail:
-    msg: 'CMDB serial ({{ cmdb_serialno }}) does not match hardware serial ({{ hw_system_serial }}) !'
-  when: cmdb_serialno != hw_system_serial
+    msg: 'CMDB serial ({{ cmdb_serialno }}) does not match hardware serial ({{ results.hw_system_serial }}) !'
+  when: cmdb_serialno != results.hw_system_serial
 '''
 
 RETURN = r'''
-# Typical output of HP iLO_facts for a physical system
+# Typical output of HP iLO_info for a physical system
 hw_bios_date:
     description: BIOS date
     returned: always
@@ -141,15 +144,15 @@ warnings.simplefilter('ignore')
 
 def parse_flat_interface(entry, non_numeric='hw_eth_ilo'):
     try:
-        factname = 'hw_eth' + str(int(entry['Port']) - 1)
+        infoname = 'hw_eth' + str(int(entry['Port']) - 1)
     except Exception:
-        factname = non_numeric
+        infoname = non_numeric
 
-    facts = {
+    info = {
         'macaddress': entry['MAC'].replace('-', ':'),
         'macaddress_dash': entry['MAC']
     }
-    return (factname, facts)
+    return (infoname, info)
 
 
 def main():
@@ -163,6 +166,10 @@ def main():
         ),
         supports_check_mode=True,
     )
+    is_old_facts = module._name == 'hpilo_facts'
+    if is_old_facts:
+        module.deprecate("The 'hpilo_facts' module has been renamed to 'hpilo_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     if not HAS_HPILO:
         module.fail_json(msg=missing_required_lib('python-hpilo'), exception=HPILO_IMP_ERR)
@@ -174,7 +181,7 @@ def main():
 
     ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
 
-    facts = {
+    info = {
         'module_hw': True,
     }
 
@@ -188,66 +195,69 @@ def main():
         if 'type' not in entry:
             continue
         elif entry['type'] == 0:  # BIOS Information
-            facts['hw_bios_version'] = entry['Family']
-            facts['hw_bios_date'] = entry['Date']
+            info['hw_bios_version'] = entry['Family']
+            info['hw_bios_date'] = entry['Date']
         elif entry['type'] == 1:  # System Information
-            facts['hw_uuid'] = entry['UUID']
-            facts['hw_system_serial'] = entry['Serial Number'].rstrip()
-            facts['hw_product_name'] = entry['Product Name']
-            facts['hw_product_uuid'] = entry['cUUID']
+            info['hw_uuid'] = entry['UUID']
+            info['hw_system_serial'] = entry['Serial Number'].rstrip()
+            info['hw_product_name'] = entry['Product Name']
+            info['hw_product_uuid'] = entry['cUUID']
         elif entry['type'] == 209:  # Embedded NIC MAC Assignment
             if 'fields' in entry:
                 for (name, value) in [(e['name'], e['value']) for e in entry['fields']]:
                     if name.startswith('Port'):
                         try:
-                            factname = 'hw_eth' + str(int(value) - 1)
+                            infoname = 'hw_eth' + str(int(value) - 1)
                         except Exception:
-                            factname = 'hw_eth_ilo'
+                            infoname = 'hw_eth_ilo'
                     elif name.startswith('MAC'):
-                        facts[factname] = {
+                        info[infoname] = {
                             'macaddress': value.replace('-', ':'),
                             'macaddress_dash': value
                         }
             else:
-                (factname, entry_facts) = parse_flat_interface(entry, 'hw_eth_ilo')
-                facts[factname] = entry_facts
+                (infoname, entry_info) = parse_flat_interface(entry, 'hw_eth_ilo')
+                info[infoname] = entry_info
         elif entry['type'] == 209:  # HPQ NIC iSCSI MAC Info
             for (name, value) in [(e['name'], e['value']) for e in entry['fields']]:
                 if name.startswith('Port'):
                     try:
-                        factname = 'hw_iscsi' + str(int(value) - 1)
+                        infoname = 'hw_iscsi' + str(int(value) - 1)
                     except Exception:
-                        factname = 'hw_iscsi_ilo'
+                        infoname = 'hw_iscsi_ilo'
                 elif name.startswith('MAC'):
-                    facts[factname] = {
+                    info[infoname] = {
                         'macaddress': value.replace('-', ':'),
                         'macaddress_dash': value
                     }
         elif entry['type'] == 233:  # Embedded NIC MAC Assignment (Alternate data format)
-            (factname, entry_facts) = parse_flat_interface(entry, 'hw_eth_ilo')
-            facts[factname] = entry_facts
+            (infoname, entry_info) = parse_flat_interface(entry, 'hw_eth_ilo')
+            info[infoname] = entry_info
 
     # Collect health (RAM/CPU data)
     health = ilo.get_embedded_health()
-    facts['hw_health'] = health
+    info['hw_health'] = health
 
     memory_details_summary = health.get('memory', {}).get('memory_details_summary')
     # RAM as reported by iLO 2.10 on ProLiant BL460c Gen8
     if memory_details_summary:
-        facts['hw_memory_details_summary'] = memory_details_summary
-        facts['hw_memory_total'] = 0
+        info['hw_memory_details_summary'] = memory_details_summary
+        info['hw_memory_total'] = 0
         for cpu, details in memory_details_summary.items():
             cpu_total_memory_size = details.get('total_memory_size')
             if cpu_total_memory_size:
                 ram = re.search(r'(\d+)\s+(\w+)', cpu_total_memory_size)
                 if ram:
                     if ram.group(2) == 'GB':
-                        facts['hw_memory_total'] = facts['hw_memory_total'] + int(ram.group(1))
+                        info['hw_memory_total'] = info['hw_memory_total'] + int(ram.group(1))
 
         # reformat into a text friendly format
-        facts['hw_memory_total'] = "{0} GB".format(facts['hw_memory_total'])
+        info['hw_memory_total'] = "{0} GB".format(info['hw_memory_total'])
 
-    module.exit_json(ansible_facts=facts)
+    if is_old_facts:
+        module.exit_json(ansible_facts=info)
+    else:
+        module.exit_json(**info)
 
 
 if __name__ == '__main__':
