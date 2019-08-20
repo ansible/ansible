@@ -72,7 +72,6 @@ EXAMPLES = r'''
       SYSTEM: LDAP
       registry: LDAP
     state: present
-    mode: '0644'
 
 - name: Change login times for user
   aix_chsec:
