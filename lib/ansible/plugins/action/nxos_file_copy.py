@@ -307,7 +307,7 @@ class ActionModule(ActionBase):
                                  '(?i)Failed.*#',
                                  '(?i)Could not resolve hostname',
                                  '(?i)Too many authentication failures',
-                                 '(?i)Copying to\/from this server name is not permitted',
+                                 r'(?i)Copying to\/from this server name is not permitted',
                                  '(?i)Copy complete',
                                  r'#\s',
                                  pexpect.TIMEOUT]
