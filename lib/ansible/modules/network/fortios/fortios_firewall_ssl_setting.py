@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_firewall_ssl_setting
 short_description: SSL proxy settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify firewall_ssl feature and setting category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -88,15 +88,16 @@ options:
                     - disable
             cert_cache_capacity:
                 description:
-                    - Maximum capacity of the host certificate cache (0 - 500).
+                    - Maximum capacity of the host certificate cache (0 - 500, default = 200).
                 type: int
             cert_cache_timeout:
                 description:
-                    - Time limit to keep certificate cache (1 - 120 min).
+                    - Time limit to keep certificate cache (1 - 120 min, default = 10).
                 type: int
             kxp_queue_threshold:
                 description:
-                    - Maximum length of the CP KXP queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512).
+                    - Maximum length of the CP KXP queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512, default =
+                       16).
                 type: int
             no_matching_cipher_action:
                 description:
@@ -107,19 +108,19 @@ options:
                     - drop
             proxy_connect_timeout:
                 description:
-                    - Time limit to make an internal connection to the appropriate proxy process (1 - 60 sec).
+                    - Time limit to make an internal connection to the appropriate proxy process (1 - 60 sec, default = 30).
                 type: int
             session_cache_capacity:
                 description:
-                    - Capacity of the SSL session cache (--Obsolete--) (1 - 1000).
+                    - Capacity of the SSL session cache (--Obsolete--) (1 - 1000, default = 500).
                 type: int
             session_cache_timeout:
                 description:
-                    - Time limit to keep SSL session state (1 - 60 min).
+                    - Time limit to keep SSL session state (1 - 60 min, default = 20).
                 type: int
             ssl_dh_bits:
                 description:
-                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation.
+                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation (default = 2048).
                 type: str
                 choices:
                     - 768
@@ -128,7 +129,8 @@ options:
                     - 2048
             ssl_queue_threshold:
                 description:
-                    - Maximum length of the CP SSL queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512).
+                    - Maximum length of the CP SSL queue. When the queue becomes full, the proxy switches cipher functions to the main CPU (0 - 512, default =
+                       32).
                 type: int
             ssl_send_empty_frags:
                 description:
@@ -306,7 +308,7 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
@@ -337,6 +339,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
