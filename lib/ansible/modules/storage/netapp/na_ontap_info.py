@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'certified'}
 
 DOCUMENTATION = '''
-module: na_ontap_gather_info
+module: na_ontap_info
 author: Piotr Olczak (@dprts) <polczak@redhat.com>
 extends_documentation_fragment:
     - netapp.na_ontap
@@ -52,7 +52,7 @@ options:
 
 EXAMPLES = '''
 - name: Get NetApp info (Password Authentication)
-  na_ontap_gather_info:
+  na_ontap_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
@@ -62,7 +62,7 @@ EXAMPLES = '''
     msg: "{{ ontap_info.ontap_info }}"
 
 - name: Limit Info Gathering to Aggregate Information
-  na_ontap_gather_info:
+  na_ontap_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
@@ -71,7 +71,7 @@ EXAMPLES = '''
   register: ontap_info
 
 - name: Limit Info Gathering to Volume and Lun Information
-  na_ontap_gather_info:
+  na_ontap_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
@@ -82,7 +82,7 @@ EXAMPLES = '''
   register: ontap_info
 
 - name: Gather all info except for volume and lun information
-  na_ontap_gather_info:
+  na_ontap_info:
     state: info
     hostname: "na-vsim"
     username: "admin"
@@ -499,7 +499,7 @@ class NetAppONTAPGatherInfo(object):
 
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
-        netapp_utils.ems_log_event("na_ontap_gather_info", cserver)
+        netapp_utils.ems_log_event("na_ontap_info", cserver)
 
         self.netapp_info['ontap_version'] = self.ontapi()
 
