@@ -113,24 +113,24 @@ class Lldp_interfaces(ConfigBase):
         commands = []
         state = self._module.params['state']
         if state == 'overridden':
-            commands.extend(self._state_overridden(want, have))
+            commands.extend(self._state_overridden(want=want, have=have))
         elif state == 'deleted':
             if want:
                 for item in want:
                     name = item['name']
                     have_item = search_obj_in_list(name, have)
-                    commands.extend(self._state_deleted(have_item))
+                    commands.extend(self._state_deleted(want=None, have=have_item))
             else:
                 for have_item in have:
-                    commands.extend(self._state_deleted(have_item))
+                    commands.extend(self._state_deleted(want=None, have=have_item))
         else:
             for want_item in want:
                 name = want_item['name']
                 have_item = search_obj_in_list(name, have)
                 if state == 'merged':
-                    commands.extend(self._state_merged(want_item, have_item))
+                    commands.extend(self._state_merged(want=want_item, have=have_item))
                 else:
-                    commands.extend(self._state_replaced(want_item, have_item))
+                    commands.extend(self._state_replaced(want=want_item, have=have_item))
         return commands
 
     def _state_replaced(self, want, have):
@@ -142,7 +142,7 @@ class Lldp_interfaces(ConfigBase):
         """
         commands = []
         if have:
-            commands.extend(self._render_del_commands(want, have))
+            commands.extend(self._state_deleted(want, have))
         commands.extend(self._state_merged(want, have))
         return commands
 
@@ -158,7 +158,9 @@ class Lldp_interfaces(ConfigBase):
             lldp_name = have_item['name']
             lldp_in_want = search_obj_in_list(lldp_name, want)
             if not lldp_in_want:
-                commands.extend(self._purge_attribs(have_item))
+                commands.append(
+                    self._compute_command(have_item['name'], remove=True)
+                )
 
         for want_item in want:
             name = want_item['name']
@@ -180,7 +182,7 @@ class Lldp_interfaces(ConfigBase):
             commands.extend(self._render_set_commands(want))
         return commands
 
-    def _state_deleted(self, have):
+    def _state_deleted(self, want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -188,9 +190,16 @@ class Lldp_interfaces(ConfigBase):
                   of the provided objects
         """
         commands = []
-        if have:
-            name = have['name']
-            commands.append(Lldp_interfaces.del_cmd + name)
+        if want:
+            params = Lldp_interfaces.params
+            for attrib in params:
+                if attrib == 'location':
+                    commands.extend(self._update_location(have['name'], want, have))
+
+        elif have:
+            commands.append(
+                self._compute_command(have['name'], remove=True)
+            )
         return commands
 
     def _render_updates(self, want, have):
@@ -223,21 +232,6 @@ class Lldp_interfaces(ConfigBase):
                         self._compute_command(lldp_name)
                     )
 
-        return commands
-
-    def _purge_attribs(self, have):
-        commands = []
-        commands.append(
-            self._compute_command(have['name'], remove=True)
-        )
-        return commands
-
-    def _render_del_commands(self, want, have):
-        commands = []
-        params = Lldp_interfaces.params
-        for attrib in params:
-            if attrib == 'location':
-                commands.extend(self._update_location(have['name'], want, have))
         return commands
 
     def _configure_status(self, name, want_item, have_item):
