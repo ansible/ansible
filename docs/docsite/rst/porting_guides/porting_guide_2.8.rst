@@ -133,7 +133,7 @@ You can still use lists and dictionaries as conditionals based on the truthiness
       my_dictionary: {'key': 'value'}
       my_list: ['item']
 
-Both ``when: my_dictionary`` and ``when: my_list`` will continue to be true regardless of the toggle. If they are empty data structures they will continue to be evaluated as false. Note that using the ``bool`` filter with a populated or empty list or dictionary will result in false. Instead, you may want to use the ``length`` filter instead if you cannot opt into the new behavior or silence the warning::
+Both ``when: my_dictionary`` and ``when: my_list`` will continue to be true regardless of the toggle. If they are empty data structures they will continue to be evaluated as false. Note that using the ``bool`` filter with a populated or empty list or dictionary will result in false. Instead, you may want to use the ``length`` filter if you cannot opt into the new behavior or silence the warning::
 
     tasks:
       - debug:
