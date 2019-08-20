@@ -3879,8 +3879,6 @@ lib/ansible/modules/network/fortios/fortios_system_interface.py validate-modules
 lib/ansible/modules/network/fortios/fortios_system_interface.py validate-modules:E337
 lib/ansible/modules/network/fortios/fortios_system_sdn_connector.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_system_sdn_connector.py validate-modules:E337
-lib/ansible/modules/network/fortios/fortios_system_settings.py validate-modules:E336
-lib/ansible/modules/network/fortios/fortios_system_settings.py validate-modules:E337
 lib/ansible/modules/network/fortios/fortios_system_vdom.py validate-modules:E336
 lib/ansible/modules/network/fortios/fortios_system_vdom.py validate-modules:E337
 lib/ansible/modules/network/fortios/fortios_system_virtual_wan_link.py validate-modules:E336
