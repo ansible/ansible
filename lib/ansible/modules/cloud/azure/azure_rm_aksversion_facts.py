@@ -101,7 +101,7 @@ class AzureRMAKSVersion(AzureRMModuleBase):
     def get_all_versions(self, location, version):
         '''
         Get all kubernetes version supported by AKS
-        :return: version list
+        :return: ordered version list
         '''
         try:
             result = dict()
@@ -112,7 +112,9 @@ class AzureRMAKSVersion(AzureRMModuleBase):
             if version:
                 return result.get(version) or []
             else:
-                return result.keys()
+                keys = list(result.keys())
+                keys.sort()
+                return keys
         except Exception as exc:
             self.fail('Error when getting AKS supported kubernetes version list for location {0} - {1}'.format(self.location, exc.message or str(exc)))
 
