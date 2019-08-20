@@ -55,7 +55,7 @@ options:
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
     choices: ['all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces', 'vlans', '!vlans',
-    'lag_interfaces', '!lag_interfaces']
+    'lag_interfaces', '!lag_interfaces', 'lacp', '!lacp']
     version_added: "2.9"
 """
 
