@@ -24,7 +24,7 @@ short_description: Modify AIX stanza files
 version_added: '2.8'
 description:
 - Modify stanzas to AIX config files using the C(chsec) command.
-options:
+attrs:
   path:
     description:
     - Path to the stanza file.
@@ -36,15 +36,15 @@ options:
     - Name of stanza.
     type: str
     required: true
-  options:
+  attrs:
      description:
-     - A list of key/value pairs, e.g. C(key=val,key=val).
+     - A list of key/value pairs, e.g. C(key: val,key: val).
      type: list
   state:
      description:
-     - If set to C(absent) the whole stanza incl. all given options will be removed.
-     - If set to C(present) stanza incl.options will be added.
-     - To remove an option from the stanza set to C(present) and set key to an empty value (key=).
+     - If set to C(absent) the whole stanza incl. all given attrs will be removed.
+     - If set to C(present) stanza incl.attrs will be added.
+     - To remove an attribute from the stanza set to C(present) and set key to an empty value (key=).
      - All rules, allowed file-stanza combos or allowed files for the C(chsec) command also applies here.
      type: str
      choices: [ absent, present ]
@@ -166,7 +166,7 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['dest']),
             stanza=dict(type='str', required=True),
-            options=dict(type='list', required=True),
+            attrs=dict(type='raw', required=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=False,
