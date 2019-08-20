@@ -116,7 +116,7 @@ class VswitchInfoManager(PyVmomi):
 
     def gather_vswitch_info(self):
         """Gather vSwitch info"""
-        hosts_vswitch_facts = dict()
+        hosts_vswitch_info = dict()
         for host in self.hosts:
             network_manager = host.configManager.networkSystem
             if network_manager:
@@ -130,8 +130,8 @@ class VswitchInfoManager(PyVmomi):
                         # (e.g. 5632 ports instead of 128)
                         num_ports=available_vswitch.spec.numPorts
                     )
-                hosts_vswitch_facts[host.name] = temp_switch_dict
-        return hosts_vswitch_facts
+                hosts_vswitch_info[host.name] = temp_switch_dict
+        return hosts_vswitch_info
 
 
 def main():

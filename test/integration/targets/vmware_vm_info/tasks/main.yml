@@ -36,7 +36,7 @@
 
 - debug: var=vm_info_0001
 
-- &vm_fact_check
+- &vm_info_check
   name: Verify if VM info exist
   assert:
     that:
@@ -56,7 +56,7 @@
   name: Get info about available vms in check mode
   check_mode: yes
 
-- <<: *vm_fact_check
+- <<: *vm_info_check
   name: Verify if VM info exist in check mode
 
 - name: Get folder name from VM

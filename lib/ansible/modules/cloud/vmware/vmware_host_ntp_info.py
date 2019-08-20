@@ -67,7 +67,7 @@ EXAMPLES = r'''
 RETURN = r'''
 hosts_ntp_facts:
     description:
-    - dict with hostname as key and dict with NTP facts as value
+    - dict with hostname as key and dict with NTP infos as value
     returned: hosts_ntp_facts
     type: dict
     sample: {
@@ -87,9 +87,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
 
 
-class VmwareNtpFactManager(PyVmomi):
+class VmwareNtpInfoManager(PyVmomi):
     def __init__(self, module):
-        super(VmwareNtpFactManager, self).__init__(module)
+        super(VmwareNtpInfoManager, self).__init__(module)
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
@@ -130,7 +130,7 @@ def main():
     if module._name == 'vmware_host_ntp_facts':
         module.deprecate("The 'vmware_host_ntp_facts' module has been renamed to 'vmware_host_ntp_info'", version='2.13')
 
-    vmware_host_ntp_config = VmwareNtpFactManager(module)
+    vmware_host_ntp_config = VmwareNtpInfoManager(module)
     module.exit_json(changed=False, hosts_ntp_facts=vmware_host_ntp_config.gather_ntp_info())
 
 

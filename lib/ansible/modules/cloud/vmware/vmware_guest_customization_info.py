@@ -47,7 +47,7 @@ EXAMPLES = '''
     password: "{{ vcenter_password }}"
     validate_certs: no
   delegate_to: localhost
-  register: all_custom_spec_facts
+  register: all_custom_spec_info
 
 - name: Gather info about customization specification with the given name
   vmware_guest_customization_info:
@@ -57,7 +57,7 @@ EXAMPLES = '''
     validate_certs: no
     spec_name: custom_linux_spec
   delegate_to: localhost
-  register: custom_spec_facts
+  register: custom_spec_info
 '''
 
 RETURN = """

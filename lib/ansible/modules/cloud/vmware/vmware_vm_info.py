@@ -203,7 +203,7 @@ class VmwareVmInfo(PyVmomi):
     def __init__(self, module):
         super(VmwareVmInfo, self).__init__(module)
 
-    def get_tag_facts(self, vm_dynamic_obj):
+    def get_tag_info(self, vm_dynamic_obj):
         vmware_client = VmwareRestClient(self.module)
         return vmware_client.get_tags_for_vm(vm_id=vm_dynamic_obj._moId)
 
@@ -269,7 +269,7 @@ class VmwareVmInfo(PyVmomi):
 
             vm_tags = list()
             if self.module.params.get('show_tag'):
-                vm_tags = self.get_tag_facts(vm)
+                vm_tags = self.get_tag_info(vm)
 
             virtual_machine = {
                 "guest_name": summary.config.name,

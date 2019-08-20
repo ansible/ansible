@@ -39,7 +39,7 @@
 
 # Testcase 0002: Get portgroup facts for a given dvswitch
 - name: get facts for a given dvswitch
-  vmware_dvs_portgroup_facts:
+  vmware_dvs_portgroup_info:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"

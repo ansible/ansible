@@ -111,12 +111,12 @@ class VmwareServiceManager(PyVmomi):
     def gather_host_info(self):
         hosts_info = {}
         for host in self.hosts:
-            host_service_facts = []
+            host_service_info = []
             host_service_system = host.configManager.serviceSystem
             if host_service_system:
                 services = host_service_system.serviceInfo.service
                 for service in services:
-                    host_service_facts.append(
+                    host_service_info.append(
                         dict(
                             key=service.key,
                             label=service.label,
@@ -128,7 +128,7 @@ class VmwareServiceManager(PyVmomi):
                             source_package_desc=service.sourcePackage.description if service.sourcePackage else None,
                         )
                     )
-            hosts_info[host.name] = host_service_facts
+            hosts_info[host.name] = host_service_info
         return hosts_info
 
 

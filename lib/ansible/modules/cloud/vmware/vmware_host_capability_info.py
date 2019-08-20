@@ -91,10 +91,10 @@ class CapabilityInfoManager(PyVmomi):
         self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
 
     def gather_host_capability_info(self):
-        hosts_capability_facts = dict()
+        hosts_capability_info = dict()
         for host in self.hosts:
             hc = host.capability
-            hosts_capability_facts[host.name] = dict(
+            hosts_capability_info[host.name] = dict(
                 recursiveResourcePoolsSupported=hc.recursiveResourcePoolsSupported,
                 cpuMemoryResourceConfigurationSupported=hc.cpuMemoryResourceConfigurationSupported,
                 rebootSupported=hc.rebootSupported,
@@ -196,7 +196,7 @@ class CapabilityInfoManager(PyVmomi):
                 smpFtCompatibilityIssues=[issue for issue in hc.smpFtCompatibilityIssues],
                 replayCompatibilityIssues=[issue for issue in hc.replayCompatibilityIssues],
             )
-        return hosts_capability_facts
+        return hosts_capability_info
 
 
 def main():

@@ -91,7 +91,7 @@ EXAMPLES = r'''
 RETURN = r'''
 hosts_vmnics_facts:
     description:
-    - dict with hostname as key and dict with vmnics facts as value.
+    - dict with hostname as key and dict with vmnics information as value.
     - for C(num_vmnics), only NICs starting with vmnic are counted. NICs like vusb* are not counted.
     - details about vswitch and dvswitch was added in version 2.7.
     - details about vmnics was added in version 2.8.

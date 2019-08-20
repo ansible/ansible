@@ -188,7 +188,7 @@ class DVSPortgroupInfoManager(PyVmomi):
 
         return vdret
 
-    def gather_dvs_portgroup_facts(self):
+    def gather_dvs_portgroup_info(self):
         dvs_lists = self.dvsls
         result = dict()
         for dvs in dvs_lists:

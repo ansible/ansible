@@ -67,7 +67,7 @@ EXAMPLES = r'''
 RETURN = r'''
 hosts_package_facts:
     description:
-    - dict with hostname as key and dict with package facts as value
+    - dict with hostname as key and dict with package information as value
     returned: hosts_package_facts
     type: dict
     sample: { "hosts_package_facts": { "localhost.localdomain": []}}

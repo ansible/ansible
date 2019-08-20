@@ -144,7 +144,7 @@ EXAMPLES = '''
   delegate_to: localhost
   register: info
 
-- name: Gather some facts from a guest using MoID
+- name: Gather some information about a guest using MoID
   vmware_guest_facts:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -155,7 +155,7 @@ EXAMPLES = '''
     schema: "vsphere"
     properties: ["config.hardware.memoryMB", "guest.disk", "overallStatus"]
   delegate_to: localhost
-  register: vm_moid_facts
+  register: vm_moid_info
 
 - name: Gather Managed object ID (moid) from a guest using the vSphere API output schema for REST Calls
   vmware_guest_info:
@@ -306,7 +306,7 @@ def main():
                 )
             module.exit_json(instance=instance)
         except Exception as exc:
-            module.fail_json(msg="Fact gather failed with exception %s" % to_text(exc))
+            module.fail_json(msg="Information gathering failed with exception %s" % to_text(exc))
     else:
         vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
         module.fail_json(msg="Unable to gather information for non-existing VM %s" % vm_id)

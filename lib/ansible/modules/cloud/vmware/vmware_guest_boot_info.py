@@ -72,8 +72,8 @@ EXAMPLES = r'''
     name: "{{ vm_name }}"
   register: vm_boot_order_info
 
-- name: Gather facts about virtual machine's boot order using MoID
-  vmware_guest_boot_facts:
+- name: Gather information about virtual machine's boot order using MoID
+  vmware_guest_boot_info:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"

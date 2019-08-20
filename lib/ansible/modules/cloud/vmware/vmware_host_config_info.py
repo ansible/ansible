@@ -89,13 +89,13 @@ class VmwareConfigInfoManager(PyVmomi):
         self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
 
     def gather_host_info(self):
-        hosts_facts = {}
+        hosts_info = {}
         for host in self.hosts:
-            host_fact = {}
+            host_info = {}
             for option in host.configManager.advancedOption.QueryOptions():
-                host_fact[option.key] = option.value
-            hosts_facts[host.name] = host_fact
-        return hosts_facts
+                host_info[option.key] = option.value
+            hosts_info[host.name] = host_info
+        return hosts_info
 
 
 def main():

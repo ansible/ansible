@@ -119,9 +119,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, find_datacenter_by_name, get_all_objs
 
 
-class VmwareDrsFactManager(PyVmomi):
+class VmwareDrsInfoManager(PyVmomi):
     def __init__(self, module):
-        super(VmwareDrsFactManager, self).__init__(module)
+        super(VmwareDrsInfoManager, self).__init__(module)
 
         datacenter_name = self.params.get('datacenter', None)
         if datacenter_name:
@@ -257,7 +257,7 @@ def main():
     if module._name == 'vmware_drs_rule_facts':
         module.deprecate("The 'vmware_drs_rule_facts' module has been renamed to 'vmware_drs_rule_info'", version='2.13')
 
-    vmware_drs_info = VmwareDrsFactManager(module)
+    vmware_drs_info = VmwareDrsInfoManager(module)
     module.exit_json(changed=False, drs_rule_facts=vmware_drs_info.gather_drs_rule_info())
 
 

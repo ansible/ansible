@@ -72,7 +72,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 hosts_feature_facts:
-    description: metadata about host's feature capability facts
+    description: metadata about host's feature capability information
     returned: always
     type: dict
     sample: {

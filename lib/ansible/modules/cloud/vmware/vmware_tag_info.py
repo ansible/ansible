@@ -88,10 +88,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 
 
-class VmTagFactManager(VmwareRestClient):
+class VmTagInfoManager(VmwareRestClient):
     def __init__(self, module):
         """Constructor."""
-        super(VmTagFactManager, self).__init__(module)
+        super(VmTagInfoManager, self).__init__(module)
         self.tag_service = self.api_client.tagging.Tag
         self.global_tags = dict()
 
@@ -116,7 +116,7 @@ def main():
     if module._name == 'vmware_tag_facts':
         module.deprecate("The 'vmware_tag_facts' module has been renamed to 'vmware_tag_info'", version='2.13')
 
-    vmware_tag_info = VmTagFactManager(module)
+    vmware_tag_info = VmTagInfoManager(module)
     vmware_tag_info.get_all_tags()
 
 

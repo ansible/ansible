@@ -92,7 +92,7 @@ class ResourcePoolInfoManager(PyVmomi):
         super(ResourcePoolInfoManager, self).__init__(module)
 
     def gather_rp_info(self):
-        resource_pool_facts = []
+        resource_pool_info = []
         rps = get_all_objs(self.content, [vim.ResourcePool])
         for rp in rps:
             tmp_info = dict(
@@ -125,8 +125,8 @@ class ResourcePoolInfoManager(PyVmomi):
                 runtime_memory_max_usage=rp.summary.runtime.memory.maxUsage,
             )
 
-            resource_pool_facts.append(tmp_info)
-        return resource_pool_facts
+            resource_pool_info.append(tmp_info)
+        return resource_pool_info
 
 
 def main():

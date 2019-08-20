@@ -121,14 +121,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, find_datacenter_by_name, get_all_objs
 
 
-class VmwareDrsGroupFactManager(PyVmomi):
+class VmwareDrsGroupInfoManager(PyVmomi):
 
     def __init__(self, module, datacenter_name, cluster_name=None):
         """
         Doctring: Init
         """
 
-        super(VmwareDrsGroupFactManager, self).__init__(module)
+        super(VmwareDrsGroupInfoManager, self).__init__(module)
 
         self.__datacenter_name = datacenter_name
         self.__datacenter_obj = None
@@ -261,7 +261,7 @@ def main():
 
     try:
         # Create instance of VmwareDrsGroupManager
-        vmware_drs_group_info = VmwareDrsGroupFactManager(
+        vmware_drs_group_info = VmwareDrsGroupInfoManager(
             module=module,
             datacenter_name=module.params.get('datacenter'),
             cluster_name=module.params.get('cluster_name', None))

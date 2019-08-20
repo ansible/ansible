@@ -16,7 +16,7 @@
     - set_fact: vm_name="{{ vm_info['virtual_machines'][0]['guest_name'] }}"
 
     # Get Tagname
-    - &tag_fact
+    - &tag_info
       name: Get info about tag
       vmware_tag_info:
         hostname: '{{ vcenter_hostname }}'
@@ -25,7 +25,7 @@
         validate_certs: False
       register: tag_info
 
-    - <<: *tag_fact
+    - <<: *tag_info
       name: Get info about tag in check mode
       check_mode: yes
 

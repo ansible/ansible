@@ -72,8 +72,8 @@ EXAMPLES = '''
   delegate_to: localhost
   register: cluster_info
 
-- name: Gather facts from datacenter about specific cluster with tags
-  vmware_cluster_facts:
+- name: Gather info from datacenter about specific cluster with tags
+  vmware_cluster_info:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'

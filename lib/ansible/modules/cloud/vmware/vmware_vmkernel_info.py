@@ -156,12 +156,12 @@ class VmkernelInfoManager(PyVmomi):
         hosts_info = {}
 
         for host in self.hosts:
-            host_vmk_facts = []
+            host_vmk_info = []
             host_network_system = host.config.network
             if host_network_system:
                 vmks_config = host.config.network.vnic
                 for vmk in vmks_config:
-                    host_vmk_facts.append(dict(
+                    host_vmk_info.append(dict(
                         device=vmk.device,
                         key=vmk.key,
                         portgroup=vmk.portgroup,
@@ -177,7 +177,7 @@ class VmkernelInfoManager(PyVmomi):
                         enable_ft=vmk.device in self.service_type_vmks[host.name]['faultToleranceLogging'],
                     )
                     )
-            hosts_info[host.name] = host_vmk_facts
+            hosts_info[host.name] = host_vmk_info
         return hosts_info
 
 
