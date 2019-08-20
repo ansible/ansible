@@ -747,6 +747,28 @@ def windows_inventory(remotes):
         if remote.ssh_key:
             options["ansible_ssh_private_key_file"] = os.path.abspath(remote.ssh_key.key)
 
+        if remote.name == 'windows-2008':
+            options.update(
+                # force 2008 to use PSRP for the connection plugin
+                ansible_connection='psrp',
+                ansible_psrp_auth='basic',
+                ansible_psrp_cert_validation='ignore',
+            )
+        elif remote.name == 'windows-2016':
+            options.update(
+                # force 2016 to use NTLM + HTTP message encryption
+                ansible_connection='winrm',
+                ansible_winrm_server_cert_validation='ignore',
+                ansible_winrm_transport='ntlm',
+                ansible_winrm_scheme='http',
+                ansible_port='5985',
+            )
+        else:
+            options.update(
+                ansible_connection='winrm',
+                ansible_winrm_server_cert_validation='ignore',
+            )
+
         hosts.append(
             '%s %s' % (
                 remote.name.replace('/', '_'),
@@ -757,14 +779,6 @@ def windows_inventory(remotes):
     template = """
     [windows]
     %s
-
-    [windows:vars]
-    ansible_connection=winrm
-    ansible_winrm_server_cert_validation=ignore
-
-    # support winrm connection tests (temporary solution, does not support testing enable/disable of pipelining)
-    [winrm:children]
-    windows
 
     # support winrm binary module tests (temporary solution)
     [testhost:children]
