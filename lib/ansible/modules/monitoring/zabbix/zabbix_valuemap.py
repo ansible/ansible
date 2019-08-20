@@ -179,7 +179,7 @@ def get_update_params(module, zbx, existing_valuemap, **kwargs):
     """
 
     params_to_update = {}
-    if sorted(existing_valuemap['mappings']) != sorted(kwargs['mappings']):
+    if sorted(existing_valuemap['mappings'], key=lambda k: k['value']) != sorted(kwargs['mappings'], key=lambda k: k['value']):
         params_to_update['mappings'] = kwargs['mappings']
     return params_to_update, diff(existing_valuemap, kwargs)
 
