@@ -12,7 +12,6 @@ Connections Available
 ================================================================================
 
 .. table::
-    :widths: auto
     :class: documentation-table
 
     ====================  ==========================================  =========================
@@ -138,8 +137,7 @@ Cisco Nexus Platform Support Matrix
 
 The following platforms and software versions have been certified by Cisco to work with this version of Ansible.
 
-  .. table:: Platform / Software Mininum Requirements
-     :widths: auto
+.. table:: Platform / Software Mininum Requirements
      :align: center
 
      ===================  =====================
@@ -152,16 +150,15 @@ The following platforms and software versions have been certified by Cisco to wo
      Cisco Nexus N7k      7.3(0)D1(1) and later
      ===================  =====================
 
-  .. table:: Platform Models
-     :widths: auto
+.. table:: Platform Models
      :align: center
 
-     ========  ===========
+     ========  ==============================================
      Platform  Description
-     ========  ===========
+     ========  ==============================================
      N3k       Support includes N30xx, N31xx and N35xx models
      N5k       Support includes all N5xxx models
      N6k       Support includes all N6xxx models
      N7k       Support includes all N7xxx models
      N9k       Support includes all N9xxx models
-     ========  ===========
+     ========  ==============================================
