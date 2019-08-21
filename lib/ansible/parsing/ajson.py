@@ -7,15 +7,12 @@ __metaclass__ = type
 
 import json
 
-from datetime import date, datetime
+# Imported for backwards compat
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.six import binary_type, text_type
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
 
 
 class AnsibleJSONDecoder(json.JSONDecoder):
@@ -43,59 +40,3 @@ class AnsibleJSONDecoder(json.JSONDecoder):
                 return wrap_var(value)
 
         return pairs
-
-
-def _preprocess_unsafe_encode(value):
-    """Recursively preprocess a data structure converting instances of ``AnsibleUnsafe``
-    into their JSON dict representations
-
-    Used in ``AnsibleJSONEncoder.iterencode``
-    """
-    if getattr(value, '__UNSAFE__', False) and not getattr(value, '__ENCRYPTED__', False):
-        value = {'__ansible_unsafe': to_text(value, errors='surrogate_or_strict', nonstring='strict')}
-    elif is_sequence(value):
-        value = [_preprocess_unsafe_encode(v) for v in value]
-    elif isinstance(value, Mapping):
-        value = dict((k, _preprocess_unsafe_encode(v)) for k, v in value.items())
-
-    return value
-
-
-# TODO: find way to integrate with the encoding modules do in module_utils
-class AnsibleJSONEncoder(json.JSONEncoder):
-    '''
-    Simple encoder class to deal with JSON encoding of Ansible internal types
-    '''
-
-    def __init__(self, preprocess_unsafe=False, **kwargs):
-        self._preprocess_unsafe = preprocess_unsafe
-        super(AnsibleJSONEncoder, self).__init__(**kwargs)
-
-    # NOTE: ALWAYS inform AWS/Tower when new items get added as they consume them downstream via a callback
-    def default(self, o):
-        if getattr(o, '__ENCRYPTED__', False):
-            # vault object
-            value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
-        elif getattr(o, '__UNSAFE__', False):
-            # unsafe object, this will never be triggered, see ``AnsibleJSONEncoder.iterencode``
-            value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
-        elif isinstance(o, Mapping):
-            # hostvars and other objects
-            value = dict(o)
-        elif isinstance(o, (date, datetime)):
-            # date object
-            value = o.isoformat()
-        else:
-            # use default encoder
-            value = super(AnsibleJSONEncoder, self).default(o)
-        return value
-
-    def iterencode(self, o, **kwargs):
-        """Custom iterencode, primarily design to handle encoding ``AnsibleUnsafe``
-        as the ``AnsibleUnsafe`` subclasses inherit from string types and
-        ``json.JSONEncoder`` does not support custom encoders for string types
-        """
-        if self._preprocess_unsafe:
-            o = _preprocess_unsafe_encode(o)
-
-        return super(AnsibleJSONEncoder, self).iterencode(o, **kwargs)
