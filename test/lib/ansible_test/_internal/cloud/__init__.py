@@ -314,14 +314,12 @@ class CloudProvider(CloudBase):
 
         atexit.register(self.cleanup)
 
-    # pylint: disable=locally-disabled, no-self-use
     def get_remote_ssh_options(self):
         """Get any additional options needed when delegating tests to a remote instance via SSH.
         :rtype: list[str]
         """
         return []
 
-    # pylint: disable=locally-disabled, no-self-use
     def get_docker_run_options(self):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
