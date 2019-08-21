@@ -23,6 +23,8 @@ from .config import (
     TestConfig,
     EnvironmentConfig,
     IntegrationConfig,
+    WindowsIntegrationConfig,
+    NetworkIntegrationConfig,
     ShellConfig,
     SanityConfig,
     UnitsConfig,
@@ -556,6 +558,11 @@ def filter_options(args, argv, options, exclude, require):
     elif isinstance(args, SanityConfig):
         options.update({
             '--base-branch': 1,
+        })
+
+    if isinstance(args, (NetworkIntegrationConfig, WindowsIntegrationConfig)):
+        options.update({
+            '--inventory': 1,
         })
 
     remaining = 0

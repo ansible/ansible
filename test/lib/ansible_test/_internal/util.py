@@ -80,6 +80,9 @@ if not os.path.exists(ANSIBLE_LIB_ROOT):
 ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
 ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, 'config')
 
+INTEGRATION_DIR_RELATIVE = 'test/integration'
+INTEGRATION_VARS_FILE_RELATIVE = os.path.join(INTEGRATION_DIR_RELATIVE, 'integration_config.yml')
+
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
 # The only exception is write access to directories for the user creating them.

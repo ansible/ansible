@@ -26,6 +26,7 @@ from .util_common import (
 from .config import (
     PosixIntegrationConfig,
     EnvironmentConfig,
+    CommonConfig,
 )
 
 from .data import (
@@ -50,7 +51,7 @@ def ansible_environment(args, color=True, ansible_config=None):
 
     if not ansible_config:
         # use the default empty configuration unless one has been provided
-        ansible_config = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+        ansible_config = args.get_ansible_config()
 
     if not args.explain and not os.path.exists(ansible_config):
         raise ApplicationError('Configuration not found: %s' % ansible_config)

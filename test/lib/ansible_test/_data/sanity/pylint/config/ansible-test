@@ -10,6 +10,7 @@ disable=
     too-many-nested-blocks,
     too-many-return-statements,
     too-many-statements,
+    no-self-use,
     unused-import,  # pylint does not understand PEP 484 type hints
     consider-using-dict-comprehension,  # requires Python 2.6, which we still support
     consider-using-set-comprehension,  # requires Python 2.6, which we still support
