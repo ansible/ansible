@@ -243,7 +243,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware'])
+        vm_provider=dict(type='str', choices=VM_PROVIDER_MAPPING.keys())
     )
 
     module = AnsibleModule(
