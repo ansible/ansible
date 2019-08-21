@@ -16,14 +16,16 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_server_facts
+module: hcloud_server_info
 
-short_description: Gather facts about your Hetzner Cloud servers.
+short_description: Gather infos about your Hetzner Cloud servers.
 
 version_added: "2.8"
 
 description:
-    - Gather facts about your Hetzner Cloud servers.
+    - Gather infos about your Hetzner Cloud servers.
+    - This module was called C(hcloud_server_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_server_facts).
+      Note that the M(hcloud_server_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_server_info)!
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -45,18 +47,18 @@ extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud server facts
-  local_action:
-    module: hcloud_server_facts
+- name: Gather hcloud server infos
+  hcloud_server_info:
+  register: output
 
-- name: Print the gathered facts
+- name: Print the gathered infos
   debug:
-    var: ansible_facts.hcloud_server_facts
+    var: output.hcloud_server_info
 """
 
 RETURN = """
-hcloud_server_facts:
-    description: The server facts as list
+hcloud_server_info:
+    description: The server infos as list
     returned: always
     type: complex
     contains:
@@ -126,15 +128,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudServerFacts(Hcloud):
+class AnsibleHcloudServerInfo(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_server_facts")
-        self.hcloud_server_facts = None
+        Hcloud.__init__(self, module, "hcloud_server_info")
+        self.hcloud_server_info = None
 
     def _prepare_result(self):
         tmp = []
 
-        for server in self.hcloud_server_facts:
+        for server in self.hcloud_server_info:
             if server is not None:
                 tmp.append({
                     "id": to_native(server.id),
@@ -155,18 +157,18 @@ class AnsibleHcloudServerFacts(Hcloud):
     def get_servers(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_server_facts = [self.client.servers.get_by_id(
+                self.hcloud_server_info = [self.client.servers.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("name") is not None:
-                self.hcloud_server_facts = [self.client.servers.get_by_name(
+                self.hcloud_server_info = [self.client.servers.get_by_name(
                     self.module.params.get("name")
                 )]
             elif self.module.params.get("label_selector") is not None:
-                self.hcloud_server_facts = self.client.servers.get_all(
+                self.hcloud_server_info = self.client.servers.get_all(
                     label_selector=self.module.params.get("label_selector"))
             else:
-                self.hcloud_server_facts = self.client.servers.get_all()
+                self.hcloud_server_info = self.client.servers.get_all()
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -185,15 +187,26 @@ class AnsibleHcloudServerFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudServerFacts.define_module()
+    module = AnsibleHcloudServerInfo.define_module()
 
-    hcloud = AnsibleHcloudServerFacts(module)
+    is_old_facts = module._name == 'hcloud_server_facts'
+    if is_old_facts:
+        module.deprecate("The 'hcloud_server_info' module has been renamed to 'hcloud_server_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
+
+    hcloud = AnsibleHcloudServerInfo(module)
     hcloud.get_servers()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_server_facts': result['hcloud_server_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts)
+    if is_old_facts:
+        ansible_info = {
+            'hcloud_server_facts': result['hcloud_server_info']
+        }
+        module.exit_json(ansible_facts=ansible_info)
+    else:
+        ansible_info = {
+            'hcloud_server_info': result['hcloud_server_info']
+        }
+        module.exit_json(**ansible_info)
 
 
 if __name__ == "__main__":

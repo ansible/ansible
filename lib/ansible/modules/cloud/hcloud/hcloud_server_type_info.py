@@ -18,13 +18,13 @@ DOCUMENTATION = """
 ---
 module: hcloud_server_type_info
 
-short_description: Gather facts about the Hetzner Cloud server types.
+short_description: Gather infos about the Hetzner Cloud server types.
 
 version_added: "2.8"
 
 description:
-    - Gather facts about your Hetzner Cloud server types.
-    - This module was called C(hcloud_server_type_info) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_server_type_info).
+    - Gather infos about your Hetzner Cloud server types.
+    - This module was called C(hcloud_server_type_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_server_type_facts).
       Note that the M(hcloud_server_type_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_server_type_info)!
 
 author:
