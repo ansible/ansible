@@ -36,7 +36,7 @@
 - name: create route
   hcloud_route:
     network: "{{ hcloud_network_name }}"
-    destination: "10.0.2.0/24"
+    destination: "10.0.3.0/24"
     gateway: "10.0.2.1"
   register: main_route
 - name: verify create route
