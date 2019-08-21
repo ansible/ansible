@@ -20,9 +20,74 @@ import unittest
 
 from ansible.module_utils.ec2 import map_complex_type, compare_policies
 
+
 class Ec2Utils(unittest.TestCase):
 
     def setUp(self):
+        # A pair of simple IAM Trust relationships using bools, the first a
+        # native bool the second a quoted string
+        self.bool_policy_bool = {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    "Action": "sts:AssumeRole",
+                    "Condition": {
+                        "Bool": {"aws:MultiFactorAuthPresent": True}
+                    },
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "arn:aws:iam::XXXXXXXXXXXX:root"},
+                    "Sid": "AssumeRoleWithBoolean"
+                }
+            ]
+        }
+
+        self.bool_policy_string = {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    "Action": "sts:AssumeRole",
+                    "Condition": {
+                        "Bool": {"aws:MultiFactorAuthPresent": "true"}
+                    },
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "arn:aws:iam::XXXXXXXXXXXX:root"},
+                    "Sid": "AssumeRoleWithBoolean"
+                }
+            ]
+        }
+
+        # A pair of simple bucket policies using numbers, the first a
+        # native int the second a quoted string
+        self.numeric_policy_number = {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    "Action": "s3:ListBucket",
+                    "Condition": {
+                        "NumericLessThanEquals": {"s3:max-keys": 5}
+                    },
+                    "Effect": "Allow",
+                    "Resource": "arn:aws:s3:::examplebucket",
+                    "Sid": "s3ListBucketWithNumericLimit"
+                }
+            ]
+        }
+
+        self.numeric_policy_string = {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    "Action": "s3:ListBucket",
+                    "Condition": {
+                        "NumericLessThanEquals": {"s3:max-keys": "5"}
+                    },
+                    "Effect": "Allow",
+                    "Resource": "arn:aws:s3:::examplebucket",
+                    "Sid": "s3ListBucketWithNumericLimit"
+                }
+            ]
+        }
+
         self.small_policy_one = {
             'Version': '2012-10-17',
             'Statement': [
@@ -152,7 +217,6 @@ class Ec2Utils(unittest.TestCase):
         """
         self.assertFalse(compare_policies(self.small_policy_one, self.small_policy_two))
 
-
     def test_compare_large_policies_without_differences(self):
         """ Testing two larger policies which are identical except for:
                 * The statements are in different orders
@@ -161,14 +225,20 @@ class Ec2Utils(unittest.TestCase):
         """
         self.assertFalse(compare_policies(self.larger_policy_one, self.larger_policy_two))
 
-
     def test_compare_larger_policies_with_difference(self):
         """ Testing two larger policies which are identical except for:
                 * one different principal
         """
         self.assertTrue(compare_policies(self.larger_policy_two, self.larger_policy_three))
 
-
     def test_compare_smaller_policy_with_larger(self):
         """ Testing two policies of different sizes """
         self.assertTrue(compare_policies(self.larger_policy_one, self.small_policy_one))
+
+    def test_compare_boolean_policy_bool_and_string_are_equal(self):
+        """ Testing two policies one using a quoted boolean, the other a bool """
+        self.assertFalse(compare_policies(self.bool_policy_string, self.bool_policy_bool))
+
+    def test_compare_numeric_policy_number_and_string_are_equal(self):
+        """ Testing two policies one using a quoted number, the other an int """
+        self.assertFalse(compare_policies(self.numeric_policy_string, self.numeric_policy_number))
