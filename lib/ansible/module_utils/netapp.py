@@ -677,11 +677,11 @@ class AwsCvsRestAPI(object):
         json_error = None
         error_details = None
         headers = {
-              'Content-type': "application/json",
-              'api-key': self.api_key,
-              'secret-key': self.secret_key,
-              'Cache-Control': "no-cache",
-              }
+            'Content-type': "application/json",
+            'api-key': self.api_key,
+            'secret-key': self.secret_key,
+            'Cache-Control': "no-cache",
+        }
 
         def get_json(response):
             ''' extract json, and error message if present '''
