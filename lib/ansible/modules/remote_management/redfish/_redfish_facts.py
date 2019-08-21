@@ -8,12 +8,16 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
+                    'supported_by': 'deprecated',
                     'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
 module: redfish_facts
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favour of C(_info) module.
+  alternative: Use M(redfish_info) instead.
 version_added: "2.7"
 short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:

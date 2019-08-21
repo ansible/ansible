@@ -13,8 +13,8 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: idrac_redfish_facts
-version_added: "2.8"
+module: idrac_redfish_info
+version_added: "2.9"
 short_description: Manages servers through iDRAC using Dell Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote iDRAC controllers to
@@ -159,7 +159,7 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        module.exit_json(ansible_facts=dict(redfish_facts=result))
+        module.exit_json(**result)
     else:
         module.fail_json(msg=to_native(result['msg']))
 
