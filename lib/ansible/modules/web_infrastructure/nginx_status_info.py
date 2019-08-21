@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: nginx_status_info
 short_description: Retrieve information on nginx status.
@@ -38,7 +38,7 @@ notes:
   - See http://nginx.org/en/docs/http/ngx_http_stub_status_module.html for more information.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Gather status info from nginx on localhost
 - name: get current http stats
   nginx_status_info:
@@ -53,7 +53,7 @@ EXAMPLES = '''
   register: result
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 active_connections:
   description: Active connections.
