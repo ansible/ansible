@@ -30,3 +30,5 @@ ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBO
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATHS=''
 ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory -i a.statichost.yml --list --export --playbook-dir=. -v "$@"
+
+./vars_plugin_tests.sh
