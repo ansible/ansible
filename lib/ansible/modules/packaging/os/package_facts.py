@@ -339,7 +339,9 @@ def main():
                 module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
 
     if found == 0:
-        module.fail_json(msg='Could not detect a supported package manager from the following list: %s' % managers)
+        msg = ('Could not detect a supported package manager from the following list: %s, '
+               'or the required Python library is not installed. Check warnings for details.' % managers)
+        module.fail_json(msg=msg)
 
     # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
     # when using operating system level or distribution package managers
