@@ -2,6 +2,8 @@
 - debug:
       msg: "START Overridden ios_lldp_interfaces state for integration tests on connection={{ ansible_connection }}"
 
+- include_tasks: _enable_lldp.yaml
+
 - include_tasks: _remove_config.yaml
 
 - include_tasks: _populate_config.yaml
