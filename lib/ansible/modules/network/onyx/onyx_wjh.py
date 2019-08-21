@@ -31,8 +31,12 @@ options:
           - wjh group status
         type: bool
     auto_export:
+<<<<<<< 703ebf71892d8ea48663a507b158118bf710f0fd
         description:
           - wjh group auto export pcap file status
+=======
+        description: wjh group auto export pcap file status
+>>>>>>> Fix version, fix enable/disable all groups
         type: bool
     export_group:
         description:
@@ -97,6 +101,8 @@ class OnyxWJHModule(BaseOnyxModule):
     WJH_GROUPS = ['all', 'forwarding', 'acl']
     CLEAR_GROUPS = ['all', 'user', 'auto-export']
 
+    WJH_GROUPS   = ['all', 'forwarding', 'acl']
+    CLEAR_GROUPS = ['all', 'user', 'auto-export']
     def init_module(self):
         """
         module initialization
