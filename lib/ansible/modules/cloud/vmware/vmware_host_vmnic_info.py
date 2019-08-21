@@ -39,19 +39,16 @@ options:
     - Gather information about general capabilities (Auto negotiation, Wake On LAN, and Network I/O Control).
     type: bool
     default: false
-    version_added: 2.8
   directpath_io:
     description:
     - Gather information about DirectPath I/O capabilities and configuration.
     type: bool
     default: false
-    version_added: 2.8
   sriov:
     description:
     - Gather information about SR-IOV capabilities and configuration.
     type: bool
     default: false
-    version_added: 2.8
   esxi_hostname:
     description:
     - Name of the host system to work with.

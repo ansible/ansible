@@ -29,7 +29,6 @@ author:
 - Christian Kotte (@ckotte)
 notes:
     - Tested on ESXi 6.5
-    - The C(full_name), C(principal), and C(user_group) properties are deprecated starting from Ansible v2.12
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -55,23 +54,17 @@ local_user_info:
         {
             "role": "admin",
             "description": "Administrator",
-            "full_name": "Administrator",
             "group": false,
-            "user_group": false,
             "user_id": 0,
             "user_name": "root",
-            "principal": "root",
             "shell_access": true
         },
         {
             "role": "admin",
             "description": "DCUI User",
-            "full_name": "DCUI User",
             "group": false,
-            "user_group": false,
             "user_id": 100,
             "user_name": "dcui",
-            "principal": "dcui",
             "shell_access": false
         },
     ]
@@ -111,10 +104,6 @@ class VMwareUserInfoManager(PyVmomi):
         if user_accounts:
             for user in user_accounts:
                 temp_user = dict()
-                # NOTE: the properties full_name, principal, and user_group are deprecated starting from Ansible v2.12
-                temp_user['full_name'] = user.fullName
-                temp_user['principal'] = user.principal
-                temp_user['user_group'] = user.group
                 temp_user['user_name'] = user.principal
                 temp_user['description'] = user.fullName
                 temp_user['group'] = user.group

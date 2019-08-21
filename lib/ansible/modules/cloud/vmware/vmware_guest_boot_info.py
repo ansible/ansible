@@ -44,14 +44,12 @@ options:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
      - This is required if C(name) or C(uuid) is not supplied.
-     version_added: '2.9'
      type: str
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
-     version_added: '2.8'
    name_match:
      description:
      - If multiple virtual machines matching the name, use the first or last found.

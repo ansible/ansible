@@ -26,7 +26,6 @@ author:
 - Christian Kotte (@ckotte)
 notes:
 - Tested on vSphere 6.5
-- The C(vswitch_name) property is deprecated starting from Ansible v2.12
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -37,7 +36,6 @@ options:
     - The property C(ts) stands for Traffic Shaping and C(lb) for Load Balancing.
     type: bool
     default: false
-    version_added: 2.8
   cluster_name:
     description:
     - Name of the cluster.
@@ -88,8 +86,7 @@ hosts_portgroup_info:
                 "security": [false, false, false],
                 "ts": "No override",
                 "vlan_id": 0,
-                "vswitch": "vSwitch0",
-                "vswitch_name": "vSwitch0"
+                "vswitch": "vSwitch0"
             },
             {
                 "failback": true,
@@ -102,8 +99,7 @@ hosts_portgroup_info:
                 "security": [false, false, false],
                 "ts": "No override",
                 "vlan_id": 33,
-                "vswitch": "vSwitch1",
-                "vswitch_name": "vSwitch1"
+                "vswitch": "vSwitch1"
             }
         ]
     }
@@ -131,8 +127,6 @@ class PortgroupInfoManager(PyVmomi):
         spec = portgroup_obj.spec
         pg_info_dict['portgroup'] = spec.name
         pg_info_dict['vlan_id'] = spec.vlanId
-        # NOTE: the property vswitch_name is deprecated starting from Ansible v2.12
-        pg_info_dict['vswitch_name'] = spec.vswitchName
         pg_info_dict['vswitch'] = spec.vswitchName
 
         if policy_info:
