@@ -12,7 +12,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import vars_loader
-from ansible.utils.collection_loader import is_collection_ref
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
@@ -45,7 +45,7 @@ def get_vars_from_path(loader, path, entities, stage):
 
     vars_plugin_list = list(vars_loader.all())
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if is_collection_ref(plugin_name):
+        if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
             vars_plugin = vars_loader.get(plugin_name)
             if vars_plugin is None:
                 # Error if there's no play directory or the name is wrong?
