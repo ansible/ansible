@@ -44,15 +44,16 @@ def remove_omit(task_args, omit_token):
         return task_args
 
     new_args = {}
-    for i in iteritems(task_args):
-        if i[1] == omit_token:
+    for key, value in iteritems(task_args):
+        stripped_value = value.strip() if isinstance(value, str) else value
+        if stripped_value == omit_token:
             continue
-        elif isinstance(i[1], dict):
-            new_args[i[0]] = remove_omit(i[1], omit_token)
-        elif isinstance(i[1], list):
-            new_args[i[0]] = [remove_omit(v, omit_token) for v in i[1]]
+        elif isinstance(value, dict):
+            new_args[key] = remove_omit(value, omit_token)
+        elif isinstance(value, list):
+            new_args[key] = [remove_omit(v, omit_token) for v in value]
         else:
-            new_args[i[0]] = i[1]
+            new_args[key] = value
 
     return new_args
 

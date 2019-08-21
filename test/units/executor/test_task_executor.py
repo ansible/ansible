@@ -531,3 +531,20 @@ class TestTaskExecutor(unittest.TestCase):
         }
 
         self.assertEqual(remove_omit(data, omit_token), expected)
+
+    def test_recursive_omit_strips_values(self):
+        omit_token = 'WHATEVER'
+        token = ' ' + omit_token + ' '
+        data = {
+            'foo': token,
+            'bar': {'baz': token},
+            'qux': [{'one': token, 'two': 3}],
+            'a_list': [1, token, 3],
+        }
+
+        expected = {
+            'bar': {},
+            'qux': [{'two': 3}],
+            'a_list': [1, token, 3],
+        }
+        self.assertEqual(remove_omit(data, omit_token), expected)
