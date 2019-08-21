@@ -4,6 +4,7 @@ __metaclass__ = type
 
 import atexit
 import os
+import stat
 import tarfile
 import tempfile
 import time
@@ -57,10 +58,17 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
         return
 
     files = list(data_context().ansible_source)
+    filters = {}
+
+    def make_executable(tar_info):  # type: (tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]
+        """Make the given file executable."""
+        tar_info.mode |= stat.S_IXUSR | stat.S_IXOTH | stat.S_IXGRP
+        return tar_info
 
     if not ANSIBLE_SOURCE_ROOT:
         # reconstruct the bin directory which is not available when running from an ansible install
         files.extend(create_temporary_bin_files(args))
+        filters.update(dict((path[3:], make_executable) for path in ANSIBLE_BIN_SYMLINK_MAP.values() if path.startswith('../')))
 
     if not data_context().content.is_ansible:
         # exclude unnecessary files when not testing ansible itself
@@ -91,7 +99,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     with tarfile.TarFile.gzopen(dst_path, mode='w', compresslevel=4) as tar:
         for src, dst in files:
             display.info('%s -> %s' % (src, dst), verbosity=4)
-            tar.add(src, dst)
+            tar.add(src, dst, filter=filters.get(dst))
 
     duration = time.time() - start
     payload_size_bytes = os.path.getsize(dst_path)
