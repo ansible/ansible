@@ -97,6 +97,8 @@ class OnyxWJHModule(BaseOnyxModule):
     WJH_GROUPS = ['all', 'forwarding', 'acl']
     CLEAR_GROUPS = ['all', 'user', 'auto-export']
 
+    WJH_GROUPS   = ['all', 'forwarding', 'acl']
+    CLEAR_GROUPS = ['all', 'user', 'auto-export']
     def init_module(self):
         """
         module initialization
