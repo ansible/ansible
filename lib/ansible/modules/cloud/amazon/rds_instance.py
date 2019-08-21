@@ -245,6 +245,7 @@ options:
         description:
           - The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.
         type: int
+        version_added: "2.9"
     monitoring_interval:
         description:
           - The interval, in seconds, when Enhanced Monitoring metrics are collected for the DB instance. To disable collecting
@@ -647,6 +648,11 @@ master_username:
   returned: always
   type: str
   sample: test
+max_allocated_storage:
+  description: The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.
+  returned: When max allocated storage is present.
+  type: int
+  sample: 100
 monitoring_interval:
   description:
     - The interval, in seconds, between points when Enhanced Monitoring metrics are collected for the DB instance.
