@@ -45,8 +45,8 @@ description: This module manages link layer discovery protocol (LLDP) attributes
 author: Sumit Jaiswal (@justjais)
 notes:
   - Tested against Cisco IOSv Version 15.2 on VIRL
-  - This module works with connection C(network_cli).
-See L(IOS Platform Options,../network/user_guide/platform_ios.html).
+  - This module works with connection C(network_cli),
+    See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
   config:
     description: A dictionary of LLDP options
@@ -67,11 +67,11 @@ options:
         description:
         - Selection of LLDP MED TLVs to send
         - NOTE, if med-tlv-select is configured idempotency won't be maintained
-          as Cisco device doesn't record configured med-tlv-select options, so
-          there is no means to check if the respective med-tlv-select options is
-          already configured or not from the device side. So, if the user
-          tries to apply med-tlv-select option in every play run ansible will
-          show changed as True.
+          as Cisco device doesn't record configured med-tlv-select options. As
+          such, Ansible cannot verify if the respective med-tlv-select options is
+          already configured or not from the device side. If you try to apply
+          med-tlv-select option in every play run, Ansible will show changed as
+          True.
         type: dict
         suboptions:
           inventory_management:
@@ -81,11 +81,10 @@ options:
         description:
         - Selection of LLDP type-length-value i.e. TLVs to send
         - NOTE, if tlv-select is configured idempotency won't be maintained
-          as Cisco device doesn't record configured tlv-select options, so
-          there is no means to check if the respective tlv-select options is
-          already configured or not from the device side. So, if the user
-          tries to apply tlv-select option in every play run ansible will
-          show changed as True.
+          as Cisco device doesn't record configured tlv-select options. As
+          such, Ansible cannot verify if the respective tlv-select options is
+          already configured or not from the device side. If you try to apply
+          tlv-select option in every play run, Ansible will show changed as True.
         type: dict
         suboptions:
           power_management:
