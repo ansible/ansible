@@ -1,0 +1,130 @@
+---
+merged:
+  before: []
+
+
+  commands:
+    - "set service lldp interface eth1 location civic-based country-code 'US'"
+    - "set service lldp interface eth1 location civic-based ca-type 0 ca-value 'ENGLISH'"
+    - "set service lldp interface eth1"
+    - "set service lldp interface eth2 location coordinate-based latitude '33.524449N'"
+    - "set service lldp interface eth2 location coordinate-based altitude '2200'"
+    - "set service lldp interface eth2 location coordinate-based datum 'WGS84'"
+    - "set service lldp interface eth2 location coordinate-based longitude '222.267255W'"
+    - "set service lldp interface eth2 location coordinate-based latitude '33.524449N'"
+    - "set service lldp interface eth2 location coordinate-based altitude '2200'"
+    - "set service lldp interface eth2 location coordinate-based datum 'WGS84'"
+    - "set service lldp interface eth2 location coordinate-based longitude '222.267255W'"
+    - "set service lldp interface eth2"
+
+  after:
+    - name: 'eth1'
+      location:
+        civic_based: 
+          country_code: 'US' 
+          ca_info:
+            - ca_type: 0 
+              ca_value: 'ENGLISH'  
+
+    - name: 'eth2'
+      location:
+        coordinate_based: 
+         altitude: 2200 
+         datum: 'WGS84'
+         longitude: '222.267255W'
+         latitude: '33.524449N'  
+
+populate:
+  - name: 'eth1'
+    location:
+      civic_based: 
+        country_code: 'US' 
+        ca_info:
+          - ca_type: 0 
+            ca_value: 'ENGLISH'  
+
+  - name: 'eth2'
+    location:
+      coordinate_based: 
+       altitude: 2200 
+       datum: 'WGS84'
+       longitude: '222.267255W'
+       latitude: '33.524449N'  
+
+replaced:
+  commands:
+    - "delete service lldp interface eth2 location"
+    - "set service lldp interface eth2 'disable'"
+    - "set service lldp interface eth2 location civic-based country-code 'US'"
+    - "set service lldp interface eth2 location civic-based ca-type 0 ca-value 'ENGLISH'"
+    - "delete service lldp interface eth1 location"
+    - "set service lldp interface eth1 'disable'"
+    - "set service lldp interface eth1 location coordinate-based latitude '33.524449N'"
+    - "set service lldp interface eth1 location coordinate-based altitude '2200'"
+    - "set service lldp interface eth1 location coordinate-based datum 'WGS84'"
+    - "set service lldp interface eth1 location coordinate-based longitude '222.267255W'"
+
+  after:
+    - name: 'eth2'
+      enable: false
+      location:
+        civic_based: 
+          country_code: 'US' 
+          ca_info:
+            - ca_type: 0 
+              ca_value: 'ENGLISH'  
+
+    - name: 'eth1'
+      enable: false
+      location:
+        coordinate_based: 
+         altitude: 2200 
+         datum: 'WGS84'
+         longitude: '222.267255W'
+         latitude: '33.524449N'  
+
+populate_intf:
+  - name: 'eth2'
+    enable: false
+    location:
+      civic_based: 
+        country_code: 'US' 
+        ca_info:
+          - ca_type: 0 
+            ca_value: 'ENGLISH'  
+
+overridden:
+  commands:
+    - "delete service lldp interface eth2 location" 
+    - "delete service lldp interface eth2 'disable'" 
+    - "set service lldp interface eth2 location elin '0000000911'"
+
+  after:
+    - name: 'eth2'
+      location:
+        elin: 0000000911
+
+deleted:
+  commands:
+    - "delete service lldp interface eth1"
+    - "delete service lldp interface eth2"
+
+  after: []
+
+round_trip:
+  after:
+    - name: 'eth1'
+      location:
+        civic_based: 
+          country_code: 'US' 
+          ca_info:
+            - ca_type: 0 
+              ca_value: 'ENGLISH'
+
+    - name: 'eth2'
+      location:
+        coordinate_based: 
+         altitude: 2200 
+         datum: 'WGS84'
+         longitude: '222.267255W'
+         latitude: '33.524449N'
