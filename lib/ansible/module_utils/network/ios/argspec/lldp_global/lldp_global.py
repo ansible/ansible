@@ -34,8 +34,7 @@ class Lldp_globalArgs(object):
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'elements': 'dict',
-                                'options': {'holdtime': {'type': 'int'},
+    argument_spec = {'config': {'options': {'holdtime': {'type': 'int'},
                                             'reinit': {'type': 'int'},
                                             'run': {'type': 'bool'},
                                             'timer': {'type': 'int'},
@@ -52,7 +51,7 @@ class Lldp_globalArgs(object):
                                                 },
                                                 'type': 'dict'},
                                             },
-                                'type': 'list'},
+                                'type': 'dict'},
                      'state': {'choices': ['merged', 'replaced', 'deleted'],
                                'default': 'merged',
                                'type': 'str'}}

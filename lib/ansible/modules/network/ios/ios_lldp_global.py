@@ -42,9 +42,9 @@ short_description: Configure and manage Link Layer Discovery Protocol(LLDP) attr
 description: This module configures and manages the Link Layer Discovery Protocol(LLDP) attributes on IOS platforms.
 author: Sumit Jaiswal (@justjais)
 notes:
-- Tested against Cisco IOSv Version 15.2 on VIRL
-- This module works with connection C(network_cli).
-See L(IOS Platform Options,../network/user_guide/platform_ios.html).
+  - Tested against Cisco IOSv Version 15.2 on VIRL
+  - This module works with connection C(network_cli),
+    See L(IOS Platform Options,../network/user_guide/platform_ios.html).
 options:
   config:
     description: A dictionary of LLDP options
@@ -59,6 +59,14 @@ options:
         description:
           - Specify the delay (in secs) for LLDP to initialize.
           - Refer to vendor documentation for valid values.
+          - NOTE, if LLDP reinit is configured with starting value idempotency
+            won't be maintained as Cisco device doesn't record starting reinit
+            configured value, so it cannot be verified that if the respective
+            starting reinit value is already configured or not from the device
+            side. So, if user uses tries to apply starting reinit value in every
+            play run ansible will show changed as True. But, for other reinit value
+            idempotency will be maintained as other than starting reinit value other
+            reinit value are recorded in device side.
         type: int
       run:
         description:
@@ -72,8 +80,18 @@ options:
       tlv_select:
         description:
           - Selection of LLDP TLVs to send
+          - NOTE, if tlv-select is configured idempotency won't be maintained
+            as Cisco device doesn't record configured tlv-select options, so
+            there is no means to check if the respective tlv-selct options is
+            already configured or not from the device side. So, if user uses
+            tries to apply tlv-select option in every play run ansible will
+            show changed as True.
         type: dict
         suboptions:
+          4_wire_power_management:
+            description:
+              - Cisco 4-wire Power via MDI TLV
+            type: bool
           mac_phy_cfg:
             description:
               - IEEE 802.3 MAC/Phy Configuration/status TLV
@@ -98,7 +116,7 @@ options:
             description:
               - System Capabilities TLV
             type: bool
-          system_description
+          system_description:
             description:
               - System Description TLV
             type: bool
@@ -124,51 +142,51 @@ EXAMPLES = """
 
 # Before state:
 # -------------
-#
+# vios#sh running-config | section ^lldp
+# vios1#
 
 
 - name: Merge provided configuration with device configuration
   ios_lldp_global:
     config:
+      holdtime: 10
+      run: True
+      reinit: 3
+      timer: 10
     state: merged
 
 # After state:
 # ------------
-#
+# vios#sh running-config | section ^lldp
+#  lldp timer 10
+#  lldp holdtime 10
+#  lldp reinit 3
+#  lldp run
 
 
 # Using replaced
 
 # Before state:
 # -------------
-#
+# vios#sh running-config | section ^lldp
+#  lldp timer 10
+#  lldp holdtime 10
+#  lldp reinit 3
+#  lldp run
 
 
 - name: Replaces LLDP device configuration with provided configuration
   ios_lldp_global:
     config:
+      holdtime: 20
+      reinit: 5
     state: replaced
 
 # After state:
 # -------------
-#
-
-
-# Using overridden
-
-# Before state:
-# -------------
-#
-
-
-- name: Override LLDP device configuration with provided configuration
-  ios_lldp_global:
-    config:
-    state: overridden
-
-# After state:
-# -------------
-#
+# vios#sh running-config | section ^lldp
+#  lldp holdtime 20
+#  lldp reinit 5
 
 
 # Using Deleted without any config passed
@@ -176,7 +194,11 @@ EXAMPLES = """
 
 # Before state:
 # -------------
-#
+# vios#sh running-config | section ^lldp
+#  lldp timer 10
+#  lldp holdtime 10
+#  lldp reinit 3
+#  lldp run
 
 
 - name: "Delete LLDP attributes (Note: This won't delete the interface itself)"
@@ -185,8 +207,8 @@ EXAMPLES = """
 
 # After state:
 # -------------
-#
-
+# vios#sh running-config | section ^lldp
+# vios1#
 
 """
 
@@ -194,18 +216,18 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation
   returned: always
-  type: list
+  type: dict
   sample: The configuration returned will alwys be in the same format of the paramters above.
 after:
   description: The resulting configuration model invocation
   returned: when changed
-  type: list
+  type: dict
   sample: The configuration returned will alwys be in the same format of the paramters above.
 commands:
   description: The set of commands pushed to the remote device
   returned: always
   type: list
-  sample: ['', '', '']
+  sample: ['lldp holdtime 10', 'lldp run', 'lldp timer 10']
 """
 
 from ansible.module_utils.basic import AnsibleModule

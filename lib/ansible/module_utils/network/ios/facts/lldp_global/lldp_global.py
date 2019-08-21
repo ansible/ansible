@@ -15,9 +15,7 @@ __metaclass__ = type
 
 
 from copy import deepcopy
-import re
 from ansible.module_utils.network.common import utils
-from ansible.module_utils.network.ios.utils.utils import get_interface_type, normalize_interface
 from ansible.module_utils.network.ios.argspec.lldp_global.lldp_global import Lldp_globalArgs
 
 
@@ -47,24 +45,22 @@ class Lldp_globalFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        objs = []
-
+        objs = dict()
         if not data:
-            data = connection.get('show running-config | section ^interface')
+            data = connection.get('show running-config | section ^lldp')
         # operate on a collection of resource x
-        config = data.split('interface ')
+        config = data.split('\n')
         for conf in config:
             if conf:
                 obj = self.render_config(self.generated_spec, conf)
                 if obj:
-                    objs.append(obj)
+                    objs.update(obj)
         facts = {}
 
         if objs:
             facts['lldp_global'] = []
-            params = utils.validate_config(self.argument_spec, {'config': objs})
-            for cfg in params['config']:
-                facts['lldp_global'].append(utils.remove_empties(cfg))
+            params = utils.validate_config(self.argument_spec, {'config': utils.remove_empties(objs)})
+            facts['lldp_global'] = utils.remove_empties(params['config'])
         ansible_facts['ansible_network_resources'].update(facts)
 
         return ansible_facts
@@ -79,9 +75,17 @@ class Lldp_globalFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        match = re.search(r'^(\S+)', conf)
-        intf = match.group(1)
 
-
+        holdtime = utils.parse_conf_arg(conf, 'lldp holdtime')
+        timer = utils.parse_conf_arg(conf, 'lldp timer')
+        reinit = utils.parse_conf_arg(conf, 'lldp reinit')
+        if holdtime:
+            config['holdtime'] = int(holdtime)
+        if 'lldp run' in conf:
+            config['run'] = True
+        if timer:
+            config['timer'] = int(timer)
+        if reinit:
+            config['reinit'] = int(reinit)
 
         return utils.remove_empties(config)

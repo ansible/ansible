@@ -13,13 +13,12 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
-from ansible.module_utils.network.ios.utils.utils import get_interface_type, dict_diff
-from ansible.module_utils.network.ios.utils.utils import remove_command_from_config_list, add_command_to_config_list
-from ansible.module_utils.network.ios.utils.utils import filter_dict_having_none_value, remove_duplicate_interface
+from ansible.module_utils.network.ios.utils.utils import dict_to_set
+from ansible.module_utils.network.ios.utils.utils import filter_dict_having_none_value
 
 
 class Lldp_global(ConfigBase):
@@ -36,6 +35,12 @@ class Lldp_global(ConfigBase):
         'lldp_global',
     ]
 
+    tlv_select_params = {'4_wire_power_management': '4-wire-power-management', 'mac_phy_cfg': 'mac-phy-cfg',
+                         'management_address': 'management-address', 'port_description': 'port-description',
+                         'port_vlan': 'port-vlan', 'power_management': 'power-management',
+                         'system_capabilities': 'system-capabilities', 'system_description': 'system-description',
+                         'system_name': 'system-name'}
+
     def __init__(self, module):
         super(Lldp_global, self).__init__(module)
 
@@ -48,7 +53,7 @@ class Lldp_global(ConfigBase):
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         lldp_global_facts = facts['ansible_network_resources'].get('lldp_global')
         if not lldp_global_facts:
-            return []
+            return {}
 
         return lldp_global_facts
 
@@ -128,52 +133,9 @@ class Lldp_global(ConfigBase):
         """
         commands = []
 
-        for interface in want:
-            for each in have:
-                if each['name'] == interface['name']:
-                    break
-                elif interface['name'] in each['name']:
-                    break
-            else:
-                continue
-            have_dict = filter_dict_having_none_value(interface, each)
-            want = dict()
-            commands.extend(self._clear_config(want, have_dict))
-            commands.extend(self._set_config(interface, each))
-        # Remove the duplicate interface call
-        commands = remove_duplicate_interface(commands)
-
-        return commands
-
-    def _state_overridden(self, want, have):
-        """ The command generator when state is overridden
-
-        :param want: the desired configuration as a dictionary
-        :param obj_in_have: the current configuration as a dictionary
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
-        """
-        commands = []
-
-        for each in have:
-            for interface in want:
-                if each['name'] == interface['name']:
-                    break
-                elif interface['name'] in each['name']:
-                    break
-            else:
-                # We didn't find a matching desired state, which means we can
-                # pretend we recieved an empty desired state.
-                interface = dict(name=each['name'])
-                commands.extend(self._clear_config(interface, each))
-                continue
-            have_dict = filter_dict_having_none_value(interface, each)
-            want = dict()
-            commands.extend(self._clear_config(want, have_dict))
-            commands.extend(self._set_config(interface, each))
-        # Remove the duplicate interface call
-        commands = remove_duplicate_interface(commands)
+        have_dict = filter_dict_having_none_value(want, have)
+        commands.extend(self._clear_config(have_dict))
+        commands.extend(self._set_config(want, have))
 
         return commands
 
@@ -188,13 +150,7 @@ class Lldp_global(ConfigBase):
         """
         commands = []
 
-        for interface in want:
-            for each in have:
-                if each['name'] == interface['name']:
-                    break
-            else:
-                continue
-            commands.extend(self._set_config(interface, each))
+        commands.extend(self._set_config(want, have))
 
         return commands
 
@@ -210,68 +166,71 @@ class Lldp_global(ConfigBase):
         """
         commands = []
 
-        if want:
-            for interface in want:
-                for each in have:
-                    if each['name'] == interface['name']:
-                        break
-                else:
-                    continue
-                interface = dict(name=interface['name'])
-                commands.extend(self._clear_config(interface, each))
-        else:
-            for each in have:
-                want = dict()
-                commands.extend(self._clear_config(want, each))
+        commands.extend(self._clear_config(have))
 
         return commands
+
+    def _remove_command_from_config_list(self, cmd, commands):
+        if cmd not in commands:
+            commands.append('no %s' % cmd)
+
+    def add_command_to_config_list(self, cmd, commands):
+        if cmd not in commands:
+            commands.append(cmd)
 
     def _set_config(self, want, have):
         # Set the interface config based on the want and have config
         commands = []
-        interface = 'interface ' + want['name']
 
         # Get the diff b/w want and have
-        want_dict = dict_diff(want)
-        have_dict = dict_diff(have)
+        want_dict = dict_to_set(want)
+        have_dict = dict_to_set(have)
         diff = want_dict - have_dict
 
         if diff:
             diff = dict(diff)
-            for item in self.params:
-                if diff.get(item):
-                    cmd = item + ' ' + str(want.get(item))
-                    add_command_to_config_list(interface, cmd, commands)
-            if diff.get('enabled'):
-                add_command_to_config_list(interface, 'no shutdown', commands)
-            elif diff.get('enabled') is False:
-                add_command_to_config_list(interface, 'shutdown', commands)
+            holdtime = diff.get('holdtime')
+            run = diff.get('run')
+            timer = diff.get('timer')
+            reinit = diff.get('reinit')
+            tlv_select = diff.get('tlv_select')
+
+            if holdtime:
+                cmd = 'lldp holdtime {0}'.format(holdtime)
+                self.add_command_to_config_list(cmd, commands)
+            if run:
+                cmd = 'lldp run'
+                self.add_command_to_config_list(cmd, commands)
+            if timer:
+                cmd = 'lldp timer {0}'.format(timer)
+                self.add_command_to_config_list(cmd, commands)
+            if reinit:
+                cmd = 'lldp reinit {0}'.format(reinit)
+                self.add_command_to_config_list(cmd, commands)
+            if tlv_select:
+                tlv_selec_dict = dict(tlv_select)
+                for k, v in iteritems(self.tlv_select_params):
+                    if k in tlv_selec_dict and tlv_selec_dict[k]:
+                        cmd = 'lldp tlv-select {0}'.format(v)
+                        self.add_command_to_config_list(cmd, commands)
 
         return commands
 
-    def _clear_config(self, want, have):
+    def _clear_config(self, have):
         # Delete the interface config based on the want and have config
         commands = []
 
-        if want.get('name'):
-            interface_type = get_interface_type(want['name'])
-            interface = 'interface ' + want['name']
-        else:
-            interface_type = get_interface_type(have['name'])
-            interface = 'interface ' + have['name']
-
-        if have.get('description') and want.get('description') != have.get('description'):
-            remove_command_from_config_list(interface, 'description', commands)
-        if not have.get('enabled') and want.get('enabled') != have.get('enabled'):
-            # if enable is False set enable as True which is the default behavior
-            remove_command_from_config_list(interface, 'shutdown', commands)
-
-        if interface_type.lower() == 'gigabitethernet':
-            if have.get('speed') and have.get('speed') != 'auto' and want.get('speed') != have.get('speed'):
-                remove_command_from_config_list(interface, 'speed', commands)
-            if have.get('duplex') and have.get('duplex') != 'auto' and want.get('duplex') != have.get('duplex'):
-                remove_command_from_config_list(interface, 'duplex', commands)
-            if have.get('mtu') and want.get('mtu') != have.get('mtu'):
-                remove_command_from_config_list(interface, 'mtu', commands)
+        if have.get('holdtime'):
+            cmd = 'lldp holdtime'
+            self._remove_command_from_config_list(cmd, commands)
+        if have.get('run'):
+            cmd = 'lldp run'
+            self._remove_command_from_config_list(cmd, commands)
+        if have.get('timer'):
+            cmd = 'lldp timer'
+            self._remove_command_from_config_list(cmd, commands)
+        if have.get('reinit'):
+            cmd = 'lldp reinit'
+            self._remove_command_from_config_list(cmd, commands)
 
         return commands
