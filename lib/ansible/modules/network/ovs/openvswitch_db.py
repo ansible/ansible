@@ -156,7 +156,7 @@ def map_config_to_obj(module):
     col_value_to_dict = {}
     if NON_EMPTY_MAP_RE.match(col_value):
         for kv in col_value[1:-1].split(', '):
-            k, v = kv.split('=')
+            k, v = kv.split('=', 1)
             col_value_to_dict[k.strip()] = v.strip('\"')
 
     obj = {
