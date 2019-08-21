@@ -31,7 +31,7 @@ from ansible.module_utils.facts import timeout
 @pytest.fixture
 def set_gather_timeout_higher():
     default_timeout = timeout.GATHER_TIMEOUT
-    timeout.GATHER_TIMEOUT = timeout.DEFAULT_GATHER_TIMEOUT + 5
+    timeout.GATHER_TIMEOUT = 5
     yield
     timeout.GATHER_TIMEOUT = default_timeout
 
@@ -81,7 +81,8 @@ def test_implicit_file_default_succeeds():
     assert sleep_amount_implicit(1) == 'Succeeded after 1 sec'
 
 
-def test_implicit_file_default_timesout():
+def test_implicit_file_default_timesout(monkeypatch):
+    monkeypatch.setattr(timeout, 'DEFAULT_GATHER_TIMEOUT', 1)
     # sleep_time is greater than the default
     sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
     with pytest.raises(timeout.TimeoutError):
@@ -90,7 +91,7 @@ def test_implicit_file_default_timesout():
 
 def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
     # Set sleep_time greater than the default timeout and less than our new timeout
-    sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
+    sleep_time = 3
     assert sleep_amount_implicit(sleep_time) == 'Succeeded after {0} sec'.format(sleep_time)
 
 
@@ -101,9 +102,10 @@ def test_implicit_file_overridden_timesout(set_gather_timeout_lower):
         assert sleep_amount_implicit(sleep_time) == '(Not expected to Succeed)'
 
 
-def test_explicit_succeeds():
+def test_explicit_succeeds(monkeypatch):
+    monkeypatch.setattr(timeout, 'DEFAULT_GATHER_TIMEOUT', 1)
     # Set sleep_time greater than the default timeout and less than our new timeout
-    sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
+    sleep_time = 2
     assert sleep_amount_explicit_higher(sleep_time) == 'Succeeded after {0} sec'.format(sleep_time)
 
 
