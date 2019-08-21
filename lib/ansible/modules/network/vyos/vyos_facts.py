@@ -52,7 +52,8 @@ options:
         specific subset should not be collected.
     required: false
     version_added: "2.9"
-    choices: ['all', 'interfaces', '!interfaces', 'l3_interfaces', '!l3_interfaces', 'lag_interfaces', '!lag_interfaces', 'lldp_global', '!lldp_global']
+    choices: ['all', 'interfaces', '!interfaces', 'l3_interfaces', '!l3_interfaces','lag_interfaces', '!lag_interfaces',
+             'lldp_global', '!lldp_global','lldp_interfaces', '!lldp_interfaces']
 """
 
 EXAMPLES = """
