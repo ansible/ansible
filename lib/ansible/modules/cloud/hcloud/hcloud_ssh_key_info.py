@@ -16,11 +16,13 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_ssh_key_facts
-short_description: Gather facts about your Hetzner Cloud ssh_keys.
+module: hcloud_ssh_key_info
+short_description: Gather infos about your Hetzner Cloud ssh_keys.
 version_added: "2.8"
 description:
     - Gather facts about your Hetzner Cloud ssh_keys.
+    - This module was called C(hcloud_ssh_key_facts) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_ssh_key_facts).
+      Note that the M(hcloud_ssh_key_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_ssh_key_info)!
 author:
     - Christopher Schmitt (@cschmitt-hcloud)
 options:
@@ -44,16 +46,16 @@ extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud sshkey facts
-  local_action:
-    module: hcloud_ssh_key_facts
-- name: Print the gathered facts
+- name: Gather hcloud sshkey infos
+  hcloud_ssh_key_info:
+  register: output
+- name: Print the gathered infos
   debug:
-    var: ansible_facts.hcloud_ssh_key_facts
+    var: output.hcloud_ssh_key_info
 """
 
 RETURN = """
-hcloud_ssh_key_facts:
+hcloud_ssh_key_info:
     description: The ssh key instances
     returned: Always
     type: complex
@@ -93,15 +95,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudSSHKeyFacts(Hcloud):
+class AnsibleHcloudSSHKeyInfo(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_ssh_key_facts")
-        self.hcloud_ssh_key_facts = None
+        Hcloud.__init__(self, module, "hcloud_ssh_key_info")
+        self.hcloud_ssh_key_info = None
 
     def _prepare_result(self):
         ssh_keys = []
 
-        for ssh_key in self.hcloud_ssh_key_facts:
+        for ssh_key in self.hcloud_ssh_key_info:
             if ssh_key:
                 ssh_keys.append({
                     "id": to_native(ssh_key.id),
@@ -115,22 +117,22 @@ class AnsibleHcloudSSHKeyFacts(Hcloud):
     def get_ssh_keys(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_ssh_key_facts = [self.client.ssh_keys.get_by_id(
+                self.hcloud_ssh_key_info = [self.client.ssh_keys.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("name") is not None:
-                self.hcloud_ssh_key_facts = [self.client.ssh_keys.get_by_name(
+                self.hcloud_ssh_key_info = [self.client.ssh_keys.get_by_name(
                     self.module.params.get("name")
                 )]
             elif self.module.params.get("fingerprint") is not None:
-                self.hcloud_ssh_key_facts = [self.client.ssh_keys.get_by_fingerprint(
+                self.hcloud_ssh_key_info = [self.client.ssh_keys.get_by_fingerprint(
                     self.module.params.get("fingerprint")
                 )]
             elif self.module.params.get("label_selector") is not None:
-                self.hcloud_ssh_key_facts = self.client.ssh_keys.get_all(
+                self.hcloud_ssh_key_info = self.client.ssh_keys.get_all(
                     label_selector=self.module.params.get("label_selector"))
             else:
-                self.hcloud_ssh_key_facts = self.client.ssh_keys.get_all()
+                self.hcloud_ssh_key_info = self.client.ssh_keys.get_all()
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -150,15 +152,27 @@ class AnsibleHcloudSSHKeyFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudSSHKeyFacts.define_module()
+    module = AnsibleHcloudSSHKeyInfo.define_module()
 
-    hcloud = AnsibleHcloudSSHKeyFacts(module)
+    is_old_facts = module._name == 'hcloud_ssh_key_facts'
+    if is_old_facts:
+        module.deprecate("The 'hcloud_ssh_key_facts' module has been renamed to 'hcloud_ssh_key_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
+
+    hcloud = AnsibleHcloudSSHKeyInfo(module)
     hcloud.get_ssh_keys()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_ssh_key_facts': result['hcloud_ssh_key_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts)
+
+    if is_old_facts:
+        ansible_info = {
+            'hcloud_ssh_key_facts': result['hcloud_ssh_key_info']
+        }
+        module.exit_json(ansible_facts=ansible_info)
+    else:
+        ansible_info = {
+            'hcloud_ssh_key_info': result['hcloud_ssh_key_info']
+        }
+        module.exit_json(**ansible_info)
 
 
 if __name__ == "__main__":

@@ -191,12 +191,13 @@ def main():
 
     is_old_facts = module._name == 'hcloud_server_facts'
     if is_old_facts:
-        module.deprecate("The 'hcloud_server_info' module has been renamed to 'hcloud_server_info', "
+        module.deprecate("The 'hcloud_server_facts' module has been renamed to 'hcloud_server_info', "
                          "and the renamed one no longer returns ansible_facts", version='2.13')
 
     hcloud = AnsibleHcloudServerInfo(module)
     hcloud.get_servers()
     result = hcloud.get_result()
+
     if is_old_facts:
         ansible_info = {
             'hcloud_server_facts': result['hcloud_server_info']
