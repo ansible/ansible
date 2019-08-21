@@ -9,13 +9,17 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
 ---
 module: nginx_status_facts
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favour of C(_info) module.
+  alternative: Use M(nginx_status_info) instead.
 short_description: Retrieve nginx status facts.
 description:
   - Gathers facts from nginx from an URL having C(stub_status) enabled.
