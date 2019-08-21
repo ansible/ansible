@@ -127,6 +127,7 @@
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
           port: 1150
+          max_allocated_storage: 100
           apply_immediately: True
           <<: *aws_connection_info
         register: result
@@ -152,6 +153,7 @@
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
           port: 1150
+          max_allocated_storage: 100
           <<: *aws_connection_info
         register: result
         retries: 30

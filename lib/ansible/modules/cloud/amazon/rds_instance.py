@@ -241,6 +241,10 @@ options:
         aliases:
           - username
         type: str
+    max_allocated_storage:
+        description:
+          - The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.
+        type: int
     monitoring_interval:
         description:
           - The interval, in seconds, when Enhanced Monitoring metrics are collected for the DB instance. To disable collecting
@@ -904,6 +908,9 @@ def get_changing_options_with_inconsistent_keys(modify_params, instance, purge_c
     changing_params = {}
     current_options = get_current_attributes_with_inconsistent_keys(instance)
 
+    if current_options.get("MaxAllocatedStorage") is None:
+        current_options["MaxAllocatedStorage"] = None
+
     for option in current_options:
         current_option = current_options[option]
         desired_option = modify_params.pop(option, None)
@@ -1094,6 +1101,7 @@ def main():
         license_model=dict(),
         master_user_password=dict(aliases=['password'], no_log=True),
         master_username=dict(aliases=['username']),
+        max_allocated_storage=dict(type='int'),
         monitoring_interval=dict(type='int'),
         monitoring_role_arn=dict(),
         multi_az=dict(type='bool'),
