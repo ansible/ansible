@@ -458,18 +458,22 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
     existing_collections = _find_existing_collections(output_path)
 
     with _tempdir() as b_temp_path:
-        dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, apis, validate_certs,
-                                               force, force_deps, no_deps)
+        display.display("Process install dependency map")
+        with _display_progress():
+            dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, apis,
+                                                   validate_certs, force, force_deps, no_deps)
 
-        for collection in dependency_map.values():
-            try:
-                collection.install(output_path, b_temp_path)
-            except AnsibleError as err:
-                if ignore_errors:
-                    display.warning("Failed to install collection %s but skipping due to --ignore-errors being set. "
-                                    "Error: %s" % (to_text(collection), to_text(err)))
-                else:
-                    raise
+        display.display("Starting collection install process")
+        with _display_progress():
+            for collection in dependency_map.values():
+                try:
+                    collection.install(output_path, b_temp_path)
+                except AnsibleError as err:
+                    if ignore_errors:
+                        display.warning("Failed to install collection %s but skipping due to --ignore-errors being set. "
+                                        "Error: %s" % (to_text(collection), to_text(err)))
+                    else:
+                        raise
 
 
 def validate_collection_name(name):
@@ -498,6 +502,64 @@ def _tarfile_extract(tar, member):
     tar_obj = tar.extractfile(member)
     yield tar_obj
     tar_obj.close()
+
+
+@contextmanager
+def _display_progress():
+    def progress(display_queue, actual_display):
+        actual_display.debug("Starting display_progress display thread")
+        t = threading.current_thread()
+
+        while True:
+            for c in "|/-\\":
+                actual_display.display(c + "\b", newline=False)
+                time.sleep(0.1)
+
+                # Display a message from the main thread
+                while True:
+                    try:
+                        method, args, kwargs = display_queue.get(block=False, timeout=0.1)
+                    except queue.Empty:
+                        break
+                    else:
+                        func = getattr(actual_display, method)
+                        func(*args, **kwargs)
+
+                if getattr(t, "finish", False):
+                    actual_display.debug("Received end signal for display_progress display thread")
+                    return
+
+    class DisplayThread(object):
+
+        def __init__(self, display_queue):
+            self.display_queue = display_queue
+
+        def __getattr__(self, attr):
+            def call_display(*args, **kwargs):
+                self.display_queue.put((attr, args, kwargs))
+
+            return call_display
+
+    # Temporary override the global display class with our own which add the calls to a queue for the thread to call.
+    global display
+    old_display = display
+    try:
+        display_queue = queue.Queue()
+        display = DisplayThread(display_queue)
+        t = threading.Thread(target=progress, args=(display_queue, old_display))
+        t.daemon = True
+        t.start()
+
+        try:
+            yield
+        finally:
+            t.finish = True
+            t.join()
+    except Exception:
+        # The exception is re-raised so we can sure the thread is finished and not using the display anymore
+        raise
+    finally:
+        display = old_display
 
 
 def _get_galaxy_yml(b_galaxy_yml_path):
@@ -741,69 +803,28 @@ def _get_mime_data(b_collection_path):
 def _wait_import(task_url, api, timeout):
     headers = api._auth_header()
 
-    def display_progress(message_queue):
-        display.debug("Starting collection publish wait_import display thread")
-        t = threading.current_thread()
-
-        display.display("Waiting until Galaxy import task %s has completed" % task_url)
-        while True:
-            for c in "|/-\\":
-                display.display(c + "\b", newline=False)
-                time.sleep(0.1)
-
-                # Display a message from the main thread
-                while True:
-                    try:
-                        msg = message_queue.get(block=False, timeout=0.1)
-                    except queue.Empty:
-                        break
-                    else:
-                        func = getattr(display, msg[0])
-                        func(msg[1])
-
-                if getattr(t, "finish", False):
-                    display.debug("Received end signal for collection publish wait import display thread")
-                    return
-
-    @contextmanager
-    def daemon_thread(func, queue):
-        t = threading.Thread(target=func, args=(queue,))
-        t.daemon = True
-        t.start()
-
-        try:
-            yield
-        finally:
-            t.finish = True
-            t.join()
-
     state = 'waiting'
     resp = None
 
-    try:
-        msg_queue = queue.Queue()
+    display.display("Waiting until Galaxy import task %s has completed" % task_url)
+    with _display_progress():
+        start = time.time()
+        wait = 2
 
-        with daemon_thread(display_progress, msg_queue):
-            start = time.time()
-            wait = 2
+        while timeout == 0 or (time.time() - start) < timeout:
+            resp = json.load(open_url(to_native(task_url, errors='surrogate_or_strict'), headers=headers,
+                                      method='GET', validate_certs=api.validate_certs))
+            state = resp.get('state', 'waiting')
 
-            while timeout == 0 or (time.time() - start) < timeout:
-                resp = json.load(open_url(to_native(task_url, errors='surrogate_or_strict'), headers=headers,
-                                          method='GET', validate_certs=api.validate_certs))
-                state = resp.get('state', 'waiting')
+            if resp.get('finished_at', None):
+                break
 
-                if resp.get('finished_at', None):
-                    break
+            display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again'
+                        % (state, wait))
+            time.sleep(wait)
 
-                msg_queue.put(('vvv', 'Galaxy import process has a status of %s, wait %d seconds before trying again'
-                               % (state, wait)))
-                time.sleep(wait)
-
-                # poor man's exponential backoff algo so we don't flood the Galaxy API, cap at 30 seconds.
-                wait = min(30, wait * 1.5)
-    except Exception:
-        # The exception is re-raised so we can sure the thread is finished and not using the display anymore
-        raise
+            # poor man's exponential backoff algo so we don't flood the Galaxy API, cap at 30 seconds.
+            wait = min(30, wait * 1.5)
 
     if state == 'waiting':
         raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
