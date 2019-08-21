@@ -132,7 +132,7 @@ class NetAppONTAPCommand(object):
             output = self.server.invoke_successfully(command_obj, True)
             if self.return_dict:
                 # Parseable dict output
-                retval = self.parse_xml_to_dict(output.to_string())                    
+                retval = self.parse_xml_to_dict(output.to_string())
             else:
                 # Raw XML output
                 retval = output.to_string()
@@ -175,11 +175,10 @@ class NetAppONTAPCommand(object):
             except xml.parsers.expat.ExpatError as errcode:
                 self.result_dict['status'] = "XML parser: " + str(errcode)
 
-            
         except ImportError:
             self.result_dict['stdout'] = "XML parsing failed. Cannot import xml.parsers.expat!"
-        
-        return self.result_dict 
+
+        return self.result_dict
 
     def _start_element(self, name, attrs):
         ''' Start XML element '''
