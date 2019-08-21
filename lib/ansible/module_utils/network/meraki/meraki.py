@@ -367,7 +367,10 @@ class MerakiModule(object):
                             "Rate limiter hit, retry {0}".format(self.retry))
                     elif self.status == 500:
                         raise RateLimitException(
-                            "Internal server error, retry {0}".format(self.retry))
+                            "Internal server error 500, retry {0}".format(self.retry))
+                    elif self.status == 502:
+                        raise RateLimitException(
+                            "Internal server error 502, retry {0}".format(self.retry))
                     elif self.status >= 400:
                         raise HTTPError(
                             "HTTP error {0} - {1}".format(self.status, response)
