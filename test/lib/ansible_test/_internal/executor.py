@@ -129,7 +129,7 @@ from .integration import (
     integration_test_environment,
     integration_test_config_file,
     setup_common_temp_dir,
-    VARS_FILE_RELATIVE,
+    INTEGRATION_VARS_FILE_RELATIVE,
     get_inventory_relative_path,
     INTEGRATION_DIR_RELATIVE,
     check_inventory,
@@ -850,7 +850,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
 
     cloud_init(args, internal_targets)
 
-    vars_file_src = os.path.join(data_context().content.root, VARS_FILE_RELATIVE)
+    vars_file_src = os.path.join(data_context().content.root, INTEGRATION_VARS_FILE_RELATIVE)
 
     if os.path.exists(vars_file_src):
         def integration_config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
@@ -863,7 +863,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
             else:
                 working_path = ''
 
-            files.append((vars_file_src, os.path.join(working_path, VARS_FILE_RELATIVE)))
+            files.append((vars_file_src, os.path.join(working_path, INTEGRATION_VARS_FILE_RELATIVE)))
 
         data_context().register_payload_callback(integration_config_callback)
 

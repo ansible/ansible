@@ -31,7 +31,8 @@ from ..util import (
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
-    ANSIBLE_TEST_DATA_ROOT,
+    INTEGRATION_DIR_RELATIVE,
+    INTEGRATION_VARS_FILE_RELATIVE,
     to_bytes,
 )
 
@@ -54,9 +55,6 @@ from ..cloud import (
 from ..data import (
     data_context,
 )
-
-INTEGRATION_DIR_RELATIVE = 'test/integration'
-VARS_FILE_RELATIVE = os.path.join(INTEGRATION_DIR_RELATIVE, 'integration_config.yml')
 
 
 def setup_common_temp_dir(args, path):
@@ -198,12 +196,8 @@ def integration_test_environment(args, target, inventory_path_src):
     :type target: IntegrationTarget
     :type inventory_path_src: str
     """
-    ansible_config_relative = os.path.join(INTEGRATION_DIR_RELATIVE, '%s.cfg' % args.command)
-    ansible_config_src = os.path.join(data_context().content.root, ansible_config_relative)
-
-    if not os.path.exists(ansible_config_src):
-        # use the default empty configuration unless one has been provided
-        ansible_config_src = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+    ansible_config_src = args.get_ansible_config()
+    ansible_config_relative = os.path.relpath(ansible_config_src, data_context().content.root)
 
     if args.no_temp_workdir or 'no/temp_workdir/' in target.aliases:
         display.warning('Disabling the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
@@ -211,7 +205,7 @@ def integration_test_environment(args, target, inventory_path_src):
         integration_dir = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE)
         inventory_path = inventory_path_src
         ansible_config = ansible_config_src
-        vars_file = os.path.join(data_context().content.root, VARS_FILE_RELATIVE)
+        vars_file = os.path.join(data_context().content.root, INTEGRATION_VARS_FILE_RELATIVE)
 
         yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
         return
@@ -246,8 +240,8 @@ def integration_test_environment(args, target, inventory_path_src):
         integration_dir = os.path.join(temp_dir, INTEGRATION_DIR_RELATIVE)
         ansible_config = os.path.join(temp_dir, ansible_config_relative)
 
-        vars_file_src = os.path.join(data_context().content.root, VARS_FILE_RELATIVE)
-        vars_file = os.path.join(temp_dir, VARS_FILE_RELATIVE)
+        vars_file_src = os.path.join(data_context().content.root, INTEGRATION_VARS_FILE_RELATIVE)
+        vars_file = os.path.join(temp_dir, INTEGRATION_VARS_FILE_RELATIVE)
 
         file_copies = [
             (ansible_config_src, ansible_config),
