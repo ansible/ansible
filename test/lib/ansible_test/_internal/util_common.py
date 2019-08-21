@@ -50,6 +50,10 @@ class CommonConfig:
 
         self.cache = {}
 
+    def get_ansible_config(self):  # type: () -> str
+        """Return the path to the Ansible config for the given config."""
+        return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+
 
 @contextlib.contextmanager
 def named_temporary_file(args, prefix, suffix, directory, content):
