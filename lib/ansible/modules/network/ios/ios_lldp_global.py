@@ -63,12 +63,12 @@ options:
             won't be maintained as Cisco device doesn't record starting reinit
             configured value, so it cannot be verified that if the respective
             starting reinit value is already configured or not from the device
-            side. So, if user uses tries to apply starting reinit value in every
+            side. So, if the user uses tries to apply starting reinit value in every
             play run ansible will show changed as True. But, for other reinit value
             idempotency will be maintained as other than starting reinit value other
-            reinit value are recorded in device side.
+            reinit value is recorded in the device side.
         type: int
-      run:
+      enable:
         description:
           - Enable LLDP
         type: bool
@@ -83,12 +83,12 @@ options:
           - NOTE, if tlv-select is configured idempotency won't be maintained
             as Cisco device doesn't record configured tlv-select options, so
             there is no means to check if the respective tlv-selct options is
-            already configured or not from the device side. So, if user uses
+            already configured or not from the device side. So, if the user
             tries to apply tlv-select option in every play run ansible will
             show changed as True.
         type: dict
         suboptions:
-          4_wire_power_management:
+          four_wire_power_management:
             description:
               - Cisco 4-wire Power via MDI TLV
             type: bool

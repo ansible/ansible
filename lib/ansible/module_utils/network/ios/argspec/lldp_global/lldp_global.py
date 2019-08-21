@@ -36,14 +36,15 @@ class Lldp_globalArgs(object):
 
     argument_spec = {'config': {'options': {'holdtime': {'type': 'int'},
                                             'reinit': {'type': 'int'},
-                                            'run': {'type': 'bool'},
+                                            'enable': {'type': 'bool'},
                                             'timer': {'type': 'int'},
                                             'tlv_select': {
                                                 'options': {
+                                                    'four_wire_power_management': {'type': 'bool'},
                                                     'mac_phy_cfg': {'type': 'bool'},
                                                     'management_address': {'type': 'bool'},
                                                     'port_description': {'type': 'bool'},
-                                                    'port_vlan:': {'type': 'bool'},
+                                                    'port_vlan': {'type': 'bool'},
                                                     'power_management': {'type': 'bool'},
                                                     'system_capabilities': {'type': 'bool'},
                                                     'system_description': {'type': 'bool'},

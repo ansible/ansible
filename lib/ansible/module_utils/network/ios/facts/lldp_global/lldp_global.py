@@ -58,7 +58,6 @@ class Lldp_globalFacts(object):
         facts = {}
 
         if objs:
-            facts['lldp_global'] = []
             params = utils.validate_config(self.argument_spec, {'config': utils.remove_empties(objs)})
             facts['lldp_global'] = utils.remove_empties(params['config'])
         ansible_facts['ansible_network_resources'].update(facts)
@@ -82,7 +81,7 @@ class Lldp_globalFacts(object):
         if holdtime:
             config['holdtime'] = int(holdtime)
         if 'lldp run' in conf:
-            config['run'] = True
+            config['enable'] = True
         if timer:
             config['timer'] = int(timer)
         if reinit:

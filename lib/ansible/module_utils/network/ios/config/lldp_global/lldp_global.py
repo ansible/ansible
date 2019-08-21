@@ -35,7 +35,7 @@ class Lldp_global(ConfigBase):
         'lldp_global',
     ]
 
-    tlv_select_params = {'4_wire_power_management': '4-wire-power-management', 'mac_phy_cfg': 'mac-phy-cfg',
+    tlv_select_params = {'four_wire_power_management': '4-wire-power-management', 'mac_phy_cfg': 'mac-phy-cfg',
                          'management_address': 'management-address', 'port_description': 'port-description',
                          'port_vlan': 'port-vlan', 'power_management': 'power-management',
                          'system_capabilities': 'system-capabilities', 'system_description': 'system-description',
@@ -190,7 +190,7 @@ class Lldp_global(ConfigBase):
         if diff:
             diff = dict(diff)
             holdtime = diff.get('holdtime')
-            run = diff.get('run')
+            enable = diff.get('enable')
             timer = diff.get('timer')
             reinit = diff.get('reinit')
             tlv_select = diff.get('tlv_select')
@@ -198,7 +198,7 @@ class Lldp_global(ConfigBase):
             if holdtime:
                 cmd = 'lldp holdtime {0}'.format(holdtime)
                 self.add_command_to_config_list(cmd, commands)
-            if run:
+            if enable:
                 cmd = 'lldp run'
                 self.add_command_to_config_list(cmd, commands)
             if timer:
@@ -223,7 +223,7 @@ class Lldp_global(ConfigBase):
         if have.get('holdtime'):
             cmd = 'lldp holdtime'
             self._remove_command_from_config_list(cmd, commands)
-        if have.get('run'):
+        if have.get('enable'):
             cmd = 'lldp run'
             self._remove_command_from_config_list(cmd, commands)
         if have.get('timer'):
