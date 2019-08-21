@@ -141,7 +141,7 @@ class InventoryCLI(CLI):
             hosts = self.inventory.get_hosts(context.CLIARGS['host'])
             if len(hosts) != 1:
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
-            
+
             if context.CLIARGS['unmerge']:
                 myvars = self._get_host_variables_unmerged(host=hosts[0])
 
@@ -282,7 +282,8 @@ class InventoryCLI(CLI):
     @staticmethod
     def _combine_vars_unmerged(results, hash_to_integrate, group, path):
         ''' Recursive function that browses a recursive dict ('hash_to_integrate') to update the 'results' dict.
-            For each leaf encountered (i.e. anything that is not another dict) it creates an entry in 'results' with the path (in a dotted format) as key and a list as value.
+            For each leaf encountered (i.e. anything that is not another dict) it creates an entry in 'results' with the path (in a dotted format) as key and
+            a list as value.
             This list contain the leaf's value, along with the "source" (group name most of the time, or host name) of 'hash_to_integrate'.
             If the key already exists, the list is simply prepended. The first item of said list is considered to be the "winning" value.
         '''
@@ -291,8 +292,8 @@ class InventoryCLI(CLI):
             new_path = path + [key]
             flattened_path = '.'.join(new_path)
             if isinstance(value, MutableMapping):  # We are not at a leaf
-                if flattened_path in results: del results[flattened_path]  # If there was a leaf here previously, delete it as it would have been overwritten by combine_vars
-                                                                           # We should maybe find a way to display that...
+                if flattened_path in results:
+                    del results[flattened_path]  # If there was a leaf here previously, delete it as it would have been overwritten by combine_vars.
                 InventoryCLI._combine_vars_unmerged(results, value, group, new_path)  # We need to go deeper !
             else:
                 if flattened_path in results:
@@ -312,33 +313,35 @@ class InventoryCLI(CLI):
                 elif isinstance(source, Group):
                     source_entities.add(source)  # set.add() only adds if item is not present already
         source_entities = sort_groups(source_entities)  # This is now a list of groups with the less specific ('all' for instance) first
-        if host is not None: source_entities.append(host)
+        if host is not None:
+            source_entities.append(host)
         source_entities.reverse()  # We're done, we have a list of all place where we found variables, from more specific to less specific
 
-        max_width = len(str(max(source_entities, key=lambda v: len(str(v)))))  # The maximum string length of all group names (and the hostname), for display purposes
+        max_width = len(str(max(source_entities, key=lambda v: len(str(v)))))  # The max string length of all group and host names, for display purposes
 
         result = []
         for key, values in sorted(unmerged_vars.items()):
             if context.CLIARGS['filter'] is None or context.CLIARGS['filter'] in key:  # Apply filter if provided
-                if len(values)==1:  # There was no override, just display "[source] path.to.variable : value"
-                    prefix = '[{}] {} : '.format(InventoryCLI._colorize_entity(values[0][0], source_entities, max_width), key)
-                    prefix_nocolor = '[{}] {} : '.format(InventoryCLI._colorize_entity(values[0][0], source_entities, max_width, force_nocolor=True), key)
+                if len(values) == 1:  # There was no override, just display "[source] path.to.variable : value"
+                    prefix = '[{0}] {1} : '.format(InventoryCLI._colorize_entity(values[0][0], source_entities, max_width), key)
+                    prefix_nocolor = '[{0}] {1} : '.format(InventoryCLI._colorize_entity(values[0][0], source_entities, max_width, force_nocolor=True), key)
                     value_pretty = pformat(values[0][1]).split('\n')
 
-                    # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : in that case, indent the remaining ones.
+                    # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : indent the remaining ones.
                     result.extend([prefix + line if index == 0 else " " * len(prefix_nocolor) + line for index, line in enumerate(value_pretty)])
 
-                else:  # There was several candidates, display the winning one first, and then all of them in order (starting with the winning one) along with their source
-                    prefix = '[{}] {} : '.format('+' * max_width, key)
+                else:  # There was several candidates, display the winning one first, and then all of them in order (starting with the winning one), with source
+                    prefix = '[{0}] {1} : '.format('+' * max_width, key)
                     value_pretty = pformat(values[0][1]).split('\n')
 
-                    # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : in that case, indent the remaining ones.
+                    # Add the prefix to the first line. If the value is complex, pprint.pformat() will output multiple lines : indent the remaining ones.
                     result.extend([prefix + line if index == 0 else " " * len(prefix) + line for index, line in enumerate(value_pretty)])
 
                     local_max_width = len(str(max(values, key=lambda v: len(str(v[0])))[0]))  # Longer of all candidates' sources, for alignment
                     for entity, value in values:
-                        prefix = '{}|{} : '.format('-' * (max_width + 3), InventoryCLI._colorize_entity(entity, source_entities, local_max_width))
-                        prefix_nocolor = '{}|{} : '.format('-' * (max_width + 3), InventoryCLI._colorize_entity(entity, source_entities, local_max_width, force_nocolor=True))
+                        prefix = '{0}|{1} : '.format('-' * (max_width + 3), InventoryCLI._colorize_entity(entity, source_entities, local_max_width))
+                        prefix_nocolor = '{0}|{1} : '.format('-' * (max_width + 3), InventoryCLI._colorize_entity(entity, source_entities, local_max_width,
+                                                                                                                  force_nocolor=True))
                         value_pretty = pformat(value).split('\n')
 
                         result.extend([prefix + line if index == 0 else " " * len(prefix_nocolor) + line for index, line in enumerate(value_pretty)])
