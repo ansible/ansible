@@ -1796,6 +1796,7 @@ class BgpNeighborAf(object):
             cmd = "peer %s enable" % remote_address
         else:
             cmd = "peer %s" % remote_address
+        cmds.append(cmd)
 
         return cmds
 
@@ -2081,9 +2082,9 @@ class BgpNeighborAf(object):
                     cmd = "undo peer %s public-as-only limited include-peer-as" % remote_address
             cmds.append(cmd)
 
-        route_limit_sign = "route_limit"
+        route_limit_sign = "route-limit"
         if af_type == "evpn":
-            route_limit_sign = "mac_limit"
+            route_limit_sign = "mac-limit"
         route_limit = module.params['route_limit']
         if route_limit:
             conf_str += "<routeLimit>%s</routeLimit>" % route_limit
