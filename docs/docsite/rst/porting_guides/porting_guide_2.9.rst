@@ -64,6 +64,8 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * digital_ocean_sshkey_facts use :ref:`digital_ocean_sshkey_info <digital_ocean_sshkey_info_module>` instead.
 
+* idrac_redfish_facts use :ref:`idrac_redfish_info <idrac_redfish_info_module>` instead.
+
 * junos_interface use :ref:`junos_interfaces <junos_interfaces_module>` instead.
 
 * junos_l2_interface use :ref:`junos_l2_interfaces <junos_l2_interfaces_module>` instead.
@@ -93,6 +95,8 @@ The following modules will be removed in Ansible 2.13. Please update update your
 * purefa_facts use :ref:`purefa_info <purefa_info_module>` instead.
 
 * purefb_facts use :ref:`purefb_info <purefb_info_module>` instead.
+
+* redfish_facts use :ref:`redfish_info <redfish_info_module>` instead.
 
 * vultr_dns_domain_facts use :ref:`vultr_dns_domain_info <vultr_dns_domain_info_module>` instead.
 
