@@ -59,6 +59,13 @@ class AnsibleFailJson(Exception):
 
 class TestEnosModule(unittest.TestCase):
 
+    def setUp(self):
+        self.mock_sleep = patch('time.sleep')
+        self.mock_sleep.start()
+
+    def tearDown(self):
+        self.mock_sleep.stop()
+
     def execute_module(self, failed=False, changed=False, commands=None,
                        sort=True, defaults=False):
 
