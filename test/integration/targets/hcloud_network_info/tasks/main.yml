@@ -53,8 +53,8 @@
   assert:
     that:
       - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count == 1
-      - hcloud_network.hcloud_network_info.subnetworks | list | count == 1
-      - hcloud_network.hcloud_network_info.routes | list | count == 1
+      - hcloud_network.hcloud_network_info[0].subnetworks | list | count == 1
+      - hcloud_network.hcloud_network_info[0].routes | list | count == 1
 
 - name: test gather hcloud network info with correct label selector
   hcloud_network_info:

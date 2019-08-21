@@ -76,7 +76,7 @@ hcloud_network_info:
             type: str
             sample: 10.0.0.0/16
         subnetworks:
-            description: subnetworks belongig to the network
+            description: subnetworks belonging to the network
             returned: always
             type: complex
         routes:
