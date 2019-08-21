@@ -164,10 +164,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.exos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.exos.facts.facts import Facts
 
+
 def main():
     """Main entry point for AnsibleModule
     """
-    argument_spec  = FactsArgs.argument_spec
+    argument_spec = FactsArgs.argument_spec
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

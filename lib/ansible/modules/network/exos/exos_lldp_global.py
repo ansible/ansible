@@ -30,9 +30,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'community'
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
 }
 
 DOCUMENTATION = """
@@ -40,13 +40,13 @@ DOCUMENTATION = """
 module: exos_lldp_global
 version_added: 2.9
 short_description: Configure and manage Link Layer Discovery Protocol(LLDP) attribures on EXOS platforms.
-description: This module configures and manages the Link Layer Discovery Protocol(LLDP) attributes on Extreme Networks EXOS platforms. 
+description: This module configures and manages the Link Layer Discovery Protocol(LLDP) attributes on Extreme Networks EXOS platforms.
 author: Ujwal Komarla (@ujwalkomarla)
 notes:
 - Tested against Extreme Networks EXOS version 30.2.1.8 on x460g2.
 - This module works with connection C(httpapi).
   See L(EXOS Platform Options,../network/user_guide/platform_exos.html)
-options: 
+options:
   config:
     description: A dictionary of LLDP options
     type: dict
@@ -58,7 +58,7 @@ options:
         default: 30
       tlv_select:
         description:
-          - This attribute can be used to specify the TLVs that need to be sent in the LLDP packets. By default, only system name and system description is sent.
+          - This attribute can be used to specify the TLVs that need to be sent in the LLDP packets. By default, only system name and system description is sent
         type: dict
         suboptions:
           management_address:
@@ -415,7 +415,9 @@ def main():
 
     :returns: the result form module invocation
     """
-    module = AnsibleModule(argument_spec=Lldp_globalArgs.argument_spec,
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',))]
+    module = AnsibleModule(argument_spec=Lldp_globalArgs.argument_spec, required_if=required_if,
                            supports_check_mode=True)
 
     result = Lldp_global(module).execute_module()

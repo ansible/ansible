@@ -9,6 +9,9 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import re
 from copy import deepcopy
 
@@ -88,8 +91,7 @@ class Lldp_globalFacts(object):
 
         for item in self.TLV_SELECT_OPTIONS:
             config["tlv_select"][item.lower()] = (
-                False if (item in
-                    conf["opeconfig-lldp:config"]["suppress-tlv-advertisement"])
+                False if (item in conf["opeconfig-lldp:config"]["suppress-tlv-advertisement"])
                 else True)
 
         return utils.remove_empties(config)
