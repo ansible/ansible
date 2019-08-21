@@ -39,6 +39,7 @@ options:
     description:
       - Object name.
     type: str
+    required: True
   subnet:
     description:
       - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
@@ -71,7 +72,40 @@ options:
   nat_settings:
     description:
       - NAT settings.
-    type: dict
+    type: list
+    suboptions:
+      auto_rule:
+        description:
+          - Whether to add automatic address translation rules.
+        type: bool
+      ip_address:
+        description:
+          - IPv4 or IPv6 address. If both addresses are required use ipv4-address and ipv6-address fields
+            explicitly. This parameter is not required in case "method" parameter is "hide" and "hide-behind" parameter
+            is "gateway".
+        type: str
+      ipv4_address:
+        description:
+          - IPv4 address.
+        type: str
+      ipv6_address:
+        description:
+          - IPv6 address.
+        type: str
+      hide_behind:
+        description:
+          - Hide behind method. This parameter is not required in case "method" parameter is "static".
+        type: str
+        choices: ['gateway', 'ip-address']
+      install_on:
+        description:
+          - Which gateway should apply the NAT translation.
+        type: str
+      method:
+        description:
+          - NAT translation method.
+        type: str
+        choices: ['hide', 'static']
   tags:
     description:
       - Collection of tag identifiers.
@@ -80,27 +114,26 @@ options:
     description:
       - Allow broadcast address inclusion.
     type: str
-    choices:
-      - disallow
-      - allow
+    choices: ['disallow', 'allow']
   color:
     description:
       - Color of the object. Should be one of existing colors.
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-              'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green',
-              'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
-              'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-              'sienna', 'yellow']
+    type: str
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
+             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
+             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
+             'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of the
-        object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of
+        the object to a fully detailed representation of the object.
     type: str
-    choices: [uid, standard, full]
+    choices: ['uid', 'standard', 'full']
   groups:
     description:
       - Collection of group identifiers.
@@ -111,13 +144,9 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted
-        - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
+        omitted - warnings will also be ignored.
     type: bool
-  uid:
-    description:
-      - Object unique identifier.
-    type: str
   new_name:
     description:
       - New name of the object.
@@ -130,10 +159,10 @@ EXAMPLES = """
   cp_network:
     name: New Network 3
     nat_settings:
-      auto-rule: true
-      hide-behind: ip-address
-      install-on: All
-      ip-address: 192.0.2.1
+      auto_rule: true
+      hide_behind: ip-address
+      install_on: All
+      ip_address: 192.0.2.1
       method: static
     state: present
     subnet: 192.0.2.1
@@ -141,17 +170,17 @@ EXAMPLES = """
 
 - name: set-network
   cp_network:
-    name : New Network 1
-    new-name : New Network 2
-    color : green
-    subnet : 192.0.0.0
-    mask-length : 16
-    groups : New Group 1
+    color: green
+    groups: New Group 1
+    mask_length: 16
+    name: New Network 1
+    new_name: New Network 2
     state: present
+    subnet: 192.0.0.0
 
 - name: delete-network
   cp_network:
-    name : New Network 2
+    name: New Network 2
     state: absent
 """
 
@@ -168,7 +197,7 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
-        name=dict(type='str'),
+        name=dict(type='str', required=True),
         subnet=dict(type='str'),
         subnet4=dict(type='str'),
         subnet6=dict(type='str'),
@@ -176,29 +205,34 @@ def main():
         mask_length4=dict(type='int'),
         mask_length6=dict(type='int'),
         subnet_mask=dict(type='str'),
-        nat_settings=dict(type='dict'),
+        nat_settings=dict(type='list', options=dict(
+            auto_rule=dict(type='bool'),
+            ip_address=dict(type='str'),
+            ipv4_address=dict(type='str'),
+            ipv6_address=dict(type='str'),
+            hide_behind=dict(type='str', choices=['gateway', 'ip-address']),
+            install_on=dict(type='str'),
+            method=dict(type='str', choices=['hide', 'static'])
+        )),
         tags=dict(type='list'),
         broadcast=dict(type='str', choices=['disallow', 'allow']),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
-                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise',
-                                        'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray',
-                                        'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue',
-                                        'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-                                        'red', 'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
+                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
+                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
+                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
+                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
+                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
+                                        'sienna', 'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         groups=dict(type='list'),
         ignore_warnings=dict(type='bool'),
         ignore_errors=dict(type='bool'),
-        uid=dict(type='str'),
         new_name=dict(type='str')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
-                           mutually_exclusive=[['name', 'uid']],
-                           supports_check_mode=True)
-
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
     api_call_object = 'network'
 
     result = api_call(module, api_call_object)

@@ -2866,7 +2866,6 @@ lib/ansible/modules/network/bigswitch/bigmon_policy.py validate-modules:E326
 lib/ansible/modules/network/bigswitch/bigmon_policy.py validate-modules:E337
 lib/ansible/modules/network/bigswitch/bigmon_policy.py validate-modules:E338
 lib/ansible/modules/network/checkpoint/checkpoint_object_facts.py validate-modules:E337
-lib/ansible/modules/network/checkpoint/cp_network.py validate-modules:E337
 lib/ansible/modules/network/cli/cli_command.py validate-modules:E337
 lib/ansible/modules/network/cli/cli_config.py validate-modules:E337
 lib/ansible/modules/network/cli/cli_config.py validate-modules:E338
