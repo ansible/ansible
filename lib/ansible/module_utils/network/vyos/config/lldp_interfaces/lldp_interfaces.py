@@ -38,8 +38,6 @@ class Lldp_interfaces(ConfigBase):
     ]
 
     params = ['enable', 'location', 'name']
-    set_cmd = 'set service lldp interface '
-    del_cmd = 'delete service lldp interface '
 
     def __init__(self, module):
         super(Lldp_interfaces, self).__init__(module)
