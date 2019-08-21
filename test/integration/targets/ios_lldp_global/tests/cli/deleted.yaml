@@ -1,0 +1,40 @@
+---
+- debug:
+    msg: "Start Deleted integration state for ios_lldp_global  ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Delete configured Global LLDP
+      ios_lldp_global: &deleted
+        state: deleted
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ deleted['before'] == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ deleted['before'] == result['before'] }}"
+
+    - name: Delete configured Global LLDP (IDEMPOTENT)
+      ios_lldp_global: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.changed == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
