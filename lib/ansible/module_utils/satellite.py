@@ -41,13 +41,14 @@ def request(module, url, pagination=False, params=None):
     per_page = 200
     if not params:
         params = dict()
+        req_url = url
     if params != {} or pagination:
         params.update(page=1, per_page=per_page, paged=True)
+        req_url = '{0}?{1}'.format(url, urlencode(params))
 
     results = []
     done = 0
-    url = '{0}?{1}'.format(url, urlencode(params))
-    resp, info = fetch_url(module, url, timeout=timeout)
+    resp, info = fetch_url(module, req_url, timeout=timeout)
     if info["status"] == 200:
         response = json.loads(resp.read())
     else:
@@ -61,8 +62,8 @@ def request(module, url, pagination=False, params=None):
             while done < response["subtotal"]:
                 response = None
                 params["page"] += 1
-                url = '{0}?{1}'.format(url, urlencode(params))
-                resp, info = fetch_url(module, url, timeout=timeout)
+                req_url = '{0}?{1}'.format(url, urlencode(params))
+                resp, info = fetch_url(module, req_url, timeout=timeout)
                 if info["status"] == 200:
                     response = json.loads(resp.read())
                     results.extend(response["results"])
