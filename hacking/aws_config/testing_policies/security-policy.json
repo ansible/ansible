@@ -197,19 +197,28 @@
             ]
         },
         {
-            "Sid": "AllowAccessToACM",
+            "Sid": "AllowAccessToACMRestrictable",
             "Effect": "Allow",
             "Action": [
-                "acm:ListCertificates",
                 "acm:ImportCertificate",
                 "acm:DescribeCertificate",
                 "acm:GetCertificate",
-                "acm:ListTagsForCertificate",
                 "acm:AddTagsToCertificate",
                 "acm:DeleteCertificate"
             ],
             "Resource": [
                 "arn:aws:acm:{{aws_region}}:{{aws_account}}:certificate/*"
+            ]
+        },
+        {
+            "Sid": "AllowAccessToACMUnrestrictable",
+            "Effect": "Allow",
+            "Action": [
+                "acm:ListCertificates",
+                "acm:ListTagsForCertificate"
+            ],
+            "Resource": [
+                "*"
             ]
         }
     ]
