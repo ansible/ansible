@@ -36,7 +36,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.utils.collection_loader import is_collection_ref
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
@@ -158,7 +158,8 @@ class TaskQueueManager:
             callback_obj.set_options()
             self._callback_plugins.append(callback_obj)
 
-        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if is_collection_ref(c)):
+        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
+            # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
             callback_obj = callback_loader.get(callback_plugin_name)
             self._callback_plugins.append(callback_obj)
 
