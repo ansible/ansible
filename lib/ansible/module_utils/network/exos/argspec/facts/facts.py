@@ -17,7 +17,9 @@ class FactsArgs(object):  # pylint: disable=R0903
 
     choices = [
         'all',
+        '!all',
         'lldp_global',
+        '!lldp_global'
     ]
 
     argument_spec = {
