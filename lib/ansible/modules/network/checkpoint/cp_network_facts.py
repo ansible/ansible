@@ -40,6 +40,7 @@ options:
   name:
     description:
       - Object name.
+        This parameter is relevant only for getting a specific object.
     type: str
   details_level:
     description:
@@ -50,18 +51,22 @@ options:
   limit:
     description:
       - No more than that many results will be returned.
+        This parameter is relevant only for getting few objects.
     type: int
   offset:
     description:
       - Skip that many results before beginning to return them.
+        This parameter is relevant only for getting few objects.
     type: int
   order:
     description:
       - Sorts results by the given field. By default the results are sorted in the ascending order by name.
+        This parameter is relevant only for getting few objects.
     type: list
   show_membership:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
+        This parameter is relevant only for getting few objects.
     type: bool
 extends_documentation_fragment: checkpoint_facts
 """
