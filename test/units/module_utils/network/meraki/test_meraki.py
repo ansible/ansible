@@ -26,7 +26,7 @@ import pytest
 
 from units.compat import unittest, mock
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
+from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec, HTTPError, RateLimitException
 from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_native, to_bytes
 from units.modules.utils import set_module_args
@@ -88,11 +88,16 @@ def mocked_fail_json(*args, **kwargs):
     pass
 
 
+def mocked_sleep(*args, **kwargs):
+    pass
+
+
 def test_fetch_url_404(module, mocker):
     url = '404'
     mocker.patch('ansible.module_utils.network.meraki.meraki.fetch_url', side_effect=mocked_fetch_url)
     mocker.patch('ansible.module_utils.network.meraki.meraki.MerakiModule.fail_json', side_effect=mocked_fail_json)
-    data = module.request(url, method='GET')
+    with pytest.raises(HTTPError):
+        data = module.request(url, method='GET')
     assert module.status == 404
 
 
@@ -100,7 +105,9 @@ def test_fetch_url_429(module, mocker):
     url = '429'
     mocker.patch('ansible.module_utils.network.meraki.meraki.fetch_url', side_effect=mocked_fetch_url)
     mocker.patch('ansible.module_utils.network.meraki.meraki.MerakiModule.fail_json', side_effect=mocked_fail_json)
-    data = module.request(url, method='GET')
+    mocker.patch('time.sleep', return_value=None)
+    with pytest.raises(RateLimitException):
+        data = module.request(url, method='GET')
     assert module.status == 429
 
 
