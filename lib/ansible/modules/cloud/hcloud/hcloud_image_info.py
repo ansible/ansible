@@ -119,7 +119,7 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudImageImages(Hcloud):
+class AnsibleHcloudImageInfo(Hcloud):
     def __init__(self, module):
         Hcloud.__init__(self, module, "hcloud_image_info")
         self.hcloud_image_info = None
@@ -181,14 +181,14 @@ class AnsibleHcloudImageImages(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudImageImages.define_module()
+    module = AnsibleHcloudImageInfo.define_module()
 
     is_old_facts = module._name == 'hcloud_image_facts'
     if is_old_facts:
-        module.deprecate("The 'hcloud_image_info' module has been renamed to 'hcloud_image_info', "
+        module.deprecate("The 'hcloud_image_facts' module has been renamed to 'hcloud_image_info', "
                          "and the renamed one no longer returns ansible_facts", version='2.13')
 
-    hcloud = AnsibleHcloudImageImages(module)
+    hcloud = AnsibleHcloudImageInfo(module)
     hcloud.get_images()
     result = hcloud.get_result()
 
