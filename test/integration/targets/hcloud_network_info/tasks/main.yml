@@ -24,8 +24,8 @@
 - name: create subnetwork
   hcloud_subnetwork:
     network: "{{ hcloud_network_name }}"
-    type: "server"
-    network-zone: eu-central
+    type: server
+    network_zone: eu-central
     ip_range: "10.0.0.0/24"
   register: main_subnetwork
 - name: verify create subnetwork
