@@ -35,7 +35,7 @@ options:
     default: 10
 
 notes:
-  - See http://nginx.org/en/docs/http/ngx_http_stub_status_module.html for more information.
+  - See U(http://nginx.org/en/docs/http/ngx_http_stub_status_module.html) for more information.
 '''
 
 EXAMPLES = r'''
