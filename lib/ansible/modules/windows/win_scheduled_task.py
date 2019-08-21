@@ -430,8 +430,9 @@ notes:
 - The option names and structure for actions and triggers of a service follow
   the C(RegisteredTask) naming standard and requirements, it would be useful to
   read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
-- A Group Managed Service Account (gMSA) can be used by setting C(logon_type) to C(password) 
-  and omitting the password parameter. For more information on gMSAs, see U(https://techcommunity.microsoft.com/t5/Core-Infrastructure-and-Security/Windows-Server-2012-Group-Managed-Service-Accounts/ba-p/255910)
+- A Group Managed Service Account (gMSA) can be used by setting C(logon_type) to C(password)
+  and omitting the password parameter. For more information on gMSAs,
+  see U(https://techcommunity.microsoft.com/t5/Core-Infrastructure-and-Security/Windows-Server-2012-Group-Managed-Service-Accounts/ba-p/255910)
 seealso:
 - module: win_scheduled_task_stat
 author:
