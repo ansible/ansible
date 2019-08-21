@@ -13,7 +13,7 @@ from __future__ import (absolute_import, division, print_function)
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 __metaclass__ = type
 
