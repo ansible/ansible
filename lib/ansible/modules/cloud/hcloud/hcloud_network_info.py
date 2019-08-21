@@ -75,8 +75,8 @@ hcloud_network_info:
             returned: always
             type: str
             sample: 10.0.0.0/16
-        subnets:
-            description: subnets belongig to the network
+        subnetworks:
+            description: subnetworks belongig to the network
             returned: always
             type: complex
         routes:
@@ -152,7 +152,7 @@ class AnsibleHcloudNetworkInfo(Hcloud):
                     "id": to_native(network.id),
                     "name": to_native(network.name),
                     "ip_range": to_native(network.ip_range),
-                    "subnets": subnets,
+                    "subnetworks": subnets,
                     "routes": routes,
                     "servers": servers,
                     "labels": network.labels,
