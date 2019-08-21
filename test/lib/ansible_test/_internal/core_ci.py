@@ -23,6 +23,7 @@ from .util import (
     display,
     is_shippable,
     to_text,
+    ANSIBLE_TEST_DATA_ROOT,
 )
 
 from .util_common import (
@@ -347,7 +348,7 @@ class AnsibleCoreCI:
         display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
 
         if self.platform == 'windows':
-            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'rb') as winrm_config_fd:
+            with open(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'ConfigureRemotingForAnsible.ps1'), 'rb') as winrm_config_fd:
                 winrm_config = to_text(winrm_config_fd.read())
         else:
             winrm_config = None
