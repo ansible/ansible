@@ -23,7 +23,7 @@
 - assert:
     that:
       - "not capability_0001_results.changed"
-      - "capability_0001_results.hosts_feature_facts is defined"
+      - "capability_0001_results.hosts_feature_info is defined"
 
 - name: Gather feature capability info for all ESXi host from given cluster in check mode
   vmware_host_feature_info:
@@ -40,7 +40,7 @@
 - assert:
     that:
       - "not capability_0001_results.changed"
-      - "capability_0001_results.hosts_feature_facts is defined"
+      - "capability_0001_results.hosts_feature_info is defined"
 
 - name: Gather feature capability info for ESXi host
   vmware_host_feature_info:
@@ -56,7 +56,7 @@
 - assert:
     that:
       - "not capability_0002_results.changed"
-      - "capability_0002_results.hosts_feature_facts is defined"
+      - "capability_0002_results.hosts_feature_info is defined"
 
 
 - name: Gather feature capability info for ESXi host in check mode
@@ -74,4 +74,4 @@
 - assert:
     that:
       - "not capability_0002_results.changed"
-      - "capability_0002_results.hosts_feature_facts is defined"
+      - "capability_0002_results.hosts_feature_info is defined"

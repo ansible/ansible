@@ -25,7 +25,7 @@
 
     - assert:
         that:
-          - host_vmhbas.hosts_vmhbas_facts is defined
+          - host_vmhbas.hosts_vmhbas_info is defined
 
     - <<: *vmhba_data
       name: Gather vmhba info in check mode 
@@ -36,4 +36,4 @@
 
     - assert:
         that:
-          - host_vmhbas.hosts_vmhbas_facts is defined
+          - host_vmhbas.hosts_vmhbas_info is defined

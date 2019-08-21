@@ -19,8 +19,7 @@ module: vmware_host_firewall_info
 short_description: Gathers info about an ESXi host's firewall configuration information
 description:
 - This module can be used to gather information about an ESXi host's firewall configuration information when ESXi hostname or Cluster name is given.
-- This module was called C(vmware_host_firewall_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.5'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -61,7 +60,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_firewall_facts:
+hosts_firewall_info:
     description: metadata about host's firewall configuration
     returned: on success
     type: dict
@@ -132,14 +131,14 @@ class FirewallInfoManager(PyVmomi):
         return rule_dict
 
     def gather_host_firewall_info(self):
-        hosts_firewall_facts = dict()
+        hosts_firewall_info = dict()
         for host in self.hosts:
             firewall_system = host.configManager.firewallSystem
             if firewall_system:
-                hosts_firewall_facts[host.name] = []
+                hosts_firewall_info[host.name] = []
                 for rule_set_obj in firewall_system.firewallInfo.ruleset:
-                    hosts_firewall_facts[host.name].append(self.normalize_rule_set(rule_obj=rule_set_obj))
-        return hosts_firewall_facts
+                    hosts_firewall_info[host.name].append(self.normalize_rule_set(rule_obj=rule_set_obj))
+        return hosts_firewall_info
 
 
 def main():
@@ -156,11 +155,9 @@ def main():
         ],
         supports_check_mode=True
     )
-    if module._name == 'vmware_host_firewall_facts':
-        module.deprecate("The 'vmware_host_firewall_facts' module has been renamed to 'vmware_host_firewall_info'", version='2.13')
 
     vmware_host_firewall = FirewallInfoManager(module)
-    module.exit_json(changed=False, hosts_firewall_facts=vmware_host_firewall.gather_host_firewall_info())
+    module.exit_json(changed=False, hosts_firewall_info=vmware_host_firewall.gather_host_firewall_info())
 
 
 if __name__ == "__main__":

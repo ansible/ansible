@@ -19,7 +19,7 @@
 - name: ensure DNS info are gathered for all hosts in given cluster
   assert:
     that:
-        - all_hosts_dns_result.hosts_dns_facts
+        - all_hosts_dns_result.hosts_dns_info
         - not all_hosts_dns_result.changed
 
 - name: gather DNS info about host system
@@ -34,7 +34,7 @@
 - name: ensure DNS info are gathered about host system
   assert:
     that:
-        - all_hosts_dns_result.hosts_dns_facts
+        - all_hosts_dns_result.hosts_dns_info
         - not all_hosts_dns_result.changed
 
 - name: gather DNS info about all hosts in given cluster in check mode
@@ -50,7 +50,7 @@
 - name: ensure DNS info are gathered for all hosts in given cluster
   assert:
     that:
-        - all_hosts_dns_result_check_mode.hosts_dns_facts
+        - all_hosts_dns_result_check_mode.hosts_dns_info
         - not all_hosts_dns_result_check_mode.changed
 
 - name: gather DNS info about host system in check mode
@@ -66,5 +66,5 @@
 - name: ensure DNS info are gathered about host system
   assert:
     that:
-        - all_hosts_dns_result_check_mode.hosts_dns_facts
+        - all_hosts_dns_result_check_mode.hosts_dns_info
         - not all_hosts_dns_result_check_mode.changed

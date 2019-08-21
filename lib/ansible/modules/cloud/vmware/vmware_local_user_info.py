@@ -23,8 +23,7 @@ description:
     - This module can be used to gather information about users present on the given ESXi host system in VMware infrastructure.
     - All variables and VMware object names are case sensitive.
     - User must hold the 'Authorization.ModifyPermissions' privilege to invoke this module.
-    - This module was called C(vmware_local_user_facts) before Ansible 2.9. The usage did not change.
-version_added: "2.6"
+version_added: "2.9"
 author:
 - Abhijeet Kasurde (@Akasurde)
 - Christian Kotte (@ckotte)
@@ -48,7 +47,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-local_user_facts:
+local_user_info:
     description: metadata about all local users
     returned: always
     type: dict
@@ -101,7 +100,7 @@ class VMwareUserInfoManager(PyVmomi):
 
     def gather_user_info(self):
         """Gather info about local users"""
-        results = dict(changed=False, local_user_facts=[])
+        results = dict(changed=False, local_user_info=[])
         search_string = ''
         exact_match = False
         find_users = True
@@ -136,7 +135,7 @@ class VMwareUserInfoManager(PyVmomi):
                         temp_user['role'] = self.get_role_name(permission.roleId, self.content.authorizationManager.roleList)
                         break
 
-                results['local_user_facts'].append(temp_user)
+                results['local_user_info'].append(temp_user)
         self.module.exit_json(**results)
 
     @staticmethod
@@ -166,8 +165,6 @@ def main():
     argument_spec = vmware_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    if module._name == 'vmware_local_user_facts':
-        module.deprecate("The 'vmware_local_user_facts' module has been renamed to 'vmware_local_user_info'", version='2.13')
 
     vmware_local_user_info = VMwareUserInfoManager(module)
     vmware_local_user_info.gather_user_info()

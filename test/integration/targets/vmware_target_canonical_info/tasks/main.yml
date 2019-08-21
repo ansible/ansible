@@ -21,7 +21,7 @@
 - assert:
     that:
       - "not target_0001_results.changed"
-      - "target_0001_results.scsi_tgt_facts is defined"
+      - "target_0001_results.scsi_tgt_info is defined"
 
 - name: Gather target info for ESXi host
   vmware_target_canonical_info:
@@ -35,4 +35,4 @@
 - assert:
     that:
       - "not target_0002_results.changed"
-      - "target_0002_results.scsi_tgt_facts is defined"
+      - "target_0002_results.scsi_tgt_info is defined"

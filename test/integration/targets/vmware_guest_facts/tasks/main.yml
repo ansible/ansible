@@ -1,0 +1,226 @@
+# Test code for the vmware_guest_facts module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: (c) 2018, James E. King III (@jeking3) <jking@apache.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+
+# Testcase 0001: Get details about virtual machines
+- name: get list of facts about virtual machines
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
+  register: guest_facts_0001
+
+- debug:
+    var: guest_facts_0001
+
+- assert:
+    that:
+      - "guest_facts_0001['instance']['hw_name'] == virtual_machines[0].name"
+      - "guest_facts_0001['instance']['hw_product_uuid'] is defined"
+      - "guest_facts_0001['instance']['hw_cores_per_socket'] is defined"
+      - "guest_facts_0001['instance']['hw_datastores'] is defined"
+      - "guest_facts_0001['instance']['hw_esxi_host'] is defined"
+      - "guest_facts_0001['instance']['hw_files'] is defined"
+      - "guest_facts_0001['instance']['hw_guest_ha_state'] is defined"
+      - "guest_facts_0001['instance']['hw_is_template'] is defined"
+      - "guest_facts_0001['instance']['hw_folder'] is defined"
+      - "guest_facts_0001['instance']['guest_question'] is defined"
+      - "guest_facts_0001['instance']['guest_consolidation_needed'] is defined"
+      - "guest_facts_0001['instance']['moid'] is defined"
+      - "guest_facts_0001['instance']['vimref'] is defined"
+      - "'portgroup_portkey' in guest_facts_0001['instance']['hw_eth0']"
+      - "'portgroup_key' in guest_facts_0001['instance']['hw_eth0']"
+      - "guest_facts_0001['instance']['instance_uuid'] is defined"
+
+- set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
+
+- set_fact: vm1_instance_uuid="{{ guest_facts_0001['instance']['instance_uuid'] }}"
+
+- set_fact: vm1_moid="{{ guest_facts_0001['instance']['moid'] }}"
+
+- debug:
+    var: vm1_uuid
+
+# Testcase 0002: Get details about virtual machines using UUID
+- name: get list of facts about virtual machines using UUID
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    uuid: "{{ vm1_uuid }}"
+  register: guest_facts_0002
+
+- debug:
+    var: guest_facts_0002
+
+- name: Get specific details about virtual machines using the vsphere output schema
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    uuid: "{{ vm1_uuid }}"
+    schema: vsphere
+    properties:
+      - config.hardware.memoryMB
+      - guest
+      - name
+      - summary.runtime.connectionState
+  register: guest_facts_0002b
+
+- debug:
+    var: guest_facts_0002b
+
+- assert:
+    that:
+      - "guest_facts_0002['instance']['hw_name'] == virtual_machines[0].name"
+      - "guest_facts_0002['instance']['hw_product_uuid'] is defined"
+      - "guest_facts_0002['instance']['hw_product_uuid'] == vm1_uuid"
+      - "guest_facts_0002['instance']['hw_cores_per_socket'] is defined"
+      - "guest_facts_0002b['instance']['config']['hardware']['memoryMB'] is defined"
+      - "guest_facts_0002b['instance']['config']['hardware']['numCoresPerSocket'] is not defined"
+      - "guest_facts_0002b['instance']['guest']['toolsVersion'] is defined"
+      - "guest_facts_0001['instance']['moid'] is defined"
+      - "guest_facts_0001['instance']['vimref'] is defined"
+      - "guest_facts_0002b['instance']['overallStatus'] is not defined"
+
+# Testcase 0003: Get details about virtual machines without snapshots using UUID
+- name: get empty list of snapshots from virtual machine using UUID
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    uuid: "{{ vm1_uuid }}"
+  register: guest_facts_0003
+
+- debug:
+    var: guest_facts_0003
+
+- assert:
+    that:
+      - "guest_facts_0003['instance']['snapshots']|length == 0"
+      - "guest_facts_0003['instance']['current_snapshot'] is none"
+
+# Testcase 0004: Get details about virtual machines with two snapshots using UUID
+- name: Create first snapshot
+  vmware_guest_snapshot: &vm_snap
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
+    state: present
+    snapshot_name: snap1
+
+- name: Create second snapshot
+  vmware_guest_snapshot:
+    <<: *vm_snap
+    snapshot_name: snap2
+
+- name: get list of snapshots from virtual machine using UUID
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    uuid: "{{ vm1_uuid }}"
+  register: guest_facts_0004
+
+- debug:
+    var: guest_facts_0004
+
+- assert:
+   that:
+     - "guest_facts_0004['instance']['snapshots'] is defined"
+     - "guest_facts_0004['instance']['snapshots'][0]['name'] == 'snap1'"
+     - "guest_facts_0004['instance']['snapshots'][1]['name'] == 'snap2'"
+     - "guest_facts_0004['instance']['current_snapshot']['name'] == 'snap2'"
+     - "guest_facts_0004['instance']['hw_folder'] is defined"
+
+# Testcase 0005: Get details about virtual machines using UUID
+- name: get list of facts about virtual machines using instance UUID
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    uuid: "{{ vm1_instance_uuid }}"
+    use_instance_uuid: True
+  register: guest_facts_0005
+
+- debug:
+    msg: "{{ guest_facts_0005 }}"
+
+- assert:
+    that:
+      - "guest_facts_0005['instance']['hw_name'] == virtual_machines[0].name"
+      - "guest_facts_0005['instance']['hw_product_uuid'] is defined"
+      - "guest_facts_0005['instance']['hw_product_uuid'] == vm1_uuid"
+      - "guest_facts_0005['instance']['hw_cores_per_socket'] is defined"
+      - "guest_facts_0005['instance']['hw_datastores'] is defined"
+      - "guest_facts_0005['instance']['hw_esxi_host'] is defined"
+      - "guest_facts_0005['instance']['hw_files'] is defined"
+      - "guest_facts_0005['instance']['hw_guest_ha_state'] is defined"
+      - "guest_facts_0005['instance']['hw_is_template'] is defined"
+      - "guest_facts_0005['instance']['hw_folder'] is defined"
+      - "guest_facts_0005['instance']['guest_question'] is defined"
+      - "guest_facts_0005['instance']['guest_consolidation_needed'] is defined"
+      - "guest_facts_0005['instance']['instance_uuid'] is defined"
+      - "guest_facts_0005['instance']['instance_uuid'] == vm1_instance_uuid"
+      - "guest_facts_0005['instance']['moid'] is defined"
+      - "guest_facts_0005['instance']['vimref'] is defined"
+
+# Testcase 0006: Get details about virtual machines using MoID
+- name: get list of facts about virtual machines using instance MoID
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    moid: "{{ vm1_moid }}"
+    use_instance_uuid: True
+  register: guest_facts_0006
+
+- debug:
+    msg: "{{ guest_facts_0006 }}"
+
+- assert:
+    that:
+      - "guest_facts_0006['instance']['hw_name'] == virtual_machines[0].name"
+      - "guest_facts_0006['instance']['hw_product_uuid'] is defined"
+      - "guest_facts_0006['instance']['hw_product_uuid'] == vm1_uuid"
+      - "guest_facts_0006['instance']['hw_cores_per_socket'] is defined"
+      - "guest_facts_0006['instance']['hw_datastores'] is defined"
+      - "guest_facts_0006['instance']['hw_esxi_host'] is defined"
+      - "guest_facts_0006['instance']['hw_files'] is defined"
+      - "guest_facts_0006['instance']['hw_guest_ha_state'] is defined"
+      - "guest_facts_0006['instance']['hw_is_template'] is defined"
+      - "guest_facts_0006['instance']['hw_folder'] is defined"
+      - "guest_facts_0006['instance']['guest_question'] is defined"
+      - "guest_facts_0006['instance']['guest_consolidation_needed'] is defined"
+      - "guest_facts_0006['instance']['instance_uuid'] is defined"
+      - "guest_facts_0006['instance']['instance_uuid'] == vm1_instance_uuid"
+      - "guest_facts_0006['instance']['moid'] is defined"
+      - "guest_facts_0006['instance']['vimref'] is defined"

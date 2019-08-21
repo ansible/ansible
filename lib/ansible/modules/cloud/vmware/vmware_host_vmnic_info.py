@@ -24,8 +24,7 @@ description:
 - If C(cluster_name) is provided, then vmnic information about all hosts from given cluster will be returned.
 - If C(esxi_hostname) is provided, then vmnic information about given host system will be returned.
 - Additional details about vswitch and dvswitch with respective vmnic is also provided which is added in 2.7 version.
-- This module was called C(vmware_host_vmnic_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.5'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 - Christian Kotte (@ckotte)
@@ -89,13 +88,13 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_vmnics_facts:
+hosts_vmnics_info:
     description:
     - dict with hostname as key and dict with vmnics information as value.
     - for C(num_vmnics), only NICs starting with vmnic are counted. NICs like vusb* are not counted.
     - details about vswitch and dvswitch was added in version 2.7.
     - details about vmnics was added in version 2.8.
-    returned: hosts_vmnics_facts
+    returned: hosts_vmnics_info
     type: dict
     sample:
         {
@@ -312,11 +311,9 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_host_vmnic_facts':
-        module.deprecate("The 'vmware_host_vmnic_facts' module has been renamed to 'vmware_host_vmnic_info'", version='2.13')
 
     host_vmnic_mgr = HostVmnicMgr(module)
-    module.exit_json(changed=False, hosts_vmnics_facts=host_vmnic_mgr.gather_host_vmnic_info())
+    module.exit_json(changed=False, hosts_vmnics_info=host_vmnic_mgr.gather_host_vmnic_info())
 
 
 if __name__ == "__main__":

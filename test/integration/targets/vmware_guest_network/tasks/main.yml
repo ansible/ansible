@@ -18,7 +18,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       name: "{{ virtual_machines[0].name }}"
-      gather_network_facts: true
+      gather_network_info: true
     register: netadapter_info
 
   - debug: var=netadapter_info

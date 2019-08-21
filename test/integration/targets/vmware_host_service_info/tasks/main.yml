@@ -25,7 +25,7 @@
 
     - assert:
         that:
-          - host_services.host_service_facts is defined
+          - host_services.host_service_info is defined
 
     - <<: *host_srv_info
       name: Check info about all hosts in given cluster in check mode
@@ -36,4 +36,4 @@
 
     - assert:
         that:
-          - host_services.host_service_facts is defined
+          - host_services.host_service_info is defined

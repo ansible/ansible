@@ -21,8 +21,7 @@ short_description: Gather info about VM customization specifications
 description:
     - This module can be used to gather information about customization specifications.
     - All parameters and VMware object names are case sensitive.
-    - This module was called C(vmware_guest_customization_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.8
+version_added: '2.9'
 author:
     - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -61,7 +60,7 @@ EXAMPLES = '''
 '''
 
 RETURN = """
-custom_spec_facts:
+custom_spec_info:
     description: metadata about the customization specification
     returned: always
     type: dict
@@ -182,12 +181,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-    if module._name == 'vmware_guest_customization_facts':
-        module.deprecate("The 'vmware_guest_customization_facts' module has been renamed to 'vmware_guest_customization_info'", version='2.13')
 
     pyv = VmwareCustomSpecManger(module)
     try:
-        module.exit_json(custom_spec_facts=pyv.gather_custom_spec_info())
+        module.exit_json(custom_spec_info=pyv.gather_custom_spec_info())
     except Exception as exc:
         module.fail_json(msg="Failed to gather information with exception : %s" % to_text(exc))
 

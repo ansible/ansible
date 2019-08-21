@@ -21,4 +21,4 @@
     - debug: var=host_ntp
     - assert:
         that:
-          - host_ntp.hosts_ntp_facts is defined
+          - host_ntp.hosts_ntp_info is defined

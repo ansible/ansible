@@ -1,0 +1,70 @@
+# Test code for the vmware_host_dns_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+
+- name: gather DNS facts about all hosts in given cluster
+  vmware_host_dns_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: no
+  register: all_hosts_dns_result
+
+- name: ensure DNS facts are gathered for all hosts in given cluster
+  assert:
+    that:
+        - all_hosts_dns_result.hosts_dns_facts
+        - not all_hosts_dns_result.changed
+
+- name: gather DNS facts about host system
+  vmware_host_dns_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  register: all_hosts_dns_result
+
+- name: ensure DNS facts are gathered about host system
+  assert:
+    that:
+        - all_hosts_dns_result.hosts_dns_facts
+        - not all_hosts_dns_result.changed
+
+- name: gather DNS facts about all hosts in given cluster in check mode
+  vmware_host_dns_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: no
+  register: all_hosts_dns_result_check_mode
+  check_mode: yes
+
+- name: ensure DNS facts are gathered for all hosts in given cluster
+  assert:
+    that:
+        - all_hosts_dns_result_check_mode.hosts_dns_facts
+        - not all_hosts_dns_result_check_mode.changed
+
+- name: gather DNS facts about host system in check mode
+  vmware_host_dns_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  register: all_hosts_dns_result_check_mode
+  check_mode: yes
+
+- name: ensure DNS facts are gathered about host system
+  assert:
+    that:
+        - all_hosts_dns_result_check_mode.hosts_dns_facts
+        - not all_hosts_dns_result_check_mode.changed

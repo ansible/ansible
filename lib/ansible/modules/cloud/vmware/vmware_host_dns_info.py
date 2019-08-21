@@ -21,8 +21,7 @@ short_description: Gathers info about an ESXi host's DNS configuration informati
 description:
 - This module can be used to gather information about an ESXi host's DNS configuration information when ESXi hostname or Cluster name is given.
 - All parameters and VMware object names are case sensitive.
-- This module was called C(vmware_host_dns_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.5'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -63,7 +62,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_dns_facts:
+hosts_dns_info:
     description: metadata about DNS config from given cluster / host system
     returned: always
     type: dict
@@ -123,11 +122,9 @@ def main():
         ],
         supports_check_mode=True
     )
-    if module._name == 'vmware_host_dns_facts':
-        module.deprecate("The 'vmware_host_dns_facts' module has been renamed to 'vmware_host_dns_info'", version='2.13')
 
     vmware_dns_config = VmwareDnsInfoManager(module)
-    module.exit_json(changed=False, hosts_dns_facts=vmware_dns_config.gather_dns_info())
+    module.exit_json(changed=False, hosts_dns_info=vmware_dns_config.gather_dns_info())
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@
 
     - assert:
         that:
-          - dvs_results.dvs_portgroup_facts is defined
+          - dvs_results.dvs_portgroup_info is defined
 
     - <<: *dvs_info
       name: Gather info about DVS portgroup in check mode
@@ -35,10 +35,10 @@
 
     - assert:
         that:
-          - dvs_results.dvs_portgroup_facts is defined
+          - dvs_results.dvs_portgroup_info is defined
 
-# Testcase 0002: Get portgroup facts for a given dvswitch
-- name: get facts for a given dvswitch
+# Testcase 0002: Get portgroup info for a given dvswitch
+- name: get info for a given dvswitch
   vmware_dvs_portgroup_info:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
@@ -53,4 +53,4 @@
 
 - assert:
     that:
-      - "dvs_results_0002['dvs_portgroup_facts']['DVS0'] is defined"
+      - "dvs_results_0002['dvs_portgroup_info']['DVS0'] is defined"

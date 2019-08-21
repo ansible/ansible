@@ -21,8 +21,7 @@ module: vmware_guest_boot_info
 short_description: Gather info about boot options for the given virtual machine
 description:
     - Gather information about boot options for the given virtual machine.
-    - This module was called C(vmware_guest_boot_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.7
+version_added: '2.9'
 author:
     - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -83,7 +82,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r"""
-vm_boot_facts:
+vm_boot_info:
     description: metadata about boot order of virtual machine
     returned: always
     type: dict
@@ -182,7 +181,7 @@ class VmBootInfoManager(PyVmomi):
                 current_secure_boot_enabled=self.vm.config.bootOptions.efiSecureBootEnabled
             )
 
-        self.module.exit_json(changed=False, vm_boot_facts=results)
+        self.module.exit_json(changed=False, vm_boot_info=results)
 
 
 def main():
@@ -208,8 +207,6 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_guest_boot_facts':
-        module.deprecate("The 'vmware_guest_boot_facts' module has been renamed to 'vmware_guest_boot_info'", version='2.13')
 
     pyv = VmBootInfoManager(module)
     pyv.ensure()

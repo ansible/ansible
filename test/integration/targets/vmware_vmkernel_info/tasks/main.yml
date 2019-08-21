@@ -21,7 +21,7 @@
     - debug: var=host_vmkernel
     - assert:
         that:
-          - host_vmkernel.host_vmk_facts is defined
+          - host_vmkernel.host_vmk_info is defined
 
     - name: Gather VMkernel info for a given host in check mode
       vmware_vmkernel_info:
@@ -35,4 +35,4 @@
     - debug: var=host_vmkernel
     - assert:
         that:
-          - host_vmkernel_check_mode.host_vmk_facts is defined
+          - host_vmkernel_check_mode.host_vmk_info is defined

@@ -25,7 +25,7 @@
       assert:
         that:
             - not all_user_info.changed
-            - all_user_info.local_user_facts is defined
+            - all_user_info.local_user_info is defined
 
     - <<: *user_info_data
       name: Gather info about users in check mode
@@ -35,4 +35,4 @@
       assert:
         that:
             - not all_user_info.changed
-            - all_user_info.local_user_facts is defined
+            - all_user_info.local_user_info is defined

@@ -23,12 +23,12 @@
   - name: assert that values are set
     assert:
       that:
-          - vm1_info.vm_boot_facts.current_boot_delay is defined
-          - vm1_info.vm_boot_facts.current_boot_firmware is defined
-          - vm1_info.vm_boot_facts.current_boot_order is defined
-          - vm1_info.vm_boot_facts.current_boot_retry_delay is defined
-          - vm1_info.vm_boot_facts.current_boot_retry_enabled is defined
-          - vm1_info.vm_boot_facts.current_enter_bios_setup is defined
+          - vm1_info.vm_boot_info.current_boot_delay is defined
+          - vm1_info.vm_boot_info.current_boot_firmware is defined
+          - vm1_info.vm_boot_info.current_boot_order is defined
+          - vm1_info.vm_boot_info.current_boot_retry_delay is defined
+          - vm1_info.vm_boot_info.current_boot_retry_enabled is defined
+          - vm1_info.vm_boot_info.current_enter_bios_setup is defined
 
   - name: Gather info about VM boot order in check mode
     vmware_guest_boot_info:
@@ -43,9 +43,9 @@
   - name: assert that values are set
     assert:
       that:
-          - vm1_info.vm_boot_facts.current_boot_delay is defined
-          - vm1_info.vm_boot_facts.current_boot_firmware is defined
-          - vm1_info.vm_boot_facts.current_boot_order is defined
-          - vm1_info.vm_boot_facts.current_boot_retry_delay is defined
-          - vm1_info.vm_boot_facts.current_boot_retry_enabled is defined
-          - vm1_info.vm_boot_facts.current_enter_bios_setup is defined
+          - vm1_info.vm_boot_info.current_boot_delay is defined
+          - vm1_info.vm_boot_info.current_boot_firmware is defined
+          - vm1_info.vm_boot_info.current_boot_order is defined
+          - vm1_info.vm_boot_info.current_boot_retry_delay is defined
+          - vm1_info.vm_boot_info.current_boot_retry_enabled is defined
+          - vm1_info.vm_boot_info.current_enter_bios_setup is defined

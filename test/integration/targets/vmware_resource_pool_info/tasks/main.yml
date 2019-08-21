@@ -17,4 +17,4 @@
   assert:
     that:
         - "{{ resource_result_0001.changed == false }}"
-        - "{{ resource_result_0001.resource_pool_facts is defined }}"
+        - "{{ resource_result_0001.resource_pool_info is defined }}"

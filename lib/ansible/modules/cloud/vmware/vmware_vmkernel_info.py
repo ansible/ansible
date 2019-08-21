@@ -19,8 +19,7 @@ module: vmware_vmkernel_info
 short_description: Gathers VMKernel info about an ESXi host
 description:
 - This module can be used to gather VMKernel information about an ESXi host from given ESXi hostname or cluster name.
-- This module was called C(vmware_vmkernel_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.5'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -65,7 +64,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-host_vmk_facts:
+host_vmk_info:
     description: metadata about VMKernel present on given host system
     returned: success
     type: dict
@@ -195,11 +194,9 @@ def main():
         ],
         supports_check_mode=True
     )
-    if module._name == 'vmware_vmkernel_facts':
-        module.deprecate("The 'vmware_vmkernel_facts' module has been renamed to 'vmware_vmkernel_info'", version='2.13')
 
     vmware_vmk_config = VmkernelInfoManager(module)
-    module.exit_json(changed=False, host_vmk_facts=vmware_vmk_config.gather_host_vmk_info())
+    module.exit_json(changed=False, host_vmk_info=vmware_vmk_config.gather_host_vmk_info())
 
 
 if __name__ == "__main__":

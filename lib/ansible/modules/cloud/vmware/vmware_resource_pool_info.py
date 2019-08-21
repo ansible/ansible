@@ -18,8 +18,7 @@ module: vmware_resource_pool_info
 short_description: Gathers info about resource pool information
 description:
 - This module can be used to gather information about all resource configuration information.
-- This module was called C(vmware_resource_pool_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.6'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -41,7 +40,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-resource_pool_facts:
+resource_pool_info:
     description: metadata about resource pool configuration
     returned: on success
     type: list
@@ -132,11 +131,9 @@ class ResourcePoolInfoManager(PyVmomi):
 def main():
     argument_spec = vmware_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    if module._name == 'vmware_resource_pool_facts':
-        module.deprecate("The 'vmware_resource_pool_facts' module has been renamed to 'vmware_resource_pool_info'", version='2.13')
 
     vmware_rp_mgr = ResourcePoolInfoManager(module)
-    module.exit_json(changed=False, resource_pool_facts=vmware_rp_mgr.gather_rp_info())
+    module.exit_json(changed=False, resource_pool_info=vmware_rp_mgr.gather_rp_info())
 
 
 if __name__ == "__main__":

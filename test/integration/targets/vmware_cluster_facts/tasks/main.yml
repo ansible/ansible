@@ -1,0 +1,92 @@
+# Test code for the vmware_cluster_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- &vc_all_data
+  name: gather facts about all clusters in the given datacenter
+  vmware_cluster_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    datacenter: "{{ dc1 }}"
+  register: all_cluster_result
+
+- &ensure_vc_all_data
+  name: ensure facts are gathered for all clusters
+  assert:
+    that:
+        - all_cluster_result.clusters
+        - not all_cluster_result.changed
+
+- <<: *vc_all_data
+  name: Gather facts about all clusters in the given datacenter in check mode
+  check_mode: yes
+
+- debug: msg=all_cluster_result
+
+- <<: *ensure_vc_all_data
+  name: Ensure facts are gathered for all clusters in check mode
+
+- &vc_cluster_data
+  name: Gather facts about the given cluster
+  vmware_cluster_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    cluster_name: "{{ ccr1 }}"
+  register: cluster_result
+
+- &ensure_vc_cluster_data
+  name: Ensure facts are gathered for the given cluster
+  assert:
+    that:
+        - cluster_result.clusters
+        - not cluster_result.changed
+
+- <<: *vc_cluster_data
+  name: Gather facts about the given cluster in check mode
+  check_mode: yes
+
+- <<: *ensure_vc_cluster_data
+  name: Ensure facts are gathered for the given cluster in check mode
+
+
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_category: true
+      setup_tag: true
+
+  - name: Apply tag to cluster
+    vmware_tag_manager:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      tag_names:
+        - '{{ cluster_category }}:{{ cluster_tag }}'
+      state: present
+      object_name: '{{ ccr1 }}'
+      object_type: ClusterComputeResource
+
+  - name: Get facts about cluster
+    vmware_cluster_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      show_tag: True
+      cluster_name: "{{ ccr1 }}"
+    register: cluster_info
+
+  - assert:
+      that:
+        - cluster_info is defined
+        - cluster_info.clusters[ccr1].tags is defined

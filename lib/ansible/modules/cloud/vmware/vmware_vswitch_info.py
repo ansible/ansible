@@ -21,8 +21,7 @@ description:
 - The vSphere Client shows the value for the number of ports as elastic from vSphere 5.5 and above.
 - Other tools like esxcli might show the number of ports as 1536 or 5632.
 - See U(https://kb.vmware.com/s/article/2064511) for more details.
-- This module was called C(vmware_vswitch_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.6'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -66,7 +65,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_vswitch_facts:
+hosts_vswitch_info:
     description: metadata about host's vswitch configuration
     returned: on success
     type: dict
@@ -149,11 +148,9 @@ def main():
         ],
         supports_check_mode=True
     )
-    if module._name == 'vmware_vswitch_facts':
-        module.deprecate("The 'vmware_vswitch_facts' module has been renamed to 'vmware_vswitch_info'", version='2.13')
 
     vmware_vswitch_mgr = VswitchInfoManager(module)
-    module.exit_json(changed=False, hosts_vswitch_facts=vmware_vswitch_mgr.gather_vswitch_info())
+    module.exit_json(changed=False, hosts_vswitch_info=vmware_vswitch_mgr.gather_vswitch_info())
 
 
 if __name__ == "__main__":

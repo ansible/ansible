@@ -23,8 +23,7 @@ description:
 - This module can be used to gather information about VMware tag categories.
 - Tag feature is introduced in vSphere 6 version, so this module is not supported in earlier versions of vSphere.
 - All variables and VMware object names are case sensitive.
-- This module was called C(vmware_category_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.7'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -55,7 +54,7 @@ EXAMPLES = r'''
 
 - set_fact:
     category_id: "{{ item.category_id }}"
-  loop: "{{ tag_category_results.tag_category_facts|json_query(query) }}"
+  loop: "{{ tag_category_results.tag_category_info|json_query(query) }}"
   vars:
     query: "[?category_name==`Category0001`]"
 - debug: var=category_id
@@ -63,7 +62,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-tag_category_facts:
+tag_category_info:
   description: metadata of tag categories
   returned: always
   type: list
@@ -114,14 +113,12 @@ class VmwareCategoryInfoManager(VmwareRestClient):
                 )
             )
 
-        self.module.exit_json(changed=False, tag_category_facts=global_tag_categories)
+        self.module.exit_json(changed=False, tag_category_info=global_tag_categories)
 
 
 def main():
     argument_spec = VmwareRestClient.vmware_client_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    if module._name == 'vmware_category_facts':
-        module.deprecate("The 'vmware_category_facts' module has been renamed to 'vmware_category_info'", version='2.13')
 
     vmware_category_info = VmwareCategoryInfoManager(module)
     vmware_category_info.get_all_tag_categories()

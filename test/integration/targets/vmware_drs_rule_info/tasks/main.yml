@@ -26,7 +26,7 @@
 
   - assert:
       that:
-        - "drs_rule_0001_results.drs_rule_facts is defined"
+        - "drs_rule_0001_results.drs_rule_info is defined"
         - "not drs_rule_0001_results.changed"
 
   - name: Gather info about DRS rule from given datacenter
@@ -43,5 +43,5 @@
 
   - assert:
       that:
-        - "drs_rule_0001_results.drs_rule_facts is defined"
+        - "drs_rule_0001_results.drs_rule_info is defined"
         - "not drs_rule_0001_results.changed"

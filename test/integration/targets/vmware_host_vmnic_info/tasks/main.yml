@@ -21,7 +21,7 @@
     - debug: var=host_vmnics
     - assert:
         that:
-          - host_vmnics.hosts_vmnics_facts is defined
+          - host_vmnics.hosts_vmnics_info is defined
 
     - name: Gather extended vmnic info about a host
       vmware_host_vmnic_info:
@@ -37,4 +37,4 @@
     - debug: var=host_vmnics_extended
     - assert:
         that:
-          - host_vmnics_extended.hosts_vmnics_facts is defined
+          - host_vmnics_extended.hosts_vmnics_info is defined

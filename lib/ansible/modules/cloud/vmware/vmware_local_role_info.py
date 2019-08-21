@@ -21,8 +21,7 @@ module: vmware_local_role_info
 short_description: Gather info about local roles on an ESXi host
 description:
     - This module can be used to gather information about local role info on an ESXi host
-    - This module was called C(vmware_local_role_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.7
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -45,13 +44,13 @@ EXAMPLES = '''
   delegate_to: localhost
 - name: Get Admin privileges
   set_fact:
-    admin_priv: "{{ fact_details.local_role_facts['Admin']['privileges'] }}"
+    admin_priv: "{{ fact_details.local_role_info['Admin']['privileges'] }}"
 - debug:
     msg: "{{ admin_priv }}"
 '''
 
 RETURN = r'''
-local_role_facts:
+local_role_info:
     description: Info about role present on ESXi host
     returned: always
     type: dict
@@ -123,7 +122,7 @@ class VMwareLocalRoleInfo(PyVmomi):
                 )
             )
 
-        self.module.exit_json(changed=False, local_role_facts=results)
+        self.module.exit_json(changed=False, local_role_info=results)
 
 
 def main():
@@ -131,8 +130,6 @@ def main():
     argument_spec = vmware_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    if module._name == 'vmware_local_role_facts':
-        module.deprecate("The 'vmware_local_role_facts' module has been renamed to 'vmware_local_role_info'", version='2.13')
 
     vmware_local_role_info = VMwareLocalRoleInfo(module)
     vmware_local_role_info.gather_local_role_info()

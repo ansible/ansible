@@ -1,0 +1,41 @@
+# Test code for the vmware_vswitch_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+# TODO: vcsim does not support networkConfig related to operations
+
+- name: Gather vswitch facts about all hosts in given cluster
+  vmware_vswitch_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  register: switch_facts
+
+- debug: var=switch_facts
+
+- assert:
+    that:
+      - switch_facts.hosts_vswitch_facts is defined
+
+- name: Gather vswitch facts about all hosts in given cluster in check mode
+  vmware_vswitch_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  register: switch_facts_check_mode
+  check_mode: yes
+
+- debug: var=switch_facts_check_mode
+
+- assert:
+    that:
+      - switch_facts_check_mode.hosts_vswitch_facts is defined

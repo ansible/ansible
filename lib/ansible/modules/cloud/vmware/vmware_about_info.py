@@ -20,8 +20,7 @@ module: vmware_about_info
 short_description: Provides information about VMware server to which user is connecting to
 description:
 - This module can be used to gather information about VMware server to which user is trying to connect.
-- This module was called C(vmware_about_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.7
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -51,7 +50,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-about_facts:
+about_info:
     description:
     - dict about VMware server
     returned: success
@@ -86,13 +85,13 @@ class VmwareAboutManager(PyVmomi):
     def gather_about_info(self):
 
         if not self.content:
-            self.module.exit_json(changed=False, about_facts=dict())
+            self.module.exit_json(changed=False, about_info=dict())
 
         about = self.content.about
 
         self.module.exit_json(
             changed=False,
-            about_facts=dict(
+            about_info=dict(
                 product_name=about.name,
                 product_full_name=about.fullName,
                 vendor=about.vendor,
@@ -118,8 +117,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-    if module._name == 'vmware_about_facts':
-        module.deprecate("The 'vmware_about_facts' module has been renamed to 'vmware_about_info'", version='2.13')
 
     vmware_about_info_mgr = VmwareAboutManager(module)
     vmware_about_info_mgr.gather_about_info()

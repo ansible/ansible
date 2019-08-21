@@ -20,8 +20,7 @@ module: vmware_host_ssl_info
 short_description: Gather info of ESXi host system about SSL
 description:
 - This module can be used to gather information of the SSL thumbprint information for a host.
-- This module was called C(vmware_host_ssl_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.7
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -63,7 +62,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
   register: ssl_info
 - set_fact:
-    ssl_thumbprint: "{{ ssl_info['host_ssl_facts'][esxi_hostname]['ssl_thumbprints'][0] }}"
+    ssl_thumbprint: "{{ ssl_info['host_ssl_info'][esxi_hostname]['ssl_thumbprints'][0] }}"
 - debug:
     msg: "{{ ssl_thumbprint }}"
 - name: Add ESXi Host to vCenter
@@ -81,9 +80,9 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-host_ssl_facts:
+host_ssl_info:
     description:
-    - dict with hostname as key and dict with SSL thumbprint related facts
+    - dict with hostname as key and dict with SSL thumbprint related info
     returned: info
     type: dict
     sample:
@@ -124,7 +123,7 @@ class VMwareHostSslManager(PyVmomi):
                 self.hosts_info[host.name]['owner_tag'] = host_ssl_info_mgr.ownerTag
                 self.hosts_info[host.name]['ssl_thumbprints'] = [i for i in host_ssl_info_mgr.sslThumbprints]
 
-        self.module.exit_json(changed=False, host_ssl_facts=self.hosts_info)
+        self.module.exit_json(changed=False, host_ssl_info=self.hosts_info)
 
 
 def main():
@@ -141,8 +140,6 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_host_ssl_facts':
-        module.deprecate("The 'vmware_host_ssl_facts' module has been renamed to 'vmware_host_ssl_info'", version='2.13')
 
     vmware_host_accept_config = VMwareHostSslManager(module)
     vmware_host_accept_config.gather_ssl_info()

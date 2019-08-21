@@ -19,8 +19,7 @@ module: vmware_host_capability_info
 short_description: Gathers info about an ESXi host's capability information
 description:
 - This module can be used to gather information about an ESXi host's capability information when ESXi hostname or Cluster name is given.
-- This module was called C(vmware_host_capability_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.6
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -63,8 +62,8 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_capability_facts:
-    description: metadata about host's capability facts
+hosts_capability_info:
+    description: metadata about host's capability info
     returned: always
     type: dict
     sample: {
@@ -213,12 +212,10 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_host_capability_facts':
-        module.deprecate("The 'vmware_host_capability_facts' module has been renamed to 'vmware_host_capability_info'", version='2.13')
 
     host_capability_manager = CapabilityInfoManager(module)
     module.exit_json(changed=False,
-                     hosts_capability_facts=host_capability_manager.gather_host_capability_info())
+                     hosts_capability_info=host_capability_manager.gather_host_capability_info())
 
 
 if __name__ == "__main__":

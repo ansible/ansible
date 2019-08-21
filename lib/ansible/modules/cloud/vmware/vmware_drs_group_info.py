@@ -30,7 +30,6 @@ options:
       - "Cluster to search for VM/Host groups."
       - "If set, information of DRS groups belonging this cluster will be returned."
       - "Not needed if C(datacenter) is set."
-      - This module was called C(vmware_drs_group_facts) before Ansible 2.9. The usage did not change.
     required: false
     type: str
   datacenter:
@@ -44,7 +43,7 @@ requirements:
   - "python >= 2.6"
   - PyVmomi
 short_description: "Gathers info about DRS VM/Host groups on the given cluster"
-version_added: "2.8"
+version_added: "2.9"
 '''
 
 EXAMPLES = r'''
@@ -70,12 +69,12 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-drs_group_facts:
+drs_group_info:
     description: Metadata about DRS group from given cluster / datacenter
     returned: always
     type: dict
     sample:
-        "drs_group_facts": {
+        "drs_group_info": {
             "DC0_C0": [
                 {
                     "group_name": "GROUP_HOST_S01",
@@ -256,8 +255,6 @@ def main():
         required_one_of=[['cluster_name', 'datacenter']],
         mutually_exclusive=[['cluster_name', 'datacenter']],
     )
-    if module._name == 'vmware_drs_group_facts':
-        module.deprecate("The 'vmware_drs_group_facts' module has been renamed to 'vmware_drs_group_info'", version='2.13')
 
     try:
         # Create instance of VmwareDrsGroupManager
@@ -270,7 +267,7 @@ def main():
 
         # Set results
         results = dict(failed=False,
-                       drs_group_facts=vmware_drs_group_info.get_result())
+                       drs_group_info=vmware_drs_group_info.get_result())
 
     except Exception as error:
         results = dict(failed=True, msg="Error: %s" % error)

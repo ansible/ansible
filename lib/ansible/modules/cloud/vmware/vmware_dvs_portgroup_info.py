@@ -21,8 +21,7 @@ module: vmware_dvs_portgroup_info
 short_description: Gathers info DVS portgroup configurations
 description:
 - This module can be used to gather information about DVS portgroup configurations.
-- This module was called C(vmware_dvs_portgroup_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.8
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -80,13 +79,13 @@ EXAMPLES = r'''
   debug:
     msg: "{{ item.num_ports }}"
   with_items:
-    - "{{ dvpg_info.dvs_portgroup_facts['dvs_001'] | json_query(query) }}"
+    - "{{ dvpg_info.dvs_portgroup_info['dvs_001'] | json_query(query) }}"
   vars:
     query: "[?portgroup_name=='dvpg_001']"
 '''
 
 RETURN = r'''
-dvs_portgroup_facts:
+dvs_portgroup_info:
     description: metadata about DVS portgroup configuration
     returned: on success
     type: dict
@@ -266,12 +265,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-    if module._name == 'vmware_dvs_portgroup_facts':
-        module.deprecate("The 'vmware_dvs_portgroup_facts' module has been renamed to 'vmware_dvs_portgroup_info'", version='2.13')
 
     dvs_pg_mgr = DVSPortgroupInfoManager(module)
     module.exit_json(changed=False,
-                     dvs_portgroup_facts=dvs_pg_mgr.gather_dvs_portgroup_info())
+                     dvs_portgroup_info=dvs_pg_mgr.gather_dvs_portgroup_info())
 
 
 if __name__ == "__main__":

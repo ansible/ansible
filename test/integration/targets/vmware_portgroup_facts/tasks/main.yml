@@ -1,0 +1,67 @@
+# Test code for the vmware_portgroup_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+
+- name: Gather portgroup facts for all ESXi host from given cluster
+  vmware_portgroup_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+  register: portgroup_0001_results
+
+- assert:
+    that:
+      - "not portgroup_0001_results.changed"
+      - "portgroup_0001_results.hosts_portgroup_facts is defined"
+
+- name: Gather portgroup facts for an ESXi host
+  vmware_portgroup_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: '{{ esxi1 }}'
+  register: portgroup_0002_results
+
+- assert:
+    that:
+      - "not portgroup_0002_results.changed"
+      - "portgroup_0002_results.hosts_portgroup_facts is defined"
+
+- name: Gather all portgroup facts for an ESXi host
+  vmware_portgroup_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: '{{ esxi1 }}'
+    policies: true
+  register: portgroup_0003_results
+
+- assert:
+    that:
+      - "not portgroup_0003_results.changed"
+      - "portgroup_0003_results.hosts_portgroup_facts is defined"
+
+- name: Gather all portgroup facts for an ESXi host in check mode
+  vmware_portgroup_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: '{{ esxi1 }}'
+    policies: true
+  register: portgroup_0004_results
+  check_mode: yes
+
+- assert:
+    that:
+      - "not portgroup_0004_results.changed"
+      - "portgroup_0004_results.hosts_portgroup_facts is defined"

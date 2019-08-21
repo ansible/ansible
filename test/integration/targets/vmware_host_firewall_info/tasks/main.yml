@@ -19,7 +19,7 @@
 - assert:
     that:
       - "not firewall_0004_results.changed"
-      - "firewall_0004_results.hosts_firewall_facts is defined"
+      - "firewall_0004_results.hosts_firewall_info is defined"
 
 
 - when: vcsim is not defined
@@ -41,7 +41,7 @@
   - assert:
       that:
         - "not firewall_0001_results.changed"
-        - "firewall_0001_results.hosts_firewall_facts is defined"
+        - "firewall_0001_results.hosts_firewall_info is defined"
 
   - name: Gather firewall info for ESXi host
     vmware_host_firewall_info:
@@ -55,7 +55,7 @@
   - assert:
       that:
         - "not firewall_0002_results.changed"
-        - "firewall_0002_results.hosts_firewall_facts is defined"
+        - "firewall_0002_results.hosts_firewall_info is defined"
 
   - name: Gather firewall info for all ESXi host from given cluster in check mode
     vmware_host_firewall_info:
@@ -70,4 +70,4 @@
   - assert:
       that:
         - "not firewall_0003_results.changed"
-        - "firewall_0003_results.hosts_firewall_facts is defined"
+        - "firewall_0003_results.hosts_firewall_info is defined"

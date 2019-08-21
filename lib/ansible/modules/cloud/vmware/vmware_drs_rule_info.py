@@ -20,8 +20,7 @@ module: vmware_drs_rule_info
 short_description: Gathers info about DRS rule on the given cluster
 description:
 - 'This module can be used to gather information about DRS VM-VM and VM-HOST rules from the given cluster.'
-- This module was called C(vmware_drs_rule_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.5'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -66,7 +65,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-drs_rule_facts:
+drs_rule_info:
     description: metadata about DRS rule from given cluster / datacenter
     returned: always
     type: dict
@@ -254,11 +253,9 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_drs_rule_facts':
-        module.deprecate("The 'vmware_drs_rule_facts' module has been renamed to 'vmware_drs_rule_info'", version='2.13')
 
     vmware_drs_info = VmwareDrsInfoManager(module)
-    module.exit_json(changed=False, drs_rule_facts=vmware_drs_info.gather_drs_rule_info())
+    module.exit_json(changed=False, drs_rule_info=vmware_drs_info.gather_drs_rule_info())
 
 
 if __name__ == "__main__":

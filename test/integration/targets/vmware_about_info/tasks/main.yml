@@ -15,7 +15,7 @@
 
 - assert:
     that:
-      - about.about_facts["{{ item }}"] is defined
+      - about.about_info["{{ item }}"] is defined
   with_items:
     - api_type
     - api_version
@@ -40,7 +40,7 @@
 
 - assert:
     that:
-      - about.about_facts["{{ item }}"] is defined
+      - about.about_info["{{ item }}"] is defined
   with_items:
     - api_type
     - api_version

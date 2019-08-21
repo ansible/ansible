@@ -1,0 +1,43 @@
+# Test code for the vmware_guest_disk_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+
+
+- name: Gather facts about virtual machine disks
+  vmware_guest_disk_facts: &get_facts
+    validate_certs: no
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    name: "{{ virtual_machines[0].name }}"
+    datacenter: '{{ dc1 }}'
+  register: disk_facts
+
+- debug:
+    msg: '{{ disk_facts }}'
+
+- name: assert that no changes were made
+  assert:
+    that:
+        - "not disk_facts.changed"
+
+- name: Gather facts about virtual machine disks in check mode
+  vmware_guest_disk_facts:
+    <<: *get_facts
+  register: disk_facts
+  check_mode: yes
+
+- debug:
+    msg: '{{ disk_facts }}'
+
+- name: assert that no changes were made
+  assert:
+    that:
+        - "not disk_facts.changed"

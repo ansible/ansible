@@ -1,0 +1,70 @@
+# Test code for the vmware_host_ssl_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+
+- name: Gather SSL facts about ESXi machine
+  vmware_host_ssl_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  register: ssl_facts
+
+- debug: var=ssl_facts
+
+- assert:
+    that:
+      - ssl_facts.host_ssl_facts is defined
+
+- name: Gather facts about all hostsystem in given cluster
+  vmware_host_ssl_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: no
+  register: ssl_facts
+
+- debug: var=ssl_facts
+
+- assert:
+    that:
+      - ssl_facts.host_ssl_facts is defined
+
+- name: Gather SSL facts about ESXi machine in check mode
+  vmware_host_ssl_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ esxi1 }}'
+    validate_certs: no
+  check_mode: yes
+  register: ssl_facts
+
+- debug: var=ssl_facts
+
+- assert:
+    that:
+      - ssl_facts.host_ssl_facts is defined
+
+- name: Gather facts about all hostsystem in given cluster in check mode ee
+  vmware_host_ssl_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: no
+  check_mode: yes
+  register: ssl_facts
+
+- debug: var=ssl_facts
+
+- assert:
+    that:
+      - ssl_facts.host_ssl_facts is defined

@@ -19,8 +19,7 @@ module: vmware_host_package_info
 short_description: Gathers info about available packages on an ESXi host
 description:
 - This module can be used to gather information about available packages and their status on an ESXi host.
-- This module was called C(vmware_host_package_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.5'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -65,12 +64,12 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_package_facts:
+hosts_package_info:
     description:
     - dict with hostname as key and dict with package information as value
-    returned: hosts_package_facts
+    returned: hosts_package_info
     type: dict
-    sample: { "hosts_package_facts": { "localhost.localdomain": []}}
+    sample: { "hosts_package_info": { "localhost.localdomain": []}}
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -120,11 +119,9 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_host_package_facts':
-        module.deprecate("The 'vmware_host_package_facts' module has been renamed to 'vmware_host_package_info'", version='2.13')
 
     vmware_host_package_config = VmwarePackageManager(module)
-    module.exit_json(changed=False, hosts_package_facts=vmware_host_package_config.gather_package_info())
+    module.exit_json(changed=False, hosts_package_info=vmware_host_package_config.gather_package_info())
 
 
 if __name__ == "__main__":

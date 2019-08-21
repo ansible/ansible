@@ -19,8 +19,7 @@ module: vmware_host_config_info
 short_description: Gathers info about an ESXi host's advance configuration information
 description:
 - This module can be used to gather information about an ESXi host's advance configuration information when ESXi hostname or Cluster name is given.
-- This module was called C(vmware_host_config_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.5'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -61,7 +60,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_facts:
+hosts_info:
     description:
     - dict with hostname as key and dict with host config information
     returned: always
@@ -112,11 +111,9 @@ def main():
         ],
         supports_check_mode=True
     )
-    if module._name == 'vmware_host_config_facts':
-        module.deprecate("The 'vmware_host_config_facts' module has been renamed to 'vmware_host_config_info'", version='2.13')
 
     vmware_host_config = VmwareConfigInfoManager(module)
-    module.exit_json(changed=False, hosts_facts=vmware_host_config.gather_host_info())
+    module.exit_json(changed=False, hosts_info=vmware_host_config.gather_host_info())
 
 
 if __name__ == "__main__":

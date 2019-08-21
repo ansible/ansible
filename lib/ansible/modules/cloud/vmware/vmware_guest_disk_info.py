@@ -22,8 +22,7 @@ short_description: Gather info about disks of given virtual machine
 description:
     - This module can be used to gather information about disks belonging to given virtual machine.
     - All parameters and VMware object names are case sensitive.
-    - This module was called C(vmware_guest_disk_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.6
+version_added: '2.9'
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
@@ -103,8 +102,8 @@ EXAMPLES = '''
   delegate_to: localhost
   register: disk_info
 
-- name: Gather disk facts from virtual machine using moid
-  vmware_guest_disk_facts:
+- name: Gather disk info from virtual machine using moid
+  vmware_guest_disk_info:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
@@ -116,7 +115,7 @@ EXAMPLES = '''
 '''
 
 RETURN = """
-guest_disk_facts:
+guest_disk_info:
     description: metadata about the virtual machine's disks
     returned: always
     type: dict
@@ -302,8 +301,6 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_guest_disk_facts':
-        module.deprecate("The 'vmware_guest_disk_facts' module has been renamed to 'vmware_guest_disk_info'", version='2.13')
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path
@@ -317,7 +314,7 @@ def main():
     if vm:
         # VM exists
         try:
-            module.exit_json(guest_disk_facts=pyv.gather_disk_info(vm))
+            module.exit_json(guest_disk_info=pyv.gather_disk_info(vm))
         except Exception as exc:
             module.fail_json(msg="Failed to gather information with exception : %s" % to_text(exc))
     else:

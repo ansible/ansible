@@ -22,8 +22,7 @@ description:
 - This module can be used to gather information about vmhbas available on the given ESXi host.
 - If C(cluster_name) is provided, then vmhba information about all hosts from given cluster will be returned.
 - If C(esxi_hostname) is provided, then vmhba information about given host system will be returned.
-- This module was called C(vmware_host_vmhba_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.8'
+version_added: '2.9'
 author:
 - Christian Kotte (@ckotte)
 notes:
@@ -68,10 +67,10 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_vmhbas_facts:
+hosts_vmhbas_info:
     description:
     - dict with hostname as key and dict with vmhbas information as value.
-    returned: hosts_vmhbas_facts
+    returned: hosts_vmhbas_info
     type: dict
     sample:
         {
@@ -210,11 +209,9 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_host_vmhba_facts':
-        module.deprecate("The 'vmware_host_vmhba_facts' module has been renamed to 'vmware_host_vmhba_info'", version='2.13')
 
     host_vmhba_mgr = HostVmhbaMgr(module)
-    module.exit_json(changed=False, hosts_vmhbas_facts=host_vmhba_mgr.gather_host_vmhba_info())
+    module.exit_json(changed=False, hosts_vmhbas_info=host_vmhba_mgr.gather_host_vmhba_info())
 
 
 if __name__ == "__main__":

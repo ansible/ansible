@@ -1,0 +1,73 @@
+# Test code for the vmware_host_firewall_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+- name: Gather firewall facts for a given ESXi
+  vmware_host_firewall_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: '{{ esxi1 }}'
+  register: firewall_0004_results
+  check_mode: yes
+
+- assert:
+    that:
+      - "not firewall_0004_results.changed"
+      - "firewall_0004_results.hosts_firewall_facts is defined"
+
+
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+
+  - name: Gather firewall facts for all ESXi host from given cluster
+    vmware_host_firewall_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      cluster_name: "{{ ccr1 }}"
+    register: firewall_0001_results
+
+  - assert:
+      that:
+        - "not firewall_0001_results.changed"
+        - "firewall_0001_results.hosts_firewall_facts is defined"
+
+  - name: Gather firewall facts for ESXi host
+    vmware_host_firewall_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      esxi_hostname: '{{ esxi1 }}'
+    register: firewall_0002_results
+
+  - assert:
+      that:
+        - "not firewall_0002_results.changed"
+        - "firewall_0002_results.hosts_firewall_facts is defined"
+
+  - name: Gather firewall facts for all ESXi host from given cluster in check mode
+    vmware_host_firewall_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      cluster_name: "{{ ccr1 }}"
+    register: firewall_0003_results
+    check_mode: yes
+
+  - assert:
+      that:
+        - "not firewall_0003_results.changed"
+        - "firewall_0003_results.hosts_firewall_facts is defined"

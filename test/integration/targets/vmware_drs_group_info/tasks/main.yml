@@ -21,8 +21,8 @@
 
   - assert:
       that:
-        - "drs_group_0001_results.drs_group_facts.DC0_C0 is defined"
-        - "not drs_group_0001_results.drs_group_facts.DC0_C1 is defined"
+        - "drs_group_0001_results.drs_group_info.DC0_C0 is defined"
+        - "not drs_group_0001_results.drs_group_info.DC0_C1 is defined"
         - "not drs_group_0001_results.changed"
 
   - name: Gather DRS group info from given datacenter
@@ -39,6 +39,6 @@
 
   - assert:
       that:
-        - "drs_group_0002_results.drs_group_facts.DC0_C0 is defined"
-        - "not drs_group_0002_results.drs_group_facts.DC0_C1 is defined"
+        - "drs_group_0002_results.drs_group_info.DC0_C0 is defined"
+        - "not drs_group_0002_results.drs_group_info.DC0_C1 is defined"
         - "not drs_group_0002_results.changed"

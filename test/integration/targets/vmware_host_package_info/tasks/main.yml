@@ -21,4 +21,4 @@
     - debug: var=host_packages
     - assert:
         that:
-          - host_packages.hosts_package_facts is defined
+          - host_packages.hosts_package_info is defined

@@ -19,8 +19,7 @@ module: vmware_host_ntp_info
 short_description: Gathers info about NTP configuration on an ESXi host
 description:
 - This module can be used to gather information about NTP configurations on an ESXi host.
-- This module was called C(vmware_host_ntp_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.7
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -65,10 +64,10 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_ntp_facts:
+hosts_ntp_info:
     description:
     - dict with hostname as key and dict with NTP infos as value
-    returned: hosts_ntp_facts
+    returned: hosts_ntp_info
     type: dict
     sample: {
         "10.76.33.226": [
@@ -127,11 +126,9 @@ def main():
         ],
         supports_check_mode=True,
     )
-    if module._name == 'vmware_host_ntp_facts':
-        module.deprecate("The 'vmware_host_ntp_facts' module has been renamed to 'vmware_host_ntp_info'", version='2.13')
 
     vmware_host_ntp_config = VmwareNtpInfoManager(module)
-    module.exit_json(changed=False, hosts_ntp_facts=vmware_host_ntp_config.gather_ntp_info())
+    module.exit_json(changed=False, hosts_ntp_info=vmware_host_ntp_config.gather_ntp_info())
 
 
 if __name__ == "__main__":

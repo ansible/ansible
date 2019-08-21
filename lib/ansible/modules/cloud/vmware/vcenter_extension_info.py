@@ -19,8 +19,7 @@ module: vcenter_extension_info
 short_description: Gather info vCenter extensions
 description:
 - This module can be used to gather information about vCenter extension.
-- This module was called C(vcenter_extension_facts) before Ansible 2.9. The usage did not change.
-version_added: 2.8
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
@@ -42,7 +41,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-extension_facts:
+extension_info:
     description: List of extensions
     returned: success
     type: list
@@ -79,7 +78,7 @@ class VmwareExtManager(PyVmomi):
         super(VmwareExtManager, self).__init__(module)
 
     def gather_plugin_info(self):
-        result = dict(changed=False, extension_facts=[])
+        result = dict(changed=False, extension_info=[])
         ext_manager = self.content.extensionManager
         if not ext_manager:
             self.module.exit_json(**result)
@@ -95,7 +94,7 @@ class VmwareExtManager(PyVmomi):
                 extension_subject_name=ext.subjectName if ext.subjectName else '',
                 extension_last_heartbeat_time=ext.lastHeartbeatTime,
             )
-            result['extension_facts'].append(ext_info)
+            result['extension_info'].append(ext_info)
 
         self.module.exit_json(**result)
 
@@ -107,8 +106,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-    if module._name == 'vcenter_extension_facts':
-        module.deprecate("The 'vcenter_extension_facts' module has been renamed to 'vcenter_extension_info'", version='2.13')
 
     vcenter_extension_info_mgr = VmwareExtManager(module)
     vcenter_extension_info_mgr.gather_plugin_info()

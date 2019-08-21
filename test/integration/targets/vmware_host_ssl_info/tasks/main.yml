@@ -20,7 +20,7 @@
 
 - assert:
     that:
-      - ssl_info.host_ssl_facts is defined
+      - ssl_info.host_ssl_info is defined
 
 - name: Gather info about all hostsystem in given cluster
   vmware_host_ssl_info:
@@ -35,7 +35,7 @@
 
 - assert:
     that:
-      - ssl_info.host_ssl_facts is defined
+      - ssl_info.host_ssl_info is defined
 
 - name: Gather SSL info about ESXi machine in check mode
   vmware_host_ssl_info:
@@ -51,7 +51,7 @@
 
 - assert:
     that:
-      - ssl_info.host_ssl_facts is defined
+      - ssl_info.host_ssl_info is defined
 
 - name: Gather info about all hostsystem in given cluster in check mode ee
   vmware_host_ssl_info:
@@ -67,4 +67,4 @@
 
 - assert:
     that:
-      - ssl_info.host_ssl_facts is defined
+      - ssl_info.host_ssl_info is defined

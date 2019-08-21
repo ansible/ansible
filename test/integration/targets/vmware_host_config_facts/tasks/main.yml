@@ -1,0 +1,68 @@
+# Test code for the vmware_host_config_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+- name: gather facts about all hosts in given cluster
+  vmware_host_config_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+  register: all_hosts_result
+
+- debug:
+    var: all_hosts_result
+
+- name: ensure facts are gathered for all hosts
+  assert:
+    that:
+        - all_hosts_result.hosts_facts
+
+- name: gather facts about all hosts in given cluster in check mode
+  vmware_host_config_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+  register: all_hosts_result_check_mode
+  check_mode: yes
+
+- name: ensure facts are gathered for all hosts
+  assert:
+    that:
+        - all_hosts_result_check_mode.hosts_facts
+
+- when: vcsim is not defined
+  block:
+  - name: gather facts about a given host in check mode
+    vmware_host_config_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      esxi_hostname: "{{ esxi1 }}"
+    register: single_hosts_result_check_mode
+    check_mode: yes
+  - name: ensure facts are gathered for all hosts
+    assert:
+      that:
+          - single_hosts_result_check_mode.hosts_facts
+
+  - name: gather facts about a given host
+    vmware_host_config_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      esxi_hostname: "{{ esxi1 }}"
+    register: single_hosts_result
+  - name: ensure facts are gathered for all hosts
+    assert:
+      that:
+          - single_hosts_result.hosts_facts

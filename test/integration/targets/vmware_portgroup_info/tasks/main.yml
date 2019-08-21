@@ -19,7 +19,7 @@
 - assert:
     that:
       - "not portgroup_0001_results.changed"
-      - "portgroup_0001_results.hosts_portgroup_facts is defined"
+      - "portgroup_0001_results.hosts_portgroup_info is defined"
 
 - name: Gather portgroup info for an ESXi host
   vmware_portgroup_info:
@@ -33,7 +33,7 @@
 - assert:
     that:
       - "not portgroup_0002_results.changed"
-      - "portgroup_0002_results.hosts_portgroup_facts is defined"
+      - "portgroup_0002_results.hosts_portgroup_info is defined"
 
 - name: Gather all portgroup info for an ESXi host
   vmware_portgroup_info:
@@ -48,7 +48,7 @@
 - assert:
     that:
       - "not portgroup_0003_results.changed"
-      - "portgroup_0003_results.hosts_portgroup_facts is defined"
+      - "portgroup_0003_results.hosts_portgroup_info is defined"
 
 - name: Gather all portgroup info for an ESXi host in check mode
   vmware_portgroup_info:
@@ -64,4 +64,4 @@
 - assert:
     that:
       - "not portgroup_0004_results.changed"
-      - "portgroup_0004_results.hosts_portgroup_facts is defined"
+      - "portgroup_0004_results.hosts_portgroup_info is defined"

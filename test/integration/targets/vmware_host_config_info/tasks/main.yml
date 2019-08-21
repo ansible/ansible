@@ -21,7 +21,7 @@
 - name: ensure info are gathered for all hosts
   assert:
     that:
-        - all_hosts_result.hosts_facts
+        - all_hosts_result.hosts_info
 
 - name: gather info about all hosts in given cluster in check mode
   vmware_host_config_info:
@@ -36,7 +36,7 @@
 - name: ensure info are gathered for all hosts
   assert:
     that:
-        - all_hosts_result_check_mode.hosts_facts
+        - all_hosts_result_check_mode.hosts_info
 
 - when: vcsim is not defined
   block:
@@ -52,7 +52,7 @@
   - name: ensure info are gathered for all hosts
     assert:
       that:
-          - single_hosts_result_check_mode.hosts_facts
+          - single_hosts_result_check_mode.hosts_info
 
   - name: gather info about a given host
     vmware_host_config_info:
@@ -65,4 +65,4 @@
   - name: ensure info are gathered for all hosts
     assert:
       that:
-          - single_hosts_result.hosts_facts
+          - single_hosts_result.hosts_info

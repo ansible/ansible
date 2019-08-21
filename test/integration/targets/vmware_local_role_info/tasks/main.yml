@@ -26,7 +26,7 @@
 - &role_test
   name: Test if role id is present for role
   assert:
-    that: "{{ role_details.local_role_facts | json_query(s_query) != [] }}"
+    that: "{{ role_details.local_role_info | json_query(s_query) != [] }}"
   vars:
     s_query: "[?role_name == '{{ item }}'].role_id"
   with_items: "{{ role_list }}"

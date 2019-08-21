@@ -22,7 +22,7 @@
 
 - assert:
     that:
-      - switch_info.hosts_vswitch_facts is defined
+      - switch_info.hosts_vswitch_info is defined
 
 - name: Gather vswitch info about all hosts in given cluster in check mode
   vmware_vswitch_info:
@@ -38,4 +38,4 @@
 
 - assert:
     that:
-      - switch_info_check_mode.hosts_vswitch_facts is defined
+      - switch_info_check_mode.hosts_vswitch_info is defined

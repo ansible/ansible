@@ -20,8 +20,7 @@ module: vmware_portgroup_info
 short_description: Gathers info about an ESXi host's Port Group configuration
 description:
 - This module can be used to gather information about an ESXi host's Port Group configuration when ESXi hostname or Cluster name is given.
-- This module was called C(vmware_portgroup_facts) before Ansible 2.9. The usage did not change.
-version_added: '2.6'
+version_added: '2.9'
 author:
 - Abhijeet Kasurde (@Akasurde)
 - Christian Kotte (@ckotte)
@@ -72,7 +71,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-hosts_portgroup_facts:
+hosts_portgroup_info:
     description: metadata about host's portgroup configuration
     returned: on success
     type: dict
@@ -222,11 +221,9 @@ def main():
         ],
         supports_check_mode=True
     )
-    if module._name == 'vmware_portgroup_facts':
-        module.deprecate("The 'vmware_portgroup_facts' module has been renamed to 'vmware_portgroup_info'", version='2.13')
 
     host_pg_mgr = PortgroupInfoManager(module)
-    module.exit_json(changed=False, hosts_portgroup_facts=host_pg_mgr.gather_host_portgroup_info())
+    module.exit_json(changed=False, hosts_portgroup_info=host_pg_mgr.gather_host_portgroup_info())
 
 
 if __name__ == "__main__":
