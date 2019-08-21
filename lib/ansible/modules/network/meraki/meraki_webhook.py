@@ -283,7 +283,7 @@ def main():
                 meraki.exit_json(**meraki.result)
         if webhook_id is None:  # Make sure it is downloaded
             if webhooks is None:
-                wehooks = get_all_webhooks(meraki, net_id)
+                webhooks = get_all_webhooks(meraki, net_id)
             webhook_id = get_webhook_id(meraki.params['name'], webhooks)
         if webhook_id is None:  # Test to see if it needs to be created
             if meraki.check_mode is True:
