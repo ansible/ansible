@@ -221,7 +221,7 @@ class LookupModule(LookupBase):
             params = boto3_tag_list_to_ansible_dict(response['Parameters'], tag_name_key_name="Name",
                                                     tag_value_key_name="Value")
             for i in terms:
-                if i in params:
+                if i.split(':', 1)[0] in params:
                     ret.append(params[i])
                 elif i in response['InvalidParameters']:
                     ret.append(None)
