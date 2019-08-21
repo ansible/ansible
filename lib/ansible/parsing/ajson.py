@@ -49,9 +49,9 @@ def _preprocess_unsafe_encode(value):
     """Recursively preprocess a data structure converting instances of ``AnsibleUnsafe``
     into their JSON dict representations
 
-    Used in ``AnsibleJSONEncoder.encode``
+    Used in ``AnsibleJSONEncoder.iterencode``
     """
-    if isinstance(value, AnsibleUnsafe):
+    if getattr(value, '__UNSAFE__', False) and not getattr(value, '__ENCRYPTED__', False):
         value = {'__ansible_unsafe': to_text(value, errors='surrogate_or_strict', nonstring='strict')}
     elif is_sequence(value):
         value = [_preprocess_unsafe_encode(v) for v in value]
@@ -73,11 +73,11 @@ class AnsibleJSONEncoder(json.JSONEncoder):
 
     # NOTE: ALWAYS inform AWS/Tower when new items get added as they consume them downstream via a callback
     def default(self, o):
-        if isinstance(o, AnsibleVaultEncryptedUnicode):
+        if getattr(o, '__ENCRYPTED__', False):
             # vault object
             value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
-        elif isinstance(o, AnsibleUnsafe):
-            # unsafe object, this will never be triggered, see ``encode``
+        elif getattr(o, '__UNSAFE__', False):
+            # unsafe object, this will never be triggered, see ``AnsibleJSONEncoder.iterencode``
             value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
         elif isinstance(o, Mapping):
             # hostvars and other objects
@@ -91,8 +91,8 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         return value
 
     def iterencode(self, o, **kwargs):
-        """Custom encode, primarily design to handle encoding ``AnsibleUnsafe``
-        as the ``AnsibleUnsafe`` subclasses inherit from string types and the
+        """Custom iterencode, primarily design to handle encoding ``AnsibleUnsafe``
+        as the ``AnsibleUnsafe`` subclasses inherit from string types and
         ``json.JSONEncoder`` does not support custom encoders for string types
         """
         if self._preprocess_unsafe:
