@@ -26,7 +26,7 @@
     network: "{{ hcloud_network_name }}"
     type: server
     network_zone: eu-central
-    ip_range: "10.0.0.0/24"
+    ip_range: "10.0.1.0/24"
   register: main_subnetwork
 - name: verify create subnetwork
   assert:
@@ -36,8 +36,8 @@
 - name: create route
   hcloud_route:
     network: "{{ hcloud_network_name }}"
-    destination: "10.100.1.0/24"
-    gateway: "10.0.1.1"
+    destination: "10.0.2.0/24"
+    gateway: "10.0.2.1"
   register: main_route
 - name: verify create route
   assert:
