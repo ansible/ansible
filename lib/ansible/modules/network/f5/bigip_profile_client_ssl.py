@@ -96,6 +96,7 @@ options:
       - no-session-resumption-on-renegotiation
       - no-tlsv1.1
       - no-tlsv1.2
+      - no-tlsv1.3
       - single-dh-use
       - ephemeral-rsa
       - cipher-server-preference
@@ -1040,6 +1041,7 @@ class ArgumentSpec(object):
                     'no-session-resumption-on-renegotiation',
                     'no-tlsv1.1',
                     'no-tlsv1.2',
+                    'no-tlsv1.3',
                     'single-dh-use',
                     'ephemeral-rsa',
                     'cipher-server-preference',
