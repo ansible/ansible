@@ -6473,6 +6473,8 @@ test/units/module_utils/test_database.py future-import-boilerplate
 test/units/module_utils/test_database.py metaclass-boilerplate
 test/units/module_utils/test_distro.py future-import-boilerplate
 test/units/module_utils/test_distro.py metaclass-boilerplate
+test/units/module_utils/test_ec2.py future-import-boilerplate
+test/units/module_utils/test_ec2.py metaclass-boilerplate
 test/units/module_utils/test_hetzner.py future-import-boilerplate
 test/units/module_utils/test_hetzner.py metaclass-boilerplate
 test/units/module_utils/test_kubevirt.py future-import-boilerplate
@@ -6500,8 +6502,6 @@ test/units/modules/cloud/amazon/test_data_pipeline.py future-import-boilerplate
 test/units/modules/cloud/amazon/test_data_pipeline.py metaclass-boilerplate
 test/units/modules/cloud/amazon/test_ec2_group.py future-import-boilerplate
 test/units/modules/cloud/amazon/test_ec2_group.py metaclass-boilerplate
-test/units/modules/cloud/amazon/test_ec2_utils.py future-import-boilerplate
-test/units/modules/cloud/amazon/test_ec2_utils.py metaclass-boilerplate
 test/units/modules/cloud/amazon/test_ec2_vpc_nat_gateway.py future-import-boilerplate
 test/units/modules/cloud/amazon/test_ec2_vpc_nat_gateway.py metaclass-boilerplate
 test/units/modules/cloud/amazon/test_ec2_vpc_nat_gateway.py pylint:blacklisted-name
@@ -6518,8 +6518,6 @@ test/units/modules/cloud/amazon/test_redshift_cross_region_snapshots.py future-i
 test/units/modules/cloud/amazon/test_redshift_cross_region_snapshots.py metaclass-boilerplate
 test/units/modules/cloud/amazon/test_route53_zone.py future-import-boilerplate
 test/units/modules/cloud/amazon/test_route53_zone.py metaclass-boilerplate
-test/units/modules/cloud/amazon/test_s3_bucket.py future-import-boilerplate
-test/units/modules/cloud/amazon/test_s3_bucket.py metaclass-boilerplate
 test/units/modules/cloud/amazon/test_s3_bucket_notification.py future-import-boilerplate
 test/units/modules/cloud/amazon/test_s3_bucket_notification.py metaclass-boilerplate
 test/units/modules/cloud/cloudstack/test_cs_traffic_type.py future-import-boilerplate
