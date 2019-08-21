@@ -19,6 +19,7 @@
 NAME = ansible
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
+SDIST_DIR ?= 'dist'
 
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
@@ -226,14 +227,14 @@ sdist_check:
 
 .PHONY: sdist
 sdist: sdist_check clean docs
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 # Official releases generate the changelog as the last commit before the release.
 # Snapshots shouldn't result in new checkins so the changelog is generated as
 # part of creating the tarball.
 .PHONY: snapshot
 snapshot: sdist_check clean docs changelog
-	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
