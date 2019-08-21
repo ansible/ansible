@@ -31,12 +31,7 @@ options:
           - wjh group status
         type: bool
     auto_export:
-<<<<<<< 703ebf71892d8ea48663a507b158118bf710f0fd
-        description:
-          - wjh group auto export pcap file status
-=======
         description: wjh group auto export pcap file status
->>>>>>> Fix version, fix enable/disable all groups
         type: bool
     export_group:
         description:
