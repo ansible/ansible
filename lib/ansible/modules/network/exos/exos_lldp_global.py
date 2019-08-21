@@ -390,12 +390,14 @@ before:
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
+  type: list
 after:
   description: The resulting configuration model invocation.
   returned: when changed
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
+  type: list
 requests:
   description: The set of requests pushed to the remote device.
   returned: always

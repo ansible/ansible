@@ -29,6 +29,7 @@ class FactsBase(object):
     def __init__(self, module):
         self.module = module
         self.facts = dict()
+        self.warnings = list()
         self.responses = None
 
     def populate(self):

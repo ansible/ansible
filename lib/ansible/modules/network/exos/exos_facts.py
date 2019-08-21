@@ -52,6 +52,7 @@ options:
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
+    type: list
     default: ['!config']
   gather_network_resources:
     description:
@@ -60,7 +61,7 @@ options:
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
     choices: ['all', '!all', 'lldp_global', '!lldp_global']
-    default: ['all']
+    type: list
     version_added: "2.9"
 """
 
