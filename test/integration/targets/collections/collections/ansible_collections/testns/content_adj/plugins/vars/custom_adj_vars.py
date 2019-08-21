@@ -29,8 +29,8 @@ DOCUMENTATION = '''
         choices: ['all', 'inventory', 'task']
         type: str
         ini:
-          - section: stage
-            key: custom_adj_vars
+          - key: stage
+            section: custom_adj_vars
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
 '''

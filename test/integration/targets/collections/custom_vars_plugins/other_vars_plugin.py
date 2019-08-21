@@ -29,8 +29,8 @@ DOCUMENTATION = '''
         choices: ['all', 'inventory', 'task']
         type: str
         ini:
-          - section: stage
-            key: other_vars_plugin
+          - key: stage
+            section: other_vars_plugin
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
 '''

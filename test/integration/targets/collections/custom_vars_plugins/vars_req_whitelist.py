@@ -29,8 +29,8 @@ DOCUMENTATION = '''
         choices: ['all', 'inventory', 'task']
         type: str
         ini:
-          - section: stage
-            key: vars_req_whitelist
+          - key: stage
+            section: vars_req_whitelist
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
 '''

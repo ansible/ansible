@@ -34,8 +34,8 @@ DOCUMENTATION = '''
         choices: ['all', 'inventory', 'task']
         type: str
         ini:
-          - section: stage
-            key: host_group_vars
+          - key: stage
+            section: host_group_vars
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
         version_added: "2.9"

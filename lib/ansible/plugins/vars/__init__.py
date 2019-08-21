@@ -18,7 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins import AnsiblePlugin, get_plugin_class
+from ansible.plugins import AnsiblePlugin
 from ansible.utils.path import basedir
 from ansible.utils.display import Display
 
