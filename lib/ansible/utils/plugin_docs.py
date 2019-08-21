@@ -47,27 +47,37 @@ def add_fragments(doc, filename, fragment_loader):
     if isinstance(fragments, string_types):
         fragments = [fragments]
 
-    # Allow the module to specify a var other than DOCUMENTATION
-    # to pull the fragment from, using dot notation as a separator
+    unknown_fragments = []
+
+    # doc_fragments are allowed to specify a fragment var other than DOCUMENTATION
+    # with a . separator; this is complicated by collections-hosted doc_fragments that
+    # use the same separator. Assume it's collection-hosted normally first, try to load
+    # as-specified. If failure, assume the right-most component is a var, split it off,
+    # and retry the load.
     for fragment_slug in fragments:
-        fallback_name = None
-        fragment_slug = fragment_slug.lower()
-        if '.' in fragment_slug:
-            fallback_name = fragment_slug
-            fragment_name, fragment_var = fragment_slug.rsplit('.', 1)
-            fragment_var = fragment_var.upper()
-        else:
-            fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
+        fragment_name = fragment_slug
+        fragment_var = 'DOCUMENTATION'
 
         fragment_class = fragment_loader.get(fragment_name)
-        if fragment_class is None and fallback_name:
-            fragment_class = fragment_loader.get(fallback_name)
-            fragment_var = 'DOCUMENTATION'
+        if fragment_class is None and '.' in fragment_slug:
+            splitname = fragment_slug.rsplit('.', 1)
+            fragment_name = splitname[0]
+            fragment_var = splitname[1].upper()
+            fragment_class = fragment_loader.get(fragment_name)
 
         if fragment_class is None:
-            raise AnsibleAssertionError('fragment_class is None')
+            unknown_fragments.append(fragment_slug)
+            continue
 
-        fragment_yaml = getattr(fragment_class, fragment_var, '{}')
+        fragment_yaml = getattr(fragment_class, fragment_var, None)
+        if fragment_yaml is None:
+            if fragment_var != 'DOCUMENTATION':
+                # if it's asking for something specific that's missing, that's an error
+                unknown_fragments.append(fragment_slug)
+                continue
+            else:
+                fragment_yaml = '{}'  # TODO: this is still an error later since we require 'options' below...
+
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
         if 'notes' in fragment:
@@ -101,6 +111,9 @@ def add_fragments(doc, filename, fragment_loader):
             merge_fragment(doc, fragment)
         except Exception as e:
             raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+
+    if unknown_fragments:
+        raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
