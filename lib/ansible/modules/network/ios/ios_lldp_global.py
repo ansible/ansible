@@ -59,14 +59,15 @@ options:
         description:
           - Specify the delay (in secs) for LLDP to initialize.
           - Refer to vendor documentation for valid values.
-          - NOTE, if LLDP reinit is configured with starting value idempotency
-            won't be maintained as Cisco device doesn't record starting reinit
-            configured value, so it cannot be verified that if the respective
-            starting reinit value is already configured or not from the device
-            side. So, if the user uses tries to apply starting reinit value in every
-            play run ansible will show changed as True. But, for other reinit value
-            idempotency will be maintained as other than starting reinit value other
-            reinit value is recorded in the device side.
+          - NOTE, if LLDP reinit is configured with a starting
+            value, idempotency won't be maintained as the Cisco
+            device doesn't record the starting reinit configured
+            value. As such, Ansible cannot verify if the respective
+            starting reinit value is already configured or not from
+            the device side. If you try to apply starting reinit
+            value in every play run, Ansible will show changed as True.
+            For any other reinit value, idempotency will be maintained
+            since any other reinit value is recorded in the Cisco device.
         type: int
       enable:
         description:
@@ -79,13 +80,12 @@ options:
         type: int
       tlv_select:
         description:
-          - Selection of LLDP TLVs to send
+          - Selection of LLDP TLVs i.e. type-length-value to send
           - NOTE, if tlv-select is configured idempotency won't be maintained
-            as Cisco device doesn't record configured tlv-select options, so
-            there is no means to check if the respective tlv-selct options is
-            already configured or not from the device side. So, if the user
-            tries to apply tlv-select option in every play run ansible will
-            show changed as True.
+            as Cisco device doesn't record configured tlv-select options. As
+            such, Ansible cannot verify if the respective tlv-select options is
+            already configured or not from the device side. If you try to apply
+            tlv-select option in every play run, Ansible will show changed as True.
         type: dict
         suboptions:
           four_wire_power_management:
