@@ -51,6 +51,7 @@ class Default(FactsBase):
         if data:
             self.facts['iostype'] = self.parse_iostype(data)
             self.facts['serialnum'] = self.parse_serialnum(data)
+            self.facts['uptime'] = self.parse_uptime(data)
             self.parse_stacks(data)
 
     def parse_iostype(self, data):
@@ -62,6 +63,11 @@ class Default(FactsBase):
 
     def parse_serialnum(self, data):
         match = re.search(r'board ID (\S+)', data)
+        if match:
+            return match.group(1)
+
+    def parse_uptime(self, data):
+        match = re.search(r'uptime is (\S+)', data)
         if match:
             return match.group(1)
 
