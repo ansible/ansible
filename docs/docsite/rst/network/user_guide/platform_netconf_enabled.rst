@@ -11,7 +11,6 @@ This page offers details on how the netconf connection works in Ansible and how 
 Connections Available
 ================================================================================
 .. table::
-    :widths: auto
     :class: documentation-table
 
     ====================  ==========================================
