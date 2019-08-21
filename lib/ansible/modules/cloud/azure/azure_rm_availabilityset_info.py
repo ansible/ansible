@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_availabilityset_facts
+module: azure_rm_availabilityset_info
 
-version_added: "2.4"
+version_added: "2.9"
 
 short_description: Get Azure Availability Set facts
 
@@ -42,12 +42,12 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one availability set
-      azure_rm_availabilityset_facts:
+      azure_rm_availabilityset_info:
         name: Testing
         resource_group: myResourceGroup
 
     - name: Get facts for all availability sets in a specific resource group
-      azure_rm_availabilityset_facts:
+      azure_rm_availabilityset_info:
         resource_group: myResourceGroup
 
 '''
@@ -116,7 +116,7 @@ except Exception:
 AZURE_OBJECT_CLASS = 'AvailabilitySet'
 
 
-class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
+class AzureRMAvailabilitySetInfo(AzureRMModuleBase):
     """Utility class to get availability set facts"""
 
     def __init__(self):
@@ -138,7 +138,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMAvailabilitySetFacts, self).__init__(
+        super(AzureRMAvailabilitySetInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
@@ -205,7 +205,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMAvailabilitySetFacts()
+    AzureRMAvailabilitySetInfo()
 
 
 if __name__ == '__main__':

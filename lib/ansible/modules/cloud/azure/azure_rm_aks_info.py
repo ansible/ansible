@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_aks_facts
+module: azure_rm_aks_info
 
-version_added: "2.6"
+version_added: "2.9"
 
 short_description: Get Azure Kubernetes Service facts
 
@@ -51,15 +51,15 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one Azure Kubernetes Service
-      azure_rm_aks_facts:
+      azure_rm_aks_info:
         name: Testing
         resource_group: myResourceGroup
 
     - name: Get facts for all Azure Kubernetes Services
-      azure_rm_aks_facts:
+      azure_rm_aks_info:
 
     - name: Get facts by tags
-      azure_rm_aks_facts:
+      azure_rm_aks_info:
         tags:
           - testing
 '''
@@ -83,7 +83,7 @@ except Exception:
 AZURE_OBJECT_CLASS = 'managedClusters'
 
 
-class AzureRMManagedClusterFacts(AzureRMModuleBase):
+class AzureRMManagedClusterInfo(AzureRMModuleBase):
     """Utility class to get Azure Kubernetes Service facts"""
 
     def __init__(self):
@@ -106,7 +106,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.tags = None
         self.show_kubeconfig = None
 
-        super(AzureRMManagedClusterFacts, self).__init__(
+        super(AzureRMManagedClusterInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
@@ -180,7 +180,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMManagedClusterFacts()
+    AzureRMManagedClusterInfo()
 
 
 if __name__ == '__main__':
