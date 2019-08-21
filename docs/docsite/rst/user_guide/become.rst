@@ -656,7 +656,7 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
     win_copy:
       src: \\server\share\data\file.txt
       dest: C:\temp\file.txt
-      remote_src: yex
+      remote_src: yes
     vars:
       ansible_become: yes
       ansible_become_method: runas
