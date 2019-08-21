@@ -28,6 +28,17 @@ DOCUMENTATION = '''
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
     options:
+      stage:
+        description: Control when this vars plugin may be executed.
+        default: all
+        choices: ['all', 'inventory', 'task']
+        type: str
+        ini:
+          - section: stage
+            key: host_group_vars
+        env:
+          - name: ANSIBLE_VARS_PLUGIN_STAGE
+        version_added: "2.9"
       _valid_extensions:
         default: [".yml", ".yaml", ".json"]
         description:
@@ -54,6 +65,8 @@ FOUND = {}
 
 
 class VarsModule(BaseVarsPlugin):
+
+    REQUIRES_WHITELIST = True
 
     def get_vars(self, loader, path, entities, cache=True):
         ''' parses the inventory file '''

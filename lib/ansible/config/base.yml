@@ -1701,7 +1701,7 @@ RUN_VARS_PLUGINS:
   env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
   ini:
   - {key: run_vars_plugins, section: defaults}
-  type: path
+  type: str
   choices: ['demand', 'start']
 SHOW_CUSTOM_STATS:
   name: Display custom stats
@@ -1757,6 +1757,15 @@ USE_PERSISTENT_CONNECTIONS:
   ini:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
+VARIABLE_PLUGINS_ENABLED:
+  name: Vars plugin whitelist
+  default: ['host_group_vars']
+  description: Whitelist for variable plugins that require it.
+  env: [{name: ANSIBLE_VARS_ENABLED}]
+  ini:
+  - {key: vars_plugins_enabled, section: defaults}
+  type: list
+  version_added: "2.9"
 VARIABLE_PRECEDENCE:
   name: Group variable precedence
   default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']

@@ -142,7 +142,7 @@ class VariableManager:
         self._inventory = inventory
 
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True,
-                 _hosts=None, _hosts_all=None):
+                 _hosts=None, _hosts_all=None, stage='task'):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -232,13 +232,13 @@ class VariableManager:
             # internal fuctions that actually do the work
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
-                return get_vars_from_inventory_sources(self._loader, self._inventory._sources, entities, 'task')
+                return get_vars_from_inventory_sources(self._loader, self._inventory._sources, entities, stage)
 
             def _plugins_play(entities):
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for path in basedirs:
-                    data = combine_vars(data, get_vars_from_path(self._loader, path, entities, 'task'))
+                    data = combine_vars(data, get_vars_from_path(self._loader, path, entities, stage))
                 return data
 
             # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list

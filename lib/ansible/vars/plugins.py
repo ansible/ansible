@@ -12,6 +12,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import vars_loader
+from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
@@ -41,18 +42,25 @@ def get_plugin_vars(loader, plugin, path, entities):
 def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
-    for plugin in vars_loader.all():
-        pobj = vars_loader.get(plugin)
 
-        if pobj.get('REQUIRES_WHITELIST', False) and plugin not in C.ENABLED_VARS_PLUGINS:
-            # skip plugins that require whitelisting but are not whitelisted
-            # 'legacy' plugins always run
+    vars_plugin_list = list(vars_loader.all())
+    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
+        if is_collection_ref(plugin_name):
+            vars_plugin = vars_loader.get(plugin_name)
+            if vars_plugin is None:
+                # Error if there's no play directory or the name is wrong?
+                continue
+            if vars_plugin not in vars_plugin_list:
+                vars_plugin_list.append(vars_plugin)
+
+    for plugin in vars_plugin_list:
+        if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
+            # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+            continue
+        if hasattr(plugin, 'get_option') and plugin.has_option('stage') and plugin.get_option('stage') not in ('all', stage):
             continue
 
-        if hasattr(pobj, 'get_option') and pobj.get_option('stage') not in ('all', stage):
-            continue
-
-        data = combine_vars(data, get_plugin_vars(loader, pobj, path, entities))
+        data = combine_vars(data, get_plugin_vars(loader, plugin, path, entities))
 
     return data
 
