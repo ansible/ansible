@@ -99,6 +99,7 @@ def command_units(args):
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
             '--junit-xml', os.path.join(data_context().results, 'junit', 'python%s-units.xml' % version),
+            '--durations=25',
         ]
 
         if version != '2.6':
