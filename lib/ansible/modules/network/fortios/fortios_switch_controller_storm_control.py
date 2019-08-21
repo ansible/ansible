@@ -87,7 +87,7 @@ options:
                     - disable
             rate:
                 description:
-                    - Rate in packets per second at which storm traffic is controlled (1 - 10000000, default = 500). Storm control drops excess traffic data
+                    - Rate in packets per second at which storm traffic is controlled (1 - 10000000). Storm control drops excess traffic data
                        rates beyond this threshold.
                 type: int
             unknown_multicast:
