@@ -1518,7 +1518,6 @@ lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:E322
 lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:E324
 lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:E326
 lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:E338
-lib/ansible/modules/cloud/hcloud/hcloud_image_facts.py validate-modules:E338
 lib/ansible/modules/cloud/heroku/heroku_collaborator.py validate-modules:E337
 lib/ansible/modules/cloud/kubevirt/kubevirt_cdi_upload.py validate-modules:E338
 lib/ansible/modules/cloud/kubevirt/kubevirt_preset.py validate-modules:E337
