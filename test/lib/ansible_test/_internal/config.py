@@ -14,6 +14,7 @@ from .util import (
     generate_pip_command,
     get_docker_completion,
     ApplicationError,
+    INTEGRATION_DIR_RELATIVE,
 )
 
 from .util_common import (
@@ -244,6 +245,17 @@ class IntegrationConfig(TestConfig):
         if self.list_targets:
             self.explain = True
 
+    def get_ansible_config(self):  # type: () -> str
+        """Return the path to the Ansible config for the given config."""
+        ansible_config_relative_path = os.path.join(INTEGRATION_DIR_RELATIVE, '%s.cfg' % self.command)
+        ansible_config_path = os.path.join(data_context().content.root, ansible_config_relative_path)
+
+        if not os.path.exists(ansible_config_path):
+            # use the default empty configuration unless one has been provided
+            ansible_config_path = super(IntegrationConfig, self).get_ansible_config()
+
+        return ansible_config_path
+
 
 class PosixIntegrationConfig(IntegrationConfig):
     """Configuration for the posix integration command."""
@@ -265,6 +277,7 @@ class WindowsIntegrationConfig(IntegrationConfig):
         super(WindowsIntegrationConfig, self).__init__(args, 'windows-integration')
 
         self.windows = args.windows  # type: t.List[str]
+        self.inventory = args.inventory  # type: str
 
         if self.windows:
             self.allow_destructive = True
