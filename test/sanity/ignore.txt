@@ -5598,8 +5598,8 @@ lib/ansible/modules/storage/netapp/na_ontap_fcp.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_firewall_policy.py validate-modules:E337
 lib/ansible/modules/storage/netapp/na_ontap_firewall_policy.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_flexcache.py validate-modules:E337
-lib/ansible/modules/storage/netapp/na_ontap_gather_facts.py validate-modules:E337
-lib/ansible/modules/storage/netapp/na_ontap_gather_facts.py validate-modules:E338
+lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:E337
+lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_igroup.py validate-modules:E337
 lib/ansible/modules/storage/netapp/na_ontap_igroup.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_igroup_initiator.py validate-modules:E337
