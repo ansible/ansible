@@ -1,0 +1,95 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup ensure volume is absent
+  hcloud_volume:
+    name: "{{ hcloud_volume_name }}"
+    state: absent
+  register: result
+
+- name: setup volume
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 10
+    location: "fsn1"
+    labels:
+      key: value
+  register: main_volume
+- name: verify setup volume
+  assert:
+    that:
+      - main_volume is changed
+
+- name: test gather hcloud volume infos in check mode
+  hcloud_volume_info:
+  register: hcloud_volume
+  check_mode: yes
+
+- name: verify test gather hcloud volume infos in check mode
+  assert:
+    that:
+      - hcloud_volume.hcloud_volume_info|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count == 1
+
+- name: test gather hcloud volume infos with correct label selector
+  hcloud_volume_info:
+    label_selector: "key=value"
+  register: hcloud_volume
+- name: verify test gather hcloud volume infos with correct label selector
+  assert:
+    that:
+      - hcloud_volume.hcloud_volume_info|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count == 1
+
+- name: test gather hcloud volume infos with wrong label selector
+  hcloud_volume_info:
+    label_selector: "key!=value"
+  register: hcloud_volume
+- name: verify test gather hcloud volume infos with wrong label selector
+  assert:
+    that:
+      - hcloud_volume.hcloud_volume_info | list | count == 0
+
+- name: test gather hcloud volume infos with correct name
+  hcloud_volume_info:
+    name: "{{hcloud_volume_name}}"
+  register: hcloud_volume
+- name: verify test gather hcloud volume infos with correct name
+  assert:
+    that:
+      - hcloud_volume.hcloud_volume_info|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count == 1
+
+- name: test gather hcloud volume infos with wrong name
+  hcloud_volume_info:
+      name: "{{hcloud_volume_name}}1"
+  register: hcloud_volume
+- name: verify test gather hcloud volume infos with wrong name
+  assert:
+    that:
+      - hcloud_volume.hcloud_volume_info | list | count == 0
+
+- name: test gather hcloud volume facts with correct id
+  hcloud_volume_info:
+    id: "{{main_volume.hcloud_volume.id}}"
+  register: hcloud_volume
+- name: verify test gather hcloud volume with correct id
+  assert:
+    that:
+      - hcloud_volume.hcloud_volume_info|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count == 1
+
+- name: test gather hcloud volume infos with wrong id
+  hcloud_volume_info:
+      name: "4711"
+  register: hcloud_volume
+- name: verify test gather hcloud volume infos with wrong id
+  assert:
+    that:
+      - hcloud_volume.hcloud_volume_info | list | count == 0
+
+- name: cleanup
+  hcloud_volume:
+    name: "{{ hcloud_volume_name }}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+    - result is success

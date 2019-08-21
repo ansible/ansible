@@ -246,6 +246,30 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``gluster_heal_facts`` module was renamed to :ref:`gluster_heal_info <gluster_heal_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_datacenter_facts`` module was renamed to :ref:`hcloud_datacenter_info <hcloud_datacenter_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_floating_ip_facts`` module was renamed to :ref:`hcloud_floating_ip_info <hcloud_floating_ip_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_image_facts`` module was renamed to :ref:`hcloud_image_info <hcloud_image_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_location_facts`` module was renamed to :ref:`hcloud_location_info <hcloud_location_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_server_facts`` module was renamed to :ref:`hcloud_server_info <hcloud_server_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_server_type_facts`` module was renamed to :ref:`hcloud_server_type_info <hcloud_server_type_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_ssh_key_facts`` module was renamed to :ref:`hcloud_ssh_key_info <hcloud_ssh_key_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``hcloud_volume_facts`` module was renamed to :ref:`hcloud_volume_info <hcloud_volume_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``hpilo_facts`` module was renamed to :ref:`hpilo_info <hpilo_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
