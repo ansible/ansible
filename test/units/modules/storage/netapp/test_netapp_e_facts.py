@@ -4,21 +4,21 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-from ansible.modules.storage.netapp.netapp_e_info import Info
+from ansible.modules.storage.netapp.netapp_e_facts import Facts
 from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 from units.compat import mock
 
 
-class InfoTest(ModuleTestCase):
+class FactsTest(ModuleTestCase):
     REQUIRED_PARAMS = {
         'api_username': 'rw',
         'api_password': 'password',
         'api_url': 'http://localhost',
         'ssid': '1'
     }
-    REQUEST_FUNC = 'ansible.modules.storage.netapp.netapp_e_info.Info.request'
-    GET_CONTROLLERS_FUNC = 'ansible.modules.storage.netapp.netapp_e_info.Info.get_controllers'
+    REQUEST_FUNC = 'ansible.modules.storage.netapp.netapp_e_facts.Facts.request'
+    GET_CONTROLLERS_FUNC = 'ansible.modules.storage.netapp.netapp_e_facts.Facts.get_controllers'
     WORKLOAD_RESPONSE = [{"id": "4200000001000000000000000000000000000000", "name": "beegfs_metadata",
                           "workloadAttributes": [{"key": "profileId", "value": "ansible_workload_1"}]},
                          {"id": "4200000002000000000000000000000000000000", "name": "other_workload_1",
@@ -343,86 +343,86 @@ class InfoTest(ModuleTestCase):
                                                                  "mapRef": "84000000600A098000A4B28D00303D065D430118",
                                                                  "id": "88000000A1010000000000000000000000000000"}]}, "highLevelVolBundle": {"pit": []}}
 
-    EXPECTED_GET_ARRAY_INFO = {'facts_from_proxy': False, 'netapp_controllers': [{'name': 'A', 'serial': '021619039162', 'status': 'optimal'}],
-                               'netapp_disks': [
-                                   {'available': True, 'firmware_version': 'MSB6', 'id': '0100000050000396AC882ED10000000000000000', 'media_type': 'ssd',
-                                    'product_id': 'PX04SVQ160      ', 'serial_number': 'Y530A001T5MD', 'status': 'optimal',
-                                    'tray_ref': '0E00000000000000000000000000000000000000', 'usable_bytes': '1599784443904'},
-                                   {'available': True, 'firmware_version': 'MSB6', 'id': '0100000050000396AC882EDD0000000000000000', 'media_type': 'ssd',
-                                    'product_id': 'PX04SVQ160      ', 'serial_number': 'Y530A004T5MD', 'status': 'optimal',
-                                    'tray_ref': '0E00000000000000000000000000000000000000', 'usable_bytes': '1599784443904'}],
-                               'netapp_driveside_interfaces': [{'controller': 'A', 'interface_speed': '12g', 'interface_type': 'sas'}],
-                               'netapp_enabled_features': ['autoCodeSync', 'autoLunTransfer', 'bundleMigration', 'driveSlotLimit', 'flashReadCache',
-                                                           'mixedDriveTypes', 'performanceTier', 'protectionInformation', 'raid6', 'secureVolume',
-                                                           'ssdSupport', 'stagedDownload', 'storagePoolsType2', 'subLunsAllowed',
-                                                           'totalNumberOfArvmMirrorsPerArray', 'totalNumberOfPitsPerArray',
-                                                           'totalNumberOfThinVolumesPerArray'], 'netapp_host_groups': [],
-                               'netapp_host_types': [{'index': 0, 'type': 'FactoryDefault'}, {'index': 1, 'type': 'W2KNETNCL'},
-                                                     {'index': 27, 'type': 'LnxTPGSALUA_SF'}, {'index': 28, 'type': 'LnxDHALUA'}],
-                               'netapp_hosts': [
-                                   {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
-                                    'hosts_reference': '84000000600A098000A4B28D00303D005D430107',
-                                    'id': '84000000600A098000A4B28D00303D005D430107', 'name': 'test',
-                                    'posts': [{'address': 'iqn.iscsi_tests1', 'label': 'iscsi_test1', 'type': 'iscsi'}]},
-                                   {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
-                                    'hosts_reference': '84000000600A098000A4B9D1003037035D4300F8',
-                                    'id': '84000000600A098000A4B9D1003037035D4300F8', 'name': 'test2',
-                                    'posts': [{'address': 'iqn.iscsi_tests2', 'label': 'iscsi_test2', 'type': 'iscsi'}]},
-                                   {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
-                                    'hosts_reference': '84000000600A098000A4B28D00303D065D430118',
-                                    'id': '84000000600A098000A4B28D00303D065D430118', 'name': 'beegfs_storage1',
-                                    'posts': [{'address': 'iqn.1993-08.org.debian.beegfs-storage1:01:b0621126818', 'label': 'beegfs_storage1_iscsi_0',
-                                               'type': 'iscsi'}]},
-                                   {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
-                                    'hosts_reference': '84000000600A098000A4B9D10030370B5D430109',
-                                    'id': '84000000600A098000A4B9D10030370B5D430109', 'name': 'beegfs_metadata1',
-                                    'posts': [{'address': 'iqn.1993-08.org.debian.beegfs-metadata:01:69e4efdf30b8', 'label': 'beegfs_metadata1_iscsi_0',
-                                               'type': 'iscsi'}]}],
-                               'netapp_hostside_interfaces': [{'fc': [], 'ib': [],
-                                                               'iscsi': [
-                                                                   {'controller': 'A', 'current_interface_speed': '10g', 'ipv4_address': '10.10.11.110',
-                                                                    'ipv4_enabled': True,
-                                                                    'ipv4_gateway': '0.0.0.0', 'ipv4_subnet_mask': '255.255.255.0', 'ipv6_enabled': True,
-                                                                    'iqn': 'iqn.1992-08.com.netapp:2806.600a098000a4b28d000000005cf10481', 'link_status': 'up',
-                                                                    'mtu': 9000,
-                                                                    'supported_interface_speeds': ['1g', '10g']}], 'sas': []}],
-                               'netapp_management_interfaces': [
-                                   {'alias': 'ictm0718s01c1-a', 'channel': 1, 'controller': 'A', 'dns_config_method': 'stat',
-                                    'dns_servers': [{'addressType': 'ipv4', 'ipv4Address': '10.193.0.250', 'ipv6Address': None},
-                                                    {'addressType': 'ipv4', 'ipv4Address': '10.192.0.250', 'ipv6Address': None}],
-                                    'ipv4_address': '10.113.1.192',
-                                    'ipv4_address_config_method': 'static', 'ipv4_enabled': True, 'ipv4_gateway': '10.113.1.1',
-                                    'ipv4_subnet_mask': '255.255.255.0', 'ipv6_enabled': False, 'link_status': 'up',
-                                    'mac_address': '00A098A4B28D', 'name': 'wan0', 'ntp_config_method': 'stat',
-                                    'ntp_servers': [
-                                        {'addrType': 'ipvx', 'domainName': None,
-                                         'ipvxAddress': {'addressType': 'ipv4', 'ipv4Address': '216.239.35.0', 'ipv6Address': None}},
-                                        {'addrType': 'ipvx', 'domainName': None,
-                                         'ipvxAddress': {'addressType': 'ipv4', 'ipv4Address': '216.239.35.4', 'ipv6Address': None}}],
-                                    'remote_ssh_access': True}],
-                               'netapp_storage_array': {'cache_block_sizes': [4096, 8192, 16384, 32768], 'chassis_serial': '021633035190',
-                                                        'firmware': '08.42.30.05', 'name': 'ictm0718s01c1',
-                                                        'segment_sizes': [32768, 65536, 131072, 262144, 524288, 495616, 655360, 1982464],
-                                                        'wwn': '600A098000A4B28D000000005CF10481'},
-                               'netapp_storage_pools': [
-                                   {'available_capacity': '8498142969856', 'id': '04000000600A098000A4B9D10000380A5D4AAC3C', 'name': 'beegfs_storage_vg',
-                                    'total_capacity': '9597654597632', 'used_capacity': '1099511627776'}],
-                               'netapp_volumes': [
-                                   {'capacity': '1099511627776', 'id': '02000000600A098000A4B28D00003E435D4AAC54', 'is_thin_provisioned': False,
-                                    'name': 'beegfs_storage_01_1', 'parent_storage_pool_id': '04000000600A098000A4B9D10000380A5D4AAC3C', 'workload': []}],
-                               'netapp_volumes_by_initiators': {'beegfs_metadata1': [],
-                                                                'beegfs_storage1': [{
-                                                                    'id': '02000000600A098000A4B28D00003E435D4AAC54',
-                                                                    'meta_data': {},
-                                                                    'name': 'beegfs_storage_01_1',
-                                                                    'workload_name': '',
-                                                                    'wwn': '600A098000A4B28D00003E435D4AAC54'}],
-                                                                'test': [], 'test2': []},
-                               'netapp_workload_tags': [
-                                   {'attributes': [{'key': 'profileId', 'value': 'ansible_workload_1'}], 'id': '4200000001000000000000000000000000000000',
-                                    'name': 'beegfs_metadata'},
-                                   {'attributes': [{'key': 'profileId', 'value': 'Other_1'}], 'id': '4200000002000000000000000000000000000000',
-                                    'name': 'other_workload_1'}], 'snapshot_images': [], 'ssid': '1'}
+    EXPECTED_GET_ARRAY_FACTS = {'facts_from_proxy': False, 'netapp_controllers': [{'name': 'A', 'serial': '021619039162', 'status': 'optimal'}],
+                                'netapp_disks': [
+                                    {'available': True, 'firmware_version': 'MSB6', 'id': '0100000050000396AC882ED10000000000000000', 'media_type': 'ssd',
+                                     'product_id': 'PX04SVQ160      ', 'serial_number': 'Y530A001T5MD', 'status': 'optimal',
+                                     'tray_ref': '0E00000000000000000000000000000000000000', 'usable_bytes': '1599784443904'},
+                                    {'available': True, 'firmware_version': 'MSB6', 'id': '0100000050000396AC882EDD0000000000000000', 'media_type': 'ssd',
+                                     'product_id': 'PX04SVQ160      ', 'serial_number': 'Y530A004T5MD', 'status': 'optimal',
+                                     'tray_ref': '0E00000000000000000000000000000000000000', 'usable_bytes': '1599784443904'}],
+                                'netapp_driveside_interfaces': [{'controller': 'A', 'interface_speed': '12g', 'interface_type': 'sas'}],
+                                'netapp_enabled_features': ['autoCodeSync', 'autoLunTransfer', 'bundleMigration', 'driveSlotLimit', 'flashReadCache',
+                                                            'mixedDriveTypes', 'performanceTier', 'protectionInformation', 'raid6', 'secureVolume',
+                                                            'ssdSupport', 'stagedDownload', 'storagePoolsType2', 'subLunsAllowed',
+                                                            'totalNumberOfArvmMirrorsPerArray', 'totalNumberOfPitsPerArray',
+                                                            'totalNumberOfThinVolumesPerArray'], 'netapp_host_groups': [],
+                                'netapp_host_types': [{'index': 0, 'type': 'FactoryDefault'}, {'index': 1, 'type': 'W2KNETNCL'},
+                                                      {'index': 27, 'type': 'LnxTPGSALUA_SF'}, {'index': 28, 'type': 'LnxDHALUA'}],
+                                'netapp_hosts': [
+                                    {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
+                                     'hosts_reference': '84000000600A098000A4B28D00303D005D430107',
+                                     'id': '84000000600A098000A4B28D00303D005D430107', 'name': 'test',
+                                     'posts': [{'address': 'iqn.iscsi_tests1', 'label': 'iscsi_test1', 'type': 'iscsi'}]},
+                                    {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
+                                     'hosts_reference': '84000000600A098000A4B9D1003037035D4300F8',
+                                     'id': '84000000600A098000A4B9D1003037035D4300F8', 'name': 'test2',
+                                     'posts': [{'address': 'iqn.iscsi_tests2', 'label': 'iscsi_test2', 'type': 'iscsi'}]},
+                                    {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
+                                     'hosts_reference': '84000000600A098000A4B28D00303D065D430118',
+                                     'id': '84000000600A098000A4B28D00303D065D430118', 'name': 'beegfs_storage1',
+                                     'posts': [{'address': 'iqn.1993-08.org.debian.beegfs-storage1:01:b0621126818', 'label': 'beegfs_storage1_iscsi_0',
+                                                'type': 'iscsi'}]},
+                                    {'group_id': '0000000000000000000000000000000000000000', 'host_type_index': 28,
+                                     'hosts_reference': '84000000600A098000A4B9D10030370B5D430109',
+                                     'id': '84000000600A098000A4B9D10030370B5D430109', 'name': 'beegfs_metadata1',
+                                     'posts': [{'address': 'iqn.1993-08.org.debian.beegfs-metadata:01:69e4efdf30b8', 'label': 'beegfs_metadata1_iscsi_0',
+                                                'type': 'iscsi'}]}],
+                                'netapp_hostside_interfaces': [{'fc': [], 'ib': [],
+                                                                'iscsi': [
+                                                                    {'controller': 'A', 'current_interface_speed': '10g', 'ipv4_address': '10.10.11.110',
+                                                                     'ipv4_enabled': True,
+                                                                     'ipv4_gateway': '0.0.0.0', 'ipv4_subnet_mask': '255.255.255.0', 'ipv6_enabled': True,
+                                                                     'iqn': 'iqn.1992-08.com.netapp:2806.600a098000a4b28d000000005cf10481', 'link_status': 'up',
+                                                                     'mtu': 9000,
+                                                                     'supported_interface_speeds': ['1g', '10g']}], 'sas': []}],
+                                'netapp_management_interfaces': [
+                                    {'alias': 'ictm0718s01c1-a', 'channel': 1, 'controller': 'A', 'dns_config_method': 'stat',
+                                     'dns_servers': [{'addressType': 'ipv4', 'ipv4Address': '10.193.0.250', 'ipv6Address': None},
+                                                     {'addressType': 'ipv4', 'ipv4Address': '10.192.0.250', 'ipv6Address': None}],
+                                     'ipv4_address': '10.113.1.192',
+                                     'ipv4_address_config_method': 'static', 'ipv4_enabled': True, 'ipv4_gateway': '10.113.1.1',
+                                     'ipv4_subnet_mask': '255.255.255.0', 'ipv6_enabled': False, 'link_status': 'up',
+                                     'mac_address': '00A098A4B28D', 'name': 'wan0', 'ntp_config_method': 'stat',
+                                     'ntp_servers': [
+                                         {'addrType': 'ipvx', 'domainName': None,
+                                          'ipvxAddress': {'addressType': 'ipv4', 'ipv4Address': '216.239.35.0', 'ipv6Address': None}},
+                                         {'addrType': 'ipvx', 'domainName': None,
+                                          'ipvxAddress': {'addressType': 'ipv4', 'ipv4Address': '216.239.35.4', 'ipv6Address': None}}],
+                                     'remote_ssh_access': True}],
+                                'netapp_storage_array': {'cache_block_sizes': [4096, 8192, 16384, 32768], 'chassis_serial': '021633035190',
+                                                         'firmware': '08.42.30.05', 'name': 'ictm0718s01c1',
+                                                         'segment_sizes': [32768, 65536, 131072, 262144, 524288, 495616, 655360, 1982464],
+                                                         'wwn': '600A098000A4B28D000000005CF10481'},
+                                'netapp_storage_pools': [
+                                    {'available_capacity': '8498142969856', 'id': '04000000600A098000A4B9D10000380A5D4AAC3C', 'name': 'beegfs_storage_vg',
+                                     'total_capacity': '9597654597632', 'used_capacity': '1099511627776'}],
+                                'netapp_volumes': [
+                                    {'capacity': '1099511627776', 'id': '02000000600A098000A4B28D00003E435D4AAC54', 'is_thin_provisioned': False,
+                                     'name': 'beegfs_storage_01_1', 'parent_storage_pool_id': '04000000600A098000A4B9D10000380A5D4AAC3C', 'workload': []}],
+                                'netapp_volumes_by_initiators': {'beegfs_metadata1': [],
+                                                                 'beegfs_storage1': [{
+                                                                     'id': '02000000600A098000A4B28D00003E435D4AAC54',
+                                                                     'meta_data': {},
+                                                                     'name': 'beegfs_storage_01_1',
+                                                                     'workload_name': '',
+                                                                     'wwn': '600A098000A4B28D00003E435D4AAC54'}],
+                                                                 'test': [], 'test2': []},
+                                'netapp_workload_tags': [
+                                    {'attributes': [{'key': 'profileId', 'value': 'ansible_workload_1'}], 'id': '4200000001000000000000000000000000000000',
+                                     'name': 'beegfs_metadata'},
+                                    {'attributes': [{'key': 'profileId', 'value': 'Other_1'}], 'id': '4200000002000000000000000000000000000000',
+                                     'name': 'other_workload_1'}], 'snapshot_images': [], 'ssid': '1'}
 
     def _set_args(self, **kwargs):
         module_args = self.REQUIRED_PARAMS.copy()
@@ -433,22 +433,22 @@ class InfoTest(ModuleTestCase):
     def test_get_controllers_pass(self):
         """Verify get_controllers returns the expected results."""
         self._set_args()
-        info = Info()
+        facts = Facts()
         with mock.patch(self.REQUEST_FUNC, return_value=(200, ["070000000000000000000002", "070000000000000000000001"])):
-            self.assertEqual(info.get_controllers(), {"070000000000000000000001": "A", "070000000000000000000002": "B"})
+            self.assertEqual(facts.get_controllers(), {"070000000000000000000001": "A", "070000000000000000000002": "B"})
 
     def test_get_controllers_fail(self):
         """Verify get_controllers throws the expected exceptions."""
         self._set_args()
-        info = Info()
+        facts = Facts()
         with self.assertRaisesRegexp(AnsibleFailJson, "Failed to retrieve controller list!"):
             with mock.patch(self.REQUEST_FUNC, return_value=Exception()):
-                info.get_controllers()
+                facts.get_controllers()
 
-    def test_get_array_info_pass(self):
-        """Verify get_array_info method returns expected results."""
+    def test_get_array_facts_pass(self):
+        """Verify get_array_facts method returns expected results."""
         self._set_args()
-        info = Info()
+        facts = Facts()
         with mock.patch(self.GET_CONTROLLERS_FUNC, return_value={"070000000000000000000001": "A", "070000000000000000000002": "B"}):
             with mock.patch(self.REQUEST_FUNC, side_effect=[(200, self.GRAPH_RESPONSE), (200, self.WORKLOAD_RESPONSE)]):
-                self.assertEquals(info.get_array_info(), self.EXPECTED_GET_ARRAY_INFO)
+                self.assertEquals(facts.get_array_facts(), self.EXPECTED_GET_ARRAY_FACTS)
