@@ -1,0 +1,10 @@
+---
+- name: Populate Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      lldp holdtime 10
+      lldp run
+      lldp timer 100
+      lldp reinit 3
