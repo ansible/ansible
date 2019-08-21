@@ -82,7 +82,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
         callback(files)
 
     # maintain predictable file order
-    files = sorted(files)
+    files = sorted(set(files))
 
     display.info('Creating a payload archive containing %d files...' % len(files), verbosity=1)
 
