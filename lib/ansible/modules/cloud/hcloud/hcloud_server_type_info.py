@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: hcloud_server_type_facts
+module: hcloud_server_type_info
 
 short_description: Gather facts about the Hetzner Cloud server types.
 
@@ -24,6 +24,8 @@ version_added: "2.8"
 
 description:
     - Gather facts about your Hetzner Cloud server types.
+    - This module was called C(hcloud_server_type_info) before Ansible 2.9, returning C(ansible_facts) and C(hcloud_server_type_info).
+      Note that the M(hcloud_server_type_info) module no longer returns C(ansible_facts) and the value was renamed to C(hcloud_server_type_info)!
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -41,18 +43,18 @@ extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud server type facts
-  local_action:
-    module: hcloud_server_type_facts
+- name: Gather hcloud server type infos
+  hcloud_server_type_info:
+  register: output
 
-- name: Print the gathered facts
+- name: Print the gathered infos
   debug:
-    var: ansible_facts.hcloud_server_type_facts
+    var: output.hcloud_server_type_info
 """
 
 RETURN = """
-hcloud_server_type_facts:
-    description: The server type facts as list
+hcloud_server_type_info:
+    description: The server type infos as list
     returned: always
     type: complex
     contains:
@@ -108,15 +110,15 @@ except ImportError:
     pass
 
 
-class AnsibleHcloudLocationFacts(Hcloud):
+class AnsibleHcloudServerTypeInfo(Hcloud):
     def __init__(self, module):
-        Hcloud.__init__(self, module, "hcloud_server_type_facts")
-        self.hcloud_server_type_facts = None
+        Hcloud.__init__(self, module, "hcloud_server_type_info")
+        self.hcloud_server_type_info = None
 
     def _prepare_result(self):
         tmp = []
 
-        for server_type in self.hcloud_server_type_facts:
+        for server_type in self.hcloud_server_type_info:
             if server_type is not None:
                 tmp.append({
                     "id": to_native(server_type.id),
@@ -133,15 +135,15 @@ class AnsibleHcloudLocationFacts(Hcloud):
     def get_server_types(self):
         try:
             if self.module.params.get("id") is not None:
-                self.hcloud_server_type_facts = [self.client.server_types.get_by_id(
+                self.hcloud_server_type_info = [self.client.server_types.get_by_id(
                     self.module.params.get("id")
                 )]
             elif self.module.params.get("name") is not None:
-                self.hcloud_server_type_facts = [self.client.server_types.get_by_name(
+                self.hcloud_server_type_info = [self.client.server_types.get_by_name(
                     self.module.params.get("name")
                 )]
             else:
-                self.hcloud_server_type_facts = self.client.server_types.get_all()
+                self.hcloud_server_type_info = self.client.server_types.get_all()
 
         except APIException as e:
             self.module.fail_json(msg=e.message)
@@ -159,15 +161,26 @@ class AnsibleHcloudLocationFacts(Hcloud):
 
 
 def main():
-    module = AnsibleHcloudLocationFacts.define_module()
+    module = AnsibleHcloudServerTypeInfo.define_module()
 
-    hcloud = AnsibleHcloudLocationFacts(module)
+    is_old_facts = module._name == 'hcloud_server_type_facts'
+    if is_old_facts:
+        module.deprecate("The 'hcloud_server_type_info' module has been renamed to 'hcloud_server_type_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
+
+    hcloud = AnsibleHcloudServerTypeInfo(module)
     hcloud.get_server_types()
     result = hcloud.get_result()
-    ansible_facts = {
-        'hcloud_server_type_facts': result['hcloud_server_type_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts)
+    if is_old_facts:
+        ansible_info = {
+            'hcloud_server_type_info': result['hcloud_server_type_info']
+        }
+        module.exit_json(ansible_facts=ansible_info)
+    else:
+        ansible_info = {
+            'hcloud_server_type_info': result['hcloud_server_type_info']
+        }
+        module.exit_json(**ansible_info)
 
 
 if __name__ == "__main__":
