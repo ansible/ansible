@@ -3264,7 +3264,8 @@ html {
     background: #fcfcfc;
 }
 .wy-grid-for-nav {
-    position: absolute;
+  /* Ansible - changed to relative to remove extraneous side scroll bar */
+    position: relative;
     width: 100%;
     height: 100%}
 .wy-nav-side {
@@ -3284,7 +3285,7 @@ html {
     top: 45px;
 }
 .wy-side-scroll {
-/* Ansible - causes side scrollbar to disappear    width: 320px; */
+    width: 320px;
     position: relative;
     overflow-x: hidden;
     overflow-y: scroll;
@@ -3418,8 +3419,9 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 #search-results .context {
     color: gray;
     font-size: 90%}
-/* Ansible -has strange effect of changing permalink to P image .genindextable li>ul {
-        margin-left: 24px; */
+.genindextable li>ul {
+    margin-left: 24px;
+}
 @media screen and (max-width: 768px) {
     .wy-body-for-nav {
     background: #fcfcfc;
@@ -3445,11 +3447,9 @@ footer span.commit code, footer span.commit .rst-content tt, .rst-content footer
 }
 .wy-nav-content-wrap {
     margin-left: 0;
-    top: 15px;
 }
 .wy-nav-content-wrap .wy-nav-content {
     padding: 1.618em;
-    padding-bottom: 100px;
 }
 .wy-nav-content-wrap.shift {
     position: fixed;
