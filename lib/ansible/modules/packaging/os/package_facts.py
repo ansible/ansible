@@ -36,8 +36,8 @@ options:
     version_added: "2.8"
 version_added: "2.5"
 requirements:
-    - For 'portage' support it requires the `qlist` utility, which is part of 'app-portage/portage-utils'.
-    - For Debian-based systems `python-apt` package must be installed on targeted hosts.
+    - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
+    - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
