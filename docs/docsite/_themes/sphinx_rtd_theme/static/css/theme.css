@@ -1,3 +1,6 @@
+/* sphinx_rtd_theme version 0.4.3 | MIT license */
+/* Built 20190212 16:02 */
+/* Ansible -merged 20190821 for 2.9 */
 * {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -3324,37 +3327,15 @@ html {
     cursor: pointer;
     padding-top: inherit;
 }
-@media screen and (max-width: 768px) {
-    .wy-nav-content-wrap {
-    margin-top: 30px;
+.wy-nav-content-wrap {
     margin-left: 300px;
-    width: 100%;
-    float: left;
-    background: #fcfcfc;
-    min-height: 100%;
-    position: fixed;
-    top: 15px;
-}
-}
-@media screen and (min-width: 768px) {
-    .wy-nav-content-wrap {
-    margin-top: 0px;
-    margin-left: 300px;
-    width: calc(100% - 300px);
-    float: left;
     background: #fcfcfc;
     min-height: 100%}
-}
 .wy-nav-content {
     padding: 1.618em 3.236em;
     height: 100%;
+    max-width: 800px;
     margin: auto;
-    overflow-x: hidden;
-    overflow-y: scroll;
-    position: fixed;
-    width: inherit;
-    padding-bottom: 50px;
-    -webkit-overflow-scrolling: touch;
 }
 .wy-body-mask {
     position: fixed;
