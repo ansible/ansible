@@ -34,7 +34,7 @@ options:
     return_dict:
         description:
         - returns a parsesable dictonary instead of raw XML output
-        choices: ['true', 'false']
+        type: bool
         default: false
         version_added: "2.9"
 '''
@@ -61,7 +61,6 @@ RETURN = """
 """
 
 import traceback
-import xml.parsers.expat
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
@@ -76,10 +75,8 @@ class NetAppONTAPCommand(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             command=dict(required=True, type='list'),
-            privilege=dict(required=False, type='str', choices=['admin', 'advanced'],
-                           default='admin'),
-            return_dict=dict(required=False, type='bool', choices=[True, False],
-                             default=False)
+            privilege=dict(required=False, type='str', choices=['admin', 'advanced'], default='admin'),
+            return_dict=dict(required=False, type='bool', default=False)
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -135,7 +132,7 @@ class NetAppONTAPCommand(object):
             output = self.server.invoke_successfully(command_obj, True)
             if self.return_dict:
                 # Parseable dict output
-                retval = self.parse_xml_to_dict(output.to_string())
+                retval = self.parse_xml_to_dict(output.to_string())                    
             else:
                 # Raw XML output
                 retval = output.to_string()
@@ -154,30 +151,35 @@ class NetAppONTAPCommand(object):
 
     def parse_xml_to_dict(self, xmldata):
         '''Parse raw XML from system-cli and create an Ansible parseable dictonary'''
-
-        xml_str = xmldata.decode('utf-8').replace('\n', '---')
-
-        xml_parser = xml.parsers.expat.ParserCreate()
-        xml_parser.StartElementHandler = self._start_element
-        xml_parser.CharacterDataHandler = self._char_data
-        xml_parser.EndElementHandler = self._end_element
-
         try:
-            xml_parser.Parse(xml_str)
-            self.result_dict['status'] = self.result_dict['xml_dict']['results']['attrs']['status']
-            stdout_string = self._format_escaped_data(self.result_dict['xml_dict']['cli-output']['data'])
-            self.result_dict['stdout'] = stdout_string
-            for line in stdout_string.split('\n'):
-                stripped_line = line.strip()
-                if len(stripped_line) > 1:
-                    self.result_dict['stdout_lines'].append(stripped_line)
-            self.result_dict['xml_dict']['cli-output']['data'] = stdout_string
-            self.result_dict['result_value'] = int(str(self.result_dict['xml_dict']['cli-result-value']['data']).replace("'", ""))
+            import xml.parsers.expat
+            xml_str = xmldata.decode('utf-8').replace('\n', '---')
 
-        except xml.parsers.expat.ExpatError as errcode:
-            self.result_dict['status'] = "XML parser: " + str(errcode)
+            xml_parser = xml.parsers.expat.ParserCreate()
+            xml_parser.StartElementHandler = self._start_element
+            xml_parser.CharacterDataHandler = self._char_data
+            xml_parser.EndElementHandler = self._end_element
 
-        return self.result_dict
+            try:
+                xml_parser.Parse(xml_str)
+                self.result_dict['status'] = self.result_dict['xml_dict']['results']['attrs']['status']
+                stdout_string = self._format_escaped_data(self.result_dict['xml_dict']['cli-output']['data'])
+                self.result_dict['stdout'] = stdout_string
+                for line in stdout_string.split('\n'):
+                    stripped_line = line.strip()
+                    if len(stripped_line) > 1:
+                        self.result_dict['stdout_lines'].append(stripped_line)
+                self.result_dict['xml_dict']['cli-output']['data'] = stdout_string
+                self.result_dict['result_value'] = int(str(self.result_dict['xml_dict']['cli-result-value']['data']).replace("'", ""))
+
+            except xml.parsers.expat.ExpatError as errcode:
+                self.result_dict['status'] = "XML parser: " + str(errcode)
+
+            
+        except ImportError:
+            self.result_dict['stdout'] = "XML parsing failed. Cannot import xml.parsers.expat!"
+        
+        return self.result_dict 
 
     def _start_element(self, name, attrs):
         ''' Start XML element '''
