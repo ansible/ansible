@@ -15,7 +15,7 @@
     datacenter: "{{ dc1 }}"
     validate_certs: no
     name: "{{ virtual_machines[0].name }}"
-    disk: 
+    disk:
         - datastore: "{{ ds1 }}"
           disk_mode: "invalid_disk_mode"
           scsi_controller: 0
@@ -27,7 +27,7 @@
   register: test_create_disk1
   ignore_errors: True
 
-- debug: 
+- debug:
     msg: "{{ test_create_disk1 }}"
 
 - name: assert that changes were not made
@@ -43,7 +43,7 @@
     datacenter: "{{ dc1 }}"
     validate_certs: no
     name: "{{ virtual_machines[0].name }}"
-    disk: 
+    disk:
         - datastore: "{{ ds1 }}"
           disk_mode: "independent_persistent"
           scsi_controller: 0
@@ -70,7 +70,7 @@
           unit_number: 4
   register: test_create_disk2
 
-- debug: 
+- debug:
     msg: "{{ test_create_disk2 }}"
 
 - name: assert that changes were made
