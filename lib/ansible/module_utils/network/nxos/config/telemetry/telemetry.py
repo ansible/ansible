@@ -71,8 +71,6 @@ class Telemetry(ConfigBase):
         state = self._module.params['state']
         if 'overridden' in state:
             self._module.fail_json(msg='State <overridden> is invalid for this module.')
-        if 'replaced' in state:
-            self._module.fail_json(msg='State: <replaced> not yet supported')
 
         # When state is 'deleted', the module_params should not contain data
         # under the 'config' key
@@ -154,6 +152,7 @@ class Telemetry(ConfigBase):
         ref.get_existing()
         ref.get_playvals()
         device_cache = ref.cache_existing
+        import epdb ; epdb.serve()
 
         if device_cache is None:
             device_cache_lines = []
@@ -226,27 +225,24 @@ class Telemetry(ConfigBase):
                 ref.get_existing(device_cache)
                 ref.get_playvals()
 
-        if state == 'overridden':
-            if want == have:
-                return []
-            commands = self._state_overridden(cmd_ref, want, have)
-        elif state == 'merged':
+        if state == 'merged':
             if want == have:
                 return []
             commands = self._state_merged(cmd_ref)
         elif state == 'replaced':
             if want == have:
                 return []
-            commands = self._state_replaced(cmd_ref)
+            commands = self._state_replaced(cmd_ref, want, have)
         return commands
 
     @staticmethod
-    def _state_replaced(cmd_ref):
+    def _state_replaced(cmd_ref, want, have):
         """ The command generator when state is replaced
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
+        import epdb ; epdb.serve()
         commands = []
         return commands
 

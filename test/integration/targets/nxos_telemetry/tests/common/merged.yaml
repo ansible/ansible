@@ -147,6 +147,7 @@
           - { id: 55, destination_group: 10, sensor_group: {id: 55, sample_interval: 2000}}
     register: result
 
+  - meta: end_play
     # The step above should result in only the following changes:
     # "commands": [
     #     "telemetry",

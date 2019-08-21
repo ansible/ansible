@@ -1,0 +1,64 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_telemetry replaced sanity test"
+
+# - set_fact: source_interface="Loopback55"
+#   when: imagetag and (major_version is version_compare('9.1', 'ge'))
+#
+# - set_fact: command_list_length=30
+# - set_fact: command_list_length=31
+#   when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+# - name: Setup
+#   nxos_feature: &setup_teardown
+#     feature: telemetry
+#     state: disabled
+#   ignore_errors: yes
+
+- block:
+  - name: Gather Telemetry Facts Before Changes
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources:
+        - telemetry
+
+  - name: Telemetry - replaced
+    nxos_telemetry: &replaced
+      state: 'replaced'
+      config:
+        certificate:
+          key: /bootflash/new_key.key
+          hostname: server.example.com
+        compression: gzip
+        source_interface: "loopback77"
+        vrf: management
+        destination_groups:
+          - id: 2
+            destination:
+              ip: 192.168.0.1
+              port: 50001
+              protocol: grpc
+              encoding: gpb
+          - { id: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: Grpc, encoding: gPB}}
+          - { id: 10, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: gpb}}
+          - { id: 11, destination: {ip: 192.168.0.5, port: 40001, protocol: gRPC, encoding: gpb}}
+        sensor_groups:
+          - { id: 8, data_source: NX-API, path: {name: sys/bgp, depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 2, data_source: NX-API, path: {name: sys/bgp/inst, depth: unbounded, query_condition: foo, filter_condition: foo}}
+          - { id: 55, data_source: DME, path: {name: 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]', depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 55, data_source: DME, path: {name: sys/ospf, depth: 0, query_condition: foo, filter_condition: 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'}}
+          - { id: 10, data_source: NX-API, path: {name: sys/bgp, depth: 0, query_condition: foo, filter_condition: foo}}
+        subscriptions:
+          - { id: 44, destination_group: 2, sensor_group: {id: 2, sample_interval: 2000}}
+          - { id: 55, destination_group: 10, sensor_group: {id: 55, sample_interval: 2000}}
+          - { id: 44, destination_group: 11, sensor_group: {id: 55, sample_interval: 2000}}
+          - { id: 55, destination_group: 2, sensor_group: {id: 2, sample_interval: 3000}}
+    register: result
+
+  # always:
+  # - name: Teardown
+  #   nxos_feature: *setup_teardown
+  #   ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_telemetry merged sanity test"
