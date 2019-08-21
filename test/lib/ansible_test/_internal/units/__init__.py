@@ -101,6 +101,9 @@ def command_units(args):
             '--junit-xml', os.path.join(data_context().results, 'junit', 'python%s-units.xml' % version),
         ]
 
+        if not data_context().content.collection:
+            cmd.append('--durations=25')
+
         if version != '2.6':
             # added in pytest 4.5.0, which requires python 2.7+
             cmd.append('--strict-markers')
