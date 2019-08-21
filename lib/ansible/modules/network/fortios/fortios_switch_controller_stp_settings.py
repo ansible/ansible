@@ -80,19 +80,19 @@ options:
         suboptions:
             forward_time:
                 description:
-                    - Period of time a port is in listening and learning state (4 - 30 sec, default = 15).
+                    - Period of time a port is in listening and learning state (4 - 30 sec).
                 type: int
             hello_time:
                 description:
-                    - Period of time between successive STP frame Bridge Protocol Data Units (BPDUs) sent on a port (1 - 10 sec, default = 2).
+                    - Period of time between successive STP frame Bridge Protocol Data Units (BPDUs) sent on a port (1 - 10 sec).
                 type: int
             max_age:
                 description:
-                    - Maximum time before a bridge port saves its configuration BPDU information (6 - 40 sec, default = 20).
+                    - Maximum time before a bridge port saves its configuration BPDU information (6 - 40 sec).
                 type: int
             max_hops:
                 description:
-                    - Maximum number of hops between the root bridge and the furthest bridge (1- 40, default = 20).
+                    - Maximum number of hops between the root bridge and the furthest bridge (1- 40).
                 type: int
             name:
                 description:
@@ -100,7 +100,7 @@ options:
                 type: str
             pending_timer:
                 description:
-                    - Pending time (1 - 15 sec, default = 4).
+                    - Pending time (1 - 15 sec).
                 type: int
             revision:
                 description:
