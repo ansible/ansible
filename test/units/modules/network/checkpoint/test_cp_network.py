@@ -25,20 +25,19 @@ from ansible.module_utils import basic
 from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.checkpoint import cp_network
 
-
-OBJECT = {'name': 'test_network', 'nat_settings': {'auto-rule': True,
-                                                   'hide-behind': 'ip-address',
-                                                   'ip-address': '192.168.1.111'},
+OBJECT = {'name': 'test_network', 'nat_settings': [{'auto_rule': True,
+                                                    'hide_behind': 'ip-address',
+                                                    'ip_address': '192.168.1.111'}],
           'subnet': '192.0.2.1', 'subnet_mask': '255.255.255.0', 'state': 'present'}
 
-CREATE_PAYLOAD = {'name': 'test_network', 'nat_settings': {'auto-rule': True,
-                                                           'hide-behind': 'ip-address',
-                                                           'ip-address': '192.168.1.111'},
+CREATE_PAYLOAD = {'name': 'test_network', 'nat_settings': [{'auto_rule': True,
+                                                            'hide_behind': 'ip-address',
+                                                            'ip_address': '192.168.1.111'}],
                   'subnet': '192.168.1.0', 'subnet_mask': '255.255.255.0', 'state': 'present'}
 
-UPDATE_PAYLOAD = {'name': 'test_new_network', 'nat_settings': {'auto-rule': True,
-                                                               'hide-behind': 'ip-address',
-                                                               'ip-address': '192.168.1.111'},
+UPDATE_PAYLOAD = {'name': 'test_new_network', 'nat_settings': [{'auto_rule': True,
+                                                                'hide_behind': 'ip-address',
+                                                                'ip_address': '192.168.1.111'}],
                   'subnet': '192.168.1.0', 'subnet_mask': '255.255.255.0', 'state': 'present'}
 
 DELETE_PAYLOAD = {'name': 'test_new_network', 'state': 'absent'}
