@@ -53,9 +53,10 @@ options:
             - Identifies the key in the record column, when the column is a map
               type.
     value:
-        required: true
+        required: false
         description:
             - Expected value for the table, record, column and key.
+            - Required when I(state) is I(present)
     timeout:
         required: false
         default: 5
@@ -83,7 +84,7 @@ EXAMPLES = '''
 
 # Remove in band key
 - openvswitch_db:
-    state: present
+    state: absent
     table: Bridge
     record: br-int
     col: other_config
@@ -113,7 +114,10 @@ def map_obj_to_commands(want, have, module):
     if module.params['state'] == 'absent':
         if 'key' in have.keys():
             templatized_command = "%(ovs-vsctl)s -t %(timeout)s remove %(table)s %(record)s " \
-                                  "%(col)s %(key)s=%(value)s"
+                                  "%(col)s %(key)s"
+            # Append the value only when provided
+            if 'value' in want.keys():
+                templatized_command += "=%(value)s"
             commands.append(templatized_command % module.params)
         elif module.params['key'] is None:
             templatized_command = "%(ovs-vsctl)s -t %(timeout)s remove %(table)s %(record)s " \
@@ -176,14 +180,16 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module):
-    if module.params['value'] in ['True', 'False']:
-        module.params['value'] = module.params['value'].lower()
     obj = {
         'table': module.params['table'],
         'record': module.params['record'],
         'col': module.params['col'],
-        'value': module.params['value']
     }
+
+    if module.params['value'] is not None:
+        if module.params['value'] in ['True', 'False']:
+            module.params['value'] = module.params['value'].lower()
+        obj['value'] = module.params['value']
 
     key = module.params['key']
     if key is not None:
@@ -200,11 +206,14 @@ def main():
         'record': {'required': True},
         'col': {'required': True},
         'key': {'required': False},
-        'value': {'required': True, 'type': 'str'},
+        'value': {'required': False, 'type': 'str'},
         'timeout': {'default': 5, 'type': 'int'},
     }
 
+    required_if = [('state', 'present', ['value'])]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     result = {'changed': False}
