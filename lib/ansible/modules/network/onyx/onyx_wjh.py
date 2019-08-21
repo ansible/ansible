@@ -172,6 +172,16 @@ class OnyxWJHModule(BaseOnyxModule):
         if config_lines:
             self._set_current_config(config_lines)
 
+
+    def wjh_group_status(self, current_config, group_value, suffix = ''):
+        current_enabled = False 
+
+        if group_value == 'all':
+            current_enabled = not any([(group + suffix) in current_config for group in self.WJH_GROUPS]) # no disabled group
+        else:
+            current_enabled = current_config[group_value + suffix] if group_value in current_config else True # if no current-value its enabled
+        
+        return current_enabled
     '''
         wjh is enabled "by default"
         when wjh disable we  will find no wjh commands in running config 
@@ -180,24 +190,14 @@ class OnyxWJHModule(BaseOnyxModule):
         current_config, required_config = self._current_config, self._required_config
         for key, value in required_config.items():
             if key == 'group': #configration for wjh drop resean group
-                if value == 'all':
-                    current_enabled = not any([(group in current_config) for group in self.WJH_GROUPS]) # no disabled group
-                else:
-                    current_enabled = current_config[value] if value in current_config else True # if no current-value its enabled
-                
+                current_enabled = self.wjh_group_status(current_config, value)
                 if(required_config['enabled'] !=  current_enabled):
                     self._commands.append(self.WJH_CMD_FMT.format(
                                                         '' if required_config['enabled'] else 'no ',
                                                         value))
 
             elif key == 'export_group': #configration for wjh auto-export resean group
-                ex_value = value + '_export'
-
-                if value == 'all':
-                    current_enabled = not any([(group + '_export') in current_config for group in self.WJH_GROUPS])
-                else:
-                    current_enabled = current_config[ex_value] if ex_value in current_config else True # if no current its enabled
-
+                current_enabled = self.wjh_group_status(current_config, value, '_export')
                 if(required_config['auto_export'] !=  current_enabled):
                     self._commands.append(self.WJH_EXPORT_CMD_FMT.format(
                                                         '' if required_config['auto_export'] else 'no ',
