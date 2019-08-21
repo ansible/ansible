@@ -94,59 +94,59 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * purefb_facts use :ref:`purefb_info <purefb_info_module>` instead.
 
-* vcenter_extension_facts`` use :ref:`vcenter_extension_info <vcenter_extension_info_module>` instead.
+* vcenter_extension_facts use :ref:`vcenter_extension_info <vcenter_extension_info_module>` instead.
 
-* vmware_about_facts`` use :ref:`vmware_about_info <vmware_about_info_module>` instead.
+* vmware_about_facts use :ref:`vmware_about_info <vmware_about_info_module>` instead.
 
-* vmware_category_facts`` use :ref:`vmware_category_info <vmware_category_info_module>` instead.
+* vmware_category_facts use :ref:`vmware_category_info <vmware_category_info_module>` instead.
 
-* vmware_drs_group_facts`` use :ref:`vmware_drs_group_info <vmware_drs_group_info_module>` instead.
+* vmware_drs_group_facts use :ref:`vmware_drs_group_info <vmware_drs_group_info_module>` instead.
 
-* vmware_drs_rule_facts`` use :ref:`vmware_drs_rule_info <vmware_drs_rule_info_module>` instead.
+* vmware_drs_rule_facts use :ref:`vmware_drs_rule_info <vmware_drs_rule_info_module>` instead.
 
-* vmware_dvs_portgroup_facts`` use :ref:`vmware_dvs_portgroup_info <vmware_dvs_portgroup_info_module>` instead.
+* vmware_dvs_portgroup_facts use :ref:`vmware_dvs_portgroup_info <vmware_dvs_portgroup_info_module>` instead.
 
-* vmware_guest_boot_facts`` use :ref:`vmware_guest_boot_info <vmware_guest_boot_info_module>` instead.
+* vmware_guest_boot_facts use :ref:`vmware_guest_boot_info <vmware_guest_boot_info_module>` instead.
 
-* vmware_guest_customization_facts`` use :ref:`vmware_guest_customization_info <vmware_guest_customization_info_module>` instead.
+* vmware_guest_customization_facts use :ref:`vmware_guest_customization_info <vmware_guest_customization_info_module>` instead.
 
-* vmware_guest_disk_facts`` use :ref:`vmware_guest_disk_info <vmware_guest_disk_info_module>` instead.
+* vmware_guest_disk_facts use :ref:`vmware_guest_disk_info <vmware_guest_disk_info_module>` instead.
 
-* vmware_host_capability_facts`` use :ref:`vmware_host_capability_info <vmware_host_capability_info_module>` instead.
+* vmware_host_capability_facts use :ref:`vmware_host_capability_info <vmware_host_capability_info_module>` instead.
 
-* vmware_host_config_facts`` use :ref:`vmware_host_config_info <vmware_host_config_info_module>` instead.
+* vmware_host_config_facts use :ref:`vmware_host_config_info <vmware_host_config_info_module>` instead.
 
-* vmware_host_dns_facts`` use :ref:`vmware_host_dns_info <vmware_host_dns_info_module>` instead.
+* vmware_host_dns_facts use :ref:`vmware_host_dns_info <vmware_host_dns_info_module>` instead.
 
-* vmware_host_feature_facts`` use :ref:`vmware_host_feature_info <vmware_host_feature_info_module>` instead.
+* vmware_host_feature_facts use :ref:`vmware_host_feature_info <vmware_host_feature_info_module>` instead.
 
-* vmware_host_firewall_facts`` use :ref:`vmware_host_firewall_info <vmware_host_firewall_info_module>` instead.
+* vmware_host_firewall_facts use :ref:`vmware_host_firewall_info <vmware_host_firewall_info_module>` instead.
 
-* vmware_host_ntp_facts`` use :ref:`vmware_host_ntp_info <vmware_host_ntp_info_module>` instead.
+* vmware_host_ntp_facts use :ref:`vmware_host_ntp_info <vmware_host_ntp_info_module>` instead.
 
-* vmware_host_package_facts`` use :ref:`vmware_host_package_info <vmware_host_package_info_module>` instead.
+* vmware_host_package_facts use :ref:`vmware_host_package_info <vmware_host_package_info_module>` instead.
 
-* vmware_host_service_facts`` use :ref:`vmware_host_service_info <vmware_host_service_info_module>` instead.
+* vmware_host_service_facts use :ref:`vmware_host_service_info <vmware_host_service_info_module>` instead.
 
-* vmware_host_ssl_facts`` use :ref:`vmware_host_ssl_info <vmware_host_ssl_info_module>` instead.
+* vmware_host_ssl_facts use :ref:`vmware_host_ssl_info <vmware_host_ssl_info_module>` instead.
 
-* vmware_host_vmhba_facts`` use :ref:`vmware_host_vmhba_info <vmware_host_vmhba_info_module>` instead.
+* vmware_host_vmhba_facts use :ref:`vmware_host_vmhba_info <vmware_host_vmhba_info_module>` instead.
 
-* vmware_host_vmnic_facts`` use :ref:`vmware_host_vmnic_info <vmware_host_vmnic_info_module>` instead.
+* vmware_host_vmnic_facts use :ref:`vmware_host_vmnic_info <vmware_host_vmnic_info_module>` instead.
 
-* vmware_local_role_facts`` use :ref:`vmware_local_role_info <vmware_local_role_info_module>` instead.
+* vmware_local_role_facts use :ref:`vmware_local_role_info <vmware_local_role_info_module>` instead.
 
-* vmware_local_user_facts`` use :ref:`vmware_local_user_info <vmware_local_user_info_module>` instead.
+* vmware_local_user_facts use :ref:`vmware_local_user_info <vmware_local_user_info_module>` instead.
 
-* vmware_portgroup_facts`` use :ref:`vmware_portgroup_info <vmware_portgroup_info_module>` instead.
+* vmware_portgroup_facts use :ref:`vmware_portgroup_info <vmware_portgroup_info_module>` instead.
 
-* vmware_resource_pool_facts`` use :ref:`vmware_resource_pool_info <vmware_resource_pool_info_module>` instead.
+* vmware_resource_pool_facts use :ref:`vmware_resource_pool_info <vmware_resource_pool_info_module>` instead.
 
-* vmware_target_canonical_facts`` use :ref:`vmware_target_canonical_info <vmware_target_canonical_info_module>` instead.
+* vmware_target_canonical_facts use :ref:`vmware_target_canonical_info <vmware_target_canonical_info_module>` instead.
 
-* vmware_vmkernel_facts`` use :ref:`vmware_vmkernel_info <vmware_vmkernel_info_module>` instead.
+* vmware_vmkernel_facts use :ref:`vmware_vmkernel_info <vmware_vmkernel_info_module>` instead.
 
-* vmware_vswitch_facts`` use :ref:`vmware_vswitch_info <vmware_vswitch_info_module>` instead.
+* vmware_vswitch_facts use :ref:`vmware_vswitch_info <vmware_vswitch_info_module>` instead.
 
 * vultr_dns_domain_facts use :ref:`vultr_dns_domain_info <vultr_dns_domain_info_module>` instead.
 
