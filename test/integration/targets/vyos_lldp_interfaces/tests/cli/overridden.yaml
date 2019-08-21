@@ -1,0 +1,49 @@
+---
+- debug:
+      msg: "START vyos_lldp_interfaces overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_intf.yaml
+
+- block:
+  - name: Overrides all device configuration with provided configuration
+    vyos_lldp_interfaces: &overridden
+       config:
+        - name: 'eth2'
+          location:
+            elin: '0000000911'
+       state: overridden
+    register: result
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+        that:
+            - "{{ populate_intf | symmetric_difference(result['before']) |length == 0 }}"
+
+  - name: Assert that correct commands were generated
+    assert:
+        that:
+            - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+  - name: Assert that after dicts were correctly generated
+    assert:
+        that:
+            - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+  - name: Overrides all device configuration with provided configurations (IDEMPOTENT)
+    vyos_lldp_interfaces: *overridden
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  - name: Assert that before dicts were correctly generated
+    assert:
+        that:
+            - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+  always:
+  - include_tasks: _remove_config.yaml
