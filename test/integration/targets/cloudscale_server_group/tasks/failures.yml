@@ -1,4 +1,20 @@
 ---
+- name: Fail invalid tags
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-grp'
+    tags:
+      bool: true
+      number : 1
+      not_bool: "false"
+      not_number: "1"
+  register: grp
+  ignore_errors: True
+- name: 'VERIFY: Fail invalid tags'
+  assert:
+    that:
+      - grp is failed
+      - '"Tags must be text values. Add quotes for the following tags: bool=True, number=1" in grp.msg'
+
 - name: Fail missing params
   cloudscale_server_group:
   register: grp

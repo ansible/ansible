@@ -10,6 +10,7 @@ from copy import deepcopy
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import iteritems, string_types
 
 API_URL = 'https://api.cloudscale.ch/v1/'
 
@@ -32,6 +33,7 @@ class AnsibleCloudscaleBase(object):
             'changed': False,
             'diff': dict(before=dict(), after=dict()),
         }
+        self._validate_tags()
 
     def _get(self, api_call):
         resp, info = fetch_url(self._module, API_URL + api_call,
@@ -123,6 +125,19 @@ class AnsibleCloudscaleBase(object):
                     self._patch(href, patch_data)
                     return True
         return False
+
+    def _validate_tags(self):
+        tags = self._module.params.get('tags')
+        if tags is None:
+            return
+
+        invalid_tags = []
+        for tag_key, tag_value in iteritems(tags):
+            if not isinstance(tag_value, string_types):
+                invalid_tags.append('%s=%s' % (tag_key, tag_value))
+
+        if invalid_tags:
+            self._module.fail_json(msg='Tags must be text values. Add quotes for the following tags: %s' % ', '.join(invalid_tags))
 
     def get_result(self, resource):
         if resource:
