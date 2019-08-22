@@ -83,12 +83,7 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.common.utils import conditional
-from ansible.module_utils.network.common.utils import remove_default_spec
-
 from ansible.module_utils.network.onyx.onyx import BaseOnyxModule, show_cmd
-from ansible.module_utils.network.onyx.onyx import get_interfaces_config
 
 
 class OnyxWJHModule(BaseOnyxModule):
