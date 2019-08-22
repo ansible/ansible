@@ -15,36 +15,27 @@ options:
     entrust_api_user:
         description:
             - The username for authentication to the Entrust Certificate Services (ECS) API.
-            - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
         type: str
         required: true
     entrust_api_key:
         description:
             - The key (password) for authentication to the Entrust Certificate Services (ECS) API.
-            - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
         type: str
         required: true
     entrust_api_client_cert_path:
         description:
             - The path of the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
-            - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
         type: path
         required: true
     entrust_api_client_cert_key_path:
         description:
-            - The path of the key for the client certificate used to authenticate to the Entrust Certificate Services (ECS) API
-            - This is only used by the C(entrust) provider.
-            - This is required if the provider is C(entrust)
+            - The path of the key for the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
         type: path
         required: true
     entrust_api_specification_path:
         description:
             - Path to the specification file defining the Entrust Certificate Services (ECS) API.
             - Can be used to keep a local copy of the specification to avoid downloading it every time the module is used.
-            - This is only used by the C(entrust) provider.
         type: path
         default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
 requirements:

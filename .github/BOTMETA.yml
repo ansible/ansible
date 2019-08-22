@@ -217,7 +217,7 @@ files:
     maintainers: $team_crypto
     supershipit: felixfontein
   $modules/crypto/openssl_certificate.py:
-    maintainers: ctrufan tylert
+    maintainers: ctrufan
   $modules/crypto/entrust/: ctrufan tylert
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988

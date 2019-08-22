@@ -17,11 +17,11 @@ DOCUMENTATION = '''
 module: ecs_certificate
 author:
     - Chris Trufan (@ctrufan)
-version_added: 2.9
-short_description: Request SSL/TLS certificates with the Entrust Certificate Services (ECS) API.
+version_added: '2.9'
+short_description: Request SSL/TLS certificates with the Entrust Certificate Services (ECS) API
 description:
     - Create, reissue, and renew Certificates with the Entrust Certificate Services (ECS) API.
-    - Requires credentials for the L(https://www.entrustdatacard.com/products/categories/ssl-certificates,Entrust Certificate Services) (ECS) API.
+    - Requires credentials for the L(Entrust Certificate Services, https://www.entrustdatacard.com/products/categories/ssl-certificates) (ECS) API.
     - In order to request a certificate, the domain and organization used in the certificate signing request must be already
       validated in the ECS system. It is I(not) the responsibility of this module to perform those steps.
 notes:
@@ -177,12 +177,15 @@ options:
     requester_name:
         description: Requester name to associate with certificate tracking information.
         type: str
+        required: True
     requester_email:
         description: Requester email to associate with certificate tracking information and receive delivery and expiry notices for the certificate.
         type: str
+        required: True
     requester_phone:
         description: Requester phone number to associate with certificate tracking information.
         type: str
+        required: True
     additional_emails:
         description: A list of additional email addresses to receive the delivery notice and expiry notification for the certificate
         type: list
@@ -191,7 +194,7 @@ options:
             - Mapping of custom fields to associate with the certificate request and certificate.
             - Only supported if custom fields are enabled for your account.
             - Each custom field specified must be a custom field you have defined for your account.
-        type: list
+        type: dict
         suboptions:
             text1:
                 description: Custom text field of maximum size 500.
@@ -318,6 +321,9 @@ options:
               be used for the first certificate issuance, but subsequent issuances will have the same expiry as the initial certificate.
             - Applies to certificates of I(cert_type)=C(CDS_INDIVIDUAL, CDS_GROUP, CDS_ENT_LITE, CDS_ENT_PRO, SMIME_ENT) for accounts with a pooling inventory
               model.
+            - C(P1Y) is a certificate with a 1 year lifetime.
+            - C(P2Y) is a certificate with a 2 year lifetime.
+            - C(P3Y) is a certificate with a 3 year lifetime.
             - Only one of I(cert_expiry) or I(cert_lifetime) may be specified.
         type: str
         choices: [ P1Y, P2Y, P3Y ]
@@ -326,8 +332,6 @@ seealso:
       description: Can be used to create private keys (both for certificates and accounts).
     - module: openssl_csr
       description: Can be used to create a Certificate Signing Request (CSR).
-    - module: certificate_complete_chain
-      description: Allows to find the root certificate for the returned fullchain.
 extends_documentation_fragment:
     - ecs_credential
 '''
@@ -335,7 +339,7 @@ extends_documentation_fragment:
 EXAMPLES = r'''
 - name: Request a new certificate from Entrust with bare minimum parameters. Will request a new certificate if current one is valid but within 30 days of
         expiry. If replacing an existing file in path, will back it up.
-  entrust_certificate:
+  ecs_certificate:
     backup: True
     path: /etc/ssl/crt/ansible.com.crt
     chain_path: /etc/ssl/crt/ansible.com.chain.crt
@@ -351,11 +355,11 @@ EXAMPLES = r'''
 
 - name: If there is no certificate present in path, request a new certificate of type EV_SSL. Otherwise, if there is an Entrust managed certificate in path and
         it is within 63 days of expiration, request a RENEW of that certificate.
-  entrust_certificate:
+  ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
     cert_type: EV_SSL
-    cert_expiry: 2019-08-20
+    cert_expiry: '2020-08-20'
     request_type: RENEW
     remaining_days: 63
     requester_name: Jo Doe
@@ -368,7 +372,7 @@ EXAMPLES = r'''
 
 - name: If there is no certificate present in path, download certificate specified by tracking_id if it is still valid. Otherwise, if the certificate is within
         79 days of expiration, request a RENEW of that certificate and save it in path. This can be used to "migrate" a certificate to be Ansible managed.
-  entrust_certificate:
+  ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
     tracking_id: 2378915
@@ -380,7 +384,7 @@ EXAMPLES = r'''
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
 - name: Force a reissue of the certificate specified by tracking_id.
-  entrust_certificate:
+  ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     force: True
     tracking_id: 2378915
@@ -392,7 +396,7 @@ EXAMPLES = r'''
 
 - name: Request a new certificate with an alternative client. Note that the issued certificate will have it's Subject Distinguished Name use the organization
         details associated with that client, rather than what is in the CSR.
-  entrust_certificate:
+  ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
     client_id: 2
@@ -405,7 +409,7 @@ EXAMPLES = r'''
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
 - name: Request a new certificate with a number of CSR parameters overridden and tracking information
-  entrust_certificate:
+  ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     chain_path: /etc/ssl/crt/ansible.com.chain.crt
     csr: /etc/ssl/csr/ansible.com.csr
@@ -425,10 +429,10 @@ EXAMPLES = r'''
       text1: Admin
       text2: Invoice 25
       number1: 342
-      date1: 2018-01-01
+      date1: '2018-01-01'
       email1: sales@ansible.testcertificates.com
       dropdown1: red
-    cert_expiry: 2020-08-15
+    cert_expiry: '2020-08-15'
     requester_name: Jo Doe
     requester_email: jdoe@ansible.com
     requester_phone: 555-555-5555
@@ -447,7 +451,7 @@ filename:
     sample: /etc/ssl/crt/www.ansible.com.crt
 backup_file:
     description: Name of backup file created.
-    returned: changed and if I(backup) is C(yes)
+    returned: changed and if I(backup) is C(True)
     type: str
     sample: /path/to/www.ansible.com.crt.2019-03-09@11:22~
 tracking_id:
@@ -542,24 +546,29 @@ class EcsCertificate(object):
 
     def __init__(self, module):
         self.path = module.params['path']
-        self.filename = None
         self.chain_path = module.params.get('chain_path')
         self.force = module.params['force']
         self.backup = module.params['backup']
         self.request_type = module.params['request_type']
-        self.backup_file = None
-        self.module = module
         self.csr = module.params.get('csr')
+
+        # All return values
+        self.changed = False
+        self.filename = None
         self.tracking_id = None
+        self.cert_status = None
         self.serial_number = None
+        self.cert_days = None
+        self.cert_details = None
+        self.backup_file = None
 
         self.cert = None
+        self.ecs_client = None
         if self.path and os.path.exists(self.path):
             try:
                 self.cert = crypto_utils.load_certificate(self.path, backend='cryptography')
             except Exception as dummy:
                 self.cert = None
-
         # Instantiate the ECS client and then try a no-op connection to verify credentials are valid
         try:
             self.ecs_client = ECSClient(
@@ -570,7 +579,7 @@ class EcsCertificate(object):
                 entrust_api_specification_path=module.params.get('entrust_api_specification_path')
             )
         except SessionConfigurationException as e:
-            module.fail_json(msg='Failed to initialize Entrust Provider: {0}'.format(to_native(e.message)))
+            module.fail_json(msg='Failed to initialize Entrust Provider: {0}'.format(to_native(e)))
         try:
             self.ecs_client.GetAppVersion()
         except RestOperationException as e:
@@ -589,20 +598,26 @@ class EcsCertificate(object):
         if module.params.get('tracking_info'):
             tracking['trackingInfo'] = module.params['tracking_info']
         if(module.params.get('custom_fields')):
-            tracking['customFields'] = module.params['custom_fields']
+            # Omit custom fields from submitted dict if not present, instead of submitting them with value of 'null'
+            # The ECS API does technically accept null without error, but it complicates debugging user escalations and is unnecessary bandwidth.
+            custom_fields = {}
+            for k, v in module.params['custom_fields'].items():
+                if v is not None:
+                    custom_fields[k] = v
+            tracking['customFields'] = custom_fields
         if(module.params.get('additional_emails')):
-            tracking['additionalEmails'] = json.dumps(module.params['additional_emails'])
+            tracking['additionalEmails'] = module.params['additional_emails']
         body['tracking'] = tracking
         return body
 
     def convert_cert_subject_params(self, module):
         body = {}
-        if module.params.get('subject_alt_name') and module.params.get('subject_alt_name').len() > 0:
-            body['subjectAltName'] = json.dumps(module.params['subject_alt_name'])
+        if module.params.get('subject_alt_name') and len(module.params['subject_alt_name']) > 0:
+            body['subjectAltName'] = module.params['subject_alt_name']
         if module.params.get('org'):
             body['org'] = module.params['org']
-        if module.params.get('ou') and module.params.get('ou').len() > 0:
-            body['ou'] = json.dumps(module.params['ou'])
+        if module.params.get('ou') and len(module.params['ou']) > 0:
+            body['ou'] = module.params['ou']
         return body
 
     def convert_general_params(self, module):
@@ -623,7 +638,7 @@ class EcsCertificate(object):
         elif module.params.get('cert_expiry'):
             body['certExpiryDate'] = module.params['cert_expiry']
         # If neither cerTLifetime or certExpiryDate was specified and the request type is new, default to 365 days
-        elif self.request_type == 'NEW':
+        elif self.request_type != 'REISSUE':
             gmt_now = datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))
             expiry = gmt_now + datetime.timedelta(days=365)
             body['certExpiryDate'] = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
@@ -678,10 +693,12 @@ class EcsCertificate(object):
 
     def request_cert(self, module):
         if not self.check(module) or self.force:
-            # Read the CSR contents
             body = {}
-            with open(self.csr, 'r') as csr_file:
-                body['csr'] = csr_file.read()
+
+            # Read the CSR contents
+            if self.csr and os.path.exists(self.csr):
+                with open(self.csr, 'r') as csr_file:
+                    body['csr'] = csr_file.read()
 
             # Check if the path is already a cert
             # tracking_id may be set as a parameter or by get_cert_details if an entrust cert is in 'path'. If tracking ID is null
@@ -724,16 +741,16 @@ class EcsCertificate(object):
 
                 if self.backup:
                     self.backup_file = module.backup_local(self.path)
-                crypto_utils.write_file(self.module, to_bytes(self.cert_details.get('endEntityCert')))
+                crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
                 if self.chain_path:
-                    crypto_utils.write_file(self.module, to_bytes(self.cert_details.get('chainCerts')), path=self.chain_path)
+                    crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.chain_path)
                 self.changed = True
         # If there is no certificate present in path but a tracking ID was specified, save it to disk
         elif not os.path.exists(self.path) and self.tracking_id:
             if not module.check_mode:
-                crypto_utils.write_file(self.module, to_bytes(self.cert_details.get('endEntityCert')))
+                crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
                 if self.chain_path:
-                    crypto_utils.write_file(self.module, to_bytes(self.cert_details.get('chainCerts')), path=self.chain_path)
+                    crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.chain_path)
             self.changed = True
 
     def dump(self):
@@ -824,11 +841,11 @@ def ecs_certificate_argument_spec():
         ou=dict(type='list', elements='str'),
         end_user_key_storage_agreement=dict(type='bool'),
         tracking_info=dict(type='str'),
-        requester_name=dict(type='str'),
-        requester_email=dict(type='str'),
-        requester_phone=dict(type='str'),
+        requester_name=dict(type='str', required=True),
+        requester_email=dict(type='str', required=True),
+        requester_phone=dict(type='str', required=True),
         additional_emails=dict(type='list', elements='str'),
-        custom_fields=dict(type='list', elements='dict', options=custom_fields_spec()),
+        custom_fields=dict(type='dict', default=None, options=custom_fields_spec()),
         cert_expiry=dict(type='str'),
         cert_lifetime=dict(type='str', choices=['P1Y', 'P2Y', 'P3Y']),
     )
@@ -840,7 +857,7 @@ def main():
     module = AnsibleModule(
         argument_spec=ecs_argument_spec,
         required_if=(
-            ['request_type', 'NEW', ['cert_type', 'requester_name', 'requester_email', 'requester_phone']],
+            ['request_type', 'NEW', ['cert_type']],
             ['cert_type', 'CODE_SIGNING', ['end_user_key_storage_agreement']],
             ['cert_type', 'EV_CODE_SIGNING', ['end_user_key_storage_agreement']],
         ),
@@ -850,7 +867,6 @@ def main():
         supports_check_mode=True,
     )
 
-    # Does not yet support pyopenssl as a cryptography provider
     if (not CRYPTOGRAPHY_FOUND) or CRYPTOGRAPHY_VERSION < LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION):
         module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
                          exception=CRYPTOGRAPHY_IMP_ERR)
@@ -870,7 +886,7 @@ def main():
             module.fail_json(msg='The csr field of {0} was not a valid path. csr is required when request_type={1}'.format(
                 module_params_csr, module.params['request_type']))
 
-    if module.params.get('ou') and module.params.get('ou').len() > 1:
+    if module.params.get('ou') and len(module.params.get('ou')) > 1:
         module.fail_json(msg='Multiple "ou" values are not currently supported.')
 
     if module.params.get('end_user_key_storage_agreement'):
