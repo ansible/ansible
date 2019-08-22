@@ -79,6 +79,11 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
 
+    def has_option(self, option):
+        if not self._options:
+            self.set_options()
+        return option in self._options
+
     def _check_required(self):
         # FIXME: standardize required check based on config
         pass

@@ -29,16 +29,11 @@ DOCUMENTATION = '''
         - Only applies to inventory sources that are existing paths.
     options:
       stage:
-        description: Control when this vars plugin may be executed.
-        default: all
-        choices: ['all', 'inventory', 'task']
-        type: str
         ini:
           - key: stage
-            section: host_group_vars
+            section: vars_host_group_vars
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
-        version_added: "2.9"
       _valid_extensions:
         default: [".yml", ".yaml", ".json"]
         description:
@@ -50,6 +45,8 @@ DOCUMENTATION = '''
           - section: yaml_valid_extensions
             key: defaults
         type: list
+    extends_documentation_fragment:
+      - vars_plugin_staging
 '''
 
 import os

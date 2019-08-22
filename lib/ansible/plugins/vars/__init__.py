@@ -36,11 +36,6 @@ class BaseVarsPlugin(AnsiblePlugin):
         super(BaseVarsPlugin, self).__init__()
         self._display = display
 
-    def has_option(self, option):
-        if not self._options:
-            self.set_options()
-        return option in self._options
-
     def get_vars(self, loader, path, entities):
         """ Gets variables. """
         self._basedir = basedir(path)
