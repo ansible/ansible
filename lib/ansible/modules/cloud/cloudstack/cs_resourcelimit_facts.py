@@ -95,9 +95,6 @@ project:
 '''
 
 # import cloudstack common
-import os
-import time
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
@@ -164,14 +161,9 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_resource_limit_facts = AnsibleCloudStackResourceLimitFacts(module)
-        resource_limit = acs_resource_limit_facts.get_resource_limit()
-        result = acs_resource_limit_facts.get_result(resource_limit)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    acs_resource_limit_facts = AnsibleCloudStackResourceLimitFacts(module)
+    resource_limit = acs_resource_limit_facts.get_resource_limit()
+    result = acs_resource_limit_facts.get_result(resource_limit)
     module.exit_json(**result)
 
 
