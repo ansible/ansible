@@ -47,7 +47,6 @@ options:
             - nvme is supported with ONTAP 9.4 onwards.
             - use "help" to get a list of supported information for your system.
         default: "all"
-        version_added: 2.8
 '''
 
 EXAMPLES = '''
