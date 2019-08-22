@@ -6640,7 +6640,6 @@ test/units/modules/network/radware/test_vdirect_file.py future-import-boilerplat
 test/units/modules/network/radware/test_vdirect_file.py metaclass-boilerplate
 test/units/modules/network/radware/test_vdirect_runnable.py future-import-boilerplate
 test/units/modules/network/radware/test_vdirect_runnable.py metaclass-boilerplate
-test/units/modules/network/routeros/fixtures/system_package_print line-endings
 test/units/modules/notification/test_slack.py future-import-boilerplate
 test/units/modules/notification/test_slack.py metaclass-boilerplate
 test/units/modules/packaging/language/test_gem.py future-import-boilerplate
