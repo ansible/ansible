@@ -40,7 +40,7 @@ options:
     type: int
   description:
     description:
-      - Description of snat-translation. c(none or '') will set to default description of null.
+      - Description of snat-translation. C(none or '') will set to default description of null.
     type: str
   ip_idle_timeout:
     description:
@@ -58,7 +58,7 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
-      - Required with state c(absent) when partiition other than Common used.
+      - Required with state C(absent) when partition other than Common used.
     type: str
   state:
     description:
@@ -98,6 +98,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Greg Crosby (@crosbygw)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -245,7 +246,7 @@ udp_idle_timeout:
   type: str
   sample: indifinite
 '''
-import os
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
@@ -362,19 +363,24 @@ class ModuleParameters(Parameters):
         if 0 <= int(limit) <= 65535:
             return int(limit)
         raise F5ModuleError(
-            "Valid 'maximum_age' must be in range 0 - 65535."
+            "Valid 'connection_limit' must be in range 0 - 65535."
         )
 
     @property
     def address(self):
         if self._values['address'] is None:
             return None
-        if is_valid_ip(self._values['address']):
-            return compress_address(self._values['address'])
+        if len(self._values['address'].split('%')) > 1:
+            address, rd = self._values['address'].split('%')
+            if is_valid_ip(address):
+                result = '{0}%{1}'.format(compress_address(address), rd)
+                return result
         else:
-            raise F5ModuleError(
-                "The provided 'address' is not a valid IP address"
-            )
+            if is_valid_ip(self._values['address']):
+                return self._values['address']
+        raise F5ModuleError(
+            "The provided address: {0} is not a valid IP address".format(self._values['address'])
+        )
 
     @property
     def arp(self):
@@ -564,8 +570,25 @@ class ModuleManager(object):
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
+
+        if self.module._diff and self.have:
+            result['diff'] = self.make_diff()
+
         result.update(dict(changed=changed))
         self._announce_deprecations(result)
+
+        return result
+
+    def _grab_attr(self, item):
+        result = dict()
+        updatables = Parameters.updatables
+        for k in updatables:
+            if getattr(item, k) is not None:
+                result[k] = getattr(item, k)
+        return result
+
+    def make_diff(self):
+        result = dict(before=self._grab_attr(self.have), after=self._grab_attr(self.want))
         return result
 
     def present(self):
