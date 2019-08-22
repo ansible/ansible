@@ -76,6 +76,14 @@ options:
         - 'Also this accepts a string containing a list of (net/port)-(id/name)
           Eg: nics: "net-id=uuid-1,port-name=myport"
           Only one of network or nics should be supplied.'
+     suboptions:
+       tag:
+         description:
+            - A "tag" for the specific port to be passed via metadata.
+              Eg: nics:
+                    - port-name: net1_port1
+                      tag: test_tag
+         version_added: "2.9"
    auto_ip:
      description:
         - Ensure instance has public ip however the cloud wants to do that
@@ -396,6 +404,24 @@ EXAMPLES = '''
         scheduler_hints:
           group: f5c8c61a-9230-400a-8ed2-3b023c190a7f
 
+# Create an instance with "tags" for the nic
+- name: Create instance with nics "tags"
+  os_server:
+    state: present
+    auth:
+        auth_url: https://identity.example.com
+        username: admin
+        password: admin
+        project_name: admin
+    name: vm1
+    image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+    key_name: ansible_key
+    flavor: 4
+    nics:
+      - port-name: net1_port1
+        tag: test_tag
+      - net-name: another_network
+
 # Deletes an instance via its ID
 - name: remove an instance
   hosts: localhost
@@ -435,7 +461,7 @@ def _network_args(module, cloud):
     if not isinstance(nics, list):
         module.fail_json(msg='The \'nics\' parameter must be a list.')
 
-    for net in _parse_nics(nics):
+    for num, net in enumerate(_parse_nics(nics)):
         if not isinstance(net, dict):
             module.fail_json(
                 msg='Each entry in the \'nics\' parameter must be a dict.')
@@ -458,6 +484,9 @@ def _network_args(module, cloud):
                     msg='Could not find port by port-name: %s' %
                     net['port-name'])
             args.append({'port-id': by_name['id']})
+
+        if 'tag' in net:
+            args[num]['tag'] = net['tag']
     return args
 
 
