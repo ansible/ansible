@@ -118,9 +118,9 @@ overridden:
       name: GigabitEthernet0/0
     - name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.4.1 255.255.255.0
       - address: 192.168.4.2 255.255.255.0
         secondary: true
+      - address: 192.168.4.1 255.255.255.0
       name: GigabitEthernet0/2
 
 deleted:
