@@ -215,6 +215,7 @@ EXAMPLES = '''
         location: eastus
         resource_group: myResourceGroup
         dns_prefix: akstest
+        kubernetes_version: 1.14.6
         linux_profile:
           admin_username: azureuser
           ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -254,7 +255,7 @@ state:
         dns_prefix: aks9860bdcd89
         id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
-        kubernetes_version: 1.13.5
+        kubernetes_version: 1.14.6
         linux_profile:
            admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADA.....
