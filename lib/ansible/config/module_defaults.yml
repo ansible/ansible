@@ -406,6 +406,8 @@ groupings:
   - aws
   iam_server_certificate_facts:
   - aws
+  iam_saml_federation:
+  - aws
   iam_server_certificate_info:
   - aws
   iam_user:
