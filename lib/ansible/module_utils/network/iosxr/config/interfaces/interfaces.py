@@ -112,8 +112,7 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _state_replaced(want, have):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
@@ -131,15 +130,14 @@ class Interfaces(ConfigBase):
                 continue
             have_dict = filter_dict_having_none_value(interface, each)
             want = dict()
-            commands.extend(Interfaces._clear_config(want, have_dict))
-            commands.extend(Interfaces._set_config(interface, each))
+            commands.extend(self._clear_config(want, have_dict))
+            commands.extend(self._set_config(interface, each))
         # Remove the duplicate interface call
         commands = remove_duplicate_interface(commands)
 
         return commands
 
-    @staticmethod
-    def _state_overridden(want, have):
+    def _state_overridden(self, want, have):
         """ The command generator when state is overridden
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
@@ -157,19 +155,18 @@ class Interfaces(ConfigBase):
                 # We didn't find a matching desired state, which means we can
                 # pretend we recieved an empty desired state.
                 interface = dict(name=each['name'])
-                commands.extend(Interfaces._clear_config(interface, each))
+                commands.extend(self._clear_config(interface, each))
                 continue
             have_dict = filter_dict_having_none_value(interface, each)
             want = dict()
-            commands.extend(Interfaces._clear_config(want, have_dict))
-            commands.extend(Interfaces._set_config(interface, each))
+            commands.extend(self._clear_config(want, have_dict))
+            commands.extend(self._set_config(interface, each))
         # Remove the duplicate interface call
         commands = remove_duplicate_interface(commands)
 
         return commands
 
-    @staticmethod
-    def _state_merged(want, have):
+    def _state_merged(self, want, have):
         """ The command generator when state is merged
         :rtype: A list
         :returns: the commands necessary to merge the provided into
@@ -185,12 +182,11 @@ class Interfaces(ConfigBase):
                     break
             else:
                 continue
-            commands.extend(Interfaces._set_config(interface, each))
+            commands.extend(self._set_config(interface, each))
 
         return commands
 
-    @staticmethod
-    def _state_deleted(want, have):
+    def _state_deleted(self, want, have):
         """ The command generator when state is deleted
         :rtype: A list
         :returns: the commands necessary to remove the current configuration
@@ -208,16 +204,15 @@ class Interfaces(ConfigBase):
                 else:
                     continue
                 interface = dict(name=interface['name'])
-                commands.extend(Interfaces._clear_config(interface, each))
+                commands.extend(self._clear_config(interface, each))
         else:
             for each in have:
                 want = dict()
-                commands.extend(Interfaces._clear_config(want, each))
+                commands.extend(self._clear_config(want, each))
 
         return commands
 
-    @staticmethod
-    def _set_config(want, have):
+    def _set_config(self, want, have):
         # Set the interface config based on the want and have config
         commands = []
         interface = 'interface ' + want['name']
@@ -229,7 +224,7 @@ class Interfaces(ConfigBase):
 
         if diff:
             diff = dict(diff)
-            for item in Interfaces.params:
+            for item in self.params:
                 if diff.get(item):
                     cmd = item + ' ' + str(want.get(item))
                     add_command_to_config_list(interface, cmd, commands)
@@ -240,8 +235,7 @@ class Interfaces(ConfigBase):
 
         return commands
 
-    @staticmethod
-    def _clear_config(want, have):
+    def _clear_config(self, want, have):
         # Delete the interface config based on the want and have config
         commands = []
 
