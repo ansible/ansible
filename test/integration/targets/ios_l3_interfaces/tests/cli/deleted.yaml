@@ -12,6 +12,7 @@
         config:
           - name: GigabitEthernet0/1
           - name: GigabitEthernet0/2
+        state: deleted
       register: result
 
     - name: Assert that correct set of commands were generated

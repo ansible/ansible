@@ -231,6 +231,7 @@ class L3_Interfaces(ConfigBase):
                     if ipv4_dict.get("secondary"):
                         cmd += " secondary"
                 elif ipv4_dict.get('address') == 'dhcp':
+                    cmd = "ip address dhcp"
                     if ipv4_dict.get('dhcp_client') is not None and ipv4_dict.get('dhcp_hostname'):
                         cmd = "ip address dhcp client-id GigabitEthernet 0/{0} hostname {1}"\
                             .format(ipv4_dict.get('dhcp_client'), ipv4_dict.get('dhcp_hostname'))
@@ -239,8 +240,7 @@ class L3_Interfaces(ConfigBase):
                             .format(ipv4_dict.get('dhcp_client'))
                     elif not ipv4_dict.get('dhcp_client') and ipv4_dict.get('dhcp_hostname'):
                         cmd = "ip address dhcp hostname {0}".format(ipv4_dict.get('dhcp_client'))
-                    else:
-                        cmd = "ip address dhcp"
+
                 add_command_to_config_list(interface, cmd, commands)
 
         # To handle L3 IPV6 configuration
@@ -273,5 +273,4 @@ class L3_Interfaces(ConfigBase):
             remove_command_from_config_list(interface, 'ip address', commands)
         if have.get('ipv6') and not want.get('ipv6'):
             remove_command_from_config_list(interface, 'ipv6 address', commands)
-
         return commands

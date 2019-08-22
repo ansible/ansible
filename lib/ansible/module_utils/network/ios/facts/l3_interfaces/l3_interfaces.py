@@ -97,10 +97,10 @@ class L3_InterfacesFacts(object):
                 each_ipv4['secondary'] = True
             elif 'dhcp' in each:
                 each_ipv4['address'] = 'dhcp'
-                if 'hostname' in each:
-                    each_ipv4["dhcp_hostname"] = each.split(' hostname ')[-1]
                 if 'client-id' in each:
                     each_ipv4['dhcp_client'] = int(each.split(' hostname ')[0].split('/')[-1])
+                if 'hostname' in each:
+                    each_ipv4["dhcp_hostname"] = each.split(' hostname ')[-1]
                 if 'client-id' in each and each_ipv4['dhcp_client'] is None:
                     each_ipv4['dhcp_client'] = int(each.split('/')[-1])
                 if 'hostname' in each and not each_ipv4["dhcp_hostname"]:
