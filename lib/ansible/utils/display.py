@@ -129,7 +129,7 @@ class Display(with_metaclass(Singleton, object)):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
@@ -140,7 +140,7 @@ class Display(with_metaclass(Singleton, object)):
             msg = stringc(msg, color)
 
         if not log_only:
-            if not msg.endswith(u'\n'):
+            if not msg.endswith(u'\n') and newline:
                 msg2 = msg + u'\n'
             else:
                 msg2 = msg
