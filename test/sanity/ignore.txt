@@ -5562,8 +5562,8 @@ lib/ansible/modules/storage/netapp/na_ontap_fcp.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_firewall_policy.py validate-modules:E337
 lib/ansible/modules/storage/netapp/na_ontap_firewall_policy.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_flexcache.py validate-modules:E337
-lib/ansible/modules/storage/netapp/na_ontap_gather_facts.py validate-modules:E337
-lib/ansible/modules/storage/netapp/na_ontap_gather_facts.py validate-modules:E338
+lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:E337
+lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_igroup.py validate-modules:E337
 lib/ansible/modules/storage/netapp/na_ontap_igroup.py validate-modules:E338
 lib/ansible/modules/storage/netapp/na_ontap_igroup_initiator.py validate-modules:E337
@@ -6717,8 +6717,8 @@ test/units/modules/storage/netapp/test_na_ontap_firewall_policy.py future-import
 test/units/modules/storage/netapp/test_na_ontap_firewall_policy.py metaclass-boilerplate
 test/units/modules/storage/netapp/test_na_ontap_flexcache.py future-import-boilerplate
 test/units/modules/storage/netapp/test_na_ontap_flexcache.py metaclass-boilerplate
-test/units/modules/storage/netapp/test_na_ontap_gather_facts.py future-import-boilerplate
-test/units/modules/storage/netapp/test_na_ontap_gather_facts.py metaclass-boilerplate
+test/units/modules/storage/netapp/test_na_ontap_info.py future-import-boilerplate
+test/units/modules/storage/netapp/test_na_ontap_info.py metaclass-boilerplate
 test/units/modules/storage/netapp/test_na_ontap_igroup.py future-import-boilerplate
 test/units/modules/storage/netapp/test_na_ontap_igroup.py metaclass-boilerplate
 test/units/modules/storage/netapp/test_na_ontap_igroup_initiator.py future-import-boilerplate
