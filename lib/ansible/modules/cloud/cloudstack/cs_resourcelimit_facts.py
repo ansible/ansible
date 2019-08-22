@@ -106,18 +106,19 @@ from ansible.module_utils.cloudstack import (
 )
 
 RESOURCE_TYPES = {
-    'instance':             0,
-    'ip_address':           1,
-    'volume':               2,
-    'snapshot':             3,
-    'template':             4,
-    'network':              6,
-    'vpc':                  7,
-    'cpu':                  8,
-    'memory':               9,
-    'primary_storage':      10,
-    'secondary_storage':    11,
+    'instance': 0,
+    'ip_address': 1,
+    'volume': 2,
+    'snapshot': 3,
+    'template': 4,
+    'network': 6,
+    'vpc': 7,
+    'cpu': 8,
+    'memory': 9,
+    'primary_storage': 10,
+    'secondary_storage': 11,
 }
+
 
 class AnsibleCloudStackResourceLimitFacts(AnsibleCloudStack):
 
@@ -147,6 +148,7 @@ class AnsibleCloudStackResourceLimitFacts(AnsibleCloudStack):
         self.result['resource_type'] = self.module.params.get('resource_type')
         return self.result
 
+
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
@@ -171,6 +173,7 @@ def main():
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
