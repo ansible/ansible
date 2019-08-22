@@ -15,7 +15,6 @@ from .onyx_module import TestOnyxModule, load_fixture
 class TestOnyxWJHModule(TestOnyxModule):
 
     module = onyx_wjh
-    enabled = False
 
     def setUp(self):
         self.enabled = False
@@ -29,7 +28,7 @@ class TestOnyxWJHModule(TestOnyxModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
-        super(TestOnyxIgmpModule, self).tearDown()
+        super(TestOnyxWJHModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
@@ -39,21 +38,29 @@ class TestOnyxWJHModule(TestOnyxModule):
         self.load_config.return_value = None
 
     def test_wjh_no_change(self):
-        set_module_args(dict(group='forwarding',enabled=True))
+        set_module_args(dict(group='forwarding', enabled=False))
         self.execute_module(changed=False)
+
     def test_wjh_enable(self):
-        set_module_args(dict(group='forwarding',enabled=True))
-        commands= ['what-just-happened forwarding enable']
+        set_module_args(dict(group='forwarding', enabled=True))
+        commands = ['what-just-happened forwarding enable']
         self.execute_module(changed=True, commands=commands)
+
+    def test_wjh_export_no_change(self):
+        set_module_args(dict(export_group='forwarding', auto_export=False))
+        self.execute_module(changed=False)
+
     def test_wjh_export_enable(self):
-        set_module_args(dict(auto_group='forwarding',auto_export=True))
-        commands= ['what-just-happened auto-export forwarding enable']
+        set_module_args(dict(export_group='forwarding', auto_export=True))
+        commands = ['what-just-happened auto-export forwarding enable']
         self.execute_module(changed=True, commands=commands)
+
     def test_wjh_export_disable(self):
-        set_module_args(dict(auto_group='forwarding',auto_export=False))
-        commands= ['no what-just-happened auto-export forwarding enable']
+        set_module_args(dict(export_group='all', auto_export=False))
+        commands = ['no what-just-happened auto-export all enable']
         self.execute_module(changed=True, commands=commands)
+
     def test_wjh_clear(self):
         set_module_args(dict(clear_group='all'))
-        commands= ['clear what-just-happened pcap-files all']
+        commands = ['clear what-just-happened pcap-files all']
         self.execute_module(changed=True, commands=commands)

@@ -15,7 +15,7 @@ DOCUMENTATION = """
 module: onyx_wjh
 version_added: "2.9"
 author: "Anas Shami (@anass)"
-short_description: Configure what-just-happend module 
+short_description: Configure what-just-happend module
 description:
   - This module provides declarative management of wjh
     on Mellanox ONYX network devices.
@@ -23,7 +23,6 @@ notes:
 options:
     group:
         description: Name of wjh group
-        required: true
         choice: ['all', 'forwarding', 'acl']
     enabled:
         description: wjh group status
@@ -35,7 +34,7 @@ options:
         description: wjh group auto export group
         choice: ['all', 'forwarding', 'acl']
     clear_group:
-        description: clear pcap file by group 
+        description: clear pcap file by group
         choice: ['all', 'user', 'auto-export']
 """
 
@@ -88,28 +87,32 @@ class OnyxWJHModule(BaseOnyxModule):
     WJH_DISABLED_REGX = re.compile(r'^no what-just-happened ([a-z]+) enable.*')
     WJH_DISABLED_AUTO_EXPORT_REGX = re.compile(r'^no what-just-happened auto-export ([a-z]+) enable.*')
 
-
     WJH_CMD_FMT = '{}what-just-happened {} enable'
     WJH_EXPORT_CMD_FMT = '{}what-just-happened auto-export {} enable'
     WJH_CLEAR_CMD_FMT = 'clear what-just-happened pcap-files {}'
 
-    WJH_GROUPS   = ['all', 'forwarding', 'acl']
+    WJH_GROUPS = ['all', 'forwarding', 'acl']
     CLEAR_GROUPS = ['all', 'user', 'auto-export']
+
     def init_module(self):
-        """ module initialization
         """
-        element_spec = dict(
-                        group=dict(choices = self.WJH_GROUPS),
-                        enabled = dict(type = 'bool'),
-                        auto_export = dict(type = 'bool'),
-                        export_group = dict(choices = self.WJH_GROUPS),
-                        clear_group = dict(choices = self.CLEAR_GROUPS)
-                        )
+        module initialization
+        """
+        element_spec = dict(group=dict(choices=self.WJH_GROUPS),
+                            enabled=dict(type='bool'),
+                            auto_export=dict(type='bool'),
+                            export_group=dict(choices=self.WJH_GROUPS),
+                            clear_group=dict(choices=self.CLEAR_GROUPS))
+
         argument_spec = dict()
         argument_spec.update(element_spec)
         self._module = AnsibleModule(
             argument_spec=argument_spec,
-            supports_check_mode=True)
+            supports_check_mode=True,
+            required_together=[
+                ['group', 'enabled'],
+                ['auto_export', 'export_group']
+            ])
 
     def get_required_config(self):
         self._required_config = dict()
@@ -118,17 +121,16 @@ class OnyxWJHModule(BaseOnyxModule):
         export_group = module_params.get('export_group')
         clear_group = module_params.get('clear_group')
 
-        auto_export = module_params.get('auto_export', True)
-        enabled = module_params.get('enabled', True)
-
         params = dict()
         if group:
+            enabled = module_params.get('enabled')
             params.update({
                 'group': group,
                 'enabled': enabled
             })
 
         if export_group:
+            auto_export = module_params.get('auto_export')
             params.update({
                 'export_group': export_group,
                 'auto_export': auto_export
@@ -143,69 +145,71 @@ class OnyxWJHModule(BaseOnyxModule):
         self._required_config = params
 
     def _get_wjh_config(self):
-        return show_cmd(self._module, "show running-config | include .*what-just-happened.*")
-        
+        return show_cmd(self._module, "show running-config | include .*what-just-happened.*", json_fmt=False, fail_on_error=False)
+
     def _set_current_config(self, config):
         if not config:
-            return 
-        current_config = self._current_config #alias 
-        for line in config:
+            return
+        current_config = self._current_config
+        lines = config.split('\n')
+        for line in lines:
+            if line.startswith('#'):
+                continue
             match = self.WJH_DISABLED_REGX.match(line)
-            if match: 
-                #wjh is disabled
+            if match:
+                # wjh is disabled
                 group = match.group(1)
-                current_config[group] = False 
+                current_config[group] = False
 
             match = self.WJH_DISABLED_AUTO_EXPORT_REGX.match(line)
             if match:
-                #wjh auto export is disabled
+                # wjh auto export is disabled
                 export_group = match.group(1) + '_export'
-                current_config[export_group] = False 
-    
+                current_config[export_group] = False
+
     '''
-        show running config will contains [no wjh * group enable] if disabled - default config is enabled 
+        show running config will contains [no wjh * group enable] if disabled - default config is enabled
     '''
     def load_current_config(self):
         self._current_config = dict()
-        config_lines = self._get_wjh_config().get('Lines', None)
-        
+        config_lines = self._get_wjh_config()
         if config_lines:
             self._set_current_config(config_lines)
 
-
-    def wjh_group_status(self, current_config, group_value, suffix = ''):
-        current_enabled = False 
-
+    def wjh_group_status(self, current_config, group_value, suffix=''):
+        current_enabled = False
         if group_value == 'all':
-            current_enabled = not any([(group + suffix) in current_config for group in self.WJH_GROUPS]) # no disabled group
+            # no disabled group so all would be false
+            current_enabled = not all([
+                                      (group + suffix) in current_config for group in self.WJH_GROUPS])
         else:
-            current_enabled = current_config[group_value + suffix] if group_value in current_config else True # if no current-value its enabled
-        
+            # if no current-value its enabled
+            current_enabled = current_config[group_value + suffix] if((group_value + suffix) in current_config) else True
         return current_enabled
+
     '''
         wjh is enabled "by default"
-        when wjh disable we  will find no wjh commands in running config 
-    ''' 
+        when wjh disable we  will find no wjh commands in running config
+    '''
     def generate_commands(self):
         current_config, required_config = self._current_config, self._required_config
-        for key, value in required_config.items():
-            if key == 'group': #configration for wjh drop resean group
-                current_enabled = self.wjh_group_status(current_config, value)
-                if(required_config['enabled'] !=  current_enabled):
-                    self._commands.append(self.WJH_CMD_FMT.format(
-                                                        '' if required_config['enabled'] else 'no ',
-                                                        value))
+        group = required_config.get('group')
+        export_group = required_config.get('export_group')
+        clear_group = required_config.get('clear_group')
+        if group:
+            current_enabled = self.wjh_group_status(current_config, group)
+            if(required_config['enabled'] != current_enabled):
+                self._commands.append(self.WJH_CMD_FMT
+                                      .format(('' if required_config['enabled'] else 'no '), group))
+        if export_group:
+            current_enabled = self.wjh_group_status(current_config, required_config['export_group'], '_export')
+            if(required_config['auto_export'] != current_enabled):
+                self._commands.append(self.WJH_EXPORT_CMD_FMT
+                                      .format(('' if required_config['auto_export'] else 'no '), export_group))
+        if clear_group:
+            # clear pcap files
+            self._commands.append(self.WJH_CLEAR_CMD_FMT.format(clear_group))
 
-            elif key == 'export_group': #configration for wjh auto-export resean group
-                current_enabled = self.wjh_group_status(current_config, value, '_export')
-                if(required_config['auto_export'] !=  current_enabled):
-                    self._commands.append(self.WJH_EXPORT_CMD_FMT.format(
-                                                        '' if required_config['auto_export'] else 'no ',
-                                                        value))
-
-            elif key == 'clear_group':
-                #clear pcap files
-                self._commands.append(self.WJH_CLEAR_CMD_FMT.format(value))
 
 def main():
     """ main entry point for module execution
