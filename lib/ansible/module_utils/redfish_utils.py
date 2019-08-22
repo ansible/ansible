@@ -647,6 +647,8 @@ class RedfishUtils(object):
             payload = {'ResetType': 'On'}
         elif command == "PowerForceOff":
             payload = {'ResetType': 'ForceOff'}
+        elif command == "PowerForceRestart":
+            payload = {'ResetType': "ForceRestart"}
         elif command == "PowerGracefulRestart":
             payload = {'ResetType': 'GracefulRestart'}
         elif command == "PowerGracefulShutdown":
