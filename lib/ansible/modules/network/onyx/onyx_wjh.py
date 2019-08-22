@@ -22,25 +22,28 @@ description:
 notes:
 options:
     group:
-        description: 
+        description:
          - Name of wjh group.
         choices: ['all', 'forwarding', 'acl']
+        type: str
     enabled:
-        description: 
+        description:
           - wjh group status
         type: bool
     auto_export:
-        description: 
+        description:
           - wjh group auto export pcap file status
         type: bool
     export_group:
-        description: 
+        description:
           - wjh group auto export group
         choices: ['all', 'forwarding', 'acl']
+        type: str
     clear_group:
-        description: 
+        description:
           - clear pcap file by group
         choices: ['all', 'user', 'auto-export']
+        type: str
 """
 
 EXAMPLES = """
