@@ -133,8 +133,7 @@ html_show_sphinx = False
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
-    'vcs_pageview_mode': 'edit',
-#    'style_nav_header_background': "#5bbdbf;height=80px;margin:'auto auto auto auto"
+    'vcs_pageview_mode': 'edit'
 }
 
 html_context = {
