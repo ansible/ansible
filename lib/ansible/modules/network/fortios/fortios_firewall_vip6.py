@@ -967,7 +967,8 @@ def main():
                 "ssl_cipher_suites": {"required": False, "type": "list",
                                       "options": {
                                           "cipher": {"required": False, "type": "str",
-                                                     "choices": ["TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA", "TLS-DHE-DSS-WITH-DES-CBC-SHA"]},
+                                                     "choices": ["TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA",
+                                                                 "TLS-DHE-DSS-WITH-DES-CBC-SHA"]},
                                           "priority": {"required": True, "type": "int"},
                                           "versions": {"required": False, "type": "str",
                                                        "choices": ["ssl-3.0", "tls-1.0", "tls-1.1",
@@ -1020,7 +1021,8 @@ def main():
                 "ssl_server_cipher_suites": {"required": False, "type": "list",
                                              "options": {
                                                  "cipher": {"required": False, "type": "str",
-                                                            "choices": ["TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA", "TLS-DHE-DSS-WITH-DES-CBC-SHA"]},
+                                                            "choices": ["TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA",
+                                                                        "TLS-DHE-DSS-WITH-DES-CBC-SHA"]},
                                                  "priority": {"required": True, "type": "int"},
                                                  "versions": {"required": False, "type": "str",
                                                               "choices": ["ssl-3.0", "tls-1.0", "tls-1.1",
