@@ -43,6 +43,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 EXAMPLES = r'''
 - name: Ensure an existing image is installed in specified volume
@@ -75,6 +76,7 @@ RETURN = r'''
 import time
 import ssl
 
+from ansible.module_utils.six.moves.urllib.error import URLError
 from ansible.module_utils.urls import urlparse
 from ansible.module_utils.basic import AnsibleModule
 
@@ -340,6 +342,9 @@ class ModuleManager(object):
                 self._set_volume_url(item)
                 break
 
+        if not self.volume_url:
+            self.volume_url = uri + self.want.volume
+
         resp = self.client.api.get(self.volume_url)
 
         try:
@@ -469,6 +474,9 @@ class ModuleManager(object):
         except ssl.SSLError:
             # Suggests BIG-IP is still in the middle of restarting itself or
             # restjavad is restarting.
+            return None
+        except URLError:
+            # At times during reboot BIG-IP will reset or timeout connections so we catch and pass this here.
             return None
 
         if 'code' in response and response['code'] == 400:
