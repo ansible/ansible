@@ -96,7 +96,7 @@ def main():
 
     try:
         module.exit_json(
-            scaleway_volume_info=ScalewayVolumeFacts(module).get_resources()
+            scaleway_volume_info=ScalewayVolumeInfo(module).get_resources()
         )
     except ScalewayException as exc:
         module.fail_json(msg=exc.message)
