@@ -46,9 +46,6 @@ class InterfacesFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if connection:
-            pass
-
         objs = []
         if not data:
             data = connection.get('show running-config interface')
