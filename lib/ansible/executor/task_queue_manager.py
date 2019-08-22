@@ -286,10 +286,9 @@ class TaskQueueManager:
         # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
 
         defunct = False
-        for (idx, x) in enumerate(self._workers):
-            if hasattr(x, 'exitcode'):
-                if x.exitcode in [-9, -11, -15]:
-                    defunct = True
+        for x in self._workers:
+            if getattr(x, 'exitcode', None):
+                defunct = True
         return defunct
 
     def send_callback(self, method_name, *args, **kwargs):
