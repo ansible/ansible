@@ -396,8 +396,9 @@ def main():
                                                                                            "cred-hardware-token", "cred-softoken", "cred-certificate",
                                                                                            "cred-user-pwd", "cred-none", "cred-vendor-specific",
                                                                                            "tun-cred-sim", "tun-cred-usim", "tun-cred-nfc",
-                                                                                           "tun-cred-hardware-token", "tun-cred-softoken", "tun-cred-certificate",
-                                                                                           "tun-cred-user-pwd", "tun-cred-anonymous", "tun-cred-vendor-specific"]}
+                                                                                           "tun-cred-hardware-token", "tun-cred-softoken",
+                                                                                           "tun-cred-certificate", "tun-cred-user-pwd",
+                                                                                           "tun-cred-anonymous", "tun-cred-vendor-specific"]}
                                                                    }},
                                                     "index": {"required": True, "type": "int"},
                                                     "method": {"required": False, "type": "str",
