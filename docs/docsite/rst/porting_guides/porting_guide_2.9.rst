@@ -116,6 +116,10 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * nxos_vlan use :ref:`nxos_vlans <nxos_vlans_module>` instead.
 
+* online_server_facts use :ref:`online_server_info <online_server_info_module>` instead.
+
+* online_user_facts use :ref:`online_user_info <online_user_info_module>` instead.
+
 * purefa_facts use :ref:`purefa_info <purefa_info_module>` instead.
 
 * purefb_facts use :ref:`purefb_info <purefb_info_module>` instead.
