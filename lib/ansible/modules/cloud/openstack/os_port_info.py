@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-module: os_port_facts
-short_description: Retrieve facts about ports within OpenStack.
+module: os_port_info
+short_description: Retrieve information about ports within OpenStack.
 version_added: "2.1"
 author: "David Shrewsbury (@Shrews)"
 description:
-    - Retrieve facts about ports from OpenStack.
-notes:
-    - Facts are placed in the C(openstack_ports) variable.
+    - Retrieve information about ports from OpenStack.
+    - This module was called C(os_port_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_port_info) module no longer returns C(ansible_facts)!
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -41,18 +41,22 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all ports
-- os_port_facts:
+# Gather information about all ports
+- os_port_info:
     cloud: mycloud
+  register: result
 
-# Gather facts about a single port
-- os_port_facts:
+- debug:
+    msg: "{{ result.openstack_ports }}"
+
+# Gather information about a single port
+- os_port_info:
     cloud: mycloud
     port: 6140317d-e676-31e1-8a4a-b1913814a471
 
-# Gather facts about all ports that have device_id set to a specific value
+# Gather information about all ports that have device_id set to a specific value
 # and with a status of ACTIVE.
-- os_port_facts:
+- os_port_info:
     cloud: mycloud
     filters:
       device_id: 1038a010-3a37-4a9d-82ea-652f1da36597
@@ -195,6 +199,10 @@ def main():
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
+    is_old_facts = module._name == 'os_port_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_port_facts' module has been renamed to 'os_port_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     port = module.params.get('port')
     filters = module.params.get('filters')
@@ -202,8 +210,11 @@ def main():
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         ports = cloud.search_ports(port, filters)
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_ports=ports))
+        if is_old_facts:
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_ports=ports))
+        else:
+            module.exit_json(changed=False, openstack_ports=ports)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

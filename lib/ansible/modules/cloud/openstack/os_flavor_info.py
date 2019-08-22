@@ -13,21 +13,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_flavor_facts
-short_description: Retrieve facts about one or more flavors
+module: os_flavor_info
+short_description: Retrieve information about one or more flavors
 author: "David Shrewsbury (@Shrews)"
 version_added: "2.1"
 description:
-    - Retrieve facts about available OpenStack instance flavors. By default,
-      facts about ALL flavors are retrieved. Filters can be applied to get
-      facts for only matching flavors. For example, you can filter on the
+    - Retrieve information about available OpenStack instance flavors. By default,
+      information about ALL flavors are retrieved. Filters can be applied to get
+      information for only matching flavors. For example, you can filter on the
       amount of RAM available to the flavor, or the number of virtual CPUs
       available to the flavor, or both. When specifying multiple filters,
       *ALL* filters must match on a flavor before that flavor is returned as
       a fact.
+    - This module was called C(os_flavor_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_flavor_info) module no longer returns C(ansible_facts)!
 notes:
-    - This module creates a new top-level C(openstack_flavors) fact, which
-      contains a list of unsorted flavors.
+    - The result contains a list of unsorted flavors.
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -75,41 +76,45 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all available flavors
-- os_flavor_facts:
+# Gather information about all available flavors
+- os_flavor_info:
     cloud: mycloud
+  register: result
 
-# Gather facts for the flavor named "xlarge-flavor"
-- os_flavor_facts:
+- debug:
+    msg: "{{ result.openstack_flavors }}"
+
+# Gather information for the flavor named "xlarge-flavor"
+- os_flavor_info:
     cloud: mycloud
     name: "xlarge-flavor"
 
 # Get all flavors that have exactly 512 MB of RAM.
-- os_flavor_facts:
+- os_flavor_info:
     cloud: mycloud
     ram: "512"
 
 # Get all flavors that have 1024 MB or more of RAM.
-- os_flavor_facts:
+- os_flavor_info:
     cloud: mycloud
     ram: ">=1024"
 
 # Get a single flavor that has the minimum amount of RAM. Using the 'limit'
 # option will guarantee only a single flavor is returned.
-- os_flavor_facts:
+- os_flavor_info:
     cloud: mycloud
     ram: "MIN"
     limit: 1
 
 # Get all flavors with 1024 MB of RAM or more, AND exactly 2 virtual CPUs.
-- os_flavor_facts:
+- os_flavor_info:
     cloud: mycloud
     ram: ">=1024"
     vcpus: "2"
 
 # Get all flavors with 1024 MB of RAM or more, exactly 2 virtual CPUs, and
 # less than 30gb of ephemeral storage.
-- os_flavor_facts:
+- os_flavor_info:
     cloud: mycloud
     ram: ">=1024"
     vcpus: "2"
@@ -186,6 +191,10 @@ def main():
         ]
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
+    is_old_facts = module._name == 'os_flavor_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_flavor_facts' module has been renamed to 'os_flavor_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     name = module.params['name']
     vcpus = module.params['vcpus']
@@ -214,8 +223,12 @@ def main():
         if limit is not None:
             flavors = flavors[:limit]
 
-        module.exit_json(changed=False,
-                         ansible_facts=dict(openstack_flavors=flavors))
+        if is_old_facts:
+            module.exit_json(changed=False,
+                             ansible_facts=dict(openstack_flavors=flavors))
+        else:
+            module.exit_json(changed=False,
+                             openstack_flavors=flavors)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

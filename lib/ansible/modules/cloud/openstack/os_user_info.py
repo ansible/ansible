@@ -13,13 +13,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_user_facts
-short_description: Retrieve facts about one or more OpenStack users
+module: os_user_info
+short_description: Retrieve information about one or more OpenStack users
 extends_documentation_fragment: openstack
 version_added: "2.1"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
-    - Retrieve facts about a one or more OpenStack users
+    - Retrieve information about a one or more OpenStack users
+    - This module was called C(os_user_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_user_info) module no longer returns C(ansible_facts)!
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -41,42 +43,46 @@ options:
 '''
 
 EXAMPLES = '''
-# Gather facts about previously created users
-- os_user_facts:
+# Gather information about previously created users
+- os_user_info:
     cloud: awesomecloud
+  register: result
 - debug:
-    var: openstack_users
+    msg: "{{ result.openstack_users }}"
 
-# Gather facts about a previously created user by name
-- os_user_facts:
+# Gather information about a previously created user by name
+- os_user_info:
     cloud: awesomecloud
     name: demouser
+  register: result
 - debug:
-    var: openstack_users
+    msg: "{{ result.openstack_users }}"
 
-# Gather facts about a previously created user in a specific domain
-- os_user_facts:
+# Gather information about a previously created user in a specific domain
+- os_user_info:
     cloud: awesomecloud
     name: demouser
     domain: admindomain
+  register: result
 - debug:
-    var: openstack_users
+    msg: "{{ result.openstack_users }}"
 
-# Gather facts about a previously created user in a specific domain with filter
-- os_user_facts:
+# Gather information about a previously created user in a specific domain with filter
+- os_user_info:
     cloud: awesomecloud
     name: demouser
     domain: admindomain
     filters:
       enabled: False
+  register: result
 - debug:
-    var: openstack_users
+    msg: "{{ result.openstack_users }}"
 '''
 
 
 RETURN = '''
 openstack_users:
-    description: has all the OpenStack facts about users
+    description: has all the OpenStack information about users
     returned: always, but can be null
     type: complex
     contains:
@@ -123,6 +129,10 @@ def main():
     )
 
     module = AnsibleModule(argument_spec)
+    is_old_facts = module._name == 'os_user_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_user_facts' module has been renamed to 'os_user_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, opcloud = openstack_cloud_from_module(module)
     try:
@@ -150,8 +160,11 @@ def main():
             filters['domain_id'] = domain
 
         users = opcloud.search_users(name, filters)
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_users=users))
+        if is_old_facts:
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_users=users))
+        else:
+            module.exit_json(changed=False, openstack_users=users)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

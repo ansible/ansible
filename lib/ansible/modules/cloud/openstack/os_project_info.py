@@ -13,13 +13,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_project_facts
-short_description: Retrieve facts about one or more OpenStack projects
+module: os_project_info
+short_description: Retrieve information about one or more OpenStack projects
 extends_documentation_fragment: openstack
 version_added: "2.1"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
-    - Retrieve facts about a one or more OpenStack projects
+    - Retrieve information about a one or more OpenStack projects
+    - This module was called C(os_project_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_project_info) module no longer returns C(ansible_facts)!
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -41,42 +43,46 @@ options:
 '''
 
 EXAMPLES = '''
-# Gather facts about previously created projects
-- os_project_facts:
+# Gather information about previously created projects
+- os_project_info:
     cloud: awesomecloud
+  register: result
 - debug:
-    var: openstack_projects
+    msg: "{{ result.openstack_projects }}"
 
-# Gather facts about a previously created project by name
-- os_project_facts:
+# Gather information about a previously created project by name
+- os_project_info:
     cloud: awesomecloud
     name: demoproject
+  register: result
 - debug:
-    var: openstack_projects
+    msg: "{{ result.openstack_projects }}"
 
-# Gather facts about a previously created project in a specific domain
-- os_project_facts:
+# Gather information about a previously created project in a specific domain
+- os_project_info:
     cloud: awesomecloud
     name: demoproject
     domain: admindomain
+  register: result
 - debug:
-    var: openstack_projects
+    msg: "{{ result.openstack_projects }}"
 
-# Gather facts about a previously created project in a specific domain with filter
-- os_project_facts:
+# Gather information about a previously created project in a specific domain with filter
+- os_project_info:
     cloud: awesomecloud
     name: demoproject
     domain: admindomain
     filters:
       enabled: False
+  register: result
 - debug:
-    var: openstack_projects
+    msg: "{{ result.openstack_projects }}"
 '''
 
 
 RETURN = '''
 openstack_projects:
-    description: has all the OpenStack facts about projects
+    description: has all the OpenStack information about projects
     returned: always, but can be null
     type: complex
     contains:
@@ -115,6 +121,10 @@ def main():
     )
 
     module = AnsibleModule(argument_spec)
+    is_old_facts = module._name == 'os_port_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_port_facts' module has been renamed to 'os_port_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, opcloud = openstack_cloud_from_module(module)
     try:
@@ -142,8 +152,11 @@ def main():
             filters['domain_id'] = domain
 
         projects = opcloud.search_projects(name, filters)
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_projects=projects))
+        if is_old_facts:
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_projects=projects))
+        else:
+            module.exit_json(changed=False, openstack_projects=projects)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
