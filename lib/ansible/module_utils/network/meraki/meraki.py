@@ -89,9 +89,7 @@ def _error_report(function):
                     raise InternalErrorException(
                         "Internal server error 502, retry {0}".format(self.retry))
                 elif self.status >= 400:
-                    raise HTTPError(
-                        "HTTP error {0} - {1}".format(self.status, response)
-                        )
+                    raise HTTPError("HTTP error {0} - {1}".format(self.status, response))
                 self.retry = 0  # Needs to reset in case of future retries
                 return response
             except RateLimitException as e:
@@ -406,7 +404,6 @@ class MerakiModule(object):
         if params:
             built_path += self.encode_url_params(params)
         return built_path
-
 
     @_error_report
     def request(self, path, method=None, payload=None):

@@ -89,7 +89,7 @@ def mocked_fetch_url_rate_success(module, *args, **kwargs):
         info = {'status': 200,
                 'url': 'https://api.meraki.com/api/organization',
                 }
-        resp = { 'body': 'Succeeded' }
+        resp = {'body': 'Succeeded'}
     else:
         info = {'status': 429,
                 'msg': '429 - Rate limit hit',
