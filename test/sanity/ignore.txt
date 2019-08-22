@@ -3580,11 +3580,11 @@ lib/ansible/modules/network/eos/_eos_l2_interface.py validate-modules:E326
 lib/ansible/modules/network/eos/_eos_l2_interface.py validate-modules:E337
 lib/ansible/modules/network/eos/_eos_l2_interface.py validate-modules:E338
 lib/ansible/modules/network/eos/_eos_l2_interface.py validate-modules:E340
-lib/ansible/modules/network/eos/eos_l3_interface.py validate-modules:E322
-lib/ansible/modules/network/eos/eos_l3_interface.py validate-modules:E326
-lib/ansible/modules/network/eos/eos_l3_interface.py validate-modules:E337
-lib/ansible/modules/network/eos/eos_l3_interface.py validate-modules:E338
-lib/ansible/modules/network/eos/eos_l3_interface.py validate-modules:E340
+lib/ansible/modules/network/eos/_eos_l3_interface.py validate-modules:E322
+lib/ansible/modules/network/eos/_eos_l3_interface.py validate-modules:E326
+lib/ansible/modules/network/eos/_eos_l3_interface.py validate-modules:E337
+lib/ansible/modules/network/eos/_eos_l3_interface.py validate-modules:E338
+lib/ansible/modules/network/eos/_eos_l3_interface.py validate-modules:E340
 lib/ansible/modules/network/eos/_eos_linkagg.py validate-modules:E322
 lib/ansible/modules/network/eos/_eos_linkagg.py validate-modules:E326
 lib/ansible/modules/network/eos/_eos_linkagg.py validate-modules:E337
