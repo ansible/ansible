@@ -1,0 +1,48 @@
+---
+- debug:
+      msg: "START Overridden ios_lldp_interfaces state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _enable_lldp.yaml
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Override device configuration of all lldp_interfaces with provided configuration
+      ios_lldp_interfaces: &overridden
+        config:
+          - name: GigabitEthernet0/0
+            receive: True
+            transmit: True
+          - name: GigabitEthernet0/2
+            receive: True
+        state: overridden
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Override device configuration of all lldp_interfaces with provided configuration (IDEMPOTENT)
+      ios_lldp_interfaces: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

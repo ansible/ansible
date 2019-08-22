@@ -1,0 +1,126 @@
+---
+merged:
+  before:
+    - name: GigabitEthernet0/0
+      receive: False
+      transmit: False
+    - name: GigabitEthernet0/1
+      receive: False
+      transmit: False
+    - name: GigabitEthernet0/2
+      receive: False
+      transmit: False
+
+  commands:
+    - "interface GigabitEthernet0/0"
+    - "lldp receive"
+    - "lldp transmit"
+    - "interface GigabitEthernet0/1"
+    - "lldp receive"
+    - "lldp transmit"
+    - "interface GigabitEthernet0/2"
+    - "lldp receive"
+
+  after:
+    - name: GigabitEthernet0/0
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/1
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/2
+      receive: True
+      transmit: False
+
+replaced:
+  before:
+    - name: GigabitEthernet0/0
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/1
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/2
+      receive: True
+      transmit: True
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no lldp receive"
+    - "interface GigabitEthernet0/2"
+    - "no lldp transmit"
+
+  after:
+    - name: GigabitEthernet0/0
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/1
+      receive: False
+      transmit: True
+    - name: GigabitEthernet0/2
+      receive: True
+      transmit: False
+
+overridden:
+  before:
+    - name: GigabitEthernet0/0
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/1
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/2
+      receive: True
+      transmit: True
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no lldp receive"
+    - "no lldp transmit"
+    - "interface GigabitEthernet0/2"
+    - "no lldp transmit"
+
+  after:
+    - name: GigabitEthernet0/0
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/1
+      receive: False
+      transmit: False
+    - name: GigabitEthernet0/2
+      receive: True
+      transmit: False
+
+deleted:
+  before:
+    - name: GigabitEthernet0/0
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/1
+      receive: True
+      transmit: True
+    - name: GigabitEthernet0/2
+      receive: True
+      transmit: True
+
+  commands:
+    - "interface GigabitEthernet0/0"
+    - "no lldp receive"
+    - "no lldp transmit"
+    - "interface GigabitEthernet0/1"
+    - "no lldp receive"
+    - "no lldp transmit"
+    - "interface GigabitEthernet0/2"
+    - "no lldp receive"
+    - "no lldp transmit"
+
+  after:
+    - name: GigabitEthernet0/0
+      receive: False
+      transmit: False
+    - name: GigabitEthernet0/1
+      receive: False
+      transmit: False
+    - name: GigabitEthernet0/2
+      receive: False
+      transmit: False
