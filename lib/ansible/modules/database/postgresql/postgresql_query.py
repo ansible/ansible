@@ -121,6 +121,22 @@ EXAMPLES = r'''
     query: INSERT INTO test_table (array_column) VALUES (%s)
     positional_args:
     - '{1,2,3}'
+
+# Pass list and string vars as positional_args
+- name: Set vars
+  set_fact:
+    my_list:
+    - 1
+    - 2
+    - 3
+    my_arr: '{1, 2, 3}'
+
+- name: postgresql_query - select from test table by passing positional_args
+  postgresql_query:
+    query: SELECT * FROM test_array_table WHERE arr_col1 = %s AND arr_col2 = %s
+    positional_args:
+    - '{{ my_list }}'
+    - '{{ my_arr|string }}'
 '''
 
 RETURN = r'''
