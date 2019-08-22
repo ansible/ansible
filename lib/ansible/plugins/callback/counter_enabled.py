@@ -43,6 +43,7 @@ class CallbackModule(CallbackBase):
     _task_total = 0
     _host_counter = 1
     _host_total = 0
+    _task_names = []
 
     def __init__(self):
         super(CallbackModule, self).__init__()
@@ -143,12 +144,18 @@ class CallbackModule(CallbackBase):
             path = task.get_path()
             if path:
                 self._display.display("task path: %s" % path, color=C.COLOR_DEBUG)
-        self._host_counter = 0
-        self._task_counter += 1
+        if task.get_name().strip() not in self._task_names:
+            self._task_names.append(task.get_name().strip())
+            self._host_counter = 0
+        if self._task_counter < self._task_total:
+            self._task_counter += 1
+        else:
+            self._task_counter = 1
 
     def v2_runner_on_ok(self, result):
 
-        self._host_counter += 1
+        if self._host_counter < self._host_total:
+            self._host_counter += 1
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
 
@@ -183,7 +190,8 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
-        self._host_counter += 1
+        if self._host_counter < self._host_total:
+            self._host_counter += 1
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._clean_results(result._result, result._task.action)
@@ -212,7 +220,8 @@ class CallbackModule(CallbackBase):
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_runner_on_skipped(self, result):
-        self._host_counter += 1
+        if self._host_counter < self._host_total:
+            self._host_counter += 1
 
         if self._plugin_options.get('show_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS):  # fallback on constants for inherited plugins missing docs
 
@@ -230,7 +239,8 @@ class CallbackModule(CallbackBase):
                 self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
-        self._host_counter += 1
+        if self._host_counter < self._host_total:
+            self._host_counter += 1
 
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
