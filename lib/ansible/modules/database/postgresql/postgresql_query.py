@@ -131,7 +131,7 @@ EXAMPLES = r'''
     - 3
     my_arr: '{1, 2, 3}'
 
-- name: postgresql_query - select from test table by passing positional_args
+- name: Select from test table by passing positional_args as arrays
   postgresql_query:
     query: SELECT * FROM test_array_table WHERE arr_col1 = %s AND arr_col2 = %s
     positional_args:
