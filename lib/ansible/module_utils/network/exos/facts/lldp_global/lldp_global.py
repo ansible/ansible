@@ -18,6 +18,7 @@ from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.exos.argspec.lldp_global.lldp_global \
     import Lldp_globalArgs
+from ansible.module_utils.network.exos.exos import send_requests
 
 
 class Lldp_globalFacts(object):
@@ -54,15 +55,15 @@ class Lldp_globalFacts(object):
         :returns: facts
         """
         if not data:
-            request = [{
+            request = {
                 "path": "/rest/restconf/data/openconfig-lldp:lldp/config/",
                 "method": "GET",
-            }]
-            data = connection.send_requests(requests=request)
+            }
+            data = send_requests(self._module, request)
 
         obj = {}
         if data:
-            lldp_obj = self.render_config(self.generated_spec, data)
+            lldp_obj = self.render_config(self.generated_spec, data[0])
             if lldp_obj:
                 obj = lldp_obj
 
@@ -86,12 +87,11 @@ class Lldp_globalFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-
-        config['interval'] = conf["opeconfig-lldp:config"]["hello-timer"]
+        config['interval'] = conf["openconfig-lldp:config"]["hello-timer"]
 
         for item in self.TLV_SELECT_OPTIONS:
             config["tlv_select"][item.lower()] = (
-                False if (item in conf["opeconfig-lldp:config"]["suppress-tlv-advertisement"])
+                False if (item in conf["openconfig-lldp:config"]["suppress-tlv-advertisement"])
                 else True)
 
         return utils.remove_empties(config)

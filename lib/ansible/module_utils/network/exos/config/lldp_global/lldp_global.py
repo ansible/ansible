@@ -16,6 +16,10 @@ __metaclass__ = type
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.exos.facts.facts import Facts
+from ansible.module_utils.network.exos.exos import send_requests
+
+import json
+from copy import deepcopy
 
 
 class Lldp_global(ConfigBase):
@@ -33,8 +37,18 @@ class Lldp_global(ConfigBase):
     ]
 
     LLDP_DEFAULT_INTERVAL = 30
-    LLDP_DEFAULT_TLV_SUPPRESSED = [
-        'SYSTEM_CAPABILITIES', 'PORT_DESCRIPTION', 'MANAGEMENT_ADDRESS']
+    LLDP_DEFAULT_TLV = {
+        'system_name': True,
+        'system_description': True,
+        'system_capabilities': False,
+        'port_description': False,
+        'management_address': False
+    }
+    LLDP_REQUEST = {
+        "data": {"openconfig-lldp:config": {}},
+        "method": "PUT",
+        "path": "/rest/restconf/data/openconfig-lldp:lldp/config"
+    }
 
     def __init__(self, module):
         super(Lldp_global, self).__init__(module)
@@ -66,7 +80,7 @@ class Lldp_global(ConfigBase):
         requests.extend(self.set_config(existing_lldp_global_facts))
         if requests:
             if not self._module.check_mode:
-                self._connection.send_requests(requests)
+                send_requests(self._module, requests)
             result['changed'] = True
         result['requests'] = requests
 
@@ -131,19 +145,16 @@ class Lldp_global(ConfigBase):
         :returns: the requests necessary to merge the provided into
                   the current configuration
         """
-        request = {
-            'body': {"openconfig_lldp:config": {}},
-            'method': 'PATCH',
-            'path': '/rest/restconf/data/openconfig-lldp:lldp/config'
-        }
-        if want.get('interval'):
-            if want['interval'] != have['interval']:
-                request['body']['openconfig_lldp:config']['hello-timer'] = want['interval']
-        if want.get('tlv-select'):
-            if want['tlv-select'] != have['tlv-select']:
-                request['body']['openconfig_lldp:config']['suppress-tlv-advertisement'] = [
-                    tlv.key().upper() for tlv in want['tlv-select'] if tlv.value() is False]
-        return request
+        requests = []
+
+        request = deepcopy(self.LLDP_REQUEST)
+        self._update_lldp_config_body_if_diff(want, have, request)
+
+        if len(request["data"]["openconfig-lldp:config"]):
+            request["data"] = json.dumps(request["data"])
+            requests.append(request)
+
+        return requests
 
     def _state_deleted(self, want, have):
         """ The request generator when state is deleted
@@ -152,13 +163,36 @@ class Lldp_global(ConfigBase):
         :returns: the requests necessary to remove the current configuration
                   of the provided objects
         """
-        request = {
-            'body': {"openconfig_lldp:config": {}},
-            'method': 'PUT',
-            'path': '/rest/restconf/data/openconfig-lldp:lldp/config'
-        }
-        request['body']['openconfig_lldp:config']['hello-timer'] = (
-            self.LLDP_DEFAULT_INTERVAL)
-        request['body']['openconfig_lldp:config']['suppress-tlv-advertisement'] = [
-            tlv for tlv in self.LLDP_DEFAULT_TLV_SUPPRESSED]
-        return request
+        requests = []
+
+        request = deepcopy(self.LLDP_REQUEST)
+        if want:
+            self._update_lldp_config_body_if_diff(want, have, request)
+        else:
+            if self.LLDP_DEFAULT_INTERVAL != have['interval']:
+                request["data"]["openconfig-lldp:config"].update(
+                    {"hello-timer": self.LLDP_DEFAULT_INTERVAL})
+
+            if have['tlv_select'] != self.LLDP_DEFAULT_TLV:
+                request["data"]["openconfig-lldp:config"].update(
+                    {"suppress-tlv-advertisement": [key.upper() for key, value in self.LLDP_DEFAULT_TLV.items() if not value]})
+
+        if len(request["data"]["openconfig-lldp:config"]):
+            request["data"] = json.dumps(request["data"])
+            requests.append(request)
+
+        return requests
+
+    def _update_lldp_config_body_if_diff(self, want, have, request):
+        if want.get('interval'):
+            if want['interval'] != have['interval']:
+                request["data"]["openconfig-lldp:config"].update(
+                    {"hello-timer": want['interval']})
+        if want.get('tlv_select'):
+            # Create list of TLVs to be suppressed which aren't already
+            want_suppress = [key.upper() for key, value in want["tlv_select"].items() if have["tlv_select"][key] != value and value is False]
+            if want_suppress:
+                # Add previously suppressed TLVs to the list as we are doing a PUT op
+                want_suppress.extend([key.upper() for key, value in have["tlv_select"].items() if value is False])
+                request["data"]["openconfig-lldp:config"].update(
+                    {"suppress-tlv-advertisement": want_suppress})
