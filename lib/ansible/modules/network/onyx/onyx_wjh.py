@@ -31,7 +31,7 @@ options:
           - wjh group status
         type: bool
     auto_export:
-        description: 
+        description:
           - wjh group auto export pcap file status
         type: bool
     export_group:
