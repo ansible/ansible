@@ -9,7 +9,7 @@ from __future__ import (absolute_import, division, print_function)
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -238,7 +238,7 @@ def wireless_controller_hotspot20_anqp_network_auth_type(data, fos):
     state = data['state']
     wireless_controller_hotspot20_anqp_network_auth_type_data = data['wireless_controller_hotspot20_anqp_network_auth_type']
     filtered_data = \
-    underscore_to_hyphen(filter_wireless_controller_hotspot20_anqp_network_auth_type_data(wireless_controller_hotspot20_anqp_network_auth_type_data))
+        underscore_to_hyphen(filter_wireless_controller_hotspot20_anqp_network_auth_type_data(wireless_controller_hotspot20_anqp_network_auth_type_data))
 
     if state == "present":
         return fos.set('wireless-controller.hotspot20',
