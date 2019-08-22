@@ -293,7 +293,7 @@ def _wait_for_lb(module, cloud, lb, status, failures, interval=5):
         failures = []
 
     while total_sleep < timeout:
-        lb = cloud.load_balancer.get_load_balancer(lb.id)
+        lb = cloud.load_balancer.find_load_balancer(lb.id)
 
         if lb:
             if lb.provisioning_status == status:
