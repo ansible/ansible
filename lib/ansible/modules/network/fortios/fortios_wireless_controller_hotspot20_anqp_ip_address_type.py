@@ -246,7 +246,7 @@ def wireless_controller_hotspot20_anqp_ip_address_type(data, fos):
     state = data['state']
     wireless_controller_hotspot20_anqp_ip_address_type_data = data['wireless_controller_hotspot20_anqp_ip_address_type']
     filtered_data = \
-    underscore_to_hyphen(filter_wireless_controller_hotspot20_anqp_ip_address_type_data(wireless_controller_hotspot20_anqp_ip_address_type_data))
+        underscore_to_hyphen(filter_wireless_controller_hotspot20_anqp_ip_address_type_data(wireless_controller_hotspot20_anqp_ip_address_type_data))
 
     if state == "present":
         return fos.set('wireless-controller.hotspot20',
