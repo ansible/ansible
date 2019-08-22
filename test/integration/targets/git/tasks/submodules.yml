@@ -29,12 +29,12 @@
     chdir: "{{ git_repo_base.path }}"
 
 - name: "SUBMODULES | Add local git config user.email for repo_no_submodules"
-  command: "git config --local user.email ansible@ansible.com"
+  command: "git config user.email ansible@ansible.com"
   args:
     chdir: "{{ git_repo_base.path }}/repo_no_submodules"
 
 - name: "SUBMODULES | Add local git config user.name for repo_no_submodules"
-  command: "git config --local user.name 'Ansible Test Runner'"
+  command: "git config user.name 'Ansible Test Runner'"
   args:
     chdir: "{{ git_repo_base.path }}/repo_no_submodules"
 
@@ -62,12 +62,12 @@
     chdir: "{{ git_repo_base.path }}"
 
 - name: "SUBMODULES | Add local git config user.email for repo_single_submodule"
-  command: "git config --local user.email ansible@ansible.com"
+  command: "git config user.email ansible@ansible.com"
   args:
     chdir: "{{ git_repo_base.path }}/repo_single_submodule"
 
 - name: "SUBMODULES | Add local git config user.name for repo_single_submodule"
-  command: "git config --local user.name 'Ansible Test Runner'"
+  command: "git config user.name 'Ansible Test Runner'"
   args:
     chdir: "{{ git_repo_base.path }}/repo_single_submodule"
 
@@ -103,12 +103,12 @@
     chdir: "{{ git_repo_base.path }}"
 
 - name: "SUBMODULES | Add local git config user.email for repo_recursive_submodules"
-  command: "git config --local user.email ansible@ansible.com"
+  command: "git config user.email ansible@ansible.com"
   args:
     chdir: "{{ git_repo_base.path }}/repo_recursive_submodules"
 
 - name: "SUBMODULES | Add local git config user.name for repo_recursive_submodules"
-  command: "git config --local user.name 'Ansible Test Runner'"
+  command: "git config user.name 'Ansible Test Runner'"
   args:
     chdir: "{{ git_repo_base.path }}/repo_recursive_submodules"
 
