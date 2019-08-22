@@ -22,6 +22,11 @@ version_added: "2.1.0"
 
 description:
      - Provide one or more image names, and the module will inspect each, returning an array of inspection results.
+     - If an image does not exist locally, it will not appear in the results. If you want to check whether an image exists
+       locally, you can call the module with the image name, then check whether the result list is empty (image does not
+       exist) or has one element (the image exists locally).
+     - The module will not attempt to pull images from registries. Use M(docker_image) with I(source) set to C(pull)
+       to ensure an image is pulled.
 
 notes:
      - This module was called C(docker_image_facts) before Ansible 2.8. The usage did not change.
@@ -49,7 +54,6 @@ author:
 '''
 
 EXAMPLES = '''
-
 - name: Inspect a single image
   docker_image_info:
     name: pacur/centos-7
@@ -59,13 +63,21 @@ EXAMPLES = '''
     name:
       - pacur/centos-7
       - sinatra
+  register: result
+
+- name: Make sure that both images pacur/centos-7 and sinatra exist locally
+  assert:
+    that:
+      - result.images | length == 2
 '''
 
 RETURN = '''
 images:
-    description: Facts for the selected images.
+    description:
+      - Inspection results for the selected images.
+      - The list only contains inspection results of images existing locally.
     returned: always
-    type: dict
+    type: list
     sample: [
         {
             "Architecture": "amd64",
