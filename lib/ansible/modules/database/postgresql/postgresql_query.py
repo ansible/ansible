@@ -30,11 +30,13 @@ options:
   positional_args:
     description:
     - List of values to be passed as positional arguments to the query.
+      When the value is a list, it will be converted to PostgreSQL array.
     - Mutually exclusive with I(named_args).
     type: list
   named_args:
     description:
     - Dictionary of key-value arguments to pass to the query.
+      When the value is a list, it will be converted to PostgreSQL array.
     - Mutually exclusive with I(positional_args).
     type: dict
   path_to_script:
@@ -119,6 +121,22 @@ EXAMPLES = r'''
     query: INSERT INTO test_table (array_column) VALUES (%s)
     positional_args:
     - '{1,2,3}'
+
+# Pass list and string vars as positional_args
+- name: Set vars
+  set_fact:
+    my_list:
+    - 1
+    - 2
+    - 3
+    my_arr: '{1, 2, 3}'
+
+- name: Select from test table by passing positional_args as arrays
+  postgresql_query:
+    query: SELECT * FROM test_array_table WHERE arr_col1 = %s AND arr_col2 = %s
+    positional_args:
+    - '{{ my_list }}'
+    - '{{ my_arr|string }}'
 '''
 
 RETURN = r'''
@@ -161,11 +179,49 @@ from ansible.module_utils.postgres import (
     postgres_common_argument_spec,
 )
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 
 # ===========================================
 # Module execution.
 #
+
+def list_to_pg_array(elem):
+    """Convert the passed list to PostgreSQL array
+    represented as a string.
+
+    Args:
+        elem (list): List that needs to be converted.
+
+    Returns:
+        elem (str): String representation of PostgreSQL array.
+    """
+    elem = str(elem).strip('[]')
+    elem = '{' + elem + '}'
+    return elem
+
+
+def convert_elements_to_pg_arrays(obj):
+    """Convert list elements of the passed object
+    to PostgreSQL arrays represented as strings.
+
+    Args:
+        obj (dict or list): Object whose elements need to be converted.
+
+    Returns:
+        obj (dict or list): Object with converted elements.
+    """
+    if isinstance(obj, dict):
+        for (key, elem) in iteritems(obj):
+            if isinstance(elem, list):
+                obj[key] = list_to_pg_array(elem)
+
+    elif isinstance(obj, list):
+        for i, elem in enumerate(obj):
+            if isinstance(elem, list):
+                obj[i] = list_to_pg_array(elem)
+
+    return obj
 
 
 def main():
@@ -200,6 +256,12 @@ def main():
 
     if path_to_script and query:
         module.fail_json(msg="path_to_script is mutually exclusive with query")
+
+    if positional_args:
+        positional_args = convert_elements_to_pg_arrays(positional_args)
+
+    elif named_args:
+        named_args = convert_elements_to_pg_arrays(named_args)
 
     if path_to_script:
         try:
