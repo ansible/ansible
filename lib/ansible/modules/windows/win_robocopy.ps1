@@ -8,6 +8,7 @@
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
+$checksum = Get-AnsibleParam -obj $params -name "checksum" -type "bool" -default $false
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $purge = Get-AnsibleParam -obj $params -name "purge" -type "bool" -default $false
@@ -75,6 +76,80 @@ if ($null -eq $flags) {
 $result.flags = $flags
 $result.cmd = "$robocopy $robocopy_opts"
 
+$checksum_output=@()
+if ($checksum -eq $true){
+    $checksum_output+="md5 checksum enabled for existing destination files, changed files:"
+    $excludelist=@()
+    if ($flags -match '/xf') {
+        $excludes=($flags -Split "/xf ")[1]
+        $excludelist=$excludes.Split(' ')
+    }
+    $checksum_output+="-------------------------------------------------------------------------------"
+    function Get-FileMD5 {
+        Param([string]$file)
+        $md5 = [System.Security.Cryptography.HashAlgorithm]::Create("MD5")
+        $IO = New-Object System.IO.FileStream($file, [System.IO.FileMode]::Open)
+        $StringBuilder = New-Object System.Text.StringBuilder
+        $md5.ComputeHash($IO) | ForEach-Object { [void] $StringBuilder.Append($_.ToString("x2")) }
+        $hash = $StringBuilder.ToString()
+        $IO.Dispose()
+        return $hash
+    }
+    function CheckifExcluded($file, $excludelist){
+        $excludelist | Foreach-Object {
+            if($file -match $_){
+                return $true
+            }
+        }
+        return $false
+    }
+    $SourceFiles = Get-ChildItem -Recurse $src `
+      | Where-Object { $_.PSIsContainer -eq $false } `
+      | Where-Object { -not (CheckifExcluded -file $_.FullName -excludelist $excludelist) }
+
+    $cfiles = @()
+    # loop through the source dir files
+    $SourceFiles | Foreach-object {
+        $fres = @{
+            src=[string]$_.FullName.Replace('\','\\');
+            src_md5=$null;
+            dest=[string]($_.FullName -replace $src.Replace('\','\\'),$dest);
+            dest_md5=$null;
+            changed=$false
+          }
+
+        $cpy = $false
+        #if file exists in destination folder check MD5 hash
+        if (test-path $fres.dest) {
+            $cpy = $true
+
+            $srcMD5 = Get-FileMD5 -file $fres.src
+            $fres.src_md5 = $srcMD5
+            $destMD5 = Get-FileMD5 -file $fres.dest
+            $fres.dest_md5 = $destMD5
+
+            #if the MD5 hashes match then the files are the same
+            if ($fres.src_md5 -eq $fres.dest_md5) {
+                $cpy = $false
+            }
+        }
+
+        #copy the file if file exists and the hash is different
+        if ($cpy -eq $true) {
+            $fres.changed = $true
+            if (!(test-path $fres.dest)) {
+                New-Item -ItemType "File" -Path $fres.dest -Force
+            }
+            Copy-Item -Path $fres.src -Destination $fres.dest -Force
+        }
+        $cfiles += $fres
+    }
+    $cfiles | Where-Object { $_.changed -eq $true } | Foreach-Object {
+        $checksum_output+="* File: $($_.dest.replace($dest, ''))"
+        $checksum_output+="`tOld md5: $($_.dest_md5)`tNew md5: $($_.src_md5)"
+    }
+}
+
 Try {
     $robocopy_output = &robocopy $robocopy_opts
     $rc = $LASTEXITCODE
@@ -83,7 +158,7 @@ Try {
 }
 
 $result.msg = "Success"
-$result.output = $robocopy_output
+$result.output = $checksum_output + $robocopy_output
 $result.return_code = $rc # Backward compatibility
 $result.rc = $rc
 
