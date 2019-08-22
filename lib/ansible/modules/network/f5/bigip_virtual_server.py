@@ -892,6 +892,7 @@ try:
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_simple_list
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from library.module_utils.network.f5.ipaddress import ip_interface
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from library.module_utils.network.f5.ipaddress import get_netmask
@@ -911,6 +912,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_simple_list
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from ansible.module_utils.network.f5.ipaddress import ip_interface
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from ansible.module_utils.network.f5.ipaddress import get_netmask
@@ -1108,10 +1110,7 @@ class Parameters(AnsibleF5Parameters):
 
     def _format_port_for_destination(self, ip, port):
         if validate_ip_v6_address(ip):
-            if port == 0:
-                result = '.any'
-            else:
-                result = '.{0}'.format(port)
+            result = '.{0}'.format(port)
         else:
             result = ':{0}'.format(port)
         return result
@@ -1156,19 +1155,6 @@ class Parameters(AnsibleF5Parameters):
         except ValueError:
             raise F5ModuleError(
                 "Specified ip_protocol was neither a number nor in the list of common protocols."
-            )
-
-    @property
-    def source(self):
-        if self._values['source'] is None:
-            return None
-        try:
-            addr = ip_interface(u'{0}'.format(self._values['source']))
-            result = '{0}/{1}'.format(str(addr.ip), addr.network.prefixlen)
-            return result
-        except ValueError:
-            raise F5ModuleError(
-                "The source IP address must be specified in CIDR format: address/prefix"
             )
 
     @property
@@ -1528,6 +1514,18 @@ class ApiParameters(Parameters):
             )
             return result
 
+        # match IPv6 wildcard with port without RD
+        pattern = r'(?P<ip>[^.]+).(?P<port>[0-9]+|any)'
+        matches = re.search(pattern, destination)
+        if matches:
+            result = Destination(
+                ip=matches.group('ip'),
+                port=matches.group('port'),
+                route_domain=None,
+                mask=self.mask
+            )
+            return result
+
         result = Destination(ip=None, port=None, route_domain=None, mask=None)
         return result
 
@@ -1780,14 +1778,64 @@ class ModuleParameters(Parameters):
             )
 
     @property
+    def source(self):
+        if self._values['source'] is None:
+            return None
+        source = self.source_tuple
+        if is_valid_ip_interface(u'{0}/{1}'.format(source.ip, source.cidr)):
+            if source.route_domain:
+                result = '{0}%{1}/{2}'.format(source.ip, source.route_domain, source.cidr)
+            else:
+                result = '{0}/{1}'.format(source.ip, source.cidr)
+            return result
+        raise F5ModuleError(
+            "The source IP address must be a valid CIDR format: address/prefix."
+        )
+
+    @property
+    def source_tuple(self):
+        Source = namedtuple('Source', ['ip', 'route_domain', 'cidr'])
+        if self._values['source'] is None:
+            result = Source(ip=None, route_domain=None, cidr=None)
+            return result
+        # match source with RD
+        pattern = r'(?P<ip>[^%]+)%(?P<route_domain>[0-9]+)/(?P<cidr>[0-9]+)'
+        matches = re.search(pattern, self._values['source'])
+        if matches:
+            result = Source(
+                ip=matches.group('ip'),
+                route_domain=matches.group('route_domain'),
+                cidr=matches.group('cidr')
+            )
+            return result
+        # match source without RD
+        pattern = r'(?P<ip>[^%]+)/(?P<cidr>[0-9]+)'
+        matches = re.search(pattern, self._values['source'])
+        if matches:
+            result = Source(
+                ip=matches.group('ip'),
+                route_domain=None,
+                cidr=matches.group('cidr')
+            )
+            return result
+
+        result = Source(ip=None, route_domain=None, cidr=None)
+        return result
+
+    @property
     def destination(self):
         pattern = r'^[a-zA-Z0-9_.-]+'
-        addr = self._values['destination'].split("%")[0].split('/')[0]
+        if len(self._values['destination'].split('/')) > 1:
+            addr, dud = self._values['destination'].split('/')
+            if '%' in addr:
+                addr = addr.split('%')[0]
+        else:
+            addr = self._values['destination'].split('%')[0]
         if not is_valid_ip(addr):
             matches = re.search(pattern, addr)
             if not matches:
                 raise F5ModuleError(
-                    "The provided destination is not a valid IP address or a Virtual Address name"
+                    "The provided destination is not a valid IP address or a Virtual Address name."
                 )
         result = self._format_destination(addr, self.port, self.route_domain)
         return result
@@ -1796,8 +1844,14 @@ class ModuleParameters(Parameters):
     def route_domain(self):
         if self._values['destination'] is None:
             return None
-        result = self._values['destination'].split("%")
-        if len(result) > 1:
+        result = None
+        if len(self._values['destination'].split('/')) > 1:
+            addr, dud = self._values['destination'].split('/')
+            if '%' in addr:
+                result = addr.split('%')
+        else:
+            result = self._values['destination'].split('%')
+        if result and len(result) > 1:
             pattern = r'^[a-zA-Z0-9_.-]+'
             matches = re.search(pattern, result[0])
             if matches and not is_valid_ip(result[0]):
@@ -1822,13 +1876,20 @@ class ModuleParameters(Parameters):
     def mask(self):
         if self._values['destination'] is None:
             return None
-        addr = self._values['destination'].split("%")[0]
+        if len(self._values['destination'].split('/')) > 1:
+            addr, cidr = self._values['destination'].split('/')
+            if '%' in addr:
+                addr = addr.split('%')[0] + '/' + cidr
+            else:
+                addr = self._values['destination']
+        else:
+            addr = self._values['destination'].split('%')[0]
         if addr in ['0.0.0.0', '0.0.0.0/any', '0.0.0.0/0']:
             return 'any'
         if addr in ['::', '::/0', '::/any6']:
             return 'any6'
         if self._values['mask'] is None:
-            if is_valid_ip(addr):
+            if is_valid_ip_interface(addr):
                 return get_netmask(addr)
             else:
                 return None
@@ -1838,7 +1899,7 @@ class ModuleParameters(Parameters):
     def port(self):
         if self._values['port'] is None:
             return None
-        if self._values['port'] in ['*', 'any']:
+        if self._values['port'] in ['*', 'any', '0']:
             return 0
         if self._values['port'] in self.services_map:
             port = self._values['port']
@@ -1948,15 +2009,6 @@ class ModuleParameters(Parameters):
             return None
         elif any(x.lower() for x in self._values['enabled_vlans'] if x.lower() in ['all', '*']):
             result = [fq_name(self.partition, 'all')]
-            if result[0].endswith('/all'):
-                if self._values['__warnings'] is None:
-                    self._values['__warnings'] = []
-                self._values['__warnings'].append(
-                    dict(
-                        msg="Usage of the 'ALL' value for 'enabled_vlans' parameter is deprecated. Use '*' instead",
-                        version='2.9'
-                    )
-                )
             return result
         results = list(set([fq_name(self.partition, x) for x in self._values['enabled_vlans']]))
         results.sort()
@@ -2436,9 +2488,6 @@ class VirtualServerValidator(object):
         self.module = module
 
     def check_update(self):
-        # TODO(Remove in Ansible 2.9)
-        self._override_standard_type_from_profiles()
-
         # Regular checks
         self._override_port_by_type()
         self._override_protocol_by_type()
@@ -2455,9 +2504,6 @@ class VirtualServerValidator(object):
         self._verify_stateless_profile()
 
     def check_create(self):
-        # TODO(Remove in Ansible 2.9)
-        self._override_standard_type_from_profiles()
-
         # Regular checks
         self._set_default_ip_protocol()
         self._set_default_profiles()
@@ -2528,44 +2574,6 @@ class VirtualServerValidator(object):
         if self.want.type in ['stateless']:
             self.want.update({'ip_protocol': 17})
 
-    def _override_standard_type_from_profiles(self):
-        """Overrides a standard virtual server type given the specified profiles
-
-        For legacy purposes, this module will do some basic overriding of the default
-        ``type`` parameter to support cases where changing the ``type`` only requires
-        specifying a different set of profiles.
-
-        Ideally, ``type`` would always be specified, but in the past, this module only
-        supported an implicit "standard" type. Module users would specify some different
-        types of profiles and this would change the type...in some circumstances.
-
-        Now that this module supports a ``type`` param, the implicit ``type`` changing
-        that used to happen is technically deprecated (and will be warned on). Users
-        should always specify a ``type`` now, or, accept the default standard type.
-
-        Returns:
-            void
-        """
-        if self.want.type == 'standard':
-            if self.want.has_fastl4_profiles:
-                self.want.update({'type': 'performance-l4'})
-                self.module.deprecate(
-                    msg="Specifying 'performance-l4' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.10'
-                )
-            if self.want.has_fasthttp_profiles:
-                self.want.update({'type': 'performance-http'})
-                self.module.deprecate(
-                    msg="Specifying 'performance-http' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.10'
-                )
-            if self.want.has_message_routing_profiles:
-                self.want.update({'type': 'message-routing'})
-                self.module.deprecate(
-                    msg="Specifying 'message-routing' profiles on a 'standard' type is deprecated and will be removed.",
-                    version='2.10'
-                )
-
     def _check_source_and_destination_match(self):
         """Verify that destination and source are of the same IP version
 
@@ -2580,7 +2588,7 @@ class VirtualServerValidator(object):
             F5ModuleError: Raised when the IP versions of source and destination differ.
         """
         if self.want.source and self.want.destination:
-            want = ip_interface(u'{0}'.format(self.want.source))
+            want = ip_interface(u'{0}/{1}'.format(self.want.source_tuple.ip, self.want.source_tuple.cidr))
             have = ip_interface(u'{0}'.format(self.want.destination_tuple.ip))
             if want.version != have.version:
                 raise F5ModuleError(
@@ -3025,7 +3033,7 @@ class Difference(object):
             return
 
         addr_tuple = [self.want.destination, self.want.port, self.want.route_domain]
-        if all(x for x in addr_tuple if x is None):
+        if all(x is None for x in addr_tuple):
             return None
 
         have = self.have.destination_tuple
