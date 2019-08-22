@@ -109,7 +109,7 @@ options:
                 type: str
             ssl_min_proto_version:
                 description:
-                    - Minimum supported protocol version for SSL/TLS connections .
+                    - Minimum supported protocol version for SSL/TLS connections.
                 type: str
                 choices:
                     - default
