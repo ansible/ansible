@@ -293,20 +293,20 @@ class NetAppESeriesModule(object):
         """
         if not self.is_web_services_valid_cache:
 
-            url_parts = list(urlparse(self.url))
-            if not url_parts[0] or not url_parts[1]:
+            url_parts = urlparse(self.url)
+            if not url_parts.scheme or not url_parts.netloc:
                 self.module.fail_json(msg="Failed to provide valid API URL. Example: https://192.168.1.100:8443/devmgr/v2. URL [%s]." % self.url)
 
-            if url_parts[0] not in ["http", "https"]:
+            if url_parts.scheme not in ["http", "https"]:
                 self.module.fail_json(msg="Protocol must be http or https. URL [%s]." % self.url)
 
-            self.url = "%s://%s/" % (url_parts[0], url_parts[1])
+            self.url = "%s://%s/" % (url_parts.scheme, url_parts.netloc)
             about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
             rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, ignore_errors=True, **self.creds)
 
             if rc != 200:
                 self.module.warn("Failed to retrieve web services about information! Retrying with secure ports. Array Id [%s]." % self.ssid)
-                self.url = "https://%s:8443/" % url_parts[1].split(":")[0]
+                self.url = "https://%s:8443/" % url_parts.netloc.split(":")[0]
                 about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
                 try:
                     rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, **self.creds)
@@ -378,7 +378,12 @@ class NetAppESeriesModule(object):
 
 
 def create_multipart_formdata(files, fields=None, send_8kb=False):
-    """Create the data for a multipart/form request."""
+    """Create the data for a multipart/form request.
+
+    :param list(list) files: list of lists each containing (name, filename, path).
+    :param list(list) fields: list of lists each containing (key, value).
+    :param bool send_8kb: only sends the first 8kb of the files (default: False).
+    """
     boundary = "---------------------------" + "".join([str(random.randint(0, 9)) for x in range(27)])
     data_parts = list()
     data = None
