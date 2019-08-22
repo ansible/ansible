@@ -44,6 +44,12 @@ options:
     - If C(flags) is set, this will be ignored.
     type: bool
     default: no
+  checksum:
+    version_added: '2.9'
+    description:
+    - Use md5 checksum hash on existing dest files to compare with the src files.
+    type: bool
+    default: no
   flags:
     description:
       - Directly supply Robocopy flags.
@@ -68,6 +74,13 @@ EXAMPLES = r'''
 
 - name: Sync the contents of one directory to another, including subdirectories
   win_robocopy:
+    src: C:\DirectoryOne
+    dest: C:\DirectoryTwo
+    recurse: yes
+
+- name: Sync the contents of one directory to another, including subdirectories, using md5 checksum hash on destination files
+  win_robocopy:
+    checksum: true
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
     recurse: yes
