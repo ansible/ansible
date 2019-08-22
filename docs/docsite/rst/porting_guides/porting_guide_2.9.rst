@@ -80,6 +80,8 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * lambda_facts use :ref:`lambda_info <lambda_info_module>` instead.
 
+* na_ontap_gather_facts use :ref:`na_ontap_info <na_ontap_info_module>` instead.
+
 * nginx_status_facts use :ref:`nginx_status_info <nginx_status_info_module>` instead.
 
 * nxos_interface use :ref:`nxos_interfaces <nxos_interfaces_module>` instead.
