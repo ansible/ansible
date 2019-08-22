@@ -24,7 +24,7 @@ author:
 options:
   region:
     description:
-     - Scaleway region to use (for example par1).
+      - Scaleway region to use (for example C(par1)).
     required: true
     choices:
       - ams1
