@@ -399,7 +399,13 @@ def command_network_integration(args):
     else:
         inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 
-    if not args.explain and not args.platform and not os.path.isfile(inventory_path):
+    if args.no_temp_workdir:
+        # temporary solution to keep DCI tests working
+        inventory_exists = os.path.exists(inventory_path)
+    else:
+        inventory_exists = os.path.isfile(inventory_path)
+
+    if not args.explain and not args.platform and not inventory_exists:
         raise ApplicationError(
             'Inventory not found: %s\n'
             'Use --inventory to specify the inventory path.\n'
