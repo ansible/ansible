@@ -109,13 +109,23 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to
 
 
 class IAMConnection(object):
-
     def __init__(self, module):
         try:
             self.connection = module.resource('iam')
             self.module = module
         except Exception as e:
             module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
+
+    def policy_to_dict(self, policy):
+        policy_attributes = [
+            'allow_users_to_change_password', 'expire_passwords', 'hard_expiry',
+            'max_password_age', 'minimum_password_length', 'password_reuse_prevention',
+            'require_lowercase_characters', 'require_numbers', 'require_symbols', 'require_uppercase_characters'
+        ]
+        ret = {}
+        for attr in policy_attributes:
+            ret[attr] = getattr(policy, attr)
+        return ret
 
     def update_password_policy(self, module, policy):
         min_pw_length = module.params.get('min_pw_length')
@@ -135,18 +145,27 @@ class IAMConnection(object):
             RequireUppercaseCharacters=require_uppercase,
             RequireLowercaseCharacters=require_lowercase,
             AllowUsersToChangePassword=allow_pw_change,
-            PasswordReusePrevention=pw_reuse_prevent,
             HardExpiry=pw_expire
         )
+        if pw_reuse_prevent:
+            update_parameters.update(PasswordReusePrevention=pw_reuse_prevent)
         if pw_max_age:
             update_parameters.update(MaxPasswordAge=pw_max_age)
 
         try:
+            original_policy = self.policy_to_dict(policy)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            original_policy = {}
+
+        try:
             results = policy.update(**update_parameters)
             policy.reload()
+            updated_policy = self.policy_to_dict(policy)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Couldn't update IAM Password Policy")
-        return camel_dict_to_snake_dict(results)
+
+        changed = (original_policy != updated_policy)
+        return (changed, updated_policy, camel_dict_to_snake_dict(results))
 
     def delete_password_policy(self, policy):
         try:
@@ -182,8 +201,8 @@ def main():
     state = module.params.get('state')
 
     if state == 'present':
-        update_result = resource.update_password_policy(module, policy)
-        module.exit_json(changed=True, task_status={'IAM': update_result})
+        (changed, new_policy, update_result) = resource.update_password_policy(module, policy)
+        module.exit_json(changed=changed, task_status={'IAM': update_result}, policy=new_policy)
 
     if state == 'absent':
         delete_result = resource.delete_password_policy(policy)
