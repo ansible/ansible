@@ -56,7 +56,7 @@ options:
         Can specify a list of values to include a larger subset.
     choices: ['all', '!all', 'interfaces', '!interfaces', 'l2_interfaces', '!l2_interfaces', 'vlans', '!vlans',
     'lag_interfaces', '!lag_interfaces', 'lacp', '!lacp', 'lacp_interfaces', '!lacp_interfaces', 'lldp_global',
-    '!lldp_global']
+    '!lldp_global', 'lldp_interfaces', '!lldp_interfaces']
     version_added: "2.9"
 """
 

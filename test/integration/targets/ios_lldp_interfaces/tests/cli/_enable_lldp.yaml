@@ -1,0 +1,7 @@
+---
+- name: Enable LLDP Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      lldp run
