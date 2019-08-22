@@ -434,12 +434,9 @@ options:
         type: bool
   status:
     description:
-    - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
-      RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
-    - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
-      off .
-    - 'Some valid choices include: "PROVISIONING", "STAGING", "RUNNING", "STOPPING",
-      "SUSPENDING", "SUSPENDED", "TERMINATED"'
+    - The desired state of the instance.
+    - As a user, use RUNNING to keep a machine "on" and TERMINATED or STOPPED
+      to turn a machine off .
     required: false
     type: str
     version_added: 2.8
@@ -1352,7 +1349,7 @@ class InstancePower(object):
             return
         elif self.desired_status == 'RUNNING':
             self.start()
-        elif self.desired_status == 'TERMINATED':
+        elif self.desired_status in ['STOPPED', 'TERMINATED']:
             self.stop()
         elif self.desired_status == 'SUSPENDED':
             self.module.fail_json(msg="Instances cannot be suspended using Ansible")
