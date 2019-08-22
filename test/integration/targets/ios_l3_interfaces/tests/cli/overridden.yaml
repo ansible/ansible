@@ -10,6 +10,9 @@
     - name: Override device configuration of all interfaces with provided configuration
       ios_l3_interfaces: &overridden
         config:
+          - name: GigabitEthernet0/0
+            ipv4:
+            - address: dhcp
           - name: GigabitEthernet0/2
             ipv4:
             - address: 192.168.4.1/24
