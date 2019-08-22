@@ -421,7 +421,8 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
         for result in results:
             self.assertEquals(result, u'a' * password.DEFAULT_LENGTH)
 
-    def test_lock_been_held(self):
+    @patch('time.sleep')
+    def test_lock_been_held(self, mock_sleep):
         # pretend the lock file is here
         password.os.path.exists = lambda x: True
         try:
