@@ -44,7 +44,7 @@ description:
   - This module manages Global Link Layer Discovery Protocol (LLDP) settings on IOS-XR devices.
 notes:
   - Tested against IOS-XR 6.1.3.
-  - This module works with connection C(network_cli).
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 author: Nilashish Chakraborty (@NilashishC)
 options:
   config:

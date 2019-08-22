@@ -29,7 +29,8 @@ description:
     configuration that are not explicitly defined.
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3
 options:
   aggregate:
     description:
@@ -121,6 +122,8 @@ options:
         public_key.If used with multiple users in aggregates, then the
         same key file is used for all users.
 requirements:
+  - ncclient >= 0.5.3 when using netconf
+  - lxml >= 4.1.1 when using netconf
   - base64 when using I(public_key_contents) or I(public_key)
   - paramiko when using I(public_key_contents) or I(public_key)
 """
