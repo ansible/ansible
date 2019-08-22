@@ -61,9 +61,7 @@ extends_documentation_fragment: checkpoint_commands
 EXAMPLES = """
 - name: put-file
   cp_mgmt_put_file:
-    file_content: 'vs ip 192.0.2.1
-    
-      vs2 ip 192.0.2.2'
+    file_content: 'vs ip 192.0.2.1\nvs2 ip 192.0.2.2'
     file_name: vsx_conf
     file_path: /home/admin/
     targets:

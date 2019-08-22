@@ -117,7 +117,6 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        except=dict(type='str'),
         include=dict(type='str'),
         tags=dict(type='list'),
         color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
@@ -131,6 +130,7 @@ def main():
         ignore_warnings=dict(type='bool'),
         ignore_errors=dict(type='bool')
     )
+    argument_spec['except'] = dict(type='str')
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
