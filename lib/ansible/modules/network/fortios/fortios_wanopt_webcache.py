@@ -124,7 +124,7 @@ options:
                 type: int
             host_validate:
                 description:
-                    - "Enable/disable validating "Host:" with original server IP."
+                    - "Enable/disable validating Host: with original server IP."
                 type: str
                 choices:
                     - enable
