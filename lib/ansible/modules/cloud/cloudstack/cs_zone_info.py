@@ -205,9 +205,7 @@ def main():
         )
         module.exit_json(**result)
     else:
-        result = acs_zone_info.get_result(
-            resource=acs_zone_info.get_zone()
-        )
+        result = acs_zone_info.get_result(acs_zone_info.get_zone())
         module.exit_json(**result)
 
 

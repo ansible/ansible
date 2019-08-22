@@ -385,9 +385,7 @@ def main():
         )
         module.exit_json(**cs_instance_info)
     else:
-        cs_instance_info = acs_instance_info.get_result(
-            resource=acs_instance_info.run()
-        )
+        cs_instance_info = acs_instance_info.get_result(acs_instance_info.run())
         module.exit_json(**cs_instance_info)
 
 
