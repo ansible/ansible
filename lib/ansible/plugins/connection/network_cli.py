@@ -250,6 +250,21 @@ options:
     default: True
     vars:
       - name: ansible_terminal_initial_prompt_newline
+  network_cli_retries:
+    description:
+      - Number of attempts to connect to remote host. The delay time between the retires increases after
+        every attempt by power of 2 in seconds till either the maximum attempts are exhausted or any of the
+        C(persistent_command_timeout) or C(persistent_connect_timeout) timer is triggered.
+    default: 3
+    version_added: '2.9'
+    type: integer
+    env:
+        - name: ANSIBLE_NETWORK_CLI_RETRIES
+    ini:
+        - section: persistent_connection
+          key: network_cli_retries
+    vars:
+        - name: ansible_network_cli_retries
 """
 
 import getpass
@@ -259,6 +274,7 @@ import re
 import os
 import signal
 import socket
+import time
 import traceback
 from io import BytesIO
 
@@ -383,13 +399,34 @@ class Connection(NetworkConnectionBase):
             self.paramiko_conn._set_log_channel(self._get_log_channel())
             self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
             self.paramiko_conn.force_persistence = self.force_persistence
-            ssh = self.paramiko_conn._connect()
+
+            command_timeout = self.get_option('persistent_command_timeout')
+            max_pause = min([self.get_option('persistent_connect_timeout'), command_timeout])
+            retries = self.get_option('network_cli_retries')
+            total_pause = 0
+
+            for attempt in range(retries + 1):
+                try:
+                    ssh = self.paramiko_conn._connect()
+                    break
+                except Exception as e:
+                    pause = 2 ** (attempt + 1)
+                    if attempt == retries or total_pause >= max_pause:
+                        raise AnsibleConnectionFailure(to_text(e, errors='surrogate_or_strict'))
+                    else:
+                        msg = (u"network_cli_retry: attempt: %d, caught exception(%s), "
+                               u"pausing for %d seconds" % (attempt + 1, to_text(e, errors='surrogate_or_strict'), pause))
+
+                        self.queue_message('vv', msg)
+                        time.sleep(pause)
+                        total_pause += pause
+                        continue
 
             self.queue_message('vvvv', 'ssh connection done, setting terminal')
             self._connected = True
 
             self._ssh_shell = ssh.ssh.invoke_shell()
-            self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
+            self._ssh_shell.settimeout(command_timeout)
 
             self._terminal = terminal_loader.get(self._network_os, self)
             if not self._terminal:
