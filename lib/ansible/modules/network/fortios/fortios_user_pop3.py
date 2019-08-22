@@ -105,7 +105,7 @@ options:
                     - pop3s
             server:
                 description:
-                    - {<name_str|ip_str>} server domain name or IP.
+                    - <name_str|ip_str> server domain name or IP.
                 type: str
             ssl_min_proto_version:
                 description:
