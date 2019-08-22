@@ -95,9 +95,9 @@ class OnyxWJHModule(BaseOnyxModule):
     WJH_DISABLED_REGX = re.compile(r'^no what-just-happened ([a-z]+) enable.*')
     WJH_DISABLED_AUTO_EXPORT_REGX = re.compile(r'^no what-just-happened auto-export ([a-z]+) enable.*')
 
-    WJH_CMD_FMT = '{}what-just-happened {} enable'
-    WJH_EXPORT_CMD_FMT = '{}what-just-happened auto-export {} enable'
-    WJH_CLEAR_CMD_FMT = 'clear what-just-happened pcap-files {}'
+    WJH_CMD_FMT = '{0}what-just-happened {1} enable'
+    WJH_EXPORT_CMD_FMT = '{0}what-just-happened auto-export {1} enable'
+    WJH_CLEAR_CMD_FMT = 'clear what-just-happened pcap-files {0}'
 
     WJH_GROUPS = ['all', 'forwarding', 'acl']
     CLEAR_GROUPS = ['all', 'user', 'auto-export']
