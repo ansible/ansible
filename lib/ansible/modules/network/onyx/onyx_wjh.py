@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -22,20 +22,28 @@ description:
 notes:
 options:
     group:
-        description: Name of wjh group
-        choice: ['all', 'forwarding', 'acl']
+        description:
+         - Name of wjh group.
+        choices: ['all', 'forwarding', 'acl']
+        type: str
     enabled:
-        description: wjh group status
+        description:
+          - wjh group status
         type: bool
     auto_export:
-        description: wjh group auto export pcap file status
+        description:
+          - wjh group auto export pcap file status
         type: bool
     export_group:
-        description: wjh group auto export group
-        choice: ['all', 'forwarding', 'acl']
+        description:
+          - wjh group auto export group
+        choices: ['all', 'forwarding', 'acl']
+        type: str
     clear_group:
-        description: clear pcap file by group
-        choice: ['all', 'user', 'auto-export']
+        description:
+          - clear pcap file by group
+        choices: ['all', 'user', 'auto-export']
+        type: str
 """
 
 EXAMPLES = """
@@ -75,21 +83,16 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.common.utils import conditional
-from ansible.module_utils.network.common.utils import remove_default_spec
-
 from ansible.module_utils.network.onyx.onyx import BaseOnyxModule, show_cmd
-from ansible.module_utils.network.onyx.onyx import get_interfaces_config
 
 
 class OnyxWJHModule(BaseOnyxModule):
     WJH_DISABLED_REGX = re.compile(r'^no what-just-happened ([a-z]+) enable.*')
     WJH_DISABLED_AUTO_EXPORT_REGX = re.compile(r'^no what-just-happened auto-export ([a-z]+) enable.*')
 
-    WJH_CMD_FMT = '{}what-just-happened {} enable'
-    WJH_EXPORT_CMD_FMT = '{}what-just-happened auto-export {} enable'
-    WJH_CLEAR_CMD_FMT = 'clear what-just-happened pcap-files {}'
+    WJH_CMD_FMT = '{0}what-just-happened {1} enable'
+    WJH_EXPORT_CMD_FMT = '{0}what-just-happened auto-export {1} enable'
+    WJH_CLEAR_CMD_FMT = 'clear what-just-happened pcap-files {0}'
 
     WJH_GROUPS = ['all', 'forwarding', 'acl']
     CLEAR_GROUPS = ['all', 'user', 'auto-export']
