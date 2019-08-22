@@ -1,7 +1,7 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_security_group_facts
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_security_group_info
 
 - name: Get security group informations and register it in a variable
-  scaleway_security_group_facts:
+  scaleway_security_group_info:
     region: par1
   register: security_groups
 
@@ -9,13 +9,13 @@
   debug:
     var: security_groups
 
-- name: Ensure retrieval of security groups facts is success
+- name: Ensure retrieval of security groups info is success
   assert:
     that:
       - security_groups is success
 
 - name: Get security group informations and register it in a variable (AMS1)
-  scaleway_security_group_facts:
+  scaleway_security_group_info:
     region: ams1
   register: ams1_security_groups
 
@@ -23,7 +23,7 @@
   debug:
     var: ams1_security_groups
 
-- name: Ensure retrieval of security groups facts is success (AMS1)
+- name: Ensure retrieval of security groups info is success (AMS1)
   assert:
     that:
       - ams1_security_groups is success

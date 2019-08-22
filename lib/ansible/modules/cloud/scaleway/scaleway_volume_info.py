@@ -13,17 +13,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: scaleway_security_group_facts
-short_description: Gather facts about the Scaleway security groups available.
+module: scaleway_volume_info
+short_description: Gather information about the Scaleway volumes available.
 description:
-  - Gather facts about the Scaleway security groups available.
-version_added: "2.7"
+  - Gather information about the Scaleway volumes available.
+version_added: "2.9"
 author:
   - "Yanis Guenane (@Spredzy)"
   - "Remy Leone (@sieben)"
+extends_documentation_fragment: scaleway
 options:
   region:
-    version_added: "2.8"
     description:
      - Scaleway region to use (for example par1).
     required: true
@@ -32,54 +32,52 @@ options:
       - EMEA-NL-EVS
       - par1
       - EMEA-FR-PAR1
-extends_documentation_fragment: scaleway
 '''
 
 EXAMPLES = r'''
-- name: Gather Scaleway security groups facts
-  scaleway_security_group_facts:
+- name: Gather Scaleway volumes information
+  scaleway_volume_info:
     region: par1
+  register: result
+
+- debug:
+    msg: "{{ result.scaleway_volume_info }}"
 '''
 
 RETURN = r'''
 ---
-scaleway_security_group_facts:
+scaleway_volume_info:
   description: Response from Scaleway API
   returned: success
   type: complex
   contains:
-    "scaleway_security_group_facts": [
+    "scaleway_volume_info": [
         {
-            "description": "test-ams",
-            "enable_default_security": true,
-            "id": "7fcde327-8bed-43a6-95c4-6dfbc56d8b51",
-            "name": "test-ams",
+            "creation_date": "2018-08-14T20:56:24.949660+00:00",
+            "export_uri": null,
+            "id": "b8d51a06-daeb-4fef-9539-a8aea016c1ba",
+            "modification_date": "2018-08-14T20:56:24.949660+00:00",
+            "name": "test-volume",
             "organization": "3f709602-5e6c-4619-b80c-e841c89734af",
-            "organization_default": false,
-            "servers": [
-                {
-                    "id": "12f19bc7-108c-4517-954c-e6b3d0311363",
-                    "name": "scw-e0d158"
-                }
-            ]
+            "server": null,
+            "size": 50000000000,
+            "state": "available",
+            "volume_type": "l_ssd"
         }
     ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.scaleway import (
-    Scaleway,
-    ScalewayException,
-    scaleway_argument_spec,
-    SCALEWAY_LOCATION,
-)
+    Scaleway, ScalewayException, scaleway_argument_spec,
+    SCALEWAY_LOCATION)
 
 
-class ScalewaySecurityGroupFacts(Scaleway):
+class ScalewayVolumeInfo(Scaleway):
 
     def __init__(self, module):
-        super(ScalewaySecurityGroupFacts, self).__init__(module)
-        self.name = 'security_groups'
+        super(ScalewayVolumeInfo, self).__init__(module)
+        self.name = 'volumes'
 
         region = module.params["region"]
         self.module.params['api_url'] = SCALEWAY_LOCATION[region]["api_endpoint"]
@@ -90,6 +88,7 @@ def main():
     argument_spec.update(dict(
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
     ))
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -97,7 +96,7 @@ def main():
 
     try:
         module.exit_json(
-            ansible_facts={'scaleway_security_group_facts': ScalewaySecurityGroupFacts(module).get_resources()}
+            scaleway_volume_info=ScalewayVolumeFacts(module).get_resources()
         )
     except ScalewayException as exc:
         module.fail_json(msg=exc.message)

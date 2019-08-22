@@ -13,18 +13,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: scaleway_server_facts
-short_description: Gather facts about the Scaleway servers available.
+module: scaleway_server_info
+short_description: Gather information about the Scaleway servers available.
 description:
-  - Gather facts about the Scaleway servers available.
-version_added: "2.7"
+  - Gather information about the Scaleway servers available.
+version_added: "2.9"
 author:
   - "Yanis Guenane (@Spredzy)"
   - "Remy Leone (@sieben)"
 extends_documentation_fragment: scaleway
 options:
   region:
-    version_added: "2.8"
     description:
      - Scaleway region to use (for example par1).
     required: true
@@ -36,19 +35,23 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Gather Scaleway servers facts
-  scaleway_server_facts:
+- name: Gather Scaleway servers information
+  scaleway_server_info:
     region: par1
+  register: result
+
+- debug:
+    msg: "{{ result.scaleway_server_info }}"
 '''
 
 RETURN = r'''
 ---
-scaleway_server_facts:
+scaleway_server_info:
   description: Response from Scaleway API
   returned: success
   type: complex
   contains:
-    "scaleway_server_facts": [
+    "scaleway_server_info": [
         {
             "arch": "x86_64",
             "boot_type": "local",
@@ -157,10 +160,10 @@ from ansible.module_utils.scaleway import (
 )
 
 
-class ScalewayServerFacts(Scaleway):
+class ScalewayServerInfo(Scaleway):
 
     def __init__(self, module):
-        super(ScalewayServerFacts, self).__init__(module)
+        super(ScalewayServerInfo, self).__init__(module)
         self.name = 'servers'
 
         region = module.params["region"]
@@ -180,7 +183,7 @@ def main():
 
     try:
         module.exit_json(
-            ansible_facts={'scaleway_server_facts': ScalewayServerFacts(module).get_resources()}
+            scaleway_server_info=ScalewayServerInfo(module).get_resources()
         )
     except ScalewayException as exc:
         module.fail_json(msg=exc.message)

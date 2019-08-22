@@ -8,15 +8,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
-module: scaleway_ip_facts
-short_description: Gather facts about the Scaleway ips available.
+module: scaleway_volume_facts
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favour of C(_info) module.
+  alternative: Use M(scaleway_volume_info) instead.
+short_description: Gather facts about the Scaleway volumes available.
 description:
-  - Gather facts about the Scaleway ips available.
+  - Gather facts about the Scaleway volumes available.
 version_added: "2.7"
 author:
   - "Yanis Guenane (@Spredzy)"
@@ -36,46 +40,45 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Gather Scaleway ips facts
-  scaleway_ip_facts:
+- name: Gather Scaleway volumes facts
+  scaleway_volume_facts:
     region: par1
 '''
 
 RETURN = r'''
 ---
-scaleway_ip_facts:
+scaleway_volume_facts:
   description: Response from Scaleway API
   returned: success
   type: complex
   contains:
-    "scaleway_ip_facts": [
+    "scaleway_volume_facts": [
         {
-            "address": "163.172.170.243",
-            "id": "ea081794-a581-8899-8451-386ddaf0a451",
-            "organization": "3f709602-5e6c-4619-b80c-e324324324af",
-            "reverse": null,
-            "server": {
-                "id": "12f19bc7-109c-4517-954c-e6b3d0311363",
-                "name": "scw-e0d158"
-            }
+            "creation_date": "2018-08-14T20:56:24.949660+00:00",
+            "export_uri": null,
+            "id": "b8d51a06-daeb-4fef-9539-a8aea016c1ba",
+            "modification_date": "2018-08-14T20:56:24.949660+00:00",
+            "name": "test-volume",
+            "organization": "3f709602-5e6c-4619-b80c-e841c89734af",
+            "server": null,
+            "size": 50000000000,
+            "state": "available",
+            "volume_type": "l_ssd"
         }
     ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.scaleway import (
-    Scaleway,
-    ScalewayException,
-    scaleway_argument_spec,
-    SCALEWAY_LOCATION,
-)
+    Scaleway, ScalewayException, scaleway_argument_spec,
+    SCALEWAY_LOCATION)
 
 
-class ScalewayIpFacts(Scaleway):
+class ScalewayVolumeFacts(Scaleway):
 
     def __init__(self, module):
-        super(ScalewayIpFacts, self).__init__(module)
-        self.name = 'ips'
+        super(ScalewayVolumeFacts, self).__init__(module)
+        self.name = 'volumes'
 
         region = module.params["region"]
         self.module.params['api_url'] = SCALEWAY_LOCATION[region]["api_endpoint"]
@@ -86,6 +89,7 @@ def main():
     argument_spec.update(dict(
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
     ))
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -93,7 +97,7 @@ def main():
 
     try:
         module.exit_json(
-            ansible_facts={'scaleway_ip_facts': ScalewayIpFacts(module).get_resources()}
+            ansible_facts={'scaleway_volume_facts': ScalewayVolumeFacts(module).get_resources()}
         )
     except ScalewayException as exc:
         module.fail_json(msg=exc.message)

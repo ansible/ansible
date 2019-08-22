@@ -1,7 +1,7 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_server_facts
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_server_info
 
 - name: Get server informations and register it in a variable
-  scaleway_server_facts:
+  scaleway_server_info:
     region: par1
   register: servers
 
@@ -9,13 +9,13 @@
   debug:
     var: servers
 
-- name: Ensure retrieval of servers facts is success
+- name: Ensure retrieval of servers info is success
   assert:
     that:
       - servers is success
 
 - name: Get server informations and register it in a variable
-  scaleway_server_facts:
+  scaleway_server_info:
     region: ams1
   register: ams1_servers
 
@@ -23,7 +23,7 @@
   debug:
     var: ams1_servers
 
-- name: Ensure retrieval of servers facts is success
+- name: Ensure retrieval of servers info is success
   assert:
     that:
       - ams1_servers is success

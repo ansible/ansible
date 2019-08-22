@@ -8,12 +8,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: scaleway_organization_facts
+deprecated:
+  removed_in: '2.13'
+  why: Deprecated in favour of C(_info) module.
+  alternative: Use M(scaleway_organization_info) instead.
 short_description: Gather facts about the Scaleway organizations available.
 description:
   - Gather facts about the Scaleway organizations available.

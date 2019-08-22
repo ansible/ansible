@@ -13,11 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: scaleway_image_facts
-short_description: Gather facts about the Scaleway images available.
+module: scaleway_image_info
+short_description: Gather information about the Scaleway images available.
 description:
-  - Gather facts about the Scaleway images available.
-version_added: "2.7"
+  - Gather information about the Scaleway images available.
+version_added: "2.9"
 author:
   - "Yanis Guenane (@Spredzy)"
   - "Remy Leone (@sieben)"
@@ -26,7 +26,6 @@ extends_documentation_fragment: scaleway
 options:
 
   region:
-    version_added: "2.7"
     description:
     - Scaleway compute zone
     required: true
@@ -38,19 +37,23 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Gather Scaleway images facts
-  scaleway_image_facts:
+- name: Gather Scaleway images information
+  scaleway_image_info:
     region: par1
+  register: result
+
+- debug:
+    msg: "{{ result.scaleway_image_info }}"
 '''
 
 RETURN = r'''
 ---
-scaleway_image_facts:
+scaleway_image_info:
   description: Response from Scaleway API
   returned: success
   type: complex
   contains:
-    "scaleway_image_facts": [
+    "scaleway_image_info": [
         {
            "arch": "x86_64",
            "creation_date": "2018-07-17T16:18:49.276456+00:00",
@@ -89,10 +92,10 @@ from ansible.module_utils.scaleway import (
     Scaleway, ScalewayException, scaleway_argument_spec, SCALEWAY_LOCATION)
 
 
-class ScalewayImageFacts(Scaleway):
+class ScalewayImageInfo(Scaleway):
 
     def __init__(self, module):
-        super(ScalewayImageFacts, self).__init__(module)
+        super(ScalewayImageInfo, self).__init__(module)
         self.name = 'images'
 
         region = module.params["region"]
@@ -111,7 +114,7 @@ def main():
 
     try:
         module.exit_json(
-            ansible_facts={'scaleway_image_facts': ScalewayImageFacts(module).get_resources()}
+            scaleway_image_info=ScalewayImageInfo(module).get_resources()
         )
     except ScalewayException as exc:
         module.fail_json(msg=exc.message)
