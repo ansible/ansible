@@ -1,0 +1,276 @@
+{
+  "kind": "tm:security:dos:profile:application:applicationstate",
+  "name": "test",
+  "fullPath": "test",
+  "generation": 1442,
+  "selfLink": "https://localhost/mgmt/tm/security/dos/profile/~Common~test/application/test?ver=13.1.1.4",
+  "botDefense": {
+    "browserLegitCaptcha": "enabled",
+    "browserLegitEnabled": "enabled",
+    "crossDomainRequests": "allow-all",
+    "gracePeriod": 300,
+    "mode": "disabled"
+  },
+  "botSignatures": {
+    "check": "disabled",
+    "categories": [
+      {
+        "name": "DOS Tool",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~DOS%20Tool?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "E-Mail Collector",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~E-Mail%20Collector?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Exploit Tool",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Exploit%20Tool?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Network Scanner",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Network%20Scanner?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Search Engine",
+        "partition": "Common",
+        "action": "report",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Search%20Engine?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Spam Bot",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Spam%20Bot?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Spyware",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Spyware?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Vulnerability Scanner",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Vulnerability%20Scanner?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Web Spider",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Web%20Spider?ver=13.1.1.4"
+        }
+      },
+      {
+        "name": "Webserver Stress Tool",
+        "partition": "Common",
+        "action": "block",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/security/dos/bot-signature-category/~Common~Webserver%20Stress%20Tool?ver=13.1.1.4"
+        }
+      }
+    ]
+  },
+  "captchaResponse": {
+    "failure": {
+      "body": "You have entered an invalid answer for the question. Please, try again.\n<br>\n%DOSL7.captcha.image% %DOSL7.captcha.change%\n<br>\n<b>What code is in the image\\?</b>\n%DOSL7.captcha.solution%\n<br>\n%DOSL7.captcha.submit%\n<br>\n<br>\nYour support ID is: %DOSL7.captcha.support_id%.",
+      "type": "default"
+    },
+    "first": {
+      "body": "This question is for testing whether you are a human visitor and to prevent automated spam submission.\n<br>\n%DOSL7.captcha.image% %DOSL7.captcha.change%\n<br>\n<b>What code is in the image\\?</b>\n%DOSL7.captcha.solution%\n<br>\n%DOSL7.captcha.submit%\n<br>\n<br>\nYour support ID is: %DOSL7.captcha.support_id%.",
+      "type": "default"
+    }
+  },
+  "heavyUrls": {
+    "automaticDetection": "enabled",
+    "exclude": [
+      "/exclude.html"
+    ],
+    "latencyThreshold": 1000,
+    "protection": "disabled",
+    "includeList": [
+      {
+        "name": "URL/test.htm",
+        "threshold": "auto",
+        "url": "/test.htm"
+      },
+      {
+        "name": "URL/testy.htm",
+        "threshold": "auto",
+        "url": "/testy.htm"
+      }
+    ]
+  },
+  "mobileDetection": {
+    "allowAndroidRootedDevice": "false",
+    "allowAnyAndroidPackage": "false",
+    "allowAnyIosPackage": "false",
+    "allowEmulators": "true",
+    "allowJailbrokenDevices": "true",
+    "clientSideChallengeMode": "pass",
+    "enabled": "disabled",
+    "iosAllowedPackageNames": [
+      "foobarapp"
+    ],
+    "androidPublishers": [
+      {
+        "name": "ca-bundle.crt",
+        "partition": "Common",
+        "nameReference": {
+          "link": "https://localhost/mgmt/tm/sys/file/ssl-cert/~Common~ca-bundle.crt?ver=13.1.1.4"
+        }
+      }
+    ]
+  },
+  "rtbhDurationSec": 300,
+  "rtbhEnable": "enabled",
+  "scrubbingDurationSec": 60,
+  "scrubbingEnable": "enabled",
+  "singlePageApplication": "enabled",
+  "stressBased": {
+    "behavioral": {
+      "dosDetection": "disabled",
+      "mitigationMode": "none",
+      "signatures": "disabled",
+      "signaturesApprovedOnly": "disabled"
+    },
+    "deEscalationPeriod": 7200,
+    "deviceCaptchaChallenge": "disabled",
+    "deviceClientSideDefense": "disabled",
+    "deviceMaximumAutoTps": 5000,
+    "deviceMaximumTps": 200,
+    "deviceMinimumAutoTps": 5,
+    "deviceMinimumTps": 40,
+    "deviceRateLimiting": "disabled",
+    "deviceRequestBlockingMode": "rate-limit",
+    "deviceTpsIncreaseRate": 500,
+    "escalationPeriod": 120,
+    "geoCaptchaChallenge": "disabled",
+    "geoClientSideDefense": "disabled",
+    "geoMaximumAutoTps": 20000,
+    "geoMinimumAutoTps": 50,
+    "geoMinimumShare": 10,
+    "geoRateLimiting": "disabled",
+    "geoRequestBlockingMode": "rate-limit",
+    "geoShareIncreaseRate": 500,
+    "ipCaptchaChallenge": "disabled",
+    "ipClientSideDefense": "disabled",
+    "ipMaximumAutoTps": 5000,
+    "ipMaximumTps": 200,
+    "ipMinimumAutoTps": 5,
+    "ipMinimumTps": 40,
+    "ipRateLimiting": "enabled",
+    "ipRequestBlockingMode": "rate-limit",
+    "ipTpsIncreaseRate": 500,
+    "mode": "off",
+    "siteCaptchaChallenge": "disabled",
+    "siteClientSideDefense": "disabled",
+    "siteMaximumAutoTps": 20000,
+    "siteMaximumTps": 10000,
+    "siteMinimumAutoTps": 50,
+    "siteMinimumTps": 2000,
+    "siteRateLimiting": "disabled",
+    "siteTpsIncreaseRate": 500,
+    "thresholdsMode": "manual",
+    "urlCaptchaChallenge": "disabled",
+    "urlClientSideDefense": "disabled",
+    "urlEnableHeavy": "enabled",
+    "urlMaximumAutoTps": 5000,
+    "urlMaximumTps": 1000,
+    "urlMinimumAutoTps": 50,
+    "urlMinimumTps": 200,
+    "urlRateLimiting": "enabled",
+    "urlTpsIncreaseRate": 500
+  },
+  "tcpDump": {
+    "maximumDuration": 30,
+    "maximumSize": 10,
+    "recordTraffic": "disabled",
+    "repetitionInterval": "120"
+  },
+  "tpsBased": {
+    "deEscalationPeriod": 7200,
+    "deviceCaptchaChallenge": "disabled",
+    "deviceClientSideDefense": "disabled",
+    "deviceMaximumAutoTps": 5000,
+    "deviceMaximumTps": 200,
+    "deviceMinimumAutoTps": 5,
+    "deviceMinimumTps": 40,
+    "deviceRateLimiting": "disabled",
+    "deviceRequestBlockingMode": "rate-limit",
+    "deviceTpsIncreaseRate": 500,
+    "escalationPeriod": 120,
+    "geoCaptchaChallenge": "disabled",
+    "geoClientSideDefense": "disabled",
+    "geoMaximumAutoTps": 20000,
+    "geoMinimumAutoTps": 50,
+    "geoMinimumShare": 10,
+    "geoRateLimiting": "disabled",
+    "geoRequestBlockingMode": "rate-limit",
+    "geoShareIncreaseRate": 500,
+    "ipCaptchaChallenge": "disabled",
+    "ipClientSideDefense": "disabled",
+    "ipMaximumAutoTps": 5000,
+    "ipMaximumTps": 200,
+    "ipMinimumAutoTps": 5,
+    "ipMinimumTps": 40,
+    "ipRateLimiting": "enabled",
+    "ipRequestBlockingMode": "rate-limit",
+    "ipTpsIncreaseRate": 500,
+    "mode": "off",
+    "siteCaptchaChallenge": "disabled",
+    "siteClientSideDefense": "disabled",
+    "siteMaximumAutoTps": 20000,
+    "siteMaximumTps": 10000,
+    "siteMinimumAutoTps": 50,
+    "siteMinimumTps": 2000,
+    "siteRateLimiting": "disabled",
+    "siteTpsIncreaseRate": 500,
+    "thresholdsMode": "manual",
+    "urlCaptchaChallenge": "disabled",
+    "urlClientSideDefense": "disabled",
+    "urlEnableHeavy": "enabled",
+    "urlMaximumAutoTps": 5000,
+    "urlMaximumTps": 1000,
+    "urlMinimumAutoTps": 50,
+    "urlMinimumTps": 200,
+    "urlRateLimiting": "enabled",
+    "urlTpsIncreaseRate": 500
+  },
+  "triggerIrule": "enabled",
+  "geolocations": [
+    {
+      "name": "Afghanistan",
+      "blackListed": true
+    },
+    {
+      "name": "Aland Islands",
+      "whiteListed": true
+    }
+  ]
+}
