@@ -5,6 +5,87 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.4
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-08-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Correct the return values of matched and examined from string to int
+- Fix call from "merge_dictionaries" to "_merge_dictionaries" in GcpSession object (https://github.com/ansible/ansible/issues/57140).
+- Fixes comparison of list to integer in gluster_volume (https://github.com/ansible/ansible/issues/56844).
+- The `podman` connection plugin now supports pipelining.
+- With Python3, we cannot iterate on a dict and modify it at the same time (https://github.com/ansible/ansible/issues/54869).
+- ovirt_host - update force parameter documentation (https://bugzilla.redhat.com/show_bug.cgi?id=1719271#c11)
+- remove ambiguity in module naming; use "my_test" as module name
+
+Bugfixes
+--------
+
+- Add no_log to credentials field to avoid disclosures (CVE-2019-10217)
+- Do not re-use remote_user from previous loop iteration (https://github.com/ansible/ansible/issues/58876)
+- Fix netconf connection command timeout issue (https://github.com/ansible/ansible/pull/58322)
+- Fix strategy functions that update inventory and back 'add_host' and 'group_by' actions.
+- Fixed issue where `ansible_net_model` was not being populated in iosxr_facts (https://github.com/ansible/ansible/pull/58488)
+- ansible.basics - fix core C# recursive call when logging fails (e.g. if insufficient permissions are held) (https://github.com/ansible/ansible/pull/59503)
+- async - Fix async callback plugins to allow async output to be displayed when running command/shell (https://github.com/ansible/ansible/issues/15988)
+- aws_s3 - Improve usability when the execution host lacks MD5 support (e.g. due to FIPS-140-2).
+- aws_s3 module - Improve ETag calculation, allow overwrite=always to work on FIPS-140-2
+- ce_aaa_server - update to fix some bugs - When you want to delete a parameter, a conflict will occur, causing the download configuration to fail. (https://github.com/ansible/ansible/pull/60270)
+- ce_aaa_server_host - update to fix some bugs - module CMD update in ansible is inconsistent with switch; when parameter is bool type, it is impossible to judge the value of expensive parameter. (https://github.com/ansible/ansible/pull/60272)
+- ce_acl - update to fix some bugs - When the frag_type parameter is in the module and the configuration is repeatedly sent to the device, the module displays change = True. (https://github.com/ansible/ansible/pull/60274)
+- ce_bgp_af - update to fix some bugs - XML query result error, update_cmds statement missing. (https://github.com/ansible/ansible/pull/59678)
+- ce_config  - It is also necessary to undo mmi-mode enable after running commands.Otherwise it will make a effect to next tasks.(https://github.com/ansible/ansible/pull/60071).
+- ce_config - Optimize multi-level views & fix a bug. (https://github.com/ansible/ansible/pull/59523)
+- ce_mlag_config - update to fix some bugs - Configuration does not absent as expect. (https://github.com/ansible/ansible/pull/59336)
+- ce_mtu - bug-info - unable to parse request, to fix the bug (https://github.com/ansible/ansible/pull/59343)
+- ce_netstream_global - The 'get_config', which is from 'ansible.module_utils.network.cloudengine.ce', try to return the result from cache,however the configure has changed. (https://github.com/ansible/ansible/pull/59689)
+- ce_netstream_global - The 'get_config', which is from 'ansible.module_utils.network.cloudengine.ce', try to return the result from cache,however the configure has changed. (https://github.com/ansible/ansible/pull/59690)
+- ce_ntp_auth - update to fix "state is present but all of the following are missing-password" bug(https://github.com/ansible/ansible/pull/59344)
+- ce_rollback - set mmi-mode enable to run commands and unset after running(https://github.com/ansible/ansible/pull/60075).
+- ce_rollback - shouldn't load xml configure via network_cli(https://github.com/ansible/ansible/pull/59345)
+- ce_startup - update to fix a bug - netconf and cli are all used to load configure at a time (https://github.com/ansible/ansible/pull/59346 )
+- ce_stp - update to fix some bugs - The config of first time showing is same as second because of 'get_config', using regular to search & show config (https://github.com/ansible/ansible/pull/59347 )
+- ce_vrrp - update to fix some bugs - Solving the mistake of parameter judgment, update_cmds statement missing. (https://github.com/ansible/ansible/pull/59677)
+- consul_session - ``state`` parameter: use ``required_if``, document ``id`` parameter, update ``name`` parameter documentation
+- docker_container - fix port bindings with IPv6 addresses.
+- documented ``ignore`` option for ``TRANSFORM_INVALID_GROUP_CHARS``
+- ec2_group - Don't truncate the host bits off of IPv6 CIDRs. CIDRs will be passed thru to EC2 as-is provided they are valid IPv6 representations.  (https://github.com/ansible/ansible/issues/53297)
+- ec2_instance - Ensures ``ebs.volume_size`` and ``ebs.iops`` are ``int`` to avoid issues with Jinja2 templating
+- facts - fixed double-counting of CPUs on POWER systems
+- group - The group module errored of if the gid exists with the same group name. This prevents reruns of the playbook. This fixes a regression introduced by 4898b0a.
+- nagios - Removed redundant type check which caused crashes. Guardrails added elsewhere in earlier change.
+- openssh_keypair - add public key and key comment validation on change
+- os_subnet - it is valid to specify an explicit ``subnetpool_id`` rather than ``use_default_subnetpool`` or ``cidr``
+
+- ovirt_host - add event log on failure (https://github.com/oVirt/ovirt-ansible-infra/issues/8)
+- ovirt_vnic_profile - fix for updating vnic profile (https://github.com/ansible/ansible/pull/56518)
+- ovirt_vnic_profile - update qos and pass_through logic (https://bugzilla.redhat.com/show_bug.cgi?id=1597537)
+- pbrun - add default user for become plugin (https://github.com/ansible/ansible/pull/59754)
+- plugin loader - Restore adding plugin loader playbook dir to ``Playbook`` in addition to ``PlaybookCLI`` to solve sub directory playbook relative plugins to be located (https://github.com/ansible/ansible/issues/59548)
+- podman_image - handle new output format for image build
+- postgresql_db.py - Fix code formatting (https://github.com/ansible/ansible/pull/59497)
+- postgresql_ext.py - Remove pg_quote_identifier unused import (https://github.com/ansible/ansible/pull/59497)
+- postgresql_lang.py - Remove pg_quote_identifier and to_native unused imports (https://github.com/ansible/ansible/pull/59497)
+- postgresql_membership - turn off the default database warning (https://github.com/ansible/ansible/pull/60043)
+- postgresql_ping - turn off the default database warning (https://github.com/ansible/ansible/pull/60043)
+- postgresql_slot - turn off the default database warning for slot_type physical (https://github.com/ansible/ansible/issues/60043)
+- postgresql_table.py - Fix code formatting (https://github.com/ansible/ansible/pull/59497)
+- postgresql_tablespace - turn off the default database warning (https://github.com/ansible/ansible/pull/60043)
+- resolves CVE-2019-10206, by avoiding templating passwords from prompt as it is probable they have special characters.
+- sysctl - check system values, not just sysctl.conf file, when determing state (https://github.com/ansible/ansible/pull/56153#issuecomment-514384922)
+- user - do not warn when using ``local: yes`` if user already exists (https://github.com/ansible/ansible/issues/58063)
+- win_domain_group_membership - Fix missing @extra_args on Get-ADObject to support dirrent domain and credentials for retrival (https://github.com/ansible/ansible/issues/57404)
+- win_dsc - Be more leniant around the accepted DateTime values for backwards compatibility - https://github.com/ansible/ansible/issues/59667
+- win_user - Get proper error code when failing to validate the user's credentials
+
 v2.8.3
 ======
 
@@ -2219,8 +2300,8 @@ cpm
 - cpm_plugconfig - Get and Set Plug Parameters on WTI OOB and PDU power devices
 - cpm_plugcontrol - Get and Set Plug actions on WTI OOB and PDU power devices
 
-dellemc.idrac
-^^^^^^^^^^^^^
+dellemc
+^^^^^^^
 
 - idrac_firmware - Firmware update from a repository on a network share (CIFS, NFS).
 - idrac_server_config_profile - Export or Import iDRAC Server Configuration Profile (SCP).
