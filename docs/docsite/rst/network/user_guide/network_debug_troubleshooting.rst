@@ -846,3 +846,20 @@ Modify the error regex for individual task.
 The terminal plugin regex options ``ansible_terminal_stderr_re`` and ``ansible_terminal_stdout_re`` have
 ``pattern`` and ``flags`` as keys. The value of the ``flags`` key should be a value that is accepted by
 the ``re.compile`` python method.
+
+
+Intermittent failure while using ``network_cli`` connection type due to slower network or remote target host
+------------------------------------------------------------------------------------------------------------
+
+In Ansible 2.9 and later, the network_cli connection plugin configuration option is added to control
+the number of attempts to connect to remote host, the default number of attempts is three.
+The delay time between the retires increases after every attempt by power of 2 in seconds till either
+the maximum attempts are exhausted or any of the ``persistent_command_timeout`` or ``persistent_connect_timeout``
+timer is triggered.
+
+To make this a global setting, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   network_cli_retries = 5

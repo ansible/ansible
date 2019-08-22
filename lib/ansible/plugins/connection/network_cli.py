@@ -194,6 +194,7 @@ options:
   terminal_stdout_re:
     type: list
     elements: dict
+    version_added: '2.9'
     description:
       - A single regex pattern or a sequence of patterns along with optional flags
         to match the command prompt from the received response chunk. This option
@@ -206,6 +207,7 @@ options:
   terminal_stderr_re:
     type: list
     elements: dict
+    version_added: '2.9'
     description:
       - This option provides the regex pattern and optional flags to match the
         error string from the received response chunk. This option
@@ -217,6 +219,7 @@ options:
       - name: ansible_terminal_stderr_re
   terminal_initial_prompt:
     type: list
+    version_added: '2.9'
     description:
       - A single regex pattern or a sequence of patterns to evaluate the expected
         prompt at the time of initial login to the remote host.
@@ -224,6 +227,7 @@ options:
       - name: ansible_terminal_initial_prompt
   terminal_initial_answer:
     type: list
+    version_added: '2.9'
     description:
       - The answer to reply with if the C(terminal_initial_prompt) is matched. The value can be a single answer
         or a list of answers for multiple terminal_initial_prompt. In case the login menu has
@@ -234,6 +238,7 @@ options:
       - name: ansible_terminal_initial_answer
   terminal_initial_prompt_checkall:
     type: boolean
+    version_added: '2.9'
     description:
       - By default the value is set to I(False) and any one of the prompts mentioned in C(terminal_initial_prompt)
         option is matched it won't check for other prompts. When set to I(True) it will check for all the prompts
@@ -244,6 +249,7 @@ options:
       - name: ansible_terminal_initial_prompt_checkall
   terminal_inital_prompt_newline:
     type: boolean
+    version_added: '2.9'
     description:
       - This boolean flag, that when set to I(True) will send newline in the response if any of values
         in I(terminal_initial_prompt) is matched.
