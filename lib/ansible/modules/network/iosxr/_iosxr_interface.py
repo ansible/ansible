@@ -28,9 +28,13 @@ deprecated:
   removed_in: '2.13'
   alternative: iosxr_interfaces
   why: Newer and updated modules released with more functionality in Ansible 2.9
+requirements:
+    - ncclient >= 0.5.3 when using netconf
+    - lxml >= 4.1.1 when using netconf
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3.
   - Preconfiguration of physical interfaces is not supported with C(netconf) transport.
 options:
   name:

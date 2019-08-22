@@ -41,7 +41,7 @@ description: This module manages the interface attributes on Cisco IOS-XR networ
 author: Sumit Jaiswal (@justjais)
 notes:
   - Tested against Cisco IOS-XRv Version 6.1.3 on VIRL.
-  - This module works with connection C(network_cli).
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 options:
   config:
     description: A dictionary of interface options

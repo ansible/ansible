@@ -25,8 +25,9 @@ description:
     a deterministic way.
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
-  - This module does not support netconf connection
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - Tested against IOS XRv 6.1.3.
+  - This module does not support C(netconf) connection
   - Abbreviated commands are NOT idempotent, see
     L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Avoid service disrupting changes (viz. Management IP) from config replace.

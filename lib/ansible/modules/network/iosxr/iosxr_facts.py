@@ -28,6 +28,9 @@ description:
     respective resource name.  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
+notes:
+  - Tested against IOS-XR 6.1.3.
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 author:
   - Ricardo Carrillo Cruz (@rcarrillocruz)
   - Nilashish Chakraborty (@Nilashishc)
