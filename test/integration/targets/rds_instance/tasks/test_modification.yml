@@ -127,6 +127,7 @@
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
           port: 1150
+          max_allocated_storage: 100
           apply_immediately: True
           <<: *aws_connection_info
         register: result
@@ -135,6 +136,7 @@
           that:
             - result.changed
             - '"allocated_storage" in result.pending_modified_values or result.allocated_storage == 30'
+            - '"max_allocated_storage" in result.pending_modified_values or result.max_allocated_storage == 100'
             - '"port" in result.pending_modified_values or result.endpoint.port == 1150'
             - '"db_instance_class" in result.pending_modified_values or result.db_instance_class == "db.t2.medium"'
             - '"engine_version" in result.pending_modified_values or result.engine_version == "10.2.21"'
@@ -152,6 +154,7 @@
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
           port: 1150
+          max_allocated_storage: 100
           <<: *aws_connection_info
         register: result
         retries: 30
@@ -162,6 +165,7 @@
           that:
             - not result.changed
             - '"allocated_storage" in result.pending_modified_values or result.allocated_storage == 30'
+            - '"max_allocated_storage" in result.pending_modified_values or result.max_allocated_storage == 100'
             - '"port" in result.pending_modified_values or result.endpoint.port == 1150'
             - '"db_instance_class" in result.pending_modified_values or result.db_instance_class == "db.t2.medium"'
             - '"engine_version" in result.pending_modified_values or result.engine_version == "10.2.21"'
