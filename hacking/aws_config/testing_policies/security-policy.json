@@ -128,6 +128,16 @@
                 "iam:GetServerCertificate"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToManagePasswordPolicy",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetAccountPasswordPolicy",
+                "iam:DeleteAccountPasswordPolicy",
+                "iam:UpdateAccountPasswordPolicy"
+            ],
+            "Resource": "*"
         }
     ]
 }
