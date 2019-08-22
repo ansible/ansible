@@ -326,6 +326,7 @@ class CollectionRequirement:
                 resp = json.load(open_url(n_collection_url, validate_certs=api.validate_certs, headers=headers))
             except urllib_error.HTTPError as err:
                 if err.code == 404:
+                    display.vvv("Collection '%s' is not available from server %s %s" % (collection, api.name, api.api_server))
                     continue
                 raise
 
@@ -344,6 +345,7 @@ class CollectionRequirement:
                     resp = json.load(open_url(to_native(resp['next'], errors='surrogate_or_strict'),
                                               validate_certs=api.validate_certs, headers=headers))
 
+            display.vvv("Collection '%s' obtained from server %s %s" % (collection, api.name, api.api_server))
             break
         else:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
