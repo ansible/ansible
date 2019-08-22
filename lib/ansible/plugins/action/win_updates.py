@@ -105,7 +105,7 @@ class ActionModule(ActionBase):
                                     wrap_async, use_task):
         orig_become = self._play_context.become
         orig_become_method = self._play_context.become_method
-        orig_become_user = self._play_context.become_user\
+        orig_become_user = self._play_context.become_user
 
         if not use_task:
             if orig_become is None or orig_become is False:
