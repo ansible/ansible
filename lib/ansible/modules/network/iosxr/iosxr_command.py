@@ -27,8 +27,9 @@ description:
     Please use M(iosxr_config) to configure iosxr devices.
 extends_documentation_fragment: iosxr
 notes:
-  - This module does not support netconf connection
-  - Tested against IOS XR 6.1.2
+  - This module works with C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
+  - This module does not support C(netconf) connection.
+  - Tested against IOS XR 6.1.3
 options:
   commands:
     description:
