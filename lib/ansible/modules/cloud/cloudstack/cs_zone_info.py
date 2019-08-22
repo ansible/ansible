@@ -32,7 +32,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: Gather info from a zone
+- name: Gather information from a zone
   cs_zone_info:
     name: ch-gva-1
   register: zone
@@ -42,11 +42,11 @@ EXAMPLES = '''
   debug:
     var: zone
 
-# When the module is called as cs_zone_info, return values are also
+# When the module is called as cs_zone_facts, return values are also
 # published in ansible_facts['cloudstack_zone'] and can be used as
 # follows. Note that this is deprecated and will stop working in
 # Ansible 2.13.
-- name: Gather info from a zone
+- name: Gather information from a zone
   cs_zone_facts:
     name: ch-gva-1
   delegate_to: localhost

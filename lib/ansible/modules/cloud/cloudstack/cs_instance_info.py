@@ -46,7 +46,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: gather instance info
+- name: gather instance information
   cs_instance_info:
     name: web-vm-1
   delegate_to: localhost
@@ -56,11 +56,11 @@ EXAMPLES = '''
   debug:
     var: vm
 
-# When the module is called as cs_instance_info, return values are also
+# When the module is called as cs_instance_facts, return values are also
 # published in ansible_facts['cloudstack_instance'] and can be used as
 # follows. Note that this is deprecated and will stop working in
 # Ansible 2.13.
-- name: gather instance info
+- name: gather instance information
   cs_instance_facts:
     name: web-vm-1
   delegate_to: localhost
