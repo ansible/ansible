@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -24,6 +24,10 @@ short_description: Manage Interface on Cisco IOS XR network devices
 description:
   - This module provides declarative management of Interfaces
     on Cisco IOS XR network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: iosxr_interfaces
+  why: Newer and updated modules released with more functionality in Ansible 2.9
 extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XRv 6.1.2
