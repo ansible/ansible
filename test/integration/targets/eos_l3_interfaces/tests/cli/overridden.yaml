@@ -1,0 +1,45 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: Ethernet1
+        ipv6:
+          - address: 2001:db8:feed::1/96
+      - name: Ethernet2
+        ipv6:
+          - address: 2001:db8::1/64
+      - name: Management1
+        ipv4:
+          - address: dhcp
+
+- eos_facts:
+    gather_network_resources: l3_interfaces
+  become: yes
+
+- name: Override device configuration of all L3 interfaces on device with provided configuration.
+  eos_l3_interfaces:
+    config: "{{ config }}"
+    state: overridden
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.before) == []"
+
+- eos_facts:
+    gather_network_resources: l3_interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.after) == []"
+  become: yes
+
+- set_fact:
+    expected_config: "{{ config }}"
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(expected_config) == []"
