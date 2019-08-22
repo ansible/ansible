@@ -33,6 +33,7 @@ from shutil import rmtree
 
 import ansible.constants as C
 from ansible import context
+import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
@@ -173,14 +174,28 @@ class GalaxyRole(object):
 
             # first grab the file and save it to a temp location
             if "github_user" in role_data and "github_repo" in role_data:
-                archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
+                if "github_server" in role_data:
+                    archive_url = '%s/api/v3/repos/%s/%s/tarball/%s' % (
+                        role_data["github_server"],
+                        role_data["github_user"],
+                        role_data["github_repo"],
+                        self.version
+                    )
+                else:
+                    archive_url = 'https://api.github.com/repos/%s/%s/tarball/%s' % (
+                        role_data["github_user"],
+                        role_data["github_repo"],
+                        self.version
+                    )
             else:
                 archive_url = self.src
 
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs)
+                url_file = open_url(archive_url,
+                                    validate_certs=self._validate_certs,
+                                    headers=(None, {"Authorization": "Token %s" % C.GALAXY_TOKEN})[C.GALAXY_TOKEN is not None])
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
