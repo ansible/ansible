@@ -126,8 +126,8 @@ options:
         description:
           - N/A
         type: str
-        choices: ['none', 'log', 'popup alert', 'mail alert', 'snmp trap alert',
-                 'user defined alert no.1', 'user defined alert no.2', 'user defined alert no.3']
+        choices: ['none', 'log', 'popup alert', 'mail alert', 'snmp trap alert', 'user defined alert no.1', 'user defined alert no.2',
+                 'user defined alert no.3']
       before_delete_keep_logs_from_the_last_days:
         description:
           - N/A
@@ -303,19 +303,17 @@ options:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
-             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
-             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
-             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-             'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green',
+             'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon',
+             'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   groups:
@@ -328,8 +326,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -414,13 +411,9 @@ def main():
         logs_settings=dict(type='list', options=dict(
             alert_when_free_disk_space_below=dict(type='bool'),
             alert_when_free_disk_space_below_threshold=dict(type='int'),
-            alert_when_free_disk_space_below_
-                                                                           type=dict(type='str', choices=['none', 'log',
-                                                                            'popup alert', 'mail alert',
-                                                                            'snmp trap alert',
-                                                                            'user defined alert no.1',
-                                                                            'user defined alert no.2',
-                                                                            'user defined alert no.3']),
+            alert_when_free_disk_space_below_type=dict(type='str', choices=['none',
+                                                                            'log', 'popup alert', 'mail alert', 'snmp trap alert', 'user defined alert no.1',
+                                                                            'user defined alert no.2', 'user defined alert no.3']),
             before_delete_keep_logs_from_the_last_days=dict(type='bool'),
             before_delete_keep_logs_from_the_last_days_threshold=dict(type='int'),
             before_delete_run_script=dict(type='bool'),
@@ -465,13 +458,11 @@ def main():
             maximum_concurrent_ike_negotiations=dict(type='int'),
             maximum_concurrent_tunnels=dict(type='int')
         )),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
-                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
-                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
-                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
-                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-                                        'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+                                        'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+                                        'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna',
+                                        'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         groups=dict(type='list'),

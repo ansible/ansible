@@ -28,9 +28,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cp_mgmt_run_script
-short_description: 
+short_description:
 description:
-  - 
+  -
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"

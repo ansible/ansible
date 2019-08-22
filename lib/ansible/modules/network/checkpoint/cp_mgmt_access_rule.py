@@ -70,7 +70,6 @@ options:
       - List of processed file types that this rule applies on.
     type: list
     suboptions:
-    
   content_direction:
     description:
       - On which direction the file types processing is applied.
@@ -223,14 +222,6 @@ options:
       - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
         omitted - warnings will also be ignored.
     type: bool
-  rule_number:
-    description:
-      - Rule number.
-    type: int
-  new_position:
-    description:
-      - New position in the rulebase.
-    type: str
 extends_documentation_fragment: checkpoint_objects
 """
 
@@ -267,7 +258,8 @@ cp_mgmt_access_rule:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_objects, api_call
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_objects, api_call, api_call_for_rule
 
 
 def main():
@@ -321,16 +313,18 @@ def main():
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         ignore_warnings=dict(type='bool'),
-        ignore_errors=dict(type='bool'),
-        rule_number=dict(type='int'),
-        new_position=dict(type='str')
+        ignore_errors=dict(type='bool')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
     api_call_object = 'access-rule'
 
-    result = api_call(module, api_call_object)
+    if module.params['action'] is None and module.params['position'] is None:
+        result = api_call(module, api_call_object)
+    else:
+        result = api_call_for_rule(module, api_call_object)
+
     module.exit_json(**result)
 
 

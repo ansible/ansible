@@ -88,8 +88,7 @@ options:
         description:
           - The encryption algorithm to be used.
         type: str
-        choices: ['cast', 'aes-gcm-256', 'cast-40', 'aes-256', 'des', 'aes-128', '3des', 'des-40cp',
-                 'aes-gcm-128', 'none']
+        choices: ['cast', 'aes-gcm-256', 'cast-40', 'aes-256', 'des', 'aes-128', '3des', 'des-40cp', 'aes-gcm-128', 'none']
   mesh_center_gateways:
     description:
       - Indicates whether the meshed community is in center.
@@ -114,19 +113,17 @@ options:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
-             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
-             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
-             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-             'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green',
+             'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon',
+             'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   ignore_warnings:
@@ -135,8 +132,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -181,35 +177,28 @@ def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
         center_gateways=dict(type='list'),
-        encryption_method=dict(type='str',
-                                                    choices=['prefer ikev2 but support ikev1', 'ikev2 only',
-                                                    'ikev1 for ipv4 and ikev2 for ipv6 only']),
+        encryption_method=dict(type='str', choices=['prefer ikev2 but support ikev1', 'ikev2 only', 'ikev1 for ipv4 and ikev2 for ipv6 only']),
         encryption_suite=dict(type='str', choices=['suite-b-gcm-256', 'custom', 'vpn b', 'vpn a', 'suite-b-gcm-128']),
         ike_phase_1=dict(type='list', options=dict(
             data_integrity=dict(type='str', choices=['aes-xcbc', 'sha1', 'sha256', 'sha384', 'md5']),
-            diffie_hellman_group=dict(type='str',
-                                                           choices=['group-1', 'group-2', 'group-5', 'group-14',
-                                                           'group-19', 'group-20']),
+            diffie_hellman_group=dict(type='str', choices=['group-1', 'group-2', 'group-5', 'group-14', 'group-19', 'group-20']),
             encryption_algorithm=dict(type='str', choices=['cast', 'aes-256', 'des', 'aes-128', '3des'])
         )),
         ike_phase_2=dict(type='list', options=dict(
             data_integrity=dict(type='str', choices=['aes-xcbc', 'sha1', 'sha256', 'sha384', 'md5']),
-            encryption_algorithm=dict(type='str',
-                                                           choices=['cast', 'aes-gcm-256', 'cast-40', 'aes-256', 'des',
-                                                           'aes-128', '3des', 'des-40cp', 'aes-gcm-128', 'none'])
+            encryption_algorithm=dict(type='str', choices=['cast', 'aes-gcm-256', 'cast-40',
+                                                           'aes-256', 'des', 'aes-128', '3des', 'des-40cp', 'aes-gcm-128', 'none'])
         )),
         mesh_center_gateways=dict(type='bool'),
         satellite_gateways=dict(type='list'),
         shared_secrets=dict(type='list'),
         tags=dict(type='list'),
         use_shared_secret=dict(type='bool'),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
-                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
-                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
-                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
-                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-                                        'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+                                        'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+                                        'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna',
+                                        'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         ignore_warnings=dict(type='bool'),

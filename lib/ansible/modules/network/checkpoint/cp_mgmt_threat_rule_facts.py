@@ -32,7 +32,7 @@ short_description: Get threat-rule objects facts on Checkpoint over Web Services
 description:
   - Get threat-rule objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
-    This module handles both operations, get a specific object and get several objects.
+    This module handles both operations: get a specific object and get several objects.
     For getting a specific object use the parameter 'name'.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -40,17 +40,14 @@ options:
   name:
     description:
       - Object name. Should be unique in the domain.
-        This parameter is relevant only for getting few objects.
     type: str
   rule_number:
     description:
       - Rule number.
-        This parameter is relevant only for getting a specific object.
     type: int
   layer:
     description:
       - Layer that the rule belongs to identified by the name or UID.
-        This parameter is relevant only for getting a specific object.
     type: str
   details_level:
     description:
@@ -63,12 +60,10 @@ options:
       - Search expression to filter the rulebase. The provided text should be exactly the same as it would be
         given in Smart Console. The logical operators in the expression ('AND', 'OR') should be provided in capital
         letters. If an operator is not used, the default OR operator applies.
-        This parameter is relevant only for getting few objects.
     type: str
   filter_settings:
     description:
       - Sets filter preferences.
-        This parameter is relevant only for getting few objects.
     type: list
     suboptions:
       search_mode:
@@ -107,40 +102,33 @@ options:
             description:
               - Whether to match on a negated cell.
             type: bool
-  limit:
+          limit:
     description:
       - No more than that many results will be returned.
-        This parameter is relevant only for getting few objects.
     type: int
   offset:
     description:
       - Skip that many results before beginning to return them.
-        This parameter is relevant only for getting few objects.
     type: int
   order:
     description:
       - Sorts results by the given field. By default the results are sorted in the ascending order by name.
-        This parameter is relevant only for getting few objects.
     type: list
   package:
     description:
       - Name of the package.
-        This parameter is relevant only for getting few objects.
     type: str
   use_object_dictionary:
     description:
       - N/A
-        This parameter is relevant only for getting few objects.
     type: bool
   dereference_group_members:
     description:
       - Indicates whether to dereference "members" field by details level for every object in reply.
-        This parameter is relevant only for getting few objects.
     type: bool
   show_membership:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
-        This parameter is relevant only for getting few objects.
     type: bool
 extends_documentation_fragment: checkpoint_facts
 """
@@ -169,7 +157,7 @@ ansible_facts:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_facts, api_call_facts
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_facts, api_call_facts_for_rule
 
 
 def main():
@@ -204,7 +192,7 @@ def main():
     api_call_object = "threat-rule"
     api_call_object_plural_version = "threat-rulebase"
 
-    result = api_call_facts(module, api_call_object, api_call_object_plural_version)
+    result = api_call_facts_for_rule(module, api_call_object, api_call_object_plural_version)
     module.exit_json(ansible_facts=result)
 
 

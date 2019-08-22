@@ -54,8 +54,8 @@ options:
     type: str
   mask_length:
     description:
-      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields
-        explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
+      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields explicitly. Instead of IPv4 mask length
+        it is possible to specify IPv4 mask itself in subnet-mask field.
     type: int
   mask_length4:
     description:
@@ -80,9 +80,8 @@ options:
         type: bool
       ip_address:
         description:
-          - IPv4 or IPv6 address. If both addresses are required use ipv4-address and ipv6-address fields
-            explicitly. This parameter is not required in case "method" parameter is "hide" and "hide-behind" parameter
-            is "gateway".
+          - IPv4 or IPv6 address. If both addresses are required use ipv4-address and ipv6-address fields explicitly. This parameter is not
+            required in case "method" parameter is "hide" and "hide-behind" parameter is "gateway".
         type: str
       ipv4_address:
         description:
@@ -119,19 +118,17 @@ options:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
-             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
-             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
-             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-             'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green',
+             'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon',
+             'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   groups:
@@ -144,8 +141,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -210,13 +206,11 @@ def main():
         )),
         tags=dict(type='list'),
         broadcast=dict(type='str', choices=['disallow', 'allow']),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
-                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
-                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
-                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
-                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-                                        'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+                                        'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+                                        'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna',
+                                        'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         groups=dict(type='list'),

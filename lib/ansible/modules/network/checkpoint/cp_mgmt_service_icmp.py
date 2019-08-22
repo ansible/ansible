@@ -50,33 +50,29 @@ options:
     type: int
   keep_connections_open_after_policy_installation:
     description:
-      - Keep connections open after policy has been installed even if they are not allowed under the new
-        policy. This overrides the settings in the Connection Persistence page. If you change this property, the change
-        will not affect open connections, but only future connections.
+      - Keep connections open after policy has been installed even if they are not allowed under the new policy. This overrides the settings in the
+        Connection Persistence page. If you change this property, the change will not affect open connections, but only future connections.
     type: bool
   tags:
     description:
       - Collection of tag identifiers.
     type: list
     suboptions:
-    
   color:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
-             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
-             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
-             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-             'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green',
+             'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon',
+             'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   groups:
@@ -84,15 +80,13 @@ options:
       - Collection of group identifiers.
     type: list
     suboptions:
-    
   ignore_warnings:
     description:
       - Apply changes ignoring warnings.
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -136,13 +130,11 @@ def main():
         keep_connections_open_after_policy_installation=dict(type='bool'),
         tags=dict(type='list', options=dict(
         )),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
-                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
-                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
-                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
-                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-                                        'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+                                        'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+                                        'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna',
+                                        'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         groups=dict(type='list', options=dict(

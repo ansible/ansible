@@ -28,13 +28,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cp_mgmt_continue_session_in_smartconsole
-short_description: Logout from existing session. The session will be continued next time your open SmartConsole. In
-case 'uid' is not provided, use current session. In order for the session to pass successfully to SmartConsole, make
-sure you don't have any other active GUI sessions.
+short_description: Logout from existing session. The session will be continued next time your open SmartConsole. In case 'uid' is not provided, use current
+session. In order for the session to pass successfully to SmartConsole, make sure you don't have any other active GUI sessions.
 description:
-  - Logout from existing session. The session will be continued next time your open SmartConsole. In case 'uid' is
-    not provided, use current session. In order for the session to pass successfully to SmartConsole, make sure you
-    don't have any other active GUI sessions.
+  - Logout from existing session. The session will be continued next time your open SmartConsole. In case 'uid' is not provided, use current session. In
+    order for the session to pass successfully to SmartConsole, make sure you don't have any other active GUI sessions.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"

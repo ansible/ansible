@@ -44,16 +44,14 @@ options:
     type: str
   show_as_ranges:
     description:
-      - When true, the group with exclusion's matched content is displayed as ranges of IP addresses rather
-        than network objects.<br />Objects that are not represented using IP addresses are presented as objects.<br
-        />The 'include' and 'except' parameters are omitted from the response and instead the 'ranges' parameter is
-        displayed.
-        This parameter is relevant only for getting few objects.
+      - When true, the group with exclusion's matched content is displayed as ranges of IP addresses rather than network objects.<br />Objects that
+        are not represented using IP addresses are presented as objects.<br />The 'include' and 'except' parameters are omitted from the response and instead
+        the 'ranges' parameter is displayed.
     type: bool
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   limit:

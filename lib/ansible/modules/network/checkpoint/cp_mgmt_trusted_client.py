@@ -58,8 +58,7 @@ options:
     type: list
   ip_address_first:
     description:
-      - First IP address in the range. If both IPv4 and IPv6 address ranges are required, use the
-        ipv4-address-first and the ipv6-address-first fields instead.
+      - First IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and the ipv6-address-first fields instead.
     type: str
   ipv4_address_first:
     description:
@@ -71,8 +70,7 @@ options:
     type: str
   ip_address_last:
     description:
-      - Last IP address in the range. If both IPv4 and IPv6 address ranges are required, use the
-        ipv4-address-first and the ipv6-address-first fields instead.
+      - Last IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and the ipv6-address-first fields instead.
     type: str
   ipv4_address_last:
     description:
@@ -106,8 +104,8 @@ options:
     description:
       - Trusted client type.
     type: str
-    choices: ['any', 'domain', 'ipv4 address', 'ipv4 address range', 'ipv4 netmask', 'ipv6 address',
-             'ipv6 address range', 'ipv6 netmask', 'name', 'wild cards (ip only)']
+    choices: ['any', 'domain', 'ipv4 address', 'ipv4 address range', 'ipv4 netmask', 'ipv6 address', 'ipv6 address range', 'ipv6 netmask', 'name',
+             'wild cards (ip only)']
   wild_card:
     description:
       - IP wild card (e.g. 192.0.2.*).
@@ -116,19 +114,17 @@ options:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
-             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
-             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
-             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-             'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green',
+             'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon',
+             'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   ignore_warnings:
@@ -137,8 +133,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -191,17 +186,14 @@ def main():
         mask_length6=dict(type='int'),
         multi_domain_server_trusted_client=dict(type='bool'),
         tags=dict(type='list'),
-        type=dict(type='str', choices=['any', 'domain', 'ipv4 address',
-                                       'ipv4 address range', 'ipv4 netmask', 'ipv6 address', 'ipv6 address range',
-                                       'ipv6 netmask', 'name', 'wild cards (ip only)']),
+        type=dict(type='str', choices=['any', 'domain', 'ipv4 address', 'ipv4 address range', 'ipv4 netmask',
+                                       'ipv6 address', 'ipv6 address range', 'ipv6 netmask', 'name', 'wild cards (ip only)']),
         wild_card=dict(type='str'),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
-                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
-                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
-                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
-                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-                                        'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+                                        'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+                                        'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna',
+                                        'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         ignore_warnings=dict(type='bool'),

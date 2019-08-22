@@ -44,8 +44,8 @@ options:
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   limit:
@@ -66,7 +66,6 @@ options:
   show_membership:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
-        This parameter is relevant only for getting few objects.
     type: bool
 extends_documentation_fragment: checkpoint_facts
 """

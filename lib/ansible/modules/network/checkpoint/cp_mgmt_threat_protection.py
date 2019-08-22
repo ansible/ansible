@@ -50,14 +50,13 @@ options:
     type: bool
   overrides:
     description:
-      - Overrides per profile for this protection<br> Note, Remove override for Core protections removes only
-        the action’s override. Remove override for Threat Cloud protections removes the action, track and packet
-        captures.
+      - Overrides per profile for this protection<br> Note, Remove override for Core protections removes only the action’s override. Remove override
+        for Threat Cloud protections removes the action, track and packet captures.
     type: list
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   package_format:

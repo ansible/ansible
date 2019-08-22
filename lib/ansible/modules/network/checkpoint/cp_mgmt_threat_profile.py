@@ -116,14 +116,13 @@ options:
         type: bool
       email_action:
         description:
-          - Block - block the entire malicious email<br>Allow - pass the malicious email and apply email
-            changes (like, remove attachments and links, add x-header, etc...).
+          - Block - block the entire malicious email<br>Allow - pass the malicious email and apply email changes (like, remove attachments and
+            links, add x-header, etc...).
         type: str
         choices: ['allow', 'block']
       email_body_customized_text:
         description:
-          - Customized text for the malicious email body.<br> Available predefined fields,<br> $verdicts$ -
-            the malicious/error attachments/links verdict.
+          - Customized text for the malicious email body.<br> Available predefined fields,<br> $verdicts$ - the malicious/error attachments/links verdict.
         type: str
       email_subject_prefix_text:
         description:
@@ -131,18 +130,17 @@ options:
         type: str
       failed_to_scan_attachments_text:
         description:
-          - Replace attachments that failed to be scanned with this text.<br> Available predefined
-            fields,<br> $filename$ - the malicious file name.<br> $md5$ - MD5 of the malicious file.
+          - Replace attachments that failed to be scanned with this text.<br> Available predefined fields,<br> $filename$ - the malicious file
+            name.<br> $md5$ - MD5 of the malicious file.
         type: str
       malicious_attachments_text:
         description:
-          - Replace malicious attachments with this text.<br> Available predefined fields,<br> $filename$ -
-            the malicious file name.<br> $md5$ - MD5 of the malicious file.
+          - Replace malicious attachments with this text.<br> Available predefined fields,<br> $filename$ - the malicious file name.<br> $md5$ -
+            MD5 of the malicious file.
         type: str
       malicious_links_text:
         description:
-          - Replace malicious links with this text.<br> Available predefined fields,<br> $neutralized_url$
-            - neutralized malicious link.
+          - Replace malicious links with this text.<br> Available predefined fields,<br> $neutralized_url$ - neutralized malicious link.
         type: str
       remove_attachments_and_links:
         description:
@@ -200,19 +198,17 @@ options:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
-             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
-             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
-             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-             'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green',
+             'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon',
+             'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   ignore_warnings:
@@ -221,8 +217,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -307,16 +302,9 @@ def main():
         indicator_overrides=dict(type='list'),
         ips_settings=dict(type='list', options=dict(
             exclude_protection_with_performance_impact=dict(type='bool'),
-            exclude_protection_with
-                                                                                     _performance_impact_mode=dict(type=
-                                                                                     'str', choices=['very low',
-                                                                                      'low or lower', 'medium or lower',
-                                                                                      'high or lower']),
+            exclude_protection_with_performance_impact_mode=dict(type='str', choices=['very low', 'low or lower', 'medium or lower', 'high or lower']),
             exclude_protection_with_severity=dict(type='bool'),
-            exclude_protection_with_severity_
-                                                                           mode=dict(type='str',
-                                                                            choices=['low or above', 'medium or above',
-                                                                            'high or above', 'critical']),
+            exclude_protection_with_severity_mode=dict(type='str', choices=['low or above', 'medium or above', 'high or above', 'critical']),
             newly_updated_protections=dict(type='str', choices=['active', 'inactive', 'staging'])
         )),
         malicious_mail_policy_settings=dict(type='list', options=dict(
@@ -343,13 +331,11 @@ def main():
         activate_protections_by_extended_attributes=dict(type='list'),
         deactivate_protections_by_extended_attributes=dict(type='list'),
         use_extended_attributes=dict(type='bool'),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
-                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
-                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
-                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
-                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-                                        'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+                                        'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+                                        'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna',
+                                        'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         ignore_warnings=dict(type='bool'),

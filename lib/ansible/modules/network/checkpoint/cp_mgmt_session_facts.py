@@ -49,19 +49,17 @@ options:
     type: int
   order:
     description:
-      - Sorts results by the given field. By default the results are sorted in the descending order by the
-        session publish time.
+      - Sorts results by the given field. By default the results are sorted in the descending order by the session publish time.
         This parameter is relevant only for getting few objects.
     type: list
   view_published_sessions:
     description:
       - Show a list of published sessions.
-        This parameter is relevant only for getting few objects.
     type: bool
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
 extends_documentation_fragment: checkpoint_facts

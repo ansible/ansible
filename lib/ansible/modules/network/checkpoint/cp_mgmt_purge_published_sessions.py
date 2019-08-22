@@ -28,11 +28,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cp_mgmt_purge_published_sessions
-short_description: Permanently deletes all data which belongs to the published sessions not selected for preservation.
-This operation is irreversible.
+short_description: Permanently deletes all data which belongs to the published sessions not selected for preservation. This operation is irreversible.
 description:
-  - Permanently deletes all data which belongs to the published sessions not selected for preservation. This
-    operation is irreversible.
+  - Permanently deletes all data which belongs to the published sessions not selected for preservation. This operation is irreversible.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -43,8 +41,8 @@ options:
     type: int
   preserve_to_date:
     description:
-      - The date until which sessions are preserved, by the sessions's publish date. ISO 8601. If timezone
-        isn't specified in the input, the Management server's timezone is used.
+      - The date until which sessions are preserved, by the sessions's publish date. ISO 8601. If timezone isn't specified in the input, the
+        Management server's timezone is used.
     type: str
 extends_documentation_fragment: checkpoint_commands
 """

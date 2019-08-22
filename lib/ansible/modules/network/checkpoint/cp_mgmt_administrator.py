@@ -71,8 +71,8 @@ options:
     type: str
   permissions_profile:
     description:
-      - Administrator permissions profile. Permissions profile should not be provided when multi-domain-profile
-        is set to "Multi-Domain Super User" or "Domain Super User".
+      - Administrator permissions profile. Permissions profile should not be provided when multi-domain-profile is set to "Multi-Domain Super User" or
+        "Domain Super User".
     type: list
   phone_number:
     description:
@@ -80,13 +80,11 @@ options:
     type: str
   radius_server:
     description:
-      - RADIUS server object identified by the name or UID. Must be set when "authentication-method" was
-        selected to be "RADIUS".
+      - RADIUS server object identified by the name or UID. Must be set when "authentication-method" was selected to be "RADIUS".
     type: str
   tacacs_server:
     description:
-      - TACACS server object identified by the name or UID. Must be set when "authentication-method" was
-        selected to be "TACACS".
+      - TACACS server object identified by the name or UID. Must be set when "authentication-method" was selected to be "TACACS".
     type: str
   tags:
     description:
@@ -96,19 +94,17 @@ options:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki',
-             'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
-             'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
-             'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-             'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green',
+             'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon',
+             'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   ignore_warnings:
@@ -117,8 +113,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -169,9 +164,8 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        authentication_method=dict(type='str',
-                                                        choices=['undefined', 'check point password', 'os password',
-                                                        'securid', 'radius', 'tacacs', 'ad authentication']),
+        authentication_method=dict(type='str', choices=['undefined', 'check point password',
+                                                        'os password', 'securid', 'radius', 'tacacs', 'ad authentication']),
         email=dict(type='str'),
         expiration_date=dict(type='str'),
         multi_domain_profile=dict(type='str'),
@@ -183,13 +177,11 @@ def main():
         radius_server=dict(type='str'),
         tacacs_server=dict(type='str'),
         tags=dict(type='list'),
-        color=dict(type='str', choices=['aquamarine', 'black', 'blue',
-                                        'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
-                                        'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
-                                        'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
-                                        'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta',
-                                        'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
-                                        'sienna', 'yellow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
+                                        'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+                                        'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna',
+                                        'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         ignore_warnings=dict(type='bool'),
