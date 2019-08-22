@@ -45,6 +45,7 @@ options:
     type: bool
     default: no
   checksum:
+    version_added: '2.9'
     description:
     - Use md5 checksum hash on existing dest files to compare with the src files.
     type: bool
