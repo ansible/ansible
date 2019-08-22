@@ -501,7 +501,8 @@ class TestMyModule(unittest.TestCase):
             assert exc.value.args[0]['msg'] == msg
             mock_create.assert_called_with()
 
-    def test_create_flexcache_time_out(self):
+    @patch('time.sleep')
+    def test_create_flexcache_time_out(self, mock_sleep):
         ''' create flexcache '''
         args = {
             'volume': 'volume_err',
