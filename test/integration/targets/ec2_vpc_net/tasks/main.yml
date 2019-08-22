@@ -139,6 +139,7 @@
     - name: attempt to create another VPC with the same CIDR and name without multi_ok
       ec2_vpc_net:
         cidr_block: 20.0.0.0/24
+        ipv6_cidr: True
         name: "{{ resource_prefix }}"
         state: present
         multi_ok: no
