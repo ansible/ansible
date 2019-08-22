@@ -249,6 +249,7 @@
     repo:             "file://{{ git_repo_base.path }}/repo_single_submodule"
     submodule_init:   "yes"
     track_submodules: "yes"
+  register: git_clone_submodule_init_with_submodule_tracking
 
 - name: "SUBMODULES | List files in submodule for clone with submodule init and submodule tracking"
   find:
@@ -261,9 +262,15 @@
     recurse:   "yes"
   register: test_clone_submodule_init_with_submodule_tracking
 
+- name: "SUBMODULES | Assert that clone with submodule init and submodule tracking results in submodule repo_no_submodules pinned at commit 1 when submodule tracking is not supported"
+  assert:
+    that: '{{ test_clone_submodule_init_with_submodule_tracking.matched }} == 1'
+  when: '"Your git version is too old to fully support the track_submodules argument. Falling back to not tracking submodules." in git_clone_submodule_init_with_submodule_tracking.get("warnings", [])'
+
 - name: "SUBMODULES | Assert that clone with submodule init and submodule tracking results in submodule repo_no_submodules checked out master commit 2 and not pinned at commit 1"
   assert:
     that: '{{ test_clone_submodule_init_with_submodule_tracking.matched }} == 2'
+  when: '"Your git version is too old to fully support the track_submodules argument. Falling back to not tracking submodules." not in git_clone_submodule_init_with_submodule_tracking.get("warnings", [])'
 
 - name: "SUBMODULES | Remove clone test repo clone_repo_single_submodule"
   file:
