@@ -285,6 +285,8 @@ class GalaxyCLI(CLI):
                                     help='The path to the collection tarball to publish.')
         publish_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True,
                                     help="Don't wait for import validation results.")
+        publish_parser.add_argument('--import-timeout', dest='import_timeout', type=int, default=0,
+                                    help="The time to wait for the collection import process to finish.")
 
     def post_process_args(self, options):
         options = super(GalaxyCLI, self).post_process_args(options)
@@ -977,8 +979,9 @@ class GalaxyCLI(CLI):
         """
         collection_path = GalaxyCLI._resolve_path(context.CLIARGS['args'])
         wait = context.CLIARGS['wait']
+        timeout = context.CLIARGS['import_timeout']
 
-        publish_collection(collection_path, self.api, wait)
+        publish_collection(collection_path, self.api, wait, timeout)
 
     def execute_search(self):
         ''' searches for roles on the Ansible Galaxy server'''
