@@ -239,6 +239,8 @@ class L3_Interfaces(ConfigBase):
                             .format(ipv4_dict.get('dhcp_client'))
                     elif not ipv4_dict.get('dhcp_client') and ipv4_dict.get('dhcp_hostname'):
                         cmd = "ip address dhcp hostname {0}".format(ipv4_dict.get('dhcp_client'))
+                    else:
+                        cmd = "ip address dhcp"
                 add_command_to_config_list(interface, cmd, commands)
 
         # To handle L3 IPV6 configuration

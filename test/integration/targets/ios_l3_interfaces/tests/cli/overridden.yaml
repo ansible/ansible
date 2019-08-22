@@ -12,9 +12,6 @@
         config:
           - name: GigabitEthernet0/2
             ipv4:
-            - address: dhcp
-          - name: GigabitEthernet0/2
-            ipv4:
             - address: 192.168.4.1/24
             - address: 192.168.4.2/24
               secondary: True

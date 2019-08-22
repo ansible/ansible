@@ -89,7 +89,7 @@ def filter_dict_having_none_value(want, have):
                 if each.get('secondary'):
                     want_ip = each.get('address').split('/')
                     have_ip = have.get('ipv4')
-                    if len(want_ip) > 1 and have_ip:
+                    if len(want_ip) > 1 and have_ip and have_ip[0].get('secondary'):
                         have_ip = have_ip[0]['address'].split(' ')[0]
                         if have_ip != want_ip[0]:
                             diff_ip = True
