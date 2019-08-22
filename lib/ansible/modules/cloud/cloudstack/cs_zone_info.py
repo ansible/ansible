@@ -11,11 +11,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cs_zone_facts
-short_description: Gathering facts of zones from Apache CloudStack based clouds.
+module: cs_zone_info
+short_description: Gathering information about zones from Apache CloudStack based clouds.
 description:
-  - Gathering facts from the API of a zone.
+  - Gathering information from the API of a zone.
   - Sets Ansible facts accessable by the key C(cloudstack_zone) and since version 2.6 also returns results.
+  - This module was called C(cs_zone_facts) before Ansible 2.9, returning C(ansible_facts) with key C(cloudstack_zone).
+    Since Ansible 2.6, the module also returned registerable results.
+    Note that the M(cs_zone_info) module no longer returns C(ansible_facts)!
 version_added: '2.1'
 author: René Moser (@resmo)
 options:
@@ -29,8 +32,8 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: Gather facts from a zone
-  cs_zone_facts:
+- name: Gather info from a zone
+  cs_zone_info:
     name: ch-gva-1
   register: zone
   delegate_to: localhost
@@ -38,6 +41,15 @@ EXAMPLES = '''
 - name: Show the returned results of the registered variable
   debug:
     var: zone
+
+# When the module is called as cs_zone_info, return values are also
+# published in ansible_facts['cloudstack_zone'] and can be used as
+# follows. Note that this is deprecated and will stop working in
+# Ansible 2.13.
+- name: Gather info from a zone
+  cs_zone_facts:
+    name: ch-gva-1
+  delegate_to: localhost
 
 - name: Show the facts by the ansible_facts key cloudstack_zone
   debug:
@@ -145,10 +157,10 @@ from ansible.module_utils.cloudstack import (
 )
 
 
-class AnsibleCloudStackZoneFacts(AnsibleCloudStack):
+class AnsibleCloudStackZoneInfo(AnsibleCloudStack):
 
     def __init__(self, module):
-        super(AnsibleCloudStackZoneFacts, self).__init__(module)
+        super(AnsibleCloudStackZoneInfo, self).__init__(module)
         self.returns = {
             'dns1': 'dns1',
             'dns2': 'dns2',
@@ -167,7 +179,7 @@ class AnsibleCloudStackZoneFacts(AnsibleCloudStack):
         }
 
     def get_zone(self):
-        return super(AnsibleCloudStackZoneFacts, self).get_zone()
+        return super(AnsibleCloudStackZoneInfo, self).get_zone()
 
 
 def main():
@@ -180,13 +192,23 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+    is_old_facts = module._name == 'cs_zone_facts'
+    if is_old_facts:
+        module.deprecate("The 'cs_zone_facts' module has been renamed to 'cs_zone_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
-    acs_zone_facts = AnsibleCloudStackZoneFacts(module=module)
-    result = acs_zone_facts.get_result_and_facts(
-        facts_name='cloudstack_zone',
-        resource=acs_zone_facts.get_zone()
-    )
-    module.exit_json(**result)
+    acs_zone_info = AnsibleCloudStackZoneInfo(module=module)
+    if is_old_facts:
+        result = acs_zone_info.get_result_and_facts(
+            facts_name='cloudstack_zone',
+            resource=acs_zone_info.get_zone()
+        )
+        module.exit_json(**result)
+    else:
+        result = acs_zone_info.get_result(
+            resource=acs_zone_info.get_zone()
+        )
+        module.exit_json(**result)
 
 
 if __name__ == '__main__':

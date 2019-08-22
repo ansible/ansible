@@ -11,12 +11,12 @@
     that:
       - zone is successful
 
-- name: get facts from zone in check mode
-  cs_zone_facts:
+- name: get info from zone in check mode
+  cs_zone_info:
     name: "{{ cs_resource_prefix }}-zone"
   register: zone
   check_mode: yes
-- name: verify  get facts from zone in check mode
+- name: verify  get info from zone in check mode
   assert:
     that:
       - zone is successful
@@ -31,23 +31,12 @@
       - zone.securitygroups_enabled == true
       - zone.dhcp_provider == "VirtualRouter"
       - zone.local_storage_enabled == false
-      # Ansible Facts
-      - cloudstack_zone.dns1 == "8.8.8.8"
-      - cloudstack_zone.dns2 == "8.8.4.4"
-      - cloudstack_zone.internal_dns1 == "8.8.8.8"
-      - cloudstack_zone.internal_dns2 == "8.8.4.4"
-      - cloudstack_zone.local_storage_enabled == false
-      - cloudstack_zone.network_type == "Basic"
-      - cloudstack_zone.zone_token != ""
-      - cloudstack_zone.securitygroups_enabled == true
-      - cloudstack_zone.dhcp_provider == "VirtualRouter"
-      - cloudstack_zone.local_storage_enabled == false
 
-- name: get facts from zone
-  cs_zone_facts:
+- name: get info from zone
+  cs_zone_info:
     name: "{{ cs_resource_prefix }}-zone"
   register: zone
-- name: verify get facts from zone
+- name: verify get info from zone
   assert:
     that:
       - zone is successful
@@ -62,14 +51,3 @@
       - zone.securitygroups_enabled == true
       - zone.dhcp_provider == "VirtualRouter"
       - zone.local_storage_enabled == false
-      # Ansible Facts
-      - cloudstack_zone.dns1 == "8.8.8.8"
-      - cloudstack_zone.dns2 == "8.8.4.4"
-      - cloudstack_zone.internal_dns1 == "8.8.8.8"
-      - cloudstack_zone.internal_dns2 == "8.8.4.4"
-      - cloudstack_zone.local_storage_enabled == false
-      - cloudstack_zone.network_type == "Basic"
-      - cloudstack_zone.zone_token != ""
-      - cloudstack_zone.securitygroups_enabled == true
-      - cloudstack_zone.dhcp_provider == "VirtualRouter"
-      - cloudstack_zone.local_storage_enabled == false

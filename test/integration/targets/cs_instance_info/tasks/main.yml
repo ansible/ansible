@@ -1,0 +1,74 @@
+---
+- name: setup ssh key
+  cs_sshkeypair: name={{ cs_resource_prefix }}-sshkey
+  register: sshkey
+- name: verify setup ssh key
+  assert:
+    that:
+    - sshkey is successful
+
+- name: setup affinity group
+  cs_affinitygroup: name={{ cs_resource_prefix }}-ag
+  register: ag
+- name: verify setup affinity group
+  assert:
+    that:
+    - ag is successful
+
+- name: setup security group
+  cs_securitygroup: name={{ cs_resource_prefix }}-sg
+  register: sg
+- name: verify setup security group
+  assert:
+    that:
+    - sg is successful
+
+- name: setup instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    affinity_group: "{{ cs_resource_prefix }}-ag"
+    security_group: "{{ cs_resource_prefix }}-sg"
+    ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    tags: []
+  register: instance
+- name: verify create instance
+  assert:
+    that:
+    - instance is successful
+
+- name: test instance info in check mode
+  cs_instance_info:
+    name: "{{ cs_resource_prefix }}-vm"
+  register: instance_info
+  check_mode: true
+- name: verify test instance info in check mode
+  assert:
+    that:
+    - instance_info is successful
+    - instance_info is not changed
+    - instance_info.id == instance.id
+    - instance_info.domain == instance.domain
+    - instance_info.account == instance.account
+    - instance_info.zone == instance.zone
+    - instance_info.name == instance.name
+    - instance_info.service_offering == instance.service_offering
+    - instance_info.host != ""
+
+- name: test instance info
+  cs_instance_info:
+    name: "{{ cs_resource_prefix }}-vm"
+  register: instance_info
+- name: verify test instance info
+  assert:
+    that:
+    - instance_info is successful
+    - instance_info is not changed
+    - instance_info.id == instance.id
+    - instance_info.domain == instance.domain
+    - instance_info.account == instance.account
+    - instance_info.zone == instance.zone
+    - instance_info.name == instance.name
+    - instance_info.service_offering == instance.service_offering
+    - instance_info.host != ""

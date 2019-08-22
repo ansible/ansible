@@ -52,11 +52,11 @@
     - instance is successful
     - instance.state == 'Stopped'
 
-- name: setup get instance facts
-  cs_instance_facts:
+- name: setup get instance info
+  cs_instance_info:
     name: "{{ test_cs_instance_3 }}"
   register: instance
-- name: verify setup get instance facts
+- name: verify setup get instance info
   assert:
     that:
     - instance is successful

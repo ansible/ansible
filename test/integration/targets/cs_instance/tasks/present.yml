@@ -86,7 +86,7 @@
     - not instance.tags
 
 - name: gather host facts of running instance
-  cs_instance_facts:
+  cs_instance_info:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
 
 - name: test running instance not updated in check mode
