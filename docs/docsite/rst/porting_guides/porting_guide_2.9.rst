@@ -104,6 +104,9 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * vyos_lldp_interface use :ref:`vyos_lldp_interfaces <vyos_lldp_interfaces_module>` instead.
 
+* nxos_l3_interface use :ref:`nxos_l3_interfaces <nxos_l3_interfaces_module>` instead.
+
+
 The following functionality will be removed in Ansible 2.12. Please update update your playbooks accordingly.
 
 * ``vmware_cluster`` DRS, HA and VSAN configuration; use :ref:`vmware_cluster_drs <vmware_cluster_drs_module>`, :ref:`vmware_cluster_ha <vmware_cluster_ha_module>` and :ref:`vmware_cluster_vsan <vmware_cluster_vsan_module>` instead.
