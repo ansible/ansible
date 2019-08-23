@@ -327,7 +327,6 @@ class Interfaces(FactsBase):
             intf['description'] = self.parse_description(value)
             intf['macaddress'] = self.parse_macaddress(value)
             intf['mtu'] = self.parse_mtu(value)
-            
             intf['bandwidth'] = self.parse_bandwidth(value)
             intf['duplex'] = self.parse_duplex(value)
             intf['lineprotocol'] = self.parse_lineprotocol(value)
