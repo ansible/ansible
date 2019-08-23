@@ -149,7 +149,7 @@ template_json:
 
 import traceback
 
-
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
@@ -187,8 +187,11 @@ class UserGroup(object):
         else:
             debug_mode = 0
 
-        gui_acesses = {'default': '0', 'internal': '1', 'ldap': '2', 'disabled': '3'}
-        gui_access = gui_acesses[gui_access]
+        gui_accesses = {'default': '0', 'internal': '1', 'ldap': '2', 'disabled': '3'}
+        if LooseVersion(self._zapi.api_version()).version[:2] < LooseVersion('4.0').version:
+            gui_accesses = {'default': '0', 'internal': '1', 'disabled': '2'}
+
+        gui_access = gui_accesses[gui_access]
 
         if users_status == 'enabled':
             users_status = 0
