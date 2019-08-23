@@ -29,8 +29,8 @@ options:
 
   state:
     description:
-    - Whether the Kerberos realm is present or not.
-    choices: ['present', 'absent']
+    - Whether the Kerberos realm is present (create or modify) or absent (deleted).
+    choices: ['present', 'absent', 'modify']
     default: 'present'
     type: str
 
@@ -104,13 +104,24 @@ options:
 
 EXAMPLES = '''
 
-    - name: Configure kerberos realm
+    - name: Create kerberos realm
       na_ontap_kerberos_realm:
         state:         present
         realm:         'EXAMPLE.COM'
         vserver:       'vserver1'
         kdc_ip:        '1.2.3.4'
         kdc_vendor:    'Other'
+        hostname:      "{{ netapp_hostname }}"
+        username:      "{{ netapp_username }}"
+        password:      "{{ netapp_password }}"
+
+    - name: Modify kerberos realm
+      na_ontap_kerberos_realm:
+        state:         modify
+        realm:         'EXAMPLE.COM'
+        vserver:       'vserver1'
+        # IP has changed ^
+        kdc_ip:        '4.3.2.1'
         hostname:      "{{ netapp_hostname }}"
         username:      "{{ netapp_username }}"
         password:      "{{ netapp_password }}"
@@ -147,13 +158,14 @@ class NetAppOntapKerberosRealm(object):
             pw_server_ip=dict(required=False, default=None, type='str'),
             pw_server_port=dict(required=False, default=None, type='str'),
             realm=dict(required=True, type='str'),
-            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            state=dict(required=False, choices=['present', 'absent', 'modify'], default='present'),
             vserver=dict(required=True, type='str')
         ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True
+            supports_check_mode=True,
+            required_if=[('state', 'present', ['kdc_vendor', 'kdc_ip'])],
         )
         self.na_helper = NetAppModule()
         self.parameters = self.na_helper.set_parameters(self.module.params)
