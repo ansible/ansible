@@ -5,7 +5,14 @@
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # utils
-from ncclient.xml_ import new_ele, to_ele, to_xml
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+try:
+    from ncclient.xml_ import new_ele, to_ele, to_xml
+    HAS_NCCLIENT = True
+except ImportError:
+    HAS_NCCLIENT = False
 
 
 def get_resource_config(connection, config_filter=None, attrib={'inherit': 'inherit'}):
