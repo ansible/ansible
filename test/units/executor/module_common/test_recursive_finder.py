@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import pytest
 import zipfile
 
@@ -87,6 +88,8 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/module_utils/_text.py',
 ONLY_BASIC_IMPORT = frozenset((('basic',),))
 ONLY_BASIC_FILE = frozenset(('ansible/module_utils/basic.py',))
 
+ANSIBLE_LIB = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'lib', 'ansible')
+
 
 @pytest.fixture
 def finder_containers():
@@ -107,7 +110,7 @@ class TestRecursiveFinder(object):
     def test_no_module_utils(self, finder_containers):
         name = 'ping'
         data = b'#!/usr/bin/python\nreturn \'{\"changed\": false}\''
-        recursive_finder(name, data, *finder_containers)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, *finder_containers)
         assert finder_containers.py_module_names == set(()).union(MODULE_UTILS_BASIC_IMPORTS)
         assert finder_containers.py_module_cache == {}
         assert frozenset(finder_containers.zf.namelist()) == MODULE_UTILS_BASIC_FILES
@@ -116,14 +119,14 @@ class TestRecursiveFinder(object):
         name = 'fake_module'
         data = b'#!/usr/bin/python\ndef something(:\n   pass\n'
         with pytest.raises(ansible.errors.AnsibleError) as exec_info:
-            recursive_finder(name, data, *finder_containers)
+            recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, *finder_containers)
         assert 'Unable to import fake_module due to invalid syntax' in str(exec_info.value)
 
     def test_module_utils_with_identation_error(self, finder_containers):
         name = 'fake_module'
         data = b'#!/usr/bin/python\n    def something():\n    pass\n'
         with pytest.raises(ansible.errors.AnsibleError) as exec_info:
-            recursive_finder(name, data, *finder_containers)
+            recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, *finder_containers)
         assert 'Unable to import fake_module due to unexpected indent' in str(exec_info.value)
 
     def test_from_import_toplevel_package(self, finder_containers, mocker):
@@ -140,7 +143,7 @@ class TestRecursiveFinder(object):
 
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils import foo'
-        recursive_finder(name, data, *finder_containers)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, *finder_containers)
         mocker.stopall()
 
         assert finder_containers.py_module_names == set((('foo', '__init__'),)).union(ONLY_BASIC_IMPORT)
@@ -158,7 +161,7 @@ class TestRecursiveFinder(object):
 
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils import foo'
-        recursive_finder(name, data, *finder_containers)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, *finder_containers)
         mocker.stopall()
 
         assert finder_containers.py_module_names == set((('foo',),)).union(ONLY_BASIC_IMPORT)
@@ -171,7 +174,7 @@ class TestRecursiveFinder(object):
     def test_from_import_six(self, finder_containers):
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils import six'
-        recursive_finder(name, data, *finder_containers)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, *finder_containers)
         assert finder_containers.py_module_names == set((('six', '__init__'),)).union(MODULE_UTILS_BASIC_IMPORTS)
         assert finder_containers.py_module_cache == {}
         assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', )).union(MODULE_UTILS_BASIC_FILES)
@@ -179,7 +182,7 @@ class TestRecursiveFinder(object):
     def test_import_six(self, finder_containers):
         name = 'ping'
         data = b'#!/usr/bin/python\nimport ansible.module_utils.six'
-        recursive_finder(name, data, *finder_containers)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, *finder_containers)
         assert finder_containers.py_module_names == set((('six', '__init__'),)).union(MODULE_UTILS_BASIC_IMPORTS)
         assert finder_containers.py_module_cache == {}
         assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', )).union(MODULE_UTILS_BASIC_FILES)
@@ -187,7 +190,7 @@ class TestRecursiveFinder(object):
     def test_import_six_from_many_submodules(self, finder_containers):
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils.six.moves.urllib.parse import urlparse'
-        recursive_finder(name, data, *finder_containers)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, *finder_containers)
         assert finder_containers.py_module_names == set((('six', '__init__'),)).union(MODULE_UTILS_BASIC_IMPORTS)
         assert finder_containers.py_module_cache == {}
         assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/six/__init__.py',)).union(MODULE_UTILS_BASIC_FILES)
