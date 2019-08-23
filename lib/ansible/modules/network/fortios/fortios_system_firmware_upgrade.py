@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_system_firmware_upgrade
 short_description: Perform firmware upgrade with local firmware file in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system feature and firmware category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.2
@@ -82,7 +82,7 @@ options:
                 description:
                     - "Provided when uploading a file: base64 encoded file data. Must not contain whitespace or other invalid base64 characters. Must be
                        included in HTTP body."
-                type: var-string
+                type: str
             filename:
                 description:
                     - Name and path of the local firmware file.
@@ -109,9 +109,10 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Perform firmware upgrade with local firmware file.
-    fortios_system_firmware_upgrade:
+    fortios_system_firmware:
       host:  "{{ host }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -296,14 +297,14 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
         "system_firmware": {
             "required": True, "type": "dict",
             "options": {
-                "file_content": {"required": False, "type": "var-string"},
+                "file_content": {"required": False, "type": "str"},
                 "filename": {"required": True, "type": "str"},
                 "format_partition": {"required": False, "type": "bool"},
                 "source": {"required": True, "type": "str",
@@ -316,6 +317,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
