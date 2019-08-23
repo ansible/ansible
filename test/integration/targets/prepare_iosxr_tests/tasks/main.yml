@@ -1,8 +1,16 @@
 ---
 - name: Ensure we have loopback 888 for testing
   iosxr_config:
-    src: config.j2
+    before:
+      - interface Loopback888
+    lines:
+      - description test for ansible
+      - shutdown
   connection: network_cli
+  register: result
+  until: result is success
+  delay: 120
+  retries: 3
 
 - name: Enable Netconf service
   iosxr_netconf:
