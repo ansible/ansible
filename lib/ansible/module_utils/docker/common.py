@@ -40,6 +40,7 @@ HAS_DOCKER_PY = True
 HAS_DOCKER_PY_2 = False
 HAS_DOCKER_PY_3 = False
 HAS_DOCKER_ERROR = None
+NEEDS_DOCKER_PYCREDS = False
 
 try:
     from requests.exceptions import SSLError
@@ -57,23 +58,31 @@ try:
     else:
         from docker import Client
 
+    # Earlier versions of docker/docker-py put decode_auth
+    # in docker.auth.auth instead of docker.auth
+    if hasattr(auth, 'decode_auth'):
+        from docker.auth import decode_auth
+    else:
+        from docker.auth.auth import decode_auth
+
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
+    NEEDS_DOCKER_PYCREDS = True
 
-try:
-    from docker.credentials.errors import StoreError, CredentialsNotFound
-    from docker.credentials import Store
-except ImportError:
-    from dockerpycreds.errors import StoreError, CredentialsNotFound
-    from dockerpycreds.store import Store
-
-try:
-    # In some earlier versios of docker-py, decode_auth lives in
-    # docker.auth.auth
-    from docker.auth import decode_auth
-except ImportError:
-    from docker.auth.auth import decode_auth
+# Early versions of docker/docker-py rely on docker-pycreds for
+# the credential store api.
+if HAS_DOCKER_PY:
+    try:
+        from docker.credentials.errors import StoreError, CredentialsNotFound
+        from docker.credentials import Store
+    except ImportError:
+        try:
+            from dockerpycreds.errors import StoreError, CredentialsNotFound
+            from dockerpycreds.store import Store
+        except ImportError as exc:
+            HAS_DOCKER_ERRROR = str(exc)
+            NEEDS_DOCKER_PYCREDS = True
 
 # The next 2 imports ``docker.models`` and ``docker.ssladapter`` are used
 # to ensure the user does not have both ``docker`` and ``docker-py`` modules
@@ -148,6 +157,16 @@ if not HAS_DOCKER_PY:
         pass
 
     class NotFound(Exception):  # noqa: F811
+        pass
+
+if NEEDS_DOCKER_PYCREDS:
+    # docker-pycreds missing, so we need to create some place holder classes
+    # to allow instantiation.
+
+    class StoreError(Exception):
+        pass
+
+    class CredentialsNotFound(Exception):
         pass
 
 

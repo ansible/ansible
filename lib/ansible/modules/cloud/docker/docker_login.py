@@ -46,6 +46,11 @@ options:
       - The plaintext password for the registry account
     type: str
     required: yes
+  email:
+    required: False
+    description:
+      - Does nothing, do not use.
+    type: str
   reauthorize:
     description:
       - Refresh existing authentication found in the configuration file.
