@@ -30,7 +30,8 @@ author:
   - Rohit Thakur (@rohitthakur2590)
 extends_documentation_fragment: vyos
 notes:
-  - Tested against VyOS 1.1.8
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   gather_subset:
     description:

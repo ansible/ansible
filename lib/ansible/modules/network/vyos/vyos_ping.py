@@ -70,9 +70,11 @@ options:
     choices: [ absent, present ]
     default: present
 notes:
+  - Tested against VyOS 1.1.8 (helium).
   - For a general purpose network module, see the M(net_ping) module.
   - For Windows targets, use the M(win_ping) module instead.
   - For targets running Python, use the M(ping) module instead.
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 extends_documentation_fragment: vyos
 """
 
