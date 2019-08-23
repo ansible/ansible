@@ -1,14 +1,35 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import pytest
 
+from docker.credentials import Store
+from docker.credentials.errors import InitializationError
+from docker.constants import DEFAULT_DOCKER_API_VERSION
+
+from units.compat.mock import patch
+from units.modules.utils import set_module_args
+from ansible.module_utils import basic
+
 from ansible.module_utils.docker.common import (
+    DockerFileStore,
+    AnsibleDockerClient,
     compare_dict_allow_more_present,
     compare_generic,
     convert_duration_to_nanosecond,
     parse_healthcheck
 )
+
+curr_dir = os.path.dirname(__file__)
+test_data_dir = os.path.join(curr_dir, "test_data")
+
+EXAMPLE_REGISTRY = "registry.example.com"
+CREDENTIAL_HELPERS = [
+    'desktop-config.json',
+    'osxkeychain-config.json',
+    'secretservice-config.json'
+]
 
 DICT_ALLOW_MORE_PRESENT = (
     {
@@ -516,3 +537,42 @@ def test_parse_healthcheck():
         'interval': 3662003004000
     }
     assert disabled is False
+
+def get_docker_client():
+    '''
+    Avoid crash while instantiating AnsibleDockerClient in a test context.
+    '''
+
+    set_module_args(dict())
+
+    with patch.object(AnsibleDockerClient, 'version') as version:
+        version.return_value = dict(
+            ApiVersion=DEFAULT_DOCKER_API_VERSION
+        )
+
+        client = AnsibleDockerClient( )
+
+    return client
+
+@pytest.mark.parametrize("config", CREDENTIAL_HELPERS)
+def test_docker_credential_helpers(config):
+    client = get_docker_client()
+
+    try:
+        store = client.get_credential_store_instance(EXAMPLE_REGISTRY, os.path.join(test_data_dir, config))
+
+        assert type(store) == Store
+    except InitializationError as e:
+        pytest.skip("Credential helper not available.")
+
+def test_docker_legacy_crednetials():
+    client = get_docker_client()
+
+    store = client.get_credential_store_instance(EXAMPLE_REGISTRY, os.path.join(test_data_dir, "none-config.json"))
+
+    assert type(store) == DockerFileStore
+    assert store.get(EXAMPLE_REGISTRY) == dict(
+        Username="abc",
+        Secret="123"
+    )
+
