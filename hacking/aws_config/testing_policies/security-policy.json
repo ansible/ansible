@@ -122,21 +122,24 @@
             "Sid": "AllowAccessToServerCertificates",
             "Effect": "Allow",
             "Action": [
-                "iam:ListServerCertificates",
-                "iam:UploadServerCertificate",
-                "iam:UpdateServerCertificate",
-                "iam:DeleteServerCertificate",
-                "iam:GetServerCertificate"
+                "iam:*ServerCertificates",
+                "iam:*ServerCertificate"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToSecrets",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:*"
+            ],
+            "Resource": "arn:aws:secretsmanager:{{aws_region}}:{{aws_account}}:secret:ansible-test*"
         },
         {
             "Sid": "AllowAccessToManagePasswordPolicy",
             "Effect": "Allow",
             "Action": [
-                "iam:GetAccountPasswordPolicy",
-                "iam:DeleteAccountPasswordPolicy",
-                "iam:UpdateAccountPasswordPolicy"
+                "iam:*AccountPasswordPolicy"
             ],
             "Resource": "*"
         }
