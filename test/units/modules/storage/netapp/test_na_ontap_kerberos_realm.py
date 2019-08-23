@@ -3,7 +3,9 @@
 
 ''' unit test for ONTAP Kerberos Realm module '''
 
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 import pytest
 import ansible.module_utils.netapp as netapp_utils
