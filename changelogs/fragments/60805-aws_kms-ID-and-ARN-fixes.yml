@@ -1,0 +1,3 @@
+bugfixes:
+- aws_kms - fix exception when only Key ID is passed
+- aws_kms - Use ARN rather than ID so that cross-account changes function
