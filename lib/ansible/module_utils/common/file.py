@@ -96,20 +96,6 @@ def get_flags_from_attributes(attributes):
     return ''.join(flags)
 
 
-def get_file_arg_spec():
-    arg_spec = dict(
-        mode=dict(type='raw'),
-        owner=dict(),
-        group=dict(),
-        seuser=dict(),
-        serole=dict(),
-        selevel=dict(),
-        setype=dict(),
-        attributes=dict(aliases=['attr']),
-    )
-    return arg_spec
-
-
 class LockTimeout(Exception):
     pass
 
