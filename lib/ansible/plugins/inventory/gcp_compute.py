@@ -153,6 +153,121 @@ class GcpMockModule(object):
         raise AnsibleError(kwargs['msg'])
 
 
+class GcpInstance(object):
+    def __init__(self, json, hostname_ordering, project_disks):
+        self.hostname_ordering = hostname_ordering
+        self.project_disks = project_disks
+        self.json = json
+        convert_inventory()
+
+    def json():
+        return self.json
+
+    def convert():
+        if 'zone' in self.json:
+            self.json['zone_selflink'] = self.json['zone']
+            self.json['zone'] = self.json['zone'].split('/')[-1]
+        if 'machineType' in self.json:
+            self.json['machineType_selflink'] = self.json['machineType']
+            self.json['machineType'] = self.json['machineType'].split('/')[-1]
+
+        if 'networkInterfaces' in self.json:
+            for network in self.json['networkInterfaces']:
+                if 'network' in network:
+                    network['network'] = self._format_network_info(network['network'])
+                if 'subnetwork' in network:
+                    network['subnetwork'] = self._format_network_info(network['subnetwork'])
+
+        if 'metadata' in self.json:
+            # If no metadata, 'items' will be blank.
+            # We want the metadata hash overriden anyways for consistency.
+            self.json['metadata'] = self._format_metadata(host['metadata'].get('items', {}))
+
+        self.json['project'] = self.json['selfLink'].split('/')[6]
+        self.json['image'] = self._get_image()
+
+    def _format_network_info(self, address):
+        '''
+            :param address: A GCP network address
+            :return a dict with network shortname and region
+        '''
+        split = address.split('/')
+        region = ''
+        if 'global' in split:
+            region = 'global'
+        else:
+            region = split[8]
+        return {
+            'region': region,
+            'name': split[-1],
+            'selfLink': address
+        }
+
+    def _format_metadata(self, metadata):
+        '''
+            :param metadata: A list of dicts where each dict has keys "key" and "value"
+            :return a dict with key/value pairs for each in list.
+        '''
+        new_metadata = {}
+        for pair in metadata:
+            new_metadata[pair["key"]] = pair["value"]
+        return new_metadata
+
+    def hostname(self):
+        '''
+            :return the hostname of this instance
+        '''
+        for order in self.hostname_ordering:
+            name = None
+            if order == 'public_ip':
+                name = self._get_publicip(item)
+            elif order == 'private_ip':
+                name = self._get_privateip(item)
+            elif order == 'name':
+                name = item[u'name']
+            else:
+                raise AnsibleParserError("%s is not a valid hostname precedent" % order)
+
+            if name:
+                return name
+
+        raise AnsibleParserError("No valid name found for host")
+
+    def _get_publicip(self):
+        '''
+            :return the publicIP of this instance or None
+        '''
+        # Get public IP if exists
+        for interface in self.json['networkInterfaces']:
+            if 'accessConfigs' in interface:
+                for accessConfig in interface['accessConfigs']:
+                    if 'natIP' in accessConfig:
+                        return accessConfig[u'natIP']
+        return None
+
+    def _get_image(self):
+        '''
+            :param instance: A instance response from GCP
+            :return the image of this instance or None
+        '''
+        image = None
+        if self.project_disks and 'disks' in self.json:
+            for disk in self.json['disks']:
+                if disk.get('boot'):
+                    image = self.project_disks[disk["source"]]
+        return image
+
+    def _get_privateip(self):
+        '''
+            :param item: A host response from GCP
+            :return the privateIP of this instance or None
+        '''
+        # Fallback: Get private IP
+        for interface in self.json[u'networkInterfaces']:
+            if 'networkIP' in interface:
+                return interface[u'networkIP']
+
+
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'gcp_compute'
@@ -168,9 +283,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
             :param item: A GCP instance
         '''
-        hostname = self._get_hostname(item)
+        hostname = self.hostname(item)
         self.inventory.add_host(hostname)
-        for key in item:
+        for key in item.json():
             try:
                 self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item[key])
             except (ValueError, TypeError) as e:
@@ -247,34 +362,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return result
 
-    def _format_items(self, items, project_disks):
-        '''
-            :param items: A list of hosts
-        '''
-        for host in items:
-            if 'zone' in host:
-                host['zone_selflink'] = host['zone']
-                host['zone'] = host['zone'].split('/')[-1]
-            if 'machineType' in host:
-                host['machineType_selflink'] = host['machineType']
-                host['machineType'] = host['machineType'].split('/')[-1]
-
-            if 'networkInterfaces' in host:
-                for network in host['networkInterfaces']:
-                    if 'network' in network:
-                        network['network'] = self._format_network_info(network['network'])
-                    if 'subnetwork' in network:
-                        network['subnetwork'] = self._format_network_info(network['subnetwork'])
-
-            if 'metadata' in host:
-                # If no metadata, 'items' will be blank.
-                # We want the metadata hash overriden anyways for consistency.
-                host['metadata'] = self._format_metadata(host['metadata'].get('items', {}))
-
-            host['project'] = host['selfLink'].split('/')[6]
-            host['image'] = self._get_image(host, project_disks)
-        return items
-
     def _add_hosts(self, items, config_data, format_items=True, project_disks=None):
         '''
             :param items: A list of hosts
@@ -283,93 +370,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         if not items:
             return
-        if format_items:
-            items = self._format_items(items, project_disks)
 
-        for host in items:
-            self._populate_host(host)
-
-            hostname = self._get_hostname(host)
-            self._set_composite_vars(self.get_option('compose'), host, hostname)
-            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname)
-            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname)
-
-    def _format_network_info(self, address):
-        '''
-            :param address: A GCP network address
-            :return a dict with network shortname and region
-        '''
-        split = address.split('/')
-        region = ''
-        if 'global' in split:
-            region = 'global'
-        else:
-            region = split[8]
-        return {
-            'region': region,
-            'name': split[-1],
-            'selfLink': address
-        }
-
-    def _format_metadata(self, metadata):
-        '''
-            :param metadata: A list of dicts where each dict has keys "key" and "value"
-            :return a dict with key/value pairs for each in list.
-        '''
-        new_metadata = {}
-        for pair in metadata:
-            new_metadata[pair["key"]] = pair["value"]
-        return new_metadata
-
-    def _get_hostname(self, item):
-        '''
-            :param item: A host response from GCP
-            :return the hostname of this instance
-        '''
         hostname_ordering = ['public_ip', 'private_ip', 'name']
         if self.get_option('hostnames'):
             hostname_ordering = self.get_option('hostnames')
 
-        for order in hostname_ordering:
-            name = None
-            if order == 'public_ip':
-                name = self._get_publicip(item)
-            elif order == 'private_ip':
-                name = self._get_privateip(item)
-            elif order == 'name':
-                name = item[u'name']
-            else:
-                raise AnsibleParserError("%s is not a valid hostname precedent" % order)
+        for host_json in items:
+            host = GcpInstance(host_json, hostname_ordering, project_disks) 
+            self._populate_host(host)
 
-            if name:
-                return name
-
-        raise AnsibleParserError("No valid name found for host")
-
-    def _get_publicip(self, item):
-        '''
-            :param item: A host response from GCP
-            :return the publicIP of this instance or None
-        '''
-        # Get public IP if exists
-        for interface in item['networkInterfaces']:
-            if 'accessConfigs' in interface:
-                for accessConfig in interface['accessConfigs']:
-                    if 'natIP' in accessConfig:
-                        return accessConfig[u'natIP']
-        return None
-
-    def _get_image(self, instance, project_disks):
-        '''
-            :param instance: A instance response from GCP
-            :return the image of this instance or None
-        '''
-        image = None
-        if project_disks and 'disks' in instance:
-            for disk in instance['disks']:
-                if disk.get('boot'):
-                    image = project_disks[disk["source"]]
-        return image
+            hostname = self.hostname(host)
+            self._set_composite_vars(self.get_option('compose'), host.json(), hostname)
+            self._add_host_to_composed_groups(self.get_option('groups'), host.json(), hostname)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host.json(), hostname)
 
     def _get_project_disks(self, config_data, query):
         '''
@@ -423,16 +436,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                                             self._project_disks[disk['selfLink']] = disk['selfLink'].split('/')[-1]
 
         return self._project_disks
-
-    def _get_privateip(self, item):
-        '''
-            :param item: A host response from GCP
-            :return the privateIP of this instance or None
-        '''
-        # Fallback: Get private IP
-        for interface in item[u'networkInterfaces']:
-            if 'networkIP' in interface:
-                return interface[u'networkIP']
 
     def parse(self, inventory, loader, path, cache=True):
 
