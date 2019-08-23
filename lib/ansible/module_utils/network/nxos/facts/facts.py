@@ -14,6 +14,7 @@ from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.nxos.facts.legacy.base import Default, Legacy, Hardware, Config, Interfaces, Features
 from ansible.module_utils.network.nxos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.nxos.facts.lacp.lacp import LacpFacts
+from ansible.module_utils.network.nxos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
 from ansible.module_utils.network.nxos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.nxos.facts.telemetry.telemetry import TelemetryFacts
 from ansible.module_utils.network.nxos.facts.vlans.vlans import VlansFacts
@@ -35,6 +36,7 @@ FACT_RESOURCE_SUBSETS = dict(
     lacp=LacpFacts,
     lacp_interfaces=Lacp_interfacesFacts,
     interfaces=InterfacesFacts,
+    l3_interfaces=L3_interfacesFacts,
 )
 
 
