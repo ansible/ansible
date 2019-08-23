@@ -119,7 +119,7 @@ def main():
     executable = module.params['executable']
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version=2.13)
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
 
     result = dict(
         changed=False,
