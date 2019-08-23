@@ -79,7 +79,7 @@ options:
     - Identifies the managed zone addressed by this request.
     - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
       in two ways. First, you can place a dictionary with 2 keys: ''name'' and value of
-      your resource''s name, ''dnsName'' and the value of the DNS name manged by this zone
+      your resource's name, ''dnsName'' and the value of the DNS name managed by this zone
       Alternatively, you can add `register: name-of-resource`
       to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
       }}"'
