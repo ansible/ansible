@@ -308,4 +308,134 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: ownca_backup_5
 
+- name: (OwnCA, {{select_crypto_backend}}) Create subject key identifier
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_subject_key_identifier: always_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_subject_key_identifier_1
+
+- name: (OwnCA, {{select_crypto_backend}}) Create subject key identifier (idempotency)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_subject_key_identifier: always_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_subject_key_identifier_2
+
+- name: (OwnCA, {{select_crypto_backend}}) Create subject key identifier (remove)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_subject_key_identifier: never_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_subject_key_identifier_3
+
+- name: (OwnCA, {{select_crypto_backend}}) Create subject key identifier (remove idempotency)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_subject_key_identifier: never_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_subject_key_identifier_4
+
+- name: (OwnCA, {{select_crypto_backend}}) Create subject key identifier (re-enable)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ski.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_subject_key_identifier: always_create
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_subject_key_identifier_5
+
+- name: (OwnCA, {{select_crypto_backend}}) Create authority key identifier
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_aki.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_authority_key_identifier: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_authority_key_identifier_1
+
+- name: (OwnCA, {{select_crypto_backend}}) Create authority key identifier (idempotency)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_aki.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_authority_key_identifier: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_authority_key_identifier_2
+
+- name: (OwnCA, {{select_crypto_backend}}) Create authority key identifier (remove)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_aki.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_authority_key_identifier: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_authority_key_identifier_3
+
+- name: (OwnCA, {{select_crypto_backend}}) Create authority key identifier (remove idempotency)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_aki.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_authority_key_identifier: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_authority_key_identifier_4
+
+- name: (OwnCA, {{select_crypto_backend}}) Create authority key identifier (re-add)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_aki.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_create_authority_key_identifier: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend != 'pyopenssl'
+  register: ownca_authority_key_identifier_5
+
 - import_tasks: ../tests/validate_ownca.yml
