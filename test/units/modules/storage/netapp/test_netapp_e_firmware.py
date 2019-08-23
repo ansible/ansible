@@ -9,7 +9,7 @@ except ImportError:
     from mock import patch, mock_open
 
 from ansible.module_utils import six
-from ansible.modules.storage.netapp.na_santricity_firmware import NetAppESeriesFirmware
+from ansible.modules.storage.netapp.netapp_e_firmware import NetAppESeriesFirmware
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 if six.PY2:
@@ -35,10 +35,10 @@ class FirmwareTest(ModuleTestCase):
                        "api_url": "http://localhost/devmgr/v2",
                        "ssid": "1",
                        "validate_certs": "no"}
-    REQUEST_FUNC = "ansible.modules.storage.netapp.na_santricity_firmware.NetAppESeriesFirmware.request"
-    BASE_REQUEST_FUNC = "ansible.modules.storage.netapp.na_santricity_firmware.request"
-    CREATE_MULTIPART_FORMDATA_FUNC = "ansible.modules.storage.netapp.na_santricity_firmware.create_multipart_formdata"
-    SLEEP_FUNC = "ansible.modules.storage.netapp.na_santricity_firmware.sleep"
+    REQUEST_FUNC = "ansible.modules.storage.netapp.netapp_e_firmware.NetAppESeriesFirmware.request"
+    BASE_REQUEST_FUNC = "ansible.modules.storage.netapp.netapp_e_firmware.request"
+    CREATE_MULTIPART_FORMDATA_FUNC = "ansible.modules.storage.netapp.netapp_e_firmware.create_multipart_formdata"
+    SLEEP_FUNC = "ansible.modules.storage.netapp.netapp_e_firmware.sleep"
     BUNDLE_HEADER = b'combined_content\x00\x00\x00\x04\x00\x00\x07\xf8#Engenio Downloadable Package\n#Tue Jun 04 11:46:48 CDT 2019\ncheckList=compatibleBoard' \
                     b'Map,compatibleSubmodelMap,compatibleFirmwareMap,fileManifest\ncompatibleSubmodelMap=261|true,262|true,263|true,264|true,276|true,277|t' \
                     b'rue,278|true,282|true,300|true,301|true,302|true,318|true,319|true,320|true,321|true,322|true,323|true,324|true,325|true,326|true,328|t' \
@@ -258,39 +258,48 @@ class FirmwareTest(ModuleTestCase):
                         {"module": "iom", "bundledVersion": "11.42.0G00.0003", "onboardVersion": "11.42.0G00.0001"}]})):
                     firmware.embedded_check_bundle_compatibility()
 
-    def test_embedded_wait_for_controller_reboot_pass(self):
+    def test_embedded_wait_for_upgrade_pass(self):
         """Verify controller reboot wait succeeds."""
         self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp"})
         firmware = NetAppESeriesFirmware()
+        firmware.firmware_version = lambda: b"11.40.3R2"
+        firmware.nvsram_version = lambda: b"N280X-842834-D02"
         with patch(self.SLEEP_FUNC, return_value=None):
-            with patch(self.BASE_REQUEST_FUNC, side_effect=[Exception(), Exception(), (200, "")]):
-                firmware.embedded_wait_for_controller_reboot()
+            with patch(self.REQUEST_FUNC, return_value=(200, [{"fwVersion": "08.42.30.05", "nvsramVersion": "N280X-842834-D02",
+                                                               "extendedSAData": {"codeVersions": [{"codeModule": "bundleDisplay",
+                                                                                                    "versionString": "11.40.3R2"}]}}])):
+                firmware.embedded_wait_for_upgrade()
 
-    def test_embedded_wait_for_controller_reboot_fail(self):
+    def test_embedded_wait_for_upgrade_fail(self):
         """Verify controller reboot wait throws expected exceptions"""
         self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp"})
         firmware = NetAppESeriesFirmware()
         with self.assertRaisesRegexp(AnsibleFailJson, "Timeout waiting for Santricity Web Services Embedded."):
             with patch(self.SLEEP_FUNC, return_value=None):
                 with patch(self.BASE_REQUEST_FUNC, return_value=Exception()):
-                    firmware.embedded_wait_for_controller_reboot()
+                    firmware.embedded_wait_for_upgrade()
 
     def test_embedded_upgrade_pass(self):
         """Verify embedded upgrade function."""
-        self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp"})
-        firmware = NetAppESeriesFirmware()
         with patch(self.CREATE_MULTIPART_FORMDATA_FUNC, return_value=("", {})):
             with patch(self.SLEEP_FUNC, return_value=None):
+
+                self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp"})
+                firmware = NetAppESeriesFirmware()
                 with patch(self.REQUEST_FUNC, return_value=(200, "")):
                     with patch(self.BASE_REQUEST_FUNC, side_effect=[Exception(), Exception(), (200, "")]):
                         firmware.embedded_upgrade()
                         self.assertTrue(firmware.upgrade_in_progress)
 
-                        self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp", "wait_for_completion": True})
-                        firmware = NetAppESeriesFirmware()
-                        with patch(self.BASE_REQUEST_FUNC, side_effect=[Exception(), Exception(), (200, "")]):
-                            firmware.embedded_upgrade()
-                            self.assertFalse(firmware.upgrade_in_progress)
+                self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp", "wait_for_completion": True})
+                firmware = NetAppESeriesFirmware()
+                firmware.firmware_version = lambda: b"11.40.3R2"
+                firmware.nvsram_version = lambda: b"N280X-842834-D02"
+                with patch(self.REQUEST_FUNC, return_value=(200, [{"fwVersion": "08.42.30.05", "nvsramVersion": "N280X-842834-D02",
+                                                                   "extendedSAData": {"codeVersions": [{"codeModule": "bundleDisplay",
+                                                                                                        "versionString": "11.40.3R2"}]}}])):
+                    firmware.embedded_upgrade()
+                    self.assertFalse(firmware.upgrade_in_progress)
 
     def test_embedded_upgrade_fail(self):
         """Verify embedded upgrade throws expected exception."""
@@ -521,18 +530,13 @@ class FirmwareTest(ModuleTestCase):
                     firmware.proxy_wait_for_upgrade("1")
 
             firmware.is_firmware_bundled = lambda: False
-            with self.assertRaisesRegexp(AnsibleFailJson, "Failed to retrieve firmware upgrade status."):
+            with self.assertRaisesRegexp(AnsibleFailJson, "Timed out waiting for firmware upgrade to complete."):
                 with patch(self.REQUEST_FUNC, return_value=Exception()):
                     firmware.proxy_wait_for_upgrade("1")
 
             firmware.is_firmware_bundled = lambda: True
             with self.assertRaisesRegexp(AnsibleFailJson, "Firmware upgrade failed to complete."):
                 with patch(self.REQUEST_FUNC, side_effect=[(200, {"status": "not_done"}), (200, {"status": "failed"})]):
-                    firmware.proxy_wait_for_upgrade("1")
-
-            firmware.is_firmware_bundled = lambda: False
-            with self.assertRaisesRegexp(AnsibleFailJson, "Failed to retrieve firmware upgrade status."):
-                with patch(self.REQUEST_FUNC, return_value=(200, {"status": "not_done"})):
                     firmware.proxy_wait_for_upgrade("1")
 
     def test_proxy_upgrade_fail(self):

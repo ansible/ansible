@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: na_santricity_firmware
+module: netapp_e_firmware
 version_added: "2.9"
 short_description: NetApp E-Series manage firmware.
 description:
@@ -47,7 +47,7 @@ options:
 """
 EXAMPLES = """
 - name: Ensure correct firmware versions
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ eseries_ssid }}"
     api_url: "{{ eseries_api_url }}"
     api_username: "{{ eseries_api_username }}"
@@ -57,7 +57,7 @@ EXAMPLES = """
     bundle: "path/to/bundle"
     wait_for_completion: true
 - name: Ensure correct firmware versions
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ eseries_ssid }}"
     api_url: "{{ eseries_api_url }}"
     api_username: "{{ eseries_api_username }}"
@@ -132,7 +132,7 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
         return self.is_bundle_cache
 
     def firmware_version(self):
-        """Retrieve firmware version. Return: bytes string"""
+        """Retrieve firmware version of the firmware file. Return: bytes string"""
         if self.firmware_version_cache is None:
 
             # Search firmware file for bundle or firmware version
@@ -155,7 +155,7 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
         return self.firmware_version_cache
 
     def nvsram_version(self):
-        """Retrieve NVSRAM version. Return: byte string"""
+        """Retrieve NVSRAM version of the NVSRAM file. Return: byte string"""
         if self.nvsram_version_cache is None:
 
             with open(self.nvsram, "rb") as fh:
@@ -260,18 +260,18 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
         except Exception as error:
             self.module.fail_json(msg="Failed to retrieve bundle compatibility results. Array Id [%s]. Error[%s]." % (self.ssid, to_native(error)))
 
-    def embedded_wait_for_controller_reboot(self):
+    def embedded_wait_for_upgrade(self):
         """Wait for SANtricity Web Services Embedded to be available after reboot."""
-        about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
-        for count in range(0, int(self.REBOOT_TIMEOUT_SEC / 5)):
-            sleep(5)
+        for count in range(0, self.REBOOT_TIMEOUT_SEC):
             try:
-                rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, ignore_errors=True, **self.creds)
-                if rc == 200:
+                rc, response = self.request("storage-systems/%s/graph/xpath-filter?query=/sa/saData" % self.ssid)
+                bundle_display = [m["versionString"] for m in response[0]["extendedSAData"]["codeVersions"] if m["codeModule"] == "bundleDisplay"][0]
+                if rc == 200 and six.b(bundle_display) == self.firmware_version() and six.b(response[0]["nvsramVersion"]) == self.nvsram_version():
                     self.upgrade_in_progress = False
                     break
             except Exception as error:
                 pass
+            sleep(1)
         else:
             self.module.fail_json(msg="Timeout waiting for Santricity Web Services Embedded. Array [%s]" % self.ssid)
 
@@ -285,9 +285,8 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
             self.upgrade_in_progress = True
         except Exception as error:
             self.module.fail_json(msg="Failed to upload and activate firmware. Array Id [%s]. Error[%s]." % (self.ssid, to_native(error)))
-
         if self.wait_for_completion:
-            self.embedded_wait_for_controller_reboot()
+            self.embedded_wait_for_upgrade()
 
     def proxy_check_nvsram_compatibility(self):
         """Verify nvsram is compatible with E-Series storage system."""
@@ -424,7 +423,7 @@ class NetAppESeriesFirmware(NetAppESeriesModule):
                 except Exception as error:
                     pass
             else:
-                self.module.fail_json(msg="Failed to retrieve firmware upgrade status. Array [%s]." % self.ssid)
+                self.module.fail_json(msg="Timed out waiting for firmware upgrade to complete. Array [%s]." % self.ssid)
 
     def proxy_upgrade(self):
         """Activate previously uploaded firmware related files."""

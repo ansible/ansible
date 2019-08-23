@@ -1,4 +1,4 @@
-# Test code for the na_santricity_firmware module
+# Test code for the netapp_e_firmware module
 # (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -18,21 +18,21 @@
 - set_fact:
     path: "/home/swartzn/Downloads/"
     upgrades:
-    - firmware: "RCB_11.40.3R2_280x_5c7d81b3.dlp"
-      nvsram: "N280X-842834-D02.dlp"
-      expected_firmware_version: "08.42.30.05"
-      expected_nvsram_version: "N280X-842834-D02"
-    - firmware: "RCB_11.40.5_280x_5ceef00e.dlp"
-      nvsram: "N280X-842834-D02.dlp"
-      expected_firmware_version: "08.42.50.00"
-      expected_nvsram_version: "N280X-842834-D02"
-    - firmware: "RCB_11.50.2_280x_5ce8501f.dlp"
-      nvsram: "N280X-852834-D02.dlp"
-      expected_firmware_version: "08.52.00.00"
-      expected_nvsram_version: "N280X-852834-D02"
+      - firmware: "RCB_11.40.3R2_280x_5c7d81b3.dlp"
+        nvsram: "N280X-842834-D02.dlp"
+        expected_firmware_version: "08.42.30.05"
+        expected_nvsram_version: "N280X-842834-D02"
+      - firmware: "RCB_11.40.5_280x_5ceef00e.dlp"
+        nvsram: "N280X-842834-D02.dlp"
+        expected_firmware_version: "08.42.50.00"
+        expected_nvsram_version: "N280X-842834-D02"
+      - firmware: "RCB_11.50.2_280x_5ce8501f.dlp"
+        nvsram: "N280X-852834-D02.dlp"
+        expected_firmware_version: "08.52.00.00"
+        expected_nvsram_version: "N280X-852834-D02"
 
 - name: Perform firmware upgrade using the Web Services REST API (checkmode-no change, firmware only)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_embedded_ssid }}"
     api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_embedded_api_username }}"
@@ -43,7 +43,7 @@
     wait_for_completion: true
     ignore_health_check: true
   check_mode: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
 - name: Retrieve current firmware version
   uri:
     url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
@@ -60,7 +60,7 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == False }}"
+    that: "{{ netapp_e_firmware.changed == False }}"
     msg: "Failed to return unchanged."
 - name: Verify current firmware version
   assert:
@@ -72,7 +72,7 @@
     msg: "Unexpected nvsram version."
 
 - name: Perform firmware upgrade using the Web Services REST API (no change, firmware only)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_embedded_ssid }}"
     api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_embedded_api_username }}"
@@ -82,7 +82,7 @@
     firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
     wait_for_completion: true
     ignore_health_check: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
 - name: Retrieve current firmware version
   uri:
     url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
@@ -99,7 +99,7 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == False }}"
+    that: "{{ netapp_e_firmware.changed == False }}"
     msg: "Failed to return changed."
 - name: Verify current firmware version
   assert:
@@ -111,7 +111,7 @@
     msg: "Unexpected nvsram version."
 
 - name: Perform firmware upgrade using the Web Services REST API (checkmode-change, firmware)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_embedded_ssid }}"
     api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_embedded_api_username }}"
@@ -121,7 +121,7 @@
     firmware: "{{ path }}{{ upgrades[1]['firmware'] }}"
     wait_for_completion: true
     ignore_health_check: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
   check_mode: true
 - name: Retrieve current firmware version
   uri:
@@ -139,7 +139,7 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == True }}"
+    that: "{{ netapp_e_firmware.changed == True }}"
     msg: "Failed to return changed."
 - name: Verify current firmware version
   assert:
@@ -151,7 +151,7 @@
     msg: "Unexpected nvsram version."
 
 - name: Perform firmware upgrade using the Web Services REST API (change, firmware)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_embedded_ssid }}"
     api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_embedded_api_username }}"
@@ -161,7 +161,7 @@
     firmware: "{{ path }}{{ upgrades[1]['firmware'] }}"
     wait_for_completion: true
     ignore_health_check: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
 - name: Retrieve current firmware version
   uri:
     url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
@@ -178,21 +178,19 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == True }}"
+    that: "{{ netapp_e_firmware.changed == True }}"
     msg: "Failed to return changed."
 - name: Verify current firmware version
   assert:
     that: "{{ current_firmware['json'][0] == upgrades[1]['expected_firmware_version'] }}"
-    msg: "Unexpected firmware version."
+    msg: "Unexpected firmware version. {{ current_firmware['json'][0] }} != {{ upgrades[1]['expected_firmware_version'] }}"
 - name: Verify current nvsram version
   assert:
     that: "{{ current_nvsram['json'][0] == upgrades[1]['expected_nvsram_version'] }}"
-    msg: "Unexpected nvsram version."
-
-
+    msg: "Unexpected nvsram version. {{ current_nvsram['json'][0] }} != {{ upgrades[1]['expected_nvsram_version'] }}"
 
 - name: Perform firmware upgrade using the Web Services REST API (changed, firmware)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_proxy_ssid }}"
     api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_proxy_api_username }}"
@@ -202,7 +200,7 @@
     firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
     wait_for_completion: true
     ignore_health_check: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
 - name: Retrieve current firmware version
   uri:
     url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
@@ -219,7 +217,7 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == True }}"
+    that: "{{ netapp_e_firmware.changed == True }}"
     msg: "Failed to return changed."
 - name: Verify current firmware version
   assert:
@@ -231,7 +229,7 @@
     msg: "Failed to change the nvsram version."
 
 - name: Perform firmware upgrade using the Web Services REST API (checkmode-unchanged, firmware)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_proxy_ssid }}"
     api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_proxy_api_username }}"
@@ -242,7 +240,7 @@
     wait_for_completion: true
     ignore_health_check: true
   check_mode: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
 - name: Retrieve current firmware version
   uri:
     url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
@@ -259,7 +257,7 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == False }}"
+    that: "{{ netapp_e_firmware.changed == False }}"
     msg: "Failed to return unchanged."
 - name: Verify current firmware version
   assert:
@@ -271,7 +269,7 @@
     msg: "Failed to change the nvsram version."
 
 - name: Perform firmware upgrade using the Web Services REST API (checkmode-change, firmware and nvsram)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_proxy_ssid }}"
     api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_proxy_api_username }}"
@@ -282,7 +280,7 @@
     wait_for_completion: true
     ignore_health_check: true
   check_mode: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
 - name: Retrieve current firmware version
   uri:
     url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
@@ -299,7 +297,7 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == True }}"
+    that: "{{ netapp_e_firmware.changed == True }}"
     msg: "Failed to return changed."
 - name: Verify current firmware version
   assert:
@@ -310,9 +308,8 @@
     that: "{{ current_nvsram['json'][0] == upgrades[0]['expected_nvsram_version'] }}"
     msg: "Failed to change the nvsram version."
 
-
 - name: Perform firmware upgrade using the Web Services REST API (changed, firmware and nvsram)
-  na_santricity_firmware:
+  netapp_e_firmware:
     ssid: "{{ netapp_e_proxy_ssid }}"
     api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_proxy_api_username }}"
@@ -322,7 +319,7 @@
     firmware: "{{ path }}{{ upgrades[2]['firmware'] }}"
     wait_for_completion: true
     ignore_health_check: true
-  register: na_santricity_firmware
+  register: netapp_e_firmware
 - name: Retrieve current firmware version
   uri:
     url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
@@ -339,7 +336,7 @@
   register: current_nvsram
 - name: Verify change status
   assert:
-    that: "{{ na_santricity_firmware.changed == True }}"
+    that: "{{ netapp_e_firmware.changed == True }}"
     msg: "Failed to return changed."
 - name: Verify current firmware version
   assert:
