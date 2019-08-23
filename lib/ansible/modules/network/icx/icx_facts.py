@@ -22,7 +22,8 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 notes:
-  - Tested against ICX 10.1
+  - Tested against ICX 10.1.
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   gather_subset:
     description:
