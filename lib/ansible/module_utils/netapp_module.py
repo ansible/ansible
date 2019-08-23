@@ -30,6 +30,7 @@
 
 import ansible.module_utils.netapp as netapp_utils
 
+
 def cmp(a, b):
     """
     Python 3 does not have a cmp function, this will do the cmp.
@@ -185,7 +186,8 @@ class NetAppModule(object):
 
     @staticmethod
     def compare_lists(current, desired, get_list_diff):
-        ''' compares two lists and return a list of elements that are either the desired elements or elements that are modified from the current state depending on the get_list_diff flag
+        ''' compares two lists and return a list of elements that are either the desired elements or elements that are
+            modified from the current state depending on the get_list_diff flag
             :param: current: current item attribute in ONTAP
             :param: desired: attributes from playbook
             :param: get_list_diff: specifies whether to have a diff of desired list w.r.t current list for an attribute
