@@ -151,10 +151,18 @@ class NetAppONTAPCommand(object):
 
     def parse_xml_to_dict(self, xmldata):
         '''Parse raw XML from system-cli and create an Ansible parseable dictonary'''
+        xml_import_ok = True
+        xml_parse_ok = True
+
         try:
             import xml.parsers.expat
-            xml_str = xmldata.decode('utf-8').replace('\n', '---')
+        except ImportError:
+            self.result_dict['status'] = "XML parsing failed. Cannot import xml.parsers.expat!"
+            self.result_dict['stdout'] = str(xmldata)
+            xml_import_ok = False
 
+        if xml_import_ok:
+            xml_str = xmldata.decode('utf-8').replace('\n', '---')
             xml_parser = xml.parsers.expat.ParserCreate()
             xml_parser.StartElementHandler = self._start_element
             xml_parser.CharacterDataHandler = self._char_data
@@ -162,6 +170,12 @@ class NetAppONTAPCommand(object):
 
             try:
                 xml_parser.Parse(xml_str)
+            except xml.parsers.expat.ExpatError as errcode:
+                self.result_dict['status'] = "XML parsing failed: " + str(errcode)
+                self.result_dict['stdout'] = str(xmldata)
+                xml_parse_ok = False
+
+            if xml_parse_ok:
                 self.result_dict['status'] = self.result_dict['xml_dict']['results']['attrs']['status']
                 stdout_string = self._format_escaped_data(self.result_dict['xml_dict']['cli-output']['data'])
                 self.result_dict['stdout'] = stdout_string
@@ -171,12 +185,6 @@ class NetAppONTAPCommand(object):
                         self.result_dict['stdout_lines'].append(stripped_line)
                 self.result_dict['xml_dict']['cli-output']['data'] = stdout_string
                 self.result_dict['result_value'] = int(str(self.result_dict['xml_dict']['cli-result-value']['data']).replace("'", ""))
-
-            except xml.parsers.expat.ExpatError as errcode:
-                self.result_dict['status'] = "XML parser: " + str(errcode)
-
-        except ImportError:
-            self.result_dict['stdout'] = "XML parsing failed. Cannot import xml.parsers.expat!"
 
         return self.result_dict
 
