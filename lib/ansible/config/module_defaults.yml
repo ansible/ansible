@@ -664,6 +664,8 @@ groupings:
   - os
   os_coe_cluster_template:
   - os
+  os_flavor_facts:
+  - os
   os_flavor_info:
   - os
   os_floating_ip:
@@ -671,6 +673,8 @@ groupings:
   os_group:
   - os
   os_image:
+  - os
+  os_image_facts:
   - os
   os_image_info:
   - os
@@ -683,6 +687,8 @@ groupings:
   os_keypair:
   - os
   os_keystone_domain:
+  - os
+  os_keystone_domain_facts:
   - os
   os_keystone_domain_info:
   - os
@@ -700,6 +706,8 @@ groupings:
   - os
   os_network:
   - os
+  os_networks_facts:
+  - os
   os_networks_info:
   - os
   os_nova_flavor:
@@ -712,11 +720,15 @@ groupings:
   - os
   os_port:
   - os
+  os_port_facts:
+  - os
   os_port_info:
   - os
   os_project:
   - os
   os_project_access:
+  - os
+  os_project_facts:
   - os
   os_project_info:
   - os
@@ -734,6 +746,8 @@ groupings:
   - os
   os_server_action:
   - os
+  os_server_facts:
+  - os
   os_server_info:
   - os
   os_server_group:
@@ -746,9 +760,13 @@ groupings:
   - os
   os_subnet:
   - os
+  os_subnets_facts:
+  - os
   os_subnets_info:
   - os
   os_user:
+  - os
+  os_user_facts:
   - os
   os_user_info:
   - os
