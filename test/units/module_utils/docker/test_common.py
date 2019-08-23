@@ -11,7 +11,7 @@ from ansible.module_utils import basic
 
 from ansible.module_utils.docker.common import (
     Store,
-    InitializationError,
+    StoreError,
     DockerFileStore,
     AnsibleDockerClient,
     compare_dict_allow_more_present,
@@ -565,7 +565,7 @@ def test_docker_credential_helpers(config):
         store = client.get_credential_store_instance(EXAMPLE_REGISTRY, os.path.join(test_data_dir, config))
 
         assert type(store) == Store
-    except InitializationError as e:
+    except StoreError as e:
         pytest.skip("Credential helper not available.")
 
 
