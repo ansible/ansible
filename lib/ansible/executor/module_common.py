@@ -932,8 +932,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     # Create the module zip data
                     zipoutput = BytesIO()
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
-                    # Note: If we need to import from release.py first,
-                    # remember to catch all exceptions: https://github.com/ansible/ansible/issues/16523
                     zf.writestr('ansible/__init__.py',
                                 b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n__version__="' +
                                 to_bytes(__version__) + b'"\n__author__="' +
