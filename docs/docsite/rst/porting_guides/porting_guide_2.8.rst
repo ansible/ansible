@@ -71,9 +71,7 @@ Command line facts
 Bare variables in conditionals
 ------------------------------
 
-In Ansible 2.7 and earlier, top-level variables sometimes treated boolean strings as if they were boolean values. This led to inconsistent behavior in conditional tests built on top-level variables defined as strings. Ansible 2.8 began changing this behavior. Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that work around or depend on the old behavior, we added a config setting that preserves it. By default, Ansible 2.8 preserves the old behavior but warns you if you pass a non-boolean to a conditional statement.
-
-For example, if you set two conditions like this::
+In Ansible 2.7 and earlier, top-level variables sometimes treated boolean strings as if they were boolean values. This led to inconsistent behavior in conditional tests built on top-level variables defined as strings. Ansible 2.8 began changing this behavior. For example, if you set two conditions like this::
 
    tasks:
      - include_tasks: teardown.yml
@@ -88,12 +86,12 @@ based on a variable you define **as a string** (with quotation marks around it):
 * In Ansible 2.7 and earlier, both conditions evaluated as ``False`` if ``teardown: 'false'``
 * In Ansible 2.8 and later, you have the option of disabling conditional bare variables, so ``when: teardown`` always evaluates as ``True`` and ``when: not teardown`` always evaluates as ``False`` when ``teardown`` is a non-empty string (including ``'true'`` or ``'false'``)
 
-You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option. In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
+Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option. In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
 
 Bare variables: updating your playbooks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only true boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``::
+To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``::
 
     vars:
       teardown: 'false'
@@ -105,7 +103,7 @@ To prepare your playbooks for the new behavior, you must update your conditional
       - include_tasks: provision.yml
         when: not teardown | bool
 
-Alternatively, you can re-define variables as boolean values (without quotation marks) instead of strings::
+Alternatively, you can re-define your variables as boolean values (without quotation marks) instead of strings::
 
             vars:
               teardown: false
