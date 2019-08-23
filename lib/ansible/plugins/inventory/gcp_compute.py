@@ -411,7 +411,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             )
             self._populate_host(host)
 
-            hostname = self.hostname(host)
+            hostname = host.hostname()
             self._set_composite_vars(
                 self.get_option("compose"), host.to_json(), hostname
             )
