@@ -875,8 +875,6 @@ class Certificate(crypto_utils.OpenSSLObject):
             module.check_mode
         )
 
-        self.create_subject_key_identifier = 'never_create'
-        self.create_authority_key_identifier = False
         self.provider = module.params['provider']
         self.privatekey_path = module.params['privatekey_path']
         self.privatekey_passphrase = module.params['privatekey_passphrase']
@@ -886,6 +884,11 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.csr = None
         self.backend = backend
         self.module = module
+
+        # The following are default values which make sure check() works as
+        # before if providers do not explicitly change these properties.
+        self.create_subject_key_identifier = 'never_create'
+        self.create_authority_key_identifier = False
 
         self.backup = module.params['backup']
         self.backup_file = None
