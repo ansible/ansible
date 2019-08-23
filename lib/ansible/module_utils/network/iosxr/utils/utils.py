@@ -105,6 +105,27 @@ def pad_commands(commands, interface):
     commands.insert(0, 'interface {0}'.format(interface))
 
 
+def diff_list_of_dicts(w, h):
+    """
+    Returns a list containing diff between
+    two list of dictionaries
+    """
+    if not w:
+        w = []
+    if not h:
+        h = []
+
+    diff = []
+    set_w = set(tuple(d.items()) for d in w)
+    set_h = set(tuple(d.items()) for d in h)
+    difference = set_w.difference(set_h)
+
+    for element in difference:
+        diff.append(dict((x, y) for x, y in element))
+
+    return diff
+
+
 def normalize_interface(name):
     """Return the normalized interface name
     """
@@ -124,20 +145,22 @@ def normalize_interface(name):
         if_type = 'FastEthernet'
     elif name.lower().startswith('fo'):
         if_type = 'FortyGigE'
-    elif name.lower().startswith('et'):
-        if_type = 'Ethernet'
-    elif name.lower().startswith('vl'):
-        if_type = 'Vlan'
-    elif name.lower().startswith('lo'):
-        if_type = 'loopback'
-    elif name.lower().startswith('po'):
-        if_type = 'port-channel'
-    elif name.lower().startswith('nv'):
-        if_type = 'nve'
+    elif name.lower().startswith('te'):
+        if_type = 'TenGigE'
     elif name.lower().startswith('twe'):
         if_type = 'TwentyFiveGigE'
     elif name.lower().startswith('hu'):
         if_type = 'HundredGigE'
+    elif name.lower().startswith('vl'):
+        if_type = 'Vlan'
+    elif name.lower().startswith('lo'):
+        if_type = 'Loopback'
+    elif name.lower().startswith('be'):
+        if_type = 'Bundle-Ether'
+    elif name.lower().startswith('bp'):
+        if_type = 'Bundle-POS'
+    elif name.lower().startswith('mg'):
+        if_type = 'MgmtEth'
     else:
         if_type = None
 

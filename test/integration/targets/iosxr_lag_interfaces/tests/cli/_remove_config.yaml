@@ -1,0 +1,34 @@
+---
+- name: Remove Bundles
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      no interface Bundle-Ether10
+      no interface Bundle-Ether11
+      no interface Bundle-Ether12
+  ignore_errors: yes
+
+- name: Remove LAG interface config
+  iosxr_config:
+    lines: 
+      - no bundle id
+      - shutdown
+    parents: "interface GigabitEthernet{{ item }}"
+  loop:
+    - 0/0/0/0
+    - 0/0/0/1
+    - 0/0/0/2
+    - 0/0/0/8
+    - 0/0/0/9
+  ignore_errors: yes
+
+- name: Remove unwanted interfaces from config
+  iosxr_config:
+    lines:
+      - "no interface GigabitEthernet{{ item }}"
+  loop:
+    - 0/0/0/2
+    - 0/0/0/8
+    - 0/0/0/9
+  ignore_errors: yes
