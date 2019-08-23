@@ -105,13 +105,25 @@ def get_ps_argument_spec(filename):
 
 
 def get_py_argument_spec(filename):
-    with setup_env(filename) as fake:
+    # Calculate the module's name so that relative imports work correctly
+    name = None
+    try:
+        idx = filename.index('ansible/modules')
+    except ValueError:
         try:
-            # We use ``module`` here instead of ``__main__``
+            idx = filename.index('ansible_collections/')
+        except ValueError:
+            # We default to ``module`` here instead of ``__main__``
             # which helps with some import issues in this tool
             # where modules may import things that conflict
+            name = 'module'
+    if name is None:
+        name = filename[idx:-len('.py')].replace('/', '.')
+
+    with setup_env(filename) as fake:
+        try:
             with CaptureStd():
-                mod = imp.load_source('module', filename)
+                mod = imp.load_source(name, filename)
                 if not fake.called:
                     mod.main()
         except AnsibleModuleCallError:
