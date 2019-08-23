@@ -158,12 +158,12 @@ class GcpInstance(object):
         self.hostname_ordering = hostname_ordering
         self.project_disks = project_disks
         self.json = json
-        convert_inventory()
+        self.convert()
 
-    def json():
+    def to_json(self):
         return self.json
 
-    def convert():
+    def convert(self):
         if 'zone' in self.json:
             self.json['zone_selflink'] = self.json['zone']
             self.json['zone'] = self.json['zone'].split('/')[-1]
@@ -181,7 +181,7 @@ class GcpInstance(object):
         if 'metadata' in self.json:
             # If no metadata, 'items' will be blank.
             # We want the metadata hash overriden anyways for consistency.
-            self.json['metadata'] = self._format_metadata(host['metadata'].get('items', {}))
+            self.json['metadata'] = self._format_metadata(self.json['metadata'].get('items', {}))
 
         self.json['project'] = self.json['selfLink'].split('/')[6]
         self.json['image'] = self._get_image()
@@ -220,11 +220,11 @@ class GcpInstance(object):
         for order in self.hostname_ordering:
             name = None
             if order == 'public_ip':
-                name = self._get_publicip(item)
+                name = self._get_publicip()
             elif order == 'private_ip':
-                name = self._get_privateip(item)
+                name = self._get_privateip()
             elif order == 'name':
-                name = item[u'name']
+                name = self.json[u'name']
             else:
                 raise AnsibleParserError("%s is not a valid hostname precedent" % order)
 
@@ -283,11 +283,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
             :param item: A GCP instance
         '''
-        hostname = self.hostname(item)
+        hostname = item.hostname()
         self.inventory.add_host(hostname)
-        for key in item.json():
+        for key in item.to_json():
             try:
-                self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item[key])
+                self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item.to_json()[key])
             except (ValueError, TypeError) as e:
                 self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_text(e)))
         self.inventory.add_child('all', hostname)
@@ -380,9 +380,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate_host(host)
 
             hostname = self.hostname(host)
-            self._set_composite_vars(self.get_option('compose'), host.json(), hostname)
-            self._add_host_to_composed_groups(self.get_option('groups'), host.json(), hostname)
-            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host.json(), hostname)
+            self._set_composite_vars(self.get_option('compose'), host.to_json(), hostname)
+            self._add_host_to_composed_groups(self.get_option('groups'), host.to_json(), hostname)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host.to_json(), hostname)
 
     def _get_project_disks(self, config_data, query):
         '''
