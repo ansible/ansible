@@ -169,7 +169,8 @@ class NetAppOntapLDAPClient(object):
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True
+            supports_check_mode=True,
+            required_if=[('state', 'present', ['ldap_servers', 'schema'])],
         )
         self.na_helper = NetAppModule()
         self.parameters = self.na_helper.set_parameters(self.module.params)
