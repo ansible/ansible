@@ -29,8 +29,8 @@ options:
 
   state:
     description:
-    - Whether the Kerberos realm is present (create or modify) or absent (deleted).
-    choices: ['present', 'absent', 'modify']
+    - Whether the Kerberos realm is present or absent.
+    choices: ['present', 'absent']
     default: 'present'
     type: str
 
@@ -115,17 +115,6 @@ EXAMPLES = '''
         username:      "{{ netapp_username }}"
         password:      "{{ netapp_password }}"
 
-    - name: Modify kerberos realm
-      na_ontap_kerberos_realm:
-        state:         modify
-        realm:         'EXAMPLE.COM'
-        vserver:       'vserver1'
-        # IP has changed ^
-        kdc_ip:        '4.3.2.1'
-        hostname:      "{{ netapp_hostname }}"
-        username:      "{{ netapp_username }}"
-        password:      "{{ netapp_password }}"
-
 '''
 
 RETURN = '''
@@ -158,7 +147,7 @@ class NetAppOntapKerberosRealm(object):
             pw_server_ip=dict(required=False, default=None, type='str'),
             pw_server_port=dict(required=False, default=None, type='str'),
             realm=dict(required=True, type='str'),
-            state=dict(required=False, choices=['present', 'absent', 'modify'], default='present'),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str')
         ))
 
