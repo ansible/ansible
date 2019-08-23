@@ -108,6 +108,7 @@
                 "kms:GenerateRandom",
                 "kms:Get*",
                 "kms:List*",
+                "kms:PutKeyPolicy",
                 "kms:RetireGrant",
                 "kms:ScheduleKeyDeletion",
                 "kms:TagResource",
