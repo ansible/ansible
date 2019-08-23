@@ -39,6 +39,7 @@ description:
       You must now use the C(register) option to use the facts in other tasks.
 options:
     search_terms:
+        type: list
         description:
             - A list of one or more search terms.
             - Each search term can either be a simple string or it can be a dictionary for more control.
@@ -46,19 +47,24 @@ options:
             - When passing a dictionary, the following fields are available.
         suboptions:
             name:
+                type: str
                 description:
                     - The name of the 1Password item to search for (required).
             field:
+                type: str
                 description:
                     - The name of the field to search for within this item (optional, defaults to "password" (or "document" if the item has an attachment).
             section:
+                type: str
                 description:
                     - The name of a section within this item containing the specified field (optional, will search all sections if not specified).
             vault:
+                type: str
                 description:
                     - The name of the particular 1Password vault to search, useful if your 1Password user has access to multiple vaults (optional).
         required: True
     auto_login:
+        type: dict
         description:
             - A dictionary containing authentication details. If this is set, M(onepassword_info) will attempt to sign in to 1Password automatically.
             - Without this option, you must have already logged in via the 1Password CLI before running Ansible.
@@ -66,25 +72,30 @@ options:
               the Ansible Vault is equal to or greater in strength than the 1Password master password.
         suboptions:
             subdomain:
+                type: str
                 description:
                     - 1Password subdomain name (<subdomain>.1password.com).
                     - If this is not specified, the most recent subdomain will be used.
             username:
+                type: str
                 description:
                     - 1Password username.
                     - Only required for initial sign in.
             master_password:
+                type: str
                 description:
                     - The master password for your subdomain.
                     - This is always required when specifying C(auto_login).
                 required: True
             secret_key:
+                type: str
                 description:
                     - The secret key for your subdomain.
                     - Only required for initial sign in.
         default: {}
         required: False
     cli_path:
+        type: path
         description: Used to specify the exact path to the C(op) command line interface
         required: False
         default: 'op'
