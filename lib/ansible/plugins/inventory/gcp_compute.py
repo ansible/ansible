@@ -154,11 +154,12 @@ class GcpMockModule(object):
 
 
 class GcpInstance(object):
-    def __init__(self, json, hostname_ordering, project_disks):
+    def __init__(self, json, hostname_ordering, project_disks, should_format=True):
         self.hostname_ordering = hostname_ordering
         self.project_disks = project_disks
         self.json = json
-        self.convert()
+        if should_format:
+            self.convert()
 
     def to_json(self):
         return self.json
@@ -268,6 +269,7 @@ class GcpInstance(object):
                 return interface[u'networkIP']
 
 
+
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'gcp_compute'
@@ -362,6 +364,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return result
 
+
     def _add_hosts(self, items, config_data, format_items=True, project_disks=None):
         '''
             :param items: A list of hosts
@@ -376,7 +379,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             hostname_ordering = self.get_option('hostnames')
 
         for host_json in items:
-            host = GcpInstance(host_json, hostname_ordering, project_disks) 
+            host = GcpInstance(host_json, hostname_ordering, project_disks, format_items)
             self._populate_host(host)
 
             hostname = self.hostname(host)
