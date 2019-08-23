@@ -35,9 +35,8 @@ description:
     in the device configuration.
 extends_documentation_fragment: vyos
 notes:
-  - Tested against VYOS 1.1.7
-  - Abbreviated commands are NOT idempotent, see
-    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   lines:
     description:
