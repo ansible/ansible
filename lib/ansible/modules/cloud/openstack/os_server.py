@@ -448,7 +448,10 @@ def _network_args(module, cloud):
                 module.fail_json(
                     msg='Could not find network by net-name: %s' %
                     net['net-name'])
-            args.append({'net-id': by_name['id']})
+            resolved_net = net.copy()
+            del resolved_net['net-name']
+            resolved_net['net-id'] = by_name['id']
+            args.append(resolved_net)
         elif net.get('port-id'):
             args.append(net)
         elif net.get('port-name'):
@@ -457,7 +460,10 @@ def _network_args(module, cloud):
                 module.fail_json(
                     msg='Could not find port by port-name: %s' %
                     net['port-name'])
-            args.append({'port-id': by_name['id']})
+            resolved_net = net.copy()
+            del resolved_net['port-name']
+            resolved_net['port-id'] = by_name['id']
+            args.append(resolved_net)
     return args
 
 
