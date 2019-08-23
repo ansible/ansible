@@ -316,7 +316,9 @@ cert_days:
   returned: success
   type: int
 challenge_data:
-  description: Per identifier / challenge type challenge data.
+  description:
+    - Per identifier / challenge type challenge data.
+    - Since Ansible 2.8.5, only challenges which are not yet valid are returned.
   returned: changed
   type: complex
   contains:
@@ -353,7 +355,9 @@ challenge_data:
       sample: _acme-challenge.example.com
       version_added: "2.5"
 challenge_data_dns:
-  description: List of TXT values per DNS record, in case challenge is C(dns-01).
+  description:
+    - List of TXT values per DNS record, in case challenge is C(dns-01).
+    - Since Ansible 2.8.5, only challenges which are not yet valid are returned.
   returned: changed
   type: dict
   version_added: "2.5"
@@ -839,8 +843,13 @@ class ACMEClient(object):
         data = {}
         for type_identifier, auth in self.authorizations.items():
             identifier_type, identifier = type_identifier.split(':', 1)
+            auth = self.authorizations[type_identifier]
+            # Skip valid authentications: their challenges are already valid
+            # and do not need to be returned
+            if auth['status'] == 'valid':
+                continue
             # We drop the type from the key to preserve backwards compatibility
-            data[identifier] = self._get_challenge_data(self.authorizations[type_identifier], identifier_type, identifier)
+            data[identifier] = self._get_challenge_data(auth, identifier_type, identifier)
         # Get DNS challenge data
         data_dns = {}
         if self.challenge == 'dns-01':
