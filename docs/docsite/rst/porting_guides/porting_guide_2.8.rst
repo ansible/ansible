@@ -12,7 +12,8 @@ We suggest you read this page along with `Ansible Changelog for 2.8 <https://git
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Playbook
 ========
@@ -67,24 +68,32 @@ Command line facts
 
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
 
-Conditionals
-------------
+Bare variables in conditionals
+------------------------------
 
-Starting in version 2.8, Ansible will warn if a non-boolean is provided for when statements since they may change in behavior. Some contrasting behavior is outlined below. The ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` can be set to false to start using the new behavior. In 2.10 the default for the setting will be changed from true to false but users will continue to be able to opt out of the behavior until 2.12, at which point it will be deprecated.
+In Ansible 2.7 and earlier, top-level variables sometimes treated boolean strings as if they were boolean values. This led to inconsistent behavior in conditional tests built on top-level variables defined as strings. Ansible 2.8 began changing this behavior. Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that work around or depend on the old behavior, we added a config setting that preserves it. By default, Ansible 2.8 preserves the old behavior but warns you if you pass a non-boolean to a conditional statement.
 
-Consider::
+For example, if you set two conditions like this::
 
-    vars:
-      teardown: 'false'
+   tasks:
+     - include_tasks: teardown.yml
+       when: teardown
 
-    tasks:
-      - include_tasks: teardown.yml
-        when: teardown
+     - include_tasks: provision.yml
+       when: not teardown
 
-      - include_tasks: provision.yml
-        when: not teardown
+based on a variable you define **as a string** (with quotation marks around it):
 
-While the toggle is set to true ``when: teardown`` and ``when: not teardown`` are both evaluated as false. When the toggle is set to false ``when: teardown`` is evaluated as true and ``when: not teardown`` is evaluated as false because ``teardown`` is a (truthy) string, not a boolean. Use the ``bool`` filter to evaluate the string 'false' as false::
+* In Ansible 2.7 and earlier, the two conditions above evaluated as ``True`` and ``False`` respectively if ``teardown: 'true'``
+* In Ansible 2.7 and earlier, both conditions evaluated as ``False`` if ``teardown: 'false'``
+* In Ansible 2.8 and later, you have the option of disabling conditional bare variables, so ``when: teardown`` always evaluates as ``True`` and ``when: not teardown`` always evaluates as ``False`` when ``teardown`` is a non-empty string (including ``'true'`` or ``'false'``)
+
+You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option. In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
+
+Bare variables: updating your playbooks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only true boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``::
 
     vars:
       teardown: 'false'
@@ -96,20 +105,32 @@ While the toggle is set to true ``when: teardown`` and ``when: not teardown`` ar
       - include_tasks: provision.yml
         when: not teardown | bool
 
-If you are using subkeys, strings are already respected and not treated as booleans. If you want a subkey that's a string to be evaluated as a boolean you need to use the ``bool`` filter. Consider this case where ``when: complex_variable['subkey']`` and ``when: not complex_variable['subkey']`` are evaluated as true and false respectively, both with and without use of the toggle::
+Alternatively, you can re-define variables as boolean values (without quotation marks) instead of strings::
 
-    vars:
-      complex_variable:
-        subkey: 'false'
+            vars:
+              teardown: false
 
-    tasks:
+            tasks:
+              - include_tasks: teardown.yml
+                when: teardown
+
+              - include_tasks: provision.yml
+                when: not teardown
+
+For dictionaries and lists, use the ``length`` filter to evaluate the presence of a dictionary or list as ``True``::
+
       - debug:
-        when: complex_variable['subkey']
+        when: my_list | length > 0
 
       - debug:
-        when: not complex_variable['subkey']
+        when: my_dictionary | length > 0
 
-While this setting is true, variables are also double-interpolated unexpectedly::
+Do not use the ``bool`` filter with lists or dictionaries. If you use ``bool`` with a list or dict, Ansible will always evaluate it as ``False``.
+
+Bare variables and double-interpolation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The bare variables setting also affects variables set based on other variables. The old behavior unexpectedly double-interpolated those variables. For example::
 
     vars:
       double_interpolated: 'bare_variable'
@@ -119,25 +140,19 @@ While this setting is true, variables are also double-interpolated unexpectedly:
       - debug:
         when: double_interpolated
 
-When bare variables are enabled, ``when: double_interpolated`` evaluates to the variable ``bare_variable`` which is false. If the variable ``bare_variable`` is undefined, the conditional fails. When the toggle is set to false it is evaluated as the string 'bare_variable', which is true. Use curly braces for double interpolation instead of bare variables::
+* In Ansible 2.7 and earlier, ``when: double_interpolated`` evaluated to the value of ``bare_variable``, in this case, ``False``. If the variable ``bare_variable`` is undefined, the conditional fails.
+* In Ansible 2.8 and later, with bare variables disabled, Ansible evaluates ``double_interpolated`` as the string ``'bare_variable'``, which is ``True``.
 
-    vars:
-      double_interpolated: "{{ other_variable }}"
-      other_variable: false
+To double-interpolate variable values, use curly braces::
 
-You can still use lists and dictionaries as conditionals based on the truthiness of whether or not they are empty::
+          vars:
+            double_interpolated: "{{ other_variable }}"
+            other_variable: false
 
-    vars:
-      my_dictionary: {'key': 'value'}
-      my_list: ['item']
+Bare variables and nested variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Both ``when: my_dictionary`` and ``when: my_list`` will continue to be true regardless of the toggle. If they are empty data structures they will continue to be evaluated as false. Note that using the ``bool`` filter with a populated or empty list or dictionary will result in false. Instead, you may want to use the ``length`` filter if you cannot opt into the new behavior or silence the warning::
-
-    tasks:
-      - debug:
-        when: my_list | length > 0
-      - debug:
-        when: my_dictionary | length > 0
+The bare variables setting does not affect nested variables. Subkey strings are already respected and not treated as booleans: ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey to be evaluated as a boolean you must use the ``bool`` filter.
 
 Python Interpreter Discovery
 ============================
