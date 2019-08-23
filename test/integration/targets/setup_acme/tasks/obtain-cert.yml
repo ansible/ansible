@@ -134,6 +134,6 @@
   when: "challenge_data is changed and challenge == 'tls-alpn-01'"
 - name: ({{ certgen_title }}) Get root certificate
   get_url:
-    url: "http://{{ acme_host }}:5000/root-certificate-for-ca"
+    url: "http://{{ acme_host }}:5000/root-certificate-for-ca/0"
     dest: "{{ output_dir }}/{{ certificate_name }}-root.pem"
 ###############################################################################################
