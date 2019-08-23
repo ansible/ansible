@@ -4,15 +4,14 @@ __metaclass__ = type
 import os
 import pytest
 
-from docker.credentials import Store
-from docker.credentials.errors import InitializationError
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 
-from units.compat.mock import patch
-from units.modules.utils import set_module_args
+from units.modules.utils import patch, set_module_args
 from ansible.module_utils import basic
 
 from ansible.module_utils.docker.common import (
+    Store,
+    InitializationError,
     DockerFileStore,
     AnsibleDockerClient,
     compare_dict_allow_more_present,

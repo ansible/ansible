@@ -62,11 +62,16 @@ except ImportError as exc:
     HAS_DOCKER_PY = False
 
 try:
-    from docker.credentials.errors import CredentialsNotFound
+    from docker.credentials.errors import InitializationError, CredentialsNotFound
     from docker.credentials import Store
 except ImportError:
-    from dockerpycreds.errors import CredentialsNotFound
+    from dockerpycreds.errors import StoreError, CredentialsNotFound
     from dockerpycreds.store import Store
+
+    # This isn't used in earlier versions of the Store API,
+    # but we need it for more modern tests.
+    class InitializationError(StoreError):
+        pass
 
 
 
