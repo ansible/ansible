@@ -439,8 +439,11 @@ else:
     # ANSIBALLZ_TEMPLATE stripped of comments for smaller over the wire size
     ACTIVE_ANSIBALLZ_TEMPLATE = _strip_comments(ANSIBALLZ_TEMPLATE)
 
-
-CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>modules/.*)\.py$' % os.path.dirname(os.path.dirname(__file__)))
+# dirname(dirname(dirname(site-packages/ansible/executor/module_common.py) == site-packages
+# Do this instead of getting site-packages from distutils.sysconfig so we work when we
+# haven't been installed
+site_packages = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.py$' % site_packages)
 COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.py$')
 
 
@@ -637,7 +640,7 @@ class ModuleInfo:
 def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
-    the module its module_utils files needs.
+    the module and its module_utils files needs.
     """
     # Parse the module and find the imports of ansible.module_utils
     try:
@@ -663,13 +666,13 @@ def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
         module_info = None
 
         if py_module_name[0] == 'six':
-            # Special case the python six library because it messes up the
+            # Special case the python six library because it messes with the
             # import process in an incompatible way
             module_info = ModuleInfo('six', module_utils_paths)
             py_module_name = ('six',)
             idx = 0
         elif py_module_name[0] == '_six':
-            # Special case the python six library because it messes up the
+            # Special case the python six library because it messes with the
             # import process in an incompatible way
             module_info = ModuleInfo('_six', [os.path.join(p, 'six') for p in module_utils_paths])
             py_module_name = ('six', '_six')
@@ -835,6 +838,64 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
+def _get_module_fqn(module_path):
+    """
+    Get the fully qualified name for a module based on its pathname
+
+    remote_module_fqn is the fully qualified name.  Like ansible.modules.system.ping
+    Or ansible_collections.Namespace.Collection_name.plugins.modules.ping
+    """
+    remote_module_fqn = None
+
+    # Is this a core module?
+    match = CORE_LIBRARY_PATH_RE.search(module_path)
+    if not match:
+        # Is this a module in a collection?
+        match = COLLECTION_PATH_RE.search(module_path)
+
+    # We can tell the FQN for core modules and collection modules
+    if match:
+        path = match.group('path')
+        if '.' in path:
+            # FQNs must be valid as python identifiers.  This sanity check has failed.
+            # we could check other things as well
+            raise ValueError('Module name (or path) was not a valid python identifier')
+
+        remote_module_fqn = '.'.join(path.split('/'))
+    else:
+        # Currently we do not handle modules in roles so we can end up here for that reason
+        raise ValueError("Unable to determine module's fully qualified name")
+
+    return remote_module_fqn
+
+
+def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
+    """Add a module from ansible or from an ansible collection into the module zip"""
+    module_path_parts = remote_module_fqn.split('.')
+
+    # Write the module
+    module_path = '/'.join(module_path_parts) + '.py'
+    zf.writestr(module_path, b_module_data)
+
+    # Write the __init__.py's necessary to get there
+    if module_path_parts[0] == 'ansible':
+        # The ansible namespace is setup as part of the module_utils setup...
+        start = 2
+    else:
+        # ... but ansible_collections and other toplevels are not
+        start = 1
+
+    for idx in range(start, len(module_path_parts)):
+        package_path = '/'.join(module_path_parts[:idx]) + '/__init__.py'
+        # Note: We don't want to include more than one ansible module in a payload at this time
+        # so no need to fill the __init__.py with namespace code
+        zf.writestr(package_path, b'')
+
+    # Write a wrapper to invoke the module as __main__
+    wrapper = 'from %s import main; main()' % remote_module_fqn
+    zf.writestr('__main__.py', to_bytes(wrapper))
+
+
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
                        become_method, become_user, become_password, become_flags, environment):
     """
@@ -938,31 +999,29 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                 to_bytes(__author__) + b'"\n')
                     zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
-                    remote_module_fqn = None
-                    match = CORE_LIBRARY_PATH_RE.search(module_path)
-
-                    if match:
-                        # relative imports supported within core
-                        remote_module_fqn = tuple(['ansible'] + match.group('path').split('/'))
-
-                    if not remote_module_fqn:
-                        match = COLLECTION_PATH_RE.search(module_path)
-
-                        if match:
-                            # relative imports supported within collection
-                            remote_module_fqn = tuple(match.group('path').split('/'))
+                    try:
+                        remote_module_fqn = _get_module_fqn(module_path)
+                    except ValueError:
+                        remote_module_fqn = None
 
                     if remote_module_fqn:
-                        entry_path = '/'.join(remote_module_fqn) + '.py'
-                        zf.writestr(entry_path, b_module_data)
-                        remote_module_import = b'.'.join(part.encode('utf-8') for part in remote_module_fqn)
-                        b_wrapper = b'from %s import main; main()' % remote_module_import
-                        remote_module_package_path = '/'.join(tuple(remote_module_fqn[:-1]) + tuple(['__init__.py']))
-                        zf.writestr(remote_module_package_path, b'')
-                        zf.writestr('__main__.py', b_wrapper)
+                        display.debug('ANSIBALLZ: Writing module into payload')
+                        _add_module_to_zip(zf, remote_module_fqn, b_module_data)
                     else:
+                        display.debug('ANSIBALLZ: Could not determing module FQN')
+                        # Modules in roles currently are not found by the fqn heuristic so we
+                        # need to fallback to this.  This means that relative imports inside
+                        # a module from a role will fail.  Absolute imports must be used.
+                        # People should start writing collections instead of modules in roles so we
+                        # may never fix this
                         zf.writestr('__main__.py', b_module_data)
 
+                    ### FIXME: py_module_cache currently only deals with module_utils so the paths
+                    # in the keys are offsets into ansible.module_utils.  with the advent of
+                    # collections and relative imports in modules, we are now rooted in the toplevel
+                    # (ie: import [*] instead of import ansible.module_utils.[*]).  We should adjust
+                    # py_module_cache to use toplevel names now and then adjust the rest of the code
+                    # to understand that
                     py_module_cache = {('__init__',): (b'', '[builtin]')}
                     recursive_finder(module_name, module_path, b_module_data, py_module_names, py_module_cache, zf)
                     zf.close()
