@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from units.compat import unittest
-from ansible.modules.remote_management.oneview.oneview_logical_interconnect_group_facts import LogicalInterconnectGroupFactsModule
+from ansible.modules.remote_management.oneview.oneview_logical_interconnect_group_info import LogicalInterconnectGroupInfoModule
 from hpe_test_utils import FactsParamsTestCase
 
 
@@ -24,9 +24,9 @@ PRESENT_LIGS = [{
 }]
 
 
-class LogicalInterconnectGroupFactsSpec(unittest.TestCase, FactsParamsTestCase):
+class LogicalInterconnectGroupInfoSpec(unittest.TestCase, FactsParamsTestCase):
     def setUp(self):
-        self.configure_mocks(self, LogicalInterconnectGroupFactsModule)
+        self.configure_mocks(self, LogicalInterconnectGroupInfoModule)
         self.logical_interconnect_groups = self.mock_ov_client.logical_interconnect_groups
         FactsParamsTestCase.configure_client_mock(self, self.logical_interconnect_groups)
 
@@ -34,22 +34,22 @@ class LogicalInterconnectGroupFactsSpec(unittest.TestCase, FactsParamsTestCase):
         self.logical_interconnect_groups.get_all.return_value = PRESENT_LIGS
         self.mock_ansible_module.params = PARAMS_GET_ALL
 
-        LogicalInterconnectGroupFactsModule().run()
+        LogicalInterconnectGroupInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(logical_interconnect_groups=(PRESENT_LIGS))
+            logical_interconnect_groups=(PRESENT_LIGS)
         )
 
     def test_should_get_lig_by_name(self):
         self.logical_interconnect_groups.get_by.return_value = PRESENT_LIGS
         self.mock_ansible_module.params = PARAMS_GET_BY_NAME
 
-        LogicalInterconnectGroupFactsModule().run()
+        LogicalInterconnectGroupInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(logical_interconnect_groups=(PRESENT_LIGS))
+            logical_interconnect_groups=(PRESENT_LIGS)
         )
 
 

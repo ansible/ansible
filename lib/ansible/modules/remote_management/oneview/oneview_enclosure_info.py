@@ -12,10 +12,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: oneview_enclosure_facts
-short_description: Retrieve facts about one or more Enclosures
+module: oneview_enclosure_info
+short_description: Retrieve information about one or more Enclosures
 description:
-    - Retrieve facts about one or more of the Enclosures from OneView.
+    - Retrieve information about one or more of the Enclosures from OneView.
+    - This module was called C(oneview_enclosure_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(oneview_enclosure_info) module no longer returns C(ansible_facts)!
 version_added: "2.5"
 requirements:
     - hpOneView >= 2.0.1
@@ -29,7 +31,7 @@ options:
         - Enclosure name.
     options:
       description:
-        - "List with options to gather additional facts about an Enclosure and related resources.
+        - "List with options to gather additional information about an Enclosure and related resources.
           Options allowed: C(script), C(environmentalConfiguration), and C(utilization). For the option C(utilization),
           you can provide specific parameters."
 
@@ -39,7 +41,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Gather facts about all Enclosures
+- name: Gather information about all Enclosures
   oneview_enclosure_facts:
     hostname: 172.16.101.48
     username: administrator
@@ -47,10 +49,12 @@ EXAMPLES = '''
     api_version: 500
   no_log: true
   delegate_to: localhost
-- debug: var=enclosures
+  register: result
+- debug:
+    msg: "{{ result.enclosures }}"
 
-- name: Gather paginated, filtered and sorted facts about Enclosures
-  oneview_enclosure_facts:
+- name: Gather paginated, filtered and sorted information about Enclosures
+  oneview_enclosure_info:
     params:
       start: 0
       count: 3
@@ -62,10 +66,12 @@ EXAMPLES = '''
     api_version: 500
   no_log: true
   delegate_to: localhost
-- debug: var=enclosures
+  register: result
+- debug:
+    msg: "{{ enclosures }}"
 
-- name: Gather facts about an Enclosure by name
-  oneview_enclosure_facts:
+- name: Gather information about an Enclosure by name
+  oneview_enclosure_info:
     name: Enclosure-Name
     hostname: 172.16.101.48
     username: administrator
@@ -73,10 +79,12 @@ EXAMPLES = '''
     api_version: 500
   no_log: true
   delegate_to: localhost
-- debug: var=enclosures
+  register: result
+- debug:
+    msg: "{{ result.enclosures }}"
 
-- name: Gather facts about an Enclosure by name with options
-  oneview_enclosure_facts:
+- name: Gather information about an Enclosure by name with options
+  oneview_enclosure_info:
     name: Test-Enclosure
     options:
       - script                       # optional
@@ -88,10 +96,15 @@ EXAMPLES = '''
     api_version: 500
   no_log: true
   delegate_to: localhost
-- debug: var=enclosures
-- debug: var=enclosure_script
-- debug: var=enclosure_environmental_configuration
-- debug: var=enclosure_utilization
+  register: result
+- debug:
+    msg: "{{ result.enclosures }}"
+- debug:
+    msg: "{{ result.enclosure_script }}"
+- debug:
+    msg: "{{ result.enclosure_environmental_configuration }}"
+- debug:
+    msg: "{{ result.enclosure_utilization }}"
 
 - name: "Gather facts about an Enclosure with temperature data at a resolution of one sample per day, between two
          specified dates"
@@ -111,28 +124,31 @@ EXAMPLES = '''
     api_version: 500
   no_log: true
   delegate_to: localhost
-- debug: var=enclosures
-- debug: var=enclosure_utilization
+  register: result
+- debug:
+    msg: "{{ result.enclosures }}"
+- debug:
+    msg: "{{ result.enclosure_utilization }}"
 '''
 
 RETURN = '''
 enclosures:
-    description: Has all the OneView facts about the Enclosures.
+    description: Has all the OneView information about the Enclosures.
     returned: Always, but can be null.
     type: dict
 
 enclosure_script:
-    description: Has all the OneView facts about the script of an Enclosure.
+    description: Has all the OneView information about the script of an Enclosure.
     returned: When requested, but can be null.
     type: str
 
 enclosure_environmental_configuration:
-    description: Has all the OneView facts about the environmental configuration of an Enclosure.
+    description: Has all the OneView information about the environmental configuration of an Enclosure.
     returned: When requested, but can be null.
     type: dict
 
 enclosure_utilization:
-    description: Has all the OneView facts about the utilization of an Enclosure.
+    description: Has all the OneView information about the utilization of an Enclosure.
     returned: When requested, but can be null.
     type: dict
 '''
@@ -140,43 +156,50 @@ enclosure_utilization:
 from ansible.module_utils.oneview import OneViewModuleBase
 
 
-class EnclosureFactsModule(OneViewModuleBase):
+class EnclosureInfoModule(OneViewModuleBase):
     argument_spec = dict(name=dict(type='str'), options=dict(type='list'), params=dict(type='dict'))
 
     def __init__(self):
-        super(EnclosureFactsModule, self).__init__(additional_arg_spec=self.argument_spec)
+        super(EnclosureInfoModule, self).__init__(additional_arg_spec=self.argument_spec)
+        self.is_old_facts = self.module._name == 'oneview_enclosure_facts'
+        if self.is_old_facts:
+            self.module.deprecate("The 'oneview_enclosure_facts' module has been renamed to 'oneview_enclosure_info', "
+                                  "and the renamed one no longer returns ansible_facts", version='2.13')
 
     def execute_module(self):
 
-        ansible_facts = {}
+        info = {}
 
         if self.module.params['name']:
             enclosures = self._get_by_name(self.module.params['name'])
 
             if self.options and enclosures:
-                ansible_facts = self._gather_optional_facts(self.options, enclosures[0])
+                info = self._gather_optional_info(self.options, enclosures[0])
         else:
             enclosures = self.oneview_client.enclosures.get_all(**self.facts_params)
 
-        ansible_facts['enclosures'] = enclosures
+        info['enclosures'] = enclosures
 
-        return dict(changed=False,
-                    ansible_facts=ansible_facts)
+        if self.is_old_facts:
+            return dict(changed=False,
+                        ansible_facts=info)
+        else:
+            return dict(changed=False, **info)
 
-    def _gather_optional_facts(self, options, enclosure):
+    def _gather_optional_info(self, options, enclosure):
 
         enclosure_client = self.oneview_client.enclosures
-        ansible_facts = {}
+        info = {}
 
         if options.get('script'):
-            ansible_facts['enclosure_script'] = enclosure_client.get_script(enclosure['uri'])
+            info['enclosure_script'] = enclosure_client.get_script(enclosure['uri'])
         if options.get('environmentalConfiguration'):
             env_config = enclosure_client.get_environmental_configuration(enclosure['uri'])
-            ansible_facts['enclosure_environmental_configuration'] = env_config
+            info['enclosure_environmental_configuration'] = env_config
         if options.get('utilization'):
-            ansible_facts['enclosure_utilization'] = self._get_utilization(enclosure, options['utilization'])
+            info['enclosure_utilization'] = self._get_utilization(enclosure, options['utilization'])
 
-        return ansible_facts
+        return info
 
     def _get_utilization(self, enclosure, params):
         fields = view = refresh = filter = ''
@@ -198,7 +221,7 @@ class EnclosureFactsModule(OneViewModuleBase):
 
 
 def main():
-    EnclosureFactsModule().run()
+    EnclosureInfoModule().run()
 
 
 if __name__ == '__main__':
