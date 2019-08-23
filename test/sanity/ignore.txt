@@ -2308,7 +2308,6 @@ lib/ansible/modules/identity/keycloak/keycloak_client.py validate-modules:E338
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py validate-modules:E324
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py validate-modules:E337
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py validate-modules:E338
-lib/ansible/modules/identity/onepassword_facts.py validate-modules:E337
 lib/ansible/modules/identity/opendj/opendj_backendprop.py validate-modules:E337
 lib/ansible/modules/identity/opendj/opendj_backendprop.py validate-modules:E338
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_binding.py validate-modules:E324
