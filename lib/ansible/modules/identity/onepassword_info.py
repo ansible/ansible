@@ -107,7 +107,7 @@ EXAMPLES = '''
   onepassword_info:
     search_terms: My 1Password item
   delegate_to: localhost
-  register_to: my_1password_item
+  register: my_1password_item
   no_log: true         # Don't want to log the secrets to the console!
 
 # Gather secrets from 1Password, with more advanced search terms:
@@ -119,7 +119,7 @@ EXAMPLES = '''
         section: Custom section name     # optional, defaults to 'None'
         vault:   Name of the vault       # optional, only necessary if there is more than 1 Vault available
   delegate_to: localhost
-  register_to: my_1password_item
+  register: my_1password_item
   no_log: True                           # Don't want to log the secrets to the console!
 
 # Gather secrets combining simple and advanced search terms to retrieve two items, one of which we fetch two
@@ -136,7 +136,7 @@ EXAMPLES = '''
         vault:   Name of the vault       # optional, only necessary if there is more than 1 Vault available
       - name: A 1Password item with document attachment
   delegate_to: localhost
-  register_to: my_1password_item
+  register: my_1password_item
   no_log: true                           # Don't want to log the secrets to the console!
 
 - name: Debug a password (for example)
