@@ -222,7 +222,6 @@ class Hardware(FactsBase):
             self.facts['filesystems'] = self.parse_filesystems(data)
             self.facts['filesystems_info'] = self.parse_filesystems_info(self.responses[1])
 
-        # data = self.responses[0]
         if data:
             if 'Invalid input detected' in data:
                 warnings.append('Unable to gather memory statistics')
@@ -292,7 +291,6 @@ class Interfaces(FactsBase):
 
         data = self.responses[2]
         if data:
-            # data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
         data = self.responses[3]
@@ -306,7 +304,6 @@ class Interfaces(FactsBase):
         data = self.responses[4]
         self.populate_mediatype(data)
 
-        # Appending type to the interface name eg (1/1/1 will be GigabitEthernet1/1/1)
         interfaceList = {}
         for iface in self.facts['interfaces']:
             if 'type' in self.facts['interfaces'][iface]:
