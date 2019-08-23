@@ -52,4 +52,5 @@ openshift ; python_version >= '2.7'
 semantic_version
 
 # requirement for docker_login
-docker
+docker ; python_version >= '2.7'
+docker-py ; python_version < '2.7'

@@ -65,15 +65,15 @@ try:
     from docker.credentials.errors import InitializationError, CredentialsNotFound
     from docker.credentials import Store
 except ImportError:
-    from dockerpycreds.errors import StoreError, CredentialsNotFound
+    from dockerpycreds.errors import InitializationError, CredentialsNotFound
     from dockerpycreds.store import Store
 
-    # This isn't used in earlier versions of the Store API,
-    # but we need it for more modern tests.
-    class InitializationError(StoreError):
-        pass
-
-
+try:
+    # In some earlier versios of docker-py, decode_auth lives in
+    # docker.auth.auth
+    from docker.auth import decode_auth
+except ImportError:
+    from docker.auth.auth import decode_auth
 
 # The next 2 imports ``docker.models`` and ``docker.ssladapter`` are used
 # to ensure the user does not have both ``docker`` and ``docker-py`` modules
@@ -300,7 +300,7 @@ class DockerFileStore(object):
     update the docker config file when no credential helpers is provided.
     '''
 
-    program="<legacy config>"
+    program = "<legacy config>"
 
     def __init__(self, config_path):
         self._config_path = config_path
@@ -317,7 +317,6 @@ class DockerFileStore(object):
             # No config found or an invalid config found so we'll ignore it.
             config = dict()
 
-
         # Update our internal config with what ever was loaded.
         self._config.update(config)
 
@@ -331,7 +330,7 @@ class DockerFileStore(object):
         if not server_creds:
             raise CredentialsNotFound('No matching credentials')
 
-        (username, password) = auth.decode_auth(server_creds['auth'])
+        (username, password) = decode_auth(server_creds['auth'])
 
         return dict(
             Username=username,
@@ -372,6 +371,7 @@ class DockerFileStore(object):
 
         self._config['auths'].pop(server)
         self._write()
+
 
 DOCKERPYUPGRADE_SWITCH_TO_DOCKER = "Try `pip uninstall docker-py` followed by `pip install docker`."
 DOCKERPYUPGRADE_UPGRADE_DOCKER = "Use `pip install --upgrade docker` to upgrade."
@@ -849,7 +849,13 @@ class AnsibleDockerClient(Client):
             credstore_env = None
 
         config = auth.load_config(config_path=dockercfg_path)
-        store_name = auth.get_credential_store(config, registry)
+
+        if hasattr(auth, 'get_credential_store'):
+            store_name = auth.get_credential_store(config, registry)
+        elif 'credsStore' in config:
+            store_name = config['credsStore']
+        else:
+            store_name = None
 
         # Make sure that there is a credential helper before trying to instantiate a
         # Store object.
@@ -858,6 +864,7 @@ class AnsibleDockerClient(Client):
             return Store(store_name, environment=credstore_env)
 
         return DockerFileStore(dockercfg_path)
+
 
 def compare_dict_allow_more_present(av, bv):
     '''

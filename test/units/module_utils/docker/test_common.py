@@ -537,21 +537,25 @@ def test_parse_healthcheck():
     }
     assert disabled is False
 
+
 def get_docker_client():
     '''
     Avoid crash while instantiating AnsibleDockerClient in a test context.
     '''
 
-    set_module_args(dict())
+    set_module_args(dict(
+        api_version=DEFAULT_DOCKER_API_VERSION
+    ))
 
     with patch.object(AnsibleDockerClient, 'version') as version:
         version.return_value = dict(
             ApiVersion=DEFAULT_DOCKER_API_VERSION
         )
 
-        client = AnsibleDockerClient( )
+        client = AnsibleDockerClient()
 
     return client
+
 
 @pytest.mark.parametrize("config", CREDENTIAL_HELPERS)
 def test_docker_credential_helpers(config):
@@ -564,6 +568,7 @@ def test_docker_credential_helpers(config):
     except InitializationError as e:
         pytest.skip("Credential helper not available.")
 
+
 def test_docker_legacy_crednetials():
     client = get_docker_client()
 
@@ -574,4 +579,3 @@ def test_docker_legacy_crednetials():
         Username="abc",
         Secret="123"
     )
-
