@@ -216,41 +216,44 @@ class L3_Interfaces(ConfigBase):
                     ip_addr_want = validate_n_expand_ipv4(module, each)
                     each['address'] = ip_addr_want
 
-        # Get the diff b/w want and have
+        # Convert the want and have dict to set
         want_dict = dict_to_set(want)
         have_dict = dict_to_set(have)
-        diff = want_dict - have_dict
 
         # To handle L3 IPV4 configuration
-        ipv4 = dict(diff).get('ipv4')
-        if ipv4:
-            for each in ipv4:
-                ipv4_dict = dict(each)
-                if ipv4_dict.get('address') != 'dhcp':
-                    cmd = "ip address {0}".format(ipv4_dict['address'])
-                    if ipv4_dict.get("secondary"):
-                        cmd += " secondary"
-                elif ipv4_dict.get('address') == 'dhcp':
-                    cmd = "ip address dhcp"
-                    if ipv4_dict.get('dhcp_client') is not None and ipv4_dict.get('dhcp_hostname'):
-                        cmd = "ip address dhcp client-id GigabitEthernet 0/{0} hostname {1}"\
-                            .format(ipv4_dict.get('dhcp_client'), ipv4_dict.get('dhcp_hostname'))
-                    elif ipv4_dict.get('dhcp_client') and not ipv4_dict.get('dhcp_hostname'):
-                        cmd = "ip address dhcp client-id GigabitEthernet 0/{0}"\
-                            .format(ipv4_dict.get('dhcp_client'))
-                    elif not ipv4_dict.get('dhcp_client') and ipv4_dict.get('dhcp_hostname'):
-                        cmd = "ip address dhcp hostname {0}".format(ipv4_dict.get('dhcp_client'))
+        if want.get('ipv4'):
+            # Get the diff b/w want and have IPV4
+            ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
+            if ipv4:
+                for each in ipv4:
+                    ipv4_dict = dict(each)
+                    if ipv4_dict.get('address') != 'dhcp':
+                        cmd = "ip address {0}".format(ipv4_dict['address'])
+                        if ipv4_dict.get("secondary"):
+                            cmd += " secondary"
+                    elif ipv4_dict.get('address') == 'dhcp':
+                        cmd = "ip address dhcp"
+                        if ipv4_dict.get('dhcp_client') is not None and ipv4_dict.get('dhcp_hostname'):
+                            cmd = "ip address dhcp client-id GigabitEthernet 0/{0} hostname {1}"\
+                                .format(ipv4_dict.get('dhcp_client'), ipv4_dict.get('dhcp_hostname'))
+                        elif ipv4_dict.get('dhcp_client') and not ipv4_dict.get('dhcp_hostname'):
+                            cmd = "ip address dhcp client-id GigabitEthernet 0/{0}"\
+                                .format(ipv4_dict.get('dhcp_client'))
+                        elif not ipv4_dict.get('dhcp_client') and ipv4_dict.get('dhcp_hostname'):
+                            cmd = "ip address dhcp hostname {0}".format(ipv4_dict.get('dhcp_client'))
 
-                add_command_to_config_list(interface, cmd, commands)
+                    add_command_to_config_list(interface, cmd, commands)
 
         # To handle L3 IPV6 configuration
-        ipv6 = dict(diff).get('ipv6')
-        if ipv6:
-            for each in ipv6:
-                ipv6_dict = dict(each)
-                validate_ipv6(ipv6_dict.get('address'), module)
-                cmd = "ipv6 address {0}".format(ipv6_dict.get('address'))
-                add_command_to_config_list(interface, cmd, commands)
+        if want.get('ipv6'):
+            # Get the diff b/w want and have IPV6
+            ipv6 = tuple(set(dict(want_dict).get('ipv6')) - set(dict(have_dict).get('ipv6')))
+            if ipv6:
+                for each in ipv6:
+                    ipv6_dict = dict(each)
+                    validate_ipv6(ipv6_dict.get('address'), module)
+                    cmd = "ipv6 address {0}".format(ipv6_dict.get('address'))
+                    add_command_to_config_list(interface, cmd, commands)
 
         return commands
 
