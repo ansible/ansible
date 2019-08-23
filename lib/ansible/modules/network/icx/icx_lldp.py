@@ -20,7 +20,8 @@ short_description: Manage LLDP configuration on Ruckus ICX 7000 series switches
 description:
   - This module provides declarative management of LLDP service on ICX network devices.
 notes:
-  - Tested against ICX 10.1
+  - Tested against ICX 10.1.
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   interfaces:
     description:
