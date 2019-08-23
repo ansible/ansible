@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage L3 interfaces on Cisco NXOS network devices
 description:
   - This module provides declarative management of L3 interfaces
     on Cisco NXOS network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: nxos_l3_interfaces
+  why: Updated modules released with more functionality
 notes:
   - Tested against NXOSv 7.0(3)I5(1).
 options:
