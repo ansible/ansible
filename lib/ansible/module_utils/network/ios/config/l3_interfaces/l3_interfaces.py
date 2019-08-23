@@ -223,7 +223,6 @@ class L3_Interfaces(ConfigBase):
         # To handle L3 IPV4 configuration
         if want.get('ipv4'):
             # Get the diff b/w want and have IPV4
-            #ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
             if have.get('ipv4'):
                 ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
             else:
