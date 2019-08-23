@@ -9,14 +9,14 @@
   block:
   - name: ensure ansible user exists
     iam_user:
-      name: AnsibleTestUser
+      name: '{{ test_user }}'
       state: present
 
   - name: ensure group exists
     iam_group:
-      name: ansible_test
+      name: '{{ test_group }}'
       users:
-        - AnsibleTestUser
+        - '{{ test_user }}'
       state: present
     register: iam_group
 
@@ -26,9 +26,9 @@
 
   - name: add non existent user to group
     iam_group:
-      name: ansible_test
+      name: '{{ test_group }}'
       users:
-        - AnsibleTestUser
+        - '{{ test_user }}'
         - NonExistentUser
       state: present
     ignore_errors: yes
@@ -38,11 +38,11 @@
     assert:
       that:
         - iam_group is failed
-        - iam_group.msg.startswith("Couldn't add user NonExistentUser to group ansible_test")
+        - iam_group.msg.startswith("Couldn't add user NonExistentUser to group {{ test_group }}")
 
   - name: remove a user
     iam_group:
-      name: ansible_test
+      name: '{{ test_group }}'
       purge_users: True
       users: []
       state: present
@@ -55,10 +55,21 @@
 
   - name: remove group
     iam_group:
-      name: ansible_test
+      name: '{{ test_group }}'
       state: absent
 
   - name: remove ansible user
     iam_user:
-      name: AnsibleTestUser
+      name: '{{ test_user }}'
+      state: absent
+
+  always:
+  - name: remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+
+  - name: remove ansible user
+    iam_user:
+      name: '{{ test_user }}'
       state: absent

@@ -1,0 +1,3 @@
+---
+test_user:  '{{ resource_prefix }}-user'
+test_group: '{{ resource_prefix }}-group'
