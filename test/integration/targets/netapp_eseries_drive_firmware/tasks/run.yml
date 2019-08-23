@@ -37,7 +37,7 @@
             version: "MS02"
 
 - name: Set drive firmware (baseline, maybe change)
-  na_santricity_drive_firmware:
+  netapp_e_drive_firmware:
     api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_api_username }}"
     api_password: "{{ netapp_e_api_password }}"
@@ -68,7 +68,7 @@
   loop: "{{ lookup('list', current_drive_firmware['json']) }}"
 
 - name: Set drive firmware (upgrade, change-checkmode)
-  na_santricity_drive_firmware:
+  netapp_e_drive_firmware:
     api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_api_username }}"
     api_password: "{{ netapp_e_api_password }}"
@@ -104,7 +104,7 @@
   loop: "{{ lookup('list', current_drive_firmware['json']) }}"
 
 - name: Set drive firmware (upgrade, change)
-  na_santricity_drive_firmware:
+  netapp_e_drive_firmware:
     api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_api_username }}"
     api_password: "{{ netapp_e_api_password }}"
@@ -139,7 +139,7 @@
   loop: "{{ lookup('list', current_drive_firmware['json']) }}"
 
 - name: Set drive firmware (upgrade, no change)
-  na_santricity_drive_firmware:
+  netapp_e_drive_firmware:
     api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_api_username }}"
     api_password: "{{ netapp_e_api_password }}"
@@ -174,7 +174,7 @@
   loop: "{{ lookup('list', current_drive_firmware['json']) }}"
 
 - name: Set drive firmware (downgrade, change)
-  na_santricity_drive_firmware:
+  netapp_e_drive_firmware:
     api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
     api_username: "{{ netapp_e_api_username }}"
     api_password: "{{ netapp_e_api_password }}"

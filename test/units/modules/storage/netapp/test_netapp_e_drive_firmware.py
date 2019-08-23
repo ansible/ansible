@@ -8,7 +8,7 @@ try:
 except ImportError:
     import mock
 
-from ansible.modules.storage.netapp.na_santricity_drive_firmware import NetAppESeriesDriveFirmware
+from ansible.modules.storage.netapp.netapp_e_drive_firmware import NetAppESeriesDriveFirmware
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 
@@ -18,9 +18,9 @@ class HostTest(ModuleTestCase):
                        "api_url": "http://localhost",
                        "ssid": "1"}
 
-    REQUEST_FUNC = "ansible.modules.storage.netapp.na_santricity_drive_firmware.NetAppESeriesDriveFirmware.request"
-    CREATE_MULTIPART_FORMDATA_FUNC = "ansible.modules.storage.netapp.na_santricity_drive_firmware.create_multipart_formdata"
-    SLEEP_FUNC = "ansible.modules.storage.netapp.na_santricity_drive_firmware.sleep"
+    REQUEST_FUNC = "ansible.modules.storage.netapp.netapp_e_drive_firmware.NetAppESeriesDriveFirmware.request"
+    CREATE_MULTIPART_FORMDATA_FUNC = "ansible.modules.storage.netapp.netapp_e_drive_firmware.create_multipart_formdata"
+    SLEEP_FUNC = "ansible.modules.storage.netapp.netapp_e_drive_firmware.sleep"
     UPGRADE_LIST_RESPONSE = ({"filename": "test_drive_firmware_1",
                               "driveRefList": ["010000005000C5007EDE4ECF0000000000000000",
                                                "010000005000C5007EDF9AAB0000000000000000",

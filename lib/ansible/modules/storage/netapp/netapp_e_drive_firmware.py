@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: na_santricity_drive_firmware
+module: netapp_e_drive_firmware
 version_added: "2.9"
 short_description: NetApp E-Series manage drive firmware
 description:
@@ -48,12 +48,12 @@ options:
 """
 EXAMPLES = """
 - name: Ensure correct firmware versions
-  na_santricity_drive_firmware:
-    ssid: "{{ eseries_ssid }}"
-    api_url: "{{ eseries_api_url }}"
-    api_username: "{{ eseries_api_username }}"
-    api_password: "{{ eseries_api_password }}"
-    validate_certs: "{{ eseries_validate_certs }}"
+  nac_santricity_drive_firmware:
+    ssid: "1"
+    api_url: "https://192.168.1.100:8443/devmgr/v2"
+    api_username: "admin"
+    api_password: "adminpass"
+    validate_certs: true
     firmware: "path/to/drive_firmware"
     wait_for_completion: true
     ignore_inaccessible_drives: false
