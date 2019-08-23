@@ -310,12 +310,7 @@ class PgPublication():
             # Add the list to query_fragments:
             query_fragments.append("WITH (%s)" % ', '.join(params_list))
 
-        if check_mode:
-            self.executed_queries.append(' '.join(query_fragments))
-            changed = True
-
-        else:
-            changed = exec_sql(self, ' '.join(query_fragments), ddl=True)
+        changed = self.__exec_sql(' '.join(query_fragments), check_mode=check_mode)
 
         if owner:
             # If check_mode, just add possible SQL to
@@ -416,11 +411,7 @@ class PgPublication():
             if cascade:
                 query_fragments.append("CASCADE")
 
-            if check_mode:
-                self.executed_queries.append(' '.join(query_fragments))
-                return True
-            else:
-                return exec_sql(self, ' '.join(query_fragments), ddl=True)
+            return self.__exec_sql(' '.join(query_fragments), check_mode=check_mode)
 
     def __get_general_pub_info(self):
         """Get and return general publication information.
@@ -477,11 +468,7 @@ class PgPublication():
         """
         query = ("ALTER PUBLICATION %s ADD TABLE %s" % (pg_quote_identifier(self.name, 'publication'),
                                                         pg_quote_identifier(table, 'table')))
-        if not check_mode:
-            return exec_sql(self, query, ddl=True)
-        else:
-            self.executed_queries.append(query)
-            return True
+        return self.__exec_sql(query, check_mode=check_mode)
 
     def __pub_drop_table(self, table, check_mode=False):
         """Drop a table from the publication.
@@ -498,11 +485,7 @@ class PgPublication():
         """
         query = ("ALTER PUBLICATION %s DROP TABLE %s" % (pg_quote_identifier(self.name, 'publication'),
                                                          pg_quote_identifier(table, 'table')))
-        if not check_mode:
-            return exec_sql(self, query, ddl=True)
-        else:
-            self.executed_queries.append(query)
-            return True
+        return self.__exec_sql(query, check_mode=check_mode)
 
     def __pub_set_tables(self, tables, check_mode=False):
         """Set a table suit that need to be published by the publication.
@@ -520,11 +503,7 @@ class PgPublication():
         quoted_tables = [pg_quote_identifier(t, 'table') for t in tables]
         query = ("ALTER PUBLICATION %s SET TABLE %s" % (pg_quote_identifier(self.name, 'publication'),
                                                         ', '.join(quoted_tables)))
-        if not check_mode:
-            return exec_sql(self, query, ddl=True)
-        else:
-            self.executed_queries.append(query)
-            return True
+        return self.__exec_sql(query, check_mode=check_mode)
 
     def __pub_set_param(self, param, value, check_mode=False):
         """Set an optional publication parameter.
@@ -542,11 +521,7 @@ class PgPublication():
         """
         query = ("ALTER PUBLICATION %s SET (%s = '%s')" % (pg_quote_identifier(self.name, 'publication'),
                                                            param, value))
-        if not check_mode:
-            return exec_sql(self, query, ddl=True)
-        else:
-            self.executed_queries.append(query)
-            return True
+        return self.__exec_sql(query, check_mode=check_mode)
 
     def __pub_set_owner(self, role, check_mode=False):
         """Set a publication owner.
@@ -563,11 +538,29 @@ class PgPublication():
         """
         query = ("ALTER PUBLICATION %s OWNER TO %s" % (pg_quote_identifier(self.name, 'publication'),
                                                        pg_quote_identifier(role, 'role')))
-        if not check_mode:
-            return exec_sql(self, query, ddl=True)
-        else:
+        return self.__exec_sql(query, check_mode=check_mode)
+
+    def __exec_sql(self, query, check_mode=False):
+        """Execute SQL query.
+
+        Note: If we need just to get information from the database,
+            we use ``exec_sql`` function directly.
+
+        Args:
+            query (str): Query that needs to be executed.
+
+        Kwargs:
+            check_mode (bool): If True, don't actually change anything,
+                just add ``query`` to ``self.executed_queries`` and return True.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        if check_mode:
             self.executed_queries.append(query)
             return True
+        else:
+            return exec_sql(self, query, ddl=True)
 
 
 # ===========================================
