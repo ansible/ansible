@@ -121,9 +121,9 @@ def main():
     )
 
     module = AnsibleModule(argument_spec)
-    is_old_facts = module._name == 'os_port_facts'
+    is_old_facts = module._name == 'os_project_facts'
     if is_old_facts:
-        module.deprecate("The 'os_port_facts' module has been renamed to 'os_port_info', "
+        module.deprecate("The 'os_project_facts' module has been renamed to 'os_project_info', "
                          "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, opcloud = openstack_cloud_from_module(module)
