@@ -17,25 +17,29 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-module: onepassword_facts
+module: onepassword_info
 author:
     - Ryan Conway (@Rylon)
 version_added: "2.7"
 requirements:
     - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
 notes:
+    - Tested with C(op) version 0.5.5
     - "Based on the C(onepassword) lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
-    - This module stores potentially sensitive data from 1Password as Ansible facts.
-      Facts are subject to caching if enabled, which means this data could be stored in clear text
-      on disk or in a database.
-      - Tested with C(op) version 0.5.5
-short_description: Gather items from 1Password and set them as facts
+    - When this module is called with the deprecated C(onepassword_facts) name, potentially sensitive data
+      from 1Password is returned as Ansible facts. Facts are subject to caching if enabled, which means this
+      data could be stored in clear text on disk or in a database.
+short_description: Gather items from 1Password
 description:
-    - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1Password items and return as Ansible facts.
+    - M(onepassword_info) wraps the C(op) command line utility to fetch data about one or more 1Password items.
     - A fatal error occurs if any of the items being searched for can not be found.
     - Recommend using with the C(no_log) option to avoid logging the values of the secrets being retrieved.
+    - This module was called C(onepassword_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(onepassword_info) module no longer returns C(ansible_facts)!
+      You must now use the C(register) option to use the facts in other tasks.
 options:
     search_terms:
+        type: list
         description:
             - A list of one or more search terms.
             - Each search term can either be a simple string or it can be a dictionary for more control.
@@ -43,45 +47,55 @@ options:
             - When passing a dictionary, the following fields are available.
         suboptions:
             name:
+                type: str
                 description:
                     - The name of the 1Password item to search for (required).
             field:
+                type: str
                 description:
                     - The name of the field to search for within this item (optional, defaults to "password" (or "document" if the item has an attachment).
             section:
+                type: str
                 description:
                     - The name of a section within this item containing the specified field (optional, will search all sections if not specified).
             vault:
+                type: str
                 description:
                     - The name of the particular 1Password vault to search, useful if your 1Password user has access to multiple vaults (optional).
         required: True
     auto_login:
+        type: dict
         description:
-            - A dictionary containing authentication details. If this is set, M(onepassword_facts) will attempt to sign in to 1Password automatically.
+            - A dictionary containing authentication details. If this is set, M(onepassword_info) will attempt to sign in to 1Password automatically.
             - Without this option, you must have already logged in via the 1Password CLI before running Ansible.
             - It is B(highly) recommened to store 1Password credentials in an Ansible Vault. Ensure that the key used to encrypt
               the Ansible Vault is equal to or greater in strength than the 1Password master password.
         suboptions:
             subdomain:
+                type: str
                 description:
                     - 1Password subdomain name (<subdomain>.1password.com).
                     - If this is not specified, the most recent subdomain will be used.
             username:
+                type: str
                 description:
                     - 1Password username.
                     - Only required for initial sign in.
             master_password:
+                type: str
                 description:
                     - The master password for your subdomain.
                     - This is always required when specifying C(auto_login).
                 required: True
             secret_key:
+                type: str
                 description:
                     - The secret key for your subdomain.
                     - Only required for initial sign in.
         default: {}
         required: False
     cli_path:
+        type: path
         description: Used to specify the exact path to the C(op) command line interface
         required: False
         default: 'op'
@@ -90,27 +104,29 @@ options:
 EXAMPLES = '''
 # Gather secrets from 1Password, assuming there is a 'password' field:
 - name: Get a password
-  onepassword_facts:
+  onepassword_info:
     search_terms: My 1Password item
   delegate_to: localhost
+  register: my_1password_item
   no_log: true         # Don't want to log the secrets to the console!
 
 # Gather secrets from 1Password, with more advanced search terms:
 - name: Get a password
-  onepassword_facts:
+  onepassword_info:
     search_terms:
       - name:    My 1Password item
         field:   Custom field name       # optional, defaults to 'password'
         section: Custom section name     # optional, defaults to 'None'
         vault:   Name of the vault       # optional, only necessary if there is more than 1 Vault available
   delegate_to: localhost
+  register: my_1password_item
   no_log: True                           # Don't want to log the secrets to the console!
 
 # Gather secrets combining simple and advanced search terms to retrieve two items, one of which we fetch two
 # fields. In the first 'password' is fetched, as a field name is not specified (default behaviour) and in the
 # second, 'Custom field name' is fetched, as that is specified explicitly.
 - name: Get a password
-  onepassword_facts:
+  onepassword_info:
     search_terms:
       - My 1Password item                # 'name' is optional when passing a simple string...
       - name: My Other 1Password item    # ...but it can also be set for consistency
@@ -120,7 +136,12 @@ EXAMPLES = '''
         vault:   Name of the vault       # optional, only necessary if there is more than 1 Vault available
       - name: A 1Password item with document attachment
   delegate_to: localhost
+  register: my_1password_item
   no_log: true                           # Don't want to log the secrets to the console!
+
+- name: Debug a password (for example)
+  debug:
+    msg: "{{ my_1password_item['onepassword']['My 1Password item'] }}"
 '''
 
 RETURN = '''
@@ -161,7 +182,7 @@ class AnsibleModuleError(Exception):
         return self.results
 
 
-class OnePasswordFacts(object):
+class OnePasswordInfo(object):
 
     def __init__(self):
         self.cli_path = module.params.get('cli_path')
@@ -361,9 +382,14 @@ def main():
         supports_check_mode=True
     )
 
-    ansible_facts = {'onepassword': OnePasswordFacts().run()}
-    module_return = dict(changed=False, ansible_facts=ansible_facts)
-    module.exit_json(**module_return)
+    results = {'onepassword': OnePasswordInfo().run()}
+
+    if module._name == 'onepassword_facts':
+        module.deprecate("The 'onepassword_facts' module has been renamed to 'onepassword_info'. "
+                         "When called with the new name it no longer returns 'ansible_facts'", version='2.13')
+        module.exit_json(changed=False, ansible_facts=results)
+    else:
+        module.exit_json(changed=False, **results)
 
 
 if __name__ == '__main__':
