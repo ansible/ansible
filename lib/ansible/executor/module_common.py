@@ -647,6 +647,7 @@ def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
         tree = ast.parse(data)
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
+
     finder = ModuleDepFinder(path)
     finder.visit(tree)
 
@@ -831,6 +832,11 @@ def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
         # Save memory; the file won't have to be read again for this ansible module.
         del py_module_cache[py_module_file]
 
+    # This is part of a hack to optimize finding whether the module contains a toplevel main()
+    # function (modules without toplevel main() functions are deprecated.  This return should be
+    # removed in 2.13 when the code to allow modules without main() to continue working is removed
+    return tree
+
 
 def _is_binary(b_module_data):
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
@@ -894,6 +900,13 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
     # Write a wrapper to invoke the module as __main__
     wrapper = 'from %s import main; main()' % remote_module_fqn
     zf.writestr('__main__.py', to_bytes(wrapper))
+
+
+def _has_main_function(tree):
+    for function in (node for node in tree.body if isinstance(node, ast.FunctionDef)):
+        if function.name == 'main':
+            return True
+    return False
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
@@ -1004,26 +1017,45 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     except ValueError:
                         remote_module_fqn = None
 
-                    if remote_module_fqn:
-                        display.debug('ANSIBALLZ: Writing module into payload')
-                        _add_module_to_zip(zf, remote_module_fqn, b_module_data)
-                    else:
-                        display.debug('ANSIBALLZ: Could not determing module FQN')
-                        # Modules in roles currently are not found by the fqn heuristic so we
-                        # need to fallback to this.  This means that relative imports inside
-                        # a module from a role will fail.  Absolute imports must be used.
-                        # People should start writing collections instead of modules in roles so we
-                        # may never fix this
-                        zf.writestr('__main__.py', b_module_data)
-
-                    ### FIXME: py_module_cache currently only deals with module_utils so the paths
+                    # FIXME: py_module_cache currently only deals with module_utils so the paths
                     # in the keys are offsets into ansible.module_utils.  with the advent of
                     # collections and relative imports in modules, we are now rooted in the toplevel
                     # (ie: import [*] instead of import ansible.module_utils.[*]).  We should adjust
                     # py_module_cache to use toplevel names now and then adjust the rest of the code
                     # to understand that
                     py_module_cache = {('__init__',): (b'', '[builtin]')}
-                    recursive_finder(module_name, module_path, b_module_data, py_module_names, py_module_cache, zf)
+
+                    # Returning the ast tree is a temporary hack.  We need to know if the module has
+                    # a main() function or not as we are deprecating new-style modules without
+                    # main().  Because parsing the ast is expensive, return it from recursive_finder
+                    # instead of reparsing.  Once the deprecation is over and we remove that code,
+                    # also remove returning of the ast tree.
+                    tree = recursive_finder(module_name, module_path, b_module_data,
+                                            py_module_names, py_module_cache, zf)
+                    has_main = _has_main_function(tree)
+                    del tree
+
+                    if remote_module_fqn and has_main:
+                        display.debug('ANSIBALLZ: Writing module into payload')
+                        _add_module_to_zip(zf, remote_module_fqn, b_module_data)
+                    else:
+                        if not has_main:
+                            display.deprecated('The %s module does not have a main() function.'
+                                               ' Add a main() function entry point to use'
+                                               ' relative imports in the module. Support for'
+                                               ' executing a module without a main() function as'
+                                               ' the entry point is deprecated.'
+                                               % module_name, version='2.13')
+                        else:
+                            # Modules in roles currently are not found by the fqn heuristic so we
+                            # need to fallback to this.  This means that relative imports inside
+                            # a module from a role will fail.  Absolute imports must be used.
+                            # People should start writing collections instead of modules in roles so
+                            # we may never fix this
+                            display.debug('ANSIBALLZ: Could not determine module FQN')
+
+                        zf.writestr('__main__.py', b_module_data)
+
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
 
