@@ -19,10 +19,7 @@ DOCUMENTATION = r'''
 module: postgresql_publication
 short_description: Add, update, or remove PostgreSQL publication
 description:
-- Add, update, or remove PostgreSQL publication
-  U(https://www.postgresql.org/docs/current/sql-createpublication.html),
-  U(https://www.postgresql.org/docs/current/sql-alterpublication.html),
-  U(https://www.postgresql.org/docs/current/sql-droppublication.html).
+- Add, update, or remove PostgreSQL publication.
 version_added: "2.9"
 options:
   name:
@@ -66,6 +63,16 @@ options:
     type: bool
 notes:
 - PostgreSQL version must be 10 or greater.
+seealso:
+- name: CREATE PUBLICATION reference
+  description: Complete reference of the CREATE PUBLICATION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createpublication.html
+- name: ALTER PUBLICATION reference
+  description: Complete reference of the ALTER PUBLICATION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterpublication.html
+- name: DROP PUBLICATION reference
+  description: Complete reference of the DROP PUBLICATION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droppublication.html
 author:
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
