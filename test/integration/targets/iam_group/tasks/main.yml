@@ -22,7 +22,7 @@
 
   - assert:
       that:
-        - iam_group.users
+        - iam_group.iam_group.users
 
   - name: add non existent user to group
     iam_group:
@@ -51,7 +51,7 @@
   - assert:
       that:
         - iam_group.changed
-        - not iam_group.users
+        - not iam_group.iam_group.users
 
   - name: remove group
     iam_group:
