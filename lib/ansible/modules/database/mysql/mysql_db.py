@@ -241,7 +241,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     return rc, stdout, stderr
 
 
-def db_import(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
+def db_import(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None, encoding=None):
     if not os.path.exists(target):
         return module.fail_json(msg="target %s does not exist on the host" % target)
 
@@ -264,6 +264,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     else:
         cmd.append("--host=%s" % shlex_quote(host))
         cmd.append("--port=%i" % port)
+    if encoding is not None:
+        cmd.append("--default-character-set=%s" % shlex_quote(encoding))
     if not all_databases:
         cmd.append("--one-database")
         cmd.append(shlex_quote(''.join(db_name)))
@@ -453,7 +455,7 @@ def main():
                                        login_password, db, target,
                                        all_databases,
                                        login_port, config_file,
-                                       socket, ssl_cert, ssl_key, ssl_ca)
+                                       socket, ssl_cert, ssl_key, ssl_ca, encoding)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
