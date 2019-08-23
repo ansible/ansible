@@ -12,7 +12,6 @@ Connections Available
 ================================================================================
 
 .. table::
-    :widths: auto
     :class: documentation-table
 
     ====================  ==========================================
@@ -28,10 +27,9 @@ Connections Available
 
     Connection Settings   ``ansible_connection: network_cli``
 
-    |enable_mode|         supported: use ``ansible_become: yes`` with
-                          ``ansible_become_method: enable`` and ``ansible_become_password:``
+    |enable_mode|         not supported                               
 
-    Returned Data Format  ``stdout[0].``
+    Returned Data Format  Refer to individual module documentation 
     ====================  ==========================================
 
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
@@ -43,7 +41,7 @@ Using CLI in Ansible
 ====================
 
 Example CLI ``group_vars/vyos.yml``
-----------------------------------
+-----------------------------------
 
 .. code-block:: yaml
 
