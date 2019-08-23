@@ -126,24 +126,150 @@ login_results:
     }
 '''
 
+import base64
+import json
 import os
 import re
 import traceback
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     from docker.errors import DockerException
+    from docker import auth
+
+    # Earlier versions of docker/docker-py put decode_auth
+    # in docker.auth.auth instead of docker.auth
+    if hasattr(auth, 'decode_auth'):
+        from docker.auth import decode_auth
+    else:
+        from docker.auth.auth import decode_auth
+
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import (
-    CredentialsNotFound,
     AnsibleDockerClient,
+    HAS_DOCKER_PY,
     DEFAULT_DOCKER_REGISTRY,
     DockerBaseClass,
     EMAIL_REGEX,
     RequestException,
 )
+
+NEEDS_DOCKER_PYCREDS = False
+
+# Early versions of docker/docker-py rely on docker-pycreds for
+# the credential store api.
+if HAS_DOCKER_PY:
+    try:
+        from docker.credentials.errors import StoreError, CredentialsNotFound
+        from docker.credentials import Store
+    except ImportError:
+        try:
+            from dockerpycreds.errors import StoreError, CredentialsNotFound
+            from dockerpycreds.store import Store
+        except ImportError as exc:
+            HAS_DOCKER_ERRROR = str(exc)
+            NEEDS_DOCKER_PYCREDS = True
+
+
+if NEEDS_DOCKER_PYCREDS:
+    # docker-pycreds missing, so we need to create some place holder classes
+    # to allow instantiation.
+
+    class StoreError(Exception):
+        pass
+
+    class CredentialsNotFound(Exception):
+        pass
+
+
+class DockerFileStore(object):
+    '''
+    A custom credential store class that implements only the functionality we need to
+    update the docker config file when no credential helpers is provided.
+    '''
+
+    program = "<legacy config>"
+
+    def __init__(self, config_path):
+        self._config_path = config_path
+
+        # Make sure we have a minimal config if none is available.
+        self._config = dict(
+            auths=dict()
+        )
+
+        try:
+            # Attempt to read the existing config.
+            config = json.load(open(self._config_path, "r"))
+        except (ValueError, IOError):
+            # No config found or an invalid config found so we'll ignore it.
+            config = dict()
+
+        # Update our internal config with what ever was loaded.
+        self._config.update(config)
+
+    @property
+    def config_path(self):
+        '''
+        Return the config path configured in this DockerFileStore instance.
+        '''
+
+        return self._config_path
+
+    def get(self, server):
+        '''
+        Retrieve credentials for `server` if there are any in the config file.
+        Otherwise raise a `StoreError`
+        '''
+
+        server_creds = self._config['auths'].get(server)
+        if not server_creds:
+            raise CredentialsNotFound('No matching credentials')
+
+        (username, password) = decode_auth(server_creds['auth'])
+
+        return dict(
+            Username=username,
+            Secret=password
+        )
+
+    def _write(self):
+        '''
+        Write config back out to disk.
+        '''
+        json.dump(self._config, open(self._config_path, "w"), indent=5, sort_keys=True)
+
+    def store(self, server, username, password):
+        '''
+        Add a credentials for `server` to the current configuration.
+        '''
+
+        b64auth = base64.b64encode(
+            to_bytes(username) + b':' + to_bytes(password)
+        )
+        auth = to_text(b64auth)
+
+        # build up the auth structure
+        new_auth = dict(
+            auths=dict()
+        )
+        new_auth['auths'][server] = dict(
+            auth=auth
+        )
+
+        self._config.update(new_auth)
+        self._write()
+
+    def erase(self, server):
+        '''
+        Remove credentials for the given server from the configuration.
+        '''
+
+        self._config['auths'].pop(server)
+        self._write()
 
 
 class LoginManager(DockerBaseClass):
@@ -163,12 +289,19 @@ class LoginManager(DockerBaseClass):
         self.email = parameters.get('email')
         self.reauthorize = parameters.get('reauthorize')
         self.config_path = parameters.get('config_path')
+        self.state = parameters.get('state')
 
         # As far as I can tell, email is not supported by credential helpers at all.
         if self.email:
             client.module.deprecate("The email parameter is deprecated and presently does nothing", "2.13")
 
-        if parameters['state'] == 'present':
+    def run(self):
+        '''
+        Do the actuall work of this task here. This allows instantiation for partial
+        testing.
+        '''
+
+        if self.state == 'present':
             self.login()
         else:
             self.logout()
@@ -219,7 +352,7 @@ class LoginManager(DockerBaseClass):
         '''
 
         # Get the configuration store.
-        store = self.client.get_credential_store_instance(self.registry_url, self.config_path)
+        store = self.get_credential_store_instance(self.registry_url, self.config_path)
 
         try:
             current = store.get(self.registry_url)
@@ -242,7 +375,7 @@ class LoginManager(DockerBaseClass):
         '''
 
         # Check to see if credentials already exist.
-        store = self.client.get_credential_store_instance(self.registry_url, self.config_path)
+        store = self.get_credential_store_instance(self.registry_url, self.config_path)
 
         try:
             current = store.get(self.registry_url)
@@ -259,6 +392,37 @@ class LoginManager(DockerBaseClass):
             self.results['actions'].append("Wrote credentials to configured helper %s for %s" % (
                 store.program, self.registry_url))
             self.results['changed'] = True
+
+    def get_credential_store_instance(self, registry, dockercfg_path):
+        '''
+        Return an instance of docker.credentials.Store used by the given registry.
+
+        :return: A Store or None
+        :rtype: Union[docker.credentials.Store, NoneType]
+        '''
+
+        # Older versions of docker-py don't have this feature.
+        try:
+            credstore_env = self.client.credstore_env
+        except AttributeError:
+            credstore_env = None
+
+        config = auth.load_config(config_path=dockercfg_path)
+
+        if hasattr(auth, 'get_credential_store'):
+            store_name = auth.get_credential_store(config, registry)
+        elif 'credsStore' in config:
+            store_name = config['credsStore']
+        else:
+            store_name = None
+
+        # Make sure that there is a credential helper before trying to instantiate a
+        # Store object.
+        if store_name:
+            self.log("Found credential store %s" % store_name)
+            return Store(store_name, environment=credstore_env)
+
+        return DockerFileStore(dockercfg_path)
 
 
 def main():
@@ -291,7 +455,9 @@ def main():
             login_result={}
         )
 
-        LoginManager(client, results)
+        manager = LoginManager(client, results)
+        manager.run()
+
         if 'actions' in results:
             del results['actions']
         client.module.exit_json(**results)
