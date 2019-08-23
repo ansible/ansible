@@ -326,22 +326,32 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the JSON response containing a list of instances.
         """
         lists = []
-        resp = self._return_if_object(self.fake_module, self.auth_session.get(link, params={"filter": query}))
-        lists.append(resp.get('items'))
-        while resp.get('nextPageToken'):
-            resp = self._return_if_object(self.fake_module, self.auth_session.get(link, params={"filter": query, "pageToken": resp.get('nextPageToken')}))
-            lists.append(resp.get('items'))
+        resp = self._return_if_object(
+            self.fake_module, self.auth_session.get(link, params={"filter": query})
+        )
+        lists.append(resp.get("items"))
+        while resp.get("nextPageToken"):
+            resp = self._return_if_object(
+                self.fake_module,
+                self.auth_session.get(
+                    link,
+                    params={"filter": query, "pageToken": resp.get("nextPageToken")},
+                ),
+            )
+            lists.append(resp.get("items"))
         return self.build_list(lists)
 
     def build_list(self, lists):
         arrays_for_zones = {}
         for resp in lists:
             for zone in resp:
-                if 'instances' in resp[zone]:
+                if "instances" in resp[zone]:
                     if zone in arrays_for_zones:
-                        arrays_for_zones[zone] = arrays_for_zones[zone] + resp[zone]['instances']
+                        arrays_for_zones[zone] = (
+                            arrays_for_zones[zone] + resp[zone]["instances"]
+                        )
                     else:
-                        arrays_for_zones[zone] = resp[zone]['instances']
+                        arrays_for_zones[zone] = resp[zone]["instances"]
         return arrays_for_zones
 
     def _get_query_options(self, filters):
@@ -562,11 +572,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 for key, value in resp.items():
                     zone = key[6:]
                     if not zones or zone in zones:
-                        self._add_hosts(
-                            value,
-                            config_data,
-                            project_disks=project_disks,
-                        )
+                        self._add_hosts(value, config_data, project_disks=project_disks)
                         cached_data[project][zone] = value
 
         if cache_needs_update:
