@@ -44,6 +44,9 @@ description:
   - This module manages the interface attributes on VyOS network devices.
   - This module supports managing base attributes of Ethernet, Bonding,
     VXLAN, Loopback and Virtual Tunnel Interfaces.
+notes:
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 author: Nilashish Chakraborty (@nilashishc)
 options:
   config:

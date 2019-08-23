@@ -36,7 +36,8 @@ description:
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
 notes:
-  - Tested against VYOS 1.1.7
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   aggregate:
     description:

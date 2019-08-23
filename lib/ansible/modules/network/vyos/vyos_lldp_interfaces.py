@@ -43,7 +43,7 @@ short_description: Manages attributes of lldp interfaces on VyOS devices.
 description: This module manages attributes of lldp interfaces on VyOS network devices.
 notes:
   - Tested against VyOS 1.1.8 (helium).
-  - This module works with connection C(network_cli)
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 author:
    - Rohit Thakur (@rohitthakur2590)
 options:

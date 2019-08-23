@@ -34,7 +34,8 @@ description:
     returning successfully.
 extends_documentation_fragment: vyos
 notes:
-  - Tested against VYOS 1.1.7
+  - Tested against VyOS 1.1.8 (helium).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 options:
   host_name:
     description:

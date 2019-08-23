@@ -43,7 +43,7 @@ short_description: Manage link layer discovery protocol (LLDP) attributes on VyO
 description: This module manages link layer discovery protocol (LLDP) attributes on VyOS devices.
 notes:
   - Tested against VyOS 1.1.8 (helium).
-  - This module works with connection C(network_cli).
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 author:
    - Rohit Thakur (@rohitthakur2590)
 options:
