@@ -306,6 +306,8 @@ Noteworthy module changes
 * `mysql_db <mysql_db_module>` returns new `db_list` parameter in addition to `db` parameter. This `db_list` parameter refers to list of database names. `db` parameter will be deprecated in version `2.13`.
 * `snow_record <snow_record_module>` and `snow_record_find <snow_record_find_module>` now takes environment variables for `instance`, `username` and `password` parameters. This change marks these parameters as optional.
 * The deprecated ``force`` option in ``win_firewall_rule`` has been removed.
+* :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: no``. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
+* :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` and ``selfsigned`` providers create subject key identifiers if not explicitly disabled with ``ownca_create_subject_key_identifier: never_create`` resp. ``selfsigned_create_subject_key_identifier: never_create``. If a subject key identifier is provided by the CSR, it is taken; if not, it is created from the public key. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
 
 
 Plugins
