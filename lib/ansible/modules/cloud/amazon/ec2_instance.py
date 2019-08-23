@@ -168,7 +168,7 @@ options:
   ebs_optimized:
     description:
       - Whether instance is should use optimized EBS volumes, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html).
-    type: bool
+    choices: ['true', 'false', 'auto']
   filters:
     description:
       - A dict of filters to apply when deciding whether existing instances match and should be altered. Each dict item
@@ -1083,6 +1083,11 @@ def discover_security_groups(group, groups, parent_vpc_id=None, subnet_id=None, 
             ).search('SecurityGroups[]'))
     return list(dict((g['GroupId'], g) for g in found_groups).values())
 
+def _supports_ebs_optimized(instance_type):
+    ebs_optimized_types = ['a1', 'c4', 'c5', 'd2', 'f1', 'g3','h1', 'i3', 'm4', 'm5', 'p2', 'p3', 'r4', 'r5', 't3', 'u-', 'x1','z1']
+    if instance_type[:2] in ebs_optimized_types:
+        return True
+    return False
 
 def build_top_level_options(params):
     spec = {}
@@ -1130,7 +1135,11 @@ def build_top_level_options(params):
     if params.get('placement_group'):
         spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
-        spec['EbsOptimized'] = params.get('ebs_optimized')
+        if params.get('ebs_optimized') == 'auto':
+            ebs_optimized = True if _supports_ebs_optimized(params.get('instance_type')) else False
+        else:
+            ebs_optimized = bool(params.get('ebs_optimized'))
+        spec['EbsOptimized'] = ebs_optimized
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
     if params.get('termination_protection') is not None:
@@ -1587,7 +1596,7 @@ def main():
         instance_type=dict(default='t2.micro', type='str'),
         user_data=dict(type='str'),
         tower_callback=dict(type='dict'),
-        ebs_optimized=dict(type='bool'),
+        ebs_optimized=dict(type='str', choices=['true', 'false', 'auto', 'True', 'False']),
         vpc_subnet_id=dict(type='str', aliases=['subnet_id']),
         availability_zone=dict(type='str'),
         security_groups=dict(default=[], type='list'),
