@@ -37,6 +37,8 @@ class FactsArgs(object):
         '!lldp_global',
         'lldp_interfaces',
         '!lldp_interfaces',
+        'l3_interfaces',
+        '!l3_interfaces',
     ]
 
     argument_spec = {
