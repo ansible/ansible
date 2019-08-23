@@ -1418,6 +1418,7 @@ def url_argument_spec():
         force_basic_auth=dict(type='bool', default=False),
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
+        deprecated_aliases=dict(alias='thirsty', version='2.13'),
     )
 
 

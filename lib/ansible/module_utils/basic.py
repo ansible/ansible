@@ -1427,6 +1427,12 @@ class AnsibleModule(object):
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
         for option, alias in alias_warnings:
             self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
+        if 'deprecated_aliases' in spec.keys():
+            if spec['deprecated_aliases']['alias'] in param.keys():
+                self._deprecations.append(
+                    {'msg': "Alias '%s' is deprecated. See the module docs for more information" % spec['deprecated_aliases']['alias'],
+                     'version': spec['deprecated_aliases']['version']})
+
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
