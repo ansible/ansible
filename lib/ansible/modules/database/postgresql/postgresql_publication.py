@@ -121,7 +121,8 @@ EXAMPLES = r'''
 
 RETURN = r'''
 exists:
-  description: Flag indicates the publication exists or not.
+  description:
+  - Flag indicates the publication exists or not at the end of runtime.
   returned: always
   type: bool
   sample: true
@@ -181,7 +182,7 @@ SUPPORTED_PG_VERSION = 10000
 ################################
 
 def transform_tables_representation(tbl_list):
-    """Add 'public.' to names of tables where a shema identifier is absent
+    """Add 'public.' to names of tables where a schema identifier is absent
     and add quotes to each element.
 
     Args:
