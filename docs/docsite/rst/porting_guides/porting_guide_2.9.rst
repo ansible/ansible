@@ -287,7 +287,7 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``memset_memstore_facts`` module was renamed to :ref:`memset_memstore_info <memset_memstore_info_module>`.
 * The ``memset_server_facts`` module was renamed to :ref:`memset_server_info <memset_server_info_module>`.
 * The ``one_image_facts`` module was renamed to :ref:`one_image_info <one_image_info_module>`.
-* The ``onepassword_facts`` module was renamed to :red:`onepassword_info <onepassword_info_module>`.
+* The ``onepassword_facts`` module was renamed to :ref:`onepassword_info <onepassword_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
 * The ``python_requirements_facts`` module was renamed to :ref:`python_requirements_info <python_requirements_info_module>`.
 * The ``rds_instance_facts`` module was renamed to :ref:`rds_instance_info <rds_instance_info_module>`.
