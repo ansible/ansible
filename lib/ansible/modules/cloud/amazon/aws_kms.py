@@ -365,7 +365,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.ec2 import compare_aws_tags
+from ansible.module_utils.ec2 import compare_aws_tags, compare_policies
 from ansible.module_utils.six import string_types
 
 import json
@@ -664,6 +664,28 @@ def update_key(connection, module, key):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Unable to add tag to key")
 
+    # Update existing policy before trying to tweak grants
+    if module.params.get('policy'):
+        policy = module.params.get('policy')
+        try:
+            keyret = connection.get_key_policy(KeyId=key['key_id'], PolicyName='default')
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            # If we can't fetch the current policy assume we're making a change
+            # Could occur if we have PutKeyPolicy without GetKeyPolicy
+            original_policy = {}
+        original_policy = json.loads(keyret['Policy'])
+        try:
+            new_policy = json.loads(policy)
+        except ValueError as e:
+            module.fail_json_aws(e, msg="Unable to parse new policy as JSON")
+        if compare_policies(original_policy, new_policy):
+            changed = True
+            if not module.check_mode:
+                try:
+                    connection.put_key_policy(KeyId=key['key_id'], PolicyName='default', Policy=policy)
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, msg="Unable to update key policy")
+
     desired_grants = module.params.get('grants')
     existing_grants = key['grants']
 
@@ -774,7 +796,7 @@ def do_policy_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=Tru
     policy = json.loads(keyret['Policy'])
 
     changes_needed = {}
-    # assert_policy_shape(policy)
+    assert_policy_shape(policy)
     had_invalid_entries = False
     for statement in policy['Statement']:
         for granttype in ['role', 'role grant', 'admin']:
