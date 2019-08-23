@@ -440,6 +440,7 @@ else:
     ACTIVE_ANSIBALLZ_TEMPLATE = _strip_comments(ANSIBALLZ_TEMPLATE)
 
 
+CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>modules/.*)\.py$' % os.path.dirname(os.path.dirname(__file__)))
 COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.py$')
 
 
@@ -858,7 +859,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
     # FUTURE: combined regex for this stuff, or a "looks like Python, let's inspect further" mechanism
     elif b'from ansible.module_utils.' in b_module_data or b'from ansible_collections.' in b_module_data\
-            or b'import ansible_collections.' in b_module_data:
+            or b'import ansible_collections.' in b_module_data or b'from ...module_utils.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
     elif REPLACER_WINDOWS in b_module_data:
@@ -939,15 +940,26 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                 to_bytes(__author__) + b'"\n')
                     zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
-                    match = COLLECTION_PATH_RE.search(module_path)
+                    remote_module_fqn = None
+                    match = CORE_LIBRARY_PATH_RE.search(module_path)
 
                     if match:
-                        collection_path = tuple(match.group('path').split('/'))
-                        entry_path = '/'.join(collection_path) + '.py'
+                        # relative imports supported within core
+                        remote_module_fqn = tuple(['ansible'] + match.group('path').split('/'))
+
+                    if not remote_module_fqn:
+                        match = COLLECTION_PATH_RE.search(module_path)
+
+                        if match:
+                            # relative imports supported within collection
+                            remote_module_fqn = tuple(match.group('path').split('/'))
+
+                    if remote_module_fqn:
+                        entry_path = '/'.join(remote_module_fqn) + '.py'
                         zf.writestr(entry_path, b_module_data)
-                        tgt = b'.'.join(cp.encode('utf-8') for cp in collection_path)
-                        b_wrapper = b'from %s import main; main()' % tgt
-                        remote_module_package_path = '/'.join(tuple(collection_path[:-1]) + tuple(['__init__.py']))
+                        remote_module_import = b'.'.join(part.encode('utf-8') for part in remote_module_fqn)
+                        b_wrapper = b'from %s import main; main()' % remote_module_import
+                        remote_module_package_path = '/'.join(tuple(remote_module_fqn[:-1]) + tuple(['__init__.py']))
                         zf.writestr(remote_module_package_path, b'')
                         zf.writestr('__main__.py', b_wrapper)
                     else:
