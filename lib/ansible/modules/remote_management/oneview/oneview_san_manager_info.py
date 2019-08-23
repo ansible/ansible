@@ -99,7 +99,6 @@ class SanManagerInfoModule(OneViewModuleBase):
             self.module.deprecate("The 'oneview_san_manager_facts' module has been renamed to 'oneview_san_manager_info', "
                                   "and the renamed one no longer returns ansible_facts", version='2.13')
 
-
     def execute_module(self):
         if self.module.params.get('provider_display_name'):
             provider_display_name = self.module.params['provider_display_name']
