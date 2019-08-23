@@ -17,11 +17,9 @@
             "Sid": "AllowAutoscaling",
             "Effect": "Allow",
             "Action": [
-                "autoscaling:CreateLaunchConfiguration",
-                "autoscaling:CreateAutoScalingGroup",
-                "autoscaling:UpdateAutoScalingGroup",
-                "autoscaling:DeleteAutoScalingGroup",
-                "autoscaling:DeleteLaunchConfiguration",
+                "autoscaling:*LaunchConfiguration",
+                "autoscaling:*AutoScalingGroup",
+                "autoscaling:*MetricsCollection",
                 "autoscaling:PutScalingPolicy",
                 "autoscaling:DeletePolicy"
             ],
