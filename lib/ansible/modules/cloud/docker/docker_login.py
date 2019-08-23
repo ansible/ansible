@@ -166,7 +166,7 @@ class LoginManager(DockerBaseClass):
 
         # As far as I can tell, email is not supported by credential helpers at all.
         if self.email:
-            client.module.deprecate("The email parameter is deprecated and presently does nothing", "2.10")
+            client.module.deprecate("The email parameter is deprecated and presently does nothing", "2.13")
 
         if parameters['state'] == 'present':
             self.login()
