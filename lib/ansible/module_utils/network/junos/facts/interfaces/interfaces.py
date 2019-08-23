@@ -60,12 +60,25 @@ class InterfacesFacts(object):
                 <interfaces/>
             </configuration>
             """
+            group_config_filter = """
+            <configuration>
+                <groups>
+                    <interfaces/>
+                </groups>
+            </configuration>
+            """
             data = connection.get_configuration(filter=config_filter)
+            group_data = connection.get_configuration(
+                filter=group_config_filter)
 
         if isinstance(data, string_types):
             data = etree.fromstring(to_bytes(data, errors='surrogate_then_replace'))
 
+        if isinstance(group_data, string_types):
+            group_data = etree.fromstring(to_bytes(group_data, errors='surrogate_then_replace'))
+
         resources = data.xpath('configuration/interfaces/interface')
+        resources += group_data.xpath('configuration/groups/interfaces/interface')
 
         objs = []
         for resource in resources:
