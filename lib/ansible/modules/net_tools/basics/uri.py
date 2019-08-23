@@ -654,9 +654,30 @@ def main():
     # Default content_encoding to try
     content_encoding = 'utf-8'
     if 'content_type' in uresp:
-        content_type, params = cgi.parse_header(uresp['content_type'])
-        if 'charset' in params:
-            content_encoding = params['charset']
+        # Handle multiple Content-Type headers
+        charsets = []
+        content_types = []
+        for value in uresp['content_type'].split(','):
+            ct, params = cgi.parse_header(value)
+            if ct not in content_types:
+                content_types.append(ct)
+            if 'charset' in params:
+                if params['charset'] not in charsets:
+                    charsets.append(params['charset'])
+
+        if content_types:
+            content_type = content_types[0]
+            if len(content_types) > 1:
+                module.warn(
+                    'Received multiple conflicting Content-Type values (%s), using %s' % (', '.join(content_types), content_type)
+                )
+        if charsets:
+            content_encoding = charsets[0]
+            if len(charsets) > 1:
+                module.warn(
+                    'Received multiple conflicting charset values (%s), using %s' % (', '.join(charsets), content_encoding)
+                )
+
         u_content = to_text(content, encoding=content_encoding)
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:
