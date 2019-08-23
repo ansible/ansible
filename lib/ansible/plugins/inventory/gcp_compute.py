@@ -40,8 +40,8 @@ DOCUMENTATION = '''
         hostnames:
           description: A list of options that describe the ordering for which
               hostnames should be assigned. Currently supported hostnames are
-              'public_ip', 'private_ip', or 'name'.
-          default: ['public_ip', 'private_ip', 'name']
+              'public_ip', 'private_ip', 'name', or 'hostname'.
+          default: ['public_ip', 'private_ip', 'name', 'hostname']
           type: list
         auth_kind:
             description:
@@ -326,7 +326,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param item: A host response from GCP
             :return the hostname of this instance
         '''
-        hostname_ordering = ['public_ip', 'private_ip', 'name']
+        hostname_ordering = ['public_ip', 'private_ip', 'name', 'hostname']
         if self.get_option('hostnames'):
             hostname_ordering = self.get_option('hostnames')
 
@@ -338,6 +338,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 name = self._get_privateip(item)
             elif order == 'name':
                 name = item[u'name']
+            elif order == 'hostname':
+                name = item[u'hostname'] if u'hostname' in item else item[u'name']
             else:
                 raise AnsibleParserError("%s is not a valid hostname precedent" % order)
 
