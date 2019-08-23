@@ -260,7 +260,7 @@ options:
     description:
       - Number of attempts to connect to remote host. The delay time between the retires increases after
         every attempt by power of 2 in seconds till either the maximum attempts are exhausted or any of the
-        C(persistent_command_timeout) or C(persistent_connect_timeout) timer is triggered.
+        C(persistent_command_timeout) or C(persistent_connect_timeout) timers are triggered.
     default: 3
     version_added: '2.9'
     type: integer

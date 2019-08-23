@@ -140,10 +140,6 @@ class ConnectionProcess(object):
 
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
 
-                    # initialization connection to remote host if not already in connected state
-                    if not self.connection._connected:
-                        self.connection._connect()
-
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
