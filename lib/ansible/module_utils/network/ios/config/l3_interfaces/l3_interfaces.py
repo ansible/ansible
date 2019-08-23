@@ -223,7 +223,12 @@ class L3_Interfaces(ConfigBase):
         # To handle L3 IPV4 configuration
         if want.get('ipv4'):
             # Get the diff b/w want and have IPV4
-            ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
+            #ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
+            if have.get('ipv4'):
+                ipv4 = tuple(set(dict(want_dict).get('ipv4')) - set(dict(have_dict).get('ipv4')))
+            else:
+                diff = want_dict - have_dict
+                ipv4 = dict(diff).get('ipv4')
             if ipv4:
                 for each in ipv4:
                     ipv4_dict = dict(each)
@@ -247,7 +252,11 @@ class L3_Interfaces(ConfigBase):
         # To handle L3 IPV6 configuration
         if want.get('ipv6'):
             # Get the diff b/w want and have IPV6
-            ipv6 = tuple(set(dict(want_dict).get('ipv6')) - set(dict(have_dict).get('ipv6')))
+            if have.get('ipv6'):
+                ipv6 = tuple(set(dict(want_dict).get('ipv6')) - set(dict(have_dict).get('ipv6')))
+            else:
+                diff = want_dict - have_dict
+                ipv6 = dict(diff).get('ipv6')
             if ipv6:
                 for each in ipv6:
                     ipv6_dict = dict(each)
