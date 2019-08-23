@@ -271,7 +271,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
         if prefix and not name.startswith(prefix):
             continue
 
-        symlink = os.path.islink(to_bytes(file_path))
+        symlink = os.path.islink(to_bytes(file_path.rstrip(os.path.sep)))
 
         if symlink and not include_symlinks:
             continue
@@ -286,7 +286,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
                 file_paths.append(file_path)
 
     for file_path in file_paths:
-        symlink = os.path.islink(to_bytes(file_path))
+        symlink = os.path.islink(to_bytes(file_path.rstrip(os.path.sep)))
 
         if symlink and not include_symlinks:
             continue
@@ -320,7 +320,7 @@ def analyze_integration_target_dependencies(integration_targets):
     # this use case is supported, but discouraged
     for target in integration_targets:
         for path in data_context().content.walk_files(target.path):
-            if not os.path.islink(to_bytes(path)):
+            if not os.path.islink(to_bytes(path.rstrip(os.path.sep))):
                 continue
 
             real_link_path = os.path.realpath(path)
