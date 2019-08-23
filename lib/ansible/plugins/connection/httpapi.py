@@ -77,6 +77,14 @@ options:
     default: True
     vars:
       - name: ansible_httpapi_validate_certs
+  use_proxy:
+    type: boolean
+    version_added: "2.9"
+    description:
+      - Whether to use https_proxy for requests.
+    default: True
+    vars:
+      - name: ansible_httpapi_use_proxy
   timeout:
     type: int
     description:
@@ -257,6 +265,7 @@ class Connection(NetworkConnectionBase):
         '''
         url_kwargs = dict(
             timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
+            use_proxy=self.get_option("use_proxy"),
             headers={},
         )
         url_kwargs.update(kwargs)
