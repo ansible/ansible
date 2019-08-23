@@ -49,7 +49,7 @@ options:
   email:
     required: False
     description:
-      - "The email address for the registry account."
+      - Does nothing, do not use.
     type: str
   reauthorize:
     description:
@@ -81,6 +81,8 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 requirements:
   - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
+  - "L(Python bindings for docker credentials store API) >= 0.2.1
+    (use L(docker-pycreds,https://pypi.org/project/docker-pycreds/) when using Docker SDK for Python < 4.0.0)"
   - "Docker API >= 1.20"
   - "Only to be able to logout, that is for I(state) = C(absent): the C(docker) command line utility"
 author:
@@ -119,14 +121,11 @@ login_results:
     returned: when state='present'
     type: dict
     sample: {
-        "email": "testuer@yahoo.com",
         "serveraddress": "localhost:5000",
         "username": "testuser"
     }
 '''
 
-import base64
-import json
 import os
 import re
 import traceback
@@ -137,8 +136,8 @@ except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.docker.common import (
+    CredentialsNotFound,
     AnsibleDockerClient,
     DEFAULT_DOCKER_REGISTRY,
     DockerBaseClass,
@@ -164,6 +163,10 @@ class LoginManager(DockerBaseClass):
         self.email = parameters.get('email')
         self.reauthorize = parameters.get('reauthorize')
         self.config_path = parameters.get('config_path')
+
+        # As far as I can tell, email is not supported by credential helpers at all.
+        if self.email:
+            client.module.deprecate("The email parameter is deprecated and presently does nothing", "2.10")
 
         if parameters['state'] == 'present':
             self.login()
@@ -206,108 +209,56 @@ class LoginManager(DockerBaseClass):
         self.results['login_result'] = response
 
         if not self.check_mode:
-            self.update_config_file()
+            self.update_credentials()
 
     def logout(self):
         '''
         Log out of the registry. On success update the config file.
-        TODO: port to API once docker.py supports this.
 
         :return: None
         '''
 
-        cmd = [self.client.module.get_bin_path('docker', True), "logout", self.registry_url]
-        # TODO: docker does not support config file in logout, restore this when they do
-        # if self.config_path and self.config_file_exists(self.config_path):
-        #     cmd.extend(["--config", self.config_path])
+        # Get the configuration store.
+        store = self.client.get_credential_store_instance(self.registry_url, self.config_path)
 
-        (rc, out, err) = self.client.module.run_command(cmd)
-        if rc != 0:
-            self.fail("Could not log out: %s" % err)
-        if b'Not logged in to ' in out:
+        try:
+            current = store.get(self.registry_url)
+        except CredentialsNotFound:
+            # get raises and exception on not found.
+            self.log("Credentials for %s not present, doing nothing." % (self.registry_url))
             self.results['changed'] = False
-        elif b'Removing login credentials for ' in out:
-            self.results['changed'] = True
-        else:
-            self.client.module.warn('Unable to determine whether logout was successful.')
 
-        # Adding output to actions, so that user can inspect what was actually returned
-        self.results['actions'].append(to_text(out))
+            return
 
-    def config_file_exists(self, path):
-        if os.path.exists(path):
-            self.log("Configuration file %s exists" % (path))
-            return True
-        self.log("Configuration file %s not found." % (path))
-        return False
+        store.erase(self.registry_url)
+        self.results['changed'] = True
 
-    def create_config_file(self, path):
+    def update_credentials(self):
         '''
-        Create a config file with a JSON blob containing an auths key.
+        If the authorization is not stored attempt to store authorization values via
+        the appropriate credential helper or to the config file.
 
         :return: None
         '''
 
-        self.log("Creating docker config file %s" % (path))
-        config_path_dir = os.path.dirname(path)
-        if not os.path.exists(config_path_dir):
-            try:
-                os.makedirs(config_path_dir)
-            except Exception as exc:
-                self.fail("Error: failed to create %s - %s" % (config_path_dir, str(exc)))
-        self.write_config(path, dict(auths=dict()))
-
-    def write_config(self, path, config):
-        try:
-            json.dump(config, open(path, "w"), indent=5, sort_keys=True)
-        except Exception as exc:
-            self.fail("Error: failed to write config to %s - %s" % (path, str(exc)))
-
-    def update_config_file(self):
-        '''
-        If the authorization not stored in the config file or reauthorize is True,
-        update the config file with the new authorization.
-
-        :return: None
-        '''
-
-        path = self.config_path
-        if not self.config_file_exists(path):
-            self.create_config_file(path)
+        # Check to see if credentials already exist.
+        store = self.client.get_credential_store_instance(self.registry_url, self.config_path)
 
         try:
-            # read the existing config
-            config = json.load(open(path, "r"))
-        except ValueError:
-            self.log("Error reading config from %s" % (path))
-            config = dict()
+            current = store.get(self.registry_url)
+        except CredentialsNotFound:
+            # get raises and exception on not found.
+            current = dict(
+                Username='',
+                Secret=''
+            )
 
-        if not config.get('auths'):
-            self.log("Adding auths dict to config.")
-            config['auths'] = dict()
-
-        if not config['auths'].get(self.registry_url):
-            self.log("Adding registry_url %s to auths." % (self.registry_url))
-            config['auths'][self.registry_url] = dict()
-
-        b64auth = base64.b64encode(
-            to_bytes(self.username) + b':' + to_bytes(self.password)
-        )
-        auth = to_text(b64auth)
-
-        encoded_credentials = dict(
-            auth=auth,
-            email=self.email
-        )
-
-        if config['auths'][self.registry_url] != encoded_credentials or self.reauthorize:
-            # Update the config file with the new authorization
-            config['auths'][self.registry_url] = encoded_credentials
-            self.log("Updating config file %s with new authorization for %s" % (path, self.registry_url))
-            self.results['actions'].append("Updated config file %s with new authorization for %s" % (
-                path, self.registry_url))
+        if current['Username'] != self.username or current['Secret'] != self.password or self.reauthorize:
+            store.store(self.registry_url, self.username, self.password)
+            self.log("Writing credentials to configured helper %s for %s" % (store.program, self.registry_url))
+            self.results['actions'].append("Wrote credentials to configured helper %s for %s" % (
+                store.program, self.registry_url))
             self.results['changed'] = True
-            self.write_config(path, config)
 
 
 def main():
