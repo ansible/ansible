@@ -145,7 +145,7 @@ def get_current_attr_value(module, filename, stanza, attr):
         module.fail_json(msg=msg, rc=rc, stdout=stdout, stderr=stderr)
     # Strip off whitespace and double-quotation marks that are sometimes added
     lssec_out = stdout.splitlines()[1].split(':')[1].strip('\\\"\n ')
-    return lssec_out
+    return str(lssec_out)
 
 
 def do_stanza(module, filename, stanza, attrs, state):
@@ -155,6 +155,7 @@ def do_stanza(module, filename, stanza, attrs, state):
     changed = 0
 
     for attr, tgt_value in attrs.items():
+        tgt_value = str(tgt_value)  # tgt_value needs to be a string for comparisons later
         if state == 'absent':
             # 'absent' sets all of the given attrs to None, regardless of given value
             tgt_value = ''
