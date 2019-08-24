@@ -38,4 +38,6 @@ class InstalledSource(SourceProvider):
             paths.extend([os.path.join(rel_root, file_name) for file_name in file_names
                           if not os.path.splitext(file_name)[1] in kill_extensions])
 
+            # NOTE: directory symlinks are ignored as there should be no directory symlinks for an install
+
         return paths
