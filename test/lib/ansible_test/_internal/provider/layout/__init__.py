@@ -25,17 +25,27 @@ class Layout:
                  ):  # type: (...) -> None
         self.root = root
 
-        self.__paths = paths
-        self.__tree = paths_to_tree(paths)
+        self.__paths = paths  # contains both file paths and symlinked directory paths (ending with os.path.sep)
+        self.__files = [path for path in paths if not path.endswith(os.path.sep)]  # contains only file paths
+        self.__paths_tree = paths_to_tree(self.__paths)
+        self.__files_tree = paths_to_tree(self.__files)
 
-    def all_files(self):  # type: () -> t.List[str]
+    def all_files(self, include_symlinked_directories=False):  # type: (bool) -> t.List[str]
         """Return a list of all file paths."""
-        return self.__paths
+        if include_symlinked_directories:
+            return self.__paths
 
-    def walk_files(self, directory):  # type: (str) -> t.List[str]
+        return self.__files
+
+    def walk_files(self, directory, include_symlinked_directories=False):  # type: (str, bool) -> t.List[str]
         """Return a list of file paths found recursively under the given directory."""
+        if include_symlinked_directories:
+            tree = self.__paths_tree
+        else:
+            tree = self.__files_tree
+
         parts = directory.rstrip(os.sep).split(os.sep)
-        item = get_tree_item(self.__tree, parts)
+        item = get_tree_item(tree, parts)
 
         if not item:
             return []
@@ -54,13 +64,13 @@ class Layout:
     def get_dirs(self, directory):  # type: (str) -> t.List[str]
         """Return a list directory paths found directly under the given directory."""
         parts = directory.rstrip(os.sep).split(os.sep)
-        item = get_tree_item(self.__tree, parts)
+        item = get_tree_item(self.__files_tree, parts)
         return [os.path.join(directory, key) for key in item[0].keys()] if item else []
 
     def get_files(self, directory):  # type: (str) -> t.List[str]
         """Return a list of file paths found directly under the given directory."""
         parts = directory.rstrip(os.sep).split(os.sep)
-        item = get_tree_item(self.__tree, parts)
+        item = get_tree_item(self.__files_tree, parts)
         return item[1] if item else []
 
 

@@ -10,6 +10,10 @@ from ...git import (
     Git,
 )
 
+from ...util import (
+    to_bytes,
+)
+
 from . import (
     SourceProvider,
 )
@@ -29,5 +33,8 @@ class GitSource(SourceProvider):
         paths = git.get_file_names(['--cached', '--others', '--exclude-standard'])
         deleted_paths = git.get_file_names(['--deleted'])
         paths = sorted(set(paths) - set(deleted_paths))
+
+        # directory symlinks are reported by git as regular files but they need to be treated as directories
+        paths = [path + os.path.sep if os.path.isdir(to_bytes(path)) else path for path in paths]
 
         return paths

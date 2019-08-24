@@ -58,7 +58,9 @@ def command_coverage_combine(args):
     groups = {}
 
     if args.all or args.stub:
-        sources = sorted(os.path.abspath(target.path) for target in walk_compile_targets())
+        # excludes symlinks of regular files to avoid reporting on the same file multiple times
+        # in the future it would be nice to merge any coverage for symlinks into the real files
+        sources = sorted(os.path.abspath(target.path) for target in walk_compile_targets(include_symlinks=False))
     else:
         sources = []
 

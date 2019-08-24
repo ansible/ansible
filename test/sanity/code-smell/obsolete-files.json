@@ -1,4 +1,5 @@
 {
+    "include_symlinks": true,
     "prefixes": [
         "test/runner/",
         "test/sanity/ansible-doc/",
