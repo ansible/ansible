@@ -32,14 +32,23 @@
         - meta: refresh_inventory
         - debug: var=groups
 
+        - name: 'generate expected group name based off the db parameter groups'
+          vars:
+            parameter_group_name: '{{ setup_instance.db_parameter_groups[0].db_parameter_group_name }}'
+          set_fact:
+            parameter_group_key: 'rds_parameter_group_{{ parameter_group_name | replace(".", "_") }}'
+
         - name: assert the keyed groups from constructed config were added to inventory
           assert:
             that:
               # There are 6 groups: all, ungrouped, aws_rds, tag keyed group, engine keyed group, parameter group keyed group
               - "groups | length == 6"
-              - groups.tag_workload_type_other
-              - groups.rds_mariadb
-              - groups.rds_parameter_group_default_mariadb10_3
+              - '"all" in groups'
+              - '"ungrouped" in groups'
+              - '"aws_rds" in groups'
+              - '"tag_workload_type_other" in groups'
+              - '"rds_mariadb" in groups'
+              - 'parameter_group_key in groups'
 
       always:
 
