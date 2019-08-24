@@ -6,12 +6,12 @@ import os
 import subprocess
 import pytest
 
-from ..._internal.util import (
+from ansible_test._internal.util import (
     to_text,
     to_bytes,
 )
 
-from ..._internal.diff import (
+from ansible_test._internal.diff import (
     parse_diff,
     FileDiff,
 )
