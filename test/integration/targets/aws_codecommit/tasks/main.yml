@@ -17,8 +17,8 @@
   - assert:
       that:
         - output is changed
-        - output['repository_metadata'].repository_name == '{{ resource_prefix }}_repo'
-        - output['repository_metadata'].repository_description == 'original comment'
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
   # ============================================================
   - name: Create a repository (CHECK MODE)
     aws_codecommit:
