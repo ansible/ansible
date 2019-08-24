@@ -1,14 +1,12 @@
 ---
-- name: set up aws connection info
-  set_fact:
-    aws_connection_info: &aws_connection_info
+- name: set up lambda as elb_target
+
+  module_defaults:
+    group/aws:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
+      security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
-  no_log: yes
-
-- name: set up lambda as elb_target
 
   block:
     - name: create zip to deploy lambda code
@@ -19,7 +17,6 @@
 
     - name: "create or update service-role for lambda"
       iam_role:
-        <<: *aws_connection_info
         name: ansible_lambda_execution
         assume_role_policy_document: "{{ lookup('file', role_path + '/files/assume-role.json') }}"
         managed_policy:
@@ -28,11 +25,10 @@
 
     - name: when it is to fast, the role is not usable.
       pause:
-        minutes: 1
+        seconds: 10
 
     - name: deploy lambda.zip to ansible_lambda_target function
       lambda:
-        <<: *aws_connection_info
         name: "ansible_lambda_target"
         state: present
         zip_file: "/tmp/lambda.zip"
@@ -47,7 +43,6 @@
 
     - name: create empty target group
       elb_target_group:
-        <<: *aws_connection_info
         name: ansible-lambda-targetgroup
         target_type: lambda
         state: present
@@ -61,7 +56,6 @@
 
     - name: allow elb to invoke the lambda function
       lambda_policy:
-        <<: *aws_connection_info
         state: present
         function_name: ansible_lambda_target
         version: "{{ lambda_function.configuration.version }}"
@@ -72,7 +66,6 @@
 
     - name: add lambda to elb target
       elb_target_group:
-        <<: *aws_connection_info
         name: ansible-lambda-targetgroup
         target_type: lambda
         state: present
@@ -87,7 +80,6 @@
 
     - name: re-add lambda to elb target (idempotency)
       elb_target_group:
-        <<: *aws_connection_info
         name: ansible-lambda-targetgroup
         target_type: lambda
         state: present
@@ -102,7 +94,6 @@
 
     - name: remove lambda target from target group
       elb_target_group:
-        <<: *aws_connection_info
         name: ansible-lambda-targetgroup
         target_type: lambda
         state: absent
@@ -117,19 +108,16 @@
   always:
     - name: remove elb target group
       elb_target_group:
-        <<: *aws_connection_info
         name: ansible-lambda-targetgroup
         target_type: lambda
         state: absent
 
     - name: remove lambda function
       lambda:
-        <<: *aws_connection_info
         name: "ansible_lambda_target"
         state: absent
 
     - name: remove iam role for lambda
       iam_role:
-        <<: *aws_connection_info
         name: ansible_lambda_execution
         state: absent
