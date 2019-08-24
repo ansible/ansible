@@ -14,6 +14,14 @@
     - name:
       debug: msg="********** Setting up elb_target_info test dependencies **********"
 
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+    - set_fact:
+        ec2_ami_image: '{{ ec2_amis.images[0].image_id }}'
 
     # ============================================================
 
@@ -129,7 +137,7 @@
       ec2:
         group_id: "{{ sg.group_id }}"
         instance_type: t2.micro
-        image: "{{ ec2_ami_image[aws_region] }}"
+        image: "{{ ec2_ami_image }}"
         vpc_subnet_id: "{{ subnet_2.subnet.id }}"
         instance_tags:
           Name: "{{ resource_prefix }}-inst"
@@ -354,7 +362,7 @@
       ec2:
         group_id: "{{ sg.group_id }}"
         instance_type: t2.micro
-        image: "{{ ec2_ami_image[aws_region] }}"
+        image: "{{ ec2_ami_image }}"
         vpc_subnet_id: "{{ subnet_2.subnet.id }}"
         instance_tags:
           Name: "{{ resource_prefix }}-inst"
