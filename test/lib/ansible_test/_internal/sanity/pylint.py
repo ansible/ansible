@@ -186,13 +186,13 @@ class PylintTest(SanitySingleVersion):
             python,  # type: str
     ):  # type: (...) -> t.List[t.Dict[str, str]]
         """Run pylint using the config specified by the context on the specified paths."""
-        rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0])
+        rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0] + '.cfg')
 
         if not os.path.exists(rcfile):
             if data_context().content.collection:
-                rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', 'collection')
+                rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', 'collection.cfg')
             else:
-                rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', 'default')
+                rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', 'default.cfg')
 
         parser = ConfigParser()
         parser.read(rcfile)
