@@ -172,18 +172,19 @@ def walk_units_targets():
     return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
 
-def walk_compile_targets():
+def walk_compile_targets(include_symlinks=True):
     """
+    :type include_symlinks: bool
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',))
+    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
 
 
 def walk_sanity_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path=data_context().content.module_path)
+    return walk_test_targets(module_path=data_context().content.module_path, include_symlinks=True, include_symlinked_directories=True)
 
 
 def walk_posix_integration_targets(include_hidden=False):
@@ -245,19 +246,21 @@ def load_integration_prefixes():
     return prefixes
 
 
-def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None, extra_dirs=None):
+def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None, extra_dirs=None, include_symlinks=False, include_symlinked_directories=False):
     """
     :type path: str | None
     :type module_path: str | None
     :type extensions: tuple[str] | None
     :type prefix: str | None
     :type extra_dirs: tuple[str] | None
+    :type include_symlinks: bool
+    :type include_symlinked_directories: bool
     :rtype: collections.Iterable[TestTarget]
     """
     if path:
-        file_paths = data_context().content.walk_files(path)
+        file_paths = data_context().content.walk_files(path, include_symlinked_directories=include_symlinked_directories)
     else:
-        file_paths = data_context().content.all_files()
+        file_paths = data_context().content.all_files(include_symlinked_directories=include_symlinked_directories)
 
     for file_path in file_paths:
         name, ext = os.path.splitext(os.path.basename(file_path))
@@ -268,12 +271,12 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
         if prefix and not name.startswith(prefix):
             continue
 
-        if os.path.islink(to_bytes(file_path)):
-            # special case to allow a symlink of ansible_release.py -> ../release.py
-            if file_path != 'lib/ansible/module_utils/ansible_release.py':
-                continue
+        symlink = os.path.islink(to_bytes(file_path.rstrip(os.path.sep)))
 
-        yield TestTarget(file_path, module_path, prefix, path)
+        if symlink and not include_symlinks:
+            continue
+
+        yield TestTarget(file_path, module_path, prefix, path, symlink)
 
     file_paths = []
 
@@ -283,10 +286,12 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
                 file_paths.append(file_path)
 
     for file_path in file_paths:
-        if os.path.islink(to_bytes(file_path)):
+        symlink = os.path.islink(to_bytes(file_path.rstrip(os.path.sep)))
+
+        if symlink and not include_symlinks:
             continue
 
-        yield TestTarget(file_path, module_path, prefix, path)
+        yield TestTarget(file_path, module_path, prefix, path, symlink)
 
 
 def analyze_integration_target_dependencies(integration_targets):
@@ -315,7 +320,7 @@ def analyze_integration_target_dependencies(integration_targets):
     # this use case is supported, but discouraged
     for target in integration_targets:
         for path in data_context().content.walk_files(target.path):
-            if not os.path.islink(path):
+            if not os.path.islink(to_bytes(path.rstrip(os.path.sep))):
                 continue
 
             real_link_path = os.path.realpath(path)
@@ -442,18 +447,23 @@ class DirectoryTarget(CompletionTarget):
 
 class TestTarget(CompletionTarget):
     """Generic test target."""
-    def __init__(self, path, module_path, module_prefix, base_path):
+    def __init__(self, path, module_path, module_prefix, base_path, symlink=None):
         """
         :type path: str
         :type module_path: str | None
         :type module_prefix: str | None
         :type base_path: str
+        :type symlink: bool | None
         """
         super(TestTarget, self).__init__()
+
+        if symlink is None:
+            symlink = os.path.islink(to_bytes(path.rstrip(os.path.sep)))
 
         self.name = path
         self.path = path
         self.base_path = base_path + '/' if base_path else None
+        self.symlink = symlink
 
         name, ext = os.path.splitext(os.path.basename(self.path))
 
