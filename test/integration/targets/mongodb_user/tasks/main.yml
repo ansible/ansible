@@ -109,6 +109,25 @@
     that:
       - mongodb_admin_user_created.changed == False
 
+- name: Run admin user creation again with forced pw update
+  mongodb_user:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    login_database: admin
+    login_port: 3001
+    replica_set:  "{{ current_replicaset }}"
+    database: admin
+    name: "{{ mongodb_admin_user }}"
+    password: "{{ mongodb_admin_password }}"
+    roles: root
+    state: present
+    update_password: always
+  register: mongodb_admin_user_created
+
+- assert:
+    that:
+      - mongodb_admin_user_created.changed == True
+
 - name: Run user creation
   mongodb_user:
     login_user: "{{ mongodb_admin_user }}"
@@ -157,6 +176,51 @@
       - "'readWrite' in test_db_users.stdout"
       - "'dbAdmin' in test_db_users.stdout"
       - "'userAdmin' in test_db_users.stdout"
+
+- name: Drop users in test db
+  mongodb_user:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    login_database: admin
+    login_port: 3001
+    replica_set:  "{{ current_replicaset }}"
+    database: "{{ item.database }}"
+    name: "{{ item.name }}"
+    state: absent
+  with_items: "{{ mongodb_user_list }}"
+  when: item.database == "test"
+
+- name: Get test db users
+  shell: mongo test --authenticationDatabase admin --port 3001 --username "{{ mongodb_admin_user }}" --password "{{ mongodb_admin_password }}" --eval "printjson(db.getUsers())"
+  register: test_db_users
+
+- name: Assert that roles do not exist in test db output
+  assert:
+    that:
+      - "'user1' not in test_db_users.stdout"
+      - "'user2' not in test_db_users.stdout"
+      - "'user3' not in test_db_users.stdout"
+      - "'user4' not in test_db_users.stdout"
+
+- name: Create user with multiple roles in test db
+  mongodb_user:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    login_database: admin
+    login_port: 3001
+    replica_set:  "{{ current_replicaset }}"
+    database: test
+    name: test_multiple_roles
+    password: secret
+    roles: readWrite,dbAdmin,userAdmin
+    state: present
+
+- name: Get test db users
+  shell: mongo test --authenticationDatabase admin --port 3001 --username "{{ mongodb_admin_user }}" --password "{{ mongodb_admin_password }}" --eval "printjson(db.getUsers())"
+  register: test_db_users
+
+- debug:
+    var: test_db_users
 
 # Clean up
 - include_tasks: mongod_teardown.yml
