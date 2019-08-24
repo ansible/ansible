@@ -1,0 +1,21 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather vultr region info in check mode
+  vultr_region_info:
+  check_mode: yes
+  register: result
+
+- name: verify test gather vultr region info in check mode
+  assert:
+    that:
+    - result.vultr_region_info|selectattr('name','equalto','Atlanta') | list | count == 1
+
+- name: test gather vultr region info
+  vultr_region_info:
+  register: result
+
+- name: verify test gather vultr region info
+  assert:
+    that:
+    - result.vultr_region_info|selectattr('name','equalto','Atlanta') | list | count == 1

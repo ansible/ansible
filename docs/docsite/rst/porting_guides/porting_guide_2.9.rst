@@ -94,6 +94,20 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * purefb_facts use :ref:`purefb_info <purefb_info_module>` instead.
 
+* vultr_dns_domain_facts use :ref:`vultr_dns_domain_info <vultr_dns_domain_info_module>` instead.
+
+* vultr_firewall_group_facts use :ref:`vultr_firewall_group_info <vultr_firewall_group_info_module>` instead.
+
+* vultr_network_facts use :ref:`vultr_network_info <vultr_network_info_module>` instead.
+
+* vultr_plan_facts use :ref:`vultr_plan_info <vultr_plan_info_module>` instead.
+
+* vultr_region_facts use :ref:`vultr_region_info <vultr_region_info_module>` instead.
+
+* vultr_server_facts use :ref:`vultr_server_info <vultr_server_info_module>` instead.
+
+* vultr_startup_script_facts use :ref:`vultr_startup_script_info <vultr_startup_script_info_module>` instead.
+
 * vyos_interface use :ref:`vyos_interfaces <vyos_interfaces_module>` instead.
 
 * vyos_l3_interface use :ref:`vyos_l3_interfaces <vyos_l3_interfaces_module>` instead.
