@@ -19,11 +19,11 @@ recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inven
 recursive-include lib/ansible/config *.yml
 recursive-include licenses *.txt
 recursive-include packaging *
+recursive-include test/ansible_test *.py Makefile
 recursive-include test/cache .keep
 recursive-include test/integration *
 recursive-include test/lib/ansible_test/config *.template
 recursive-include test/lib/ansible_test/_data *
-recursive-include test/lib/ansible_test/tests *
 recursive-exclude test/lib/ansible_test *.pyc *.pyo *.bak *.orig *~ *.rej
 recursive-include test/results .keep
 recursive-include test/sanity *.json *.py *.txt
