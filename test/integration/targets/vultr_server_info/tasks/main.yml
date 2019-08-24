@@ -1,0 +1,66 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup ensure VM is absent
+  vultr_server:
+    name: "{{ vultr_server_name }}"
+    state: absent
+  register: result
+
+# Servers can only be destroyed 5 min after creation
+- name: wait for 5 min until VM is absent
+  wait_for:
+  when: result is changed
+
+- name: test gather vultr server info - empty resources
+  vultr_server_info:
+  register: result
+- name: verify test gather vultr server info - empty resources
+  assert:
+    that:
+    - result.vultr_server_info | selectattr('name','equalto',vultr_server_name) | list | count == 0
+
+- name: setup firewall group
+  vultr_firewall_group:
+    name: test_vultr_server_info
+
+- name: setup create the server
+  vultr_server:
+    name: '{{ vultr_server_name }}'
+    os: '{{ vultr_server_os }}'
+    plan: '{{ vultr_server_plan }}'
+    region: '{{ vultr_server_region }}'
+    firewall_group: test_vultr_server_info
+
+- name: test gather vultr server info in check mode
+  vultr_server_info:
+  check_mode: yes
+  register: result
+
+- name: verify test gather vultr server info in check mode
+  assert:
+    that:
+    - result.vultr_server_info|selectattr('name','equalto',vultr_server_name) | list | count == 1
+
+- name: test gather vultr server info
+  vultr_server_info:
+  register: result
+
+- name: verify test gather vultr server info
+  assert:
+    that:
+    - result.vultr_server_info|selectattr('name','equalto',vultr_server_name) | list | count == 1
+
+- name: Pause for 5 min before deleting the VM
+  pause:
+    minutes: 5
+
+- name: cleanup the server
+  vultr_server:
+    name: '{{ vultr_server_name }}'
+    state: absent
+
+- name: cleanup firewall group
+  vultr_firewall_group:
+    name: test_vultr_server_info
+    state: absent
