@@ -617,6 +617,9 @@ class PathMapper:
 
             return minimal
 
+        if path.startswith('test/ansible_test/'):
+            return minimal  # these tests are not invoked from ansible-test
+
         if path.startswith('test/cache/'):
             return minimal
 
