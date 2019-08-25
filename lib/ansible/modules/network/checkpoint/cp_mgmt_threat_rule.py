@@ -105,7 +105,7 @@ options:
         description:
           - Packet capture.
         type: bool
-      comments:
+  comments:
     description:
       - Comments string.
     type: str

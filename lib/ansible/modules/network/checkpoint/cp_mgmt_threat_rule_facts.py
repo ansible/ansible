@@ -102,7 +102,7 @@ options:
             description:
               - Whether to match on a negated cell.
             type: bool
-          limit:
+  limit:
     description:
       - No more than that many results will be returned.
     type: int
