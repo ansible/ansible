@@ -239,15 +239,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if environment is None or len(environment) == 0:
                     continue
 
-                # Ensure any env values that are dicts are converted to JSON
-                # https://github.com/ansible/ansible/issues/60956
-                for env_key, env_val in environment.items():
-                    if isinstance(env_val, dict) or isinstance(env_val, list):
-                        environment[env_key] = json.dumps(env_val)
-
                 temp_environment = self._templar.template(environment)
                 if not isinstance(temp_environment, dict):
                     raise AnsibleError("environment must be a dictionary, received %s (%s)" % (temp_environment, type(temp_environment)))
+
+                # Ensure any env values that are dicts are converted to JSON
+                # https://github.com/ansible/ansible/issues/60956
+                for env_key, env_val in temp_environment.items():
+                    if isinstance(env_val, dict) or isinstance(env_val, list):
+                        temp_environment[env_key] = json.dumps(env_val)
+
                 # very deliberately using update here instead of combine_vars, as
                 # these environment settings should not need to merge sub-dicts
                 final_environment.update(temp_environment)
