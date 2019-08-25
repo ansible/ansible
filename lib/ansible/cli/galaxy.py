@@ -308,7 +308,7 @@ class GalaxyCLI(CLI):
                         'key': key,
                     }
                 ],
-                'environment': [
+                'env': [
                     {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
                 ],
                 'required': required,
