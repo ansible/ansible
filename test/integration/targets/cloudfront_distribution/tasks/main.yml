@@ -408,6 +408,11 @@
 
   always:
   # TEARDOWN STARTS HERE
+  - name: delete the s3 bucket
+    aws_s3:
+      bucket: "{{ resource_prefix }}-bucket"
+      mode: delete
+
   - name: clean up cloudfront distribution
     cloudfront_distribution:
       distribution_id: "{{ distribution_id }}"
