@@ -139,7 +139,7 @@ EXAMPLES = """
     layer: New Layer 1
     name: First threat rule
     position: top
-    protected_scope: ['All_Internet']
+    protected_scope: All_Internet
     state: present
     track: None
 
@@ -149,7 +149,7 @@ EXAMPLES = """
     comments: commnet for the first rule
     install_on: Policy Targets
     layer: New Layer 1
-    protected_scope: ['All_Internet']
+    protected_scope: All_Internet
     rule_number: 2
     state: present
 
