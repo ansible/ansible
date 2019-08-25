@@ -34,6 +34,11 @@ options:
       - The rule's display name.
     type: str
     required: yes
+  group:
+    description:
+      - The group name for the rule.
+    version_added: '2.9'
+    type: str
   direction:
     description:
       - Whether this rule is for inbound or outbound traffic.
@@ -126,6 +131,17 @@ EXAMPLES = r'''
     direction: in
     protocol: tcp
     profiles: private
+    state: present
+    enabled: yes
+
+- name: Firewall rule to be created for application group
+  win_firewall_rule:
+    name: SMTP
+    group: application
+    localport: 25
+    action: allow
+    direction: in
+    protocol: tcp
     state: present
     enabled: yes
 '''
