@@ -1094,11 +1094,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         if shebang is None:
             shebang = u'#!/usr/bin/python'
 
-        # Enclose the parts of the interpreter in quotes because we're
-        # substituting it into the template as a Python string
-        interpreter_parts = interpreter.split(u' ')
-        interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
-
         # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
         rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
 
@@ -1137,7 +1132,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             ansible_module=module_name,
             params=python_repred_params,
             shebang=shebang,
-            interpreter=interpreter,
             coding=ENCODING_STRING,
             year=now.year,
             month=now.month,
