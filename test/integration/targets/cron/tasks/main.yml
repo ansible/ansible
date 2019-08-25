@@ -4,7 +4,6 @@
       files:
         - 'cron.{{ ansible_distribution | lower }}.yml'
         - 'cron.{{ ansible_distribution_file_variety | lower }}.yml'
-        - cron.defaults.yml
       paths:
         - '../defaults/'
 
@@ -38,22 +37,18 @@
           register: faketime_package_installed
           until: faketime_package_installed is success
 
-        - name: 'Cron unit: fetch path'
-          command: 'systemctl show -p FragmentPath {{ cron_service }}.service'
-          changed_when: false
-          register: cron_unit_path
-
-        - name: 'Cron unit: fetch ExecStart property'
-          command: "grep ExecStart {{ cron_unit_path.stdout.split('=', 1)[1] }}"
-          changed_when: false
-          register: cron_exec_start
+        - name: Find libfaketime path
+          shell: '{{ list_pkg_files }} {{ faketime_pkg }} | grep -F libfaketime.so.1'
+          args:
+            warn: false
+          register: libfaketime_path
 
         - name: Use faketime with cron service
           copy:
             content: |-
               [Service]
-              ExecStart=
-              ExecStart=/usr/bin/faketime -f '+0y x10' {{ cron_exec_start.stdout.split('=', 1)[1] }}
+              Environment=LD_PRELOAD={{ libfaketime_path.stdout_lines[0] }}
+              Environment="FAKETIME=+0y x10"
               Environment=RANDOM_DELAY=0
             dest: '/etc/systemd/system/{{ cron_service }}.service.d/faketime.conf'
             owner: root
