@@ -84,3 +84,50 @@
     that:
       - not (statistics_results is changed)
   when: vcsim is not defined
+
+- name: Configure statistics intervall to level 2 for later check
+  vmware_vcenter_statistics:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    interval_past_day:
+      enabled: true
+      level: 2
+    interval_past_week:
+      enabled: true
+      level: 2
+    interval_past_month:
+      enabled: true
+      level: 2
+    interval_past_year:
+      enabled: true
+      level: 2
+    validate_certs: no
+  when: vcsim is not defined
+
+- name: Increase daily and weekly while decrease monthly and yearly
+  vmware_vcenter_statistics:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    interval_past_day:
+      enabled: true
+      level: 3
+    interval_past_week:
+      enabled: true
+      level: 3
+    interval_past_month:
+      enabled: true
+      level: 1
+    interval_past_year:
+      enabled: true
+      level: 1
+    validate_certs: no
+  register: statistics_results_mixed_increase_decrease
+  when: vcsim is not defined
+
+- name: Ensure statistics were configured
+  assert:
+    that:
+      - statistics_results_mixed_increase_decrease is changed
+  when: vcsim is not defined
