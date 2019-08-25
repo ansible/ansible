@@ -164,7 +164,7 @@ options:
         type: bool
       type:
         description:
-          - "Log", "Extended Log", "Detailed  Log", "None".
+          - Can be one of the following, "Log", "Extended Log", "Detailed  Log", "None".
         type: str
   user_check:
     description:
