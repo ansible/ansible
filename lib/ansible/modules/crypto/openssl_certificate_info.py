@@ -238,7 +238,6 @@ valid_at:
                  or not.
     returned: success
     type: dict
-<<<<<<< HEAD
 subject_key_identifier:
     description:
         - The certificate's subject key identifier.
