@@ -97,13 +97,13 @@ EXAMPLES = """
     ignore_warnings: true
     name: My_Indicator
     observables:
-    _ confidence: medium
+      confidence: medium
       mail_to: someone@somewhere.com
       name: My_Observable
       product: AV
       severity: low
     profile_overrides:
-    _ action: detect
+      action: detect
       profile: My_Profile
 
 - name: set-threat-indicator
