@@ -672,7 +672,10 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
-    properties['metrics_collection'] = autoscaling_group.get('EnabledMetrics')
+    metrics = autoscaling_group.get('EnabledMetrics')
+    if metrics:
+        metrics.sort(key=lambda x: x["Metric"])
+    properties['metrics_collection'] = metrics
 
     if properties['target_group_arns']:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
