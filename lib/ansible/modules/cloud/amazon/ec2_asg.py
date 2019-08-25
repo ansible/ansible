@@ -1032,6 +1032,10 @@ def create_autoscaling_group(connection):
         if len(set_tags) > 0:
             have_tags = as_group.get('Tags')
             want_tags = asg_tags
+            if have_tags:
+                have_tags.sort(key=lambda x: x["Key"])
+            if want_tags:
+                want_tags.sort(key=lambda x: x["Key"])
             dead_tags = []
             have_tag_keyvals = [x['Key'] for x in have_tags]
             want_tag_keyvals = [x['Key'] for x in want_tags]
