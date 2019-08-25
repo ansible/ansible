@@ -203,7 +203,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     else:
         cmd.append("--host=%s" % pipes.quote(host))
         cmd.append("--port=%i" % port)
-    if ( encoding is not None) and ( encoding != "" ):
+    if (encoding is not None) and (encoding != ""):
         cmd.append("--default-character-set=%s" % pipes.quote(encoding))
     if not all_databases:
         cmd.append("-D")
