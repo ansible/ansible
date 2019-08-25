@@ -80,7 +80,7 @@ options:
         description:
           - Format, 'YYYY-MM-DD', 'YYYY-mm-ddThh:mm:ss'.
         type: str
-      details_level:
+  details_level:
     description:
       - The level of detail for some of the fields in the response can vary from showing only the UID value of
         the object to a fully detailed representation of the object.
@@ -133,7 +133,7 @@ options:
             description:
               - Whether to match on a negated cell.
             type: bool
-          limit:
+  limit:
     description:
       - No more than that many results will be returned.
     type: int
