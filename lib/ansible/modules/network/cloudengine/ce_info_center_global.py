@@ -952,25 +952,28 @@ class InfoCenterGlobal(object):
             cmd += " ipv6 %s" % self.server_ip
         if self.server_domain:
             cmd += " domain %s" % self.server_domain
-        if self.vrf_name:
-            if self.vrf_name != "_public_":
-                cmd += " vpn-instance %s" % self.vrf_name
-        if self.level:
-            cmd += " level %s" % self.level
-        if self.server_port:
-            cmd += " port %s" % self.server_port
-        if self.facility:
-            cmd += " facility %s" % self.facility
         if self.channel_id:
             cmd += " channel %s" % self.channel_id
         if self.channel_name:
             cmd += " channel %s" % self.channel_name
-        if self.timestamp:
-            cmd += " %s" % self.timestamp
-        if self.transport_mode:
-            cmd += " transport %s" % self.transport_mode
+        if self.vrf_name:
+            if self.vrf_name != "_public_":
+                cmd += " vpn-instance %s" % self.vrf_name
         if self.source_ip:
             cmd += " source-ip %s" % self.source_ip
+        if self.facility:
+            cmd += " facility %s" % self.facility
+        if self.server_port:
+            cmd += " port %s" % self.server_port
+        if self.level:
+            cmd += " level %s" % self.level
+        if self.timestamp:
+            if self.timestamp == "localtime":
+                cmd += " local-time"
+            else:
+                cmd += " utc"
+        if self.transport_mode:
+            cmd += " transport %s" % self.transport_mode
         if self.ssl_policy_name:
             cmd += " ssl-policy %s" % self.ssl_policy_name
         self.updates_cmd.append(cmd)
@@ -1025,24 +1028,6 @@ class InfoCenterGlobal(object):
         if self.vrf_name:
             if self.vrf_name != "_public_":
                 cmd += " vpn-instance %s" % self.vrf_name
-        if self.level:
-            cmd += " level %s" % self.level
-        if self.server_port:
-            cmd += " port %s" % self.server_port
-        if self.facility:
-            cmd += " facility %s" % self.facility
-        if self.channel_id:
-            cmd += " channel %s" % self.channel_id
-        if self.channel_name:
-            cmd += " channel %s" % self.channel_name
-        if self.timestamp:
-            cmd += " %s" % self.timestamp
-        if self.transport_mode:
-            cmd += " transport %s" % self.transport_mode
-        if self.source_ip:
-            cmd += " source-ip %s" % self.source_ip
-        if self.ssl_policy_name:
-            cmd += " ssl-policy %s" % self.ssl_policy_name
         self.updates_cmd.append(cmd)
         self.changed = True
 
@@ -1217,13 +1202,13 @@ class InfoCenterGlobal(object):
 
         if self.state == "present":
             if self.packet_priority:
-                if self.packet_priority != "0" and self.cur_global_info["packetPriority"] != self.packet_priority:
+                if self.cur_global_info["packetPriority"] != self.packet_priority:
                     cmd = "info-center syslog packet-priority %s" % self.packet_priority
                     self.updates_cmd.append(cmd)
                     self.changed = True
         if self.state == "absent":
             if self.packet_priority:
-                if self.packet_priority != "0" and self.cur_global_info["packetPriority"] == self.packet_priority:
+                if self.cur_global_info["packetPriority"] == self.packet_priority:
                     cmd = "undo info-center syslog packet-priority %s" % self.packet_priority
                     self.updates_cmd.append(cmd)
                     self.changed = True
@@ -1567,6 +1552,8 @@ class InfoCenterGlobal(object):
             if self.server_domain_info:
                 self.end_state["server_domain_info"] = self.server_domain_info[
                     "serverAddressInfos"]
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""
