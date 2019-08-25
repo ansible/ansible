@@ -70,7 +70,7 @@ options:
     suboptions:
       from_date:
         description:
-          - Format: 'YYYY-MM-DD', 'YYYY-mm-ddThh:mm:ss'.
+          - Format, 'YYYY-MM-DD', 'YYYY-mm-ddThh:mm:ss'.
         type: str
       target:
         description:
@@ -78,7 +78,7 @@ options:
         type: str
       to_date:
         description:
-          - Format: 'YYYY-MM-DD', 'YYYY-mm-ddThh:mm:ss'.
+          - Format, 'YYYY-MM-DD', 'YYYY-mm-ddThh:mm:ss'.
         type: str
       details_level:
     description:

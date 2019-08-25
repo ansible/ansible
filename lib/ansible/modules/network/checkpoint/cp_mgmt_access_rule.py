@@ -50,7 +50,7 @@ options:
     required: True
   action:
     description:
-      - "Accept", "Drop", "Ask", "Inform", "Reject", "User Auth", "Client Auth", "Apply Layer".
+      - Can be one of the following, 'Accept', 'Drop', 'Ask', 'Inform', 'Reject', 'User Auth', 'Client Auth', 'Apply Layer'.
     type: str
   action_settings:
     description:
