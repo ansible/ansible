@@ -3,11 +3,13 @@
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token | default(omit) }}"
+    cloudfront_distribution:
+      alias: "{{ cloudfront_alias | default(omit) }}"
+      viewer_certificate: "{{ cloudfront_viewer_cert | default(omit) }}"
   block:
 
   - name: create cloudfront distribution using defaults
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
       origins:
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
         id: "{{ cloudfront_hostname }}-origin.example.com"
@@ -15,10 +17,14 @@
         target_origin_id: "{{ cloudfront_hostname }}-origin.example.com"
       state: present
       purge_origins: yes
+    register: cf_distribution
+
+  - set_fact:
+      distribution_id: '{{ cf_distribution.id }}'
 
   - name: re-run cloudfront distribution with same defaults
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
       state: present
@@ -31,7 +37,7 @@
 
   - name: re-run cloudfront distribution using distribution id
     cloudfront_distribution:
-      distribution_id: "{{ cf_dist_no_update.id }}"
+      distribution_id: "{{ distribution_id }}"
       purge_origins: no
       state: present
     register: cf_dist_with_id
@@ -43,7 +49,7 @@
 
   - name: update origin http port
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
         custom_origin_config:
@@ -58,7 +64,7 @@
 
   - name: update restrictions
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       restrictions:
         geo_restriction:
           restriction_type: "whitelist"
@@ -78,7 +84,7 @@
 
   - name: update comment
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       comment: "{{ comment }}"
       state: present
     register: cf_comment
@@ -91,7 +97,7 @@
 
   - name: create second origin
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
         id: "{{ resource_prefix }}2.example.com"
@@ -109,7 +115,7 @@
 
   - name: re-run second origin
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
         custom_origin_config:
@@ -128,7 +134,7 @@
 
   - name: run with origins in reverse order
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
@@ -146,7 +152,7 @@
 
   - name: purge first origin
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       default_cache_behavior:
@@ -163,12 +169,11 @@
 
   - name: update default_root_object of existing distribution
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       default_root_object: index.php
       state: present
-      <<: *aws_connection_info
     register: cf_update_default_root_object
 
   - name: ensure origin was updated
@@ -179,11 +184,11 @@
 
   - name: add tags to existing distribution
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       tags:
-        Name: "{{ cloudfront_alias }}"
+        ATag: tag1
         Another: tag
       default_root_object: index.php
       state: present
@@ -197,38 +202,41 @@
 
   - name: delete distribution
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       enabled: no
       wait: yes
       state: absent
 
   - name: create distribution with tags
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
         id: "{{ resource_prefix }}2.example.com"
       tags:
-        Name: "{{ cloudfront_alias }}"
+        ATag: tag1
         Another: tag
       state: present
     register: cf_second_distribution
+
+  - set_fact:
+      distribution_id: '{{ cf_second_distribution.id }}'
 
   - name: ensure tags were set on creation
     assert:
       that:
         - cf_second_distribution.changed
         - cf_second_distribution.tags|length == 2
-        - "'Name' in cf_second_distribution.tags"
+        - "'ATag' in cf_second_distribution.tags"
+        - "'Another' in cf_second_distribution.tags"
 
   - name: re-run create distribution with same tags and purge_tags
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
         id: "{{ resource_prefix }}2.example.com"
       tags:
-        Name: "{{ cloudfront_alias }}"
+        ATag: tag1
         Another: tag
       purge_tags: yes
       state: present
@@ -238,10 +246,11 @@
     assert:
       that:
         - not rerun_with_purge_tags.changed
+        - rerun_with_purge_tags.tags|length == 2
 
   - name: add new tag to distribution
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       tags:
@@ -256,10 +265,11 @@
         - update_with_new_tag.changed
         - "'Third' in update_with_new_tag.tags"
         - "'Another' in update_with_new_tag.tags"
+        - rerun_with_purge_tags.tags|length == 2
 
   - name: create some cache behaviors
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors }}"
@@ -268,7 +278,7 @@
 
   - name: reverse some cache behaviors
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors|reverse|list }}"
@@ -283,7 +293,7 @@
 
   - name: reverse some cache behaviors properly
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors|reverse|list }}"
@@ -299,7 +309,7 @@
 
   - name: update origin that changes target id (failure expected)
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}3.example.com"
         id: "{{ resource_prefix }}3.example.com"
@@ -317,7 +327,6 @@
   # not clear whether to hope they fix or prevent this issue from happening
   #- name: update origin and update cache behavior to point to new origin
   #  cloudfront_distribution:
-  #    alias: "{{ cloudfront_alias }}"
   #    origins:
   #    - domain_name: "{{ resource_prefix }}3.example.com"
   #      id: "{{ resource_prefix }}3.example.com"
@@ -342,7 +351,7 @@
 
   - name: update origin to point to the s3 bucket
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}-bucket.s3.amazonaws.com"
         id: "{{ resource_prefix }}3.example.com"
@@ -359,7 +368,7 @@
 
   - name: update origin to remove s3 origin access identity
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}-bucket.s3.amazonaws.com"
         id: "{{ resource_prefix }}3.example.com"
@@ -381,7 +390,7 @@
 
   - name: check that custom_origin_config can't be used with origin_access_identity enabled
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       origins:
       - domain_name: "{{ resource_prefix }}-bucket.s3.amazonaws.com"
         id: "{{ resource_prefix }}3.example.com"
@@ -401,7 +410,7 @@
   # TEARDOWN STARTS HERE
   - name: clean up cloudfront distribution
     cloudfront_distribution:
-      alias: "{{ cloudfront_alias }}"
+      distribution_id: "{{ distribution_id }}"
       enabled: no
       wait: yes
       state: absent
