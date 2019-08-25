@@ -242,6 +242,46 @@
           - "output.tags | length == 1"
           - output is changed
 
+    - name: Enable metrics collection
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: yes
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: Enable metrics collection (check idempotency)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: yes
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+
+    - name: Disable metrics collection
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: no
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: Disable metrics collection (check idempotency)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: no
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+
     # - name: pause for a bit to make sure that the group can't be trivially deleted
     #   pause: seconds=30
     - name: kill asg
