@@ -18,10 +18,12 @@
             "Effect": "Allow",
             "Action": [
                 "autoscaling:*LaunchConfiguration",
+                "autoscaling:*LoadBalancers",
                 "autoscaling:*AutoScalingGroup",
                 "autoscaling:*MetricsCollection",
                 "autoscaling:PutScalingPolicy",
-                "autoscaling:DeletePolicy"
+                "autoscaling:DeletePolicy",
+                "autoscaling:*Tags"
             ],
             "Resource": [
                 "arn:aws:autoscaling:{{aws_region}}:{{aws_account}}:*"
@@ -125,28 +127,22 @@
             "Sid": "AllowLoadBalancerOperations",
             "Effect": "Allow",
             "Action": [
+                "elasticloadbalancing:*LoadBalancer",
+                "elasticloadbalancing:*LoadBalancers",
+                "elasticloadbalancing:*LoadBalancerListeners",
+                "elasticloadbalancing:*TargetGroup",
                 "elasticloadbalancing:AddTags",
                 "elasticloadbalancing:ConfigureHealthCheck",
                 "elasticloadbalancing:CreateListener",
-                "elasticloadbalancing:CreateLoadBalancer",
-                "elasticloadbalancing:CreateLoadBalancerListeners",
                 "elasticloadbalancing:CreateRule",
-                "elasticloadbalancing:CreateTargetGroup",
                 "elasticloadbalancing:DeleteListener",
-                "elasticloadbalancing:DeleteLoadBalancer",
-                "elasticloadbalancing:DeleteLoadBalancerListeners",
                 "elasticloadbalancing:DeleteRule",
-                "elasticloadbalancing:DeleteTargetGroup",
-                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
                 "elasticloadbalancing:DescribeInstanceHealth",
                 "elasticloadbalancing:DescribeLoadBalancer*",
                 "elasticloadbalancing:DescribeTags",
-                "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
-                "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
                 "elasticloadbalancing:ModifyListener",
                 "elasticloadbalancing:ModifyLoadBalancerAttributes",
                 "elasticloadbalancing:ModifyRule",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
                 "elasticloadbalancing:RemoveTags"
             ],
             "Resource": "*"
