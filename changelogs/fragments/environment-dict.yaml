@@ -1,0 +1,2 @@
+bugfixes:
+- Setting an environment value on a task that is a dict or list will be converted to JSON - https://github.com/ansible/ansible/issues/60956

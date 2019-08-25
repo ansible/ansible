@@ -314,3 +314,27 @@
     win_file:
       path: C:\ansible test link
       state: absent
+
+# https://github.com/ansible/ansible/issues/60956
+- set_fact:
+    some_var: some_value
+
+- set_fact:
+    bla:
+      foo: bar
+      aaa: '{{ some_var }}'
+
+- name: test out dict/list as json var
+  win_shell: $env:testvar
+  register: shell_dict_env
+  environment:
+    testvar: '{{ item }}'
+  loop:
+  - '{{ bla }}'
+  - [ '{{ bla }}' ]
+
+- name: assert test var was passed through correctly
+  assert:
+    that:
+    - 'shell_dict_env.results[0].stdout_lines == [''{"foo": "bar", "aaa": "some_value"}'']'
+    - 'shell_dict_env.results[1].stdout_lines == [''[{"foo": "bar", "aaa": "some_value"}]'']'
