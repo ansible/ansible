@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_log_threat_weight
 short_description: Configure threat weight settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify log feature and threat_weight category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,66 +41,82 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     log_threat_weight:
         description:
             - Configure threat weight settings.
         default: null
+        type: dict
         suboptions:
             application:
                 description:
                     - Application-control threat weight settings.
+                type: list
                 suboptions:
                     category:
                         description:
                             - Application category.
+                        type: int
                     id:
                         description:
                             - Entry ID.
                         required: true
+                        type: int
                     level:
                         description:
                             - Threat weight score for Application events.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-            blocked-connection:
+            blocked_connection:
                 description:
                     - Threat weight score for blocked connections.
+                type: str
                 choices:
                     - disable
                     - low
                     - medium
                     - high
                     - critical
-            failed-connection:
+            failed_connection:
                 description:
                     - Threat weight score for failed connections.
+                type: str
                 choices:
                     - disable
                     - low
@@ -113,17 +126,21 @@ options:
             geolocation:
                 description:
                     - Geolocation-based threat weight settings.
+                type: list
                 suboptions:
                     country:
                         description:
                             - Country code.
+                        type: str
                     id:
                         description:
                             - Entry ID.
                         required: true
+                        type: int
                     level:
                         description:
                             - Threat weight score for Geolocation-based events.
+                        type: str
                         choices:
                             - disable
                             - low
@@ -133,46 +150,52 @@ options:
             ips:
                 description:
                     - IPS threat weight settings.
+                type: dict
                 suboptions:
-                    critical-severity:
+                    critical_severity:
                         description:
                             - Threat weight score for IPS critical severity events.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    high-severity:
+                    high_severity:
                         description:
                             - Threat weight score for IPS high severity events.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    info-severity:
+                    info_severity:
                         description:
                             - Threat weight score for IPS info severity events.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    low-severity:
+                    low_severity:
                         description:
                             - Threat weight score for IPS low severity events.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    medium-severity:
+                    medium_severity:
                         description:
                             - Threat weight score for IPS medium severity events.
+                        type: str
                         choices:
                             - disable
                             - low
@@ -182,35 +205,53 @@ options:
             level:
                 description:
                     - Score mapping for threat weight levels.
+                type: dict
                 suboptions:
                     critical:
                         description:
                             - Critical level score value (1 - 100).
+                        type: int
                     high:
                         description:
                             - High level score value (1 - 100).
+                        type: int
                     low:
                         description:
                             - Low level score value (1 - 100).
+                        type: int
                     medium:
                         description:
                             - Medium level score value (1 - 100).
+                        type: int
             malware:
                 description:
                     - Anti-virus malware threat weight settings.
+                type: dict
                 suboptions:
-                    botnet-connection:
+                    botnet_connection:
                         description:
                             - Threat weight score for detected botnet connections.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    command-blocked:
+                    command_blocked:
                         description:
                             - Threat weight score for blocked command detected.
+                        type: str
+                        choices:
+                            - disable
+                            - low
+                            - medium
+                            - high
+                            - critical
+                    content_disarm:
+                        description:
+                            - Threat weight score for virus (content disarm) detected.
+                        type: str
                         choices:
                             - disable
                             - low
@@ -220,6 +261,7 @@ options:
                     mimefragmented:
                         description:
                             - Threat weight score for mimefragmented detected.
+                        type: str
                         choices:
                             - disable
                             - low
@@ -229,60 +271,67 @@ options:
                     oversized:
                         description:
                             - Threat weight score for oversized file detected.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    switch-proto:
+                    switch_proto:
                         description:
                             - Threat weight score for switch proto detected.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    virus-blocked:
+                    virus_blocked:
                         description:
                             - Threat weight score for virus (blocked) detected.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    virus-file-type-executable:
+                    virus_file_type_executable:
                         description:
                             - Threat weight score for virus (filetype executable) detected.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    virus-infected:
+                    virus_infected:
                         description:
                             - Threat weight score for virus (infected) detected.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    virus-outbreak-prevention:
+                    virus_outbreak_prevention:
                         description:
                             - Threat weight score for virus (outbreak prevention) event.
+                        type: str
                         choices:
                             - disable
                             - low
                             - medium
                             - high
                             - critical
-                    virus-scan-error:
+                    virus_scan_error:
                         description:
                             - Threat weight score for virus (scan error) detected.
+                        type: str
                         choices:
                             - disable
                             - low
@@ -292,12 +341,14 @@ options:
             status:
                 description:
                     - Enable/disable the threat weight feature.
+                type: str
                 choices:
                     - enable
                     - disable
-            url-block-detected:
+            url_block_detected:
                 description:
                     - Threat weight score for URL blocking.
+                type: str
                 choices:
                     - disable
                     - low
@@ -307,17 +358,21 @@ options:
             web:
                 description:
                     - Web filtering threat weight settings.
+                type: list
                 suboptions:
                     category:
                         description:
                             - Threat weight score for web category filtering matches.
+                        type: int
                     id:
                         description:
                             - Entry ID.
                         required: true
+                        type: int
                     level:
                         description:
                             - Threat weight score for web category filtering matches.
+                        type: str
                         choices:
                             - disable
                             - low
@@ -333,6 +388,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure threat weight settings.
     fortios_log_threat_weight:
@@ -347,41 +403,42 @@ EXAMPLES = '''
             category: "4"
             id:  "5"
             level: "disable"
-        blocked-connection: "disable"
-        failed-connection: "disable"
+        blocked_connection: "disable"
+        failed_connection: "disable"
         geolocation:
          -
             country: "<your_own_value>"
             id:  "11"
             level: "disable"
         ips:
-            critical-severity: "disable"
-            high-severity: "disable"
-            info-severity: "disable"
-            low-severity: "disable"
-            medium-severity: "disable"
+            critical_severity: "disable"
+            high_severity: "disable"
+            info_severity: "disable"
+            low_severity: "disable"
+            medium_severity: "disable"
         level:
             critical: "20"
             high: "21"
             low: "22"
             medium: "23"
         malware:
-            botnet-connection: "disable"
-            command-blocked: "disable"
+            botnet_connection: "disable"
+            command_blocked: "disable"
+            content_disarm: "disable"
             mimefragmented: "disable"
             oversized: "disable"
-            switch-proto: "disable"
-            virus-blocked: "disable"
-            virus-file-type-executable: "disable"
-            virus-infected: "disable"
-            virus-outbreak-prevention: "disable"
-            virus-scan-error: "disable"
+            switch_proto: "disable"
+            virus_blocked: "disable"
+            virus_file_type_executable: "disable"
+            virus_infected: "disable"
+            virus_outbreak_prevention: "disable"
+            virus_scan_error: "disable"
         status: "enable"
-        url-block-detected: "disable"
+        url_block_detected: "disable"
         web:
          -
-            category: "38"
-            id:  "39"
+            category: "39"
+            id:  "40"
             level: "disable"
 '''
 
@@ -445,14 +502,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -460,13 +519,13 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_log_threat_weight_data(json):
-    option_list = ['application', 'blocked-connection', 'failed-connection',
+    option_list = ['application', 'blocked_connection', 'failed_connection',
                    'geolocation', 'ips', 'level',
-                   'malware', 'status', 'url-block-detected',
+                   'malware', 'status', 'url_block_detected',
                    'web']
     dictionary = {}
 
@@ -477,17 +536,15 @@ def filter_log_threat_weight_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -495,33 +552,39 @@ def flatten_multilists_attributes(data):
 def log_threat_weight(data, fos):
     vdom = data['vdom']
     log_threat_weight_data = data['log_threat_weight']
-    flattened_data = flatten_multilists_attributes(log_threat_weight_data)
-    filtered_data = filter_log_threat_weight_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_log_threat_weight_data(log_threat_weight_data))
+
     return fos.set('log',
                    'threat-weight',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_log(data, fos):
-    login(data)
 
     if data['log_threat_weight']:
         resp = log_threat_weight(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "log_threat_weight": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "application": {"required": False, "type": "list",
                                 "options": {
@@ -531,10 +594,10 @@ def main():
                                               "choices": ["disable", "low", "medium",
                                                           "high", "critical"]}
                                 }},
-                "blocked-connection": {"required": False, "type": "str",
+                "blocked_connection": {"required": False, "type": "str",
                                        "choices": ["disable", "low", "medium",
                                                    "high", "critical"]},
-                "failed-connection": {"required": False, "type": "str",
+                "failed_connection": {"required": False, "type": "str",
                                       "choices": ["disable", "low", "medium",
                                                   "high", "critical"]},
                 "geolocation": {"required": False, "type": "list",
@@ -547,19 +610,19 @@ def main():
                                 }},
                 "ips": {"required": False, "type": "dict",
                         "options": {
-                            "critical-severity": {"required": False, "type": "str",
+                            "critical_severity": {"required": False, "type": "str",
                                                   "choices": ["disable", "low", "medium",
                                                               "high", "critical"]},
-                            "high-severity": {"required": False, "type": "str",
+                            "high_severity": {"required": False, "type": "str",
                                               "choices": ["disable", "low", "medium",
                                                           "high", "critical"]},
-                            "info-severity": {"required": False, "type": "str",
+                            "info_severity": {"required": False, "type": "str",
                                               "choices": ["disable", "low", "medium",
                                                           "high", "critical"]},
-                            "low-severity": {"required": False, "type": "str",
+                            "low_severity": {"required": False, "type": "str",
                                              "choices": ["disable", "low", "medium",
                                                          "high", "critical"]},
-                            "medium-severity": {"required": False, "type": "str",
+                            "medium_severity": {"required": False, "type": "str",
                                                 "choices": ["disable", "low", "medium",
                                                             "high", "critical"]}
                         }},
@@ -572,40 +635,43 @@ def main():
                           }},
                 "malware": {"required": False, "type": "dict",
                             "options": {
-                                "botnet-connection": {"required": False, "type": "str",
+                                "botnet_connection": {"required": False, "type": "str",
                                                       "choices": ["disable", "low", "medium",
                                                                   "high", "critical"]},
-                                "command-blocked": {"required": False, "type": "str",
+                                "command_blocked": {"required": False, "type": "str",
                                                     "choices": ["disable", "low", "medium",
                                                                 "high", "critical"]},
+                                "content_disarm": {"required": False, "type": "str",
+                                                   "choices": ["disable", "low", "medium",
+                                                               "high", "critical"]},
                                 "mimefragmented": {"required": False, "type": "str",
                                                    "choices": ["disable", "low", "medium",
                                                                "high", "critical"]},
                                 "oversized": {"required": False, "type": "str",
                                               "choices": ["disable", "low", "medium",
                                                           "high", "critical"]},
-                                "switch-proto": {"required": False, "type": "str",
+                                "switch_proto": {"required": False, "type": "str",
                                                  "choices": ["disable", "low", "medium",
                                                              "high", "critical"]},
-                                "virus-blocked": {"required": False, "type": "str",
+                                "virus_blocked": {"required": False, "type": "str",
                                                   "choices": ["disable", "low", "medium",
                                                               "high", "critical"]},
-                                "virus-file-type-executable": {"required": False, "type": "str",
+                                "virus_file_type_executable": {"required": False, "type": "str",
                                                                "choices": ["disable", "low", "medium",
                                                                            "high", "critical"]},
-                                "virus-infected": {"required": False, "type": "str",
+                                "virus_infected": {"required": False, "type": "str",
                                                    "choices": ["disable", "low", "medium",
                                                                "high", "critical"]},
-                                "virus-outbreak-prevention": {"required": False, "type": "str",
+                                "virus_outbreak_prevention": {"required": False, "type": "str",
                                                               "choices": ["disable", "low", "medium",
                                                                           "high", "critical"]},
-                                "virus-scan-error": {"required": False, "type": "str",
+                                "virus_scan_error": {"required": False, "type": "str",
                                                      "choices": ["disable", "low", "medium",
                                                                  "high", "critical"]}
                             }},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},
-                "url-block-detected": {"required": False, "type": "str",
+                "url_block_detected": {"required": False, "type": "str",
                                        "choices": ["disable", "low", "medium",
                                                    "high", "critical"]},
                 "web": {"required": False, "type": "list",
@@ -623,15 +689,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_log(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_log(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_log(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
