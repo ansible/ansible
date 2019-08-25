@@ -179,7 +179,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     return rc, stdout, stderr
 
 
-def db_import(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None, encoding=None):
+def db_import(module, host, user, password, db_name, target, all_databases, port, config_file,
+              socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None, encoding=None):
     if not os.path.exists(target):
         return module.fail_json(msg="target %s does not exist on the host" % target)
 
@@ -202,7 +203,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     else:
         cmd.append("--host=%s" % pipes.quote(host))
         cmd.append("--port=%i" % port)
-    if encoding is not None:
+    if ( encoding is not None) and ( encoding != "" ):
         cmd.append("--default-character-set=%s" % pipes.quote(encoding))
     if not all_databases:
         cmd.append("-D")
