@@ -50,7 +50,7 @@ options:
     required: True
   action:
     description:
-      - "Accept", "Drop", "Ask", "Inform", "Reject", "User Auth", "Client Auth", "Apply Layer".
+      - Can be one of the following, "Accept", "Drop", "Ask", "Inform", "Reject", "User Auth", "Client Auth", "Apply Layer".
     type: str
   action_settings:
     description:
@@ -164,7 +164,7 @@ options:
         type: bool
       type:
         description:
-          - "Log", "Extended Log", "Detailed  Log", "None".
+          - Can be one of the following, "Log", "Extended Log", "Detailed  Log", "None".
         type: str
   user_check:
     description:
