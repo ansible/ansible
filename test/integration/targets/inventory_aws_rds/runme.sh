@@ -20,7 +20,7 @@ ansible-playbook playbooks/create_inventory_config.yml "$@"
 ansible-playbook playbooks/test_populating_inventory.yml "$@"
 
 # generate inventory config with caching and test using it
-ansible-playbook playbooks/create_inventory_config.yml -e "template='inventory_with_cache.yml'" "$@"
+ansible-playbook playbooks/create_inventory_config.yml -e "template='inventory_with_cache.j2'" "$@"
 ansible-playbook playbooks/populate_cache.yml "$@"
 ansible-playbook playbooks/test_inventory_cache.yml "$@"
 
@@ -28,7 +28,7 @@ ansible-playbook playbooks/test_inventory_cache.yml "$@"
 rm -r aws_rds_cache_dir/
 
 # generate inventory config with constructed features and test using it
-ansible-playbook playbooks/create_inventory_config.yml -e "template='inventory_with_constructed.yml'" "$@"
+ansible-playbook playbooks/create_inventory_config.yml -e "template='inventory_with_constructed.j2'" "$@"
 ansible-playbook playbooks/test_populating_inventory_with_constructed.yml "$@"
 
 # cleanup inventory config
