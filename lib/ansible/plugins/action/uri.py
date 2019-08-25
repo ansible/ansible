@@ -9,8 +9,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
-from ansible.module_utils._text import to_native
+from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail, AnsibleFileNotFound
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common.collections import Mapping, MutableMapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import text_type
@@ -34,6 +34,12 @@ class ActionModule(ActionBase):
         body = self._task.args.get('body')
         src = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)
+
+        decrypt = boolean(self._task.args.get('decrypt', False), strict=False)
+        try:
+            tmp_src = self._loader.get_real_file(tmp_src, decrypt=decrypt)
+        except AnsibleFileNotFound as e:
+            raise AnsibleActionFail("could not find src=%s, %s" % (tmp_src, to_text(e)))
 
         try:
             if remote_src:

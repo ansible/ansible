@@ -129,6 +129,9 @@ options:
       - The socket level timeout in seconds
     type: int
     default: 30
+  decrypt:
+    default : no
+    version_added: "2.10"
   headers:
     description:
         - Add custom HTTP headers to a request in the format of a YAML hash. As
@@ -242,6 +245,9 @@ seealso:
 - module: ansible.windows.win_uri
 author:
 - Romeo Theriault (@romeotheriault)
+extends_documentation_fragment:
+  - decrypt
+  - files
 '''
 
 EXAMPLES = r'''
@@ -442,7 +448,6 @@ import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
-from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
@@ -614,6 +619,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
+        decrypt=dict(type='bool'),
     )
 
     module = AnsibleModule(
