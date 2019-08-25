@@ -160,6 +160,22 @@ class NetAppModule(object):
             return 'delete'
         return 'create'
 
+    def compare_and_update_values(self, current, desired, keys_to_compare):
+        updated_values = dict()
+        is_changed = False
+        for key in keys_to_compare:
+            if key in current:
+                if key in desired and desired[key] is not None:
+                    if current[key] != desired[key]:
+                        updated_values[key] = desired[key]
+                        is_changed = True
+                    else:
+                        updated_values[key] = current[key]
+                else:
+                    updated_values[key] = current[key]
+
+        return updated_values, is_changed
+
     @staticmethod
     def check_keys(current, desired):
         ''' TODO: raise an error if keys do not match
@@ -170,8 +186,8 @@ class NetAppModule(object):
 
     @staticmethod
     def compare_lists(current, desired, get_list_diff):
-        ''' compares two lists and return a list of elements that are either the desired elements or elements that are modified from the current state
-        depending on the get_list_diff flag
+        ''' compares two lists and return a list of elements that are either the desired elements or elements that are
+            modified from the current state depending on the get_list_diff flag
             :param: current: current item attribute in ONTAP
             :param: desired: attributes from playbook
             :param: get_list_diff: specifies whether to have a diff of desired list w.r.t current list for an attribute
