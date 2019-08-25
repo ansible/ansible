@@ -147,10 +147,6 @@ options:
       - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
         omitted - warnings will also be ignored.
     type: bool
-  new_name:
-    description:
-      - New name of the object.
-    type: str
 extends_documentation_fragment: checkpoint_objects
 """
 
@@ -164,7 +160,6 @@ EXAMPLES = """
       install_on: All
       ip_address: 192.0.2.1
       method: static
-    state: present
     subnet: 192.0.2.1
     subnet_mask: 255.255.255.0
 
@@ -175,7 +170,6 @@ EXAMPLES = """
     mask_length: 16
     name: New Network 1
     new_name: New Network 2
-    state: present
     subnet: 192.0.0.0
 
 - name: delete-network
@@ -227,8 +221,7 @@ def main():
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         groups=dict(type='list'),
         ignore_warnings=dict(type='bool'),
-        ignore_errors=dict(type='bool'),
-        new_name=dict(type='str')
+        ignore_errors=dict(type='bool')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
