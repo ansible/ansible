@@ -32,7 +32,7 @@ short_description: Get access-rule objects facts on Checkpoint over Web Services
 description:
   - Get access-rule objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
-    This module handles both operations: get a specific object and get several objects.
+    This module handles both operations, get a specific object and get several objects.
     For getting a specific object use the parameter 'name'.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -54,8 +54,8 @@ options:
       - When true, the source, destination and services & applications parameters are displayed as ranges of IP
         addresses and port numbers rather than network objects.<br /> Objects that are not represented using IP
         addresses or port numbers are presented as objects.<br /> In addition, the response of each rule does not
-        contain the parameters: source, source-negate, destination, destination-negate, service and service-negate, but
-        instead it contains the parameters: source-ranges, destination-ranges and service-ranges.<br /><br /> Note:
+        contain the parameters, source, source-negate, destination, destination-negate, service and service-negate, but
+        instead it contains the parameters, source-ranges, destination-ranges and service-ranges.<br /><br /> Note,
         Requesting to show rules as ranges is limited up to 20 rules per request, otherwise an error is returned. If
         you wish to request more rules, use the offset and limit parameters to limit your request.
     type: bool
@@ -70,7 +70,7 @@ options:
     suboptions:
       from_date:
         description:
-          - Format: YYYY-MM-DD, YYYY-mm-ddThh:mm:ss.
+          - Format: 'YYYY-MM-DD', 'YYYY-mm-ddThh:mm:ss'.
         type: str
       target:
         description:
@@ -78,7 +78,7 @@ options:
         type: str
       to_date:
         description:
-          - Format: YYYY-MM-DD, YYYY-mm-ddThh:mm:ss.
+          - Format: 'YYYY-MM-DD', 'YYYY-mm-ddThh:mm:ss'.
         type: str
       details_level:
     description:
@@ -170,7 +170,7 @@ EXAMPLES = """
     hits_settings:
       from_date: '2014-01-01'
       target: corporate-gw
-      to_date: 2014-12-31T23:59
+      to_date: '2014-12-31T23:59'
     layer: Network
     name: Rule 1
     show_hits: true
@@ -181,7 +181,7 @@ EXAMPLES = """
     hits_settings:
       from_date: '2014-01-01'
       target: corporate-gw
-      to_date: 2014-12-31T23:59
+      to_date: '2014-12-31T23:59'
     limit: 20
     name: Network
     offset: 0
