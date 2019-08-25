@@ -1,11 +1,9 @@
-- block:
-  - name: set yaml anchor
-    set_fact:
-      aws_connection_info: &aws_connection_info
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        security_token: "{{ security_token }}"
-    no_log: yes
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+  block:
 
   - name: create cloudfront distribution using defaults
     cloudfront_distribution:
@@ -17,7 +15,6 @@
         target_origin_id: "{{ cloudfront_hostname }}-origin.example.com"
       state: present
       purge_origins: yes
-      <<: *aws_connection_info
 
   - name: re-run cloudfront distribution with same defaults
     cloudfront_distribution:
@@ -25,7 +22,6 @@
       origins:
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
       state: present
-      <<: *aws_connection_info
     register: cf_dist_no_update
 
   - name: ensure distribution was not updated
@@ -38,7 +34,6 @@
       distribution_id: "{{ cf_dist_no_update.id }}"
       purge_origins: no
       state: present
-      <<: *aws_connection_info
     register: cf_dist_with_id
 
   - name: ensure distribution was not updated
@@ -54,7 +49,6 @@
         custom_origin_config:
           http_port: 8080
       state: present
-      <<: *aws_connection_info
     register: update_origin_http_port
 
   - name: ensure http port was updated
@@ -71,7 +65,6 @@
           items:
             - "US"
       state: present
-      <<: *aws_connection_info
     register: update_restrictions
 
   - name: ensure restrictions was updated
@@ -88,7 +81,6 @@
       alias: "{{ cloudfront_alias }}"
       comment: "{{ comment }}"
       state: present
-      <<: *aws_connection_info
     register: cf_comment
 
   - name: ensure comment was updated
@@ -106,7 +98,6 @@
       default_root_object: index.html
       state: present
       wait: yes
-      <<: *aws_connection_info
     register: cf_add_origin
 
   - name: ensure origin was added
@@ -127,7 +118,6 @@
       default_root_object: index.html
       wait: yes
       state: present
-      <<: *aws_connection_info
     register: cf_rerun_second_origin
 
   - name: ensure nothing changed after re-run
@@ -145,7 +135,6 @@
         custom_origin_config:
           http_port: 8080
       state: present
-      <<: *aws_connection_info
     register: cf_rerun_second_origin_reversed
 
   - name: ensure nothing changed after reversed re-run
@@ -164,7 +153,6 @@
         target_origin_id: "{{ resource_prefix }}2.example.com"
       purge_origins: yes
       state: present
-      <<: *aws_connection_info
     register: cf_purge_origin
 
   - name: ensure origin was removed
@@ -199,7 +187,6 @@
         Another: tag
       default_root_object: index.php
       state: present
-      <<: *aws_connection_info
     register: cf_add_tags
 
   - name: ensure tags were added
@@ -214,7 +201,6 @@
       enabled: no
       wait: yes
       state: absent
-      <<: *aws_connection_info
 
   - name: create distribution with tags
     cloudfront_distribution:
@@ -226,7 +212,6 @@
         Name: "{{ cloudfront_alias }}"
         Another: tag
       state: present
-      <<: *aws_connection_info
     register: cf_second_distribution
 
   - name: ensure tags were set on creation
@@ -247,7 +232,6 @@
         Another: tag
       purge_tags: yes
       state: present
-      <<: *aws_connection_info
     register: rerun_with_purge_tags
 
   - name: ensure that re-running didn't change
@@ -264,7 +248,6 @@
         Third: thing
       purge_tags: no
       state: present
-      <<: *aws_connection_info
     register: update_with_new_tag
 
   - name: ensure tags are correct
@@ -281,7 +264,6 @@
       - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors }}"
       state: present
-      <<: *aws_connection_info
     register: add_cache_behaviors
 
   - name: reverse some cache behaviors
@@ -291,7 +273,6 @@
       - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors|reverse|list }}"
       state: present
-      <<: *aws_connection_info
     register: reverse_cache_behaviors
 
   - name: check that reversing cache behaviors changes nothing when purge_cache_behaviors unset
@@ -308,7 +289,6 @@
       cache_behaviors: "{{ cloudfront_test_cache_behaviors|reverse|list }}"
       purge_cache_behaviors: yes
       state: present
-      <<: *aws_connection_info
     register: reverse_cache_behaviors_with_purge
 
   - name: check that reversing cache behaviors changes nothing when purge_cache_behaviors unset
@@ -325,7 +305,6 @@
         id: "{{ resource_prefix }}3.example.com"
       purge_origins: yes
       state: present
-      <<: *aws_connection_info
     register: remove_origin_in_use
     ignore_errors: yes
 
@@ -360,7 +339,6 @@
     aws_s3:
       bucket: "{{ resource_prefix }}-bucket"
       mode: create
-      <<: *aws_connection_info
 
   - name: update origin to point to the s3 bucket
     cloudfront_distribution:
@@ -370,7 +348,6 @@
         id: "{{ resource_prefix }}3.example.com"
         s3_origin_access_identity_enabled: yes
       state: present
-      <<: *aws_connection_info
     register: update_origin_to_s3
 
   - name: check that s3 origin access is in result
@@ -388,7 +365,6 @@
         id: "{{ resource_prefix }}3.example.com"
         s3_origin_access_identity_enabled: no
       state: present
-      <<: *aws_connection_info
     register: update_origin_to_s3_without_origin_access
 
   - name: check that s3 origin access is not in result
@@ -402,7 +378,6 @@
     aws_s3:
       bucket: "{{ resource_prefix }}-bucket"
       mode: delete
-      <<: *aws_connection_info
 
   - name: check that custom_origin_config can't be used with origin_access_identity enabled
     cloudfront_distribution:
@@ -414,7 +389,6 @@
         custom_origin_config:
           origin_protocol_policy: 'http-only'
       state: present
-      <<: *aws_connection_info
     register: update_origin_to_s3_with_origin_access_and_with_custom_origin_config
     ignore_errors: True
 
@@ -431,4 +405,3 @@
       enabled: no
       wait: yes
       state: absent
-      <<: *aws_connection_info
