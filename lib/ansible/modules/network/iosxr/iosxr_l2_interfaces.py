@@ -23,7 +23,7 @@
 #############################################
 
 """
-The module file for iosxr_interfaces
+The module file for iosxr_l2_interfaces
 """
 
 from __future__ import absolute_import, division, print_function
