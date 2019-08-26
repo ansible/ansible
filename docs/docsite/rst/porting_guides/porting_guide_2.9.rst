@@ -120,6 +120,8 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * nxos_l3_interface use :ref:`nxos_l3_interfaces <nxos_l3_interfaces_module>` instead.
 
+* nxos_l2_interface use :ref:`nxos_l2_interfaces <nxos_l2_interfaces_module>` instead.
+
 
 The following functionality will be removed in Ansible 2.12. Please update update your playbooks accordingly.
 

@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = """
@@ -21,6 +21,10 @@ short_description: Manage Layer-2 interface on Cisco NXOS devices.
 description:
   - This module provides declarative management of Layer-2 interface on
     Cisco NXOS devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: nxos_l2_interfaces
+  why: Updated modules released with more functionality
 author:
   - Trishna Guha (@trishnaguha)
 notes:

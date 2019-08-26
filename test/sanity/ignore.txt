@@ -4449,13 +4449,6 @@ lib/ansible/modules/network/nxos/nxos_interface_ospf.py validate-modules:E324
 lib/ansible/modules/network/nxos/nxos_interface_ospf.py validate-modules:E327
 lib/ansible/modules/network/nxos/nxos_interface_ospf.py validate-modules:E337
 lib/ansible/modules/network/nxos/nxos_interface_ospf.py validate-modules:E338
-lib/ansible/modules/network/nxos/nxos_l2_interface.py validate-modules:E322
-lib/ansible/modules/network/nxos/nxos_l2_interface.py validate-modules:E324
-lib/ansible/modules/network/nxos/nxos_l2_interface.py validate-modules:E326
-lib/ansible/modules/network/nxos/nxos_l2_interface.py validate-modules:E327
-lib/ansible/modules/network/nxos/nxos_l2_interface.py validate-modules:E337
-lib/ansible/modules/network/nxos/nxos_l2_interface.py validate-modules:E338
-lib/ansible/modules/network/nxos/nxos_l2_interface.py validate-modules:E340
 lib/ansible/modules/network/nxos/_nxos_l3_interface.py validate-modules:E322
 lib/ansible/modules/network/nxos/_nxos_l3_interface.py validate-modules:E324
 lib/ansible/modules/network/nxos/_nxos_l3_interface.py validate-modules:E326
@@ -4463,6 +4456,13 @@ lib/ansible/modules/network/nxos/_nxos_l3_interface.py validate-modules:E327
 lib/ansible/modules/network/nxos/_nxos_l3_interface.py validate-modules:E337
 lib/ansible/modules/network/nxos/_nxos_l3_interface.py validate-modules:E338
 lib/ansible/modules/network/nxos/_nxos_l3_interface.py validate-modules:E340
+lib/ansible/modules/network/nxos/_nxos_l2_interface.py validate-modules:E322
+lib/ansible/modules/network/nxos/_nxos_l2_interface.py validate-modules:E324
+lib/ansible/modules/network/nxos/_nxos_l2_interface.py validate-modules:E326
+lib/ansible/modules/network/nxos/_nxos_l2_interface.py validate-modules:E327
+lib/ansible/modules/network/nxos/_nxos_l2_interface.py validate-modules:E337
+lib/ansible/modules/network/nxos/_nxos_l2_interface.py validate-modules:E338
+lib/ansible/modules/network/nxos/_nxos_l2_interface.py validate-modules:E340
 lib/ansible/modules/network/nxos/nxos_lag_interfaces.py validate-modules:E326
 lib/ansible/modules/network/nxos/nxos_lldp.py validate-modules:E324
 lib/ansible/modules/network/nxos/nxos_lldp.py validate-modules:E326
