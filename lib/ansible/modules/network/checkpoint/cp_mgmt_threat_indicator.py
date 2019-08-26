@@ -31,7 +31,7 @@ module: cp_mgmt_threat_indicator
 short_description: Manages threat-indicator objects on Checkpoint over Web Services API
 description:
   - Manages threat-indicator objects on Checkpoint devices including creating, updating and removing objects.
-    All operations are performed over Web Services API.
+  - All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
@@ -97,13 +97,13 @@ EXAMPLES = """
     ignore_warnings: true
     name: My_Indicator
     observables:
-      confidence: medium
+    - confidence: medium
       mail_to: someone@somewhere.com
       name: My_Observable
       product: AV
       severity: low
     profile_overrides:
-      action: detect
+    - action: detect
       profile: My_Profile
 
 - name: set-threat-indicator
