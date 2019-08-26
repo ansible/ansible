@@ -19,11 +19,11 @@
       validate_certs: no
       acceptance_level: vmware_certified
       state: present
-    register: host_acceptance_facts
-  - debug: var=host_acceptance_facts
+    register: host_acceptance_info
+  - debug: var=host_acceptance_info
   - assert:
       that:
-        - host_acceptance_facts.facts is defined
+        - host_acceptance_info.info is defined
 
   - name: Change acceptance level of given hosts in check mode
     vmware_host_acceptance:
@@ -34,9 +34,9 @@
       validate_certs: no
       acceptance_level: vmware_certified
       state: present
-    register: host_acceptance_facts_check_mode
+    register: host_acceptance_info_check_mode
     check_mode: yes
-  - debug: var=host_acceptance_facts_check_mode
+  - debug: var=host_acceptance_info_check_mode
   - assert:
       that:
-        - host_acceptance_facts_check_mode.facts is defined
+        - host_acceptance_info_check_mode.info is defined

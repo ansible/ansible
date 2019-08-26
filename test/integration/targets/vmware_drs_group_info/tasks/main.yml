@@ -1,0 +1,44 @@
+# Test code for the vmware_drs_group_info module
+# Copyright: (c) 2018, Karsten Kaj Jakobsen <kj@patientsky.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- when: vcsim is defined or esxi_hosts | length >= 3
+  block:
+  - name: Gather DRS group info from given cluster
+    vmware_drs_group_info:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      cluster_name: '{{ ccr1 }}'
+      validate_certs: False
+    register: drs_group_0001_results
+
+  - debug:
+      var: drs_group_0001_results
+
+  - assert:
+      that:
+        - "drs_group_0001_results.drs_group_info.DC0_C0 is defined"
+        - "not drs_group_0001_results.drs_group_info.DC0_C1 is defined"
+        - "not drs_group_0001_results.changed"
+
+  - name: Gather DRS group info from given datacenter
+    vmware_drs_group_info:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: '{{ dc1 }}'
+      validate_certs: False
+    register: drs_group_0002_results
+
+  - debug:
+      var: drs_group_0002_results
+
+  - assert:
+      that:
+        - "drs_group_0002_results.drs_group_info.DC0_C0 is defined"
+        - "not drs_group_0002_results.drs_group_info.DC0_C1 is defined"
+        - "not drs_group_0002_results.changed"

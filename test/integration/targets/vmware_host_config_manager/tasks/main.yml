@@ -27,7 +27,7 @@
 # TODO: vcsim does not support update host configuartion
 - when: vcsim is not defined
   block:
-  - name: Change facts about all hosts in given cluster
+  - name: Change info about all hosts in given cluster
     vmware_host_config_manager:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
@@ -37,7 +37,7 @@
         'Config.HostAgent.log.level': 'verbose'
       validate_certs: no
 
-  - name: Change facts about a given host
+  - name: Change info about a given host
     vmware_host_config_manager:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
@@ -55,7 +55,7 @@
       that:
           - host_result is changed
 
-  - name: Change facts about all hosts in given cluster in check mode
+  - name: Change info about all hosts in given cluster in check mode
     vmware_host_config_manager:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
@@ -72,7 +72,7 @@
       that:
           - all_hosts_result_check_mode.changed
 
-  - name: Change facts about a given host in check mode
+  - name: Change info about a given host in check mode
     vmware_host_config_manager:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"

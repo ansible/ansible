@@ -6,30 +6,30 @@
 - when: vcsim is not defined
   block:
     - name: Get VM Facts
-      vmware_vm_facts:
+      vmware_vm_info:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
         validate_certs: False
-      register: vm_facts
+      register: vm_info
 
-    - set_fact: vm_name="{{ vm_facts['virtual_machines'][0]['guest_name'] }}"
+    - set_fact: vm_name="{{ vm_info['virtual_machines'][0]['guest_name'] }}"
 
     # Get Tagname
-    - &tag_fact
-      name: Get facts about tag
-      vmware_tag_facts:
+    - &tag_info
+      name: Get info about tag
+      vmware_tag_info:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
         validate_certs: False
-      register: tag_facts
+      register: tag_info
 
-    - <<: *tag_fact
-      name: Get facts about tag in check mode
+    - <<: *tag_info
+      name: Get info about tag in check mode
       check_mode: yes
 
-    - set_fact: Tag_Name={{ tag_facts['tag_facts'].keys() | list }}
+    - set_fact: Tag_Name={{ tag_info['tag_info'].keys() | list }}
 
     - debug: var=Tag_Name
 

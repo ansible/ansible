@@ -1,0 +1,38 @@
+# Test code for the vmware_target_canonical_info module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support SCSI target releated operations
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+
+- name: Gather target info for all ESXi host from given cluster
+  vmware_target_canonical_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    cluster_name: "{{ ccr1 }}"
+  register: target_0001_results
+
+- assert:
+    that:
+      - "not target_0001_results.changed"
+      - "target_0001_results.scsi_tgt_info is defined"
+
+- name: Gather target info for ESXi host
+  vmware_target_canonical_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    esxi_hostname: '{{ esxi1 }}'
+  register: target_0002_results
+
+- assert:
+    that:
+      - "not target_0002_results.changed"
+      - "target_0002_results.scsi_tgt_info is defined"
