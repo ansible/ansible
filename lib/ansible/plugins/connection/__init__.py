@@ -352,8 +352,8 @@ class NetworkConnectionBase(ConnectionBase):
                 except Exception:
                     pass
                 finally:
-                    if os.path.exists(self._socket_path ):
-                        os.remove(self._socket_path )
+                    if os.path.exists(self._socket_path):
+                        os.remove(self._socket_path)
                         setattr(self.connection, '_socket_path', None)
                         setattr(self.connection, '_connected', False)
 
