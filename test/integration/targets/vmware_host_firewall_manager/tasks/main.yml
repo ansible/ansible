@@ -37,7 +37,7 @@
             - all_hosts_result.changed
             - all_hosts_result.rule_set_state is defined
 
-    - name: ensure facts are gathered for all hosts of {{ ccr1 }}
+    - name: ensure info are gathered for all hosts of {{ ccr1 }}
       assert:
         that:
             - all_hosts_result.rule_set_state[item]['vvold']['current_state'] == True
@@ -65,7 +65,7 @@
             - host_result.changed
             - host_result.rule_set_state is defined
 
-    - name: ensure facts are gathered for {{ host1 }}
+    - name: ensure info are gathered for {{ host1 }}
       assert:
         that:
             - host_result.rule_set_state[item]['vvold']['current_state'] == False
@@ -93,7 +93,7 @@
             - all_hosts_result_check_mode.changed
             - all_hosts_result_check_mode.rule_set_state is defined
 
-    - name: ensure facts are gathered for all hosts of {{ ccr1 }}
+    - name: ensure info are gathered for all hosts of {{ ccr1 }}
       assert:
         that:
             - all_hosts_result_check_mode.rule_set_state[esxi1]['vvold']['current_state'] == True
@@ -119,7 +119,7 @@
             - host_result_check_mode.changed == False
             - host_result_check_mode.rule_set_state is defined
 
-    - name: ensure facts are gathered for {{ host1 }}
+    - name: ensure info are gathered for {{ host1 }}
       assert:
         that:
             - host_result_check_mode.rule_set_state[item]['vvold']['current_state'] == False

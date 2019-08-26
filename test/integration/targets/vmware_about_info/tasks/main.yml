@@ -1,0 +1,58 @@
+# Test code for the vmware_about_info module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- name: Get Details about VMware vCenter Server
+  vmware_about_info: &vmware_about_data
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+  register: about
+
+- assert:
+    that:
+      - about.about_info["{{ item }}"] is defined
+  with_items:
+    - api_type
+    - api_version
+    - build
+    - instance_uuid
+    - license_product_name
+    - license_product_version
+    - locale_build
+    - locale_version
+    - os_type
+    - product_full_name
+    - product_line_id
+    - product_name
+    - vendor
+    - version
+
+- name: Get Details about VMware vCenter Server in check mode
+  vmware_about_info:
+    <<: *vmware_about_data
+  register: about
+  check_mode: yes
+
+- assert:
+    that:
+      - about.about_info["{{ item }}"] is defined
+  with_items:
+    - api_type
+    - api_version
+    - build
+    - instance_uuid
+    - license_product_name
+    - license_product_version
+    - locale_build
+    - locale_version
+    - os_type
+    - product_full_name
+    - product_line_id
+    - product_name
+    - vendor
+    - version

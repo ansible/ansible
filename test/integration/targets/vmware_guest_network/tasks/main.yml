@@ -18,14 +18,14 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       name: "{{ virtual_machines[0].name }}"
-      gather_network_facts: true
-    register: netadapter_facts
+      gather_network_info: true
+    register: netadapter_info
 
-  - debug: var=netadapter_facts
+  - debug: var=netadapter_info
 
   - name: get number of existing netowrk adapters
     set_fact:
-      netadapter_num: "{{ netadapter_facts.network_data | length }}"
+      netadapter_num: "{{ netadapter_info.network_data | length }}"
 
   - name: add new network adapters to virtual machine
     vmware_guest_network:

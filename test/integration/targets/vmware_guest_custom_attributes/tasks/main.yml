@@ -27,13 +27,13 @@
         value: 'sample_2_value'
       - name: 'sample_3'
         value: 'sample_3_value'
-  register: guest_facts_0001
+  register: guest_info_0001
 
-- debug: var=guest_facts_0001
+- debug: var=guest_info_0001
 
 - assert:
     that:
-      - guest_facts_0001 is changed
+      - guest_info_0001 is changed
 
 - name: Add custom attribute to the given virtual machine again
   vmware_guest_custom_attributes:
@@ -52,13 +52,13 @@
         value: 'sample_2_value'
       - name: 'sample_3'
         value: 'sample_3_value'
-  register: guest_facts_0002
+  register: guest_info_0002
 
-- debug: var=guest_facts_0002
+- debug: var=guest_info_0002
 
 - assert:
     that:
-      - not (guest_facts_0002 is changed)
+      - not (guest_info_0002 is changed)
 
 - name: Remove custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
@@ -74,13 +74,13 @@
       - name: 'sample_1'
       - name: 'sample_2'
       - name: 'sample_3'
-  register: guest_facts_0004
+  register: guest_info_0004
 
-- debug: msg="{{ guest_facts_0004 }}"
+- debug: msg="{{ guest_info_0004 }}"
 
 - assert:
     that:
-      - "guest_facts_0004.changed"
+      - "guest_info_0004.changed"
 
 # TODO: vcsim returns duplicate values so removing custom attributes
 # results in change. vCenter show correct behavior. Commenting this
@@ -101,10 +101,10 @@
           - name: 'sample_1'
           - name: 'sample_2'
           - name: 'sample_3'
-      register: guest_facts_0005
+      register: guest_info_0005
 
-    - debug: var=guest_facts_0005
+    - debug: var=guest_info_0005
 
     - assert:
         that:
-          - not (guest_facts_0005 is changed)
+          - not (guest_info_0005 is changed)
