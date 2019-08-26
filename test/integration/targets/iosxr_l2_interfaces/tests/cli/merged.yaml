@@ -19,6 +19,8 @@
             q_vlan:
               - 20
               - 40
+          - name: GigabitEthernet0/0/0/4
+            native_vlan: 40
         state: merged
       register: result
 
