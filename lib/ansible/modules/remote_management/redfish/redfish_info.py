@@ -13,13 +13,15 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: redfish_facts
+module: redfish_info
 version_added: "2.7"
 short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
     get information back.
   - Information retrieved is placed in a location specified by the user.
+  - This module was called C(redfish_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(redfish_info) module no longer returns C(ansible_facts)!
 options:
   category:
     required: false
@@ -60,82 +62,90 @@ author: "Jose Delarosa (@jose-delarosa)"
 
 EXAMPLES = '''
   - name: Get CPU inventory
-    redfish_facts:
+    redfish_info:
       category: Systems
       command: GetCpuInventory
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
   - debug:
-      msg: "{{ redfish_facts.cpu.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.cpu.entries | to_nice_json }}"
 
   - name: Get CPU model
-    redfish_facts:
+    redfish_info:
       category: Systems
       command: GetCpuInventory
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
   - debug:
-      msg: "{{ redfish_facts.cpu.entries.0.Model }}"
+      msg: "{{ result.redfish_facts.cpu.entries.0.Model }}"
 
   - name: Get memory inventory
-    redfish_facts:
+    redfish_info:
       category: Systems
       command: GetMemoryInventory
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
 
   - name: Get fan inventory with a timeout of 20 seconds
-    redfish_facts:
+    redfish_info:
       category: Chassis
       command: GetFanInventory
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+    register: result
 
   - name: Get Virtual Media information
-    redfish_facts:
+    redfish_info:
       category: Manager
       command: GetVirtualMedia
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
   - debug:
-      msg: "{{ redfish_facts.virtual_media.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.virtual_media.entries | to_nice_json }}"
 
   - name: Get Volume Inventory
-    redfish_facts:
+    redfish_info:
       category: Systems
       command: GetVolumeInventory
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
   - debug:
-      msg: "{{ redfish_facts.volume.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.volume.entries | to_nice_json }}"
 
   - name: Get Session information
-    redfish_facts:
+    redfish_info:
       category: Sessions
       command: GetSessions
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
   - debug:
-      msg: "{{ redfish_facts.session.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.session.entries | to_nice_json }}"
 
   - name: Get default inventory information
-    redfish_facts:
+    redfish_info:
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
   - debug:
-      msg: "{{ redfish_facts | to_nice_json }}"
+      msg: "{{ result.redfish_facts | to_nice_json }}"
 
   - name: Get several inventories
-    redfish_facts:
+    redfish_info:
       category: Systems
       command: GetNicInventory,GetBiosAttributes
       baseuri: "{{ baseuri }}"
@@ -143,21 +153,21 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get default system inventory and user information
-    redfish_facts:
+    redfish_info:
       category: Systems,Accounts
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get default system, user and firmware information
-    redfish_facts:
+    redfish_info:
       category: ["Systems", "Accounts", "Update"]
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get Manager NIC inventory information
-    redfish_facts:
+    redfish_info:
       category: Manager
       command: GetManagerNicInventory
       baseuri: "{{ baseuri }}"
@@ -165,7 +175,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get boot override information
-    redfish_facts:
+    redfish_info:
       category: Systems
       command: GetBootOverride
       baseuri: "{{ baseuri }}"
@@ -173,7 +183,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get chassis inventory
-    redfish_facts:
+    redfish_info:
       category: Chassis
       command: GetChassisInventory
       baseuri: "{{ baseuri }}"
@@ -181,7 +191,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get all information available in the Manager category
-    redfish_facts:
+    redfish_info:
       category: Manager
       command: all
       baseuri: "{{ baseuri }}"
@@ -189,7 +199,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get firmware update capability information
-    redfish_facts:
+    redfish_info:
       category: Update
       command: GetFirmwareUpdateCapabilities
       baseuri: "{{ baseuri }}"
@@ -197,7 +207,7 @@ EXAMPLES = '''
       password: "{{ password }}"
 
   - name: Get all information available in all categories
-    redfish_facts:
+    redfish_info:
       category: all
       command: all
       baseuri: "{{ baseuri }}"
@@ -252,6 +262,10 @@ def main():
         ),
         supports_check_mode=False
     )
+    is_old_facts = module._name == 'redfish_facts'
+    if is_old_facts:
+        module.deprecate("The 'redfish_facts' module has been renamed to 'redfish_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     # admin credentials used for authentication
     creds = {'user': module.params['username'],
@@ -388,7 +402,10 @@ def main():
                     result["log"] = rf_utils.get_logs()
 
     # Return data back
-    module.exit_json(ansible_facts=dict(redfish_facts=result))
+    if is_old_facts:
+        module.exit_json(ansible_facts=dict(redfish_facts=result))
+    else:
+        module.exit_json(redfish_facts=result)
 
 
 if __name__ == '__main__':
