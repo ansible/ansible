@@ -5959,8 +5959,8 @@ lib/ansible/plugins/doc_fragments/oracle_wait_options.py future-import-boilerpla
 lib/ansible/plugins/doc_fragments/oracle_wait_options.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/ovirt.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/ovirt.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/ovirt_facts.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/ovirt_facts.py metaclass-boilerplate
+lib/ansible/plugins/doc_fragments/ovirt_info.py future-import-boilerplate
+lib/ansible/plugins/doc_fragments/ovirt_info.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/panos.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/panos.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/postgres.py future-import-boilerplate
