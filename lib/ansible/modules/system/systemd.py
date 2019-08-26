@@ -22,7 +22,8 @@ description:
 options:
     name:
         description:
-            - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+            - Name of the service. This parameter takes the name of exactly one service to work with.
+            - When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: [ service, unit ]
     state:
         description:
