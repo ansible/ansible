@@ -312,11 +312,28 @@
         - testing5
       register: k8s_info
 
-
     - name: Resources are terminating if still in results
       assert:
         that: not item.resources or item.resources[0].status.phase == "Terminating"
       loop: "{{ k8s_info.results }}"
+
+    - name: Create resources from a yaml string ending with ---
+      k8s:
+        definition: |+
+          ---
+          kind: Namespace
+          apiVersion: v1
+          metadata:
+            name: testing6
+          ---
+
+    - name: Namespace should exist
+      k8s_info:
+        kind: Namespace
+        api_version: v1
+        name: testing6
+      register: k8s_info_testing6
+      failed_when: not k8s_info_testing6.resources or k8s_info_testing6.resources[0].status.phase != "Active"
 
     - include_tasks: crd.yml
     - include_tasks: lists.yml
@@ -351,4 +368,8 @@
             apiVersion: v1
             metadata:
               name: testing5
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing6
       ignore_errors: yes
