@@ -332,6 +332,9 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``hpilo_facts`` module was renamed to :ref:`hpilo_info <hpilo_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
+* The ``idrac_redfish_facts`` module was renamed to :ref:`idrac_redfish_info <idrac_redfish_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``iam_mfa_device_facts`` module was renamed to :ref:`iam_mfa_device_info <iam_mfa_device_info_module>`.
 * The ``iam_role_facts`` module was renamed to :ref:`iam_role_info <iam_role_info_module>`.
 * The ``iam_server_certificate_facts`` module was renamed to :ref:`iam_server_certificate_info <iam_server_certificate_info_module>`.
@@ -346,6 +349,9 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``python_requirements_facts`` module was renamed to :ref:`python_requirements_info <python_requirements_info_module>`.
 * The ``rds_instance_facts`` module was renamed to :ref:`rds_instance_info <rds_instance_info_module>`.
 * The ``rds_snapshot_facts`` module was renamed to :ref:`rds_snapshot_info <rds_snapshot_info_module>`.
+* The ``redfish_facts`` module was renamed to :ref:`redfish_info <redfish_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``redshift_facts`` module was renamed to :ref:`redshift_info <redshift_info_module>`.
 * The ``route53_facts`` module was renamed to :ref:`route53_info <route53_info_module>`.
 * The ``xenserver_guest_facts`` module was renamed to :ref:`xenserver_guest_info <xenserver_guest_info_module>`.
