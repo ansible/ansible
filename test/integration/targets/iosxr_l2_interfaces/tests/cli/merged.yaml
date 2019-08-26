@@ -15,11 +15,7 @@
               - pvst: tunnel
               - cdp: forward
             propagate: True
-          - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
-            q_vlan:
-              - 10
-              - any
-          - name: preconfigure GigabitEthernet0/0/0/3.900
+          - name: GigabitEthernet0/0/0/3.900
             q_vlan:
               - 20
               - 40

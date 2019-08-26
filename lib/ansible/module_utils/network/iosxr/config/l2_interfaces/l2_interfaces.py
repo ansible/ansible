@@ -16,7 +16,7 @@ __metaclass__ = type
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.iosxr.facts.facts import Facts
-from ansible.module_utils.network.iosxr.utils.utils import dict_diff
+from ansible.module_utils.network.iosxr.utils.utils import normalize_interface, dict_to_set
 from ansible.module_utils.network.iosxr.utils.utils import remove_command_from_config_list, add_command_to_config_list
 from ansible.module_utils.network.iosxr.utils.utils import filter_dict_having_none_value, remove_duplicate_interface
 
@@ -116,6 +116,7 @@ class L2_Interfaces(ConfigBase):
         commands = []
 
         for interface in want:
+            interface['name'] = normalize_interface(interface['name'])
             for each in have:
                 if each['name'] == interface['name']:
                     break
@@ -142,6 +143,7 @@ class L2_Interfaces(ConfigBase):
         in_have = set()
         for each in have:
             for interface in want:
+                interface['name'] = normalize_interface(interface['name'])
                 if each['name'] == interface['name']:
                     in_have.add(interface['name'])
                     break
@@ -178,6 +180,7 @@ class L2_Interfaces(ConfigBase):
         commands = []
 
         for interface in want:
+            interface['name'] = normalize_interface(interface['name'])
             for each in have:
                 if each['name'] == interface['name']:
                     break
@@ -200,6 +203,7 @@ class L2_Interfaces(ConfigBase):
 
         if want:
             for interface in want:
+                interface['name'] = normalize_interface(interface['name'])
                 for each in have:
                     if each['name'] == interface['name']:
                         break
@@ -223,9 +227,10 @@ class L2_Interfaces(ConfigBase):
         l2_protocol_bool = False
 
         # Get the diff b/w want and have
-        want_dict = dict_diff(want)
-        have_dict = dict_diff(have)
+        want_dict = dict_to_set(want)
+        have_dict = dict_to_set(have)
         diff = want_dict - have_dict
+
         if diff:
             # For merging with already configured l2protocol
             if have.get('l2protocol') and len(have.get('l2protocol')) > 1:
@@ -249,11 +254,10 @@ class L2_Interfaces(ConfigBase):
             if l2_protocol_bool is False:
                 l2protocol = diff.get('l2protocol')
 
-            if wants_native and 'preconfigure' not in interface:
+            if wants_native:
                 cmd = 'dot1q native vlan {0}'.format(wants_native)
                 add_command_to_config_list(interface, cmd, commands)
-            elif wants_native and 'preconfigure' in interface:
-                module.fail_json(msg='Native Vlan cannot be configured over Sub-Interface: {0}'.format(interface))
+
             if l2transport or l2protocol:
                 for each in l2protocol:
                     if isinstance(each, dict):
@@ -267,18 +271,12 @@ class L2_Interfaces(ConfigBase):
             elif want.get('l2transport') is False and (want.get('l2protocol') or want.get('propagate')):
                 module.fail_json(msg='L2transport L2protocol or Propagate can only be configured when '
                                      'L2transport set to True!')
-            if q_vlan and 'preconfigure' in interface:
+
+            if q_vlan and '.' in interface:
                 q_vlans = (" ".join(map(str, want.get('q_vlan'))))
                 if q_vlans != have.get('q_vlan'):
-                    if 'any' in q_vlans and 'l2transport' in interface:
-                        cmd = 'dot1q vlan {0}'.format(q_vlans)
-                        add_command_to_config_list(interface, cmd, commands)
-                    else:
-                        cmd = 'dot1q vlan {0}'.format(q_vlans)
-                        add_command_to_config_list(interface, cmd, commands)
-            elif q_vlan and 'preconfigure' not in interface:
-                module.fail_json(msg='Option q_vlan is 802.1Q VLAN configuration which is only supported on '
-                                     'Sub-Interface!')
+                    cmd = 'dot1q vlan {}'.format(q_vlans)
+                    add_command_to_config_list(interface, cmd, commands)
 
         return commands
 
@@ -293,9 +291,7 @@ class L2_Interfaces(ConfigBase):
         if have.get('native_vlan'):
             remove_command_from_config_list(interface, 'dot1q native vlan', commands)
 
-        if have.get('q_vlan') and 'l2transport' in interface:
-            remove_command_from_config_list(interface, 'dot1q vlan', commands)
-        if have.get('q_vlan') and 'preconfigure' in interface and 'l2transport' not in interface:
+        if have.get('q_vlan'):
             remove_command_from_config_list(interface, 'encapsulation dot1q', commands)
 
         if have.get('l2protocol') and (want.get('l2protocol') is None or want.get('propagate') is None):

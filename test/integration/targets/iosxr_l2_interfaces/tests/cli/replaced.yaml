@@ -15,10 +15,6 @@
             l2transport: True
             l2protocol:
             - vtp: tunnel
-          - name: preconfigure GigabitEthernet0/0/0/1.2 l2transport
-            q_vlan:
-            - 10
-            - any
         state: replaced
       register: result
 

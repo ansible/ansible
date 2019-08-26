@@ -79,50 +79,47 @@ class L2_InterfacesFacts(object):
         match = re.search(r'^(\S+)', conf)
 
         intf = match.group(1)
-        config['name'] = normalize_interface(intf)
 
         if match.group(1).lower() == "preconfigure":
-            match = re.search(r'^(\S+).*', conf)
+            match = re.search(r'^(\S+) (.*)', conf)
             if match:
-                config['name'] = match.group()
+                intf = match.group(2)
+
         if get_interface_type(intf) == 'unknown':
             return {}
 
-        # populate the facts from the configuration
-        native_vlan = re.search(r"dot1q native vlan (\d+)", conf)
-        if native_vlan:
-            config["native_vlan"] = int(native_vlan.group(1))
+        if intf.lower().startswith('gi'):
+            config['name'] = intf
 
-        if 'l2transport' in config['name']:
-            dot1q = utils.parse_conf_arg(conf, 'dot1q vlan')
-            config['q_vlan'] = []
-            if dot1q:
-                config['q_vlan'].append(int(dot1q.split(' ')[0]))
-                config['q_vlan'].append(dot1q.split(' ')[1])
-        if 'preconfigure' in config['name'] and 'l2transport' not in config['name']:
+            # populate the facts from the configuration
+            native_vlan = re.search(r"dot1q native vlan (\d+)", conf)
+            if native_vlan:
+                config["native_vlan"] = int(native_vlan.group(1))
+
             dot1q = utils.parse_conf_arg(conf, 'encapsulation dot1q')
             config['q_vlan'] = []
             if dot1q:
                 config['q_vlan'].append(int(dot1q.split(' ')[0]))
-                config['q_vlan'].append(int(dot1q.split(' ')[2]))
+                if len(dot1q.split(' ')) > 1:
+                    config['q_vlan'].append(int(dot1q.split(' ')[2]))
 
-        if utils.parse_conf_cmd_arg(conf, 'l2transport', True):
-            config['l2transport'] = True
-        if utils.parse_conf_arg(conf, 'propagate'):
-            config['propagate'] = True
-        config['l2protocol'] = []
+            if utils.parse_conf_cmd_arg(conf, 'l2transport', True):
+                config['l2transport'] = True
+            if utils.parse_conf_arg(conf, 'propagate'):
+                config['propagate'] = True
+            config['l2protocol'] = []
 
-        cdp = utils.parse_conf_arg(conf, 'l2protocol cdp')
-        pvst = utils.parse_conf_arg(conf, 'l2protocol pvst')
-        stp = utils.parse_conf_arg(conf, 'l2protocol stp')
-        vtp = utils.parse_conf_arg(conf, 'l2protocol vtp')
-        if cdp:
-            config['l2protocol'].append({'cdp': cdp})
-        if pvst:
-            config['l2protocol'].append({'pvst': pvst})
-        if stp:
-            config['l2protocol'].append({'stp': stp})
-        if vtp:
-            config['l2protocol'].append({'vtp': vtp})
+            cdp = utils.parse_conf_arg(conf, 'l2protocol cdp')
+            pvst = utils.parse_conf_arg(conf, 'l2protocol pvst')
+            stp = utils.parse_conf_arg(conf, 'l2protocol stp')
+            vtp = utils.parse_conf_arg(conf, 'l2protocol vtp')
+            if cdp:
+                config['l2protocol'].append({'cdp': cdp})
+            if pvst:
+                config['l2protocol'].append({'pvst': pvst})
+            if stp:
+                config['l2protocol'].append({'stp': stp})
+            if vtp:
+                config['l2protocol'].append({'vtp': vtp})
 
-        return utils.remove_empties(config)
+            return utils.remove_empties(config)

@@ -15,7 +15,7 @@
             l2transport: True
             l2protocol:
             - stp: forward
-          - name: preconfigure GigabitEthernet0/0/0/3.900
+          - name: GigabitEthernet0/0/0/3.900
             q_vlan:
             - 20
             - 40
