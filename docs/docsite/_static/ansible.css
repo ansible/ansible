@@ -166,14 +166,14 @@ table.documentation-table .value-required {
     height: 28px;
     margin-right: 8px;
     margin-top: -6px;
-/*     position: fixed; */
+    position: fixed;
 }
 
 
 .DocSiteNav-title {
     color: #fff;
     font-size: 20px;
-/*    position: fixed; */
+    position: fixed;
     margin-left: 40px;
     margin-top: -4px;
 
