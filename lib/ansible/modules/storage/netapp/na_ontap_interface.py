@@ -263,7 +263,7 @@ class NetAppOntapInterface(object):
                 return_value['netmask'] = interface_attributes['netmask']
             if interface_attributes.get_child_by_name('firewall-policy'):
                 return_value['firewall_policy'] = interface_attributes['firewall-policy']
-            if interface_attributes.get_child_by_name('dns-domain-name') is not 'none':
+            if interface_attributes.get_child_by_name('dns-domain-name') != 'none':
                 return_value['dns_domain_name'] = interface_attributes['dns-domain-name']
             else:
                 return_value['dns_domain_name'] = None
