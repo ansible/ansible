@@ -302,13 +302,14 @@ class ElementSWAccessGroup(object):
         changed = False
         update_group = False
 
+        input_account_id = self.account_id
         if self.account_id is not None:
             self.account_id = self.get_account_id()
         if self.state == 'present' and self.volumes is not None:
             if self.account_id:
                 self.volumes = self.get_volume_id()
             else:
-                self.module.fail_json(msg='Error: Specified account id %s does not exist ' % self.account_id)
+                self.module.fail_json(msg='Error: Specified account id "%s" does not exist.' % str(input_account_id))
 
         group_detail = self.get_access_group(self.access_group_name)
 
@@ -332,6 +333,7 @@ class ElementSWAccessGroup(object):
                             if volumeID not in self.volumes:
                                 update_group = True
                                 changed = True
+                                break
 
                 elif self.initiators is not None and group_detail.initiators != self.initiators:
                     update_group = True
