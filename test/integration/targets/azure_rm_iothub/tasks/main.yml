@@ -17,7 +17,7 @@
         - iothub.changed
 
 - name: Query IoT Hub
-  azure_rm_iothub_facts:
+  azure_rm_iothub_info:
       name: "hub{{ rpfx }}"
       resource_group: "{{ resource_group }}"
   register: iothub
@@ -52,7 +52,7 @@
         - not iothub.changed
 
 - name: Query IoT Hub
-  azure_rm_iothub_facts:
+  azure_rm_iothub_info:
       name: "hub{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       list_keys: yes
@@ -84,7 +84,7 @@
     - 2
 
 - name: Query devices
-  azure_rm_iotdevice_facts:
+  azure_rm_iotdevice_info:
       hub: "hub{{ rpfx }}"
       hub_policy_name: "{{ registry_write_name }}"
       hub_policy_key: "{{ registry_write_key }}"
@@ -95,7 +95,7 @@
         - devices.iot_devices | length == 2
 
 - name: Query devices
-  azure_rm_iotdevice_facts:
+  azure_rm_iotdevice_info:
       hub: "hub{{ rpfx }}"
       name: "mydevice1"
       hub_policy_name: "{{ registry_write_name }}"
@@ -108,7 +108,7 @@
         - devices.iot_devices[0].deviceId == 'mydevice1'
 
 - name: Query devices twin
-  azure_rm_iotdevice_facts:
+  azure_rm_iotdevice_info:
       hub: "hub{{ rpfx }}"
       query: "SELECT * FROM devices WHERE tags.location.country = 'US'"
       hub_policy_name: "{{ registry_write_name }}"
@@ -136,7 +136,7 @@
     - 3
 
 - name: Query devices twin
-  azure_rm_iotdevice_facts:
+  azure_rm_iotdevice_info:
       hub: "hub{{ rpfx }}"
       query: "SELECT * FROM devices WHERE tags.location.country = 'US'"
       hub_policy_name: "{{ registry_write_name }}"

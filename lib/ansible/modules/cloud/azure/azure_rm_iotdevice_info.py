@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_iotdevice_facts
+module: azure_rm_iotdevice_info
 version_added: "2.9"
 short_description: Facts of Azure IoT hub device
 description:
@@ -68,21 +68,21 @@ author:
 
 EXAMPLES = '''
 - name: Get the details of a device
-  azure_rm_iotdevice_facts:
+  azure_rm_iotdevice_info:
       name: Testing
       hub: MyIoTHub
       hub_policy_name: registryRead
       hub_policy_key: XXXXXXXXXXXXXXXXXXXX
 
 - name: Query all device modules in an IoT Hub
-  azure_rm_iotdevice_facts:
+  azure_rm_iotdevice_info:
       query: "SELECT * FROM devices.modules"
       hub: MyIoTHub
       hub_policy_name: registryRead
       hub_policy_key: XXXXXXXXXXXXXXXXXXXX
 
 - name: List all devices in an IoT Hub
-  azure_rm_iotdevice_facts:
+  azure_rm_iotdevice_info:
       hub: MyIoTHub
       hub_policy_name: registryRead
       hub_policy_key: XXXXXXXXXXXXXXXXXXXX
