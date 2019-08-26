@@ -21,6 +21,8 @@ CHOICES = [
     '!lacp',
     'lag_interfaces',
     '!lag_interfaces',
+    'lldp_global',
+    '!lldp_global',
     'vlans',
     '!vlans',
 ]
