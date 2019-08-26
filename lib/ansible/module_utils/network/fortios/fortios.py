@@ -85,8 +85,18 @@ class FortiOSHandler(object):
         self._conn = conn
 
     def cmdb_url(self, path, name, vdom=None, mkey=None):
-
         url = '/api/v2/cmdb/' + path + '/' + name
+        if mkey:
+            url = url + '/' + str(mkey)
+        if vdom:
+            if vdom == "global":
+                url += '?global=1'
+            else:
+                url += '?vdom=' + vdom
+        return url
+
+    def mon_url(self, path, name, vdom=None, mkey=None):
+        url = '/api/v2/monitor/' + path + '/' + name
         if mkey:
             url = url + '/' + str(mkey)
         if vdom:
@@ -132,8 +142,21 @@ class FortiOSHandler(object):
                 return None
         return mkey
 
-    def set(self, path, name, data, mkey=None, vdom=None, parameters=None):
+    def get(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.cmdb_url(path, name, vdom, mkey=mkey)
 
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def monitor(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.mon_url(path, name, vdom, mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def set(self, path, name, data, mkey=None, vdom=None, parameters=None):
         if not mkey:
             mkey = self.get_mkey(path, name, data, vdom=vdom)
         url = self.cmdb_url(path, name, vdom, mkey)
@@ -158,6 +181,14 @@ class FortiOSHandler(object):
 
         return self.formatresponse(result_data, vdom=vdom)
 
+    def execute(self, path, name, data, vdom=None,
+                mkey=None, parameters=None):
+        url = self.mon_url(path, name, vdom, mkey=mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='POST', timeout=300)
+
+        return self.formatresponse(result_data, vdom=vdom)
+
     def delete(self, path, name, vdom=None, mkey=None, parameters=None, data=None):
         if not mkey:
             mkey = self.get_mkey(path, name, data, vdom=vdom)
@@ -171,6 +202,7 @@ class FortiOSHandler(object):
             resp['vdom'] = "global"
         else:
             resp = json.loads(res.decode('utf-8'))
+            # resp = json.loads(res)
         return resp
 
 # BEGIN DEPRECATED

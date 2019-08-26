@@ -27,18 +27,18 @@ module: fortios_facts
 version_added: "2.9"
 short_description: Get facts about fortios devices.
 description:
-    - Collects facts from network devices running the fortios operating
-      system. This module places the facts gathered in the fact tree keyed by the
-      respective resource name.  The facts module will always collect a
-      base set of facts from the device and can enable or disable
-      collection of additional facts.
+  - Collects facts from network devices running the fortios operating
+    system. This module places the facts gathered in the fact tree keyed by the
+    respective resource name.  This facts module will only collect those  
+    facts which user specified in playbook.
 author:
+    - Don Yao (@fortinetps)
     - Miguel Angel Munoz (@mamunozgonzalez)
     - Nicolas Thomas (@thomnico)
-    - Don Yao (@fortinetps)
 notes:
-    - Requires fortiosapi library developed by Fortinet
-    - Run as a local_action in your playbook
+    - Support both legacy mode (local_action) and httpapi 
+    - Legacy mode run as a local_action in your playbook, requires fortiosapi library developed by Fortinet
+    - httpapi mode is the new recommend way for network modules
 requirements:
     - fortiosapi>=0.9.8
 options:
@@ -78,16 +78,21 @@ options:
         type: bool
         default: false
         required: false
-    gather_subset:
+    gather_network_resources:
         description:
             - When supplied, this argument will restrict the facts collected
-              to a given subset.  Possible values for this argument include
-              all, hardware, config, and interfaces.  Can specify a list of
-              values to include a larger subset.
-        type: list
-        default:
-            - "system_status_select"
-        required: false
+            to a given subset.  Possible values for this argument include:
+              - 'system_current-admins_select',
+              - 'system_firmware_select',
+              - 'system_firmware_upgrade',
+              - 'system_fortimanager_status',
+              - 'system_ha-checksums_select',
+              - 'system_interface_select',
+              - 'system_status_select',
+              - 'system_time_select'
+      type: list
+      required: true
+
 '''
 
 EXAMPLES = '''
@@ -97,18 +102,32 @@ EXAMPLES = '''
     username: "admin"
     password: ""
     vdom: "root"
+    ssl_verify: "False"
+
   tasks:
-  - name: gather system status and system interface facts
+  - name: gather system status and system interface facts (including vlan interfaces)
     fortios_facts:
       host:  "{{ host }}"
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
-      https: "False"
-      gather_subset:
-        - "system_status_select"
-        - "system_interface_select"
-'''
+      gather_network_resources:
+        - 'system_interface_select'
+        - 'system_status_select'
+      system_interface_select:
+        include_vlan: true
+  - name: upgrade system firmware
+    fortios_facts:
+      host:  "{{ host }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      vdom:  "{{ vdom }}"
+      gather_network_resources:
+        - "system_firmware_upgrade"
+      system_firmware_upgrade:
+        filename: "/workspaces/fortios_monitor/firmware/FGT_VM64_KVM-v6-build0163-FORTINET.out"
+        source: "upload"
+  '''
 
 RETURN = '''
 build:
@@ -169,43 +188,11 @@ fortios_system_status:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
 from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
-from ansible.module_utils.six import iteritems
-
-
-class Factbase(object):
-    def __init__(self, module, fos, uri=None):
-        self.module = module
-        self.fos = fos
-        self.uri = uri
-        self.facts = dict()
-
-
-FACT_SYSTEM_SUBSETS = frozenset([
-    'system_current-admins_select',
-    'system_firmware_select',
-    'system_fortimanager_status',
-    'system_ha-checksums_select',
-    'system_interface_select',
-    'system_status_select',
-    'system_time_select',
-])
-
-
-class System(Factbase):
-    def populate_facts(self):
-        fos = self.fos
-        vdom = self.module.params['vdom']
-        if self.uri.startswith(tuple(FACT_SYSTEM_SUBSETS)):
-            resp = fos.monitor('system', self.uri[len('system_'):].replace('_', '/'), vdom=vdom)
-            self.facts.update({self.uri: resp})
-
-
-FACT_SUBSETS = dict(
-    system=System,
-)
-
-VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+from ansible.module_utils.network.fortios.argspec.facts.facts import FactsArgs
+from ansible.module_utils.network.fortios.argspec.system.system import SystemArgs
+from ansible.module_utils.network.fortios.facts.facts import Facts
 
 
 def login(data, fos):
@@ -224,67 +211,53 @@ def login(data, fos):
 
 
 def main():
-    fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": True, "type": "str", "no_log": True},
-        "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": True},
-        "ssl_verify": {"required": False, "type": "bool", "default": False},
-        'gather_subset': {"required": False, "type": "list", "default": ['system_status_select']}
-    }
+    """ Main entry point for AnsibleModule
+    """
+    argument_spec = FactsArgs.argument_spec
+    argument_spec.update(SystemArgs.system_firmware_upgrade_spec)
+    argument_spec.update(SystemArgs.system_interface_select_spec)
 
-    module = AnsibleModule(argument_spec=fields,
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
 
-    # for now only support local connection mode
     if not legacy_mode:
-        module.fail_json(**FAIL_SOCKET_MSG)
+        if module._socket_path:
+            warnings = []
+            connection = Connection(module._socket_path)
+            module._connection = connection # to satisfy FactsBase
+            fos = FortiOSHandler(connection)
+
+            result = Facts(module, fos).get_facts()
+
+            ansible_facts, additional_warnings = result
+            warnings.extend(additional_warnings)
+
+            module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
     else:
         try:
             from fortiosapi import FortiOSAPI
         except ImportError:
             module.fail_json(msg="fortiosapi module is required")
 
+        warnings = []
+
         fos = FortiOSAPI()
-
         login(module.params, fos)
-        gather_subset = module.params['gather_subset']
+        module._connection = fos
 
-        runable_subsets = set()
+        result = Facts(module, fos).get_facts()
 
-        for subset in gather_subset:
-            if not subset.startswith(tuple(VALID_SUBSETS)):
-                module.fail_json(msg='Subset must be one of [%s], got %s' %
-                                 (', '.join(VALID_SUBSETS), subset))
+        ansible_facts, additional_warnings = result
+        warnings.extend(additional_warnings)
 
-            for valid_subset in VALID_SUBSETS:
-                if subset.startswith(valid_subset):
-                    runable_subsets.add((subset, valid_subset))
-
-        if not runable_subsets:
-            runable_subsets.update(VALID_SUBSETS)
-
-        facts = dict()
-        facts['gather_subset'] = list(runable_subsets)
-
-        instances = list()
-
-        for (subset, valid_subset) in runable_subsets:
-            instances.append(FACT_SUBSETS[valid_subset](module, fos, subset))
-
-        # Populate facts for instances
-        for inst in instances:
-            inst.populate_facts()
-            facts.update(inst.facts)
-
-        fos.logout()
-
-        module.exit_json(ansible_facts=facts)
+        module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':
