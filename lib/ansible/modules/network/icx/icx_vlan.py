@@ -20,7 +20,7 @@ description:
   - This module provides declarative management of VLANs
     on ICX network devices.
 notes:
-  - Tested against ICX 10.1
+  - Tested against ICX 10.1.
   - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   name:
@@ -440,7 +440,6 @@ def map_params_to_obj(module):
             for key in item:
                 if item.get(key) is None:
                     item[key] = module.params[key]
-            # item['untagged'] = item.pop('interfaces')
             stp = item.get('stp')
             if stp:
                 stp_cmd = spanning_tree(module, stp)
