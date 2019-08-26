@@ -92,6 +92,8 @@ Settings by Platform
 | Netconf*          |                         |             |         |         |          |
 +-------------------+-------------------------+-------------+---------+---------+----------+
 
+.. raw:: html
+
     <style>
     /* Style for this single table.  Add delimiters between header colums */
     table#network-platform-table thead tr th.head {
