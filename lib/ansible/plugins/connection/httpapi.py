@@ -255,8 +255,14 @@ class Connection(NetworkConnectionBase):
         if self._connected:
             self.queue_message('vvvv', "closing http(s) connection to device")
             self.logout()
-
+        self.shutdown()
         super(Connection, self).close()
+
+    def reset(self):
+        if self._socket_path:
+            self.close()
+            self.queue_message('vvvv', 'resetting persistent connection for socket_path %s for host %s'
+                               % (self._socket_path, self._play_context.remote_addr))
 
     @ensure_connect
     def send(self, path, data, **kwargs):

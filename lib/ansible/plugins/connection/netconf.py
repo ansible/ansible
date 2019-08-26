@@ -342,4 +342,11 @@ class Connection(NetworkConnectionBase):
     def close(self):
         if self._manager:
             self._manager.close_session()
+        self.shutdown()
         super(Connection, self).close()
+
+    def reset(self):
+        if self._socket_path:
+            self.close()
+            self.queue_message('vvvv', 'resetting persistent connection for socket_path %s for host %s'
+                               % (self._socket_path, self._play_context.remote_addr))

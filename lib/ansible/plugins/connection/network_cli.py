@@ -433,7 +433,16 @@ class Connection(NetworkConnectionBase):
                 self.paramiko_conn.close()
                 self.paramiko_conn = None
                 self.queue_message('debug', "ssh connection has been closed successfully")
+        self.shutdown()
         super(Connection, self).close()
+
+    def reset(self):
+        if self._socket_path:
+            self.close()
+            self.queue_message('vvvv', 'resetting persistent connection for socket_path %s for host %s'
+                               % (self._socket_path, self._play_context.remote_addr))
+
+        self.queue_message('vvvv', 'reset call on connection instance for host %s' % self._play_context.remote_addr)
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
         '''

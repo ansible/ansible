@@ -8,6 +8,7 @@ __metaclass__ = type
 import fcntl
 import os
 import shlex
+import socket
 
 from abc import abstractmethod, abstractproperty
 from functools import wraps
@@ -338,6 +339,28 @@ class NetworkConnectionBase(ConnectionBase):
         if self._connected:
             self._connected = False
 
+    def shutdown(self):
+        if self._socket_path:
+            lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(self._socket_path))
+            if os.path.exists(self._socket_path):
+                try:
+                    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    sock.bind(self.socket_path)
+                    if sock:
+                        sock.close()
+                        self.queue_message('vvvv', 'closed socket path %s' % self._socket_path)
+                except Exception:
+                    pass
+                finally:
+                    if os.path.exists(self._socket_path ):
+                        os.remove(self._socket_path )
+                        setattr(self.connection, '_socket_path', None)
+                        setattr(self.connection, '_connected', False)
+
+            if os.path.exists(lock_path):
+                os.remove(lock_path)
+        self.queue_message('vvvv', 'shutdown complete')
+
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
         if self.get_option('persistent_log_messages'):
@@ -353,15 +376,7 @@ class NetworkConnectionBase(ConnectionBase):
             except AttributeError:
                 pass
 
-    def _update_connection_state(self):
-        '''
-        Reconstruct the connection socket_path and check if it exists
-
-        If the socket path exists then the connection is active and set
-        both the _socket_path value to the path and the _connected value
-        to True.  If the socket path doesn't exist, leave the socket path
-        value to None and the _connected value to False
-        '''
+    def _get_socket_path(self):
         ssh = connection_loader.get('ssh', class_only=True)
         control_path = ssh._create_control_path(
             self._play_context.remote_addr, self._play_context.port,
@@ -371,7 +386,18 @@ class NetworkConnectionBase(ConnectionBase):
 
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         socket_path = unfrackpath(control_path % dict(directory=tmp_path))
+        return socket_path
 
+    def _update_connection_state(self):
+        '''
+        Reconstruct the connection socket_path and check if it exists
+
+        If the socket path exists then the connection is active and set
+        both the _socket_path value to the path and the _connected value
+        to True.  If the socket path doesn't exist, leave the socket path
+        value to None and the _connected value to False
+        '''
+        socket_path = self._get_socket_path()
         if os.path.exists(socket_path):
             self._connected = True
             self._socket_path = socket_path
