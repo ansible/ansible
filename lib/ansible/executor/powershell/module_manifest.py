@@ -13,10 +13,11 @@ import random
 import re
 
 from distutils.version import LooseVersion
+from importlib import import_module
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.loader import ps_module_utils_loader
 
 
@@ -164,15 +165,19 @@ class PSModuleDepFinder(object):
         else:
             # Collection util, load the package data based on the util import.
             submodules = tuple(m.split("."))
-            package_name = '.'.join(submodules[:-1])
-            resource_name = submodules[-1] + ext
+            n_package_name = to_native('.'.join(submodules[:-1]), errors='surrogate_or_strict')
+            n_resource_name = to_native(submodules[-1] + ext, errors='surrogate_or_strict')
 
             try:
-                module_util_data = to_bytes(pkgutil.get_data(package_name, resource_name))
+                # FIXME: need this in py2 for some reason TBD
+                import_module(to_native(n_package_name))
+                module_util_data = to_bytes(pkgutil.get_data(n_package_name, n_resource_name),
+                                            errors='surrogate_or_strict')
                 mu_path = None  # TODO: get this path
             except OSError as err:
                 if err.errno == errno.ENOENT:
-                    raise AnsibleError('Could not find collection imported module support code for \'%s\'' % m)
+                    raise AnsibleError('Could not find collection imported module support code for \'%s\''
+                                       % to_native(m))
                 else:
                     raise
 
