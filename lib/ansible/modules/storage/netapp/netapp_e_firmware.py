@@ -48,21 +48,21 @@ options:
 EXAMPLES = """
 - name: Ensure correct firmware versions
   netapp_e_firmware:
-    ssid: "{{ eseries_ssid }}"
-    api_url: "{{ eseries_api_url }}"
-    api_username: "{{ eseries_api_username }}"
-    api_password: "{{ eseries_api_password }}"
-    validate_certs: "{{ eseries_validate_certs }}"
+    ssid: "1"
+    api_url: "https://192.168.1.100:8443/devmgr/v2"
+    api_username: "admin"
+    api_password: "adminpass"
+    validate_certs: true
     nvsram: "path/to/nvsram"
     bundle: "path/to/bundle"
     wait_for_completion: true
 - name: Ensure correct firmware versions
   netapp_e_firmware:
-    ssid: "{{ eseries_ssid }}"
-    api_url: "{{ eseries_api_url }}"
-    api_username: "{{ eseries_api_username }}"
-    api_password: "{{ eseries_api_password }}"
-    validate_certs: "{{ eseries_validate_certs }}"
+    ssid: "1"
+    api_url: "https://192.168.1.100:8443/devmgr/v2"
+    api_username: "admin"
+    api_password: "adminpass"
+    validate_certs: true
     nvsram: "path/to/nvsram"
     firmware: "path/to/firmware"
 """
