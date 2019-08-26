@@ -81,10 +81,10 @@ class MockONTAPConnection(object):
                 'ndmp-vserver-attributes-info': {
                     'ignore_ctime_enabled': ndmp_details['ignore_ctime_enabled'],
                     'backup_log_enable': ndmp_details['backup_log_enable'],
-                    'authtype': [{
-                        'ndmpd-authtypes': 'plaintext',
-                        'ndmpd-authtypes': 'challenge'
-                    }]
+                    'authtype': [
+                        {'ndmpd-authtypes': 'plaintext'},
+                        {'ndmpd-authtypes': 'challenge'}
+                    ]
                 }
             }
         }
