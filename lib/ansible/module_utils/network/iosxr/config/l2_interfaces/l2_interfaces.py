@@ -275,7 +275,7 @@ class L2_Interfaces(ConfigBase):
             if q_vlan and '.' in interface:
                 q_vlans = (" ".join(map(str, want.get('q_vlan'))))
                 if q_vlans != have.get('q_vlan'):
-                    cmd = 'dot1q vlan {}'.format(q_vlans)
+                    cmd = 'dot1q vlan {0}'.format(q_vlans)
                     add_command_to_config_list(interface, cmd, commands)
 
         return commands
