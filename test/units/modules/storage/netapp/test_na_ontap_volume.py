@@ -90,7 +90,8 @@ class MockONTAPConnection(object):
                     'volume-id-attributes': {
                         'containing-aggregate-name': vol_details['aggregate'],
                         'junction-path': vol_details['junction_path'],
-                        'style-extended': 'flexvol'
+                        'style-extended': 'flexvol',
+                        'comment': vol_details['comment']
                     },
                     'volume-language-attributes': {
                         'language-code': 'en'
@@ -146,7 +147,8 @@ class MockONTAPConnection(object):
                     'volume-id-attributes': {
                         'aggr-list': vol_details['aggregate'],
                         'junction-path': vol_details['junction_path'],
-                        'style-extended': 'flexgroup'
+                        'style-extended': 'flexgroup',
+                        'comment': vol_details['comment']
                     },
                     'volume-language-attributes': {
                         'language-code': 'en'
@@ -259,7 +261,8 @@ class TestMyModule(unittest.TestCase):
             'qos_adaptive_policy_group': 'performance',
             'percent_snapshot_space': 60,
             'language': 'en',
-            'vserver_dr_protection': 'unprotected'
+            'vserver_dr_protection': 'unprotected',
+            'comment': 'test comment'
         }
 
     def mock_args(self, tag=None):
@@ -283,7 +286,8 @@ class TestMyModule(unittest.TestCase):
             'percent_snapshot_space': 60,
             'type': 'type',
             'nvfail_enabled': True,
-            'space_slo': 'thick'
+            'space_slo': 'thick',
+            'comment': self.mock_vol['comment']
         }
         if tag is None:
             args['aggregate_name'] = self.mock_vol['aggregate']
