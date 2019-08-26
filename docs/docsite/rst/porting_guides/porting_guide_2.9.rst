@@ -470,6 +470,78 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``os_user_facts`` module was renamed to :ref:`os_user_info <os_user_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_affinity_label_facts`` module was renamed to :ref:`ovirt_affinity_label_info <ovirt_affinity_label_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_api_facts`` module was renamed to :ref:`ovirt_api_info <ovirt_api_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_cluster_facts`` module was renamed to :ref:`ovirt_cluster_info <ovirt_cluster_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_datacenter_facts`` module was renamed to :ref:`ovirt_datacenter_info <ovirt_datacenter_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_disk_facts`` module was renamed to :ref:`ovirt_disk_info <ovirt_disk_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_event_facts`` module was renamed to :ref:`ovirt_event_info <ovirt_event_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_external_provider_facts`` module was renamed to :ref:`ovirt_external_provider_info <ovirt_external_provider_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_group_facts`` module was renamed to :ref:`ovirt_group_info <ovirt_group_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_host_facts`` module was renamed to :ref:`ovirt_host_info <ovirt_host_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_host_storage_facts`` module was renamed to :ref:`ovirt_host_storage_info <ovirt_host_storage_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_network_facts`` module was renamed to :ref:`ovirt_network_info <ovirt_network_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_nic_facts`` module was renamed to :ref:`ovirt_nic_info <ovirt_nic_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_permission_facts`` module was renamed to :ref:`ovirt_permission_info <ovirt_permission_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_quota_facts`` module was renamed to :ref:`ovirt_quota_info <ovirt_quota_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_scheduling_policy_facts`` module was renamed to :ref:`ovirt_scheduling_policy_info <ovirt_scheduling_policy_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_snapshot_facts`` module was renamed to :ref:`ovirt_snapshot_info <ovirt_snapshot_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_storage_domain_facts`` module was renamed to :ref:`ovirt_storage_domain_info <ovirt_storage_domain_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_storage_template_facts`` module was renamed to :ref:`ovirt_storage_template_info <ovirt_storage_template_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_storage_vm_facts`` module was renamed to :ref:`ovirt_storage_vm_info <ovirt_storage_vm_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_tag_facts`` module was renamed to :ref:`ovirt_tag_info <ovirt_tag_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_template_facts`` module was renamed to :ref:`ovirt_template_info <ovirt_template_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_user_facts`` module was renamed to :ref:`ovirt_user_info <ovirt_user_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_vm_facts`` module was renamed to :ref:`ovirt_vm_info <ovirt_vm_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``ovirt_vmpool_facts`` module was renamed to :ref:`ovirt_vmpool_info <ovirt_vmpool_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``python_requirements_facts`` module was renamed to :ref:`python_requirements_info <python_requirements_info_module>`.
 * The ``rds_instance_facts`` module was renamed to :ref:`rds_instance_info <rds_instance_info_module>`.
 * The ``rds_snapshot_facts`` module was renamed to :ref:`rds_snapshot_info <rds_snapshot_info_module>`.
