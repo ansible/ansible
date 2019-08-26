@@ -16,6 +16,7 @@ CHOICES = [
     'lacp_interfaces',
     'interfaces',
     'l3_interfaces',
+    'l2_interfaces',
 ]
 
 
