@@ -31,7 +31,7 @@ module: cp_mgmt_threat_rule
 short_description: Manages threat-rule objects on Checkpoint over Web Services API
 description:
   - Manages threat-rule objects on Checkpoint devices including creating, updating and removing objects.
-    All operations are performed over Web Services API.
+  - All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
@@ -111,8 +111,8 @@ options:
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   ignore_warnings:
@@ -121,13 +121,8 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
-  new_name:
-    description:
-      - New name of the object.
-    type: str
 extends_documentation_fragment: checkpoint_objects
 """
 
@@ -140,7 +135,6 @@ EXAMPLES = """
     name: First threat rule
     position: top
     protected_scope: All_Internet
-    state: present
     track: None
 
 - name: set-threat-rule
@@ -151,7 +145,6 @@ EXAMPLES = """
     layer: New Layer 1
     protected_scope: All_Internet
     rule_number: 2
-    state: present
 
 - name: delete-threat-rule
   cp_mgmt_threat_rule:
@@ -194,8 +187,7 @@ def main():
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         ignore_warnings=dict(type='bool'),
-        ignore_errors=dict(type='bool'),
-        new_name=dict(type='str')
+        ignore_errors=dict(type='bool')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 

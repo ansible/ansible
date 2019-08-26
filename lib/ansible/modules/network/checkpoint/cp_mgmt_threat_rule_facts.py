@@ -31,8 +31,8 @@ module: cp_mgmt_threat_rule_facts
 short_description: Get threat-rule objects facts on Checkpoint over Web Services API
 description:
   - Get threat-rule objects facts on Checkpoint devices.
-    All operations are performed over Web Services API.
-    This module handles both operations, get a specific object and get several objects.
+  - All operations are performed over Web Services API.
+  - This module handles both operations, get a specific object and get several objects,
     For getting a specific object use the parameter 'name'.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -51,15 +51,14 @@ options:
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   filter:
     description:
-      - Search expression to filter the rulebase. The provided text should be exactly the same as it would be
-        given in Smart Console. The logical operators in the expression ('AND', 'OR') should be provided in capital
-        letters. If an operator is not used, the default OR operator applies.
+      - Search expression to filter the rulebase. The provided text should be exactly the same as it would be given in Smart Console. The logical
+        operators in the expression ('AND', 'OR') should be provided in capital letters. If an operator is not used, the default OR operator applies.
     type: str
   filter_settings:
     description:
@@ -68,10 +67,9 @@ options:
     suboptions:
       search_mode:
         description:
-          - When set to 'general', both the Full Text Search and Packet Search are enabled. In this mode,
-            Packet Search will not match on 'Any' object, a negated cell or a group-with-exclusion. When the
-            search-mode is set to 'packet', by default, the match on 'Any' object, a negated cell or a
-            group-with-exclusion are enabled. packet-search-settings may be provided to change the default behavior.
+          - When set to 'general', both the Full Text Search and Packet Search are enabled. In this mode, Packet Search will not match on 'Any'
+            object, a negated cell or a group-with-exclusion. When the search-mode is set to 'packet', by default, the match on 'Any' object, a negated cell
+            or a group-with-exclusion are enabled. packet-search-settings may be provided to change the default behavior.
         type: str
         choices: ['general', 'packet']
       packet_search_settings:
@@ -81,14 +79,13 @@ options:
         suboptions:
           expand_group_members:
             description:
-              - When true, if the search expression contains a UID or a name of a group object, results
-                will include rules that match on at least one member of the group.
+              - When true, if the search expression contains a UID or a name of a group object, results will include rules that match on at
+                least one member of the group.
             type: bool
           expand_group_with_exclusion_members:
             description:
-              - When true, if the search expression contains a UID or a name of a group-with-exclusion
-                object, results will include rules that match at least one member of the "include" part and is not a
-                member of the "except" part.
+              - When true, if the search expression contains a UID or a name of a group-with-exclusion object, results will include rules that
+                match at least one member of the "include" part and is not a member of the "except" part.
             type: bool
           match_on_any:
             description:
