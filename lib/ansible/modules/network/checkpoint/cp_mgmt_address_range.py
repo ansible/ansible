@@ -31,7 +31,7 @@ module: cp_mgmt_address_range
 short_description: Manages address-range objects on Checkpoint over Web Services API
 description:
   - Manages address-range objects on Checkpoint devices including creating, updating and removing objects.
-    All operations are performed over Web Services API.
+  - All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:

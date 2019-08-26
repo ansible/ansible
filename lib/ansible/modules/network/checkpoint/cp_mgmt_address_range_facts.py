@@ -31,8 +31,8 @@ module: cp_mgmt_address_range_facts
 short_description: Get address-range objects facts on Checkpoint over Web Services API
 description:
   - Get address-range objects facts on Checkpoint devices.
-    All operations are performed over Web Services API.
-    This module handles both operations, get a specific object and get several objects.
+  - All operations are performed over Web Services API.
+  - This module handles both operations, get a specific object and get several objects,
     For getting a specific object use the parameter 'name'.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
