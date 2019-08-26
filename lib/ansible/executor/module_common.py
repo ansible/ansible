@@ -152,20 +152,14 @@ def _ansiballz_main():
         sys.path = [p for p in sys.path if p != scriptdir]
 
     import base64
+    import runpy
     import shutil
     import tempfile
     import zipfile
 
     if sys.version_info < (3,):
-        # imp is used on Python<3
-        import imp
-        bytes = str
-        MOD_DESC = ('.py', 'U', imp.PY_SOURCE)
         PY3 = False
     else:
-        # importlib is only used on Python>=3
-        import importlib.util
-        unicode = str
         PY3 = True
 
     ZIPDATA = """%(zipdata)s"""
@@ -187,13 +181,6 @@ def _ansiballz_main():
         zinfo.filename = 'sitecustomize.py'
         zinfo.date_time = ( %(year)i, %(month)i, %(day)i, %(hour)i, %(minute)i, %(second)i)
         z.writestr(zinfo, sitecustomize)
-        # Note: Remove the following section when we switch to zipimport
-        # Write the module to disk for imp.load_module
-        module = os.path.join(temp_path, '__main__.py')
-        with open(module, 'wb') as f:
-            f.write(z.read('__main__.py'))
-            f.close()
-        # End pre-zipimport section
         z.close()
 
         # Put the zipped up module_utils we got from the controller first in the python path so that we
@@ -205,13 +192,7 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        if sys.version_info >= (3,):
-            spec = importlib.util.spec_from_file_location('__main__', module)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-        else:
-            with open(module, 'rb') as mod:
-                imp.load_module('__main__', mod, module, MOD_DESC)
+        runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=False)
 
         # Ansible modules must exit themselves
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -253,7 +234,6 @@ def _ansiballz_main():
         # Okay to use __file__ here because we're running from a kept file
         basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
         args_path = os.path.join(basedir, 'args')
-        script_path = os.path.join(basedir, '__main__.py')
 
         if command == 'excommunicate':
             print('The excommunicate debug command is deprecated and will be removed in 2.11.  Use execute instead.')
@@ -306,15 +286,7 @@ def _ansiballz_main():
             basic._ANSIBLE_ARGS = json_params
 
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            if PY3:
-                import importlib.util
-                spec = importlib.util.spec_from_file_location('__main__', script_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-            else:
-                import imp
-                with open(script_path, 'r') as f:
-                    imp.load_module('__main__', f, script_path, ('.py', 'r', imp.PY_SOURCE))
+            runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=False)
 
             # Ansible modules must exit themselves
             print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -394,9 +366,11 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
 ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
         try:
             if PY3:
+                import importlib.util
                 if importlib.util.find_spec('coverage') is None:
                     raise ImportError
             else:
+                import imp
                 imp.find_module('coverage')
         except ImportError:
             print('{"msg": "Could not find `coverage` module.", "failed": true}')
@@ -832,11 +806,6 @@ def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
         # Save memory; the file won't have to be read again for this ansible module.
         del py_module_cache[py_module_file]
 
-    # This is part of a hack to optimize finding whether the module contains a toplevel main()
-    # function (modules without toplevel main() functions are deprecated.  This return should be
-    # removed in 2.13 when the code to allow modules without main() to continue working is removed
-    return tree
-
 
 def _is_binary(b_module_data):
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
@@ -896,17 +865,6 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
         # Note: We don't want to include more than one ansible module in a payload at this time
         # so no need to fill the __init__.py with namespace code
         zf.writestr(package_path, b'')
-
-    # Write a wrapper to invoke the module as __main__
-    wrapper = 'from %s import main; main()' % remote_module_fqn
-    zf.writestr('__main__.py', to_bytes(wrapper))
-
-
-def _has_main_function(tree):
-    for function in (node for node in tree.body if isinstance(node, ast.FunctionDef)):
-        if function.name == 'main':
-            return True
-    return False
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
@@ -975,6 +933,17 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
             compression_method = zipfile.ZIP_STORED
 
+        try:
+            remote_module_fqn = _get_module_fqn(module_path)
+        except ValueError:
+            # Modules in roles currently are not found by the fqn heuristic so we
+            # fallback to this.  This means that relative imports inside a module from
+            # a role may fail.  Absolute imports should be used for future-proofness.
+            # People should start writing collections instead of modules in roles so we
+            # may never fix this
+            display.debug('ANSIBALLZ: Could not determine module FQN')
+            remote_module_fqn = 'ansible.modules.%s' % module_name
+
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
         cached_module_filename = os.path.join(lookup_path, "%s-%s" % (module_name, module_compression))
 
@@ -1012,11 +981,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                 to_bytes(__author__) + b'"\n')
                     zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
-                    try:
-                        remote_module_fqn = _get_module_fqn(module_path)
-                    except ValueError:
-                        remote_module_fqn = None
-
                     # FIXME: py_module_cache currently only deals with module_utils so the paths
                     # in the keys are offsets into ansible.module_utils.  with the advent of
                     # collections and relative imports in modules, we are now rooted in the toplevel
@@ -1030,31 +994,11 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     # main().  Because parsing the ast is expensive, return it from recursive_finder
                     # instead of reparsing.  Once the deprecation is over and we remove that code,
                     # also remove returning of the ast tree.
-                    tree = recursive_finder(module_name, module_path, b_module_data,
-                                            py_module_names, py_module_cache, zf)
-                    has_main = _has_main_function(tree)
-                    del tree
+                    recursive_finder(module_name, module_path, b_module_data, py_module_names,
+                                     py_module_cache, zf)
 
-                    if remote_module_fqn and has_main:
-                        display.debug('ANSIBALLZ: Writing module into payload')
-                        _add_module_to_zip(zf, remote_module_fqn, b_module_data)
-                    else:
-                        if not has_main:
-                            display.deprecated('The %s module does not have a main() function.'
-                                               ' Add a main() function entry point to use'
-                                               ' relative imports in the module. Support for'
-                                               ' executing a module without a main() function as'
-                                               ' the entry point is deprecated.'
-                                               % module_name, version='2.13')
-                        else:
-                            # Modules in roles currently are not found by the fqn heuristic so we
-                            # need to fallback to this.  This means that relative imports inside
-                            # a module from a role will fail.  Absolute imports must be used.
-                            # People should start writing collections instead of modules in roles so
-                            # we may never fix this
-                            display.debug('ANSIBALLZ: Could not determine module FQN')
-
-                        zf.writestr('__main__.py', b_module_data)
+                    display.debug('ANSIBALLZ: Writing module into payload')
+                    _add_module_to_zip(zf, remote_module_fqn, b_module_data)
 
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
@@ -1130,6 +1074,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
+            module_fqn=remote_module_fqn,
             params=python_repred_params,
             shebang=shebang,
             coding=ENCODING_STRING,
