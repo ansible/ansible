@@ -30,6 +30,7 @@ options:
   suffix:
     description:
     - Suffix of snapshot name.
+    type: str
   state:
     description:
     - Define whether the protection group snapshot should exist or not.

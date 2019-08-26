@@ -418,7 +418,7 @@ def main():
             user_quota=dict(type='str'),
             group_quota=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
-            size=dict()
+            size=dict(default='32G')
         )
     )
 

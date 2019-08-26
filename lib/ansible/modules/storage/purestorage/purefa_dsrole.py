@@ -31,6 +31,7 @@ options:
   role:
     description:
     - The directory service role to work on
+    type: str
     choices: [ array_admin, ops_admin, readonly, storage_admin ]
   group_base:
     type: str
