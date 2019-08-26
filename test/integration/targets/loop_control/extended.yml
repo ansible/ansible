@@ -3,7 +3,7 @@
   gather_facts: false
   tasks:
     - name: loop on an include
-      include: inner.yml
+      include_tasks: inner.yml
       loop:
         - first
         - second
