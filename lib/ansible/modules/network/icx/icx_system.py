@@ -22,7 +22,8 @@ description:
     parameters or remove those parameters from the device active
     configuration.
 notes:
-  - Tested against ICX 10.1
+  - Tested against ICX 10.1.
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   hostname:
     description:
