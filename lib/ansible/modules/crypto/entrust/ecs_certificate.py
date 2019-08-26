@@ -20,8 +20,8 @@ author:
 version_added: '2.9'
 short_description: Request SSL/TLS certificates with the Entrust Certificate Services (ECS) API
 description:
-    - Create, reissue, and renew Certificates with the Entrust Certificate Services (ECS) API.
-    - Requires credentials for the L(Entrust Certificate Services, https://www.entrustdatacard.com/products/categories/ssl-certificates) (ECS) API.
+    - Create, reissue, and renew certificates with the Entrust Certificate Services (ECS) API.
+    - Requires credentials for the L(Entrust Certificate Services,https://www.entrustdatacard.com/products/categories/ssl-certificates) (ECS) API.
     - In order to request a certificate, the domain and organization used in the certificate signing request must be already
       validated in the ECS system. It is I(not) the responsibility of this module to perform those steps.
 notes:
@@ -33,13 +33,13 @@ options:
         description:
             - pathination to store a backup of the initial certificate, if I(path) pointed to an existing file certificate.
         type: bool
-        default: False
+        default: false
     force:
         description:
             - If force is used, a certificate is requested regardless of whether I(path) points to an existing valid certificate.
             - If C(request_type=RENEW), a forced renew will fail if the certificate being renewed has been issued within the past 30 days.
         type: bool
-        default: False
+        default: false
     path:
         description:
             - pathination to put the certificate file as a PEM encoded cert
@@ -48,7 +48,7 @@ options:
             - If an existing certificate is being replaced (see I(remaining_days), I(force), I(tracking_id)), the operation taken to replace it is dependent
               on I(request_type)
         type: path
-        required: True
+        required: true
     chain_path:
         description:
             - pathination to put the full certificate chain of the certificate, intermediates, and roots.
@@ -56,7 +56,8 @@ options:
     csr:
         description:
             - Base-64 encoded Certificate Signing Request (CSR). I(csr) is accepted with or without PEM formatting around the Base-64 string.
-            - If no I(csr) is provided during a reissue or renew action, the certificate will be generated with the same public key as previous certificate.
+            - If no I(csr) is provided when C(request_type=REISSUE) or C(request_type=RENEW), the certificate will be generated with the same public key as
+              the certificate being renewed or reissued.
             - If I(subject_alt_name) is specified, it will override the subject alternate names in the CSR.
             - If I(eku) is specified, it will override the extended key usage in the CSR.
             - If I(ou) is specified, it will override the organizational units "ou=" present in the subject distinguished name of the CSR, if any.
@@ -66,7 +67,6 @@ options:
     tracking_id:
         description:
             - Tracking ID of certificate to reissue or renew.
-            - Parameter is invalid if C(action = NEW)
             - I(tracking_id) is invalid if C(request_type=NEW).
             - If there is a certificate present in I(path) and it is an ECS certificate, I(tracking_id) will be ignored.
             - If there is not a certificate present in I(path) or there is but it is from another provider, the certificate represented by I(tracking_id) will
@@ -177,15 +177,15 @@ options:
     requester_name:
         description: Requester name to associate with certificate tracking information.
         type: str
-        required: True
+        required: true
     requester_email:
         description: Requester email to associate with certificate tracking information and receive delivery and expiry notices for the certificate.
         type: str
-        required: True
+        required: true
     requester_phone:
         description: Requester phone number to associate with certificate tracking information.
         type: str
-        required: True
+        required: true
     additional_emails:
         description: A list of additional email addresses to receive the delivery notice and expiry notification for the certificate
         type: list
@@ -340,7 +340,7 @@ EXAMPLES = r'''
 - name: Request a new certificate from Entrust with bare minimum parameters. Will request a new certificate if current one is valid but within 30 days of
         expiry. If replacing an existing file in path, will back it up.
   ecs_certificate:
-    backup: True
+    backup: true
     path: /etc/ssl/crt/ansible.com.crt
     chain_path: /etc/ssl/crt/ansible.com.chain.crt
     csr: /etc/ssl/csr/ansible.com.csr
@@ -386,7 +386,7 @@ EXAMPLES = r'''
 - name: Force a reissue of the certificate specified by tracking_id.
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
-    force: True
+    force: true
     tracking_id: 2378915
     request_type: REISSUE
     entrust_api_user: apiusername
@@ -417,7 +417,7 @@ EXAMPLES = r'''
       - ansible.testcertificates.com
       - www.testcertificates.com
     eku: SERVER_AND_CLIENT_AUTH
-    ct_log: True
+    ct_log: true
     org: Test Organization Inc.
     ou:
       - Administration
@@ -450,10 +450,15 @@ filename:
     type: str
     sample: /etc/ssl/crt/www.ansible.com.crt
 backup_file:
-    description: Name of backup file created.
-    returned: changed and if I(backup) is C(True)
+    description: Name of backup file created for the certificate.
+    returned: changed and if I(backup) is C(true)
     type: str
     sample: /path/to/www.ansible.com.crt.2019-03-09@11:22~
+backup_chain_file:
+    description: Name of the backup file created for the certificate chain.
+    returned: changed and if I(backup) is C(true) and I(chain_path) is set.
+    type: str
+    sample: /path/to/ca.chain.crt.2019-03-09@11:22~
 tracking_id:
     description: The tracking ID to reference and track the certificate in ECS.
     returned: success
@@ -531,7 +536,7 @@ def calculate_cert_days(expires_after):
 # out of resulting dict
 def convert_module_param_to_json_bool(module, dict_param_name, param_name):
     body = {}
-    if module.params.get(param_name, None) is not None:
+    if module.params[param_name] is not None:
         if module.params[param_name]:
             body[dict_param_name] = 'true'
         else:
@@ -546,11 +551,11 @@ class EcsCertificate(object):
 
     def __init__(self, module):
         self.path = module.params['path']
-        self.chain_path = module.params.get('chain_path')
+        self.chain_path = module.params['chain_path']
         self.force = module.params['force']
         self.backup = module.params['backup']
         self.request_type = module.params['request_type']
-        self.csr = module.params.get('csr')
+        self.csr = module.params['csr']
 
         # All return values
         self.changed = False
@@ -561,6 +566,7 @@ class EcsCertificate(object):
         self.cert_days = None
         self.cert_details = None
         self.backup_file = None
+        self.backup_chain_file = None
 
         self.cert = None
         self.ecs_client = None
@@ -572,11 +578,11 @@ class EcsCertificate(object):
         # Instantiate the ECS client and then try a no-op connection to verify credentials are valid
         try:
             self.ecs_client = ECSClient(
-                entrust_api_user=module.params.get('entrust_api_user'),
-                entrust_api_key=module.params.get('entrust_api_key'),
-                entrust_api_cert=module.params.get('entrust_api_client_cert_path'),
-                entrust_api_cert_key=module.params.get('entrust_api_client_cert_key_path'),
-                entrust_api_specification_path=module.params.get('entrust_api_specification_path')
+                entrust_api_user=module.params['entrust_api_user'],
+                entrust_api_key=module.params['entrust_api_key'],
+                entrust_api_cert=module.params['entrust_api_client_cert_path'],
+                entrust_api_cert_key=module.params['entrust_api_client_cert_key_path'],
+                entrust_api_specification_path=module.params['entrust_api_specification_path']
             )
         except SessionConfigurationException as e:
             module.fail_json(msg='Failed to initialize Entrust Provider: {0}'.format(to_native(e)))
@@ -589,15 +595,15 @@ class EcsCertificate(object):
     def convert_tracking_params(self, module):
         body = {}
         tracking = {}
-        if module.params.get('requester_name'):
+        if module.params['requester_name']:
             tracking['requesterName'] = module.params['requester_name']
-        if module.params.get('requester_email'):
+        if module.params['requester_email']:
             tracking['requesterEmail'] = module.params['requester_email']
-        if module.params.get('requester_phone'):
+        if module.params['requester_phone']:
             tracking['requesterPhone'] = module.params['requester_phone']
-        if module.params.get('tracking_info'):
+        if module.params['tracking_info']:
             tracking['trackingInfo'] = module.params['tracking_info']
-        if(module.params.get('custom_fields')):
+        if module.params['custom_fields']:
             # Omit custom fields from submitted dict if not present, instead of submitting them with value of 'null'
             # The ECS API does technically accept null without error, but it complicates debugging user escalations and is unnecessary bandwidth.
             custom_fields = {}
@@ -605,24 +611,24 @@ class EcsCertificate(object):
                 if v is not None:
                     custom_fields[k] = v
             tracking['customFields'] = custom_fields
-        if(module.params.get('additional_emails')):
+        if module.params['additional_emails']:
             tracking['additionalEmails'] = module.params['additional_emails']
         body['tracking'] = tracking
         return body
 
     def convert_cert_subject_params(self, module):
         body = {}
-        if module.params.get('subject_alt_name') and len(module.params['subject_alt_name']) > 0:
+        if module.params['subject_alt_name']:
             body['subjectAltName'] = module.params['subject_alt_name']
-        if module.params.get('org'):
+        if module.params['org']:
             body['org'] = module.params['org']
-        if module.params.get('ou') and len(module.params['ou']) > 0:
+        if module.params['ou']:
             body['ou'] = module.params['ou']
         return body
 
     def convert_general_params(self, module):
         body = {}
-        if module.params.get('eku'):
+        if module.params['eku']:
             body['eku'] = module.params['eku']
         if self.request_type == 'NEW':
             body['certType'] = module.params['cert_type']
@@ -633,9 +639,9 @@ class EcsCertificate(object):
 
     def convert_expiry_params(self, module):
         body = {}
-        if module.params.get('cert_lifetime'):
+        if module.params['cert_lifetime']:
             body['certLifetime'] = module.params['cert_lifetime']
-        elif module.params.get('cert_expiry'):
+        elif module.params['cert_expiry']:
             body['certExpiryDate'] = module.params['cert_expiry']
         # If neither cerTLifetime or certExpiryDate was specified and the request type is new, default to 365 days
         elif self.request_type != 'REISSUE':
@@ -671,13 +677,13 @@ class EcsCertificate(object):
             # We will only set updated tracking ID based on certificate in "path" if it is managed by entrust.
             self.set_tracking_id_by_serial_number(module)
 
-            if module.params.get('tracking_id') and self.tracking_id and module.params['tracking_id'] != self.tracking_id:
+            if module.params['tracking_id'] and self.tracking_id and module.params['tracking_id'] != self.tracking_id:
                 module.warn('tracking_id parameter of "{0}" provided, but will be ignored. Valid certificate was present in path "{1}" with '
                             'tracking_id of "{2}".'.format(module.params['tracking_id'], self.path, self.tracking_id))
 
         # If we did not end up setting tracking_id based on existing cert, get from module params
         if not self.tracking_id:
-            self.tracking_id = module.params.get('tracking_id')
+            self.tracking_id = module.params['tracking_id']
 
         if not self.tracking_id:
             return False
@@ -686,7 +692,7 @@ class EcsCertificate(object):
 
         if self.cert_status == 'EXPIRED' or self.cert_status == 'SUSPENDED' or self.cert_status == 'REVOKED':
             return False
-        if self.cert_days < module.params.get('remaining_days'):
+        if self.cert_days < module.params['remaining_days']:
             return False
 
         return True
@@ -743,6 +749,8 @@ class EcsCertificate(object):
                     self.backup_file = module.backup_local(self.path)
                 crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
                 if self.chain_path:
+                    if self.backup:
+                        self.backup_chain_file = module.backup_local(self.chain_path)
                     crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.chain_path)
                 self.changed = True
         # If there is no certificate present in path but a tracking ID was specified, save it to disk
@@ -765,6 +773,7 @@ class EcsCertificate(object):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
+            result['backup_chain_file'] = self.backup_chain_file
         return result
 
 
@@ -867,33 +876,33 @@ def main():
         supports_check_mode=True,
     )
 
-    if (not CRYPTOGRAPHY_FOUND) or CRYPTOGRAPHY_VERSION < LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION):
+    if not CRYPTOGRAPHY_FOUND or CRYPTOGRAPHY_VERSION < LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION):
         module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
                          exception=CRYPTOGRAPHY_IMP_ERR)
 
     # A reissued request can not specify an expiration date or lifetime
-    if module.params.get('request_type') == 'REISSUE':
-        if module.params.get('cert_expiry'):
+    if module.params['request_type'] == 'REISSUE':
+        if module.params['cert_expiry']:
             module.fail_json(msg='The cert_expiry field is invalid when request_type="REISSUE".')
-        elif module.params.get('cert_lifetime'):
+        elif module.params['cert_lifetime']:
             module.fail_json(msg='The cert_lifetime field is invalid when request_type="REISSUE".')
     # Only a reissued request can omit the CSR
     else:
-        module_params_csr = module.params.get('csr')
+        module_params_csr = module.params['csr']
         if module_params_csr is None:
             module.fail_json(msg='The csr field is required when request_type={0}'.format(module.params['request_type']))
         elif not os.path.exists(module_params_csr):
             module.fail_json(msg='The csr field of {0} was not a valid path. csr is required when request_type={1}'.format(
                 module_params_csr, module.params['request_type']))
 
-    if module.params.get('ou') and len(module.params.get('ou')) > 1:
+    if module.params['ou'] and len(module.params['ou']) > 1:
         module.fail_json(msg='Multiple "ou" values are not currently supported.')
 
-    if module.params.get('end_user_key_storage_agreement'):
-        if module.params.get('cert_type') != 'CODE_SIGNING' and module.params.get('cert_type') != 'EV_CODE_SIGNING':
+    if module.params['end_user_key_storage_agreement']:
+        if module.params['cert_type'] != 'CODE_SIGNING' and module.params['cert_type'] != 'EV_CODE_SIGNING':
             module.fail_json(msg='Parameter "end_user_key_storage_agreement" is valid only for cert_types "CODE_SIGNING" and "EV_CODE_SIGNING"')
 
-    if module.params.get('org') and module.params.get('client_id') != 1 and module.params.get('cert_type' != 'PD_SSL'):
+    if module.params['org'] and module.params['client_id'] != 1 and module.params['cert_type'] != 'PD_SSL':
         module.fail_json(msg='The "org" parameter is not supported when client_id parameter is set to a value other than 1, unless cert_type is "PD_SSL".')
 
     certificate = EcsCertificate(module)
