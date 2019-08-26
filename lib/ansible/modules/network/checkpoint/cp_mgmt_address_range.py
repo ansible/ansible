@@ -145,6 +145,7 @@ EXAMPLES = """
     ip_address_first: 192.0.2.1
     ip_address_last: 192.0.2.10
     name: New Address Range 4
+    state: present
 
 - name: set-address-range
   cp_mgmt_address_range:
@@ -154,6 +155,7 @@ EXAMPLES = """
     ip_address_last: 192.0.2.1
     name: New Address Range 1
     new_name: New Address Range 2
+    state: present
 
 - name: delete-address-range
   cp_mgmt_address_range:
