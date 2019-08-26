@@ -291,6 +291,12 @@ options:
     choices: ['protected', 'unprotected']
     type: str
     version_added: '2.9'
+
+  comment:
+    description:
+    - Sets a comment associated with the volume.
+    type: str
+    version_added: '2.9'
 '''
 
 EXAMPLES = """
@@ -312,6 +318,7 @@ EXAMPLES = """
         wait_for_completion: True
         space_slo: none
         nvfail_enabled: False
+        comment: ansible created volume
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -480,7 +487,9 @@ class NetAppOntapVolume(object):
             space_slo=dict(type='str', required=False, choices=['none', 'thick', 'semi-thick']),
             tiering_policy=dict(type='str', required=False, choices=['snapshot-only', 'auto',
                                                                      'backup', 'none']),
-            vserver_dr_protection=dict(type='str', required=False, choices=['protected', 'unprotected'])
+            vserver_dr_protection=dict(type='str', required=False, choices=['protected', 'unprotected']),
+            comment=dict(type='str', required=False)
+
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -587,6 +596,10 @@ class NetAppOntapVolume(object):
                 return_value['junction_path'] = volume_id_attributes['junction-path']
             else:
                 return_value['junction_path'] = ''
+            if volume_id_attributes.get_child_by_name('comment'):
+                return_value['comment'] = volume_id_attributes['comment']
+            else:
+                return_value['comment'] = None
             if volume_id_attributes.get_child_by_name('style-extended'):
                 return_value['style_extended'] = volume_id_attributes['style-extended']
             else:
@@ -708,6 +721,8 @@ class NetAppOntapVolume(object):
             options['export-policy'] = self.parameters['policy']
         if self.parameters.get('junction_path'):
             options['junction-path'] = self.parameters['junction_path']
+        if self.parameters.get('comment'):
+            options['volume-comment'] = self.parameters['comment']
         if self.parameters.get('type'):
             options['volume-type'] = self.parameters['type']
         if self.parameters.get('percent_snapshot_space') is not None:
@@ -919,6 +934,10 @@ class NetAppOntapVolume(object):
         if self.parameters.get('vserver_dr_protection') is not None:
             self.create_volume_attribute(vol_mod_attributes, 'volume-vserver-dr-protection-attributes',
                                          'vserver-dr-protection', self.parameters['vserver_dr_protection'])
+        # volume-id-attributes
+        if self.parameters.get('comment') is not None:
+            self.create_volume_attribute(vol_mod_attributes, 'volume-id-attributes',
+                                         'comment', self.parameters['comment'])
         # End of Volume-attributes sub attributes
         attributes.add_child_elem(vol_mod_attributes)
         query = netapp_utils.zapi.NaElement('query')
@@ -1007,7 +1026,7 @@ class NetAppOntapVolume(object):
                 self.move_volume()
             if attribute in ['space_guarantee', 'policy', 'unix_permissions', 'tiering_policy',
                              'snapshot_policy', 'percent_snapshot_space', 'snapdir_access', 'atime_update',
-                             'nvfail_enabled', 'space_slo', 'qos_policy_group', 'qos_adaptive_policy_group', 'vserver_dr_protection']:
+                             'nvfail_enabled', 'space_slo', 'qos_policy_group', 'qos_adaptive_policy_group', 'vserver_dr_protection', 'comment']:
                 self.volume_modify_attributes(modify)
             if attribute == 'junction_path':
                 if modify.get('junction_path') == '':
