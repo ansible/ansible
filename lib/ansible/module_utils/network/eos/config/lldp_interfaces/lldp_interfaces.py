@@ -10,8 +10,12 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import to_list, dict_diff, param_list_to_dict
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
@@ -28,9 +32,6 @@ class Lldp_interfaces(ConfigBase):
     gather_network_resources = [
         'lldp_interfaces',
     ]
-
-    def __init__(self, module):
-        super(Lldp_interfaces, self).__init__(module)
 
     def get_lldp_interfaces_facts(self):
         """ Get the 'facts' (the current configuration)
@@ -94,21 +95,20 @@ class Lldp_interfaces(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
+        want = param_list_to_dict(want, remove_key=False)
+        have = param_list_to_dict(have, remove_key=False)
         if state == 'overridden':
-            kwargs = {}
-            commands = self._state_overridden(**kwargs)
+            commands = self._state_overridden(want, have)
         elif state == 'deleted':
-            kwargs = {}
-            commands = self._state_deleted(**kwargs)
+            commands = self._state_deleted(want, have)
         elif state == 'merged':
-            kwargs = {}
-            commands = self._state_merged(**kwargs)
+            commands = self._state_merged(want, have)
         elif state == 'replaced':
-            kwargs = {}
-            commands = self._state_replaced(**kwargs)
+            commands = self._state_replaced(want, have)
         return commands
+
     @staticmethod
-    def _state_replaced(**kwargs):
+    def _state_replaced(want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -116,10 +116,21 @@ class Lldp_interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        for key, desired in want.items():
+            if key in have:
+                extant = have[key]
+            else:
+                extant = dict(name=key)
+
+            add_config = dict_diff(extant, desired)
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, add_config, del_config))
+
         return commands
 
     @staticmethod
-    def _state_overridden(**kwargs):
+    def _state_overridden(want, have):
         """ The command generator when state is overridden
 
         :rtype: A list
@@ -127,10 +138,21 @@ class Lldp_interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        for key, extant in have.items():
+            if key in want:
+                desired = want[key]
+            else:
+                desired = dict(name=key)
+
+            add_config = dict_diff(extant, desired)
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, add_config, del_config))
+
         return commands
 
     @staticmethod
-    def _state_merged(**kwargs):
+    def _state_merged(want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -138,10 +160,20 @@ class Lldp_interfaces(ConfigBase):
                   the current configuration
         """
         commands = []
+        for key, desired in want.items():
+            if key in have:
+                extant = have[key]
+            else:
+                extant = dict(name=key)
+
+            add_config = dict_diff(extant, desired)
+
+            commands.extend(generate_commands(key, add_config, {}))
+
         return commands
 
     @staticmethod
-    def _state_deleted(**kwargs):
+    def _state_deleted(want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -149,4 +181,33 @@ class Lldp_interfaces(ConfigBase):
                   of the provided objects
         """
         commands = []
+        for key in want.keys():
+            desired = dict(name=key)
+            if key in have:
+                extant = have[key]
+            else:
+                extant = dict(name=key)
+
+            del_config = dict_diff(desired, extant)
+
+            commands.extend(generate_commands(key, {}, del_config))
+
         return commands
+
+
+def generate_commands(name, to_set, to_remove):
+    commands = []
+    for key, value in to_set.items():
+        if value is None:
+            continue
+
+        prefix = "" if value else "no "
+        commands.append("{0}lldp {1}".format(prefix, key))
+
+    for key in to_remove:
+        commands.append("lldp {0}".format(key))
+
+    if commands:
+        commands.insert(0, "interface {0}".format(name))
+
+    return commands
