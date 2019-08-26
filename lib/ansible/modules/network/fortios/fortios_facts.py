@@ -46,18 +46,18 @@ options:
         description:
             - FortiOS or FortiGate IP address.
         type: str
-        required: true
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
         type: str
-        required: true
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
         type: str
         default: ""
-        required: true
+        required: false
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
@@ -81,13 +81,29 @@ options:
     gather_subset:
         description:
             - When supplied, this argument will restrict the facts collected
-            to a given subset.  Possible values for this argument include
-            system_current-admins_select, system_firmware_select,
-            system_fortimanager_status, system_ha-checksums_select,
-            system_interface_select, system_status_select and system_time_select
-      type: list
-      required: true
-
+              to a given subset.  Possible values for this argument include
+              system_current-admins_select, system_firmware_select,
+              system_fortimanager_status, system_ha-checksums_select,
+              system_interface_select, system_status_select and system_time_select
+        type: list
+        required: true
+    system_interface_select:
+        description:
+            - When supplied, this argument will filter the system interface facts
+              gathering, you can specify 
+        type: dict
+        required: false
+        options:
+            interface_name:
+                description:
+                    - interface name
+                type: str
+                required: false
+            include_vlan:
+                description:
+                    - include vlan
+                type: bool
+                required: false
 '''
 
 EXAMPLES = '''
