@@ -20,7 +20,8 @@ description:
   - This module provides declarative management of Layer-3 interfaces
     on ICX network devices.
 notes:
-  - Tested against ICX 10.1
+  - Tested against ICX 10.1.
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   name:
     description:
@@ -227,7 +228,6 @@ def validate_param_values(module, obj, param=None):
     if param is None:
         param = module.params
     for key in obj:
-        # validate the param value (if validator func exists)
         validator = globals().get('validate_%s' % key)
         if callable(validator):
             validator(param.get(key), module)
@@ -250,8 +250,6 @@ def map_params_to_obj(module):
             'name': module.params['name'],
             'ipv4': module.params['ipv4'],
             'ipv6': module.params['ipv6'],
-            # 'ipv4_ospf_area': module.params['ipv4_ospf_area'],
-            # 'ipv6_ospf_area': module.params['ipv6_ospf_area'],
             'state': module.params['state'],
             'replace': module.params['replace'],
             'mode': module.params['mode'],
@@ -302,18 +300,13 @@ def map_config_to_obj(module):
     for item in set(match):
         ipv4 = parse_config_argument(configobj, item, 'ip address')
         if ipv4:
-            # eg. 192.168.2.10 255.255.255.0 -> 192.168.2.10/24
             address = ipv4.strip().split(' ')
             if len(address) == 2 and is_netmask(address[1]):
                 ipv4 = '{0}/{1}'.format(address[0], to_text(to_masklen(address[1])))
-        # ipv4_ospf_area = parse_config_argument(configobj, item, 'ip ospf area')
-        # ipv6_ospf_area = parse_config_argument(configobj, item, 'ipv6 ospf area')
         obj = {
             'name': item,
             'ipv4': ipv4,
             'ipv6': parse_config_argument(configobj, item, 'ipv6 address'),
-            # 'ipv4_ospf_area': ipv4_ospf_area,
-            # 'ipv6_ospf_area': ipv6_ospf_area,
             'state': 'present'
         }
         instances.append(obj)
@@ -341,9 +334,6 @@ def map_obj_to_commands(updates, module):
             secondary = w['secondary'] == 'yes'
         else:
             secondary = False
-
-        # ipv4_ospf_area = w['ipv4_ospf_area']
-        # ipv6_ospf_area = w['ipv6_ospf_area']
 
         interface = 'interface ' + name
         commands.append(interface)

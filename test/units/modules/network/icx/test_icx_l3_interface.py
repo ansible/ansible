@@ -99,21 +99,6 @@ class TestICXFactsModule(TestICXModule):
             ]
             self.execute_module(commands=commands, changed=True)
 
-    # def test_icx_l3_interface_set_ipv6_ospf_area(self):
-    #     set_module_args(dict(name="ethernet 1/1/2", ipv6_ospf_area="1", ipv4_ospf_area="2"))
-    #     commands = [
-    #         "interface ethernet 1/1/2",
-    #         "ipv6 ospf area 1",
-    #         "ip ospf area 2",
-    #         "exit"
-    #     ]
-    #     self.execute_module(commands=commands)
-
-    # def test_icx_l3_interface_set_same_ipv6_ospf_area(self):
-    #     set_module_args(dict(name="ethernet 1/1/1", ipv6_ospf_area="1", ipv4_ospf_area="2"))
-    #     commands = []
-    #     self.execute_module(commands=commands)
-
     def test_icx_l3_interface_set_aggregate(self):
         set_module_args(dict(aggregate=[
             dict(name="ve 1", ipv6="2001:db8:85a3:0:0:0:0:0/64", ipv4="192.168.1.1/24")
@@ -134,15 +119,3 @@ class TestICXFactsModule(TestICXModule):
                 "exit"
             ]
             self.execute_module(commands=commands, changed=True)
-
-    # def test_icx_l3_interface_set_ipv4_compare(self):
-    #     set_module_args(dict(name="ethernet 1/1/1", ipv4="192.160.1.1/24",compare=True))
-    #     if self.ENV_ICX_USE_DIFF == False:
-    #         commands = [
-    #         ]
-    #         self.execute_module(commands=commands,changed=False)
-    #     else:
-    #         commands = [
-
-    #         ]
-    #         self.execute_module(commands=commands,changed=False)
