@@ -143,7 +143,7 @@ class Telemetry(ConfigBase):
         cmd_ref['TMS_SENSORGROUP'] = {}
         cmd_ref['TMS_SUBSCRIPTION'] = {}
 
-        # Get Telemetry Global Data
+        # Build Telemetry Global NxosCmdRef Object
         cmd_ref['TMS_GLOBAL']['ref'] = []
         self._module.params['config'] = get_module_params_subsection(ALL_MP, 'TMS_GLOBAL')
         cmd_ref['TMS_GLOBAL']['ref'].append(NxosCmdRef(self._module, TMS_GLOBAL))
@@ -152,78 +152,75 @@ class Telemetry(ConfigBase):
         ref.get_existing()
         ref.get_playvals()
         device_cache = ref.cache_existing
-        import epdb ; epdb.serve()
 
         if device_cache is None:
             device_cache_lines = []
         else:
             device_cache_lines = device_cache.split("\n")
 
-        # Get Telemetry Destination Group Data
-        if want.get('destination_groups'):
-            td = {'name': 'destination_groups', 'type': 'TMS_DESTGROUP',
-                  'obj': TMS_DESTGROUP, 'cmd': 'destination-group {0}'}
+        def build_cmdref_objects(td):
             cmd_ref[td['type']]['ref'] = []
             saved_ids = []
-            for playvals in want[td['name']]:
-                valiate_input(playvals, td['name'], self._module)
-                if playvals['id'] in saved_ids:
-                    continue
-                saved_ids.append(playvals['id'])
-                resource_key = td['cmd'].format(playvals['id'])
-                # Only build the NxosCmdRef object for the destination group module parameters.
-                self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
-                cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
-                ref = cmd_ref[td['type']]['ref'][-1]
-                ref.set_context([resource_key])
-                ref.get_existing(device_cache)
-                ref.get_playvals()
-                normalize_data(ref)
+            if want.get(td['name']):
+                for playvals in want[td['name']]:
+                    valiate_input(playvals, td['name'], self._module)
+                    if playvals['id'] in saved_ids:
+                        continue
+                    saved_ids.append(playvals['id'])
+                    resource_key = td['cmd'].format(playvals['id'])
+                    # Only build the NxosCmdRef object for the td['name'] module parameters.
+                    self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
+                    cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
+                    ref = cmd_ref[td['type']]['ref'][-1]
+                    ref.set_context([resource_key])
+                    if td['type'] == 'TMS_SENSORGROUP' and get_setval_path(self._module):
+                        # Sensor group path setting can contain optional values.
+                        # Call get_setval_path helper function to process any
+                        # optional setval keys.
+                        ref._ref['path']['setval'] = get_setval_path(self._module)
+                    ref.get_existing(device_cache)
+                    ref.get_playvals()
+                    if td['type'] == 'TMS_DESTGROUP':
+                        normalize_data(ref)
 
-        # Get Telemetry Sensor Group Data
-        if want.get('sensor_groups'):
-            td = {'name': 'sensor_groups', 'type': 'TMS_SENSORGROUP',
-                  'obj': TMS_SENSORGROUP, 'cmd': 'sensor-group {0}'}
-            cmd_ref[td['type']]['ref'] = []
-            saved_ids = []
-            for playvals in want[td['name']]:
-                valiate_input(playvals, td['name'], self._module)
-                if playvals['id'] in saved_ids:
-                    continue
-                saved_ids.append(playvals['id'])
-                resource_key = td['cmd'].format(playvals['id'])
-                # Only build the NxosCmdRef object for the sensor group module parameters.
-                self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
-                cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
-                ref = cmd_ref[td['type']]['ref'][-1]
-                ref.set_context([resource_key])
-                if get_setval_path(self._module):
-                    # Sensor group path setting can contain optional values.
-                    # Call get_setval_path helper function to process any
-                    # optional setval keys.
-                    ref._ref['path']['setval'] = get_setval_path(self._module)
-                ref.get_existing(device_cache)
-                ref.get_playvals()
+            if state == 'replaced':
+                # For state replaced we need to build NxosCmdRef objects for state on
+                # the device that is not specified in the playbook so that it can be
+                # removed.
+                re_pattern = r'{0}'.format(td['cmd'].split(' ')[0])
+                for line in device_cache_lines:
+                    if re.search(re_pattern, line):
+                        resource_key = line.strip()
+                        skip_resource_key = False
+                        # Skip id if it is being managed by the playbook.
+                        for id in saved_ids:
+                            re_pattern = r'{0}$'.format(id)
+                            if re.search(re_pattern, resource_key):
+                                skip_resource_key = True
+                                break
+                        if skip_resource_key:
+                            continue
+                        cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
+                        ref = cmd_ref[td['type']]['ref'][-1]
+                        ref.set_context([resource_key])
+                        ref.get_existing(device_cache)
+                        if td['type'] == 'TMS_DESTGROUP':
+                            normalize_data(ref)
 
-        # Get Telemetry Subscription Data
-        if want.get('subscriptions'):
-            td = {'name': 'subscriptions', 'type': 'TMS_SUBSCRIPTION',
-                  'obj': TMS_SUBSCRIPTION, 'cmd': 'subscription {0}'}
-            cmd_ref[td['type']]['ref'] = []
-            saved_ids = []
-            for playvals in want[td['name']]:
-                valiate_input(playvals, td['name'], self._module)
-                if playvals['id'] in saved_ids:
-                    continue
-                saved_ids.append(playvals['id'])
-                resource_key = td['cmd'].format(playvals['id'])
-                # Only build the NxosCmdRef object for the subscription module parameters.
-                self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
-                cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
-                ref = cmd_ref[td['type']]['ref'][-1]
-                ref.set_context([resource_key])
-                ref.get_existing(device_cache)
-                ref.get_playvals()
+        # Build Telemetry Destination Group NxosCmdRef Objects
+        td = {'name': 'destination_groups', 'type': 'TMS_DESTGROUP',
+              'obj': TMS_DESTGROUP, 'cmd': 'destination-group {0}'}
+        build_cmdref_objects(td)
+
+        # Build Telemetry Sensor Group NxosCmdRef Objects
+        td = {'name': 'sensor_groups', 'type': 'TMS_SENSORGROUP',
+              'obj': TMS_SENSORGROUP, 'cmd': 'sensor-group {0}'}
+        build_cmdref_objects(td)
+
+        # Build Telemetry Subscription NxosCmdRef Objects
+        td = {'name': 'subscriptions', 'type': 'TMS_SUBSCRIPTION',
+              'obj': TMS_SUBSCRIPTION, 'cmd': 'subscription {0}'}
+        build_cmdref_objects(td)
 
         if state == 'merged':
             if want == have:
@@ -232,19 +229,64 @@ class Telemetry(ConfigBase):
         elif state == 'replaced':
             if want == have:
                 return []
-            commands = self._state_replaced(cmd_ref, want, have)
+            commands = self._state_replaced(cmd_ref)
         return commands
 
     @staticmethod
-    def _state_replaced(cmd_ref, want, have):
+    def _state_replaced(cmd_ref):
         """ The command generator when state is replaced
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        import epdb ; epdb.serve()
-        commands = []
-        return commands
+        save_context = ['telemetry']
+        commands = cmd_ref['TMS_GLOBAL']['ref'][0].get_proposed(save_context)
+
+        # Order matters for state replaced.
+        # First remove all subscriptions, followed by sensor-groups and destination-groups.
+        # Second add all destination-groups, followed by sensor-groups and subscriptions
+        add = {'TMS_DESTGROUP': [], 'TMS_SENSORGROUP': [], 'TMS_SUBSCRIPTION': []}
+        delete = {'TMS_DESTGROUP': [], 'TMS_SENSORGROUP': [], 'TMS_SUBSCRIPTION': []}
+
+        def remove_command(cmd_list):
+            remove = False
+            for cmd in cmd_list:
+                if re.search(r'^no', cmd):
+                    remove = True
+                    break
+            return remove
+
+        if cmd_ref['TMS_DESTGROUP'].get('ref'):
+            for cr in cmd_ref['TMS_DESTGROUP']['ref']:
+                ref_cmd_list = cr.get_proposed(save_context)
+                if remove_command(ref_cmd_list):
+                    delete['TMS_DESTGROUP'].extend(ref_cmd_list)
+                else:
+                    add['TMS_DESTGROUP'].extend(ref_cmd_list)
+
+        if cmd_ref['TMS_SENSORGROUP'].get('ref'):
+            for cr in cmd_ref['TMS_SENSORGROUP']['ref']:
+                ref_cmd_list = cr.get_proposed(save_context)
+                if remove_command(ref_cmd_list):
+                    delete['TMS_SENSORGROUP'].extend(ref_cmd_list)
+                else:
+                    add['TMS_SENSORGROUP'].extend(ref_cmd_list)
+
+        if cmd_ref['TMS_SUBSCRIPTION'].get('ref'):
+            for cr in cmd_ref['TMS_SUBSCRIPTION']['ref']:
+                ref_cmd_list = cr.get_proposed(save_context)
+                if remove_command(ref_cmd_list):
+                    delete['TMS_SUBSCRIPTION'].extend(ref_cmd_list)
+                else:
+                    add['TMS_SUBSCRIPTION'].extend(ref_cmd_list)
+
+        commands.extend(delete['TMS_SUBSCRIPTION'])
+        commands.extend(delete['TMS_SENSORGROUP'])
+        commands.extend(delete['TMS_DESTGROUP'])
+        commands.extend(add['TMS_DESTGROUP'])
+        commands.extend(add['TMS_SENSORGROUP'])
+        commands.extend(add['TMS_SUBSCRIPTION'])
+        return remove_duplicate_context(commands)
 
     @staticmethod
     def _state_merged(cmd_ref):

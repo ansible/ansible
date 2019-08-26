@@ -745,7 +745,7 @@ class NxosCmdRef:
         self._check_imports()
         self._yaml_load(cmd_ref_str)
         self.cache_existing = None
-        self.present_states = ['present', 'merged']
+        self.present_states = ['present', 'merged', 'replaced']
         self.absent_states = ['absent', 'deleted']
         ref = self._ref
 
@@ -1073,11 +1073,16 @@ class NxosCmdRef:
             [proposed.append(ctx) for ctx in ref[k].get('context', [])]
             proposed.append(cmd)
 
-    def get_proposed(self):
+    def get_proposed(self, save_context=None):
         """Compare playbook values against existing states and create a list
         of proposed commands.
         Return a list of raw cli command strings.
         """
+        if save_context is None:
+            save_context = []
+        if save_context is not None and not isinstance(save_context, list):
+            raise ValueError("save_context argument must be a list of commands")
+        cmds = []
         ref = self._ref
         # '_proposed' may be empty list or contain initializations; e.g. ['feature foo']
         proposed = ref['_proposed']
@@ -1148,9 +1153,66 @@ class NxosCmdRef:
                 for pval in playval.values():
                     self.build_cmd_set(pval, existing, k)
 
+        # Remove any duplicate commands.
+        # pylint: disable=unnecessary-lambda
+        cmds.extend(sorted(set(proposed), key=lambda x: proposed.index(x)))
+
+        if ref['_state'] == 'replaced':
+            # Remove any duplicate commands.
+            # pylint: disable=unnecessary-lambda
+            cmds.extend(sorted(set(proposed), key=lambda x: proposed.index(x)))
+            from pprint import pprint
+            import copy
+            ref['_state'] = 'deleted'
+            remove_keys = [x for x in ref['commands'] if x not in play_keys]
+            remove_keys_copy = copy.deepcopy(remove_keys)
+
+            # Remove the context if the key under this context is the only
+            # remaining configuration command.
+            for key in remove_keys:
+                if ref[key].get('context') or ref.get('_context') and ref[key].get('existing'):
+                    # This key exists in the config but we now need to check
+                    # and make sure no other config exists under this context
+                    # that is being managed by the playbook.
+                    config_under_context = False
+                    for pkey in play_keys:
+                        if ref[pkey].get('context') or ref.get('_context') and ref[pkey].get('existing'):
+                            config_under_context = True
+                    if config_under_context:
+                        # We found config under that context that we are managing
+                        # so we cannot remove the context.
+                        continue
+                    # If we get here it's safe to remove the key context if it exists.
+                    if ref[key].get('context'):
+                        cmds.extend([ref[key].get('context')[0]])
+                        cmds.extend(['no ' + ref[key].get('context')[-1]])
+                        remove_keys_copy.remove(key)
+                    # If we get here is's safe to remove context but don't ever remove
+                    # the save_context context passed in by the caller because there might
+                    # be other config under that context that is on the device but not in
+                    # scope for this ref object.
+                    if ref.get('_context') and not ref.get('_context') == save_context:
+                        cmds.extend([ref.get('_context')[0]])
+                        cmds.extend(['no ' + ref.get('_context')[-1]])
+                        remove_keys_copy.remove(key)
+
+            for key in remove_keys_copy:
+                existing = ref[key].get('existing')
+                if existing:
+                    for item in existing.values():
+                        self.build_cmd_set(item, existing, key)
+                elif ref.get('_context'):
+                    cmds.extend([ref.get('_context')[0]])
+                    cmds.extend(['no ' + ref.get('_context')[-1]])
+
+                # pylint: disable=unnecessary-lambda
+                temp_cmds = sorted(set(proposed), key=lambda x: proposed.index(x))
+                cmds.extend(temp_cmds)
+
         # Remove any duplicate commands before returning.
         # pylint: disable=unnecessary-lambda
-        return sorted(set(proposed), key=lambda x: proposed.index(x))
+        cmds = sorted(set(cmds), key=lambda x: cmds.index(x))
+        return cmds
 
 
 def nxosCmdRef_import_check():
