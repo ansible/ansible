@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -124,7 +125,6 @@ deployments:
                            works/myVirtualNetwork"
 '''
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -151,7 +151,8 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        super(AzureRMDeploymentFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDeploymentFacts, self).__init__(
+            self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -168,7 +169,8 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.rm_client.deployments.get(self.resource_group, deployment_name=self.name)
+            response = self.rm_client.deployments.get(
+                self.resource_group, deployment_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Deployment.')
@@ -232,6 +234,7 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
             'outputs': d.get('properties', {}).get('outputs'),
             'output_resources': output_resources_list,
             'template_link': d.get('properties', {}).get('template_link').get('uri')
+            if "template_link" in d.get('properties', {}) else ""
         }
         return d
 
