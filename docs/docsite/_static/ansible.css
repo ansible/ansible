@@ -190,7 +190,12 @@ table.documentation-table .value-required {
 
 }
 
-
+.wy-side-nav-search {
+    background-color: #5bbdbf;
+}
+.wy-nav-top {
+  background-color: #5bbdbf;
+}
 .wy-menu-vertical a {
     padding: 0;
 }
