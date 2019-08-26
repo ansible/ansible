@@ -32,6 +32,7 @@ options:
      description:
      - Whether the specified snapshot should exist or not.
      required: true
+     type: str
      choices: ['present', 'absent']
 
   region:
@@ -89,6 +90,9 @@ EXAMPLES = """
     api_url : cds-aws-bundles.netapp.com
     api_key: myApiKey
     secret_key : mySecretKey
+"""
+
+RETURN = """
 """
 
 import ansible.module_utils.netapp as netapp_utils

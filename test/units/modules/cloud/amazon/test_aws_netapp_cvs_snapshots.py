@@ -3,7 +3,8 @@
 
 ''' unit tests ONTAP Ansible module: aws_netapp_cvs_snapshots'''
 
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 import json
 import pytest
 
