@@ -1,8 +1,22 @@
-#
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
+from __future__ import (absolute_import, division, print_function)
 # Copyright 2019 Fortinet, Inc.
-# GNU General Public License v3.0+
-# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+__metaclass__ = type
+
 """
 The monitor class for fortios
 this file validates each subset of monitor and selectively
@@ -12,11 +26,9 @@ calls the appropriate monitoring function
 from ansible.module_utils.network.fortios.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.fortios.facts.system.system import SystemFacts
-from ansible.module_utils.network.fortios.facts.firewall.firewall import FirewallFacts
 
 
 FACT_RESOURCE_SUBSETS = {
-    "firewall": FirewallFacts,
     "system": SystemFacts
 }
 
@@ -67,11 +79,11 @@ class Facts(FactsBase):
 
         if net_res_choices:
             if not resource_facts_type:
-                resource_facts_type = self._gather_network_resources
+                resource_facts_type = self._gather_subset
 
             restorun_subsets = self.gen_runable(resource_facts_type, frozenset(net_res_choices))
             if restorun_subsets:
-                self.ansible_facts['ansible_net_gather_network_resources'] = list(restorun_subsets)
+                self.ansible_facts['ansible_net_gather_subset'] = list(restorun_subsets)
                 instances = list()
                 for (subset, valid_subset) in restorun_subsets:
                     fact_cls_obj = facts_resource_obj_map.get(valid_subset)
@@ -90,7 +102,7 @@ class Facts(FactsBase):
         :rtype: dict
         :return: the facts gathered
         """
-        netres_choices = FactsArgs.argument_spec['gather_network_resources'].get('choices', [])
+        netres_choices = FactsArgs.argument_spec['gather_subset'].get('choices', [])
         if self.VALID_RESOURCE_SUBSETS:
             self.get_network_resources_facts(netres_choices, FACT_RESOURCE_SUBSETS, facts_type, data)
 

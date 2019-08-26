@@ -17,19 +17,6 @@ class SystemArgs(object):
     def __init__(self, **kwargs):
         pass
 
-    system_firmware_upgrade_spec = {
-        "system_firmware_upgrade": {
-            "required": False, "type": "dict",
-            "options": {
-                "file_content": {"required": False, "type": "str"},
-                "filename": {"required": True, "type": "str"},
-                "format_partition": {"required": False, "type": "bool"},
-                "source": {"required": True, "type": "str",
-                            "choices": ["upload", "usb", "fortiguard"]}
-            }
-        }
-    }
-
     system_interface_select_spec = {
         "system_interface_select": {
             "required": False, "type": "dict",
