@@ -21,6 +21,7 @@ description:
     on ICX network devices.
 notes:
   - Tested against ICX 10.1
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   name:
     description:
@@ -375,20 +376,20 @@ def parse_vlan_brief(module, vlan_id):
 def extract_list_from_interface(interface):
     if 'ethernet' in interface:
         if 'to' in interface:
-            s = re.search(br"\d+\/\d+/(?P<low>\d+)\sto\s+\d+\/\d+/(?P<high>\d+)", interface)
+            s = re.search(r"\d+\/\d+/(?P<low>\d+)\sto\s+\d+\/\d+/(?P<high>\d+)", interface)
             low = int(s.group('low'))
             high = int(s.group('high'))
         else:
-            s = re.search(br"\d+\/\d+/(?P<low>\d+)", interface)
+            s = re.search(r"\d+\/\d+/(?P<low>\d+)", interface)
             low = int(s.group('low'))
             high = int(s.group('low'))
     elif 'lag' in interface:
         if 'to' in interface:
-            s = re.search(br"(?P<low>\d+)\sto\s(?P<high>\d+)", interface)
+            s = re.search(r"(?P<low>\d+)\sto\s(?P<high>\d+)", interface)
             low = int(s.group('low'))
             high = int(s.group('high'))
         else:
-            s = re.search(br"(?P<low>\d+)", interface)
+            s = re.search(r"(?P<low>\d+)", interface)
             low = int(s.group('low'))
             high = int(s.group('low'))
 
@@ -609,7 +610,7 @@ def map_obj_to_commands(updates, module):
 def parse_name_argument(module, item):
     command = 'show vlan {0}'.format(item)
     rc, out, err = exec_command(module, command)
-    match = re.search(br"Name (\S+),", out)
+    match = re.search(r"Name (\S+),", out)
     if match:
         return match.group(1)
 

@@ -76,10 +76,10 @@ class TestICXVlanModule(TestICXModule):
             expected_commands = [
                 'vlan 3',
                 'vlan 3 name test_vlan',
-                'untagged ethernet 1/1/10',
                 'untagged lag 5',
+                'untagged ethernet 1/1/10'
             ]
-            self.assertEqual(result['commands'], expected_commands)
+            self.assertEqual(set(result['commands']), set(expected_commands))
         else:
             result = self.execute_module(changed=True)
             expected_commands = [
@@ -88,7 +88,7 @@ class TestICXVlanModule(TestICXModule):
                 'untagged lag 5',
                 'untagged ethernet 1/1/10'
             ]
-            self.assertEqual(result['commands'], expected_commands)
+            self.assertEqual(set(result['commands']), set(expected_commands))
 
     def test_icx_vlan_purge_tagged_port(self):
         set_module_args(dict(vlan_id=3, tagged=dict(name=['ethernet 1/1/40 to 1/1/42', 'lag 44'], purge=True)))
@@ -114,7 +114,7 @@ class TestICXVlanModule(TestICXModule):
                 'tagged ethernet 1/1/42',
                 'tagged lag 44'
             ]
-            self.assertEqual(result['commands'], expected_commands)
+            self.assertEqual(set(result['commands']), set(expected_commands))
 
     def test_icx_vlan_enable_ip_arp_inspection(self):
         set_module_args(dict(vlan_id=5, ip_arp_inspection=True))
