@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage static IP routes on network appliances (routers, switc
 description:
   - This module provides declarative management of static
     IP routes on network appliances (routers, switches et. al.).
+deprecated:
+    removed_in: "2.13"
+    alternative: Use platform-specific "[netos]_static_route" module
+    why: Updated modules released with more functionality
 extends_documentation_fragment: network_agnostic
 
 options:

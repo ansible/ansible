@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -24,6 +24,10 @@ description:
     on network devices.  It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
+deprecated:
+    removed_in: "2.13"
+    alternative: Use platform-specific "[netos]_system" module
+    why: Updated modules released with more functionality
 extends_documentation_fragment: network_agnostic
 options:
   hostname:
