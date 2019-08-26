@@ -84,6 +84,32 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * nginx_status_facts use :ref:`nginx_status_info <nginx_status_info_module>` instead.
 
+* net_banner use the platform-specific [netos]_banner modules instead.
+
+* net_interface use the new platform-specific [netos]_interfaces modules instead.
+
+* net_l2_interface use the new platform-specific [netos]_l2_interfaces modules instead.
+
+* net_l3_interface use the new platform-specific [netos]_l3_interfaces modules instead.
+
+* net_linkagg use the new platform-specific [netos]_lag modules instead.
+
+* net_lldp use the new platform-specific [netos]_lldp_global modules instead.
+
+* net_lldp_interface use the new platform-specific [netos]_lldp_interfaces modules instead.
+
+* net_logging use the platform-specific [netos]_logging modules instead.
+
+* net_static_route use the platform-specific [netos]_static_route modules instead.
+
+* net_system use the platform-specific [netos]_system modules instead.
+
+* net_user use the platform-specific [netos]_user modules instead.
+
+* net_vlan use the new platform-specific [netos]_vlans modules instead.
+
+* net_vrf use the platform-specific [netos]_vrf modules instead.
+
 * nxos_interface use :ref:`nxos_interfaces <nxos_interfaces_module>` instead.
 
 * nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
