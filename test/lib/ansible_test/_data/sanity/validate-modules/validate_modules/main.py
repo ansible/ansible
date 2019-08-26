@@ -754,7 +754,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     name='module-utils-multiple-modules-per-statement',
-                    code=210,
+                    code=212,
                     msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -765,7 +765,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     name='module-ends-in-psm1',
-                    code=211,
+                    code=214,
                     msg='Module #Requires should not end in .psm1: "%s"' % module_name
                 )
 
@@ -777,7 +777,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     name='c#-util-requirements-multiple-modules-per-statement',
-                    code=210,
+                    code=213,
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -788,7 +788,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     name='c#-ansible-requires-ends-in-cs',
-                    code=211,
+                    code=215,
                     msg='Module #AnsibleRequires -CSharpUtil should not end in .cs: "%s"' % module_name
                 )
 
@@ -1247,7 +1247,7 @@ class ModuleValidator(Validator):
                     self.reporter.error(
                         path=self.object_path,
                         name='argument-spec-options-valid',
-                        code=331,
+                        code=332,
                         msg="Argument 'options' in argument_spec['provider'] must be a dictionary/hash when used",
                     )
                 elif data.get('options'):
@@ -1599,7 +1599,7 @@ class ModuleValidator(Validator):
                 if str(current_version) != str(existing_version):
                     self.reporter.error(
                         path=self.object_path,
-                        name='correct-version-added',
+                        name='new-option-correct-version-added',
                         code=309,
                         msg=('version_added for new option (%s) should '
                              'be %r. Currently %r' %
@@ -1634,7 +1634,7 @@ class ModuleValidator(Validator):
                      strict_ansible_version < version_added)):
                 self.reporter.error(
                     path=self.object_path,
-                    name='version-added-new-option',
+                    name='new-option-correct-version-added',
                     code=309,
                     msg=('version_added for new option (%s) should '
                          'be %r. Currently %r' %
