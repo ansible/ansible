@@ -135,6 +135,7 @@ EXAMPLES = """
     name: First threat rule
     position: top
     protected_scope: All_Internet
+    state: present
     track: None
 
 - name: set-threat-rule
@@ -145,6 +146,7 @@ EXAMPLES = """
     layer: New Layer 1
     protected_scope: All_Internet
     rule_number: 2
+    state: present
 
 - name: delete-threat-rule
   cp_mgmt_threat_rule:
