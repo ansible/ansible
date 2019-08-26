@@ -50,6 +50,19 @@
         - non_qdn is not failed
         - non_qdn is not changed
 
+  - name: Create A record using zone ID
+    route53:
+      state: present
+      hosted_zone_id: '{{ z1.zone_id }}'
+      record: 'zid_test.{{ zone_one }}'
+      type: A
+      value: 1.2.3.4
+    register: zid
+  - assert:
+      that:
+        - zid is not failed
+        - zid is changed
+
   - name: Create a multi-value A record with values in different order
     route53:
       state: present
