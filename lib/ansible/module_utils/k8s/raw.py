@@ -136,6 +136,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         src = self.params.get('src')
         if src:
             self.resource_definitions = self.load_resource_definitions(src)
+        try:
+            self.resource_definitions = [item for item in self.resource_definitions if item]
+        except AttributeError:
+            pass
 
         if not resource_definition and not src:
             implicit_definition = dict(
