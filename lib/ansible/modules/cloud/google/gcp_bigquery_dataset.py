@@ -55,7 +55,7 @@ options:
     type: str
   access:
     description:
-    - Access controls on the bucket.
+    - An array of objects that define dataset access for one or more entities.
     required: false
     type: list
     suboptions:
@@ -73,13 +73,19 @@ options:
       role:
         description:
         - Describes the rights granted to the user specified by the other member of
-          the access object .
-        - 'Some valid choices include: "READER", "WRITER", "OWNER"'
+          the access object. Primitive, Predefined and custom roles are supported.
+          Predefined roles that have equivalent primitive roles are swapped by the
+          API to their Primitive counterparts, and will show a diff post-create. See
+          [official docs](U(https://cloud.google.com/bigquery/docs/access-control)).
         required: false
         type: str
       special_group:
         description:
         - A special group to grant access to.
+        - 'Possible values include: * `projectOwners`: Owners of the enclosing project.'
+        - "* `projectReaders`: Readers of the enclosing project."
+        - "* `projectWriters`: Writers of the enclosing project."
+        - "* `allAuthenticatedUsers`: All authenticated BigQuery users. ."
         required: false
         type: str
       user_by_email:
@@ -133,9 +139,35 @@ options:
         type: str
   default_table_expiration_ms:
     description:
-    - The default lifetime of all tables in the dataset, in milliseconds .
+    - The default lifetime of all tables in the dataset, in milliseconds.
+    - The minimum value is 3600000 milliseconds (one hour).
+    - Once this property is set, all newly-created tables in the dataset will have
+      an `expirationTime` property set to the creation time plus the value in this
+      property, and changing the value will only affect new tables, not existing ones.
+      When the `expirationTime` for a given table is reached, that table will be deleted
+      automatically.
+    - If a table's `expirationTime` is modified or removed before the table expires,
+      or if you provide an explicit `expirationTime` when creating a table, that value
+      takes precedence over the default expiration time indicated by this property.
     required: false
     type: int
+  default_partition_expiration_ms:
+    description:
+    - The default partition expiration for all partitioned tables in the dataset,
+      in milliseconds.
+    - Once this property is set, all newly-created partitioned tables in the dataset
+      will have an `expirationMs` property in the `timePartitioning` settings set
+      to this value, and changing the value will only affect new tables, not existing
+      ones. The storage in a partition will have an expiration time of its partition
+      time plus this value.
+    - 'Setting this property overrides the use of `defaultTableExpirationMs` for partitioned
+      tables: only one of `defaultTableExpirationMs` and `defaultPartitionExpirationMs`
+      will be used for any new partitioned table. If you provide an explicit `timePartitioning.expirationMs`
+      when creating or updating a partitioned table, that value takes precedence over
+      the default partition expiration time indicated by this property.'
+    required: false
+    type: int
+    version_added: 2.9
   description:
     description:
     - A user-friendly description of the dataset.
@@ -154,8 +186,17 @@ options:
     type: dict
   location:
     description:
-    - The geographic location where the dataset should reside. Possible values include
-      EU and US. The default value is US.
+    - The geographic location where the dataset should reside.
+    - See [official docs](U(https://cloud.google.com/bigquery/docs/dataset-locations)).
+    - There are two types of locations, regional or multi-regional. A regional location
+      is a specific geographic place, such as Tokyo, and a multi-regional location
+      is a large geographic area, such as the United States, that contains at least
+      two geographic places.
+    - 'Possible regional values include: `asia-east1`, `asia-northeast1`, `asia-southeast1`,
+      `australia-southeast1`, `europe-north1`, `europe-west2` and `us-east4`.'
+    - 'Possible multi-regional values: `EU` and `US`.'
+    - The default value is multi-regional location `US`.
+    - Changing this forces a new resource to be created.
     required: false
     default: US
     type: str
@@ -182,7 +223,7 @@ name:
   type: str
 access:
   description:
-  - Access controls on the bucket.
+  - An array of objects that define dataset access for one or more entities.
   returned: success
   type: complex
   contains:
@@ -200,12 +241,18 @@ access:
     role:
       description:
       - Describes the rights granted to the user specified by the other member of
-        the access object .
+        the access object. Primitive, Predefined and custom roles are supported. Predefined
+        roles that have equivalent primitive roles are swapped by the API to their
+        Primitive counterparts, and will show a diff post-create. See [official docs](U(https://cloud.google.com/bigquery/docs/access-control)).
       returned: success
       type: str
     specialGroup:
       description:
       - A special group to grant access to.
+      - 'Possible values include: * `projectOwners`: Owners of the enclosing project.'
+      - "* `projectReaders`: Readers of the enclosing project."
+      - "* `projectWriters`: Writers of the enclosing project."
+      - "* `allAuthenticatedUsers`: All authenticated BigQuery users. ."
       returned: success
       type: str
     userByEmail:
@@ -264,12 +311,41 @@ datasetReference:
       type: str
 defaultTableExpirationMs:
   description:
-  - The default lifetime of all tables in the dataset, in milliseconds .
+  - The default lifetime of all tables in the dataset, in milliseconds.
+  - The minimum value is 3600000 milliseconds (one hour).
+  - Once this property is set, all newly-created tables in the dataset will have an
+    `expirationTime` property set to the creation time plus the value in this property,
+    and changing the value will only affect new tables, not existing ones. When the
+    `expirationTime` for a given table is reached, that table will be deleted automatically.
+  - If a table's `expirationTime` is modified or removed before the table expires,
+    or if you provide an explicit `expirationTime` when creating a table, that value
+    takes precedence over the default expiration time indicated by this property.
+  returned: success
+  type: int
+defaultPartitionExpirationMs:
+  description:
+  - The default partition expiration for all partitioned tables in the dataset, in
+    milliseconds.
+  - Once this property is set, all newly-created partitioned tables in the dataset
+    will have an `expirationMs` property in the `timePartitioning` settings set to
+    this value, and changing the value will only affect new tables, not existing ones.
+    The storage in a partition will have an expiration time of its partition time
+    plus this value.
+  - 'Setting this property overrides the use of `defaultTableExpirationMs` for partitioned
+    tables: only one of `defaultTableExpirationMs` and `defaultPartitionExpirationMs`
+    will be used for any new partitioned table. If you provide an explicit `timePartitioning.expirationMs`
+    when creating or updating a partitioned table, that value takes precedence over
+    the default partition expiration time indicated by this property.'
   returned: success
   type: int
 description:
   description:
   - A user-friendly description of the dataset.
+  returned: success
+  type: str
+etag:
+  description:
+  - A hash of the resource.
   returned: success
   type: str
 friendlyName:
@@ -297,8 +373,17 @@ lastModifiedTime:
   type: int
 location:
   description:
-  - The geographic location where the dataset should reside. Possible values include
-    EU and US. The default value is US.
+  - The geographic location where the dataset should reside.
+  - See [official docs](U(https://cloud.google.com/bigquery/docs/dataset-locations)).
+  - There are two types of locations, regional or multi-regional. A regional location
+    is a specific geographic place, such as Tokyo, and a multi-regional location is
+    a large geographic area, such as the United States, that contains at least two
+    geographic places.
+  - 'Possible regional values include: `asia-east1`, `asia-northeast1`, `asia-southeast1`,
+    `australia-southeast1`, `europe-north1`, `europe-west2` and `us-east4`.'
+  - 'Possible multi-regional values: `EU` and `US`.'
+  - The default value is multi-regional location `US`.
+  - Changing this forces a new resource to be created.
   returned: success
   type: str
 '''
@@ -341,6 +426,7 @@ def main():
             ),
             dataset_reference=dict(required=True, type='dict', options=dict(dataset_id=dict(required=True, type='str'), project_id=dict(type='str'))),
             default_table_expiration_ms=dict(type='int'),
+            default_partition_expiration_ms=dict(type='int'),
             description=dict(type='str'),
             friendly_name=dict(type='str'),
             labels=dict(type='dict'),
@@ -401,6 +487,7 @@ def resource_to_request(module):
         u'access': DatasetAccessArray(module.params.get('access', []), module).to_request(),
         u'datasetReference': DatasetDatasetreference(module.params.get('dataset_reference', {}), module).to_request(),
         u'defaultTableExpirationMs': module.params.get('default_table_expiration_ms'),
+        u'defaultPartitionExpirationMs': module.params.get('default_partition_expiration_ms'),
         u'description': module.params.get('description'),
         u'friendlyName': module.params.get('friendly_name'),
         u'labels': module.params.get('labels'),
@@ -475,7 +562,9 @@ def response_to_hash(module, response):
         u'creationTime': response.get(u'creationTime'),
         u'datasetReference': DatasetDatasetreference(response.get(u'datasetReference', {}), module).from_response(),
         u'defaultTableExpirationMs': response.get(u'defaultTableExpirationMs'),
+        u'defaultPartitionExpirationMs': response.get(u'defaultPartitionExpirationMs'),
         u'description': response.get(u'description'),
+        u'etag': response.get(u'etag'),
         u'friendlyName': response.get(u'friendlyName'),
         u'id': response.get(u'id'),
         u'labels': response.get(u'labels'),
