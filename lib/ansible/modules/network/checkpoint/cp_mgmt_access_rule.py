@@ -232,6 +232,7 @@ EXAMPLES = """
     layer: Network
     name: Rule 1
     position: 1
+    state: present
 
 - name: set-access-rule
   cp_mgmt_access_rule:
@@ -241,6 +242,7 @@ EXAMPLES = """
       limit: Upload_1Gbps
     layer: Network
     name: Rule 1
+    state: present
 
 - name: delete-access-rule
   cp_mgmt_access_rule:
