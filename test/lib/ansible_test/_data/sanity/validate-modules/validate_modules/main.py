@@ -503,6 +503,7 @@ class ModuleValidator(Validator):
                                 isinstance(name, ast.alias) and
                                 name.name == '*'):
                             msg = (
+                                'module-utils-specific-import',
                                 208,
                                 ('module_utils imports should import specific '
                                  'components, not "*"')
@@ -510,17 +511,17 @@ class ModuleValidator(Validator):
                             if self._is_new_module():
                                 self.reporter.error(
                                     path=self.object_path,
-                                    name='FIXME',
-                                    code=msg[0],
-                                    msg=msg[1],
+                                    name=msg[0],
+                                    code=msg[1],
+                                    msg=msg[2],
                                     line=child.lineno
                                 )
                             else:
                                 self.reporter.warning(
                                     path=self.object_path,
-                                    name='FIXME',
-                                    code=msg[0],
-                                    msg=msg[1],
+                                    name=msg[0],
+                                    code=msg[1],
+                                    msg=msg[2],
                                     line=child.lineno
                                 )
 
@@ -874,7 +875,7 @@ class ModuleValidator(Validator):
 
         return docs
 
-    def _validate_docs_schema(self, doc, schema, name, error_code):
+    def _validate_docs_schema(self, doc, schema, name, error_code, error_name):
         # TODO: Add line/col
         errors = []
         try:
@@ -899,7 +900,7 @@ class ModuleValidator(Validator):
 
             self.reporter.error(
                 path=self.object_path,
-                name='FIXME',
+                name=error_name,
                 code=error_code,
                 msg='%s: %s' % (combined_path, error_message)
             )
@@ -936,28 +937,6 @@ class ModuleValidator(Validator):
                         doc_info['ANSIBLE_METADATA']['value']
                     )
                 else:
-                    # ANSIBLE_METADATA doesn't properly support YAML
-                    # we should consider removing it from the spec
-                    # Below code kept, incase we change our minds
-
-                    # metadata, errors, traces = parse_yaml(
-                    #     doc_info['ANSIBLE_METADATA']['value'].s,
-                    #     doc_info['ANSIBLE_METADATA']['lineno'],
-                    #     self.name, 'ANSIBLE_METADATA'
-                    # )
-                    # for error in errors:
-                    #     self.reporter.error(
-                    #         path=self.object_path,
-                    #         name='ansible-metadata-format',
-                    #         code=315,
-                    #         **error
-                    #     )
-                    # for trace in traces:
-                    #     self.reporter.trace(
-                    #         path=self.object_path,
-                    #         tracebk=trace
-                    #     )
-
                     self.reporter.error(
                         path=self.object_path,
                         name='ansible-metadata-format',
@@ -967,7 +946,7 @@ class ModuleValidator(Validator):
 
             if metadata:
                 self._validate_docs_schema(metadata, metadata_1_1_schema(),
-                                           'ANSIBLE_METADATA', 316)
+                                           'ANSIBLE_METADATA', 316, 'valid-ansible-metadata')
                 # We could validate these via the schema if we knew what the values are ahead of
                 # time.  We can figure that out for deprecated but we can't for removed.  Only the
                 # metadata has that information.
@@ -1062,7 +1041,8 @@ class ModuleValidator(Validator):
                                 version_added=not bool(self.collection)
                             ),
                             'DOCUMENTATION',
-                            305
+                            305,
+                            'valid-module-documentation',
                         )
                     else:
                         # This is the normal case
@@ -1073,7 +1053,8 @@ class ModuleValidator(Validator):
                                 version_added=not bool(self.collection)
                             ),
                             'DOCUMENTATION',
-                            305
+                            305,
+                            'valid-module-documentation',
                         )
 
                     if not self.collection:
@@ -1123,7 +1104,7 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                self._validate_docs_schema(data, return_schema, 'RETURN', 319)
+                self._validate_docs_schema(data, return_schema, 'RETURN', 319, 'valid-return-documentation')
 
                 for error in errors:
                     self.reporter.error(
@@ -1215,7 +1196,7 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 332)
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 332, 'valide-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
 
