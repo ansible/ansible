@@ -168,10 +168,6 @@ options:
                 choices:
                     - enable
                     - disable
-            tacacs+_server:
-                description:
-                    - Name of TACACS+ server with which the user must authenticate. Source user.tacacs+.name.
-                type: str
             two_factor:
                 description:
                     - Enable/disable two-factor authentication.
@@ -232,7 +228,6 @@ EXAMPLES = '''
         sms_phone: "<your_own_value>"
         sms_server: "fortiguard"
         status: "enable"
-        tacacs+_server: "<your_own_value> (source user.tacacs+.name)"
         two_factor: "disable"
         type: "password"
         workstation: "<your_own_value>"
@@ -325,7 +320,7 @@ def filter_user_local_data(json):
                    'passwd_policy', 'passwd_time', 'ppk_identity',
                    'ppk_secret', 'radius_server', 'sms_custom_server',
                    'sms_phone', 'sms_server', 'status',
-                   'tacacs+_server', 'two_factor', 'type',
+                   'two_factor', 'type',
                    'workstation']
     dictionary = {}
 
@@ -417,7 +412,6 @@ def main():
                                "choices": ["fortiguard", "custom"]},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},
-                "tacacs+_server": {"required": False, "type": "str"},
                 "two_factor": {"required": False, "type": "str",
                                "choices": ["disable", "fortitoken", "email",
                                            "sms"]},
