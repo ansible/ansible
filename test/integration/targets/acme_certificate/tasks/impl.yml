@@ -299,3 +299,49 @@
 - name: Dumping cert 8
   command: openssl x509 -in "{{ output_dir }}/cert-8.pem" -noout -text
   register: cert_8_text
+## GET ACCOUNT ORDERS #########################################################################
+- name: Don't retrieve orders
+  acme_account_info:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/account-ec256.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    retrieve_orders: ignore
+  register: account_orders_not
+- name: Retrieve orders as URL list (1/2)
+  acme_account_info:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/account-ec256.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    retrieve_orders: url_list
+  register: account_orders_urls
+- name: Retrieve orders as URL list (2/2)
+  acme_account_info:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/account-ec384.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    retrieve_orders: url_list
+  register: account_orders_urls2
+- name: Retrieve orders as object list (1/2)
+  acme_account_info:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/account-ec256.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    retrieve_orders: object_list
+  register: account_orders_full
+- name: Retrieve orders as object list (2/2)
+  acme_account_info:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/account-ec384.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    retrieve_orders: object_list
+  register: account_orders_full2
