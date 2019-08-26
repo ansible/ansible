@@ -34,6 +34,29 @@ Deprecated
 No notable changes
 
 
+Collection loader changes
+=========================
+
+The way to import a PowerShell of C# module util from a collection has changed in the Ansible 2.9 release. In Ansible
+2.8 a util was imported with the following syntax:
+
+.. code-block:: powershell
+
+    #AnsibleRequires -CSharpUtil AnsibleCollections.namespace_name.collection_name.util_filename
+    #AnsibleRequires -PowerShell AnsibleCollections.namespace_name.collection_name.util_filename
+
+In Ansible 2.9 this was changed to:
+
+.. code-block:: powershell
+
+    #AnsibleRequires -CSharpUtil ansible_collections.namespace_name.collection_name.plugins.module_utils.util_filename
+    #AnsibleRequires -PowerShell ansible_collections.namespace_name.collection_name.plugins.module_utils.util_filename
+
+The change in the collection import name also requires any C# util namespaces to be updated with the newer name
+format. This is more verbose but is designed to make sure we avoid plugin name conflicts across separate plugin types
+and to standardise how imports work in PowerShell with how Python modules work.
+
+
 Modules
 =======
 

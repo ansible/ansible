@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
+import errno
 import json
 import os
 import pkgutil
@@ -35,10 +36,31 @@ class PSModuleDepFinder(object):
         self.os_version = None
         self.become = False
 
-        self._re_cs_module = re.compile(to_bytes(r'(?i)^using\s((Ansible\..+)|(AnsibleCollections\.\w.+\.\w.+\w.+));\s*$'))
-        self._re_cs_in_ps_module = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\..+)|(AnsibleCollections\.\w.+\.\w.+\w.+))'))
-        self._re_coll_ps_in_ps_module = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+((Ansible\..+)|(AnsibleCollections\.\w.+\.\w.+\w.+))'))
-        self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
+        self._re_cs_module = [
+            # Reference C# module_util in another C# util
+            re.compile(to_bytes(r'(?i)^using\s((Ansible\..+)|'
+                                r'(ansible_collections\.[\w.]+\.[\w.]+\.plugins\.module_utils\.[\w.]+));\s*$')),
+        ]
+
+        self._re_cs_in_ps_module = [
+            # Reference C# module_util in a PowerShell module
+            # '#AnsibleRequires -CSharpUtil Ansible.{name}'
+            # '#AnsibleRequires -CSharpUtil ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
+            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\..+)|'
+                                r'(ansible_collections\.[\w.]+\.[\w.]+\.plugins\.module_utils\.[\w.]+))')),
+        ]
+
+        self._re_ps_module = [
+            # Original way of referencing a builtin module_util
+            # '#Requires -Module Ansible.ModuleUtils.{name}
+            re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)')),
+            # New way of referencing a builtin and collection module_util
+            # '#AnsibleRequires -PowerShell ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
+            # '#AnsibleRequires -PowerShell Ansible.ModuleUtils.{name}'
+            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+(((Ansible\.ModuleUtils\..+))|'
+                                r'(ansible_collections\.[\w.]+\.[\w.]+\.plugins\.module_utils\.[\w.]+))')),
+        ]
+
         self._re_wrapper = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)'))
         self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
         self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
@@ -55,28 +77,30 @@ class PSModuleDepFinder(object):
         if powershell:
             checks = [
                 # PS module contains '#Requires -Module Ansible.ModuleUtils.*'
-                (self._re_module, self.ps_modules, ".psm1"),
                 # PS module contains '#AnsibleRequires -Powershell Ansible.*' (or FQ collections module_utils ref)
-                (self._re_coll_ps_in_ps_module, self.ps_modules, ".psm1"),
+                (self._re_ps_module, self.ps_modules, ".psm1"),
                 # PS module contains '#AnsibleRequires -CSharpUtil Ansible.*'
                 (self._re_cs_in_ps_module, cs_utils, ".cs"),
             ]
         else:
             checks = [
-                # CS module contains 'using Ansible.*;' or 'using AnsibleCollections.ns.coll.*;'
+                # CS module contains 'using Ansible.*;' or 'using ansible_collections.ns.coll.plugins.module_utils.*;'
                 (self._re_cs_module, cs_utils, ".cs"),
             ]
 
         for line in lines:
             for check in checks:
-                match = check[0].match(line)
-                if match:
-                    # tolerate windows line endings by stripping any remaining
-                    # newline chars
-                    module_util_name = self._normalize_mu_name(match.group(1).rstrip())
+                for pattern in check[0]:
+                    match = pattern.match(line)
+                    if match:
+                        # tolerate windows line endings by stripping any remaining
+                        # newline chars
+                        module_util_name = to_text(match.group(1).rstrip())
 
-                    if module_util_name not in check[1].keys():
-                        module_utils.add((module_util_name, check[2]))
+                        if module_util_name not in check[1].keys():
+                            module_utils.add((module_util_name, check[2]))
+
+                        break
 
             if powershell:
                 ps_version_match = self._re_ps_version.match(line)
@@ -128,12 +152,30 @@ class PSModuleDepFinder(object):
     def _add_module(self, name, wrapper=False):
         m, ext = name
         m = to_text(m)
-        mu_path = ps_module_utils_loader.find_plugin(m, ext)
-        if not mu_path:
-            raise AnsibleError('Could not find imported module support code '
-                               'for \'%s\'' % m)
+        if m.startswith("Ansible."):
+            # Builtin util, use plugin loader to get the data
+            mu_path = ps_module_utils_loader.find_plugin(m, ext)
 
-        module_util_data = to_bytes(_slurp(mu_path))
+            if not mu_path:
+                raise AnsibleError('Could not find imported module support code '
+                                   'for \'%s\'' % m)
+
+            module_util_data = to_bytes(_slurp(mu_path))
+        else:
+            # Collection util, load the package data based on the util import.
+            submodules = tuple(m.split("."))
+            package_name = '.'.join(submodules[:-1])
+            resource_name = submodules[-1] + ext
+
+            try:
+                module_util_data = to_bytes(pkgutil.get_data(package_name, resource_name))
+                mu_path = None  # TODO: get this path
+            except OSError as err:
+                if err.errno == errno.ENOENT:
+                    raise AnsibleError('Could not find collection imported module support code for \'%s\'' % m)
+                else:
+                    raise
+
         util_info = {
             'data': module_util_data,
             'path': to_text(mu_path),
@@ -163,15 +205,6 @@ class PSModuleDepFinder(object):
             # determine which is the latest version and set that
             if LooseVersion(new_version) > LooseVersion(existing_version):
                 setattr(self, attribute, new_version)
-
-    def _normalize_mu_name(self, mu):
-        # normalize Windows module_utils to remove 'AnsibleCollections.' prefix so the plugin loader can find them
-        mu = to_text(mu)
-
-        if not mu.startswith(u'AnsibleCollections.'):
-            return mu
-
-        return mu.replace(u'AnsibleCollections.', u'', 1)
 
 
 def _slurp(path):
