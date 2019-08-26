@@ -8,6 +8,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils.network.junos.junos import tostring
 try:
     from ncclient.xml_ import new_ele, to_ele, to_xml
     HAS_NCCLIENT = True
@@ -15,9 +16,13 @@ except ImportError:
     HAS_NCCLIENT = False
 
 
-def get_resource_config(connection, config_filter=None, attrib={'inherit': 'inherit'}):
+def get_resource_config(connection, config_filter=None, attrib=None):
+
+    if attrib is None:
+        attrib = {'inherit': 'inherit'}
+
     get_ele = new_ele('get-configuration', attrib)
     if config_filter:
         get_ele.append(to_ele(config_filter))
 
-    return connection.execute_rpc(to_xml(get_ele))
+    return connection.execute_rpc(tostring(get_ele))
