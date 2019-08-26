@@ -37,55 +37,58 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: iosxr_l3_interfaces
-  version_added: 2.9
-  short_description: Manage Layer-3 interface on Cisco IOS-XR devices.
-  description: This module provides declarative management of Layer-3 interface on Cisco IOS-XR devices.
-  author: Sumit Jaiswal (@justjais)
-  options:
-    config:
-      description: A dictionary of Layer-3 interface options
-      type: list
-      elements: dict
-      suboptions:
-        name:
-          description:
-          - Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
-          type: str
-          required: True
-        ipv4:
-          description:
-          - IPv4 address to be set for the Layer-3 interface mentioned in I(name) option.
-          - The address format is <ipv4 address>/<mask>, the mask is number in range 0-32
-            eg. 192.168.0.1/24
-          suboptions:
-            address:
-              description:
-              - Configures the IPv4 address for Interface.
-              type: str
-            secondary:
-              description:
-              - Configures the IP address as a secondary address.
-              type: bool
-        ipv6:
-          description:
-          - IPv6 address to be set for the Layer-3 interface mentioned in I(name) option.
-          - The address format is <ipv6 address>/<mask>, the mask is number in range 0-128
-            eg. fd5d:12c9:2201:1::1/64
-          suboptions:
-            address:
-              description:
-              - Configures the IPv6 address for Interface.
-              type: str
-    state:
-      choices:
-      - merged
-      - replaced
-      - overridden
-      - deleted
-      default: merged
-      description:
-      - The state the configuration should be left in
-      type: str
+version_added: 2.9
+short_description: Manage Layer-3 interface on Cisco IOS-XR devices.
+description: This module provides declarative management of Layer-3 interface on Cisco IOS-XR devices.
+author: Sumit Jaiswal (@justjais)
+notes:
+  - Tested against Cisco IOS-XRv Version 6.1.3 on VIRL.
+  - This module works with connection C(network_cli).
+options:
+  config:
+    description: A dictionary of Layer-3 interface options
+    type: list
+    elements: dict
+    suboptions:
+      name:
+        description:
+        - Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
+        type: str
+        required: True
+      ipv4:
+        description:
+        - IPv4 address to be set for the Layer-3 interface mentioned in I(name) option.
+        - The address format is <ipv4 address>/<mask>, the mask is number in range 0-32
+          eg. 192.168.0.1/24
+        suboptions:
+          address:
+            description:
+            - Configures the IPv4 address for Interface.
+            type: str
+          secondary:
+            description:
+            - Configures the IP address as a secondary address.
+            type: bool
+      ipv6:
+        description:
+        - IPv6 address to be set for the Layer-3 interface mentioned in I(name) option.
+        - The address format is <ipv6 address>/<mask>, the mask is number in range 0-128
+          eg. fd5d:12c9:2201:1::1/64
+        suboptions:
+          address:
+            description:
+            - Configures the IPv6 address for Interface.
+            type: str
+  state:
+    choices:
+    - merged
+    - replaced
+    - overridden
+    - deleted
+    default: merged
+    description:
+    - The state the configuration should be left in
+    type: str
 """
 
 EXAMPLES = """
@@ -319,7 +322,8 @@ EXAMPLES = """
 #  shutdown
 # !
 
-# Using deleted without any config
+# Using Deleted without any config passed
+# "(NOTE: This will delete all of configured resource module attributes from each configured interface)"
 
 # Before state:
 # -------------

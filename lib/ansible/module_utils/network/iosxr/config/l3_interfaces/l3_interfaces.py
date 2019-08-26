@@ -16,7 +16,7 @@ __metaclass__ = type
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.iosxr.facts.facts import Facts
-from ansible.module_utils.network.iosxr.utils.utils import dict_diff
+from ansible.module_utils.network.iosxr.utils.utils import normalize_interface, dict_to_set
 from ansible.module_utils.network.iosxr.utils.utils import remove_command_from_config_list, add_command_to_config_list
 from ansible.module_utils.network.iosxr.utils.utils import filter_dict_having_none_value, remove_duplicate_interface
 from ansible.module_utils.network.iosxr.utils.utils import validate_n_expand_ipv4, validate_ipv6
@@ -117,6 +117,7 @@ class L3_Interfaces(ConfigBase):
         commands = []
 
         for interface in want:
+            interface['name'] = normalize_interface(interface['name'])
             for each in have:
                 if each['name'] == interface['name']:
                     break
@@ -143,6 +144,7 @@ class L3_Interfaces(ConfigBase):
 
         for each in have:
             for interface in want:
+                interface['name'] = normalize_interface(interface['name'])
                 if each['name'] == interface['name']:
                     break
                 elif interface['name'] != each['name']:
@@ -177,6 +179,7 @@ class L3_Interfaces(ConfigBase):
         commands = []
 
         for interface in want:
+            interface['name'] = normalize_interface(interface['name'])
             for each in have:
                 if each['name'] == interface['name']:
                     break
@@ -197,6 +200,7 @@ class L3_Interfaces(ConfigBase):
 
         if want:
             for interface in want:
+                interface['name'] = normalize_interface(interface['name'])
                 for each in have:
                     if each['name'] == interface['name']:
                         break
@@ -226,8 +230,8 @@ class L3_Interfaces(ConfigBase):
                     each['address'] = ip_addr_want
 
         # Get the diff b/w want and have
-        want_dict = dict_diff(want)
-        have_dict = dict_diff(have)
+        want_dict = dict_to_set(want)
+        have_dict = dict_to_set(have)
 
         # To handle L3 IPV4 configuration
         if dict(want_dict).get('ipv4'):
