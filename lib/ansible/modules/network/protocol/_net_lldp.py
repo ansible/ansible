@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage LLDP service configuration on network devices
 description:
   - This module provides declarative management of LLDP service configuration
     on network devices.
+deprecated:
+    removed_in: "2.13"
+    alternative: Use platform-specific "[netos]_lldp_global" module
+    why: Updated modules released with more functionality
 extends_documentation_fragment: network_agnostic
 options:
   state:

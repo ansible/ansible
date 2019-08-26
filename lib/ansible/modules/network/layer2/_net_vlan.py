@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage VLANs on network devices
 description:
   - This module provides declarative management of VLANs
     on network devices.
+deprecated:
+    removed_in: "2.13"
+    alternative: Use platform-specific "[netos]_vlans" module
+    why: Updated modules released with more functionality
 extends_documentation_fragment: network_agnostic
 options:
   name:
