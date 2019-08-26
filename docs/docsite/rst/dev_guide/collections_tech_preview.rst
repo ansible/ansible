@@ -276,13 +276,7 @@ Collection versions use `Sematic Versioning <https://semver.org/>` for version n
 Migrating Ansible content to a collection
 =========================================
 
-You can experiment with migrating existing modules into a collection using the `content_collector tool <https://github.com/ansible/content_collector>`_. The ``content_collector`` is a playbook that helps you migrate content from an Ansible distribution into a collection.
-
-.. warning::
-
-	This tool is in active development and is provided only for experimentation and feedback at this point.
-
-See the `content_collector README <https://github.com/ansible/content_collector>`_ for full details and usage guidelines.
+The core team will migrate content out of the ``ansible/ansible`` repo into collections.
 
 Installing collections
 ======================
