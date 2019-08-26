@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_router_ospf6
 short_description: Configure IPv6 OSPF in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify router feature and ospf6 category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,37 +41,48 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     router_ospf6:
         description:
             - Configure IPv6 OSPF.
         default: null
+        type: dict
         suboptions:
-            abr-type:
+            abr_type:
                 description:
                     - Area border router type.
+                type: str
                 choices:
                     - cisco
                     - ibm
@@ -82,38 +90,46 @@ options:
             area:
                 description:
                     - OSPF6 area configuration.
+                type: list
                 suboptions:
-                    default-cost:
+                    default_cost:
                         description:
                             - Summary default cost of stub or NSSA area.
+                        type: int
                     id:
                         description:
                             - Area entry IP address.
                         required: true
-                    nssa-default-information-originate:
+                        type: str
+                    nssa_default_information_originate:
                         description:
                             - Enable/disable originate type 7 default into NSSA area.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    nssa-default-information-originate-metric:
+                    nssa_default_information_originate_metric:
                         description:
                             - OSPFv3 default metric.
-                    nssa-default-information-originate-metric-type:
+                        type: int
+                    nssa_default_information_originate_metric_type:
                         description:
                             - OSPFv3 metric type for default routes.
+                        type: str
                         choices:
                             - 1
                             - 2
-                    nssa-redistribution:
+                    nssa_redistribution:
                         description:
                             - Enable/disable redistribute into NSSA area.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    nssa-translator-role:
+                    nssa_translator_role:
                         description:
                             - NSSA translator role type.
+                        type: str
                         choices:
                             - candidate
                             - never
@@ -121,10 +137,12 @@ options:
                     range:
                         description:
                             - OSPF6 area range configuration.
+                        type: list
                         suboptions:
                             advertise:
                                 description:
                                     - Enable/disable advertise status.
+                                type: str
                                 choices:
                                     - disable
                                     - enable
@@ -132,92 +150,114 @@ options:
                                 description:
                                     - Range entry ID.
                                 required: true
+                                type: int
                             prefix6:
                                 description:
                                     - IPv6 prefix.
-                    stub-type:
+                                type: str
+                    stub_type:
                         description:
                             - Stub summary setting.
+                        type: str
                         choices:
                             - no-summary
                             - summary
                     type:
                         description:
                             - Area type setting.
+                        type: str
                         choices:
                             - regular
                             - nssa
                             - stub
-                    virtual-link:
+                    virtual_link:
                         description:
                             - OSPF6 virtual link configuration.
+                        type: list
                         suboptions:
-                            dead-interval:
+                            dead_interval:
                                 description:
                                     - Dead interval.
-                            hello-interval:
+                                type: int
+                            hello_interval:
                                 description:
                                     - Hello interval.
+                                type: int
                             name:
                                 description:
                                     - Virtual link entry name.
                                 required: true
+                                type: str
                             peer:
                                 description:
                                     - A.B.C.D, peer router ID.
-                            retransmit-interval:
+                                type: str
+                            retransmit_interval:
                                 description:
                                     - Retransmit interval.
-                            transmit-delay:
+                                type: int
+                            transmit_delay:
                                 description:
                                     - Transmit delay.
-            auto-cost-ref-bandwidth:
+                                type: int
+            auto_cost_ref_bandwidth:
                 description:
                     - Reference bandwidth in terms of megabits per second.
+                type: int
             bfd:
                 description:
                     - Enable/disable Bidirectional Forwarding Detection (BFD).
+                type: str
                 choices:
                     - enable
                     - disable
-            default-information-metric:
+            default_information_metric:
                 description:
                     - Default information metric.
-            default-information-metric-type:
+                type: int
+            default_information_metric_type:
                 description:
                     - Default information metric type.
+                type: str
                 choices:
                     - 1
                     - 2
-            default-information-originate:
+            default_information_originate:
                 description:
                     - Enable/disable generation of default route.
+                type: str
                 choices:
                     - enable
                     - always
                     - disable
-            default-information-route-map:
+            default_information_route_map:
                 description:
                     - Default information route map. Source router.route-map.name.
-            default-metric:
+                type: str
+            default_metric:
                 description:
                     - Default metric of redistribute routes.
-            log-neighbour-changes:
+                type: int
+            log_neighbour_changes:
                 description:
                     - Enable logging of OSPFv3 neighbour's changes
+                type: str
                 choices:
                     - enable
                     - disable
-            ospf6-interface:
+            ospf6_interface:
                 description:
                     - OSPF6 interface configuration.
+                type: list
                 suboptions:
-                    area-id:
+                    area_id:
                         description:
                             - A.B.C.D, in IPv4 address format.
+                        type: str
                     bfd:
                         description:
                             - Enable/disable Bidirectional Forwarding Detection (BFD).
+                        type: str
                         choices:
                             - global
                             - enable
@@ -225,39 +265,61 @@ options:
                     cost:
                         description:
                             - Cost of the interface, value range from 0 to 65535, 0 means auto-cost.
-                    dead-interval:
+                        type: int
+                    dead_interval:
                         description:
                             - Dead interval.
-                    hello-interval:
+                        type: int
+                    hello_interval:
                         description:
                             - Hello interval.
+                        type: int
                     interface:
                         description:
                             - Configuration interface name. Source system.interface.name.
+                        type: str
+                    mtu:
+                        description:
+                            - MTU for OSPFv3 packets.
+                        type: int
+                    mtu_ignore:
+                        description:
+                            - Enable/disable ignoring MTU field in DBD packets.
+                        type: str
+                        choices:
+                            - enable
+                            - disable
                     name:
                         description:
                             - Interface entry name.
                         required: true
+                        type: str
                     neighbor:
                         description:
                             - OSPFv3 neighbors are used when OSPFv3 runs on non-broadcast media
+                        type: list
                         suboptions:
                             cost:
                                 description:
                                     - Cost of the interface, value range from 0 to 65535, 0 means auto-cost.
+                                type: int
                             ip6:
                                 description:
                                     - IPv6 link local address of the neighbor.
                                 required: true
-                            poll-interval:
+                                type: str
+                            poll_interval:
                                 description:
                                     - Poll interval time in seconds.
+                                type: int
                             priority:
                                 description:
                                     - priority
-                    network-type:
+                                type: int
+                    network_type:
                         description:
                             - Network type.
+                        type: str
                         choices:
                             - broadcast
                             - point-to-point
@@ -267,36 +329,45 @@ options:
                     priority:
                         description:
                             - priority
-                    retransmit-interval:
+                        type: int
+                    retransmit_interval:
                         description:
                             - Retransmit interval.
+                        type: int
                     status:
                         description:
                             - Enable/disable OSPF6 routing on this interface.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    transmit-delay:
+                    transmit_delay:
                         description:
                             - Transmit delay.
-            passive-interface:
+                        type: int
+            passive_interface:
                 description:
                     - Passive interface configuration.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Passive interface name. Source system.interface.name.
                         required: true
+                        type: str
             redistribute:
                 description:
                     - Redistribute configuration.
+                type: list
                 suboptions:
                     metric:
                         description:
                             - Redistribute metric setting.
-                    metric-type:
+                        type: int
+                    metric_type:
                         description:
                             - Metric type.
+                        type: str
                         choices:
                             - 1
                             - 2
@@ -304,28 +375,35 @@ options:
                         description:
                             - Redistribute name.
                         required: true
+                        type: str
                     routemap:
                         description:
                             - Route map name. Source router.route-map.name.
+                        type: str
                     status:
                         description:
                             - status
+                        type: str
                         choices:
                             - enable
                             - disable
-            router-id:
+            router_id:
                 description:
                     - A.B.C.D, in IPv4 address format.
-            spf-timers:
+                type: str
+            spf_timers:
                 description:
                     - SPF calculation frequency.
-            summary-address:
+                type: str
+            summary_address:
                 description:
                     - IPv6 address summary configuration.
+                type: list
                 suboptions:
                     advertise:
                         description:
                             - Enable/disable advertise status.
+                        type: str
                         choices:
                             - disable
                             - enable
@@ -333,12 +411,15 @@ options:
                         description:
                             - Summary address entry ID.
                         required: true
+                        type: int
                     prefix6:
                         description:
                             - IPv6 prefix.
+                        type: str
                     tag:
                         description:
                             - Tag value.
+                        type: int
 '''
 
 EXAMPLES = '''
@@ -348,6 +429,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure IPv6 OSPF.
     fortios_router_ospf6:
@@ -357,77 +439,79 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       router_ospf6:
-        abr-type: "cisco"
+        abr_type: "cisco"
         area:
          -
-            default-cost: "5"
+            default_cost: "5"
             id:  "6"
-            nssa-default-information-originate: "enable"
-            nssa-default-information-originate-metric: "8"
-            nssa-default-information-originate-metric-type: "1"
-            nssa-redistribution: "enable"
-            nssa-translator-role: "candidate"
+            nssa_default_information_originate: "enable"
+            nssa_default_information_originate_metric: "8"
+            nssa_default_information_originate_metric_type: "1"
+            nssa_redistribution: "enable"
+            nssa_translator_role: "candidate"
             range:
              -
                 advertise: "disable"
                 id:  "14"
                 prefix6: "<your_own_value>"
-            stub-type: "no-summary"
+            stub_type: "no-summary"
             type: "regular"
-            virtual-link:
+            virtual_link:
              -
-                dead-interval: "19"
-                hello-interval: "20"
+                dead_interval: "19"
+                hello_interval: "20"
                 name: "default_name_21"
                 peer: "<your_own_value>"
-                retransmit-interval: "23"
-                transmit-delay: "24"
-        auto-cost-ref-bandwidth: "25"
+                retransmit_interval: "23"
+                transmit_delay: "24"
+        auto_cost_ref_bandwidth: "25"
         bfd: "enable"
-        default-information-metric: "27"
-        default-information-metric-type: "1"
-        default-information-originate: "enable"
-        default-information-route-map: "<your_own_value> (source router.route-map.name)"
-        default-metric: "31"
-        log-neighbour-changes: "enable"
-        ospf6-interface:
+        default_information_metric: "27"
+        default_information_metric_type: "1"
+        default_information_originate: "enable"
+        default_information_route_map: "<your_own_value> (source router.route-map.name)"
+        default_metric: "31"
+        log_neighbour_changes: "enable"
+        ospf6_interface:
          -
-            area-id: "<your_own_value>"
+            area_id: "<your_own_value>"
             bfd: "global"
             cost: "36"
-            dead-interval: "37"
-            hello-interval: "38"
+            dead_interval: "37"
+            hello_interval: "38"
             interface: "<your_own_value> (source system.interface.name)"
-            name: "default_name_40"
+            mtu: "40"
+            mtu_ignore: "enable"
+            name: "default_name_42"
             neighbor:
              -
-                cost: "42"
+                cost: "44"
                 ip6: "<your_own_value>"
-                poll-interval: "44"
-                priority: "45"
-            network-type: "broadcast"
-            priority: "47"
-            retransmit-interval: "48"
+                poll_interval: "46"
+                priority: "47"
+            network_type: "broadcast"
+            priority: "49"
+            retransmit_interval: "50"
             status: "disable"
-            transmit-delay: "50"
-        passive-interface:
+            transmit_delay: "52"
+        passive_interface:
          -
-            name: "default_name_52 (source system.interface.name)"
+            name: "default_name_54 (source system.interface.name)"
         redistribute:
          -
-            metric: "54"
-            metric-type: "1"
-            name: "default_name_56"
+            metric: "56"
+            metric_type: "1"
+            name: "default_name_58"
             routemap: "<your_own_value> (source router.route-map.name)"
             status: "enable"
-        router-id: "<your_own_value>"
-        spf-timers: "<your_own_value>"
-        summary-address:
+        router_id: "<your_own_value>"
+        spf_timers: "<your_own_value>"
+        summary_address:
          -
             advertise: "disable"
-            id:  "63"
+            id:  "65"
             prefix6: "<your_own_value>"
-            tag: "65"
+            tag: "67"
 '''
 
 RETURN = '''
@@ -490,14 +574,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -505,16 +591,16 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_router_ospf6_data(json):
-    option_list = ['abr-type', 'area', 'auto-cost-ref-bandwidth',
-                   'bfd', 'default-information-metric', 'default-information-metric-type',
-                   'default-information-originate', 'default-information-route-map', 'default-metric',
-                   'log-neighbour-changes', 'ospf6-interface', 'passive-interface',
-                   'redistribute', 'router-id', 'spf-timers',
-                   'summary-address']
+    option_list = ['abr_type', 'area', 'auto_cost_ref_bandwidth',
+                   'bfd', 'default_information_metric', 'default_information_metric_type',
+                   'default_information_originate', 'default_information_route_map', 'default_metric',
+                   'log_neighbour_changes', 'ospf6_interface', 'passive_interface',
+                   'redistribute', 'router_id', 'spf_timers',
+                   'summary_address']
     dictionary = {}
 
     for attribute in option_list:
@@ -524,17 +610,15 @@ def filter_router_ospf6_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -542,48 +626,54 @@ def flatten_multilists_attributes(data):
 def router_ospf6(data, fos):
     vdom = data['vdom']
     router_ospf6_data = data['router_ospf6']
-    flattened_data = flatten_multilists_attributes(router_ospf6_data)
-    filtered_data = filter_router_ospf6_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_router_ospf6_data(router_ospf6_data))
+
     return fos.set('router',
                    'ospf6',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_router(data, fos):
-    login(data)
 
     if data['router_ospf6']:
         resp = router_ospf6(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "router_ospf6": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "abr-type": {"required": False, "type": "str",
+                "abr_type": {"required": False, "type": "str",
                              "choices": ["cisco", "ibm", "standard"]},
                 "area": {"required": False, "type": "list",
                          "options": {
-                             "default-cost": {"required": False, "type": "int"},
+                             "default_cost": {"required": False, "type": "int"},
                              "id": {"required": True, "type": "str"},
-                             "nssa-default-information-originate": {"required": False, "type": "str",
+                             "nssa_default_information_originate": {"required": False, "type": "str",
                                                                     "choices": ["enable", "disable"]},
-                             "nssa-default-information-originate-metric": {"required": False, "type": "int"},
-                             "nssa-default-information-originate-metric-type": {"required": False, "type": "str",
+                             "nssa_default_information_originate_metric": {"required": False, "type": "int"},
+                             "nssa_default_information_originate_metric_type": {"required": False, "type": "str",
                                                                                 "choices": ["1", "2"]},
-                             "nssa-redistribution": {"required": False, "type": "str",
+                             "nssa_redistribution": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                             "nssa-translator-role": {"required": False, "type": "str",
+                             "nssa_translator_role": {"required": False, "type": "str",
                                                       "choices": ["candidate", "never", "always"]},
                              "range": {"required": False, "type": "list",
                                        "options": {
@@ -592,75 +682,78 @@ def main():
                                            "id": {"required": True, "type": "int"},
                                            "prefix6": {"required": False, "type": "str"}
                                        }},
-                             "stub-type": {"required": False, "type": "str",
+                             "stub_type": {"required": False, "type": "str",
                                            "choices": ["no-summary", "summary"]},
                              "type": {"required": False, "type": "str",
                                       "choices": ["regular", "nssa", "stub"]},
-                             "virtual-link": {"required": False, "type": "list",
+                             "virtual_link": {"required": False, "type": "list",
                                               "options": {
-                                                  "dead-interval": {"required": False, "type": "int"},
-                                                  "hello-interval": {"required": False, "type": "int"},
+                                                  "dead_interval": {"required": False, "type": "int"},
+                                                  "hello_interval": {"required": False, "type": "int"},
                                                   "name": {"required": True, "type": "str"},
                                                   "peer": {"required": False, "type": "str"},
-                                                  "retransmit-interval": {"required": False, "type": "int"},
-                                                  "transmit-delay": {"required": False, "type": "int"}
+                                                  "retransmit_interval": {"required": False, "type": "int"},
+                                                  "transmit_delay": {"required": False, "type": "int"}
                                               }}
                          }},
-                "auto-cost-ref-bandwidth": {"required": False, "type": "int"},
+                "auto_cost_ref_bandwidth": {"required": False, "type": "int"},
                 "bfd": {"required": False, "type": "str",
                         "choices": ["enable", "disable"]},
-                "default-information-metric": {"required": False, "type": "int"},
-                "default-information-metric-type": {"required": False, "type": "str",
+                "default_information_metric": {"required": False, "type": "int"},
+                "default_information_metric_type": {"required": False, "type": "str",
                                                     "choices": ["1", "2"]},
-                "default-information-originate": {"required": False, "type": "str",
+                "default_information_originate": {"required": False, "type": "str",
                                                   "choices": ["enable", "always", "disable"]},
-                "default-information-route-map": {"required": False, "type": "str"},
-                "default-metric": {"required": False, "type": "int"},
-                "log-neighbour-changes": {"required": False, "type": "str",
+                "default_information_route_map": {"required": False, "type": "str"},
+                "default_metric": {"required": False, "type": "int"},
+                "log_neighbour_changes": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "ospf6-interface": {"required": False, "type": "list",
+                "ospf6_interface": {"required": False, "type": "list",
                                     "options": {
-                                        "area-id": {"required": False, "type": "str"},
+                                        "area_id": {"required": False, "type": "str"},
                                         "bfd": {"required": False, "type": "str",
                                                 "choices": ["global", "enable", "disable"]},
                                         "cost": {"required": False, "type": "int"},
-                                        "dead-interval": {"required": False, "type": "int"},
-                                        "hello-interval": {"required": False, "type": "int"},
+                                        "dead_interval": {"required": False, "type": "int"},
+                                        "hello_interval": {"required": False, "type": "int"},
                                         "interface": {"required": False, "type": "str"},
+                                        "mtu": {"required": False, "type": "int"},
+                                        "mtu_ignore": {"required": False, "type": "str",
+                                                       "choices": ["enable", "disable"]},
                                         "name": {"required": True, "type": "str"},
                                         "neighbor": {"required": False, "type": "list",
                                                      "options": {
                                                          "cost": {"required": False, "type": "int"},
                                                          "ip6": {"required": True, "type": "str"},
-                                                         "poll-interval": {"required": False, "type": "int"},
+                                                         "poll_interval": {"required": False, "type": "int"},
                                                          "priority": {"required": False, "type": "int"}
                                                      }},
-                                        "network-type": {"required": False, "type": "str",
+                                        "network_type": {"required": False, "type": "str",
                                                          "choices": ["broadcast", "point-to-point", "non-broadcast",
                                                                      "point-to-multipoint", "point-to-multipoint-non-broadcast"]},
                                         "priority": {"required": False, "type": "int"},
-                                        "retransmit-interval": {"required": False, "type": "int"},
+                                        "retransmit_interval": {"required": False, "type": "int"},
                                         "status": {"required": False, "type": "str",
                                                    "choices": ["disable", "enable"]},
-                                        "transmit-delay": {"required": False, "type": "int"}
+                                        "transmit_delay": {"required": False, "type": "int"}
                                     }},
-                "passive-interface": {"required": False, "type": "list",
+                "passive_interface": {"required": False, "type": "list",
                                       "options": {
                                           "name": {"required": True, "type": "str"}
                                       }},
                 "redistribute": {"required": False, "type": "list",
                                  "options": {
                                      "metric": {"required": False, "type": "int"},
-                                     "metric-type": {"required": False, "type": "str",
+                                     "metric_type": {"required": False, "type": "str",
                                                      "choices": ["1", "2"]},
                                      "name": {"required": True, "type": "str"},
                                      "routemap": {"required": False, "type": "str"},
                                      "status": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]}
                                  }},
-                "router-id": {"required": False, "type": "str"},
-                "spf-timers": {"required": False, "type": "str"},
-                "summary-address": {"required": False, "type": "list",
+                "router_id": {"required": False, "type": "str"},
+                "spf_timers": {"required": False, "type": "str"},
+                "summary_address": {"required": False, "type": "list",
                                     "options": {
                                         "advertise": {"required": False, "type": "str",
                                                       "choices": ["disable", "enable"]},
@@ -675,15 +768,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_router(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_router(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_router(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

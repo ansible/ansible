@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_router_ospf
 short_description: Configure OSPF in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify router feature and ospf category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,37 +41,48 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     router_ospf:
         description:
             - Configure OSPF.
         default: null
+        type: dict
         suboptions:
-            abr-type:
+            abr_type:
                 description:
                     - Area border router type.
+                type: str
                 choices:
                     - cisco
                     - ibm
@@ -83,24 +91,29 @@ options:
             area:
                 description:
                     - OSPF area configuration.
+                type: list
                 suboptions:
                     authentication:
                         description:
                             - Authentication type.
+                        type: str
                         choices:
                             - none
                             - text
                             - md5
-                    default-cost:
+                    default_cost:
                         description:
                             - Summary default cost of stub or NSSA area.
-                    filter-list:
+                        type: int
+                    filter_list:
                         description:
                             - OSPF area filter-list configuration.
+                        type: list
                         suboptions:
                             direction:
                                 description:
                                     - Direction.
+                                type: str
                                 choices:
                                     - in
                                     - out
@@ -108,38 +121,46 @@ options:
                                 description:
                                     - Filter list entry ID.
                                 required: true
+                                type: int
                             list:
                                 description:
                                     - Access-list or prefix-list name. Source router.access-list.name router.prefix-list.name.
+                                type: str
                     id:
                         description:
                             - Area entry IP address.
                         required: true
-                    nssa-default-information-originate:
+                        type: str
+                    nssa_default_information_originate:
                         description:
                             - Redistribute, advertise, or do not originate Type-7 default route into NSSA area.
+                        type: str
                         choices:
                             - enable
                             - always
                             - disable
-                    nssa-default-information-originate-metric:
+                    nssa_default_information_originate_metric:
                         description:
                             - OSPF default metric.
-                    nssa-default-information-originate-metric-type:
+                        type: int
+                    nssa_default_information_originate_metric_type:
                         description:
                             - OSPF metric type for default routes.
+                        type: str
                         choices:
                             - 1
                             - 2
-                    nssa-redistribution:
+                    nssa_redistribution:
                         description:
                             - Enable/disable redistribute into NSSA area.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    nssa-translator-role:
+                    nssa_translator_role:
                         description:
                             - NSSA translator role type.
+                        type: str
                         choices:
                             - candidate
                             - never
@@ -147,10 +168,12 @@ options:
                     range:
                         description:
                             - OSPF area range configuration.
+                        type: list
                         suboptions:
                             advertise:
                                 description:
                                     - Enable/disable advertise status.
+                                type: str
                                 choices:
                                     - disable
                                     - enable
@@ -158,210 +181,262 @@ options:
                                 description:
                                     - Range entry ID.
                                 required: true
+                                type: int
                             prefix:
                                 description:
                                     - Prefix.
+                                type: str
                             substitute:
                                 description:
                                     - Substitute prefix.
-                            substitute-status:
+                                type: str
+                            substitute_status:
                                 description:
                                     - Enable/disable substitute status.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                     shortcut:
                         description:
                             - Enable/disable shortcut option.
+                        type: str
                         choices:
                             - disable
                             - enable
                             - default
-                    stub-type:
+                    stub_type:
                         description:
                             - Stub summary setting.
+                        type: str
                         choices:
                             - no-summary
                             - summary
                     type:
                         description:
                             - Area type setting.
+                        type: str
                         choices:
                             - regular
                             - nssa
                             - stub
-                    virtual-link:
+                    virtual_link:
                         description:
                             - OSPF virtual link configuration.
+                        type: list
                         suboptions:
                             authentication:
                                 description:
                                     - Authentication type.
+                                type: str
                                 choices:
                                     - none
                                     - text
                                     - md5
-                            authentication-key:
+                            authentication_key:
                                 description:
                                     - Authentication key.
-                            dead-interval:
+                                type: str
+                            dead_interval:
                                 description:
                                     - Dead interval.
-                            hello-interval:
+                                type: int
+                            hello_interval:
                                 description:
                                     - Hello interval.
-                            md5-key:
+                                type: int
+                            md5_key:
                                 description:
                                     - MD5 key.
+                                type: str
                             name:
                                 description:
                                     - Virtual link entry name.
                                 required: true
+                                type: str
                             peer:
                                 description:
                                     - Peer IP.
-                            retransmit-interval:
+                                type: str
+                            retransmit_interval:
                                 description:
                                     - Retransmit interval.
-                            transmit-delay:
+                                type: int
+                            transmit_delay:
                                 description:
                                     - Transmit delay.
-            auto-cost-ref-bandwidth:
+                                type: int
+            auto_cost_ref_bandwidth:
                 description:
                     - Reference bandwidth in terms of megabits per second.
+                type: int
             bfd:
                 description:
                     - Bidirectional Forwarding Detection (BFD).
+                type: str
                 choices:
                     - enable
                     - disable
-            database-overflow:
+            database_overflow:
                 description:
                     - Enable/disable database overflow.
+                type: str
                 choices:
                     - enable
                     - disable
-            database-overflow-max-lsas:
+            database_overflow_max_lsas:
                 description:
                     - Database overflow maximum LSAs.
-            database-overflow-time-to-recover:
+                type: int
+            database_overflow_time_to_recover:
                 description:
                     - Database overflow time to recover (sec).
-            default-information-metric:
+                type: int
+            default_information_metric:
                 description:
                     - Default information metric.
-            default-information-metric-type:
+                type: int
+            default_information_metric_type:
                 description:
                     - Default information metric type.
+                type: str
                 choices:
                     - 1
                     - 2
-            default-information-originate:
+            default_information_originate:
                 description:
                     - Enable/disable generation of default route.
+                type: str
                 choices:
                     - enable
                     - always
                     - disable
-            default-information-route-map:
+            default_information_route_map:
                 description:
                     - Default information route map. Source router.route-map.name.
-            default-metric:
+                type: str
+            default_metric:
                 description:
                     - Default metric of redistribute routes.
+                type: int
             distance:
                 description:
                     - Distance of the route.
-            distance-external:
+                type: int
+            distance_external:
                 description:
                     - Administrative external distance.
-            distance-inter-area:
+                type: int
+            distance_inter_area:
                 description:
                     - Administrative inter-area distance.
-            distance-intra-area:
+                type: int
+            distance_intra_area:
                 description:
                     - Administrative intra-area distance.
-            distribute-list:
+                type: int
+            distribute_list:
                 description:
                     - Distribute list configuration.
+                type: list
                 suboptions:
-                    access-list:
+                    access_list:
                         description:
                             - Access list name. Source router.access-list.name.
+                        type: str
                     id:
                         description:
                             - Distribute list entry ID.
                         required: true
+                        type: int
                     protocol:
                         description:
                             - Protocol type.
+                        type: str
                         choices:
                             - connected
                             - static
                             - rip
-            distribute-list-in:
+            distribute_list_in:
                 description:
                     - Filter incoming routes. Source router.access-list.name router.prefix-list.name.
-            distribute-route-map-in:
+                type: str
+            distribute_route_map_in:
                 description:
                     - Filter incoming external routes by route-map. Source router.route-map.name.
-            log-neighbour-changes:
+                type: str
+            log_neighbour_changes:
                 description:
                     - Enable logging of OSPF neighbour's changes
+                type: str
                 choices:
                     - enable
                     - disable
             neighbor:
                 description:
                     - OSPF neighbor configuration are used when OSPF runs on non-broadcast media
+                type: list
                 suboptions:
                     cost:
                         description:
                             - Cost of the interface, value range from 0 to 65535, 0 means auto-cost.
+                        type: int
                     id:
                         description:
                             - Neighbor entry ID.
                         required: true
+                        type: int
                     ip:
                         description:
                             - Interface IP address of the neighbor.
-                    poll-interval:
+                        type: str
+                    poll_interval:
                         description:
                             - Poll interval time in seconds.
+                        type: int
                     priority:
                         description:
                             - Priority.
+                        type: int
             network:
                 description:
                     - OSPF network configuration.
+                type: list
                 suboptions:
                     area:
                         description:
                             - Attach the network to area.
+                        type: str
                     id:
                         description:
                             - Network entry ID.
                         required: true
+                        type: int
                     prefix:
                         description:
                             - Prefix.
-            ospf-interface:
+                        type: str
+            ospf_interface:
                 description:
                     - OSPF interface configuration.
+                type: list
                 suboptions:
                     authentication:
                         description:
                             - Authentication type.
+                        type: str
                         choices:
                             - none
                             - text
                             - md5
-                    authentication-key:
+                    authentication_key:
                         description:
                             - Authentication key.
+                        type: str
                     bfd:
                         description:
                             - Bidirectional Forwarding Detection (BFD).
+                        type: str
                         choices:
                             - global
                             - enable
@@ -369,36 +444,46 @@ options:
                     cost:
                         description:
                             - Cost of the interface, value range from 0 to 65535, 0 means auto-cost.
-                    database-filter-out:
+                        type: int
+                    database_filter_out:
                         description:
                             - Enable/disable control of flooding out LSAs.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    dead-interval:
+                    dead_interval:
                         description:
                             - Dead interval.
-                    hello-interval:
+                        type: int
+                    hello_interval:
                         description:
                             - Hello interval.
-                    hello-multiplier:
+                        type: int
+                    hello_multiplier:
                         description:
                             - Number of hello packets within dead interval.
+                        type: int
                     interface:
                         description:
                             - Configuration interface name. Source system.interface.name.
+                        type: str
                     ip:
                         description:
                             - IP address.
-                    md5-key:
+                        type: str
+                    md5_key:
                         description:
                             - MD5 key.
+                        type: str
                     mtu:
                         description:
                             - MTU for database description packets.
-                    mtu-ignore:
+                        type: int
+                    mtu_ignore:
                         description:
                             - Enable/disable ignore MTU.
+                        type: str
                         choices:
                             - enable
                             - disable
@@ -406,54 +491,67 @@ options:
                         description:
                             - Interface entry name.
                         required: true
-                    network-type:
+                        type: str
+                    network_type:
                         description:
                             - Network type.
+                        type: str
                         choices:
                             - broadcast
                             - non-broadcast
                             - point-to-point
                             - point-to-multipoint
                             - point-to-multipoint-non-broadcast
-                    prefix-length:
+                    prefix_length:
                         description:
                             - Prefix length.
+                        type: int
                     priority:
                         description:
                             - Priority.
-                    resync-timeout:
+                        type: int
+                    resync_timeout:
                         description:
                             - Graceful restart neighbor resynchronization timeout.
-                    retransmit-interval:
+                        type: int
+                    retransmit_interval:
                         description:
                             - Retransmit interval.
+                        type: int
                     status:
                         description:
                             - Enable/disable status.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    transmit-delay:
+                    transmit_delay:
                         description:
                             - Transmit delay.
-            passive-interface:
+                        type: int
+            passive_interface:
                 description:
                     - Passive interface configuration.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Passive interface name. Source system.interface.name.
                         required: true
+                        type: str
             redistribute:
                 description:
                     - Redistribute configuration.
+                type: list
                 suboptions:
                     metric:
                         description:
                             - Redistribute metric setting.
-                    metric-type:
+                        type: int
+                    metric_type:
                         description:
                             - Metric type.
+                        type: str
                         choices:
                             - 1
                             - 2
@@ -461,47 +559,58 @@ options:
                         description:
                             - Redistribute name.
                         required: true
+                        type: str
                     routemap:
                         description:
                             - Route map name. Source router.route-map.name.
+                        type: str
                     status:
                         description:
                             - status
+                        type: str
                         choices:
                             - enable
                             - disable
                     tag:
                         description:
                             - Tag value.
-            restart-mode:
+                        type: int
+            restart_mode:
                 description:
                     - OSPF restart mode (graceful or LLS).
+                type: str
                 choices:
                     - none
                     - lls
                     - graceful-restart
-            restart-period:
+            restart_period:
                 description:
                     - Graceful restart period.
-            rfc1583-compatible:
+                type: int
+            rfc1583_compatible:
                 description:
                     - Enable/disable RFC1583 compatibility.
+                type: str
                 choices:
                     - enable
                     - disable
-            router-id:
+            router_id:
                 description:
                     - Router ID.
-            spf-timers:
+                type: str
+            spf_timers:
                 description:
                     - SPF calculation frequency.
-            summary-address:
+                type: str
+            summary_address:
                 description:
                     - IP address summary configuration.
+                type: list
                 suboptions:
                     advertise:
                         description:
                             - Enable/disable advertise status.
+                        type: str
                         choices:
                             - disable
                             - enable
@@ -509,12 +618,15 @@ options:
                         description:
                             - Summary address entry ID.
                         required: true
+                        type: int
                     prefix:
                         description:
                             - Prefix.
+                        type: str
                     tag:
                         description:
                             - Tag value.
+                        type: int
 '''
 
 EXAMPLES = '''
@@ -524,6 +636,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure OSPF.
     fortios_router_ospf:
@@ -533,117 +646,117 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       router_ospf:
-        abr-type: "cisco"
+        abr_type: "cisco"
         area:
          -
             authentication: "none"
-            default-cost: "6"
-            filter-list:
+            default_cost: "6"
+            filter_list:
              -
                 direction: "in"
                 id:  "9"
                 list: "<your_own_value> (source router.access-list.name router.prefix-list.name)"
             id:  "11"
-            nssa-default-information-originate: "enable"
-            nssa-default-information-originate-metric: "13"
-            nssa-default-information-originate-metric-type: "1"
-            nssa-redistribution: "enable"
-            nssa-translator-role: "candidate"
+            nssa_default_information_originate: "enable"
+            nssa_default_information_originate_metric: "13"
+            nssa_default_information_originate_metric_type: "1"
+            nssa_redistribution: "enable"
+            nssa_translator_role: "candidate"
             range:
              -
                 advertise: "disable"
                 id:  "19"
                 prefix: "<your_own_value>"
                 substitute: "<your_own_value>"
-                substitute-status: "enable"
+                substitute_status: "enable"
             shortcut: "disable"
-            stub-type: "no-summary"
+            stub_type: "no-summary"
             type: "regular"
-            virtual-link:
+            virtual_link:
              -
                 authentication: "none"
-                authentication-key: "<your_own_value>"
-                dead-interval: "29"
-                hello-interval: "30"
-                md5-key: "<your_own_value>"
+                authentication_key: "<your_own_value>"
+                dead_interval: "29"
+                hello_interval: "30"
+                md5_key: "<your_own_value>"
                 name: "default_name_32"
                 peer: "<your_own_value>"
-                retransmit-interval: "34"
-                transmit-delay: "35"
-        auto-cost-ref-bandwidth: "36"
+                retransmit_interval: "34"
+                transmit_delay: "35"
+        auto_cost_ref_bandwidth: "36"
         bfd: "enable"
-        database-overflow: "enable"
-        database-overflow-max-lsas: "39"
-        database-overflow-time-to-recover: "40"
-        default-information-metric: "41"
-        default-information-metric-type: "1"
-        default-information-originate: "enable"
-        default-information-route-map: "<your_own_value> (source router.route-map.name)"
-        default-metric: "45"
+        database_overflow: "enable"
+        database_overflow_max_lsas: "39"
+        database_overflow_time_to_recover: "40"
+        default_information_metric: "41"
+        default_information_metric_type: "1"
+        default_information_originate: "enable"
+        default_information_route_map: "<your_own_value> (source router.route-map.name)"
+        default_metric: "45"
         distance: "46"
-        distance-external: "47"
-        distance-inter-area: "48"
-        distance-intra-area: "49"
-        distribute-list:
+        distance_external: "47"
+        distance_inter_area: "48"
+        distance_intra_area: "49"
+        distribute_list:
          -
-            access-list: "<your_own_value> (source router.access-list.name)"
+            access_list: "<your_own_value> (source router.access-list.name)"
             id:  "52"
             protocol: "connected"
-        distribute-list-in: "<your_own_value> (source router.access-list.name router.prefix-list.name)"
-        distribute-route-map-in: "<your_own_value> (source router.route-map.name)"
-        log-neighbour-changes: "enable"
+        distribute_list_in: "<your_own_value> (source router.access-list.name router.prefix-list.name)"
+        distribute_route_map_in: "<your_own_value> (source router.route-map.name)"
+        log_neighbour_changes: "enable"
         neighbor:
          -
             cost: "58"
             id:  "59"
             ip: "<your_own_value>"
-            poll-interval: "61"
+            poll_interval: "61"
             priority: "62"
         network:
          -
             area: "<your_own_value>"
             id:  "65"
             prefix: "<your_own_value>"
-        ospf-interface:
+        ospf_interface:
          -
             authentication: "none"
-            authentication-key: "<your_own_value>"
+            authentication_key: "<your_own_value>"
             bfd: "global"
             cost: "71"
-            database-filter-out: "enable"
-            dead-interval: "73"
-            hello-interval: "74"
-            hello-multiplier: "75"
+            database_filter_out: "enable"
+            dead_interval: "73"
+            hello_interval: "74"
+            hello_multiplier: "75"
             interface: "<your_own_value> (source system.interface.name)"
             ip: "<your_own_value>"
-            md5-key: "<your_own_value>"
+            md5_key: "<your_own_value>"
             mtu: "79"
-            mtu-ignore: "enable"
+            mtu_ignore: "enable"
             name: "default_name_81"
-            network-type: "broadcast"
-            prefix-length: "83"
+            network_type: "broadcast"
+            prefix_length: "83"
             priority: "84"
-            resync-timeout: "85"
-            retransmit-interval: "86"
+            resync_timeout: "85"
+            retransmit_interval: "86"
             status: "disable"
-            transmit-delay: "88"
-        passive-interface:
+            transmit_delay: "88"
+        passive_interface:
          -
             name: "default_name_90 (source system.interface.name)"
         redistribute:
          -
             metric: "92"
-            metric-type: "1"
+            metric_type: "1"
             name: "default_name_94"
             routemap: "<your_own_value> (source router.route-map.name)"
             status: "enable"
             tag: "97"
-        restart-mode: "none"
-        restart-period: "99"
-        rfc1583-compatible: "enable"
-        router-id: "<your_own_value>"
-        spf-timers: "<your_own_value>"
-        summary-address:
+        restart_mode: "none"
+        restart_period: "99"
+        rfc1583_compatible: "enable"
+        router_id: "<your_own_value>"
+        spf_timers: "<your_own_value>"
+        summary_address:
          -
             advertise: "disable"
             id:  "105"
@@ -711,14 +824,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -726,21 +841,21 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_router_ospf_data(json):
-    option_list = ['abr-type', 'area', 'auto-cost-ref-bandwidth',
-                   'bfd', 'database-overflow', 'database-overflow-max-lsas',
-                   'database-overflow-time-to-recover', 'default-information-metric', 'default-information-metric-type',
-                   'default-information-originate', 'default-information-route-map', 'default-metric',
-                   'distance', 'distance-external', 'distance-inter-area',
-                   'distance-intra-area', 'distribute-list', 'distribute-list-in',
-                   'distribute-route-map-in', 'log-neighbour-changes', 'neighbor',
-                   'network', 'ospf-interface', 'passive-interface',
-                   'redistribute', 'restart-mode', 'restart-period',
-                   'rfc1583-compatible', 'router-id', 'spf-timers',
-                   'summary-address']
+    option_list = ['abr_type', 'area', 'auto_cost_ref_bandwidth',
+                   'bfd', 'database_overflow', 'database_overflow_max_lsas',
+                   'database_overflow_time_to_recover', 'default_information_metric', 'default_information_metric_type',
+                   'default_information_originate', 'default_information_route_map', 'default_metric',
+                   'distance', 'distance_external', 'distance_inter_area',
+                   'distance_intra_area', 'distribute_list', 'distribute_list_in',
+                   'distribute_route_map_in', 'log_neighbour_changes', 'neighbor',
+                   'network', 'ospf_interface', 'passive_interface',
+                   'redistribute', 'restart_mode', 'restart_period',
+                   'rfc1583_compatible', 'router_id', 'spf_timers',
+                   'summary_address']
     dictionary = {}
 
     for attribute in option_list:
@@ -750,17 +865,15 @@ def filter_router_ospf_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -768,43 +881,49 @@ def flatten_multilists_attributes(data):
 def router_ospf(data, fos):
     vdom = data['vdom']
     router_ospf_data = data['router_ospf']
-    flattened_data = flatten_multilists_attributes(router_ospf_data)
-    filtered_data = filter_router_ospf_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_router_ospf_data(router_ospf_data))
+
     return fos.set('router',
                    'ospf',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_router(data, fos):
-    login(data)
 
     if data['router_ospf']:
         resp = router_ospf(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "router_ospf": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "abr-type": {"required": False, "type": "str",
+                "abr_type": {"required": False, "type": "str",
                              "choices": ["cisco", "ibm", "shortcut",
                                          "standard"]},
                 "area": {"required": False, "type": "list",
                          "options": {
                              "authentication": {"required": False, "type": "str",
                                                 "choices": ["none", "text", "md5"]},
-                             "default-cost": {"required": False, "type": "int"},
-                             "filter-list": {"required": False, "type": "list",
+                             "default_cost": {"required": False, "type": "int"},
+                             "filter_list": {"required": False, "type": "list",
                                              "options": {
                                                  "direction": {"required": False, "type": "str",
                                                                "choices": ["in", "out"]},
@@ -812,14 +931,14 @@ def main():
                                                  "list": {"required": False, "type": "str"}
                                              }},
                              "id": {"required": True, "type": "str"},
-                             "nssa-default-information-originate": {"required": False, "type": "str",
+                             "nssa_default_information_originate": {"required": False, "type": "str",
                                                                     "choices": ["enable", "always", "disable"]},
-                             "nssa-default-information-originate-metric": {"required": False, "type": "int"},
-                             "nssa-default-information-originate-metric-type": {"required": False, "type": "str",
+                             "nssa_default_information_originate_metric": {"required": False, "type": "int"},
+                             "nssa_default_information_originate_metric_type": {"required": False, "type": "str",
                                                                                 "choices": ["1", "2"]},
-                             "nssa-redistribution": {"required": False, "type": "str",
+                             "nssa_redistribution": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                             "nssa-translator-role": {"required": False, "type": "str",
+                             "nssa_translator_role": {"required": False, "type": "str",
                                                       "choices": ["candidate", "never", "always"]},
                              "range": {"required": False, "type": "list",
                                        "options": {
@@ -828,64 +947,64 @@ def main():
                                            "id": {"required": True, "type": "int"},
                                            "prefix": {"required": False, "type": "str"},
                                            "substitute": {"required": False, "type": "str"},
-                                           "substitute-status": {"required": False, "type": "str",
+                                           "substitute_status": {"required": False, "type": "str",
                                                                  "choices": ["enable", "disable"]}
                                        }},
                              "shortcut": {"required": False, "type": "str",
                                           "choices": ["disable", "enable", "default"]},
-                             "stub-type": {"required": False, "type": "str",
+                             "stub_type": {"required": False, "type": "str",
                                            "choices": ["no-summary", "summary"]},
                              "type": {"required": False, "type": "str",
                                       "choices": ["regular", "nssa", "stub"]},
-                             "virtual-link": {"required": False, "type": "list",
+                             "virtual_link": {"required": False, "type": "list",
                                               "options": {
                                                   "authentication": {"required": False, "type": "str",
                                                                      "choices": ["none", "text", "md5"]},
-                                                  "authentication-key": {"required": False, "type": "str"},
-                                                  "dead-interval": {"required": False, "type": "int"},
-                                                  "hello-interval": {"required": False, "type": "int"},
-                                                  "md5-key": {"required": False, "type": "str"},
+                                                  "authentication_key": {"required": False, "type": "str"},
+                                                  "dead_interval": {"required": False, "type": "int"},
+                                                  "hello_interval": {"required": False, "type": "int"},
+                                                  "md5_key": {"required": False, "type": "str"},
                                                   "name": {"required": True, "type": "str"},
                                                   "peer": {"required": False, "type": "str"},
-                                                  "retransmit-interval": {"required": False, "type": "int"},
-                                                  "transmit-delay": {"required": False, "type": "int"}
+                                                  "retransmit_interval": {"required": False, "type": "int"},
+                                                  "transmit_delay": {"required": False, "type": "int"}
                                               }}
                          }},
-                "auto-cost-ref-bandwidth": {"required": False, "type": "int"},
+                "auto_cost_ref_bandwidth": {"required": False, "type": "int"},
                 "bfd": {"required": False, "type": "str",
                         "choices": ["enable", "disable"]},
-                "database-overflow": {"required": False, "type": "str",
+                "database_overflow": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "database-overflow-max-lsas": {"required": False, "type": "int"},
-                "database-overflow-time-to-recover": {"required": False, "type": "int"},
-                "default-information-metric": {"required": False, "type": "int"},
-                "default-information-metric-type": {"required": False, "type": "str",
+                "database_overflow_max_lsas": {"required": False, "type": "int"},
+                "database_overflow_time_to_recover": {"required": False, "type": "int"},
+                "default_information_metric": {"required": False, "type": "int"},
+                "default_information_metric_type": {"required": False, "type": "str",
                                                     "choices": ["1", "2"]},
-                "default-information-originate": {"required": False, "type": "str",
+                "default_information_originate": {"required": False, "type": "str",
                                                   "choices": ["enable", "always", "disable"]},
-                "default-information-route-map": {"required": False, "type": "str"},
-                "default-metric": {"required": False, "type": "int"},
+                "default_information_route_map": {"required": False, "type": "str"},
+                "default_metric": {"required": False, "type": "int"},
                 "distance": {"required": False, "type": "int"},
-                "distance-external": {"required": False, "type": "int"},
-                "distance-inter-area": {"required": False, "type": "int"},
-                "distance-intra-area": {"required": False, "type": "int"},
-                "distribute-list": {"required": False, "type": "list",
+                "distance_external": {"required": False, "type": "int"},
+                "distance_inter_area": {"required": False, "type": "int"},
+                "distance_intra_area": {"required": False, "type": "int"},
+                "distribute_list": {"required": False, "type": "list",
                                     "options": {
-                                        "access-list": {"required": False, "type": "str"},
+                                        "access_list": {"required": False, "type": "str"},
                                         "id": {"required": True, "type": "int"},
                                         "protocol": {"required": False, "type": "str",
                                                      "choices": ["connected", "static", "rip"]}
                                     }},
-                "distribute-list-in": {"required": False, "type": "str"},
-                "distribute-route-map-in": {"required": False, "type": "str"},
-                "log-neighbour-changes": {"required": False, "type": "str",
+                "distribute_list_in": {"required": False, "type": "str"},
+                "distribute_route_map_in": {"required": False, "type": "str"},
+                "log_neighbour_changes": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
                 "neighbor": {"required": False, "type": "list",
                              "options": {
                                  "cost": {"required": False, "type": "int"},
                                  "id": {"required": True, "type": "int"},
                                  "ip": {"required": False, "type": "str"},
-                                 "poll-interval": {"required": False, "type": "int"},
+                                 "poll_interval": {"required": False, "type": "int"},
                                  "priority": {"required": False, "type": "int"}
                              }},
                 "network": {"required": False, "type": "list",
@@ -894,45 +1013,45 @@ def main():
                                 "id": {"required": True, "type": "int"},
                                 "prefix": {"required": False, "type": "str"}
                             }},
-                "ospf-interface": {"required": False, "type": "list",
+                "ospf_interface": {"required": False, "type": "list",
                                    "options": {
                                        "authentication": {"required": False, "type": "str",
                                                           "choices": ["none", "text", "md5"]},
-                                       "authentication-key": {"required": False, "type": "str"},
+                                       "authentication_key": {"required": False, "type": "str"},
                                        "bfd": {"required": False, "type": "str",
                                                "choices": ["global", "enable", "disable"]},
                                        "cost": {"required": False, "type": "int"},
-                                       "database-filter-out": {"required": False, "type": "str",
+                                       "database_filter_out": {"required": False, "type": "str",
                                                                "choices": ["enable", "disable"]},
-                                       "dead-interval": {"required": False, "type": "int"},
-                                       "hello-interval": {"required": False, "type": "int"},
-                                       "hello-multiplier": {"required": False, "type": "int"},
+                                       "dead_interval": {"required": False, "type": "int"},
+                                       "hello_interval": {"required": False, "type": "int"},
+                                       "hello_multiplier": {"required": False, "type": "int"},
                                        "interface": {"required": False, "type": "str"},
                                        "ip": {"required": False, "type": "str"},
-                                       "md5-key": {"required": False, "type": "str"},
+                                       "md5_key": {"required": False, "type": "str"},
                                        "mtu": {"required": False, "type": "int"},
-                                       "mtu-ignore": {"required": False, "type": "str",
+                                       "mtu_ignore": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},
                                        "name": {"required": True, "type": "str"},
-                                       "network-type": {"required": False, "type": "str",
+                                       "network_type": {"required": False, "type": "str",
                                                         "choices": ["broadcast", "non-broadcast", "point-to-point",
                                                                     "point-to-multipoint", "point-to-multipoint-non-broadcast"]},
-                                       "prefix-length": {"required": False, "type": "int"},
+                                       "prefix_length": {"required": False, "type": "int"},
                                        "priority": {"required": False, "type": "int"},
-                                       "resync-timeout": {"required": False, "type": "int"},
-                                       "retransmit-interval": {"required": False, "type": "int"},
+                                       "resync_timeout": {"required": False, "type": "int"},
+                                       "retransmit_interval": {"required": False, "type": "int"},
                                        "status": {"required": False, "type": "str",
                                                   "choices": ["disable", "enable"]},
-                                       "transmit-delay": {"required": False, "type": "int"}
+                                       "transmit_delay": {"required": False, "type": "int"}
                                    }},
-                "passive-interface": {"required": False, "type": "list",
+                "passive_interface": {"required": False, "type": "list",
                                       "options": {
                                           "name": {"required": True, "type": "str"}
                                       }},
                 "redistribute": {"required": False, "type": "list",
                                  "options": {
                                      "metric": {"required": False, "type": "int"},
-                                     "metric-type": {"required": False, "type": "str",
+                                     "metric_type": {"required": False, "type": "str",
                                                      "choices": ["1", "2"]},
                                      "name": {"required": True, "type": "str"},
                                      "routemap": {"required": False, "type": "str"},
@@ -940,14 +1059,14 @@ def main():
                                                 "choices": ["enable", "disable"]},
                                      "tag": {"required": False, "type": "int"}
                                  }},
-                "restart-mode": {"required": False, "type": "str",
+                "restart_mode": {"required": False, "type": "str",
                                  "choices": ["none", "lls", "graceful-restart"]},
-                "restart-period": {"required": False, "type": "int"},
-                "rfc1583-compatible": {"required": False, "type": "str",
+                "restart_period": {"required": False, "type": "int"},
+                "rfc1583_compatible": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "router-id": {"required": False, "type": "str"},
-                "spf-timers": {"required": False, "type": "str"},
-                "summary-address": {"required": False, "type": "list",
+                "router_id": {"required": False, "type": "str"},
+                "spf_timers": {"required": False, "type": "str"},
+                "summary_address": {"required": False, "type": "list",
                                     "options": {
                                         "advertise": {"required": False, "type": "str",
                                                       "choices": ["disable", "enable"]},
@@ -962,15 +1081,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_router(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_router(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_router(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
