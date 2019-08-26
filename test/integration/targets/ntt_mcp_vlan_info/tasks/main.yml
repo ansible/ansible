@@ -1,0 +1,47 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List VLANs
+    ntt_mcp_vlan_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: vlan
+    tags:
+      - list
+
+  - debug:
+      var: vlan
+    tags:
+      - list
+
+  - name: Get a VLAN
+    ntt_mcp_vlan_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myVLAN
+    register: vlan
+    tags:
+      - get
+
+  - debug:
+      var: vlan
+    tags:
+      - get
+
+  - name: Get a non-existent VLAN
+    ntt_mcp_vlan_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+    register: vlan
+    tags:
+      - get_noexist
+
+  - debug:
+      var: vlan
+    tags:
+      - get_noexist

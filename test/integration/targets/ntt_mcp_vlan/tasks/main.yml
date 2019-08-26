@@ -1,0 +1,130 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create an Attached VLAN
+    ntt_mcp_vlan:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myVLAN2
+      ipv4_network_address: "10.1.78.0"
+      ipv4_prefix_size: 24
+      attached_vlan_gw: HIGH
+      state: present
+    register: vlan
+    tags:
+      - create_attached
+
+  - debug:
+      var: vlan
+    tags:
+      - create_attached
+
+  - name: Create a duplicate Attached VLAN
+    ntt_mcp_vlan:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myVLAN2
+      ipv4_network_address: "10.1.78.0"
+      ipv4_prefix_size: 24
+      attached_vlan_gw: HIGH
+      state: present
+    register: vlan
+    tags:
+      - create_duplicate
+
+  - debug:
+      var: vlan
+    tags:
+      - create_duplicate
+
+  - name: Create a Detached VLAN
+    ntt_mcp_vlan:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myVLAN3
+      ipv4_network_address: "10.1.79.0"
+      ipv4_prefix_size: 24
+      vlan_type: detachedVlan
+      detached_vlan_gw: "10.1.79.1"
+      state: present
+    register: vlan
+    tags:
+      - create_detached
+
+  - debug:
+      var: vlan
+    tags:
+      - create_detached
+
+  - name: Update a VLAN
+    ntt_mcp_vlan:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myVLAN3
+      ipv4_network_address: "10.1.79.0"
+      ipv4_prefix_size: 24
+      vlan_type: "detachedVlan"
+      detached_vlan_gw: "10.1.79.2"
+      new_name: myVLAN4
+      state: present
+    register: vlan
+    tags:
+      - update
+
+  - debug:
+      var: vlan
+    tags:
+      - update
+
+  - name: Delete a detached VLAN
+    ntt_mcp_vlan:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myVLAN4
+      state: absent
+    register: vlan
+    tags:
+      - delete_detached
+
+  - debug:
+      var: vlan
+    tags:
+      - delete_detached
+
+  - name: Delete a attached VLAN
+    ntt_mcp_vlan:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myVLAN2
+      state: absent
+    register: vlan
+    tags:
+      - delete_attached
+
+  - debug:
+      var: vlan
+    tags:
+      - delete_attached
+
+  - name: Delete a non-existent VLAN
+    ntt_mcp_vlan:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+      state: absent
+    register: vlan
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: vlan
+    tags:
+      - delete_noexist

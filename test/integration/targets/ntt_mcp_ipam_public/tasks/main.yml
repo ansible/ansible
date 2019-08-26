@@ -1,0 +1,66 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Get the next free public IPv4 address
+    ntt_mcp_ipam_public:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      state: present
+    register: ipam
+    tags:
+      - get_next_free
+
+  - debug:
+      var: ipam
+    tags:
+      - get_next_free
+
+  - name: Allocate a new /31 block
+    ntt_mcp_ipam_public:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      next_free_public_ipv4: False
+      state: present
+    register: ipam
+    tags:
+      - new_block
+
+  - debug:
+      var: ipam
+    tags:
+      - new_block
+
+  - name: Delete a public IPv4 block by IP address
+    ntt_mcp_ipam_public:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      ip_address: 168.128.31.151
+      state: absent
+    register: ipam
+    tags:
+      - delete_by_ip
+
+  - debug:
+      var: ipam
+    tags:
+      - delete_by_ip
+
+  - name: Delete a public IPv4 block by UUID
+    ntt_mcp_ipam_public:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: 62989e46-1425-11e5-8c14-b8ca3a5d9ef8
+      state: absent
+    register: ipam
+    tags:
+      - delete_by_uuid
+
+  - debug:
+      var: ipam
+    tags:
+      - delete_by_uuid

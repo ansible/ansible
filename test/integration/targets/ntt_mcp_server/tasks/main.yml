@@ -1,0 +1,310 @@
+# Operations: create, create_linux, create_windows, update, update_nostart,
+# expand_disk, command_stop, command_start, command_reboot, delete, delete_all
+#
+# When using expand disk you may have to retrieve the disk UUID first using the
+# nttc_cis_server_info module (or if you wrote the UUID down when with the output
+# of the task when the server was created) and update the expand_disk task here.
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create a Linux server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      name: myServer01
+      image: "CentOS 7 64-bit 2 CPU"
+      memory_gb: 2
+      disks:
+        - id: f7b5754e-202c-40c2-a2f0-eb7c41014526
+          speed: HIGHPERFORMANCE
+      network_info:
+        network_domain: myCND
+        primary_nic:
+          vlan: myVLAN
+      start: True
+      state: present
+    register: server
+    tags:
+      - create_linux
+
+  - debug:
+      var: server
+    tags:
+      - create_linux
+
+  - name: Create a duplicate server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      name: myServer01
+      image: "CentOS 7 64-bit 2 CPU"
+      memory_gb: 2
+      network_info:
+        network_domain: myCND
+        primary_nic:
+          vlan: myVLAN
+      start: True
+      state: present
+    register: server
+    tags:
+      - create_duplicate
+
+  - debug:
+      var: server
+    tags:
+      - create_duplicate
+
+  - name: Create an invalid server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      name: myServer03
+      image: xyz
+      memory_gb: 2
+      network_info:
+        network_domain: myCND
+        primary_nic:
+          vlan: myVLAN
+      start: True
+      state: present
+    register: server
+    tags:
+      - create_invalid
+
+  - debug:
+      var: server
+    tags:
+      - create_invalid
+
+  - name: Create a Windows server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      name: myServer02
+      image: "Windows2019 Std 2 CPU"
+      disks:
+        - id: eb5fb1f2-6ea4-44f4-bef5-881870bf0ad2
+          speed: PROVISIONEDIOPS
+          iops: 500
+      cpu:
+        speed: STANDARD
+        count: 2
+        coresPerSocket: 2
+      primary_dns: "10.1.77.10"
+      secondary_dns: "10.1.77.11"
+      network_info:
+        network_domain: "myCND"
+        primary_nic:
+          vlan: myVLAN
+        additional_nic:
+          - networkAdapter: VMXNET3
+            vlan: "myVLAN2"
+            privateIpv4: "10.1.78.20"
+      start: False
+      state: present
+    register: server2
+    tags:
+      - create_windows
+
+  - debug:
+      var: server2
+    tags:
+      - create_windows
+
+  - name: Create a second Linux server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      name: myServer02
+      image: "CentOS 7 64-bit 2 CPU"
+      disks:
+        - id: f7b5754e-202c-40c2-a2f0-eb7c41014526
+          speed: PROVISIONEDIOPS
+          iops: 150
+      cpu:
+        speed: STANDARD
+        count: 2
+        coresPerSocket: 2
+      primary_dns: "10.1.77.10"
+      secondary_dns: "10.1.77.11"
+      network_info:
+        network_domain: "myCND"
+        primary_nic:
+          vlan: myVLAN
+        additional_nic:
+          - networkAdapter: VMXNET3
+            vlan: "myVLAN2"
+            privateIpv4: "10.1.78.21"
+      start: False
+      state: present
+    register: server2
+    tags:
+      - create_linux2
+
+  - debug:
+      var: server2
+    tags:
+      - create_linux2
+
+  - name: Update a server (CPU and RAM)
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      vlan: myVLAN
+      name: myServer02
+      memory_gb: 6
+      cpu:
+        count: 4
+        coresPerSocket: 4
+      state: present
+      start: True
+      wait_for_vmtools: True
+    register: server2
+    tags:
+      - update
+
+  - debug:
+      var: server2
+    tags:
+      - update
+
+  - name: Command (stop) a server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myServer02
+      state: stop
+    register: server
+    tags:
+      - command_stop
+
+  - debug:
+      var: server
+    tags:
+      - command_stop
+
+  - name: Update a server without booting (CPU and RAM)
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      vlan: myVLAN
+      name: myServer02
+      memory_gb: 4
+      cpu:
+        count: 2
+        coresPerSocket: 2
+      state: present
+      start: False
+    register: server2
+    tags:
+      - update_nostart
+
+  - debug:
+      var: server2
+    tags:
+      - update_nostart
+
+  - name: Command (hard_stop) a server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myServer02
+      state: hard_stop
+    register: server
+    tags:
+      - command_hardstop
+
+  - debug:
+      var: server
+    tags:
+      - command_hardstop
+
+  - name: Expand a disk
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myServer02
+      disk_id: 085fcf3e-fb9a-43c4-a44b-ffc7531e57b3
+      disk_size: 125
+      disk_iops: 1250
+      state: expand_disk
+    register: server
+    tags:
+      - expand_disk
+
+  - debug:
+      var: server
+    tags:
+      - expand_disk
+
+  - name: Command (start) a server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myServer02
+      state: start
+      wait_for_vmtools: True
+    register: server
+    tags:
+      - command_start
+
+  - debug:
+      var: server
+    tags:
+      - command_start
+
+  - name: Command (reboot) a server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myServer02
+      state: reboot
+      wait_for_vmtools: True
+    register: server
+    tags:
+      - command_reboot
+
+  - debug:
+      var: server
+    tags:
+      - command_reboot
+
+  - name: Delete the Windows server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      name: myServer02
+      network_domain: myCND
+      state: absent
+    register: server
+    tags:
+      - delete_windows
+
+  - debug:
+      var: server
+    tags:
+      - delete_windows
+
+  - name: Delete a non-existent server
+    ntt_mcp_server:
+      region: na
+      datacenter: NA12
+      name: xyc
+      network_domain: myCND
+      state: absent
+    register: server
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: server
+    tags:
+      - delete_noexist

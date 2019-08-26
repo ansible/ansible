@@ -1,0 +1,177 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create an IPv4 firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: Ipv4.ACL_01
+      protocol: UDP
+      src_cidr: "172.16.0.0/24"
+      src_port_start: ANY
+      dst_cidr: "10.1.77.0/24"
+      dst_port_start: "80"
+      dst_port_end: "81"
+      state: present
+    register: fw
+    tags:
+      - create_ipv4
+
+  - debug:
+      var: fw
+    tags:
+      - create_ipv4
+
+  - name: Create a duplicate firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: Ipv4.ACL_01
+      protocol: UDP
+      src_cidr: "172.16.0.0/24"
+      src_port_start: ANY
+      dst_cidr: "10.1.77.0/24"
+      dst_port_start: "80"
+      dst_port_end: "81"
+      state: present
+    register: fw
+    tags:
+      - create_duplicate
+
+  - debug:
+      var: fw
+    tags:
+      - create_duplicate
+
+  - name: Create an IPv6 firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: "myCND"
+      name: "Ipv6.ACL_02"
+      version: IPV6
+      protocol: TCP
+      src_cidr: "fc00::/64"
+      src_port_start: "ANY"
+      dst_cidr: "fc01::10/128"
+      dst_port_start: "80"
+      dst_port_end: "81"
+      state: present
+    register: fw
+    tags:
+      - create_ipv6
+
+  - debug:
+      var: fw
+    tags:
+      - create_ipv6
+
+  - name: Create a firewall rule using IP and port lists
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: Ipv4.ACL_03
+      protocol: TCP
+      src_ip_list:  myIpAddressList2
+      src_port_start: "80"
+      src_port_end: "81"
+      dst_ip_list:  myIpAddressList
+      dst_port_list: myPortList
+      state: present
+    register: fw
+    tags:
+      - create_with_lists
+
+  - debug:
+      var: fw
+    tags:
+      - create_with_lists
+
+  - name: Update a firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: Ipv4.ACL_03
+      protocol: TCP
+      src_cidr: "172.16.0.0/24"
+      src_port_start: ANY
+      dst_ip_list:  myIpAddressList
+      dst_port_list: myPortList
+      state: present
+    register: fw
+    tags:
+      - update
+
+  - debug:
+      var: fw
+    tags:
+      - update
+
+  - name: Delete an IPv4 firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: Ipv4.ACL_01
+      state: absent
+    register: fw
+    tags:
+      - delete_ipv4
+
+  - debug:
+      var: fw
+    tags:
+      - delete_ipv4
+
+  - name: Delete an IPv6 firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: Ipv6.ACL_02
+      state: absent
+    register: fw
+    tags:
+      - delete_ipv6
+
+  - debug:
+      var: fw
+    tags:
+      - delete_ipv6
+
+  - name: Delete a list based firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: Ipv4.ACL_03
+      state: absent
+    register: fw
+    tags:
+      - delete_with_lists
+
+  - debug:
+      var: fw
+    tags:
+      - delete_with_lists
+
+  - name: Delete a non-existent firewall rule
+    ntt_mcp_firewall:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: zyx
+      state: absent
+    register: fw
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: fw
+    tags:
+      - delete_noexist

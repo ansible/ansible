@@ -1,0 +1,62 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all IP address lists for a Cloud Network Domain
+    ntt_mcp_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: ip
+    tags:
+      - list
+
+  - debug:
+      var: ip
+    tags:
+      - list
+
+  - name: Get a specific IP address list by IP version (IPv6)
+    ntt_mcp_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      version: IPV6
+    register: ip
+    tags:
+      - get_by_version
+
+  - debug:
+      var: ip
+    tags:
+      - get_by_version
+
+  - name: Get a specific IP address by name
+    ntt_mcp_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myIpAddressList
+    register: ip
+    tags:
+      - get_by_name
+
+  - debug:
+      var: ip
+    tags:
+      - get_by_name
+
+  - name: Get a non-existent IP address list
+    ntt_mcp_ip_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+    register: ip
+    tags:
+      - get_noexist
+
+  - debug:
+      var: ip
+    tags:
+      - get_noexist
