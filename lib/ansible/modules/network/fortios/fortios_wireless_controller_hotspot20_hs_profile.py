@@ -86,10 +86,6 @@ options:
         default: null
         type: dict
         suboptions:
-            3gpp_plmn:
-                description:
-                    - 3GPP PLMN name. Source wireless-controller.hotspot20.anqp-3gpp-cellular.name.
-                type: str
             access_network_asra:
                 description:
                     - Enable/disable additional step required for access (ASRA).
@@ -349,7 +345,6 @@ EXAMPLES = '''
       https: "False"
       state: "present"
       wireless_controller_hotspot20_hs_profile:
-        3gpp_plmn: "<your_own_value> (source wireless-controller.hotspot20.anqp-3gpp-cellular.name)"
         access_network_asra: "enable"
         access_network_esr: "enable"
         access_network_internet: "enable"
@@ -466,7 +461,7 @@ def login(data, fos):
 
 
 def filter_wireless_controller_hotspot20_hs_profile_data(json):
-    option_list = ['3gpp_plmn', 'access_network_asra', 'access_network_esr',
+    option_list = ['access_network_asra', 'access_network_esr',
                    'access_network_internet', 'access_network_type', 'access_network_uesa',
                    'anqp_domain_id', 'bss_transition', 'conn_cap',
                    'deauth_request_timeout', 'dgaf', 'domain_name',
@@ -546,7 +541,6 @@ def main():
         "wireless_controller_hotspot20_hs_profile": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "3gpp_plmn": {"required": False, "type": "str"},
                 "access_network_asra": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
                 "access_network_esr": {"required": False, "type": "str",
