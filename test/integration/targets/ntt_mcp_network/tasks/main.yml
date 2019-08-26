@@ -1,0 +1,89 @@
+# Designed to be run in this order.
+#   create, update, delete, delete_noexist
+#
+# If you decide to run the delete before the update you will need to change the CND name to myCND on the delete task
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create a Cloud Network Domain
+    ntt_mcp_network:
+      region: na
+      datacenter: NA12
+      name: "myCND2"
+      description: "My CND 2"
+      network_type: ENTERPRISE
+      state: present
+    register: cnd
+    tags:
+      - create
+
+  - debug:
+      var: cnd
+    tags:
+      - create
+
+  - name: Create a duplicate Cloud Network Domain
+    ntt_mcp_network:
+      region: na
+      datacenter: NA12
+      name: "myCND2"
+      description: "My CND 2"
+      network_type: ENTERPRISE
+      state: present
+    register: cnd
+    tags:
+      - create_dup
+
+  - debug:
+      var: cnd
+    tags:
+      - create_dup
+
+  - name: Update a Cloud Network Domain
+    ntt_mcp_network:
+      region: na
+      datacenter: NA12
+      name: myCND2
+      description: "My CND 3"
+      network_type: ADVANCED
+      new_name: myCND3
+      state: present
+    register: cnd
+    tags:
+      - update
+
+  - debug:
+      var: cnd
+    tags:
+      - update
+
+  - name: Delete a Cloud Network Domain
+    ntt_mcp_network:
+      region: na
+      datacenter: NA12
+      name: myCND3
+      state: absent
+    register: cnd
+    tags:
+      - delete
+
+  - debug:
+      var: cnd
+    tags:
+      - delete
+
+  - name: Delete a non-existent Cloud Network Domain
+    ntt_mcp_network:
+      region: na
+      datacenter: NA12
+      name: myCND2
+      state: absent
+    register: cnd
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: cnd
+    tags:
+      - delete_noexist

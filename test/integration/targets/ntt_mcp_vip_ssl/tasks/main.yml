@@ -1,0 +1,225 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create a SSL Offload Profile
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile
+      description: "my ssl profile"
+      certificate:
+        name: my_cert_1
+        description: "My Certificate"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab.local.cert.pem"
+        key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab.local.key.pem"
+      chain:
+        name: my_chain_1
+        description: "My Certificate Chain"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/ca-chain.cert.pem"
+      ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
+      state: present
+    register: ssl
+    tags:
+      - create
+
+  - debug:
+      var: ssl
+    tags:
+      - create
+
+  - name: Create a duplicate SSL Offload Profile
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile
+      description: "my ssl profile"
+      certificate:
+        name: my_cert_1
+        description: "My Certificate"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab.local.cert.pem"
+        key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab.local.key.pem"
+      chain:
+        name: my_chain_1
+        description: "My Certificate Chain"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/ca-chain.cert.pem"
+      ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
+      state: present
+    register: ssl
+    tags:
+      - create_duplicate
+
+  - debug:
+      var: ssl
+    tags:
+      - create_duplicate
+
+  - name: Create a SSL Offload Profile using existing certificates
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile_2
+      description: "my ssl profile 2"
+      certificate:
+        name: my_existing_cert
+      chain:
+        name: my_existing_chain
+      ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
+      state: present
+    register: ssl
+    tags:
+      - create_with_existing_cert
+
+  - debug:
+      var: ssl
+    tags:
+      - create_with_existing_cert
+
+  - name: Create a SSL Offload Profile using an invalid existing certificate
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile_invalid
+      description: "my invalid ssl profile"
+      certificate:
+        name: xyz
+      chain:
+        name: my_existing_chain
+      ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
+      state: present
+    register: ssl
+    tags:
+      - create_with_existing_invalid_cert
+
+  - debug:
+      var: ssl
+    tags:
+      - create_with_existing_invalid_cert
+
+  - name: Create a SSL Offload Profile using an invalid existing certificate chain
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile_invalid
+      description: "my invalid ssl profile"
+      certificate:
+        name: my_existing_cert
+      chain:
+        name: xyz
+      ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
+      state: present
+    register: ssl
+    tags:
+      - create_with_existing_invalid_chain
+
+  - debug:
+      var: ssl
+    tags:
+      - create_with_existing_invalid_chain
+
+  - name: Create an invalid SSL Offload Profile
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile_invalid
+      description: "my ssl profile"
+      certificate:
+        name: my_cert_1@
+        description: "My Certificate"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab.local.cert.invalid.pem"
+        key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab.local.key.pem"
+      chain:
+        name: my_chain_1!
+        description: "My Certificate Chain"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/ca-chain.cert.pem"
+      ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
+      state: present
+    register: ssl
+    tags:
+      - create_invalid
+
+  - debug:
+      var: ssl
+    tags:
+      - create_invalid
+
+  - name: Update a SSL Offload Profile
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile
+      description: "my udpated ssl profile"
+      certificate:
+        name: my_cert_2
+        description: "My Certificate 2"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab2.local.cert.pem"
+        key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab2.local.key.pem"
+      chain:
+        name: my_chain_1
+        description: "My Certificate Chain"
+        path: "/Users/kenneth/dev/ca/intermediate/certs/ca-chain.cert.pem"
+      ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
+      state: present
+    register: ssl
+    tags:
+      - update
+
+  - debug:
+      var: ssl
+    tags:
+      - update
+
+  - name: Delete a SSL Offload Profile
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile
+      state: absent
+    register: ssl
+    tags:
+      - delete
+
+  - debug:
+      var: ssl
+    tags:
+      - delete
+
+  - name: Delete a second SSL Offload Profile
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_ssl_profile_2
+      state: absent
+    register: ssl
+    tags:
+      - delete_2
+
+  - debug:
+      var: ssl
+    tags:
+      - delete_2
+
+  - name: Delete a non-existent SSL Offload Profile
+    ntt_mcp_vip_ssl:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+      state: absent
+    register: ssl
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: ssl
+    tags:
+      - delete_noexist
