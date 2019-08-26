@@ -128,7 +128,25 @@ class Bfd_interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        return self.set_commands(want, have)
+        cmds = []
+        obj_in_have = search_obj_in_list(want['name'], have, 'name')
+        if obj_in_have:
+            diff = dict_diff(want, obj_in_have)
+        else:
+            diff = want
+        merged_cmds = self.set_commands(want, have)
+        if 'name' not in diff:
+            diff['name'] = want['name']
+
+        replaced_cmds = []
+        if obj_in_have:
+            replaced_cmds = self.del_attribs(diff)
+        if replaced_cmds or merged_cmds:
+            for cmd in set(replaced_cmds).intersection(set(merged_cmds)):
+                merged_cmds.remove(cmd)
+            cmds.extend(replaced_cmds)
+            cmds.extend(merged_cmds)
+        return cmds
 
     def _state_overridden(self, want, have):
         """ The command generator when state is overridden
@@ -138,7 +156,15 @@ class Bfd_interfaces(ConfigBase):
                   to the desired configuration
         """
         cmds = []
+        for h in have:
+            # Check existing states and set to default if not included in want or different than want
+            h = flatten_dict(h)
+            obj_in_want = flatten_dict(search_obj_in_list(h['name'], want, 'name'))
+            if h == obj_in_want:
+                continue
+            cmds.extend(self.del_attribs(h))
         for w in want:
+            # Update any wants if needed
             cmds.extend(self.set_commands(flatten_dict(w), have))
         return cmds
 
@@ -192,19 +218,19 @@ class Bfd_interfaces(ConfigBase):
             diff.update({'name': want['name']})
         return diff
 
-    def add_commands(self, diff):
-        if not diff:
+    def add_commands(self, want):
+        if not want:
             return []
         cmds = []
-        if 'bfd' in diff:
-            cmd = 'bfd' if diff['bfd'] == 'enable' else 'no bfd'
+        if 'bfd' in want and want['bfd'] is not None:
+            cmd = 'bfd' if want['bfd'] == 'enable' else 'no bfd'
             cmds.append(cmd)
-        if 'bfd_echo' in diff:
-            cmd = 'bfd echo' if diff['bfd'] == 'enable' else 'no bfd echo'
+        if 'bfd_echo' in want and want['bfd_echo'] is not None:
+            cmd = 'bfd echo' if want['bfd_echo'] == 'enable' else 'no bfd echo'
             cmds.append(cmd)
 
         if cmds:
-            cmds.insert(0, 'interface ' + diff['name'])
+            cmds.insert(0, 'interface ' + want['name'])
         return cmds
 
     def set_commands(self, want, have):

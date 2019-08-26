@@ -64,19 +64,40 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
     # Bfd_interfaces Test Cases
     # ---------------------------
 
+    # 'state' logic behaviors
+    #
+    # - 'merged'    : Update existing device state with any differences in the play.
+    # - 'deleted'   : Reset existing device state to default values. Ignores any
+    #                 play attrs other than 'name'. Scope is limited to interfaces
+    #                 in the play.
+    # - 'overridden': The play is the source of truth. Similar to replaced but the
+    #                 scope includes all interfaces; ie. it will also reset state
+    #                 on interfaces not found in the play.
+    # - 'replaced'  : Scope is limit
+
+
     SHOW_CMD = 'show running-config | section ^interface'
     def test_1(self):
-        # Setup: No BFD configs shown on device interface
-        # NOTE: The enable configs do not nvgen.
-        existing = 'interface Ethernet1/1'
+        # Setup: No BFD configs shown on device interfaces
+        # NOTE: The bfd 'enable' default state is to not nvgen.
+        existing = dedent('''\
+          interface Ethernet1/1
+          interface Ethernet1/2
+          interface Ethernet1/3
+        ''')
         self.get_resource_connection_facts.return_value = { self.SHOW_CMD: existing }
-        playbook = dict(config=[dict(
-            name='Ethernet1/1',
-            bfd='enable',
-            bfd_echo='enable',
-        )])
+        playbook = dict(config=[
+            dict(
+                name='Ethernet1/1',
+                bfd='disable',
+                bfd_echo='disable'),
+            dict(
+                name='Ethernet1/2',
+                bfd='disable'),
+        ])
         # Expected result commands for each 'state'
-        merged = [ 'interface Ethernet1/1', 'bfd', 'bfd echo' ]
+        merged = [ 'interface Ethernet1/1', 'no bfd', 'no bfd echo',
+                   'interface Ethernet1/2', 'no bfd']
         deleted = []
         overridden = merged
         replaced = merged
@@ -98,21 +119,37 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         self.execute_module(changed=True, commands=replaced)
 
     def test_2(self):
-        # enable -> disable
-        # Setup: No BFD configs shown on device interface
-        # NOTE: The enable configs do not nvgen.
-        existing = 'interface Ethernet1/1'
+        # Change existing BFD configs
+        existing = dedent('''\
+          interface Ethernet1/1
+            no bfd
+          interface Ethernet1/2
+            no bfd echo
+          interface Ethernet1/3
+            no bfd
+            no bfd echo
+        ''')
         self.get_resource_connection_facts.return_value = { self.SHOW_CMD: existing }
-        playbook = dict(config=[dict(
-            name='Ethernet1/1',
-            bfd='disable',
-            # bfd_echo='enable',
-        )])
+        playbook = dict(config=[
+            dict(
+                name='Ethernet1/1',
+                bfd='enable',
+                bfd_echo='disable'),
+            dict(
+                name='Ethernet1/2'),
+            # Eth1/3 not present! Thus overridden should set it to defaults and
+            # replaced should ignore it.
+        ])
         # Expected result commands for each 'state'
-        merged = [ 'interface Ethernet1/1', 'no bfd', 'no bfd echo' ]
-        deleted = []
-        overridden = merged
-        replaced = merged
+        merged = [ 'interface Ethernet1/1', 'bfd', 'no bfd echo' ]
+        deleted = [ 'interface Ethernet1/1', 'bfd',
+                    'interface Ethernet1/2', 'bfd echo' ]
+        overridden = [ 'interface Ethernet1/1', 'bfd',
+                       'interface Ethernet1/2', 'bfd echo',
+                       'interface Ethernet1/3', 'bfd', 'bfd echo',
+                       'interface Ethernet1/1', 'bfd', 'no bfd echo' ]
+        replaced = [ 'interface Ethernet1/1', 'bfd', 'no bfd echo',
+                     'interface Ethernet1/2', 'bfd echo' ]
 
         playbook['state'] = 'merged'
         set_module_args(playbook, ignore_provider_arg)
@@ -120,7 +157,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
 
         playbook['state'] = 'deleted'
         set_module_args(playbook, ignore_provider_arg)
-        self.execute_module(changed=False, commands=deleted)
+        self.execute_module(changed=True, commands=deleted)
 
         playbook['state'] = 'overridden'
         set_module_args(playbook, ignore_provider_arg)
@@ -131,23 +168,63 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         self.execute_module(changed=True, commands=replaced)
 
     def test_3(self):
-        # disable -> enable
+        # start with config, playbook has no values
         existing = dedent('''\
           interface Ethernet1/1
+            no bfd
+          interface Ethernet1/2
+            no bfd echo
+          interface Ethernet1/3
             no bfd
             no bfd echo
         ''')
         self.get_resource_connection_facts.return_value = { self.SHOW_CMD: existing }
-        playbook = dict(config=[dict(
-            name='Ethernet1/1',
-            bfd='enable',
-            bfd_echo='enable',
-        )])
+        playbook = dict(config=[
+            dict(name='Ethernet1/1'),
+        ])
         # Expected result commands for each 'state'
-        merged = [ 'interface Ethernet1/1', 'bfd', 'bfd echo' ]
-        deleted = merged
-        overridden = merged
-        replaced = merged
+        merged = []
+        deleted = [ 'interface Ethernet1/1', 'bfd' ]
+        overridden = [ 'interface Ethernet1/1', 'bfd',
+                       'interface Ethernet1/2', 'bfd echo',
+                       'interface Ethernet1/3', 'bfd', 'bfd echo' ]
+        replaced = [ 'interface Ethernet1/1', 'bfd' ]
+
+        playbook['state'] = 'merged'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=False, commands=merged)
+
+        playbook['state'] = 'deleted'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=deleted)
+
+        playbook['state'] = 'overridden'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=overridden)
+
+        playbook['state'] = 'replaced'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=replaced)
+
+    def test_4(self):
+        # Test with interface that doesn't exist yet
+        existing = dedent('''\
+          interface Ethernet1/1
+            no bfd
+        ''')
+        self.get_resource_connection_facts.return_value = { self.SHOW_CMD: existing }
+        playbook = dict(config=[
+            dict(
+                name='Ethernet1/1.42',
+                bfd='enable',
+                bfd_echo='disable'),
+        ])
+        # Expected result commands for each 'state'
+        merged = [ 'interface Ethernet1/1.42', 'bfd', 'no bfd echo' ]
+        deleted = []
+        overridden = [ 'interface Ethernet1/1.42', 'bfd', 'no bfd echo',
+                       'interface Ethernet1/1', 'bfd' ]
+        replaced = [ 'interface Ethernet1/1.42', 'bfd', 'no bfd echo' ]
 
         playbook['state'] = 'merged'
         set_module_args(playbook, ignore_provider_arg)
@@ -155,7 +232,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
 
         playbook['state'] = 'deleted'
         set_module_args(playbook, ignore_provider_arg)
-        self.execute_module(changed=True, commands=deleted)
+        self.execute_module(changed=False, commands=deleted)
 
         playbook['state'] = 'overridden'
         set_module_args(playbook, ignore_provider_arg)
