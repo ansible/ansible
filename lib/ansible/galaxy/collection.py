@@ -312,7 +312,8 @@ class CollectionRequirement:
             collection_url_paths = [api.api_server, 'api', 'v2', 'collections', namespace, name, 'versions']
             headers = api._auth_header(required=False)
 
-            if 'v3' in api.available_api_versions:
+            available_api_versions = get_available_api_versions(api)
+            if 'v3' in available_api_versions:
                 # /api/v3/ exists, use it
                 collection_url_paths[2] = 'v3'
 
@@ -333,7 +334,9 @@ class CollectionRequirement:
                 if err.code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s" % (collection, api.name, api.api_server))
                     continue
-                _handle_http_error(err, api, 'Error fetching info for %s from %s (%s)' % (collection, api.name, api.api_server))
+
+                _handle_http_error(err, api, available_api_versions,
+                                   'Error fetching info for %s from %s (%s)' % (collection, api.name, api.api_server))
 
             if is_single:
                 galaxy_info = resp
@@ -343,7 +346,7 @@ class CollectionRequirement:
                 versions = []
 
                 results_key = 'results'
-                if 'v3' in api.available_api_versions:
+                if 'v3' in available_api_versions:
                     results_key = 'data'
 
                 while True:
@@ -352,7 +355,7 @@ class CollectionRequirement:
                     versions += [v['version'] for v in resp[results_key] if StrictVersion.version_re.match(v['version'])]
 
                     next_link = resp.get('next', None)
-                    if 'v3' in api.available_api_versions:
+                    if 'v3' in available_api_versions:
                         next_link = resp['links']['next']
 
                     if next_link is None:
@@ -370,6 +373,29 @@ class CollectionRequirement:
                                     metadata=galaxy_meta)
         req._galaxy_info = galaxy_info
         return req
+
+
+def get_available_api_versions(galaxy_api):
+    url = _urljoin(galaxy_api.api_server, "api")
+    try:
+        return_data = open_url(url, validate_certs=galaxy_api.validate_certs)
+    except urllib_error.HTTPError as err:
+        _handle_http_error(err, galaxy_api, {},
+                           "Error when finding available api versions from %s (%s)" %
+                           (galaxy_api.name, galaxy_api.api_server))
+    except Exception as e:
+        raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
+
+    try:
+        data = json.loads(to_text(return_data.read(), errors='surrogate_or_strict'))
+    except Exception as e:
+        raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
+
+    available_versions = data.get('available_versions',
+                                  {'v1': '/api/v1',
+                                   'v2': '/api/v2'})
+
+    return available_versions
 
 
 def build_collection(collection_path, output_path, force):
@@ -429,7 +455,9 @@ def publish_collection(collection_path, api, wait, timeout):
     headers.update(api._auth_header())
 
     n_url = _urljoin(api.api_server, 'api', 'v2', 'collections')
-    if 'v3' in api.available_api_versions:
+    available_api_versions = get_available_api_versions(api)
+
+    if 'v3' in available_api_versions:
         n_url = _urljoin(api.api_server, 'api', 'v3', 'artifacts', 'collections')
 
     data, content_type = _get_mime_data(b_collection_path)
@@ -441,7 +469,7 @@ def publish_collection(collection_path, api, wait, timeout):
     try:
         resp = json.load(open_url(n_url, data=data, headers=headers, method='POST', validate_certs=api.validate_certs))
     except urllib_error.HTTPError as err:
-        _handle_http_error(err, api, "Error when publishing collection to %s (%s)" % (api.name, api.api_server))
+        _handle_http_error(err, api, available_api_versions, "Error when publishing collection to %s (%s)" % (api.name, api.api_server))
 
     import_uri = resp['task']
     if wait:
@@ -1029,13 +1057,13 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
         shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
 
 
-def _handle_http_error(http_error, api, context_error_message):
+def _handle_http_error(http_error, api, available_api_versions, context_error_message):
     try:
         err_info = json.load(http_error)
     except (AttributeError, ValueError):
         err_info = {}
 
-    if 'v3' in api.available_api_versions:
+    if 'v3' in available_api_versions:
         message_lines = []
         errors = err_info.get('errors', None)
 

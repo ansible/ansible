@@ -49,9 +49,7 @@ def g_connect(method):
 
             self.baseurl = _urljoin(self.api_server, "api", server_version)
 
-            available_api_versions = self.get_available_api_versions()
             self.version = server_version  # for future use
-            self.available_api_versions = available_api_versions
 
             display.vvvv("Base API: %s" % self.baseurl)
             self.initialized = True
@@ -129,29 +127,7 @@ class GalaxyAPI(object):
         except Exception as e:
             raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
 
-        available_versions = data.get('available_versions',
-                                      {'v1': '/api/v1',
-                                       'v2': '/api/v2'})
-
-        return available_versions
-
-    def get_available_api_versions(self):
-        url = _urljoin(self.api_server, "api")
-        try:
-            return_data = open_url(url, validate_certs=self.validate_certs)
-        except Exception as e:
-            raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
-
-        try:
-            data = json.loads(to_text(return_data.read(), errors='surrogate_or_strict'))
-        except Exception as e:
-            raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
-
-        available_versions = data.get('available_versions',
-                                      {'v1': '/api/v1',
-                                       'v2': '/api/v2'})
-
-        return available_versions
+        return data['current_version']
 
     @g_connect
     def authenticate(self, github_token):

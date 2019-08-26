@@ -421,6 +421,10 @@ def test_publish_not_a_tarball():
 
 
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
@@ -449,7 +453,11 @@ def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
         "being set. Import task results can be found at %s" % (galaxy_server.name, galaxy_server.api_server, fake_import_uri)
 
 
-def test_publish_dont_validate_cert(galaxy_server, collection_artifact):
+def test_publish_dont_validate_cert(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     galaxy_server.validate_certs = False
     artifact_path, mock_open = collection_artifact
 
@@ -461,7 +469,11 @@ def test_publish_dont_validate_cert(galaxy_server, collection_artifact):
     assert mock_open.mock_calls[0][2]['validate_certs'] is False
 
 
-def test_publish_failure(galaxy_server, collection_artifact):
+def test_publish_failure(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     artifact_path, mock_open = collection_artifact
 
     mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 500, 'msg', {}, StringIO())
@@ -473,7 +485,11 @@ def test_publish_failure(galaxy_server, collection_artifact):
         collection.publish_collection(artifact_path, galaxy_server, True, 0)
 
 
-def test_publish_failure_with_json_info(galaxy_server, collection_artifact):
+def test_publish_failure_with_json_info(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     artifact_path, mock_open = collection_artifact
 
     return_content = StringIO(u'{"message":"Galaxy error message","code":"GWE002"}')
@@ -490,7 +506,9 @@ def test_publish_failure_with_json_info(galaxy_server, collection_artifact):
     ('v3',)
 ])
 def test_publish_with_wait(api_version, galaxy_server, collection_artifact, monkeypatch):
-    galaxy_server.available_api_versions = {api_version: ''}
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {api_version: '/api/%s' % api_version}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
 
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
@@ -527,7 +545,10 @@ def test_publish_with_wait(api_version, galaxy_server, collection_artifact, monk
     ('v3', '/api/v3/artifacts/collections/')
 ])
 def test_publish_with_wait_timeout(api_version, exp_api_url, galaxy_server, collection_artifact, monkeypatch):
-    galaxy_server.available_api_versions = {api_version: ''}
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {api_version: '/api/%s' % api_version}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     monkeypatch.setattr(time, 'sleep', MagicMock())
 
     mock_vvv = MagicMock()
@@ -561,6 +582,10 @@ def test_publish_with_wait_timeout(api_version, exp_api_url, galaxy_server, coll
 
 
 def test_publish_with_wait_timeout_failure(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     monkeypatch.setattr(time, 'sleep', MagicMock())
 
     mock_vvv = MagicMock()
@@ -600,6 +625,10 @@ def test_publish_with_wait_timeout_failure(galaxy_server, collection_artifact, m
 
 
 def test_publish_with_wait_and_failure(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
@@ -673,6 +702,10 @@ def test_publish_with_wait_and_failure(galaxy_server, collection_artifact, monke
 
 
 def test_publish_with_wait_and_failure_and_no_error(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
@@ -741,8 +774,11 @@ def test_publish_with_wait_and_failure_and_no_error(galaxy_server, collection_ar
     assert mock_err.mock_calls[0][1][0] == 'Galaxy import error message: Some error'
 
 
-def test_publish_failure_v3_with_json_info_409_conflict(galaxy_server, collection_artifact):
-    galaxy_server.available_api_versions = {'v3': ''}
+def test_publish_failure_v3_with_json_info_409_conflict(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v3': '/api/v3'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     artifact_path, mock_open = collection_artifact
 
     error_response = {
@@ -766,8 +802,11 @@ def test_publish_failure_v3_with_json_info_409_conflict(galaxy_server, collectio
         collection.publish_collection(artifact_path, galaxy_server, True, 0)
 
 
-def test_publish_failure_v3_with_json_info_multiple_errors(galaxy_server, collection_artifact):
-    galaxy_server.available_api_versions = {'v3': ''}
+def test_publish_failure_v3_with_json_info_multiple_errors(galaxy_server, collection_artifact, monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v3': '/api/v3'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
     artifact_path, mock_open = collection_artifact
 
     error_response = {
