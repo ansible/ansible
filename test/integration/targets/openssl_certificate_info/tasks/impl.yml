@@ -93,3 +93,17 @@
 - name: Update result list
   set_fact:
     info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info for packaged cert 1
+  openssl_certificate_info:
+    path: '{{ role_path }}/files/cert1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+- assert:
+    that:
+      - "'ocsp_uri' in result"
+      - "result.ocsp_uri == 'http://ocsp.int-x3.letsencrypt.org'"
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
