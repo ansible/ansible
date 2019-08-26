@@ -24,6 +24,10 @@ description:
     - "Please note that the module regenerates existing CSR if it doesn't match the module's
       options, or if it seems to be corrupt. If you are concerned that this could overwrite
       your existing CSR, consider using the I(backup) option."
+    - The module can use the cryptography Python library, or the pyOpenSSL Python
+      library. By default, it tries to detect which one is available. This can be
+      overridden with the I(select_crypto_backend) option. Please note that the
+      PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13."
 requirements:
     - Either cryptography >= 1.3
     - Or pyOpenSSL >= 0.15
@@ -189,6 +193,8 @@ options:
             - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+            - Please note that the C(pyopenssl) backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13.
+              From that point on, only the C(cryptography) backend will be available.
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
@@ -1042,6 +1048,8 @@ def main():
                 getattr(crypto.X509Req, 'get_extensions')
             except AttributeError:
                 module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
+
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
             csr = CertificateSigningRequestPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:
