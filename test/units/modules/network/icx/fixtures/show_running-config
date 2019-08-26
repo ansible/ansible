@@ -1,0 +1,76 @@
+Current configuration:
+!
+ver 08.0.70dT213
+!
+stack unit 1
+  module 1 icx7150-48-port-management-module
+  module 2 icx7150-2-copper-port-2g-module
+  module 3 icx7150-4-sfp-plus-port-40g-module
+!
+!
+!
+lag LAG1 dynamic id 100
+ ports ethe 1/1/4 to 1/1/7 
+!
+lag LAG2 dynamic id 200
+ ports ethe 1/1/12 to 1/1/15 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+aaa authentication enable implicit-user
+aaa authentication login default local
+enable super-user-password .....
+hostname ruchusRouter148
+ip dns domain-list fileserver.alethea.in
+ip dns server-address 8.8.8.8
+!
+username alethea password .....
+username ale6 password .....
+!
+!
+banner exec ^C
+welcome icx exec^C
+^C
+!
+banner motd ^C
+welcome icx motd^C
+^C
+!
+banner incoming ^C
+welcome icx incomingg^C
+^C
+!
+!
+!
+!
+!
+!
+!
+!
+interface management 1
+ no ip dhcp-client enable
+ ip address 10.10.10.148 255.255.255.0
+!
+interface ethernet 1/1/1
+ port-name test name
+ ip address 192.168.1.1 255.255.255.0
+ ipv6 address 2001:db8:85a3::8a2e:370:7334/64
+ speed-duplex 10-full
+!
+!
+!
+!
+!
+lldp run
+!
+!
+!
+!
+!
+end
