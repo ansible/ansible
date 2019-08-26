@@ -21,6 +21,9 @@ description:
     either individual usernames or the aggregate of usernames in the
     current running config. It also supports purging usernames from the
     configuration that are not explicitly defined.
+notes:
+  - Tested against ICX 10.1.
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   aggregate:
     description:
@@ -34,9 +37,6 @@ options:
       name:
         description:
           - The username to be configured on the ICX device.
-            This argument accepts a string value and is mutually exclusive
-            with the C(aggregate) argument.
-            Please note that this option is not same as C(provider username).
         required: true
         type: str
       configured_password:
@@ -84,9 +84,6 @@ options:
   name:
     description:
       - The username to be configured on the ICX device.
-        This argument accepts a string value and is mutually exclusive
-        with the C(aggregate) argument.
-        Please note that this option is not same as C(provider username).
     required: true
     type: str
   configured_password:
@@ -188,7 +185,7 @@ from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.connection import Connection, ConnectionError, exec_command
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.icx.icx import get_config, load_config
 
