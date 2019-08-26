@@ -77,6 +77,9 @@ options:
       version_added: "2.8"
       description:
         - Local absolute file path containing a custom Python virtualenv to use
+      type: str
+      required: False
+      default: ''
     organization:
       description:
         - Primary key of organization for project.
@@ -135,7 +138,7 @@ def main():
         scm_update_on_launch=dict(type='bool', default=False),
         scm_update_cache_timeout=dict(type='int', default=0),
         job_timeout=dict(type='int', default=0),
-        custom_virtualenv=dict(),
+        custom_virtualenv=dict(type='str', required=False, default=''),
         local_path=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
     )
