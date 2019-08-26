@@ -48,7 +48,7 @@ def test_router_bfd_creation(mocker):
         'username': 'admin',
         'state': 'present',
         'router_bfd': {
-            'neighbor':[{'interface': 'if1', 'ip':'10.20.10.10'}]
+            'neighbor': [{'interface': 'if1', 'ip': '10.20.10.10'}]
         },
         'vdom': 'root'}
 
@@ -74,7 +74,7 @@ def test_router_bfd_creation_fails(mocker):
         'username': 'admin',
         'state': 'present',
         'router_bfd': {
-            'neighbor':[{'interface': 'if1', 'ip':'10.20.10.10'}]
+            'neighbor': [{'interface': 'if1', 'ip': '10.20.10.10'}]
         },
         'vdom': 'root'}
 
@@ -100,7 +100,7 @@ def test_router_bfd_idempotent(mocker):
         'username': 'admin',
         'state': 'present',
         'router_bfd': {
-            'neighbor':[{'interface': 'if1', 'ip':'10.20.10.10'}]
+            'neighbor': [{'interface': 'if1', 'ip': '10.20.10.10'}]
         },
         'vdom': 'root'}
 
