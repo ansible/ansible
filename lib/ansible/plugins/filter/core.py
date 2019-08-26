@@ -101,9 +101,10 @@ def to_bool(a):
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     try:
-      return datetime.datetime.strptime(string, format)
+        return datetime.datetime.strptime(string, format)
     except ValueError:
-      return False
+        return False
+
 
 def strftime(string_format, second=None):
     ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
