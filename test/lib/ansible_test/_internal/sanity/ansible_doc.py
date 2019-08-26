@@ -135,6 +135,9 @@ class AnsibleDocTest(SanitySingleVersion):
                 summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
                 return SanityFailure(self.name, summary=summary)
 
+        if args.explain:
+            return SanitySuccess(self.name)
+
         error_messages = settings.process_errors(error_messages, paths)
 
         if error_messages:

@@ -87,17 +87,17 @@ def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
     """
     targets = tuple(targets)
 
-    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda target: target.name)
+    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda include_target: include_target.name)
 
     if requires:
         require_targets = set(filter_targets(targets, requires, errors=True, directories=False))
-        include_targets = [target for target in include_targets if target in require_targets]
+        include_targets = [require_target for require_target in include_targets if require_target in require_targets]
 
     if excludes:
         list(filter_targets(targets, excludes, errors=True, include=False, directories=False))
 
     internal_targets = set(filter_targets(include_targets, excludes, errors=False, include=False, directories=False))
-    return tuple(sorted(internal_targets, key=lambda target: target.name))
+    return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
 def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]

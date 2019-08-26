@@ -73,7 +73,7 @@ def command_units(args):
 
     version_commands = []
 
-    available_versions = get_available_python_versions(list(SUPPORTED_PYTHON_VERSIONS))
+    available_versions = sorted(get_available_python_versions(list(SUPPORTED_PYTHON_VERSIONS)).keys())
 
     for version in SUPPORTED_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version

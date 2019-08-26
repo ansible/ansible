@@ -26,6 +26,7 @@ from ..util import (
     find_python,
     is_subdir,
     paths_to_dirs,
+    get_ansible_version,
 )
 
 from ..util_common import (
@@ -65,10 +66,6 @@ from ..test import (
 
 from ..data import (
     data_context,
-)
-
-from ..env import (
-    get_ansible_version,
 )
 
 COMMAND = 'sanity'
@@ -113,7 +110,7 @@ def command_sanity(args):
             display.info(test.name)
             continue
 
-        available_versions = get_available_python_versions(SUPPORTED_PYTHON_VERSIONS)
+        available_versions = sorted(get_available_python_versions(SUPPORTED_PYTHON_VERSIONS).keys())
 
         if args.python:
             # specific version selected

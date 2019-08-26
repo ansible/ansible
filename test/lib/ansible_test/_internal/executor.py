@@ -61,6 +61,7 @@ from .util import (
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_CONFIG_ROOT,
+    get_ansible_version,
 )
 
 from .util_common import (
@@ -82,10 +83,6 @@ from .docker_util import (
 from .ansible_util import (
     ansible_environment,
     check_pyyaml,
-)
-
-from .env import (
-    get_ansible_version,
 )
 
 from .target import (

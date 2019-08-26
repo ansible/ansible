@@ -22,8 +22,8 @@ from .util import (
     find_executable,
     SubprocessError,
     ApplicationError,
-    load_module,
-    ANSIBLE_LIB_ROOT,
+    get_ansible_version,
+    get_available_python_versions,
 )
 
 from .git import (
@@ -51,6 +51,10 @@ from .data import (
     data_context,
 )
 
+from .executor import (
+    SUPPORTED_PYTHON_VERSIONS,
+)
+
 
 class EnvConfig(CommonConfig):
     """Configuration for the tools command."""
@@ -63,6 +67,10 @@ class EnvConfig(CommonConfig):
         self.show = args.show
         self.dump = args.dump
         self.timeout = args.timeout
+
+        if not self.show and not self.dump and self.timeout is None:
+            # default to --show if no options were given
+            self.show = True
 
 
 def command_env(args):
@@ -86,6 +94,10 @@ def show_dump_env(args):
         ),
         docker=get_docker_details(args),
         environ=os.environ.copy(),
+        location=dict(
+            pwd=os.environ.get('PWD', None),
+            cwd=os.getcwd(),
+        ),
         git=get_git_details(args),
         platform=dict(
             datetime=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -96,6 +108,7 @@ def show_dump_env(args):
             executable=sys.executable,
             version=platform.python_version(),
         ),
+        interpreters=get_available_python_versions(SUPPORTED_PYTHON_VERSIONS),
     )
 
     if args.show:
@@ -239,25 +252,6 @@ def show_dict(data, verbose, root_verbosity=0, path=None):
             display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
-def get_ansible_version():  # type: () -> str
-    """Return the Ansible version."""
-    try:
-        return get_ansible_version.version
-    except AttributeError:
-        pass
-
-    # ansible may not be in our sys.path
-    # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
-    load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
-
-    # noinspection PyUnresolvedReferences
-    from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
-
-    get_ansible_version.version = ansible_version
-
-    return ansible_version
-
-
 def get_docker_details(args):
     """
     :type args: CommonConfig
@@ -299,7 +293,6 @@ def get_git_details(args):
         base_commit=base_commit,
         commit=commit,
         merged_commit=get_merged_commit(args, commit),
-        root=os.getcwd(),
     )
 
     return git_details
