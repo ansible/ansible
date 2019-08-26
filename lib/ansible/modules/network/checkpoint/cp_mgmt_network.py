@@ -156,6 +156,7 @@ EXAMPLES = """
       install_on: All
       ip_address: 192.0.2.1
       method: static
+    state: present
     subnet: 192.0.2.1
     subnet_mask: 255.255.255.0
 
@@ -166,6 +167,7 @@ EXAMPLES = """
     mask_length: 16
     name: New Network 1
     new_name: New Network 2
+    state: present
     subnet: 192.0.0.0
 
 - name: delete-network
