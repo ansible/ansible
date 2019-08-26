@@ -123,7 +123,7 @@ EXAMPLES = """
 # interface Ethernet2
 #    no lldp transmit
 
-- name: Replace existing LLDP configurations of specified interfaces with provided configuration
+- name: Replace existing LLDP configuration of specified interfaces with provided configuration
   eos_lldp_interfaces:
     config:
       - name: Ethernet1
@@ -156,7 +156,7 @@ EXAMPLES = """
 # interface Ethernet2
 #    no lldp transmit
 
-- name: Override the LLDP configurations of all the interfaces with provided configurations
+- name: Override the LLDP configuration of all the interfaces with provided configuration
   eos_lldp_interfaces:
     config:
       - name: Ethernet1
@@ -188,7 +188,7 @@ EXAMPLES = """
 # interface Ethernet2
 #    no lldp transmit
 
-- name: Delete LLDP configurations of all interfaces (Note - This won't delete the interfaces themselves)
+- name: Delete LLDP configuration of specified interfaces (or all interfaces if none are specified)
   eos_lldp_interfaces:
     state: deleted
 
