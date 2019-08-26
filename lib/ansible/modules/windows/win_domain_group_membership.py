@@ -54,6 +54,8 @@ options:
     - If not specified then the value is based on the domain of the computer
       running PowerShell.
     type: str
+notes:
+- This must be run on a host that has the ActiveDirectory powershell module installed.
 seealso:
 - module: win_domain_user
 - module: win_domain_group
