@@ -149,6 +149,7 @@ def main():
 
     commands = []
     state = module.params['state']
+
     if state is None:
         if HAS_LLDP:
             map_obj_to_commands(module, commands)
