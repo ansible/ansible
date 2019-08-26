@@ -14,12 +14,14 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: redfish_info
-version_added: "2.9"
+version_added: "2.7"
 short_description: Manages Out-Of-Band controllers using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote OOB controllers to
     get information back.
   - Information retrieved is placed in a location specified by the user.
+  - This module was called C(redfish_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(redfish_info) module no longer returns C(ansible_facts)!
 options:
   category:
     required: false
@@ -42,6 +44,7 @@ options:
     description:
       - User for authentication with OOB controller
     type: str
+    version_added: "2.8"
   password:
     required: true
     description:
@@ -52,6 +55,7 @@ options:
       - Timeout in seconds for URL requests to OOB controller
     default: 10
     type: int
+    version_added: '2.8'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -66,7 +70,7 @@ EXAMPLES = '''
       password: "{{ password }}"
     register: result
   - debug:
-      msg: "{{ result.cpu.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.cpu.entries | to_nice_json }}"
 
   - name: Get CPU model
     redfish_info:
@@ -77,7 +81,7 @@ EXAMPLES = '''
       password: "{{ password }}"
     register: result
   - debug:
-      msg: "{{ result.cpu.entries.0.Model }}"
+      msg: "{{ result.redfish_facts.cpu.entries.0.Model }}"
 
   - name: Get memory inventory
     redfish_info:
@@ -86,6 +90,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+    register: result
 
   - name: Get fan inventory with a timeout of 20 seconds
     redfish_info:
@@ -95,6 +100,7 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+    register: result
 
   - name: Get Virtual Media information
     redfish_info:
@@ -105,7 +111,7 @@ EXAMPLES = '''
       password: "{{ password }}"
     register: result
   - debug:
-      msg: "{{ result.virtual_media.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.virtual_media.entries | to_nice_json }}"
 
   - name: Get Volume Inventory
     redfish_info:
@@ -116,7 +122,7 @@ EXAMPLES = '''
       password: "{{ password }}"
     register: result
   - debug:
-      msg: "{{ result.volume.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.volume.entries | to_nice_json }}"
 
   - name: Get Session information
     redfish_info:
@@ -127,7 +133,7 @@ EXAMPLES = '''
       password: "{{ password }}"
     register: result
   - debug:
-      msg: "{{ result.session.entries | to_nice_json }}"
+      msg: "{{ result.redfish_facts.session.entries | to_nice_json }}"
 
   - name: Get default inventory information
     redfish_info:
@@ -136,7 +142,7 @@ EXAMPLES = '''
       password: "{{ password }}"
     register: result
   - debug:
-      msg: "{{ result | to_nice_json }}"
+      msg: "{{ result.redfish_facts | to_nice_json }}"
 
   - name: Get several inventories
     redfish_info:
@@ -256,6 +262,10 @@ def main():
         ),
         supports_check_mode=False
     )
+    is_old_facts = module._name == 'redfish_facts'
+    if is_old_facts:
+        module.deprecate("The 'redfish_facts' module has been renamed to 'redfish_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     # admin credentials used for authentication
     creds = {'user': module.params['username'],
@@ -392,7 +402,10 @@ def main():
                     result["log"] = rf_utils.get_logs()
 
     # Return data back
-    module.exit_json(**result)
+    if is_old_facts:
+        module.exit_json(ansible_facts=dict(redfish_facts=result))
+    else:
+        module.exit_json(redfish_facts=result)
 
 
 if __name__ == '__main__':

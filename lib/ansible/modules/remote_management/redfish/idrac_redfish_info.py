@@ -14,12 +14,14 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: idrac_redfish_info
-version_added: "2.9"
+version_added: "2.8"
 short_description: Manages servers through iDRAC using Dell Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote iDRAC controllers to
     get information back.
   - For use with Dell iDRAC operations that require Redfish OEM extensions
+  - This module was called C(idrac_redfish_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(idrac_redfish_info) module no longer returns C(ansible_facts)!
 options:
   category:
     required: true
@@ -119,6 +121,10 @@ def main():
         ),
         supports_check_mode=False
     )
+    is_old_facts = module._name == 'idrac_redfish_facts'
+    if is_old_facts:
+        module.deprecate("The 'idrac_redfish_facts' module has been renamed to 'idrac_redfish_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     category = module.params['category']
     command_list = module.params['command']
@@ -159,7 +165,10 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        module.exit_json(**result)
+        if is_old_facts:
+            module.exit_json(ansible_facts=dict(redfish_facts=result))
+        else:
+            module.exit_json(redfish_facts=result)
     else:
         module.fail_json(msg=to_native(result['msg']))
 
