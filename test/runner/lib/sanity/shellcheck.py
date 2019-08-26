@@ -18,7 +18,6 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    common_environment,
     run_command,
     read_lines_without_comments,
 )
@@ -53,10 +52,8 @@ class ShellcheckTest(SanitySingleVersion):
             '--format', 'checkstyle',
         ] + paths
 
-        env = common_environment()
-        env['LC_ALL'] = 'en_US.UTF-8'
         try:
-            stdout, stderr = run_command(args, cmd, capture=True, env=env)
+            stdout, stderr = run_command(args, cmd, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout

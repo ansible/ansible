@@ -15,9 +15,9 @@ def main():
         if path in skip:
             continue
 
-        with open(path, 'rb') as path_fd:
+        with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(br'(?<! six)\.(itervalues)', text)
+                match = re.search(r'(?<! six)\.(itervalues)', text)
 
                 if match:
                     print('%s:%d:%d: use `dict.values` or `ansible.module_utils.six.itervalues` instead of `dict.itervalues`' % (

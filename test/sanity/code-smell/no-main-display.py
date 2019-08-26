@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-MAIN_DISPLAY_IMPORT = b'from __main__ import display'
+MAIN_DISPLAY_IMPORT = 'from __main__ import display'
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
         if path in skip:
             continue
 
-        with open(path, 'rb') as f:
+        with open(path, 'r') as f:
             for i, line in enumerate(f.readlines()):
                 if MAIN_DISPLAY_IMPORT in line:
                     lineno = i + 1

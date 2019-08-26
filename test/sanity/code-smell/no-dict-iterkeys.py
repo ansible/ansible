@@ -15,9 +15,9 @@ def main():
         if path in skip:
             continue
 
-        with open(path, 'rb') as path_fd:
+        with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(br'\.(iterkeys)', text)
+                match = re.search(r'\.(iterkeys)', text)
 
                 if match:
                     print('%s:%d:%d: use `dict.keys` or `for key in dict:` instead of `dict.iterkeys`' % (

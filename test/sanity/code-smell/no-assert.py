@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-ASSERT_RE = re.compile(br'^\s*assert[^a-z0-9_:]')
+ASSERT_RE = re.compile(r'^\s*assert[^a-z0-9_:]')
 
 
 def main():
@@ -19,18 +19,14 @@ def main():
         if path in skip:
             continue
 
-        with open(path, 'rb') as f:
+        with open(path, 'r') as f:
             for i, line in enumerate(f.readlines()):
                 matches = ASSERT_RE.findall(line)
 
                 if matches:
                     lineno = i + 1
-                    colno = line.index(b'assert') + 1
-                    if sys.version_info[0] == 3:
-                        match = matches[0].decode('utf-8')
-                    else:
-                        match = matches[0]
-                    print('%s:%d:%d: raise AssertionError instead of: %s' % (path, lineno, colno, match[colno - 1:]))
+                    colno = line.index('assert') + 1
+                    print('%s:%d:%d: raise AssertionError instead of: %s' % (path, lineno, colno, matches[0][colno - 1:]))
 
 
 if __name__ == '__main__':

@@ -20,9 +20,9 @@ def main():
         if path.startswith('test/sanity/pylint/plugins/'):
             continue
 
-        with open(path, 'rb') as path_fd:
+        with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(br'((^\s*import\s+six\b)|(^\s*from\s+six\b))', text)
+                match = re.search(r'((^\s*import\s+six\b)|(^\s*from\s+six\b))', text)
 
                 if match:
                     print('%s:%d:%d: use `ansible.module_utils.six` instead of `six`' % (

@@ -251,11 +251,8 @@ class ModuleValidator(Validator):
 
         self._python_module_override = False
 
-        with open(path, 'rb') as f:
-            if PY3:
-                self.text = f.read().decode('utf-8')
-            else:
-                self.text = f.read()
+        with open(path) as f:
+            self.text = f.read()
         self.length = len(self.text.splitlines())
         try:
             self.ast = ast.parse(self.text)

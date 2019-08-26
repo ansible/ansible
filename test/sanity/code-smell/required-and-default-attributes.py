@@ -14,9 +14,9 @@ def main():
         if path in skip:
             continue
 
-        with open(path, 'rb') as path_fd:
+        with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(br'(FieldAttribute.*(default|required).*(default|required))', text)
+                match = re.search(r'(FieldAttribute.*(default|required).*(default|required))', text)
 
                 if match:
                     print('%s:%d:%d: use only one of `default` or `required` with `FieldAttribute`' % (

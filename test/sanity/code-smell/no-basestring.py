@@ -15,9 +15,9 @@ def main():
         if path in skip:
             continue
 
-        with open(path, 'rb') as path_fd:
+        with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(br'(isinstance.*basestring)', text)
+                match = re.search(r'(isinstance.*basestring)', text)
 
                 if match:
                     print('%s:%d:%d: do not use `isinstance(s, basestring)`' % (

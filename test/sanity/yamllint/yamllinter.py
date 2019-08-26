@@ -45,11 +45,8 @@ class YamlChecker(object):
         for path in paths:
             extension = os.path.splitext(path)[1]
 
-            with open(path, 'rb') as f:
-                if sys.version_info[0] == 3:
-                    contents = f.read().decode('utf-8')
-                else:
-                    contents = f.read()
+            with open(path) as f:
+                contents = f.read()
 
             if extension in ('.yml', '.yaml'):
                 self.check_yaml(yaml_conf, path, contents)

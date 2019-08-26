@@ -18,9 +18,9 @@ def main():
         if path in skip:
             continue
 
-        with open(path, 'rb') as path_fd:
+        with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(br'^(?:[^#]*?)(urlopen)', text)
+                match = re.search(r'^(?:[^#]*?)(urlopen)', text)
 
                 if match:
                     print('%s:%d:%d: use `ansible.module_utils.urls.open_url` instead of `urlopen`' % (

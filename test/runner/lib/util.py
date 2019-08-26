@@ -506,6 +506,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 def common_environment():
     """Common environment used for executing all programs."""
     env = dict(
+        LC_ALL='en_US.UTF-8',
         PATH=os.environ.get('PATH', os.path.defpath),
     )
 
