@@ -53,7 +53,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: get info on a database
   gcp_sql_database_info:
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
