@@ -19,7 +19,8 @@ short_description: Transfer files from or to remote Ruckus ICX 7000 series switc
 description:
   - This module transfers files from or to remote devices running ICX.
 notes:
-  - Tested against ICX 10.1
+  - Tested against ICX 10.1.
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   upload:
     description:
