@@ -21,7 +21,8 @@ description:
   - This module provides declarative management of Interfaces
     on ruckus icx devices.
 notes:
-  - Tested against ICX 10.1
+  - Tested against ICX 10.1.
+  - For information on using ICX platform, see L(the ICX OS Platform Options guide,../network/user_guide/platform_icx.html).
 options:
   name:
     description:
@@ -588,7 +589,6 @@ def check_declarative_intent_params(module, want, result):
             have_host = []
             have_port = []
 
-            # Process LLDP neighbors
             if have_neighbors_lldp is None:
                 rc, have_neighbors_lldp, err = exec_command(module, 'show lldp neighbors detail')
                 if rc != 0:
@@ -673,8 +673,6 @@ def main():
     exec_command(module, 'skip')
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-    print("yfygvhghvhgvuhvbjh", want)
-    print("jhbuhjbjnb kn kmnkmnmln", have)
     commands = map_obj_to_commands((want, have))
     result['commands'] = commands
 
