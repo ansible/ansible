@@ -8,13 +8,8 @@
         - '../defaults/'
 
 - vars:
-    remote_dir: '{{ echo_output_dir.stdout }}'
+    remote_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
   block:
-    # output_dir is hardcoded/created in test/runner/lib/executor.py and
-    # contains '~': expand remote path
-    - command: 'echo {{ output_dir }}'
-      register: echo_output_dir
-
     - name: install cron package
       package:
         name: '{{ cron_pkg }}'
@@ -68,5 +63,5 @@
 
     - name: wait for canary creation
       wait_for:
-        path: '{{ output_dir }}/cron_canary1'
+        path: '{{ remote_dir }}/cron_canary1'
         timeout: '{{ 20 if faketime_pkg else 70 }}'
