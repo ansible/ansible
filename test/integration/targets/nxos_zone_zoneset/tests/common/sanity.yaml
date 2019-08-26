@@ -1,9 +1,7 @@
 --- 
 - 
   debug: msg="START nxos_zone_zoneset sanity test with connection={{ ansible_connection }} "
-- 
-  debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+
 - 
   debug: "msg=\"Using vsans {{ vsan1 }}, {{ vsan2 }} for running this sanity test, please make sure these are not used in the setup, these will be deleted after the tests\""
 - 

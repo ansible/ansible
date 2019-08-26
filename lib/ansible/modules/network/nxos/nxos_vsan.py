@@ -52,10 +52,8 @@ EXAMPLES = '''
 -
   name: "Test that vsan module works"
   nxos_vsan:
-    provider: "{{ creds }}"
     vsan:
-      -
-        id: 922
+      - id: 922
         interface:
           - fc1/1
           - fc1/2
@@ -63,8 +61,7 @@ EXAMPLES = '''
         name: vsan-SAN-A
         remove: false
         suspend: false
-      -
-        id: 923
+      - id: 923
         interface:
           - fc1/11
           - fc1/21
@@ -72,8 +69,7 @@ EXAMPLES = '''
         name: vsan-SAN-B
         remove: false
         suspend: true
-      -
-        id: 1923
+      - id: 1923
         name: vsan-SAN-Old
         remove: true
 
@@ -93,7 +89,7 @@ commands:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 import re
 
 __metaclass__ = type
@@ -205,8 +201,6 @@ def main():
     argument_spec = dict(
         vsan=dict(type='list', elements='dict', options=vsan_element_spec)
     )
-
-    argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
