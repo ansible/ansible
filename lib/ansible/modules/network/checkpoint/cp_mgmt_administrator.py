@@ -128,9 +128,9 @@ EXAMPLES = """
     name: admin
     password: aaaa
     permissions_profile:
-    _ domain: domain1
+    - domain: domain1
       profile: read only all
-    _ domain: All Global Domains
+    - domain: All Global Domains
       profile: read write all
     phone_number: 1800-800-800
 
@@ -139,9 +139,9 @@ EXAMPLES = """
     name: admin
     permissions_profile:
       add:
-      _ domain: locals
+      - domain: locals
         profile: read only profile
-      _ domain: globals
+      - domain: globals
         profile: read only profile
 
 - name: delete-administrator
