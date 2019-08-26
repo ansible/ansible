@@ -349,7 +349,11 @@ if($gather_subset.Contains('processor')) {
     }
 
     $cpu_list = @( )
+<<<<<<< HEAD
     for ($i=1; $i -le $win32_cs.NumberOfLogicalProcessors; $i++) {
+=======
+    for ($i=1; $i -le ($win32_cpu.NumberOfLogicalProcessors * $win32_cs.NumberOfProcessors); $i++) {
+>>>>>>> 309d5ef2cda25428221d5f2afce2851d39c537c8
         $cpu_list += $win32_cpu.Manufacturer
         $cpu_list += $win32_cpu.Name
     }
