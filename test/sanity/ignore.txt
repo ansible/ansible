@@ -203,8 +203,6 @@ lib/ansible/module_utils/cloud.py future-import-boilerplate
 lib/ansible/module_utils/cloud.py metaclass-boilerplate
 lib/ansible/module_utils/common/network.py future-import-boilerplate
 lib/ansible/module_utils/common/network.py metaclass-boilerplate
-lib/ansible/module_utils/common/removed.py future-import-boilerplate
-lib/ansible/module_utils/common/removed.py metaclass-boilerplate
 lib/ansible/module_utils/compat/ipaddress.py future-import-boilerplate
 lib/ansible/module_utils/compat/ipaddress.py metaclass-boilerplate
 lib/ansible/module_utils/compat/ipaddress.py no-assert

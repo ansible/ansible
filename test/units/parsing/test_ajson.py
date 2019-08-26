@@ -16,6 +16,7 @@ from pytz import timezone as tz
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 
 
 def test_AnsibleJSONDecoder_vault():
@@ -25,6 +26,20 @@ def test_AnsibleJSONDecoder_vault():
     assert isinstance(data['password'], AnsibleVaultEncryptedUnicode)
     assert isinstance(data['bar']['baz'][0]['password'], AnsibleVaultEncryptedUnicode)
     assert isinstance(data['foo']['password'], AnsibleVaultEncryptedUnicode)
+
+
+def test_encode_decode_unsafe():
+    data = {
+        'key_value': AnsibleUnsafeText(u'{#NOTACOMMENT#}'),
+        'list': [AnsibleUnsafeText(u'{#NOTACOMMENT#}')],
+        'list_dict': [{'key_value': AnsibleUnsafeText(u'{#NOTACOMMENT#}')}]}
+    json_expected = (
+        '{"key_value": {"__ansible_unsafe": "{#NOTACOMMENT#}"}, '
+        '"list": [{"__ansible_unsafe": "{#NOTACOMMENT#}"}], '
+        '"list_dict": [{"key_value": {"__ansible_unsafe": "{#NOTACOMMENT#}"}}]}'
+    )
+    assert json.dumps(data, cls=AnsibleJSONEncoder, preprocess_unsafe=True, sort_keys=True) == json_expected
+    assert json.loads(json_expected, cls=AnsibleJSONDecoder) == data
 
 
 def vault_data():
