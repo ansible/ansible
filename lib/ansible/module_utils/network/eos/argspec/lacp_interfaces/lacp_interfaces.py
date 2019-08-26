@@ -30,18 +30,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-class Lacp_interfacesArgs(object):  # pylint: disable=R0903
+class Lacp_interfacesArgs(object):
     """The arg spec for the eos_lacp_interfaces module
     """
 
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'elements': 'dict',
-            'options': {'name': {'type': 'str'},
-                        'port_priority': {'type': 'int'},
-                        'rate': {'choices': ['fast', 'normal'], 'type': 'str'}},
-            'type': 'list'},
- 'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+    argument_spec = {
+        'config': {'elements': 'dict',
+                   'options': {'name': {'type': 'str'},
+                               'port_priority': {'type': 'int'},
+                               'rate': {'choices': ['fast', 'normal'], 'type': 'str'}},
+                   'type': 'list'},
+        'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+                  'default': 'merged',
+                  'type': 'str'}}
