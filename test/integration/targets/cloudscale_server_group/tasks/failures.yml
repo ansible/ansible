@@ -4,7 +4,7 @@
     name: '{{ cloudscale_resource_prefix }}-grp'
     tags:
       bool: true
-      number : 1
+      number: 1
       not_bool: "false"
       not_number: "1"
   register: grp
