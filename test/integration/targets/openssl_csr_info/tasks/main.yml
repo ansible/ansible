@@ -154,7 +154,7 @@
   when: pyopenssl_version.stdout is version('0.15', '>=') and cryptography_version.stdout is version('1.3', '>=')
   vars:
     keys_to_ignore:
-      - deprecation
+      - deprecations
       - subject_key_identifier
       - authority_key_identifier
       - authority_cert_issuer
