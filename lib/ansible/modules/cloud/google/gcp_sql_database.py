@@ -99,7 +99,7 @@ EXAMPLES = '''
   gcp_sql_database:
     name: test_object
     charset: utf8
-    instance: "{{ instance }}"
+    instance: "{{ instance.name }}"
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"

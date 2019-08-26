@@ -23,7 +23,7 @@
   register: bucket
 - name: delete a bucket access control
   gcp_storage_bucket_access_control:
-    bucket: "{{ resource_name }}"
+    bucket: "{{ bucket }}"
     entity: user-alexstephen@google.com
     role: WRITER
     project: "{{ gcp_project }}"
@@ -33,7 +33,7 @@
 #----------------------------------------------------------
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
-    bucket: "{{ resource_name }}"
+    bucket: "{{ bucket }}"
     entity: user-alexstephen@google.com
     role: WRITER
     project: "{{ gcp_project }}"
@@ -48,7 +48,7 @@
 # ----------------------------------------------------------------------------
 - name: create a bucket access control that already exists
   gcp_storage_bucket_access_control:
-    bucket: "{{ resource_name }}"
+    bucket: "{{ bucket }}"
     entity: user-alexstephen@google.com
     role: WRITER
     project: "{{ gcp_project }}"
@@ -63,7 +63,7 @@
 #----------------------------------------------------------
 - name: delete a bucket access control
   gcp_storage_bucket_access_control:
-    bucket: "{{ resource_name }}"
+    bucket: "{{ bucket }}"
     entity: user-alexstephen@google.com
     role: WRITER
     project: "{{ gcp_project }}"
@@ -78,7 +78,7 @@
 # ----------------------------------------------------------------------------
 - name: delete a bucket access control that does not exist
   gcp_storage_bucket_access_control:
-    bucket: "{{ resource_name }}"
+    bucket: "{{ bucket }}"
     entity: user-alexstephen@google.com
     role: WRITER
     project: "{{ gcp_project }}"
