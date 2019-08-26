@@ -31,7 +31,7 @@ module: cp_mgmt_access_rule
 short_description: Manages access-rule objects on Checkpoint over Web Services API
 description:
   - Manages access-rule objects on Checkpoint devices including creating, updating and removing objects.
-    All operations are performed over Web Services API.
+  - All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
@@ -50,7 +50,7 @@ options:
     required: True
   action:
     description:
-      - Can be one of the following, "Accept", "Drop", "Ask", "Inform", "Reject", "User Auth", "Client Auth", "Apply Layer".
+      - a "Accept", "Drop", "Ask", "Inform", "Reject", "User Auth", "Client Auth", "Apply Layer".
     type: str
   action_settings:
     description:
@@ -164,7 +164,7 @@ options:
         type: bool
       type:
         description:
-          - Can be one of the following, "Log", "Extended Log", "Detailed  Log", "None".
+          - a "Log", "Extended Log", "Detailed  Log", "None".
         type: str
   user_check:
     description:
@@ -209,8 +209,8 @@ options:
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of
-        the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   ignore_warnings:
@@ -219,8 +219,7 @@ options:
     type: bool
   ignore_errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was
-        omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
     type: bool
 extends_documentation_fragment: checkpoint_objects
 """
@@ -293,8 +292,7 @@ def main():
         time=dict(type='list'),
         track=dict(type='list', options=dict(
             accounting=dict(type='bool'),
-            alert=dict(type='str', choices=['none', 'alert', 'snmp', 'mail',
-                                            'user alert 1', 'user alert 2', 'user alert 3']),
+            alert=dict(type='str', choices=['none', 'alert', 'snmp', 'mail', 'user alert 1', 'user alert 2', 'user alert 3']),
             enable_firewall_session=dict(type='bool'),
             per_connection=dict(type='bool'),
             per_session=dict(type='bool'),
