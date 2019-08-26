@@ -28,9 +28,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cp_mgmt_assign_global_assignment
-short_description:
+short_description: assign global assignment on Checkpoint over Web Services API
 description:
-  -
+  - assign global assignment on Checkpoint over Web Services API
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
