@@ -221,7 +221,7 @@ class TestMyModule(unittest.TestCase):
         assert exc.value.args[0]['msg'] is not None
 
     @patch('ansible.modules.cloud.amazon.aws_netapp_cvs_pool.NetAppAWSCVS.get_aws_netapp_cvs_pool')
-    @patch('ansible.module_utils.netapp.AwsCvsRestAPI.post')
+    @patch('ansible.module_utils.netapp.AwsCvsRestAPI.delete')
     def test_delete_aws_netapp_cvs_pool_pass(self, get_delete_api, get_aws_api):
         set_module_args(self.set_args_delete_aws_netapp_cvs_pool())
         my_obj = pool_module()
