@@ -96,6 +96,17 @@ class FortiOSHandler(object):
                 url += '?vdom=' + vdom
         return url
 
+    def mon_url(self, path, name, vdom=None, mkey=None):
+        url = '/api/v2/monitor/' + path + '/' + name
+        if mkey:
+            url = url + '/' + str(mkey)
+        if vdom:
+            if vdom == "global":
+                url += '?global=1'
+            else:
+                url += '?vdom=' + vdom
+        return url
+
     def schema(self, path, name, vdom=None):
         if vdom is None:
             url = self.cmdb_url(path, name) + "?action=schema"
@@ -132,6 +143,20 @@ class FortiOSHandler(object):
                 return None
         return mkey
 
+    def get(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.cmdb_url(path, name, vdom, mkey=mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def monitor(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.mon_url(path, name, vdom, mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
     def set(self, path, name, data, mkey=None, vdom=None, parameters=None):
 
         if not mkey:
@@ -155,6 +180,14 @@ class FortiOSHandler(object):
         url = self.cmdb_url(path, name, vdom, mkey=None)
 
         status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='POST')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def execute(self, path, name, data, vdom=None,
+                mkey=None, parameters=None, timeout=300):
+        url = self.mon_url(path, name, vdom, mkey=mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='POST', timeout=timeout)
 
         return self.formatresponse(result_data, vdom=vdom)
 
