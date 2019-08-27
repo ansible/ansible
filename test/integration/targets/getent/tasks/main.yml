@@ -23,11 +23,19 @@
 ## getent
 ##
 - block:
-    - name: run the first example
+    - name: run getent with specified service
+      getent:
+          database: passwd
+          key: root
+          service: files
+      register: getent_test0
+      when: ansible_system != 'FreeBSD'
+    - name: run getent w/o specified service (FreeBSD)
       getent:
           database: passwd
           key: root
       register: getent_test0
+      when: ansible_system == 'FreeBSD'
     - debug: var=getent_test0
     - name: validate results
       assert:
