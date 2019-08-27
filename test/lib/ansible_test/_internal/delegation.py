@@ -324,7 +324,6 @@ def delegate_docker(args, exclude, require, integration_targets):
             # also disconnect from the network once requirements have been installed
             if isinstance(args, UnitsConfig):
                 writable_dirs = [
-                    os.path.join(install_root, '.pytest_cache'),
                 ]
 
                 if content_root != install_root:
