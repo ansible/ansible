@@ -13,7 +13,7 @@ from __future__ import (absolute_import, division, print_function)
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 __metaclass__ = type
 
@@ -24,12 +24,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_user_device
-short_description: Configure devices in Fortinet's FortiOS and FortiGate
+short_description: Configure devices in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify user feature and device category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.9"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,12 +44,12 @@ options:
         description:
             - FortiOS or FortiGate IP address.
         type: str
-        required: true
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
         type: str
-        required: true
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
@@ -64,14 +64,19 @@ options:
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol.
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
+        type: bool
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
         type: bool
         default: true
     state:
         description:
             - Indicates whether to create or remove the object.
         type: str
+        required: true
         choices:
             - present
             - absent
@@ -85,12 +90,15 @@ options:
                 description:
                     - Device alias.
                 required: true
+                type: str
             avatar:
                 description:
                     - Image file for avatar (maximum 4K base64 encoded).
+                type: str
             category:
                 description:
                     - Device category.
+                type: str
                 choices:
                     - none
                     - amazon-device
@@ -102,34 +110,43 @@ options:
             comment:
                 description:
                     - Comment.
+                type: str
             mac:
                 description:
-                    - Device MAC address(es).
+                    - Device MAC address.
+                type: str
             master_device:
                 description:
                     - Master device (optional). Source user.device.alias.
+                type: str
             tagging:
                 description:
                     - Config object tagging.
+                type: list
                 suboptions:
                     category:
                         description:
                             - Tag category. Source system.object-tagging.category.
+                        type: str
                     name:
                         description:
                             - Tagging entry name.
                         required: true
+                        type: str
                     tags:
                         description:
                             - Tags.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Tag name. Source system.object-tagging.tags.name.
                                 required: true
+                                type: str
             type:
                 description:
                     - Device type.
+                type: str
                 choices:
                     - unknown
                     - android-phone
@@ -155,6 +172,7 @@ options:
             user:
                 description:
                     - User name.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -164,6 +182,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure devices.
     fortios_user_device:
@@ -260,6 +279,7 @@ def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -267,7 +287,7 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_user_device_data(json):
@@ -334,13 +354,14 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "state": {"required": True, "type": "str",
                   "choices": ["present", "absent"]},
         "user_device": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "alias": {"required": True, "type": "str"},
                 "avatar": {"required": False, "type": "str"},
@@ -369,6 +390,7 @@ def main():
                                      "printer", "router-nat-device", "windows-pc",
                                      "windows-phone", "windows-tablet", "other-network-device"]},
                 "user": {"required": False, "type": "str"}
+
             }
         }
     }
@@ -376,6 +398,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
