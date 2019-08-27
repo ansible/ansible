@@ -120,7 +120,7 @@ except Exception:
     pass
 
 
-class AzureRMVaultsInfo(AzureRMModuleBase):
+class AzureRMRecoveryServiceVaultInfo(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(
@@ -146,7 +146,7 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         self.mgmt_client = None
-        super(AzureRMVaultsInfo, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMRecoveryServiceVaultInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -268,7 +268,7 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
 
 
 def main():
-    AzureRMVaultsInfo()
+    AzureRMRecoveryServiceVaultInfo()
 
 
 if __name__ == '__main__':

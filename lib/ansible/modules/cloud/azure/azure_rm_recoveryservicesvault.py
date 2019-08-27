@@ -62,7 +62,7 @@ options:
         description:
           - Status of the vault upgrade operation.
         type: dict
-        options:
+        suboptions:
           failed:
             type: str
           in_progress:
@@ -70,7 +70,7 @@ options:
           unknown:
             type: str
           upgraded:
-            type: str   
+            type: str 
       message:
         description:
           - >-
@@ -81,7 +81,7 @@ options:
         description:
           - The way the vault upgrade was triggered.
         type: dict
-        options:
+        suboptions:
           forced_upgrade:
             type: str
           user_triggered:
