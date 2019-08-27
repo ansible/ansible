@@ -1093,6 +1093,17 @@ class AzureSASAuthentication(Authentication):
         session.headers['Authorization'] = self.token
         return session
 
+    def automation_client(self):
+        self.log('Getting automation client')
+        if not self._automation_client:
+            self._automation_client = self.get_mgmt_svc_client(AutomationClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._automation_client
+
+    @property
+    def automation_models(self):
+        return AutomationModel
+
 
 class AzureRMAuthException(Exception):
     pass
