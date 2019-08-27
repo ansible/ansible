@@ -106,7 +106,7 @@ class TestRouterosFactsModule(TestRouterosModule):
             result['ansible_facts']['ansible_net_interfaces']['ether1']['ipv6'][0]['address']
         )
         self.assertEqual(
-            len(result['ansible_facts']['ansible_net_interfaces'].keys()), 2
+            len(result['ansible_facts']['ansible_net_interfaces'].keys()), 11
         )
         self.assertEqual(
             len(result['ansible_facts']['ansible_net_neighbors'].keys()), 4
