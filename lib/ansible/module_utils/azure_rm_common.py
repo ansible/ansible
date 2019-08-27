@@ -1066,6 +1066,7 @@ class AzureRMModuleBase(object):
     def automation_models(self):
         return AutomationModel
 
+    @property
     def IoThub_client(self):
         self.log('Getting iothub client')
         if not self._IoThub_client:
