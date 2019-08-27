@@ -139,18 +139,14 @@ extends_documentation_fragment: checkpoint_objects
 EXAMPLES = """
 - name: add-address-range
   cp_mgmt_address_range:
-    groups:
-    - New Group 1
-    - New Group 2
     ip_address_first: 192.0.2.1
     ip_address_last: 192.0.2.10
-    name: New Address Range 4
+    name: New Address Range 1
     state: present
 
 - name: set-address-range
   cp_mgmt_address_range:
     color: green
-    groups: New Group 1
     ip_address_first: 192.0.2.1
     ip_address_last: 192.0.2.1
     name: New Address Range 1
