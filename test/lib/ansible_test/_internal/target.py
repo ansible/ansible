@@ -180,6 +180,13 @@ def walk_compile_targets(include_symlinks=True):
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
 
 
+def walk_powershell_targets(include_symlinks=True):
+    """
+    :rtype: collections.Iterable[TestTarget]
+    """
+    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.ps1', '.psm1'), include_symlinks=include_symlinks)
+
+
 def walk_sanity_targets():
     """
     :rtype: collections.Iterable[TestTarget]

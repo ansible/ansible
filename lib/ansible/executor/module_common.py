@@ -1015,9 +1015,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # create the common exec wrapper payload and set that as the module_data
         # bytes
         b_module_data = ps_manifest._create_powershell_wrapper(
-            b_module_data, module_args, environment, async_timeout, become,
-            become_method, become_user, become_password, become_flags,
-            module_substyle
+            b_module_data, module_path, module_args, environment,
+            async_timeout, become, become_method, become_user, become_password,
+            become_flags, module_substyle, task_vars
         )
 
     elif module_substyle == 'jsonargs':

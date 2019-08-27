@@ -16,7 +16,9 @@ import stat
 import string
 import subprocess
 import sys
+import tempfile
 import time
+import zipfile
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
@@ -892,6 +894,22 @@ def load_module(path, name):  # type: (str, str) -> None
         with open(path, 'r') as module_file:
             # noinspection PyDeprecation
             imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
+
+
+@contextlib.contextmanager
+def tempdir():
+    """Creates a temporary directory that is deleted outside the context scope."""
+    temp_path = tempfile.mkdtemp()
+    yield temp_path
+    shutil.rmtree(temp_path)
+
+
+@contextlib.contextmanager
+def open_zipfile(path, mode='r'):
+    """Opens a zip file and closes the file automatically."""
+    zib_obj = zipfile.ZipFile(path, mode=mode)
+    yield zib_obj
+    zib_obj.close()
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

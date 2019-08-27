@@ -195,7 +195,7 @@
     raw: |
       $dt=[datetime]"{{ test_starttime.stdout|trim }}"
       (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
-      ? { $_.TimeCreated -ge $dt -and $_.Message -match "{{ gen_pw }}|whoami" }).Count
+      ? { $_.TimeCreated -ge $dt -and $_.Message -match "{{ gen_pw }}" }).Count
     register: ps_log_count
 
   - name: assert no PS events contain password or module args
