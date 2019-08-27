@@ -168,9 +168,9 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
     )
 
-    mutually_exclusive = [['filename', 'volume']],
-
-    module_kwargs = openstack_module_kwargs()
+    module_kwargs = openstack_module_kwargs(
+        mutually_exclusive=[['filename', 'volume']],
+    )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
     sdk, cloud = openstack_cloud_from_module(module)
