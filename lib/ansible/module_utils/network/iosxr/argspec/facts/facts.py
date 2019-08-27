@@ -29,7 +29,9 @@ class FactsArgs(object):  # pylint: disable=R0903
         'lldp_interfaces',
         '!lldp_interfaces',
         'interfaces',
-        '!interfaces'
+        '!interfaces',
+        'l2_interfaces',
+        '!l2_interfaces',
     ]
 
     argument_spec = {

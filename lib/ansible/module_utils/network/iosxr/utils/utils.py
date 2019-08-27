@@ -26,11 +26,29 @@ def add_command_to_config_list(interface, cmd, commands):
     commands.append(cmd)
 
 
-def dict_diff(sample_dict):
+def dict_to_set(sample_dict):
     # Generate a set with passed dictionary for comparison
     test_dict = {}
     for k, v in iteritems(sample_dict):
         if v is not None:
+            if isinstance(v, list):
+                if isinstance(v[0], dict):
+                    li = []
+                    for each in v:
+                        for key, value in iteritems(each):
+                            if isinstance(value, list):
+                                each[key] = tuple(value)
+                        li.extend(tuple(each.items()))
+                    v = tuple(li)
+                else:
+                    v = tuple(v)
+            elif isinstance(v, dict):
+                li = []
+                for key, value in iteritems(v):
+                    if isinstance(value, list):
+                        v[key] = tuple(value)
+                li.extend(tuple(v.items()))
+                v = tuple(li)
             test_dict.update({k: v})
     return_set = set(tuple(test_dict.items()))
     return return_set
@@ -41,6 +59,9 @@ def filter_dict_having_none_value(want, have):
     test_dict = dict()
     test_dict['name'] = want.get('name')
     for k, v in iteritems(want):
+        if k == 'l2protocol':
+            if want[k] != have.get('l2protocol') and have.get('l2protocol'):
+                test_dict.update({k: v})
         if v is None:
             val = have.get(k)
             test_dict.update({k: val})
