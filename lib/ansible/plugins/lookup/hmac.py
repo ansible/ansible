@@ -38,7 +38,7 @@ DOCUMENTATION = """
             description: List of strings to calculate HMAC signatures
             required: True
         secret:
-            description: Secret to use to create the signature`
+            description: Secret to use to create the signature
             required: True
         encoding:
             description: Encoding of the secret.  Can be any Python-valid string encoding or "base64"
@@ -55,7 +55,7 @@ DOCUMENTATION = """
 EXAMPLE = """
 - name: Calculate HMAC using password
   debug:
-    msg: "{{ lookup('hmac', 'string_to_be_signed', secret=hmac_secret }}"
+    msg: "{{ lookup('hmac', 'string_to_be_signed', secret=hmac_secret) }}"
 
 - name: Calculate HMAC using base64-encoded password
   debug:
@@ -70,6 +70,8 @@ RETURN = """
   _raw:
     description: base64-encoded hmac signature
 """
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -78,7 +80,9 @@ import hmac
 import hashlib
 from inspect import getmembers
 
+
 class LookupModule(LookupBase):
+
 
     def run(self, terms, inject=None, variables=None, **kwargs):
         try:
@@ -108,7 +112,7 @@ class LookupModule(LookupBase):
             elif algorithm == 'sha512':
                 hasher = hashlib.sha512
             else:
-                raise Exception("Unknown hash method: {}".format(algorithm))
+                raise Exception("Unknown hash method: {0}".format(algorithm))
             ret = []
             for term in terms:
                 mac = hmac.new(secret_bytes, term.encode(), hasher).digest()
@@ -116,4 +120,4 @@ class LookupModule(LookupBase):
                 ret.append(mac_b64)
             return ret
         except Exception as e:
-            raise AnsibleError('HMAC Failed: {}'.format(str(e)))
+            raise AnsibleError('HMAC Failed: {0}'.format(str(e)))

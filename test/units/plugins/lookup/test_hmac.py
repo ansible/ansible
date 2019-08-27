@@ -23,6 +23,7 @@ __metaclass__ = type
 from units.compat import unittest
 from ansible.plugins.lookup.hmac import LookupModule
 
+
 class TestHMACLookup(unittest.TestCase):
 
     testcases = (
@@ -37,7 +38,7 @@ class TestHMACLookup(unittest.TestCase):
         dict(
             term=['string_to_be_signed2', 'string_to_be_signed'],
             secret='asdf',
-            expected=['fGW4FjaIgVzGlWLQ/SITPzp2cs5q9I9wOOVO7YsZPu4=','qoR/uNWjQQa8sS77mRjUDPqV2ZXa44Y1Xnb/3AUvmlg='],
+            expected=['fGW4FjaIgVzGlWLQ/SITPzp2cs5q9I9wOOVO7YsZPu4=', 'qoR/uNWjQQa8sS77mRjUDPqV2ZXa44Y1Xnb/3AUvmlg='],
         ),
         # alternative algorithm
         dict(
@@ -50,7 +51,7 @@ class TestHMACLookup(unittest.TestCase):
         # base64-encoded secret + alternative algorithm
         dict(
             term='string_to_be_signed',
-            secret='YXNkZg==', # 'asdf' | b64encode
+            secret='YXNkZg==',  # 'asdf' | b64encode
             encoding='base64',
             algorithm='sha512',
             expected=['vy7cBvrvVxQIQWvJGB6iE7nHmMovpFBWGRwTDr54DLpxRBpDC77+iOu1GskUEj1jhBRofEjtTNZeaBqqqfr+uA=='],
