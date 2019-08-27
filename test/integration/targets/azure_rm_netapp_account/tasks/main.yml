@@ -1,6 +1,6 @@
 - name: Create Azure NetApp account
   azure_rm_netapp_account:
-    resource_group: laurentngroupnodash
+    resource_group: "{{ resource_group }}"
     name: tests-netapp1
     location: eastus
   register: output
@@ -10,7 +10,7 @@
 
 - name: Create Azure NetApp account (Idempotency)
   azure_rm_netapp_account:
-    resource_group: laurentngroupnodash
+    resource_group: "{{ resource_group }}"
     name: tests-netapp1
     location: eastus
   register: output
@@ -21,7 +21,7 @@
 - name: Delete Azure NetApp account
   azure_rm_netapp_account:
     state: absent
-    resource_group: laurentngroupnodash
+    resource_group: "{{ resource_group }}"
     name: tests-netapp1
   register: output
 
@@ -31,7 +31,7 @@
 - name: Delete Azure NetApp account (Idempotency)
   azure_rm_netapp_account:
     state: absent
-    resource_group: laurentngroupnodash
+    resource_group: "{{ resource_group }}"
     name: tests-netapp1
   register: output
 
