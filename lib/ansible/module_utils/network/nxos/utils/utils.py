@@ -3,35 +3,25 @@ import socket
 from ansible.module_utils.six import iteritems
 
 
-def search_obj_in_list(name, lst):
+def search_obj_in_list(name, lst, identifier):
     for o in lst:
-        if o['name'] == name:
+        if o[identifier] == name:
             return o
     return None
 
 
-def eliminate_null_keys(cfg_dict):
-    if not cfg_dict:
-        return None
-    if isinstance(cfg_dict, list):
-        final_cfg = []
-        for cfg in cfg_dict:
-            final_cfg.append(_null_keys(cfg))
-    else:
-        final_cfg = _null_keys(cfg_dict)
+def flatten_dict(x):
+    result = {}
+    if not isinstance(x, dict):
+        return result
 
-    return final_cfg
+    for key, value in iteritems(x):
+        if isinstance(value, dict):
+            result.update(flatten_dict(value))
+        else:
+            result[key] = value
 
-
-def _null_keys(cfg):
-    final_cfg = {}
-    for k, v in iteritems(cfg):
-        if v:
-            if isinstance(v, dict):
-                final_cfg.update(eliminate_null_keys(v))
-            else:
-                final_cfg.update({k: v})
-    return final_cfg
+    return result
 
 
 def validate_ipv4_addr(address):

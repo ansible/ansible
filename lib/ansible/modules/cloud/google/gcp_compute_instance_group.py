@@ -50,16 +50,19 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   name:
     description:
     - The name of the instance group.
     - The name must be 1-63 characters long, and comply with RFC1035.
     required: false
+    type: str
   named_ports:
     description:
     - Assigns a name to a port number.
@@ -69,16 +72,19 @@ options:
     - 'For example: [{name: "http", port: 80},{name: "http", port: 8080}] Named ports
       apply to all instances in this instance group.'
     required: false
+    type: list
     suboptions:
       name:
         description:
         - The name for this named port.
         - The name must be 1-63 characters long, and comply with RFC1035.
         required: false
+        type: str
       port:
         description:
         - The port number, which can be a value between 1 and 65535.
         required: false
+        type: int
   network:
     description:
     - The network to which all instances in the instance group belong.
@@ -88,10 +94,12 @@ options:
       to a gcp_compute_network task and then set this network field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   region:
     description:
     - The region where the instance group is located (for regional resources).
     required: false
+    type: str
   subnetwork:
     description:
     - The subnetwork to which all instances in the instance group belong.
@@ -101,10 +109,12 @@ options:
       to a gcp_compute_subnetwork task and then set this subnetwork field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   zone:
     description:
     - A reference to the zone where the instance group resides.
     required: true
+    type: str
   instances:
     description:
     - The list of instances associated with this InstanceGroup.
@@ -113,6 +123,7 @@ options:
       not be deleted.
     - Only the full identifier of the instance will be returned.
     required: false
+    type: list
     version_added: 2.8
 extends_documentation_fragment: gcp
 '''

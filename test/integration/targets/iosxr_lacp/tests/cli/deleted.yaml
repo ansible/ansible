@@ -1,0 +1,45 @@
+---
+- debug:
+    msg: "Start iosxr_lacp deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+    - name: Delete LACP attributes
+      iosxr_lacp: &deleted
+        state: deleted
+      register: result
+
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ populate == result['before'] }}"
+
+    - name: Assert that the correct set of commands were generated
+      assert:
+        that:
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that the after dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] == result['after'] }}"
+
+    - name: Delete attributes of given interfaces (IDEMPOTENT)
+      iosxr_lacp: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.changed == false"
+
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] == result['before'] }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

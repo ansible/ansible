@@ -112,6 +112,11 @@ notes:
    - With the 'order' parameter you can control which field is used to sort first, next and last.
    - The module supports a check mode and a diff mode.
 
+seealso:
+- name: PostgreSQL pg_hba.conf file reference
+  description: Complete reference of the PostgreSQL pg_hba.conf file documentation.
+  link: https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
+
 requirements:
     - ipaddress
 
@@ -573,11 +578,11 @@ class PgHbaRule(dict):
             return myweight < hisweight
         try:
             return self['src'] < other['src']
-        except (TypeError, KeyError):
+        except TypeError:
             return self.source_type_weight() < other.source_type_weight()
-        errormessage = 'We have two rules ({1}, {2})'.format(self, other)
-        errormessage += ' with exact same weight. Please file a bug.'
-        raise PgHbaValueError(errormessage)
+        except Exception:
+            # When all else fails, just compare the exact line.
+            return self.line() < other.line()
 
     def source_weight(self):
         """Report the weight of this source net.

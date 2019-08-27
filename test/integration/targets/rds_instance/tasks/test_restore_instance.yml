@@ -1,0 +1,95 @@
+---
+  - block:
+
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create a source DB instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: mysql
+          backup_retention_period: 1
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          <<: *aws_connection_info
+        register: source_db
+
+      - assert:
+          that:
+            - source_db.changed
+            - "source_db.db_instance_identifier == '{{ instance_id }}'"
+
+      - name: Create a point in time DB instance
+        rds_instance:
+          id: "{{ instance_id }}-point-in-time"
+          state: present
+          source_db_instance_identifier: "{{ instance_id }}"
+          creation_source: instance
+          engine: mysql
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          use_latest_restorable_time: True
+          <<: *aws_connection_info
+        register: result
+
+      - name: Test idempotence with a point in time replica
+        rds_instance:
+          id: "{{ instance_id }}-point-in-time"
+          state: present
+          source_db_instance_identifier: "{{ instance_id }}"
+          creation_source: instance
+          engine: mysql
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          restore_time: "{{ result.latest_restorable_time }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+    always:
+
+      - name: Remove the DB instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        ignore_errors: yes
+
+
+      - name: Remove the point in time restored DB
+        rds_instance:
+          id: "{{ instance_id }}-point-in-time"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        ignore_errors: yes

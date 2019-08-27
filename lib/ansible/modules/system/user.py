@@ -60,14 +60,14 @@ options:
               C(null), or C(~), the user is removed from all groups except the
               primary group. (C(~) means C(null) in YAML)
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
-            - Has no effect when C(local) is C(True)
+            - Mutually exclusive with C(local)
         type: list
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
             - If C(no), user will only be added to the groups specified in C(groups),
               removing them from all other groups.
-            - Has no effect when C(local) is C(True)
+            - Mutually exclusive with C(local)
         type: bool
         default: no
     shell:
@@ -211,6 +211,7 @@ options:
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
               exists somewhere other than C(/etc/passwd), this setting will not work properly.
             - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
+            - Mutually exclusive with C(groups) and C(append)
         type: bool
         default: no
         version_added: "2.4"
@@ -370,7 +371,7 @@ ssh_fingerprint:
   type: str
   sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
 ssh_key_file:
-  description: Path to generated SSH public key file
+  description: Path to generated SSH private key file
   returned: When C(generate_ssh_key) is C(True)
   type: str
   sample: /home/asmith/.ssh/id_rsa
@@ -628,6 +629,12 @@ class User(object):
             cmd.append(self.comment)
 
         if self.home is not None:
+            # If the specified path to the user home contains parent directories that
+            # do not exist, first create the home directory since useradd cannot
+            # create parent directories
+            parent = os.path.dirname(self.home)
+            if not os.path.isdir(parent):
+                self.create_homedir(self.home)
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -862,9 +869,11 @@ class User(object):
                         exists = True
                         break
 
-            self.module.warn(
-                "'local: true' specified and user was not found in {file}. "
-                "The local user account may already exist if the local account database exists somewhere other than {file}.".format(file=self.PASSWORDFILE))
+            if not exists:
+                self.module.warn(
+                    "'local: true' specified and user '{name}' was not found in {file}. "
+                    "The local user account may already exist if the local account database exists "
+                    "somewhere other than {file}.".format(file=self.PASSWORDFILE, name=self.name))
 
             return exists
 
@@ -2854,7 +2863,11 @@ def main():
             authorization=dict(type='str'),
             role=dict(type='str'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        mutually_exclusive=[
+            ('local', 'groups'),
+            ('local', 'append')
+        ]
     )
 
     user = User(module)
@@ -2883,7 +2896,24 @@ def main():
         if not user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+
+            # Check to see if the provided home path contains parent directories
+            # that do not exist.
+            path_needs_parents = False
+            if user.home:
+                parent = os.path.dirname(user.home)
+                if not os.path.isdir(parent):
+                    path_needs_parents = True
+
             (rc, out, err) = user.create_user()
+
+            # If the home path had parent directories that needed to be created,
+            # make sure file permissions are correct in the created home directory.
+            if path_needs_parents:
+                info = user.user_info()
+                if info is not False:
+                    user.chown_homedir(info[2], info[3], user.home)
+
             if module.check_mode:
                 result['system'] = user.name
             else:

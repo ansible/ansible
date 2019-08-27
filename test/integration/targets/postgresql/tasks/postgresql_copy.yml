@@ -8,7 +8,7 @@
     data_file_csv: /tmp/data.csv
     task_parameters: &task_parameters
       become_user: '{{ pg_user }}'
-      become: True
+      become: yes
       register: result
     pg_parameters: &pg_parameters
       login_user: '{{ pg_user }}'
@@ -55,7 +55,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   # check that nothing changed after the previous step:
   - name: postgresql_copy - check that data_file_txt doesn't exist
@@ -79,7 +79,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   # check that nothing changed after the previous step:
   - name: postgresql_copy - check that test table continue to have one row
@@ -116,7 +116,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["COPY \"{{ test_table }}\" TO '{{ data_file_txt }}'"]
       - result.src == '{{ test_table }}'
       - result.dst == '{{ data_file_txt }}'
@@ -145,7 +145,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["COPY \"{{ test_table }}\" (id,name) TO '{{ data_file_csv }}' (format csv)"]
       - result.src == '{{ test_table }}'
       - result.dst == '{{ data_file_csv }}'
@@ -173,7 +173,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["COPY \"{{ test_table }}\" (id,name) FROM '{{ data_file_csv }}' (format csv)"]
       - result.dst == '{{ test_table }}'
       - result.src == '{{ data_file_csv }}'
@@ -202,7 +202,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["COPY \"{{ test_table }}\" (id, name) TO PROGRAM '/bin/true' (delimiter '|')"]
       - result.src == '{{ test_table }}'
       - result.dst == '/bin/true'
@@ -221,7 +221,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["COPY \"{{ test_table }}\" (id, name) FROM PROGRAM 'echo 1,first' (delimiter ',')"]
       - result.dst == '{{ test_table }}'
       - result.src == 'echo 1,first'

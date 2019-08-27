@@ -320,7 +320,7 @@ In order to use the ``paramiko`` connection plugin or modules that require ``par
 
     $ pip install --user paramiko
 
-Ansble can also be installed inside a new or existing ``virtualenv``::
+Ansible can also be installed inside a new or existing ``virtualenv``::
 
     $ python -m virtualenv ansible  # Create a virtualenv if one does not already exist
     $ source ansible/bin/activate   # Activate the virtual environment

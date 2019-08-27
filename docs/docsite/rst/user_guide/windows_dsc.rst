@@ -366,10 +366,7 @@ The first two methods above only work when the host has access to the internet.
 When a host does not have internet access, the module must first be installed
 using the methods above on another host with internet access and then copied
 across. To save a module to a local filepath, the following PowerShell cmdlet
-can be run:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+can be run::
 
     Save-Module -Name xWebAdministration -Path C:\temp
 

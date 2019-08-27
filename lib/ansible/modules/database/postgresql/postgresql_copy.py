@@ -18,7 +18,7 @@ DOCUMENTATION = r'''
 module: postgresql_copy
 short_description: Copy data between a file/program and a PostgreSQL table
 description:
-- Copy data between a file/program and a PostgreSQL table U(https://www.postgresql.org/docs/current/sql-copy.html).
+- Copy data between a file/program and a PostgreSQL table.
 version_added: '2.9'
 
 options:
@@ -83,6 +83,11 @@ notes:
 - If i(check_mode=yes) and the source has been passed as SQL, the module
   will execute it and rolled the transaction back but pay attention
   it can affect database performance (e.g., if SQL collects a lot of data).
+
+seealso:
+- name: COPY command reference
+  description: Complete reference of the COPY command documentation.
+  link: https://www.postgresql.org/docs/current/sql-copy.html
 
 author:
 - Andrew Klychkov (@Andersson007)

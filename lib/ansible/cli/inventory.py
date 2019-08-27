@@ -180,7 +180,7 @@ class InventoryCLI(CLI):
         else:
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
-            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
+            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True)
 
         return results
 

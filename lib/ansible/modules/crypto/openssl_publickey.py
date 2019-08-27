@@ -18,14 +18,19 @@ version_added: "2.3"
 short_description: Generate an OpenSSL public key from its private key.
 description:
     - This module allows one to (re)generate OpenSSL public keys from their private keys.
-    - It uses the pyOpenSSL python library to interact with openssl.
-    - Keys are generated in PEM format.
-    - This module works only if the version of PyOpenSSL is recent enough (> 16.0.0).
+    - Keys are generated in PEM or OpenSSH format.
+    - The module can use the cryptography Python library, or the pyOpenSSL Python
+      library. By default, it tries to detect which one is available. This can be
+      overridden with the I(select_crypto_backend) option. When I(format) is C(OpenSSH),
+      the C(cryptography) backend has to be used. Please note that the PyOpenSSL backend
+      was deprecated in Ansible 2.9 and will be removed in Ansible 2.13."
 requirements:
-    - pyOpenSSL
-    - cryptography (if I(format) is C(OpenSSH))
+    - Either cryptography >= 1.2.3 (older versions might work as well)
+    - Or pyOpenSSL >= 16.0.0
+    - Needs cryptography >= 1.4 if I(format) is C(OpenSSH)
 author:
-- Yanis Guenane (@Spredzy)
+    - Yanis Guenane (@Spredzy)
+    - Felix Fontein (@felixfontein)
 options:
     state:
         description:
@@ -67,6 +72,16 @@ options:
         type: bool
         default: no
         version_added: "2.8"
+    select_crypto_backend:
+        description:
+            - Determines which crypto backend to use.
+            - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
+            - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
+            - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+        type: str
+        default: auto
+        choices: [ auto, cryptography, pyopenssl ]
+        version_added: "2.9"
 extends_documentation_fragment:
 - files
 seealso:
@@ -146,25 +161,34 @@ backup_file:
 
 import os
 import traceback
+from distutils.version import LooseVersion
+
+MINIMAL_PYOPENSSL_VERSION = '16.0.0'
+MINIMAL_CRYPTOGRAPHY_VERSION = '1.2.3'
+MINIMAL_CRYPTOGRAPHY_VERSION_OPENSSH = '1.4'
 
 PYOPENSSL_IMP_ERR = None
 try:
+    import OpenSSL
     from OpenSSL import crypto
+    PYOPENSSL_VERSION = LooseVersion(OpenSSL.__version__)
 except ImportError:
     PYOPENSSL_IMP_ERR = traceback.format_exc()
-    pyopenssl_found = False
+    PYOPENSSL_FOUND = False
 else:
-    pyopenssl_found = True
+    PYOPENSSL_FOUND = True
 
 CRYPTOGRAPHY_IMP_ERR = None
 try:
+    import cryptography
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization as crypto_serialization
+    CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
-    cryptography_found = False
+    CRYPTOGRAPHY_FOUND = False
 else:
-    cryptography_found = True
+    CRYPTOGRAPHY_FOUND = True
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
@@ -177,7 +201,7 @@ class PublicKeyError(crypto_utils.OpenSSLObjectError):
 
 class PublicKey(crypto_utils.OpenSSLObject):
 
-    def __init__(self, module):
+    def __init__(self, module, backend):
         super(PublicKey, self).__init__(
             module.params['path'],
             module.params['state'],
@@ -189,9 +213,33 @@ class PublicKey(crypto_utils.OpenSSLObject):
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey = None
         self.fingerprint = {}
+        self.backend = backend
 
         self.backup = module.params['backup']
         self.backup_file = None
+
+    def _create_publickey(self, module):
+        self.privatekey = crypto_utils.load_privatekey(
+            self.privatekey_path,
+            self.privatekey_passphrase,
+            backend=self.backend
+        )
+        if self.backend == 'cryptography':
+            if self.format == 'OpenSSH':
+                return self.privatekey.public_key().public_bytes(
+                    crypto_serialization.Encoding.OpenSSH,
+                    crypto_serialization.PublicFormat.OpenSSH
+                )
+            else:
+                return self.privatekey.public_key().public_bytes(
+                    crypto_serialization.Encoding.PEM,
+                    crypto_serialization.PublicFormat.SubjectPublicKeyInfo
+                )
+        else:
+            try:
+                return crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
+            except AttributeError as dummy:
+                raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
 
     def generate(self, module):
         """Generate the public key."""
@@ -203,23 +251,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
 
         if not self.check(module, perms_required=False) or self.force:
             try:
-                if self.format == 'OpenSSH':
-                    with open(self.privatekey_path, 'rb') as private_key_fh:
-                        privatekey_content = private_key_fh.read()
-                    key = crypto_serialization.load_pem_private_key(
-                        privatekey_content,
-                        password=None if self.privatekey_passphrase is None else to_bytes(self.privatekey_passphrase),
-                        backend=default_backend()
-                    )
-                    publickey_content = key.public_key().public_bytes(
-                        crypto_serialization.Encoding.OpenSSH,
-                        crypto_serialization.PublicFormat.OpenSSH
-                    )
-                else:
-                    self.privatekey = crypto_utils.load_privatekey(
-                        self.privatekey_path, self.privatekey_passphrase
-                    )
-                    publickey_content = crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
+                publickey_content = self._create_publickey(module)
 
                 if self.backup:
                     self.backup_file = module.backup_local(self.path)
@@ -230,8 +262,6 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 raise PublicKeyError(exc)
             except (IOError, OSError) as exc:
                 raise PublicKeyError(exc)
-            except AttributeError as exc:
-                raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
 
         self.fingerprint = crypto_utils.get_fingerprint(
             self.privatekey_path,
@@ -253,26 +283,34 @@ class PublicKey(crypto_utils.OpenSSLObject):
             try:
                 with open(self.path, 'rb') as public_key_fh:
                     publickey_content = public_key_fh.read()
-                if self.format == 'OpenSSH':
-                    current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
-                    publickey_content = current_publickey.public_bytes(crypto_serialization.Encoding.PEM,
-                                                                       crypto_serialization.PublicFormat.SubjectPublicKeyInfo)
-                current_publickey = crypto.dump_publickey(
-                    crypto.FILETYPE_ASN1,
-                    crypto.load_publickey(crypto.FILETYPE_PEM, publickey_content)
-                )
+                if self.backend == 'cryptography':
+                    if self.format == 'OpenSSH':
+                        # Read and dump public key. Makes sure that the comment is stripped off.
+                        current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
+                        publickey_content = current_publickey.public_bytes(
+                            crypto_serialization.Encoding.OpenSSH,
+                            crypto_serialization.PublicFormat.OpenSSH
+                        )
+                    else:
+                        current_publickey = crypto_serialization.load_pem_public_key(publickey_content, backend=default_backend())
+                        publickey_content = current_publickey.public_bytes(
+                            crypto_serialization.Encoding.PEM,
+                            crypto_serialization.PublicFormat.SubjectPublicKeyInfo
+                        )
+                else:
+                    publickey_content = crypto.dump_publickey(
+                        crypto.FILETYPE_PEM,
+                        crypto.load_publickey(crypto.FILETYPE_PEM, publickey_content)
+                    )
             except Exception as dummy:
                 return False
 
             try:
-                desired_publickey = crypto.dump_publickey(
-                    crypto.FILETYPE_ASN1,
-                    crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
-                )
+                desired_publickey = self._create_publickey(module)
             except crypto_utils.OpenSSLBadPassphraseError as exc:
                 raise PublicKeyError(exc)
 
-            return current_publickey == desired_publickey
+            return publickey_content == desired_publickey
 
         if not state_and_perms:
             return state_and_perms
@@ -311,16 +349,53 @@ def main():
             format=dict(type='str', default='PEM', choices=['OpenSSH', 'PEM']),
             privatekey_passphrase=dict(type='str', no_log=True),
             backup=dict(type='bool', default=False),
+            select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
         required_if=[('state', 'present', ['privatekey_path'])],
     )
 
-    if not pyopenssl_found:
-        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-    if module.params['format'] == 'OpenSSH' and not cryptography_found:
-        module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+    minimal_cryptography_version = MINIMAL_CRYPTOGRAPHY_VERSION
+    if module.params['format'] == 'OpenSSH':
+        minimal_cryptography_version = MINIMAL_CRYPTOGRAPHY_VERSION_OPENSSH
+
+    backend = module.params['select_crypto_backend']
+    if backend == 'auto':
+        # Detection what is possible
+        can_use_cryptography = CRYPTOGRAPHY_FOUND and CRYPTOGRAPHY_VERSION >= LooseVersion(minimal_cryptography_version)
+        can_use_pyopenssl = PYOPENSSL_FOUND and PYOPENSSL_VERSION >= LooseVersion(MINIMAL_PYOPENSSL_VERSION)
+
+        # Decision
+        if can_use_cryptography:
+            backend = 'cryptography'
+        elif can_use_pyopenssl:
+            if module.params['format'] == 'OpenSSH':
+                module.fail_json(
+                    msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION_OPENSSH)),
+                    exception=CRYPTOGRAPHY_IMP_ERR
+                )
+            backend = 'pyopenssl'
+
+        # Success?
+        if backend == 'auto':
+            module.fail_json(msg=("Can't detect any of the required Python libraries "
+                                  "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
+                                      minimal_cryptography_version,
+                                      MINIMAL_PYOPENSSL_VERSION))
+
+    if module.params['format'] == 'OpenSSH' and backend != 'cryptography':
+        module.fail_json(msg="Format OpenSSH requires the cryptography backend.")
+
+    if backend == 'pyopenssl':
+        if not PYOPENSSL_FOUND:
+            module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                             exception=PYOPENSSL_IMP_ERR)
+        module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
+    elif backend == 'cryptography':
+        if not CRYPTOGRAPHY_FOUND:
+            module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(minimal_cryptography_version)),
+                             exception=CRYPTOGRAPHY_IMP_ERR)
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
@@ -330,7 +405,7 @@ def main():
         )
 
     try:
-        public_key = PublicKey(module)
+        public_key = PublicKey(module, backend)
 
         if public_key.state == 'present':
             if module.check_mode:

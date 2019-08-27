@@ -29,14 +29,15 @@ options:
   strategy:
     description:
       - This option controls how the module queres the package managers on the system.
-        C(first) means it will return only informatino for the first supported package manager available.
+        C(first) means it will return only information for the first supported package manager available.
         C(all) will return information for all supported and available package managers on the system.
     choices: ['first', 'all']
     default: 'first'
     version_added: "2.8"
 version_added: "2.5"
 requirements:
-    - For 'portage' support it requires the `qlist` utility, which is part of 'app-portage/portage-utils'.
+    - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
+    - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
@@ -192,7 +193,7 @@ class APT(LibMgr):
 
     @property
     def pkg_cache(self):
-        if self._cache:
+        if self._cache is not None:
             return self._cache
 
         self._cache = self._lib.Cache()
@@ -209,7 +210,9 @@ class APT(LibMgr):
         return we_have_lib
 
     def list_installed(self):
-        return [pk for pk in self.pkg_cache.keys() if self.pkg_cache[pk].is_installed]
+        # Store the cache to avoid running pkg_cache() for each item in the comprehension, which is very slow
+        cache = self.pkg_cache
+        return [pk for pk in cache.keys() if cache[pk].is_installed]
 
     def get_package_details(self, package):
         ac_pkg = self.pkg_cache[package].installed
@@ -336,7 +339,9 @@ def main():
                 module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
 
     if found == 0:
-        module.fail_json(msg='Could not detect a supported package manager from the following list: %s' % managers)
+        msg = ('Could not detect a supported package manager from the following list: %s, '
+               'or the required Python library is not installed. Check warnings for details.' % managers)
+        module.fail_json(msg=msg)
 
     # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
     # when using operating system level or distribution package managers

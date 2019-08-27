@@ -22,7 +22,7 @@ __metaclass__ = type
 from units.compat.mock import patch, MagicMock
 from ansible.modules.network.cli import cli_config
 from units.modules.utils import set_module_args
-from .cli_module import TestCliModule, load_fixture
+from .cli_module import TestCliModule
 
 
 class TestCliConfigModule(TestCliModule):

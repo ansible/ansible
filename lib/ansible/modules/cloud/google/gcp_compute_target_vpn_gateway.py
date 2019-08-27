@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -61,6 +63,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - The network this VPN gateway is accepting traffic for.
@@ -70,10 +73,12 @@ options:
       to a gcp_compute_network task and then set this network field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   region:
     description:
     - The region this gateway should sit in.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/targetVpnGateways)'

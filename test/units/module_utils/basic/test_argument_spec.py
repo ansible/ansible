@@ -12,12 +12,11 @@ import os
 
 import pytest
 
-from units.compat.mock import MagicMock, patch
+from units.compat.mock import MagicMock
 from ansible.module_utils import basic
-from ansible.module_utils.six import string_types, integer_types
+from ansible.module_utils.six import integer_types
 from ansible.module_utils.six.moves import builtins
 
-from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
@@ -232,6 +231,14 @@ class TestComplexArgSpecs:
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['foo'], str)
         assert am.params['foo'] == 'hello'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello1', 'dup': 'hello2'}], indirect=['stdin'])
+    def test_complex_duplicate_warning(self, stdin, complex_argspec):
+        """Test that the complex argspec issues a warning if we specify an option both with its canonical name and its alias"""
+        am = basic.AnsibleModule(**complex_argspec)
+        assert isinstance(am.params['foo'], str)
+        assert 'Both option foo and its alias dup are set.' in am._warnings
+        assert am.params['foo'] == 'hello2'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'test'}], indirect=['stdin'])
     def test_complex_type_fallback(self, mocker, stdin, complex_argspec):

@@ -1,6 +1,8 @@
 import pytest
 import unittest
 
+from mock import patch
+
 import ansible.modules.cloud.amazon.ec2_vpc_nat_gateway as ng
 
 
@@ -40,7 +42,8 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
         self.assertTrue(success)
         self.assertEqual(gws, should_return)
 
-    def test_wait_for_status_to_timeout(self):
+    @patch('time.sleep')
+    def test_wait_for_status_to_timeout(self, mock_sleep):
         client = boto3.client('ec2', region_name=aws_region)
         success, err_msg, gws = (
             ng.wait_for_status(

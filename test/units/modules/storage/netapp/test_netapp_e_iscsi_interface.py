@@ -1,21 +1,11 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from mock import MagicMock
-
-from ansible.module_utils import basic, netapp
-from ansible.modules.storage.netapp import netapp_e_host
-from ansible.modules.storage.netapp.netapp_e_host import Host
 from ansible.modules.storage.netapp.netapp_e_iscsi_interface import IscsiInterface
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
-import unittest
 import mock
-import pytest
-import json
-from units.compat.mock import patch
-from ansible.module_utils._text import to_bytes
 
 
 class IscsiInterfaceTest(ModuleTestCase):

@@ -110,7 +110,7 @@ class Display(with_metaclass(Singleton, object)):
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
                 self.cows_available = set([to_text(c) for c in out.split()])
-                if C.ANSIBLE_COW_WHITELIST:
+                if C.ANSIBLE_COW_WHITELIST and any(C.ANSIBLE_COW_WHITELIST):
                     self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
             except Exception:
                 # could not execute cowsay for some reason
@@ -129,7 +129,7 @@ class Display(with_metaclass(Singleton, object)):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
@@ -140,7 +140,7 @@ class Display(with_metaclass(Singleton, object)):
             msg = stringc(msg, color)
 
         if not log_only:
-            if not msg.endswith(u'\n'):
+            if not msg.endswith(u'\n') and newline:
                 msg2 = msg + u'\n'
             else:
                 msg2 = msg

@@ -119,8 +119,8 @@ EXAMPLES = r'''
 
 - name: Insert/Update configuration using a local file and validate it
   blockinfile:
-    block: "{{ lookup('file', './local/ssh_config') }}"
-    dest: /etc/ssh/ssh_config
+    block: "{{ lookup('file', './local/sshd_config') }}"
+    dest: /etc/ssh/sshd_config
     backup: yes
     validate: /usr/sbin/sshd -T -f %s
 
@@ -145,10 +145,10 @@ EXAMPLES = r'''
     block: |
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
-  with_items:
-  - { name: host1, ip: 10.10.1.10 }
-  - { name: host2, ip: 10.10.1.11 }
-  - { name: host3, ip: 10.10.1.12 }
+  loop:
+    - { name: host1, ip: 10.10.1.10 }
+    - { name: host2, ip: 10.10.1.11 }
+    - { name: host3, ip: 10.10.1.12 }
 '''
 
 import re

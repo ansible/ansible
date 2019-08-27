@@ -1,0 +1,12 @@
+---
+- debug:
+    msg: "Start junos_vlans base config ansible_connection={{ ansible_connection }}"
+
+- name: Configure base vlans
+  junos_config:
+    lines:
+      - set vlans vlan1 vlan-id 1
+      - set vlans vlan2 vlan-id 2
+
+- debug:
+    msg: "End junos_vlans base config ansible_connection={{ ansible_connection }}"

@@ -1,5 +1,5 @@
-Sanity Tests » pep8
-===================
+pep8
+====
 
 Python static analysis for PEP 8 style guideline compliance.
 

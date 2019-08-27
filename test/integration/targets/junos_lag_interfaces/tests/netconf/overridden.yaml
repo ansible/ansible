@@ -1,0 +1,62 @@
+---
+- debug:
+    msg: "START junos_lag_interfaces overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_overridden_output:
+      - name: ae1
+        members:
+          - member: ge-0/0/2
+        mode: active
+
+- block:
+    - name: Base LAG configuration
+      junos_lag_interfaces:
+        config:
+          - name: ae1
+            members:
+              - member: ge-0/0/1
+              - member: ge-0/0/2
+            mode: active
+          - name: ae2
+            link_protection: True
+            members:
+              - member: ge-0/0/3
+                link_type: primary
+              - member: ge-0/0/4
+                link_type: backup
+            mode: passive
+        state: merged
+
+    - name: Override the provided configuration with the exisiting running configuration
+      junos_lag_interfaces: &overridden
+        config:
+          - name: ae1
+            members:
+              - member: ge-0/0/2
+            mode: active
+        state: overridden
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_overridden_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Override the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_lag_interfaces: *overridden
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_lag_interfaces overridden integration tests on connection={{ ansible_connection }}"

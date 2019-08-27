@@ -92,6 +92,11 @@ options:
           - Do not use cache when building an image.
         type: bool
         default: no
+      etc_hosts:
+        description:
+          - Extra hosts to add to C(/etc/hosts) in building containers, as a mapping of hostname to IP address.
+        type: dict
+        version_added: "2.9"
       args:
         description:
           - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
@@ -324,6 +329,7 @@ requirements:
 author:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
+  - Sorin Sbarnea (@ssbarnea)
 
 '''
 
@@ -355,6 +361,8 @@ EXAMPLES = '''
   docker_image:
     name: myimage:7.1.2
     repository: myimage:latest
+    # As 'latest' usually already is present, we need to enable overwriting of existing tags:
+    force_tag: yes
     source: local
 
 - name: Remove image
@@ -424,7 +432,13 @@ import traceback
 from distutils.version import LooseVersion
 
 from ansible.module_utils.docker.common import (
-    docker_version, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
+    clean_dict_booleans_for_docker_api,
+    docker_version,
+    AnsibleDockerClient,
+    DockerBaseClass,
+    is_image_name_id,
+    is_valid_tag,
+    RequestException,
 )
 from ansible.module_utils._text import to_native
 
@@ -464,6 +478,7 @@ class ImageManager(DockerBaseClass):
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
         self.network = build.get('network')
+        self.extra_hosts = clean_dict_booleans_for_docker_api(build.get('etc_hosts'))
         self.nocache = build.get('nocache', False)
         self.build_path = build.get('path')
         self.pull = build.get('pull')
@@ -733,6 +748,8 @@ class ImageManager(DockerBaseClass):
             params['cache_from'] = self.cache_from
         if self.network:
             params['network_mode'] = self.network
+        if self.extra_hosts:
+            params['extra_hosts'] = self.extra_hosts
         if self.use_config_proxy:
             params['use_config_proxy'] = self.use_config_proxy
             # Due to a bug in docker-py, it will crash if
@@ -808,6 +825,7 @@ def main():
             args=dict(type='dict'),
             use_config_proxy=dict(type='bool'),
             target=dict(type='str'),
+            etc_hosts=dict(type='dict'),
         )),
         archive_path=dict(type='path'),
         container_limits=dict(type='dict', options=dict(
@@ -854,11 +872,15 @@ def main():
     def detect_use_config_proxy(client):
         return client.module.params['build'] and client.module.params['build'].get('use_config_proxy') is not None
 
+    def detect_etc_hosts(client):
+        return client.module.params['build'] and bool(client.module.params['build'].get('etc_hosts'))
+
     option_minimal_versions = dict()
     option_minimal_versions["build.cache_from"] = dict(docker_py_version='2.1.0', docker_api_version='1.25', detect_usage=detect_build_cache_from)
     option_minimal_versions["build.network"] = dict(docker_py_version='2.4.0', docker_api_version='1.25', detect_usage=detect_build_network)
     option_minimal_versions["build.target"] = dict(docker_py_version='2.4.0', detect_usage=detect_build_target)
     option_minimal_versions["build.use_config_proxy"] = dict(docker_py_version='3.7.0', detect_usage=detect_use_config_proxy)
+    option_minimal_versions["build.etc_hosts"] = dict(docker_py_version='2.6.0', docker_api_version='1.27', detect_usage=detect_etc_hosts)
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
@@ -878,6 +900,9 @@ def main():
         client.module.warn('The "use_tls" option has been deprecated for a long time '
                            'and will be removed in Ansible 2.11. Please use the'
                            '"tls" and "tls_verify" options instead.')
+
+    if not is_valid_tag(client.module.params['tag'], allow_empty=True):
+        client.fail('"{0}" is not a valid docker tag!'.format(client.module.params['tag']))
 
     build_options = dict(
         container_limits='container_limits',
@@ -942,6 +967,8 @@ def main():
         client.module.exit_json(**results)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

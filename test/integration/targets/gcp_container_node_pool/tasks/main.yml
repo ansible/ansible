@@ -50,7 +50,7 @@
     that:
       - result.changed == true
 - name: verify that node_pool was created
-  gcp_container_node_pool_facts:
+  gcp_container_node_pool_info:
       cluster: "{{ cluster }}"
       location: us-central1-a
       project: "{{ gcp_project }}"
@@ -96,7 +96,7 @@
     that:
       - result.changed == true
 - name: verify that node_pool was deleted
-  gcp_container_node_pool_facts:
+  gcp_container_node_pool_info:
       cluster: "{{ cluster }}"
       location: us-central1-a
       project: "{{ gcp_project }}"

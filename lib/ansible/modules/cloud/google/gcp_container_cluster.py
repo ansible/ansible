@@ -47,16 +47,19 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - The name of this cluster. The name must be unique within this project and location,
       and can be up to 40 characters. Must be Lowercase letters, numbers, and hyphens
       only. Must start with a letter. Must end with a number or a letter.
     required: false
+    type: str
   description:
     description:
     - An optional description of this cluster.
     required: false
+    type: str
   initial_node_count:
     description:
     - The number of nodes to create in this cluster. You must ensure that your Compute
@@ -67,6 +70,7 @@ options:
       name. Do not use this and a nodePool at the same time.
     - This field has been deprecated. Please use nodePool.initial_node_count instead.
     required: false
+    type: int
   node_config:
     description:
     - Parameters used in creating the cluster's nodes.
@@ -77,17 +81,20 @@ options:
       the node configuration of the first node pool. If unspecified, the defaults
       are used.
     required: false
+    type: dict
     suboptions:
       machine_type:
         description:
         - The name of a Google Compute Engine machine type (e.g.
         - n1-standard-1). If unspecified, the default machine type is n1-standard-1.
         required: false
+        type: str
       disk_size_gb:
         description:
         - Size of the disk attached to each node, specified in GB. The smallest allowed
           disk size is 10GB. If unspecified, the default disk size is 100GB.
         required: false
+        type: int
       oauth_scopes:
         description:
         - The set of Google API scopes to be made available on all of the node VMs
@@ -100,11 +107,13 @@ options:
         - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring
           are enabled, in which case their required scopes will be added.
         required: false
+        type: list
       service_account:
         description:
         - The Google Cloud Platform Service Account to be used by the node VMs. If
           no Service Account is specified, the "default" service account is used.
         required: false
+        type: str
       metadata:
         description:
         - The metadata key/value pairs assigned to instances in the cluster.
@@ -120,11 +129,13 @@ options:
         - 'An object containing a list of "key": value pairs.'
         - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
         required: false
+        type: dict
       image_type:
         description:
         - The image type to use for this node. Note that for a given image type, the
           latest version of it will be used.
         required: false
+        type: str
       labels:
         description:
         - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
@@ -136,6 +147,7 @@ options:
           An object containing a list of "key": value pairs.'
         - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
         required: false
+        type: dict
       local_ssd_count:
         description:
         - The number of local SSD disks to be attached to the node.
@@ -143,6 +155,7 @@ options:
           available on a machine per zone. See: U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)
           for more information.'
         required: false
+        type: int
       tags:
         description:
         - The list of instance tags applied to all nodes. Tags are used to identify
@@ -150,6 +163,7 @@ options:
           client during cluster or node pool creation. Each tag within the list must
           comply with RFC1035.
         required: false
+        type: list
       preemptible:
         description:
         - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
@@ -161,27 +175,32 @@ options:
         - A list of hardware accelerators to be attached to each node. See U(https://cloud.google.com/compute/docs/gpus)
           for more information about support for GPUs.
         required: false
+        type: list
         version_added: 2.9
         suboptions:
           accelerator_count:
             description:
             - The number of accelerator cards exposed to an instance.
             required: false
+            type: str
           accelerator_type:
             description:
             - The accelerator type resource name.
             required: false
+            type: str
       disk_type:
         description:
         - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')
           If unspecified, the default disk type is 'pd-standard' .
         required: false
+        type: str
         version_added: 2.9
       min_cpu_platform:
         description:
         - Minimum CPU platform to be used by this instance. The instance may be scheduled
           on the specified or newer CPU platform.
         required: false
+        type: str
         version_added: 2.9
       taints:
         description:
@@ -189,43 +208,51 @@ options:
         - 'For more information, including usage and the valid values, see: U(https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
           .'
         required: false
+        type: list
         version_added: 2.9
         suboptions:
           key:
             description:
             - Key for taint.
             required: false
+            type: str
           value:
             description:
             - Value for taint.
             required: false
+            type: str
           effect:
             description:
             - Effect for taint.
             - 'Some valid choices include: "EFFECT_UNSPECIFIED", "NO_SCHEDULE", "PREFER_NO_SCHEDULE",
               "NO_EXECUTE"'
             required: false
+            type: str
   master_auth:
     description:
     - The authentication information for accessing the master endpoint.
     required: false
+    type: dict
     suboptions:
       username:
         description:
         - The username to use for HTTP basic authentication to the master endpoint.
         required: false
+        type: str
       password:
         description:
         - The password to use for HTTP basic authentication to the master endpoint.
           Because the master endpoint is open to the Internet, you should create a
           strong password with a minimum of 16 characters.
         required: false
+        type: str
       client_certificate_config:
         description:
         - Configuration for client certificate authentication on the cluster. For
           clusters before v1.12, if no configuration is specified, a client certificate
           is issued.
         required: false
+        type: dict
         version_added: 2.9
         suboptions:
           issue_client_certificate:
@@ -241,6 +268,7 @@ options:
     - if left as an empty string,logging.googleapis.com will be used.
     - 'Some valid choices include: "logging.googleapis.com", "none"'
     required: false
+    type: str
   monitoring_service:
     description:
     - The monitoring service the cluster should use to write metrics.
@@ -250,15 +278,18 @@ options:
     - if left as an empty string, monitoring.googleapis.com will be used.
     - 'Some valid choices include: "monitoring.googleapis.com", "none"'
     required: false
+    type: str
   network:
     description:
     - The name of the Google Compute Engine network to which the cluster is connected.
       If left unspecified, the default network will be used.
     required: false
+    type: str
   private_cluster_config:
     description:
     - Configuration for a private cluster.
     required: false
+    type: dict
     version_added: 2.8
     suboptions:
       enable_private_nodes:
@@ -280,22 +311,26 @@ options:
           set of masters, as well as the ILB VIP. This range must not overlap with
           any other ranges in use within the cluster's network.
         required: false
+        type: str
   cluster_ipv4_cidr:
     description:
     - The IP address range of the container pods in this cluster, in CIDR notation
       (e.g. 10.96.0.0/14). Leave blank to have one automatically chosen or specify
       a /14 block in 10.0.0.0/8.
     required: false
+    type: str
   addons_config:
     description:
     - Configurations for the various addons available to run in the cluster.
     required: false
+    type: dict
     suboptions:
       http_load_balancing:
         description:
         - Configuration for the HTTP (L7) load balancing controller addon, which makes
           it easy to set up HTTP load balancers for services in a cluster.
         required: false
+        type: dict
         suboptions:
           disabled:
             description:
@@ -310,6 +345,7 @@ options:
           or decreases the number of replica pods a replication controller has based
           on the resource usage of the existing pods.
         required: false
+        type: dict
         suboptions:
           disabled:
             description:
@@ -324,6 +360,7 @@ options:
           or not on the Master, it does not track whether network policy is enabled
           for the nodes.
         required: false
+        type: dict
         version_added: 2.9
         suboptions:
           disabled:
@@ -335,11 +372,13 @@ options:
     description:
     - The name of the Google Compute Engine subnetwork to which the cluster is connected.
     required: false
+    type: str
   locations:
     description:
     - The list of Google Compute Engine zones in which the cluster's nodes should
       be located.
     required: false
+    type: list
     aliases:
     - nodeLocations
     version_added: 2.9
@@ -348,11 +387,13 @@ options:
     - The resource labels for the cluster to use to annotate any related Google Compute
       Engine resources.
     required: false
+    type: dict
     version_added: 2.9
   legacy_abac:
     description:
     - Configuration for the legacy ABAC authorization mode.
     required: false
+    type: dict
     version_added: 2.9
     suboptions:
       enabled:
@@ -367,6 +408,7 @@ options:
     description:
     - Configuration options for the NetworkPolicy feature.
     required: false
+    type: dict
     version_added: 2.9
     suboptions:
       provider:
@@ -374,6 +416,7 @@ options:
         - The selected network policy provider.
         - 'Some valid choices include: "PROVIDER_UNSPECIFIED", "CALICO"'
         required: false
+        type: str
       enabled:
         description:
         - Whether network policy is enabled on the cluster.
@@ -385,12 +428,88 @@ options:
       on a node in the node pool of this cluster.
     - Only honored if cluster created with IP Alias support.
     required: false
+    type: dict
     version_added: 2.9
     suboptions:
       max_pods_per_node:
         description:
         - Constraint enforced on the max num of pods per node.
         required: false
+        type: str
+  ip_allocation_policy:
+    description:
+    - Configuration for controlling how IPs are allocated in the cluster.
+    required: false
+    type: dict
+    version_added: 2.9
+    suboptions:
+      use_ip_aliases:
+        description:
+        - Whether alias IPs will be used for pod IPs in the cluster.
+        required: false
+        type: bool
+      create_subnetwork:
+        description:
+        - Whether a new subnetwork will be created automatically for the cluster.
+        required: false
+        type: bool
+      subnetwork_name:
+        description:
+        - A custom subnetwork name to be used if createSubnetwork is true.
+        - If this field is empty, then an automatic name will be chosen for the new
+          subnetwork.
+        required: false
+        type: str
+      cluster_secondary_range_name:
+        description:
+        - The name of the secondary range to be used for the cluster CIDR block. The
+          secondary range will be used for pod IP addresses.
+        - This must be an existing secondary range associated with the cluster subnetwork
+          .
+        required: false
+        type: str
+      services_secondary_range_name:
+        description:
+        - The name of the secondary range to be used as for the services CIDR block.
+          The secondary range will be used for service ClusterIPs. This must be an
+          existing secondary range associated with the cluster subnetwork.
+        required: false
+        type: str
+      cluster_ipv4_cidr_block:
+        description:
+        - The IP address range for the cluster pod IPs. If this field is set, then
+          cluster.cluster_ipv4_cidr must be left blank.
+        - This field is only applicable when useIpAliases is true.
+        - Set to blank to have a range chosen with the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
+      node_ipv4_cidr_block:
+        description:
+        - The IP address range of the instance IPs in this cluster.
+        - This is applicable only if createSubnetwork is true.
+        - Set to blank to have a range chosen with the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
+      services_ipv4_cidr_block:
+        description:
+        - The IP address range of the services IPs in this cluster. If blank, a range
+          will be automatically chosen with the default size.
+        - This field is only applicable when useIpAliases is true.
+        - Set to blank to have a range chosen with the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
+      tpu_ipv4_cidr_block:
+        description:
+        - The IP address range of the Cloud TPUs in this cluster. If unspecified,
+          a range will be automatically chosen with the default size.
+        - This field is only applicable when useIpAliases is true.
+        - If unspecified, the range will use the default size.
+        - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+        required: false
+        type: str
   enable_tpu:
     description:
     - Enable the ability to use Cloud TPUs in this cluster.
@@ -401,11 +520,13 @@ options:
     description:
     - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
     required: false
+    type: str
     version_added: 2.9
   location:
     description:
     - The location where the cluster is deployed.
     required: true
+    type: str
     aliases:
     - zone
     version_added: 2.8
@@ -416,12 +537,14 @@ options:
     - Any existing file at this path will be completely overwritten.
     - This requires the PyYaml library.
     required: false
+    type: str
     version_added: 2.9
   kubectl_context:
     description:
     - The name of the context for the kubectl config file. Will default to the cluster
       name.
     required: false
+    type: str
     version_added: 2.9
 extends_documentation_fragment: gcp
 '''
@@ -844,6 +967,79 @@ defaultMaxPodsConstraint:
       - Constraint enforced on the max num of pods per node.
       returned: success
       type: str
+ipAllocationPolicy:
+  description:
+  - Configuration for controlling how IPs are allocated in the cluster.
+  returned: success
+  type: complex
+  contains:
+    useIpAliases:
+      description:
+      - Whether alias IPs will be used for pod IPs in the cluster.
+      returned: success
+      type: bool
+    createSubnetwork:
+      description:
+      - Whether a new subnetwork will be created automatically for the cluster.
+      returned: success
+      type: bool
+    subnetworkName:
+      description:
+      - A custom subnetwork name to be used if createSubnetwork is true.
+      - If this field is empty, then an automatic name will be chosen for the new
+        subnetwork.
+      returned: success
+      type: str
+    clusterSecondaryRangeName:
+      description:
+      - The name of the secondary range to be used for the cluster CIDR block. The
+        secondary range will be used for pod IP addresses.
+      - This must be an existing secondary range associated with the cluster subnetwork
+        .
+      returned: success
+      type: str
+    servicesSecondaryRangeName:
+      description:
+      - The name of the secondary range to be used as for the services CIDR block.
+        The secondary range will be used for service ClusterIPs. This must be an existing
+        secondary range associated with the cluster subnetwork.
+      returned: success
+      type: str
+    clusterIpv4CidrBlock:
+      description:
+      - The IP address range for the cluster pod IPs. If this field is set, then cluster.cluster_ipv4_cidr
+        must be left blank.
+      - This field is only applicable when useIpAliases is true.
+      - Set to blank to have a range chosen with the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
+    nodeIpv4CidrBlock:
+      description:
+      - The IP address range of the instance IPs in this cluster.
+      - This is applicable only if createSubnetwork is true.
+      - Set to blank to have a range chosen with the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
+    servicesIpv4CidrBlock:
+      description:
+      - The IP address range of the services IPs in this cluster. If blank, a range
+        will be automatically chosen with the default size.
+      - This field is only applicable when useIpAliases is true.
+      - Set to blank to have a range chosen with the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
+    tpuIpv4CidrBlock:
+      description:
+      - The IP address range of the Cloud TPUs in this cluster. If unspecified, a
+        range will be automatically chosen with the default size.
+      - This field is only applicable when useIpAliases is true.
+      - If unspecified, the range will use the default size.
+      - Set to /netmask (e.g. /14) to have a range chosen with a specific netmask.
+      returned: success
+      type: str
 endpoint:
   description:
   - The IP address of this cluster's master endpoint.
@@ -1025,6 +1221,20 @@ def main():
             legacy_abac=dict(type='dict', options=dict(enabled=dict(type='bool'))),
             network_policy=dict(type='dict', options=dict(provider=dict(type='str'), enabled=dict(type='bool'))),
             default_max_pods_constraint=dict(type='dict', options=dict(max_pods_per_node=dict(type='str'))),
+            ip_allocation_policy=dict(
+                type='dict',
+                options=dict(
+                    use_ip_aliases=dict(type='bool'),
+                    create_subnetwork=dict(type='bool'),
+                    subnetwork_name=dict(type='str'),
+                    cluster_secondary_range_name=dict(type='str'),
+                    services_secondary_range_name=dict(type='str'),
+                    cluster_ipv4_cidr_block=dict(type='str'),
+                    node_ipv4_cidr_block=dict(type='str'),
+                    services_ipv4_cidr_block=dict(type='str'),
+                    tpu_ipv4_cidr_block=dict(type='str'),
+                ),
+            ),
             enable_tpu=dict(type='bool'),
             tpu_ipv4_cidr_block=dict(type='str'),
             location=dict(required=True, type='str', aliases=['zone']),
@@ -1100,6 +1310,7 @@ def resource_to_request(module):
         u'legacyAbac': ClusterLegacyabac(module.params.get('legacy_abac', {}), module).to_request(),
         u'networkPolicy': ClusterNetworkpolicy(module.params.get('network_policy', {}), module).to_request(),
         u'defaultMaxPodsConstraint': ClusterDefaultmaxpodsconstraint(module.params.get('default_max_pods_constraint', {}), module).to_request(),
+        u'ipAllocationPolicy': ClusterIpallocationpolicy(module.params.get('ip_allocation_policy', {}), module).to_request(),
         u'enableTpu': module.params.get('enable_tpu'),
         u'tpuIpv4CidrBlock': module.params.get('tpu_ipv4_cidr_block'),
     }
@@ -1186,6 +1397,7 @@ def response_to_hash(module, response):
         u'legacyAbac': ClusterLegacyabac(response.get(u'legacyAbac', {}), module).from_response(),
         u'networkPolicy': ClusterNetworkpolicy(response.get(u'networkPolicy', {}), module).from_response(),
         u'defaultMaxPodsConstraint': ClusterDefaultmaxpodsconstraint(response.get(u'defaultMaxPodsConstraint', {}), module).from_response(),
+        u'ipAllocationPolicy': ClusterIpallocationpolicy(response.get(u'ipAllocationPolicy', {}), module).from_response(),
         u'endpoint': response.get(u'endpoint'),
         u'initialClusterVersion': response.get(u'initialClusterVersion'),
         u'currentMasterVersion': response.get(u'currentMasterVersion'),
@@ -1621,6 +1833,45 @@ class ClusterDefaultmaxpodsconstraint(object):
 
     def from_response(self):
         return remove_nones_from_dict({u'maxPodsPerNode': self.request.get(u'maxPodsPerNode')})
+
+
+class ClusterIpallocationpolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'useIpAliases': self.request.get('use_ip_aliases'),
+                u'createSubnetwork': self.request.get('create_subnetwork'),
+                u'subnetworkName': self.request.get('subnetwork_name'),
+                u'clusterSecondaryRangeName': self.request.get('cluster_secondary_range_name'),
+                u'servicesSecondaryRangeName': self.request.get('services_secondary_range_name'),
+                u'clusterIpv4CidrBlock': self.request.get('cluster_ipv4_cidr_block'),
+                u'nodeIpv4CidrBlock': self.request.get('node_ipv4_cidr_block'),
+                u'servicesIpv4CidrBlock': self.request.get('services_ipv4_cidr_block'),
+                u'tpuIpv4CidrBlock': self.request.get('tpu_ipv4_cidr_block'),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'useIpAliases': self.request.get(u'useIpAliases'),
+                u'createSubnetwork': self.request.get(u'createSubnetwork'),
+                u'subnetworkName': self.request.get(u'subnetworkName'),
+                u'clusterSecondaryRangeName': self.request.get(u'clusterSecondaryRangeName'),
+                u'servicesSecondaryRangeName': self.request.get(u'servicesSecondaryRangeName'),
+                u'clusterIpv4CidrBlock': self.request.get(u'clusterIpv4CidrBlock'),
+                u'nodeIpv4CidrBlock': self.request.get(u'nodeIpv4CidrBlock'),
+                u'servicesIpv4CidrBlock': self.request.get(u'servicesIpv4CidrBlock'),
+                u'tpuIpv4CidrBlock': self.request.get(u'tpuIpv4CidrBlock'),
+            }
+        )
 
 
 class ClusterConditionsArray(object):

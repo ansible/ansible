@@ -131,6 +131,34 @@ options:
         description:
             - Set a release version
         version_added: "2.8"
+    syspurpose:
+        description:
+            - Set syspurpose attributes in file C(/etc/rhsm/syspurpose/syspurpose.json)
+              and synchronize these attributes with RHSM server. Syspurpose attributes help attach
+              the most appropriate subscriptions to the system automatically. When C(syspurpose.json) file
+              already contains some attributes, then new attributes overwrite existing attributes.
+              When some attribute is not listed in the new list of attributes, the existing
+              attribute will be removed from C(syspurpose.json) file. Unknown attributes are ignored.
+        type: dict
+        default: {}
+        version_added: "2.9"
+        suboptions:
+            usage:
+                description: Syspurpose attribute usage
+            role:
+                description: Syspurpose attribute role
+            service_level_agreement:
+                description: Syspurpose attribute service_level_agreement
+            addons:
+                description: Syspurpose attribute addons
+                type: list
+            sync:
+                description:
+                    - When this option is true, then syspurpose attributes are synchronized with
+                      RHSM server immediately. When this option is false, then syspurpose attributes
+                      will be synchronized with RHSM server by rhsmcertd daemon.
+                type: bool
+                default: False
 '''
 
 EXAMPLES = '''
@@ -201,6 +229,21 @@ EXAMPLES = '''
     username: joe_user
     password: somepass
     release: 7.4
+
+- name: Register as user (joe_user) with password (somepass), set syspurpose attributes and synchronize them with server
+  redhat_subscription:
+    state: present
+    username: joe_user
+    password: somepass
+    auto_attach: true
+    syspurpose:
+      usage: "Production"
+      role: "Red Hat Enterprise Server"
+      service_level_agreement: "Premium"
+      addons:
+        - addon1
+        - addon2
+      sync: true
 '''
 
 RETURN = '''
@@ -213,10 +256,12 @@ subscribed_pool_ids:
     }
 '''
 
-import os
+from os.path import isfile
+from os import unlink
 import re
 import shutil
 import tempfile
+import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -227,6 +272,9 @@ SUBMAN_CMD = None
 
 
 class RegistrationBase(object):
+
+    REDHAT_REPO = "/etc/yum.repos.d/redhat.repo"
+
     def __init__(self, module, username=None, password=None):
         self.module = module
         self.username = username
@@ -237,9 +285,8 @@ class RegistrationBase(object):
 
     def enable(self):
         # Remove any existing redhat.repo
-        redhat_repo = '/etc/yum.repos.d/redhat.repo'
-        if os.path.isfile(redhat_repo):
-            os.unlink(redhat_repo)
+        if isfile(self.REDHAT_REPO):
+            unlink(self.REDHAT_REPO)
 
     def register(self):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -253,7 +300,7 @@ class RegistrationBase(object):
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
 
-        if os.path.isfile(plugin_conf):
+        if isfile(plugin_conf):
             tmpfd, tmpfile = tempfile.mkstemp()
             shutil.copy2(plugin_conf, tmpfile)
             cfg = configparser.ConfigParser()
@@ -294,14 +341,24 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
+
         args = [SUBMAN_CMD, 'config']
 
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--server.hostname'.
-        for k, v in kwargs.items():
+        options = []
+        for k, v in sorted(kwargs.items()):
             if re.search(r'^(server|rhsm)_', k) and v is not None:
-                args.append('--%s=%s' % (k.replace('_', '.', 1), v))
+                options.append('--%s=%s' % (k.replace('_', '.', 1), v))
+
+        # When there is nothing to configure, then it is not necessary
+        # to run config command, because it only returns current
+        # content of current configuration file
+        if len(options) == 0:
+            return
+
+        args.extend(options)
 
         self.module.run_command(args, check_rc=True)
 
@@ -449,9 +506,19 @@ class Rhsm(RegistrationBase):
         return []
 
     def subscribe_by_pool_ids(self, pool_ids):
-        for pool_id, quantity in pool_ids.items():
-            args = [SUBMAN_CMD, 'attach', '--pool', pool_id, '--quantity', quantity]
-            rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        """
+        Try to subscribe to the list of pool IDs
+        """
+        available_pools = RhsmPools(self.module)
+
+        available_pool_ids = [p.get_pool_id() for p in available_pools]
+
+        for pool_id, quantity in sorted(pool_ids.items()):
+            if pool_id in available_pool_ids:
+                args = [SUBMAN_CMD, 'attach', '--pool', pool_id, '--quantity', quantity]
+                rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+            else:
+                self.module.fail_json(msg='Pool ID: %s not in list of available pools' % pool_id)
         return pool_ids
 
     def subscribe_pool(self, regexp):
@@ -516,7 +583,7 @@ class Rhsm(RegistrationBase):
         serials = self.unsubscribe(serials=serials_to_remove)
 
         missing_pools = {}
-        for pool_id, quantity in pool_ids.items():
+        for pool_id, quantity in sorted(pool_ids.items()):
             if existing_pools.get(pool_id, 0) != quantity:
                 missing_pools[pool_id] = quantity
 
@@ -526,6 +593,13 @@ class Rhsm(RegistrationBase):
             changed = True
         return {'changed': changed, 'subscribed_pool_ids': missing_pools.keys(),
                 'unsubscribed_serials': serials}
+
+    def sync_syspurpose(self):
+        """
+        Try to synchronize syspurpose attributes with server
+        """
+        args = [SUBMAN_CMD, 'status']
+        rc, stdout, stderr = self.module.run_command(args, check_rc=False)
 
 
 class RhsmPool(object):
@@ -545,7 +619,7 @@ class RhsmPool(object):
         return getattr(self, 'PoolId', getattr(self, 'PoolID'))
 
     def subscribe(self):
-        args = "subscription-manager subscribe --pool %s" % self.get_pool_id()
+        args = "subscription-manager attach --pool %s" % self.get_pool_id()
         rc, stdout, stderr = self.module.run_command(args, check_rc=True)
         if rc == 0:
             return True
@@ -622,71 +696,124 @@ class RhsmPools(object):
                 yield product
 
 
+class SysPurpose(object):
+    """
+    This class is used for reading and writing to syspurpose.json file
+    """
+
+    SYSPURPOSE_FILE_PATH = "/etc/rhsm/syspurpose/syspurpose.json"
+
+    ALLOWED_ATTRIBUTES = ['role', 'usage', 'service_level_agreement', 'addons']
+
+    def __init__(self, path=None):
+        """
+        Initialize class used for reading syspurpose json file
+        """
+        self.path = path or self.SYSPURPOSE_FILE_PATH
+
+    def update_syspurpose(self, new_syspurpose):
+        """
+        Try to update current syspurpose with new attributes from new_syspurpose
+        """
+        syspurpose = {}
+        syspurpose_changed = False
+        for key, value in new_syspurpose.items():
+            if key in self.ALLOWED_ATTRIBUTES:
+                if value is not None:
+                    syspurpose[key] = value
+            elif key == 'sync':
+                pass
+            else:
+                raise KeyError("Attribute: %s not in list of allowed attributes: %s" %
+                               (key, self.ALLOWED_ATTRIBUTES))
+        current_syspurpose = self._read_syspurpose()
+        if current_syspurpose != syspurpose:
+            syspurpose_changed = True
+        # Update current syspurpose with new values
+        current_syspurpose.update(syspurpose)
+        # When some key is not listed in new syspurpose, then delete it from current syspurpose
+        # and ignore custom attributes created by user (e.g. "foo": "bar")
+        for key in list(current_syspurpose):
+            if key in self.ALLOWED_ATTRIBUTES and key not in syspurpose:
+                del current_syspurpose[key]
+        self._write_syspurpose(current_syspurpose)
+        return syspurpose_changed
+
+    def _write_syspurpose(self, new_syspurpose):
+        """
+        This function tries to update current new_syspurpose attributes to
+        json file.
+        """
+        with open(self.path, "w") as fp:
+            fp.write(json.dumps(new_syspurpose, indent=2, ensure_ascii=False, sort_keys=True))
+
+    def _read_syspurpose(self):
+        """
+        Read current syspurpuse from json file.
+        """
+        current_syspurpose = {}
+        try:
+            with open(self.path, "r") as fp:
+                content = fp.read()
+        except IOError:
+            pass
+        else:
+            current_syspurpose = json.loads(content)
+        return current_syspurpose
+
+
 def main():
 
     # Load RHSM configuration from file
     rhsm = Rhsm(None)
 
+    # Note: the default values for parameters are:
+    # 'type': 'str', 'default': None, 'required': False
+    # So there is no need to repeat these values for each parameter.
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(default='present',
-                       choices=['present', 'absent']),
-            username=dict(default=None,
-                          required=False),
-            password=dict(default=None,
-                          required=False,
-                          no_log=True),
-            server_hostname=dict(default=None,
-                                 required=False),
-            server_insecure=dict(default=None,
-                                 required=False),
-            rhsm_baseurl=dict(default=None,
-                              required=False),
-            rhsm_repo_ca_cert=dict(default=None, required=False),
-            auto_attach=dict(aliases=['autosubscribe'], default=False, type='bool'),
-            activationkey=dict(default=None,
-                               required=False,
-                               no_log=True),
-            org_id=dict(default=None,
-                        required=False),
-            environment=dict(default=None,
-                             required=False, type='str'),
-            pool=dict(default='^$',
-                      required=False,
-                      type='str'),
-            pool_ids=dict(default=[],
-                          required=False,
-                          type='list'),
-            consumer_type=dict(default=None,
-                               required=False),
-            consumer_name=dict(default=None,
-                               required=False),
-            consumer_id=dict(default=None,
-                             required=False),
-            force_register=dict(default=False,
-                                type='bool'),
-            server_proxy_hostname=dict(default=None,
-                                       required=False),
-            server_proxy_port=dict(default=None,
-                                   required=False),
-            server_proxy_user=dict(default=None,
-                                   required=False),
-            server_proxy_password=dict(default=None,
-                                       required=False,
-                                       no_log=True),
-            release=dict(default=None, required=False)
-        ),
+        argument_spec={
+            'state': {'default': 'present', 'choices': ['present', 'absent']},
+            'username': {},
+            'password': {'no_log': True},
+            'server_hostname': {},
+            'server_insecure': {},
+            'rhsm_baseurl': {},
+            'rhsm_repo_ca_cert': {},
+            'auto_attach': {'aliases': ['autosubscribe'], 'type': 'bool'},
+            'activationkey': {'no_log': True},
+            'org_id': {},
+            'environment': {},
+            'pool': {'default': '^$'},
+            'pool_ids': {'default': [], 'type': 'list'},
+            'consumer_type': {},
+            'consumer_name': {},
+            'consumer_id': {},
+            'force_register': {'default': False, 'type': 'bool'},
+            'server_proxy_hostname': {},
+            'server_proxy_port': {},
+            'server_proxy_user': {},
+            'server_proxy_password': {'no_log': True},
+            'release': {},
+            'syspurpose': {
+                'type': 'dict',
+                'options': {
+                    'role': {},
+                    'usage': {},
+                    'service_level_agreement': {},
+                    'addons': {'type': 'list'},
+                    'sync': {'type': 'bool', 'default': False}
+                }
+            }
+        },
         required_together=[['username', 'password'],
                            ['server_proxy_hostname', 'server_proxy_port'],
                            ['server_proxy_user', 'server_proxy_password']],
-
         mutually_exclusive=[['activationkey', 'username'],
                             ['activationkey', 'consumer_id'],
                             ['activationkey', 'environment'],
                             ['activationkey', 'autosubscribe'],
                             ['force', 'consumer_id'],
                             ['pool', 'pool_ids']],
-
         required_if=[['state', 'present', ['username', 'activationkey'], True]],
     )
 
@@ -710,7 +837,7 @@ def main():
         if isinstance(value, dict):
             if len(value) != 1:
                 module.fail_json(msg='Unable to parse pool_ids option.')
-            pool_id, quantity = value.items()[0]
+            pool_id, quantity = list(value.items())[0]
         else:
             pool_id, quantity = value, 1
         pool_ids[pool_id] = str(quantity)
@@ -723,15 +850,28 @@ def main():
     server_proxy_user = module.params['server_proxy_user']
     server_proxy_password = module.params['server_proxy_password']
     release = module.params['release']
+    syspurpose = module.params['syspurpose']
 
     global SUBMAN_CMD
     SUBMAN_CMD = module.get_bin_path('subscription-manager', True)
+
+    syspurpose_changed = False
+    if syspurpose is not None:
+        try:
+            syspurpose_changed = SysPurpose().update_syspurpose(syspurpose)
+        except Exception as err:
+            module.fail_json(msg="Failed to update syspurpose attributes: %s" % to_native(err))
 
     # Ensure system is registered
     if state == 'present':
 
         # Register system
         if rhsm.is_registered and not force_register:
+            if syspurpose and 'sync' in syspurpose and syspurpose['sync'] is True:
+                try:
+                    rhsm.sync_syspurpose()
+                except Exception as e:
+                    module.fail_json(msg="Failed to synchronize syspurpose attributes: %s" % to_native(e))
             if pool != '^$' or pool_ids:
                 try:
                     if pool_ids:
@@ -743,7 +883,10 @@ def main():
                 else:
                     module.exit_json(**result)
             else:
-                module.exit_json(changed=False, msg="System already registered.")
+                if syspurpose_changed is True:
+                    module.exit_json(changed=True, msg="Syspurpose attributes changed.")
+                else:
+                    module.exit_json(changed=False, msg="System already registered.")
         else:
             try:
                 rhsm.enable()
@@ -752,16 +895,21 @@ def main():
                               consumer_type, consumer_name, consumer_id, force_register,
                               environment, rhsm_baseurl, server_insecure, server_hostname,
                               server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password, release)
+                if syspurpose and 'sync' in syspurpose and syspurpose['sync'] is True:
+                    rhsm.sync_syspurpose()
                 if pool_ids:
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
-                else:
+                elif pool != '^$':
                     subscribed_pool_ids = rhsm.subscribe(pool)
+                else:
+                    subscribed_pool_ids = []
             except Exception as e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, to_native(e)))
             else:
                 module.exit_json(changed=True,
                                  msg="System successfully registered to '%s'." % server_hostname,
                                  subscribed_pool_ids=subscribed_pool_ids)
+
     # Ensure system is *not* registered
     if state == 'absent':
         if not rhsm.is_registered:

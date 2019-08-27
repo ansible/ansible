@@ -1,20 +1,20 @@
 - name: Check that becoming an non-existing user throws an error
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: present
     name: "{{ db_name }}"
     login_user: "{{ pg_user }}"
     session_role: "{{ db_session_role1 }}"
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.failed == True'
+      - result is failed
 
 - name: Create a high privileged user
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   postgresql_user:
     name: "{{ db_session_role1 }}"
@@ -25,7 +25,7 @@
     db: postgres
 
 - name: Create a low privileged user using the newly created user
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   postgresql_user:
     name: "{{ db_session_role2 }}"
@@ -38,7 +38,7 @@
 
 - name: Create DB as session_role
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: present
     name: "{{ db_session_role1 }}"
@@ -48,7 +48,7 @@
 
 - name: Check that database created and is owned by correct user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select rolname from pg_database join pg_roles on datdba = pg_roles.oid where datname = '{{ db_session_role1 }}';" | psql -AtXq postgres
   register: result
 
@@ -58,22 +58,22 @@
 
 - name: Fail when creating database as low privileged user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: present
     name: "{{ db_session_role2 }}"
     login_user: "{{ pg_user }}"
     session_role: "{{ db_session_role2 }}"
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.failed == True'
+      - result is failed
 
 - name: Create schema in own database
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_schema:
     database: "{{ db_session_role1 }}"
     login_user: "{{ pg_user }}"
@@ -82,7 +82,7 @@
 
 - name: Create schema in own database, should be owned by session_role
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_schema:
     database: "{{ db_session_role1 }}"
     login_user: "{{ pg_user }}"
@@ -92,35 +92,35 @@
 
 - assert:
     that:
-      - result.changed == False
+      - result is not changed
 
 - name: Fail when creating schema in postgres database as a regular user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_schema:
     database: postgres
     login_user: "{{ pg_user }}"
     name: "{{ db_session_role1 }}"
     session_role: "{{ db_session_role1 }}"
-  ignore_errors: True
+  ignore_errors: yes
   register: result
 
 - assert:
     that:
-      - 'result.failed == True'
+      - result is failed
 
 # PostgreSQL introduced extensions in 9.1, some checks are still run against older versions, therefore we need to ensure
 # we only run these tests against supported PostgreSQL databases
 
 - name: Check that pg_extension exists (postgresql >= 9.1)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select count(*) from pg_class where relname='pg_extension' and relkind='r'" | psql -AtXq postgres
   register: pg_extension
 
 - name: Remove plpgsql from testdb using postgresql_ext
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_ext:
     name: plpgsql
     db: "{{ db_session_role1 }}"
@@ -131,26 +131,26 @@
 
 - name: Fail when trying to create an extension as a mere mortal user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_ext:
     name: plpgsql
     db: "{{ db_session_role1 }}"
     login_user: "{{ pg_user }}"
     session_role: "{{ db_session_role2 }}"
-  ignore_errors: True
+  ignore_errors: yes
   register: result
   when:
      "pg_extension.stdout_lines[-1] == '1'"
 
 - assert:
     that:
-      - 'result.failed == True'
+      - result is failed
   when:
      "pg_extension.stdout_lines[-1] == '1'"
 
 - name: Install extension as session_role
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_ext:
     name: plpgsql
     db: "{{ db_session_role1 }}"
@@ -161,7 +161,7 @@
 
 - name: Check that extension is created and is owned by session_role
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select rolname from pg_extension join pg_roles on extowner=pg_roles.oid where extname='plpgsql';" | psql -AtXq "{{ db_session_role1 }}"
   register: result
   when:
@@ -175,7 +175,7 @@
 
 - name: Remove plpgsql from testdb using postgresql_ext
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_ext:
     name: plpgsql
     db: "{{ db_session_role1 }}"
@@ -188,12 +188,12 @@
 
 - name: Create table to be able to grant privileges
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "CREATE TABLE test(i int); CREATE TABLE test2(i int);" | psql -AtXq "{{ db_session_role1 }}"
 
 - name: Grant all privileges on test1 table to low privileged user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     db: "{{ db_session_role1 }}"
     type: table
@@ -205,7 +205,7 @@
 
 - name: Verify admin option was successful for grants
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     db: "{{ db_session_role1 }}"
     type: table
@@ -217,7 +217,7 @@
 
 - name: Verify no grants can be granted for test2 table
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     db: "{{ db_session_role1 }}"
     type: table
@@ -226,23 +226,23 @@
     login_user: "{{ pg_user }}"
     privs: update
     session_role: "{{ db_session_role2 }}"
-  ignore_errors: True
+  ignore_errors: yes
   register: result
 
 - assert:
     that:
-      - 'result.failed == True'
+      - result is failed
 
 - name: Drop test db
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: absent
     name: "{{ db_session_role1 }}"
     login_user: "{{ pg_user }}"
 
 - name: Drop test users
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   postgresql_user:
     name: "{{ item }}"

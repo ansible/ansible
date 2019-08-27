@@ -72,13 +72,13 @@ Command line facts
 Python Interpreter Discovery
 ============================
 
-In Ansible 2.7 and earlier, Ansible defaulted to ``usr/bin/python`` as the
+In Ansible 2.7 and earlier, Ansible defaulted to :command:`/usr/bin/python` as the
 setting for ``ansible_python_interpreter``. If you ran Ansible against a system
 that installed Python with a different name or a different path, your playbooks
 would fail with ``/usr/bin/python: bad interpreter: No such file or directory``
 unless you either set ``ansible_python_interpreter`` to the correct value for
 that system or added a Python interpreter and any necessary dependencies at
-``usr/bin/python``.
+:command:`usr/bin/python`.
 
 Starting in Ansible 2.8, Ansible searches for the correct path and executable
 name for Python on each target system, first in a lookup table of default
@@ -100,40 +100,43 @@ If you prefer to use the Python interpreter discovery behavior, use
 one of the four new values for ``ansible_python_interpreter`` introduced in
 Ansible 2.8:
 
-+---------------------------+-----------------------------------------------+
-| New value                 | Behavior                                      |
-+===========================+===============================================+
-| | auto                    | | If a Python interpreter is discovered,      |
-| | (future default)        | | Ansible uses the discovered Python, even if |
-| |                         | | ``/usr/bin/python`` is also present. Warns  |
-| |                         | | when using the fallback list.               |
-+---------------------------+-----------------------------------------------+
-| | **auto_legacy**         | | If a Python interpreter is discovered, and  |
-| | (Ansible 2.8 default)   | | ``/usr/bin/python`` is absent, Ansible      |
-| |                         | | uses the discovered Python. Warns when      |
-| |                         | | using the fallback list.                    |
-| |                         | |                                             |
-| |                         | | If a Python interpreter is discovered, and  |
-| |                         | | ``/usr/bin/python`` is present, Ansible     |
-| |                         | | uses ``/usr/bin/python`` and prints a       |
-| |                         | | deprecation warning about future default    |
-| |                         | | behavior. Warns when using the fallback     |
-| |                         | | list.                                       |
-+---------------------------+-----------------------------------------------+
-| | auto_legacy_silent      | | Behaves like ``auto_legacy`` but suppresses |
-| |                         | | the deprecation and fallback-list warnings. |
-+---------------------------+-----------------------------------------------+
-| | auto_silent             | | Behaves like ``auto`` but suppresses the    |
-| |                         | | fallback-list warning.                      |
-+---------------------------+-----------------------------------------------+
++---------------------------+---------------------------------------------+
+| New value                 | Behavior                                    |
++===========================+=============================================+
+| auto |br|                 | If a Python interpreter is discovered,      |
+| (future default)          | Ansible uses the discovered Python, even if |
+|                           | :command:`/usr/bin/python` is also present. |
+|                           | Warns when using the fallback list.         |
++---------------------------+---------------------------------------------+
+| **auto_legacy** |br|      | If a Python interpreter is discovered, and  |
+| (Ansible 2.8 default)     | :command:`/usr/bin/python` is absent,       |
+|                           | Ansible uses the discovered Python. Warns   |
+|                           | when using the fallback list.               |
+|                           |                                             |
+|                           | If a Python interpreter is discovered, and  |
+|                           | :command:`/usr/bin/python` is present,      |
+|                           | Ansible uses :command:`/usr/bin/python` and |
+|                           | prints a deprecation warning about future   |
+|                           | default behavior. Warns when using the      |
+|                           | fallback list.                              |
++---------------------------+---------------------------------------------+
+| auto_legacy_silent        | Behaves like ``auto_legacy`` but suppresses |
+|                           | the deprecation and fallback-list warnings. |
++---------------------------+---------------------------------------------+
+| auto_silent               | Behaves like ``auto`` but suppresses the    |
+|                           | fallback-list warning.                      |
++---------------------------+---------------------------------------------+
 
-Starting with Ansible 2.12, Ansible will use the discovered Python interpreter
-by default, whether or not ``/usr/bin/python`` is also present. Until then,
-the default ``auto_legacy`` setting provides compatibility with
-previous versions of Ansible that always defaulted to ``/usr/bin/python``.
+
+In Ansible 2.12, Ansible will switch the default from :literal:`auto_legacy` to :literal:`auto`.
+The difference in behaviour is that :literal:`auto_legacy` uses :command:`/usr/bin/python` if
+present and falls back to the discovered Python when it is not present.  :literal:`auto` will always
+use the discovered Python, regardless of whether :command:`/usr/bin/python` exists.  The
+:literal:`auto_legacy` setting provides compatibility with previous versions of Ansible that always
+defaulted to :command:`/usr/bin/python`.
 
 If you installed Python and dependencies (``boto``, etc.) to
-``/usr/bin/python`` as a workaround on distros with a different default Python
+:command:`/usr/bin/python` as a workaround on distros with a different default Python
 interpreter (for example, Ubuntu 16.04+, RHEL8, Fedora 23+), you have two
 options:
 

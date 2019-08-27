@@ -121,7 +121,7 @@ def generate_porting_guide(version):
 
 
 def write_guide(version, guide_content):
-    filename = f'porting_guide_{version}.rst'
+    filename = 'porting_guide_{0}.rst'.format(version)
     with open(filename, 'w') as out_file:
         out_file.write(guide_content)
 

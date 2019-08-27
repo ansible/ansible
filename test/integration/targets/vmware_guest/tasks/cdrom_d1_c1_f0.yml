@@ -4,8 +4,8 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "vm"
-    name: CDROM-Test
+    folder: vm
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: Resources
@@ -38,8 +38,9 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: "vm"
-    name: CDROM-Test
+    name: test_vm1
     datastore: "{{ ds2 }}"
+    datacenter: "{{ dc1 }}"
     cdrom:
       type: iso
       iso_path: "[{{ ds1 }}] fedora.iso"
@@ -61,7 +62,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-Test
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cdrom:
       type: client
@@ -76,6 +77,19 @@
       - "cdrom_vm.failed == false"
       - "cdrom_vm.changed == true"
 
+- name: clone vm
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm2
+    template: test_vm1
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: vm
+    convert: thin
+
 - name: Update CDROM to none for the new VM
   vmware_guest:
     validate_certs: False
@@ -83,7 +97,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-Test
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cdrom:
       type: none
@@ -105,7 +119,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: vm
-    name: CDROM-Test-38679
+    name: test_vm3
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: Resources
@@ -148,7 +162,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         folder: "{{ f0 }}"
-        name: CDROM-Test-38679
+        name: test_vm3
         datacenter: "{{ dc1 }}"
         cluster: "{{ ccr1 }}"
         resource_pool: Resources

@@ -1,0 +1,3 @@
+minor_changes:
+- mysql_db now supports creation and deletion of multiple databases (https://github.com/ansible/ansible/issues/58370)
+- mysql_db - now behaves better w.r.t ``changed`` results in ``check_mode``

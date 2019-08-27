@@ -170,7 +170,7 @@ options:
     - This field is required when creating a virtual machine, not required when creating from the template.
     - >
          Valid values are referenced here:
-         U(http://pubs.vmware.com/vsphere-6-5/topic/com.vmware.wssdk.apiref.doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
+         U(https://code.vmware.com/apis/358/vsphere#/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
     version_added: '2.3'
   disk:
     description:
@@ -186,7 +186,7 @@ options:
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
           then will select the less used datastore whose name contains this "disk.datastore" string.'
-    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
           will not be used if C(datastore) is specified outside this C(disk) configuration.'
@@ -785,12 +785,10 @@ class PyVmomiCache(object):
             if hasattr(objects, 'items'):
                 # resource pools come back as a dictionary
                 # make a copy
-                tmpobjs = objects.copy()
-                for k, v in objects.items():
+                for k, v in tuple(objects.items()):
                     parent_dc = self.get_parent_datacenter(k)
                     if parent_dc.name != self.dc_name:
-                        tmpobjs.pop(k, None)
-                objects = tmpobjs
+                        del objects[k]
             else:
                 # everything else should be a list
                 objects = [x for x in objects if self.get_parent_datacenter(x).name == self.dc_name]
@@ -896,7 +894,9 @@ class PyVmomiHelper(PyVmomi):
                     rai_change_detected = True
 
             if 'mem_reservation' in self.params['hardware'] or 'memory_reservation' in self.params['hardware']:
-                mem_reservation = self.params['hardware'].get('mem_reservation') or self.params['hardware'].get('memory_reservation') or None
+                mem_reservation = self.params['hardware'].get('mem_reservation')
+                if mem_reservation is None:
+                    mem_reservation = self.params['hardware'].get('memory_reservation')
                 try:
                     mem_reservation = int(mem_reservation)
                 except ValueError:
@@ -1345,6 +1345,13 @@ class PyVmomiHelper(PyVmomi):
                 else:
                     pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
+                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
+                # For now, check if we are able to find distributed virtual switch
+                if not pg_obj.config.distributedVirtualSwitch:
+                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
+                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
+                                              " the given distributed virtual portgroup. Also, check if user has correct"
+                                              " permission to access distributed virtual switch in the given portgroup." % pg_obj.name)
                 if (nic.device.backing and
                     (not hasattr(nic.device.backing, 'port') or
                      (nic.device.backing.port.portgroupKey != pg_obj.key or
@@ -1361,12 +1368,6 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
                                               " virtual portgroup '%s'. Please make sure host system is associated"
                                               " with given distributed virtual portgroup" % (host_system, pg_obj.name))
-                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
-                # For now, check if we are able to find distributed virtual switch
-                if not pg_obj.config.distributedVirtualSwitch:
-                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
-                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
-                                              " the given distributed virtual portgroup." % pg_obj.name)
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection
@@ -1519,30 +1520,28 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
-    def customize_customvalues(self, vm_obj, config_spec):
+    def customize_customvalues(self, vm_obj):
         if len(self.params['customvalues']) == 0:
             return
 
-        vm_custom_spec = config_spec
-        vm_custom_spec.extraConfig = []
-
-        changed = False
         facts = self.gather_facts(vm_obj)
         for kv in self.params['customvalues']:
             if 'key' not in kv or 'value' not in kv:
-                self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
+                self.module.exit_json(msg="customvalues items required both 'key' and 'value' fields.")
+
+            key_id = None
+            for field in self.content.customFieldsManager.field:
+                if field.name == kv['key']:
+                    key_id = field.key
+                    break
+
+            if not key_id:
+                self.module.fail_json(msg="Unable to find custom value key %s" % kv['key'])
 
             # If kv is not kv fetched from facts, change it
             if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
-                option = vim.option.OptionValue()
-                option.key = kv['key']
-                option.value = kv['value']
-
-                vm_custom_spec.extraConfig.append(option)
-                changed = True
-
-        if changed:
-            self.change_detected = True
+                self.content.customFieldsManager.SetField(entity=vm_obj, key=key_id, value=kv['value'])
+                self.change_detected = True
 
     def customize_vm(self, vm_obj):
 
@@ -1851,7 +1850,9 @@ class PyVmomiHelper(PyVmomi):
                 continue
             elif vm_obj is None or self.params['template']:
                 # We are creating new VM or from Template
-                diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+                # Only create virtual device if not backed by vmdk in original template
+                if diskspec.device.backing.fileName == '':
+                    diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
 
             # which datastore?
             if expected_disk_spec.get('datastore'):
@@ -1890,6 +1891,9 @@ class PyVmomiHelper(PyVmomi):
 
         datastore_freespace = 0
         for ds in datastores:
+            if not self.is_datastore_valid(datastore_obj=ds):
+                continue
+
             if ds.summary.freeSpace > datastore_freespace:
                 datastore = ds
                 datastore_freespace = ds.summary.freeSpace
@@ -1929,6 +1933,9 @@ class PyVmomiHelper(PyVmomi):
         for ds in datastore_cluster_obj.childEntity:
             if isinstance(ds, vim.Datastore) and ds.summary.freeSpace > datastore_freespace:
                 # If datastore field is provided, filter destination datastores
+                if not self.is_datastore_valid(datastore_obj=ds):
+                    continue
+
                 datastore = ds
                 datastore_freespace = ds.summary.freeSpace
         if datastore:
@@ -1949,6 +1956,9 @@ class PyVmomiHelper(PyVmomi):
 
                 datastore_freespace = 0
                 for ds in datastores:
+                    if not self.is_datastore_valid(datastore_obj=ds):
+                        continue
+
                     if (ds.summary.freeSpace > datastore_freespace) or (ds.summary.freeSpace == datastore_freespace and not datastore):
                         # If datastore field is provided, filter destination datastores
                         if 'datastore' in self.params['disk'][0] and \
@@ -2210,7 +2220,7 @@ class PyVmomiHelper(PyVmomi):
                 # Convert disk present in template if is set
                 if self.params['convert']:
                     for device in vm_obj.config.hardware.device:
-                        if hasattr(device.backing, 'fileName'):
+                        if isinstance(device, vim.vm.device.VirtualDisk):
                             disk_locator = vim.vm.RelocateSpec.DiskLocator()
                             disk_locator.diskBackingInfo = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
                             if self.params['convert'] in ['thin']:
@@ -2226,7 +2236,6 @@ class PyVmomiHelper(PyVmomi):
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
                 self.relospec.pool = resource_pool
-
                 linked_clone = self.params.get('linked_clone')
                 snapshot_src = self.params.get('snapshot_src', None)
                 if linked_clone:
@@ -2312,12 +2321,7 @@ class PyVmomiHelper(PyVmomi):
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'annotation'}
 
             if self.params['customvalues']:
-                vm_custom_spec = vim.vm.ConfigSpec()
-                self.customize_customvalues(vm_obj=vm, config_spec=vm_custom_spec)
-                task = vm.ReconfigVM_Task(vm_custom_spec)
-                self.wait_for_task(task)
-                if task.info.state == 'error':
-                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customvalues'}
+                self.customize_customvalues(vm_obj=vm)
 
             if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
@@ -2355,7 +2359,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
-        self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
+        self.customize_customvalues(vm_obj=self.current_vm_obj)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
 

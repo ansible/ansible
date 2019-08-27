@@ -30,7 +30,7 @@ command -v pip
 pip --version
 pip list --disable-pip-version-check
 
-export PATH="test/runner:${PATH}"
+export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
 
 if [ "${JOB_TRIGGERED_BY_NAME:-}" == "nightly-trigger" ]; then
@@ -133,4 +133,5 @@ fi
 
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
+"test/utils/shippable/check_matrix.py"
 "test/utils/shippable/${script}.sh" "${test}"

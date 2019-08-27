@@ -7,7 +7,7 @@ set -eux
 ### cmd tests - no DefaultShell set ###
 ansible -i ../../inventory.winrm localhost \
     -m template \
-    -a "src=test_connection.inventory.j2 dest=~/ansible_testing/test_connection.inventory" \
+    -a "src=test_connection.inventory.j2 dest=${OUTPUT_DIR}/test_connection.inventory" \
     -e "test_shell_type=cmd" \
     "$@"
 
@@ -18,7 +18,7 @@ ansible -i ../../inventory.winrm windows \
     "$@"
 
 # Need to flush the connection to ensure we get a new shell for the next tests
-ansible -i ~/ansible_testing/test_connection.inventory windows-ssh \
+ansible -i "${OUTPUT_DIR}/test_connection.inventory" windows \
     -m meta -a "reset_connection" \
     "$@"
 
@@ -27,14 +27,14 @@ ansible -i ~/ansible_testing/test_connection.inventory windows-ssh \
 # scp
 ANSIBLE_SCP_IF_SSH=true ./windows.sh "$@"
 # other tests not part of the generic connection test framework
-ansible-playbook -i ~/ansible_testing/test_connection.inventory tests.yml \
+ansible-playbook -i "${OUTPUT_DIR}/test_connection.inventory" tests.yml \
     "$@"
 
 ### powershell tests - explicit DefaultShell set ###
 # we do this last as the default shell on our CI instances is set to PowerShell
 ansible -i ../../inventory.winrm localhost \
     -m template \
-    -a "src=test_connection.inventory.j2 dest=~/ansible_testing/test_connection.inventory" \
+    -a "src=test_connection.inventory.j2 dest=${OUTPUT_DIR}/test_connection.inventory" \
     -e "test_shell_type=powershell" \
     "$@"
 
@@ -44,11 +44,11 @@ ansible -i ../../inventory.winrm windows \
     -a "path=HKLM:\\\\SOFTWARE\\\\OpenSSH name=DefaultShell data=C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe" \
     "$@"
 
-ansible -i ~/ansible_testing/test_connection.inventory windows-ssh \
+ansible -i "${OUTPUT_DIR}/test_connection.inventory" windows \
     -m meta -a "reset_connection" \
     "$@"
 
 ./windows.sh "$@"
 ANSIBLE_SCP_IF_SSH=true ./windows.sh "$@"
-ansible-playbook -i ~/ansible_testing/test_connection.inventory tests.yml \
+ansible-playbook -i "${OUTPUT_DIR}/test_connection.inventory" tests.yml \
     "$@"

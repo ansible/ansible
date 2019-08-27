@@ -87,17 +87,16 @@ class IncludedFile:
 
                     include_args = include_result.get('include_args', dict())
                     special_vars = {}
-                    loop_var = 'item'
-                    index_var = None
-                    if original_task.loop_control:
-                        loop_var = original_task.loop_control.loop_var
-                        index_var = original_task.loop_control.index_var
+                    loop_var = include_result.get('ansible_loop_var', 'item')
+                    index_var = include_result.get('ansible_index_var')
                     if loop_var in include_result:
                         task_vars[loop_var] = special_vars[loop_var] = include_result[loop_var]
                     if index_var and index_var in include_result:
                         task_vars[index_var] = special_vars[index_var] = include_result[index_var]
                     if '_ansible_item_label' in include_result:
                         task_vars['_ansible_item_label'] = special_vars['_ansible_item_label'] = include_result['_ansible_item_label']
+                    if 'ansible_loop' in include_result:
+                        task_vars['ansible_loop'] = special_vars['ansible_loop'] = include_result['ansible_loop']
                     if original_task.no_log and '_ansible_no_log' not in include_args:
                         task_vars['_ansible_no_log'] = special_vars['_ansible_no_log'] = original_task.no_log
 

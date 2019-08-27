@@ -8,7 +8,7 @@
     validate_certs: no
     folder: '{{ item.folder }}'
     name: '{{ item.name }}'
-    state: poweredon
+    state: poweredoff
     guest_id: debian8_64Guest
     disk:
     - size_gb: 1
@@ -36,7 +36,7 @@
     folder: '{{ item.folder }}'
     cluster: '{{ item.cluster }}'
     name: '{{ item.name }}'
-    state: poweredon
+    state: poweredoff
     guest_id: debian8_64Guest
     disk:
     - size_gb: 1

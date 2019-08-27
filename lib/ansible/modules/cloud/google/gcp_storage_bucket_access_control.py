@@ -56,6 +56,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   bucket:
     description:
     - The name of the bucket.
@@ -65,6 +66,7 @@ options:
       to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   entity:
     description:
     - 'The entity holding the permission, in one of the following forms: user-userId
@@ -74,29 +76,35 @@ options:
     - To refer to all members of the Google Apps for Business domain example.com,
       the entity would be domain-example.com.
     required: true
+    type: str
   entity_id:
     description:
     - The ID for the entity.
     required: false
+    type: str
   project_team:
     description:
     - The project team associated with the entity.
     required: false
+    type: dict
     suboptions:
       project_number:
         description:
         - The project team associated with the entity.
         required: false
+        type: str
       team:
         description:
         - The team.
         - 'Some valid choices include: "editors", "owners", "viewers"'
         required: false
+        type: str
   role:
     description:
     - The access permission for the entity.
     - 'Some valid choices include: "OWNER", "READER", "WRITER"'
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -112,7 +120,7 @@ EXAMPLES = '''
 
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
-    bucket: test_object
+    bucket: "{{ bucket }}"
     entity: user-alexstephen@google.com
     role: WRITER
     project: test_project
@@ -212,10 +220,7 @@ def main():
     state = module.params['state']
     kind = 'storage#bucketAccessControl'
 
-    if module.params['id']:
-        fetch = fetch_resource(module, self_link(module), kind)
-    else:
-        fetch = {}
+    fetch = fetch_resource(module, self_link(module), kind)
     changed = False
 
     if fetch:
@@ -278,11 +283,13 @@ def fetch_resource(module, link, kind, allow_not_found=True):
 
 
 def self_link(module):
-    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl/{entity}".format(**module.params)
+    res = {'bucket': replace_resource_dict(module.params['bucket'], 'name'), 'entity': module.params['entity']}
+    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl/{entity}".format(**res)
 
 
 def collection(module):
-    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl".format(**module.params)
+    res = {'bucket': replace_resource_dict(module.params['bucket'], 'name')}
+    return "https://www.googleapis.com/storage/v1/b/{bucket}/acl".format(**res)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):

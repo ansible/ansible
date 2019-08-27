@@ -17,13 +17,15 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
-      gather_network_facts: true
-    register: netadapter_facts
-  - debug: var=netadapter_facts
+      name: "{{ virtual_machines[0].name }}"
+      gather_network_info: true
+    register: netadapter_info
+
+  - debug: var=netadapter_info
+
   - name: get number of existing netowrk adapters
     set_fact:
-      netadapter_num: "{{ netadapter_facts.network_data | length }}"
+      netadapter_num: "{{ netadapter_info.network_data | length }}"
 
   - name: add new network adapters to virtual machine
     vmware_guest_network:
@@ -31,7 +33,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       networks:
         - name: "VM Network"
           state: new
@@ -42,7 +44,9 @@
           device_type: vmxnet3
           manual_mac: "00:50:56:58:59:61"
     register: add_netadapter
+
   - debug: var=add_netadapter
+
   - name: assert the new netowrk adapters were added to VM
     assert:
       that:
@@ -55,12 +59,14 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       networks:
         - state: absent
           mac: "00:50:56:58:59:60"
     register: del_netadapter
+
   - debug: var=del_netadapter
+
   - name: assert the network adapter was removed
     assert:
       that:
@@ -73,15 +79,39 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       networks:
         - state: present
           mac: "00:50:56:58:59:61"
           connected: false
     register: disc_netadapter
+
   - debug: var=disc_netadapter
+
   - name: assert the network adapter was disconnected
     assert:
       that:
         - "disc_netadapter.changed == true"
         - "{{ disc_netadapter.network_data[netadapter_num]['connected'] }} == false"
+
+  - name: Check if network does not exists
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      networks:
+        - name: non-existing-nw
+          manual_mac: "00:50:56:11:22:33"
+          state: new
+    register: no_nw_details
+    ignore_errors: yes
+
+  - debug: var=no_nw_details
+
+  - name: Check if network does not exists
+    assert:
+      that:
+        - not no_nw_details.changed
+        - no_nw_details.failed

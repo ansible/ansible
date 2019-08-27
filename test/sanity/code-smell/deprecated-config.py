@@ -25,9 +25,9 @@ import os
 import re
 import sys
 
-import yaml
-
 from distutils.version import StrictVersion
+
+import yaml
 
 import ansible.config
 
@@ -39,32 +39,32 @@ DOC_RE = re.compile(b'^DOCUMENTATION', flags=re.M)
 ANSIBLE_MAJOR = StrictVersion('.'.join(ansible_version.split('.')[:2]))
 
 
-def find_deprecations(o, path=None):
-    if not isinstance(o, (list, dict)):
+def find_deprecations(obj, path=None):
+    if not isinstance(obj, (list, dict)):
         return
 
     try:
-        items = o.items()
+        items = obj.items()
     except AttributeError:
-        items = enumerate(o)
+        items = enumerate(obj)
 
-    for k, v in items:
+    for key, value in items:
         if path is None:
             this_path = []
         else:
             this_path = path[:]
 
-        this_path.append(k)
+        this_path.append(key)
 
-        if k != 'deprecated':
-            for result in find_deprecations(v, path=this_path):
+        if key != 'deprecated':
+            for result in find_deprecations(value, path=this_path):
                 yield result
         else:
             try:
-                version = v['version']
+                version = value['version']
                 this_path.append('version')
             except KeyError:
-                version = v['removed_in']
+                version = value['removed_in']
                 this_path.append('removed_in')
             if StrictVersion(version) <= ANSIBLE_MAJOR:
                 yield (this_path, version)
@@ -75,12 +75,12 @@ def main():
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as f:
             try:
-                mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+                mm_file = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
             except ValueError:
                 continue
-            if DOC_RE.search(mm):
+            if DOC_RE.search(mm_file):
                 plugins.append(path)
-            mm.close()
+            mm_file.close()
 
     for plugin in plugins:
         data = {}

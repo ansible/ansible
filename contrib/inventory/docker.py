@@ -20,6 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 DOCUMENTATION = '''
 
 Docker Inventory Script
@@ -383,7 +387,7 @@ except ImportError as exc:
 # Client has recently been split into DockerClient and APIClient
 try:
     from docker import Client
-except ImportError as exc:
+except ImportError as dummy:
     try:
         from docker import APIClient as Client
     except ImportError as exc:

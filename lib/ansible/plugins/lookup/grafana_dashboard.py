@@ -25,7 +25,7 @@ options:
       - api key of grafana.
       - when C(grafana_api_key) is set, the options C(grafan_user), C(grafana_password) and C(grafana_org_id) are ignored.
       - Attention, please remove the two == at the end of the grafana_api_key
-      - because ansible lookup plugins options are splited on = (see example).
+      - because ansible lookup plugins options are split on = (see example).
     env:
       - name: GRAFANA_API_KEY
   grafana_user:

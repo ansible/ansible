@@ -1,0 +1,5 @@
+minor_changes:
+- ansible-galaxy - Added the ``collection init`` command to create a skeleton collection directory.
+- ansible-galaxy - Added the ``collection build`` command to build a collection tarball ready for uploading.
+- ansible-galaxy - Added the ``collection publish`` command to publish a collection tarball to a Galaxy server.
+- ansible-galaxy - Added the ``collection install`` command to install collections locally.

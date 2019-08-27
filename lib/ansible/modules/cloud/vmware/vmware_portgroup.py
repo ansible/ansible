@@ -42,11 +42,13 @@ options:
             - vSwitch to modify.
         required: True
         aliases: [ 'switch_name', 'vswitch' ]
+        type: str
     portgroup:
         description:
             - Portgroup name to add.
         required: True
         aliases: [ 'portgroup_name' ]
+        type: str
     vlan_id:
         description:
             - VLAN ID to assign to portgroup.
@@ -54,6 +56,7 @@ options:
         required: False
         default: 0
         aliases: [ 'vlan' ]
+        type: int
     security:
         description:
             - Network policy specifies layer 2 security settings for a
@@ -67,6 +70,7 @@ options:
         required: False
         version_added: "2.2"
         aliases: [ 'security_policy', 'network_policy' ]
+        type: dict
     teaming:
         description:
             - Dictionary which configures the different teaming values for portgroup.
@@ -85,6 +89,7 @@ options:
         required: False
         version_added: '2.6'
         aliases: [ 'teaming_policy' ]
+        type: dict
     traffic_shaping:
         description:
             - Dictionary which configures traffic shaping for the switch.
@@ -95,6 +100,7 @@ options:
             - '- C(burst_size) (int): Burst size (KB). (default: None)'
         required: False
         version_added: '2.9'
+        type: dict
     cluster_name:
         description:
             - Name of cluster name for host membership.
@@ -102,12 +108,14 @@ options:
             - This option is required if C(hosts) is not specified.
         version_added: "2.5"
         aliases: [ 'cluster' ]
+        type: str
     hosts:
         description:
             - List of name of host or hosts on which portgroup needs to be added.
             - This option is required if C(cluster_name) is not specified.
         aliases: [ esxi_hostname ]
         version_added: "2.5"
+        type: list
     state:
         description:
             - Determines if the portgroup should be present or not.
@@ -116,6 +124,7 @@ options:
             - 'absent'
         version_added: '2.5'
         default: present
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

@@ -1,0 +1,135 @@
+---
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: set up lambda as elb_target
+
+  block:
+    - name: create zip to deploy lambda code
+      archive:
+        path: "{{ role_path }}/files/ansible_lambda_target.py"
+        dest: /tmp/lambda.zip
+        format: zip
+
+    - name: "create or update service-role for lambda"
+      iam_role:
+        <<: *aws_connection_info
+        name: ansible_lambda_execution
+        assume_role_policy_document: "{{ lookup('file', role_path + '/files/assume-role.json') }}"
+        managed_policy:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      register: ROLE_ARN
+
+    - name: when it is to fast, the role is not usable.
+      pause:
+        minutes: 1
+
+    - name: deploy lambda.zip to ansible_lambda_target function
+      lambda:
+        <<: *aws_connection_info
+        name: "ansible_lambda_target"
+        state: present
+        zip_file: "/tmp/lambda.zip"
+        runtime: "python3.7"
+        role: "{{ ROLE_ARN.arn }}"
+        handler: "ansible_lambda_target.lambda_handler"
+        timeout: 30
+      register: lambda_function
+      retries: 3
+      delay: 15
+      until: lambda_function.changed
+
+    - name: create empty target group
+      elb_target_group:
+        <<: *aws_connection_info
+        name: ansible-lambda-targetgroup
+        target_type: lambda
+        state: present
+        modify_targets: False
+      register: elb_target_group
+
+    - name: tg is created, state must be changed
+      assert:
+        that:
+          - elb_target_group.changed
+
+    - name: allow elb to invoke the lambda function
+      lambda_policy:
+        <<: *aws_connection_info
+        state: present
+        function_name: ansible_lambda_target
+        version: "{{ lambda_function.configuration.version }}"
+        statement_id: elb1
+        action: lambda:InvokeFunction
+        principal: elasticloadbalancing.amazonaws.com
+        source_arn: "{{ elb_target_group.target_group_arn }}"
+
+    - name: add lambda to elb target
+      elb_target_group:
+        <<: *aws_connection_info
+        name: ansible-lambda-targetgroup
+        target_type: lambda
+        state: present
+        targets:
+          - Id: "{{ lambda_function.configuration.function_arn }}"
+      register: elb_target_group
+
+    - name: target is updated, state must be changed
+      assert:
+        that:
+          - elb_target_group.changed
+
+    - name: re-add lambda to elb target (idempotency)
+      elb_target_group:
+        <<: *aws_connection_info
+        name: ansible-lambda-targetgroup
+        target_type: lambda
+        state: present
+        targets:
+          - Id: "{{ lambda_function.configuration.function_arn }}"
+      register: elb_target_group
+
+    - name: target is still the same, state must not be changed (idempotency)
+      assert:
+        that:
+          - not elb_target_group.changed
+
+    - name: remove lambda target from target group
+      elb_target_group:
+        <<: *aws_connection_info
+        name: ansible-lambda-targetgroup
+        target_type: lambda
+        state: absent
+        targets: []
+      register: elb_target_group
+
+    - name: target is still the same, state must not be changed (idempotency)
+      assert:
+        that:
+          - elb_target_group.changed
+
+  always:
+    - name: remove elb target group
+      elb_target_group:
+        <<: *aws_connection_info
+        name: ansible-lambda-targetgroup
+        target_type: lambda
+        state: absent
+
+    - name: remove lambda function
+      lambda:
+        <<: *aws_connection_info
+        name: "ansible_lambda_target"
+        state: absent
+
+    - name: remove iam role for lambda
+      iam_role:
+        <<: *aws_connection_info
+        name: ansible_lambda_execution
+        state: absent

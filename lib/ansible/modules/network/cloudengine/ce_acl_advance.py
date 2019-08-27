@@ -1099,7 +1099,8 @@ class AdvanceAcl(object):
                                 find_flag = False
                             if self.dest_port_pool_name and tmp.get("aclDPortPoolName") != self.dest_port_pool_name:
                                 find_flag = False
-                            if self.frag_type and tmp.get("aclFragType") != self.frag_type:
+                            frag_type = "clear_fragment" if tmp.get("aclFragType") is None else tmp.get("aclFragType")
+                            if self.frag_type and frag_type != self.frag_type:
                                 find_flag = False
                             if self.precedence and tmp.get("aclPrecedence") != self.precedence:
                                 find_flag = False
@@ -1243,6 +1244,9 @@ class AdvanceAcl(object):
         self.check_advance_rule_args()
         self.end_state["adv_rule_info"] = self.cur_advance_rule_cfg[
             "adv_rule_info"]
+        if self.end_state == self.existing:
+            self.changed = False
+            self.updates_cmd = list()
 
     def merge_acl(self):
         """ Merge acl operation """
@@ -1411,8 +1415,6 @@ class AdvanceAcl(object):
                 cmd += " dscp %s" % self.dscp
             if self.tos:
                 cmd += " tos %s" % self.tos
-            if self.tos:
-                cmd += " tos %s" % self.tos
             if self.source_ip and self.src_wild:
                 cmd += " source %s %s" % (self.source_ip, self.src_wild)
             if self.src_pool_name:
@@ -1459,7 +1461,16 @@ class AdvanceAcl(object):
                     cmd += " icmp-type %s %s" % (self.icmp_type, self.icmp_code)
                 elif self.icmp_type:
                     cmd += " icmp-type %s" % self.icmp_type
-
+            if self.protocol == "tcp":
+                if self.syn_flag:
+                    cmd += " tcp-flag %s" % self.syn_flag
+                if self.tcp_flag_mask:
+                    cmd += " mask %s" % self.tcp_flag_mask
+                if self.established:
+                    cmd += " established"
+            if self.protocol == "igmp":
+                if self.igmp_type:
+                    cmd += " igmp-type %s" % self.igmp_type
             if self.time_range:
                 cmd += " time-range %s" % self.time_range
             if self.vrf_name:
@@ -1586,8 +1597,6 @@ class AdvanceAcl(object):
             cmd += " %s" % self.protocol
             if self.dscp:
                 cmd += " dscp %s" % self.dscp
-            if self.tos:
-                cmd += " tos %s" % self.tos
             if self.tos:
                 cmd += " tos %s" % self.tos
             if self.source_ip and self.src_mask:

@@ -62,6 +62,7 @@ options:
         description:
             - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
         type: str
+        version_added: "2.9"
 
 extends_documentation_fragment: files
 '''
@@ -113,6 +114,11 @@ public_key:
     returned: changed or success
     type: str
     sample: ssh-rsa AAAAB3Nza(...omitted...)veL4E3Xcw== test_key
+comment:
+    description: The comment of the generated key
+    returned: changed or success
+    type: str
+    sample: test@comment
 '''
 
 import os
@@ -165,7 +171,7 @@ class Keypair(object):
 
     def generate(self, module):
         # generate a keypair
-        if not self.isValid(module, perms_required=False) or self.force:
+        if not self.isPrivateKeyValid(module, perms_required=False) or self.force:
             args = [
                 module.get_bin_path('ssh-keygen', True),
                 '-q',
@@ -196,11 +202,36 @@ class Keypair(object):
                 self.remove()
                 module.fail_json(msg="%s" % to_native(e))
 
+        elif not self.isPublicKeyValid(module):
+            pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
+            pubkey = pubkey[1].strip('\n')
+            try:
+                self.changed = True
+                with open(self.path + ".pub", "w") as pubkey_f:
+                    pubkey_f.write(pubkey + '\n')
+                os.chmod(self.path + ".pub", stat.S_IWUSR + stat.S_IRUSR + stat.S_IRGRP + stat.S_IROTH)
+            except IOError:
+                module.fail_json(
+                    msg='The public key is missing or does not match the private key. '
+                        'Unable to regenerate the public key.')
+            self.public_key = pubkey
+
+            if self.comment:
+                try:
+                    if os.path.exists(self.path) and not os.access(self.path, os.W_OK):
+                        os.chmod(self.path, stat.S_IWUSR + stat.S_IRUSR)
+                    args = [module.get_bin_path('ssh-keygen', True),
+                            '-q', '-o', '-c', '-C', self.comment, '-f', self.path]
+                    module.run_command(args)
+                except IOError:
+                    module.fail_json(
+                        msg='Unable to update the comment for the public key.')
+
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-    def isValid(self, module, perms_required=True):
+    def isPrivateKeyValid(self, module, perms_required=True):
 
         # check if the key is correct
         def _check_state():
@@ -215,8 +246,6 @@ class Keypair(object):
                 return False
 
             fingerprint = proc[1].split()
-            pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
-            pubkey = pubkey[1].strip('\n')
             keysize = int(fingerprint[0])
             keytype = fingerprint[-1][1:-1].lower()
         else:
@@ -233,12 +262,50 @@ class Keypair(object):
             return self.size == keysize
 
         self.fingerprint = fingerprint
-        self.public_key = pubkey
 
         if not perms_required:
             return _check_state() and _check_type() and _check_size()
 
         return _check_state() and _check_perms(module) and _check_type() and _check_size()
+
+    def isPublicKeyValid(self, module):
+
+        def _get_pubkey_content():
+            if os.path.exists(self.path + ".pub"):
+                with open(self.path + ".pub", "r") as pubkey_f:
+                    present_pubkey = pubkey_f.read().strip(' \n')
+                return present_pubkey
+            else:
+                return False
+
+        def _parse_pubkey():
+            pubkey_content = _get_pubkey_content()
+            if pubkey_content:
+                parts = pubkey_content.split(' ', 2)
+                return parts[0], parts[1], '' if len(parts) <= 2 else parts[2]
+            return False
+
+        def _pubkey_valid(pubkey):
+            if pubkey_parts:
+                current_pubkey = ' '.join([pubkey_parts[0], pubkey_parts[1]])
+                return current_pubkey == pubkey
+            return False
+
+        def _comment_valid():
+            if pubkey_parts:
+                return pubkey_parts[2] == self.comment
+            return False
+
+        pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
+        pubkey = pubkey[1].strip('\n')
+        pubkey_parts = _parse_pubkey()
+        if _pubkey_valid(pubkey):
+            self.public_key = pubkey
+
+        if not self.comment:
+            return _pubkey_valid(pubkey)
+
+        return _pubkey_valid(pubkey) and _comment_valid()
 
     def dump(self):
         # return result as a dict
@@ -252,6 +319,7 @@ class Keypair(object):
             # On removal this has no value
             'fingerprint': self.fingerprint[1] if self.fingerprint else '',
             'public_key': self.public_key,
+            'comment': self.comment if self.comment else '',
         }
 
         return result
@@ -309,7 +377,7 @@ def main():
 
         if module.check_mode:
             result = keypair.dump()
-            result['changed'] = module.params['force'] or not keypair.isValid(module)
+            result['changed'] = module.params['force'] or not keypair.isPrivateKeyValid(module) or not keypair.isPublicKeyValid(module)
             module.exit_json(**result)
 
         try:

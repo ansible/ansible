@@ -443,3 +443,43 @@
     - not content_array is changed
     - content_array.content == '[{"abc":"def"}]'
     - content_array.json == [{"abc":"def"}]
+
+- name: send request with explicit http_agent
+  win_uri:
+    url: https://{{httpbin_host}}/get
+    http_agent: test-agent
+    return_content: yes
+  register: http_agent_option
+
+- name: assert send request with explicit http_agent
+  assert:
+    that:
+    - http_agent_option.json.headers['User-Agent'] == 'test-agent'
+
+- name: send request with explicit User-Agent header
+  win_uri:
+    url: https://{{httpbin_host}}/get
+    headers:
+      User-Agent: test-agent
+    return_content: yes
+  register: http_agent_header
+
+- name: assert send request with explicit User-Agent header
+  assert:
+    that:
+    - http_agent_header.json.headers['User-Agent'] == 'test-agent'
+
+- name: send request with explicit http_agent and header (http_agent wins)
+  win_uri:
+    url: https://{{httpbin_host}}/get
+    http_agent: test-agent-option
+    headers:
+      User-Agent: test-agent-header
+    return_content: yes
+  register: http_agent_combo
+
+- name: assert send request with explicit http_agent and header (http_agent wins)
+  assert:
+    that:
+    - http_agent_combo.json.headers['User-Agent'] == 'test-agent-option'
+    - http_agent_combo.warnings[0] == "The 'User-Agent' header and the 'http_agent' was set, using the 'http_agent' for web request"

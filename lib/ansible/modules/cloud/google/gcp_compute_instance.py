@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   can_ip_forward:
     description:
     - Allows this instance to send and receive packets with non-matching destination
@@ -56,11 +57,18 @@ options:
     type: bool
     aliases:
     - ip_forward
+  deletion_protection:
+    description:
+    - Whether the resource should be protected against deletion.
+    required: false
+    type: bool
+    version_added: 2.9
   disks:
     description:
     - An array of disks that are associated with the instances that are created from
       this template.
     required: false
+    type: list
     suboptions:
       auto_delete:
         description:
@@ -83,21 +91,25 @@ options:
           the instance. This name can be used to reference the device for mounting,
           resizing, and so on, from within the instance.
         required: false
+        type: str
       disk_encryption_key:
         description:
         - Encrypts or decrypts a disk using a customer-supplied encryption key.
         required: false
+        type: dict
         suboptions:
           raw_key:
             description:
             - Specifies a 256-bit customer-supplied encryption key, encoded in RFC
               4648 base64 to either encrypt or decrypt this resource.
             required: false
+            type: str
           rsa_encrypted_key:
             description:
             - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied
               encryption key to either encrypt or decrypt this resource.
             required: false
+            type: str
       index:
         description:
         - Assigns a zero-based index to this disk, where 0 is reserved for the boot
@@ -105,28 +117,33 @@ options:
           disk would have a unique index number. If not specified, the server will
           choose an appropriate value.
         required: false
+        type: int
       initialize_params:
         description:
         - Specifies the parameters for a new disk that will be created alongside the
           new instance. Use initialization parameters to create boot disks or local
           SSDs attached to the new instance.
         required: false
+        type: dict
         suboptions:
           disk_name:
             description:
             - Specifies the disk name. If not specified, the default is to use the
               name of the instance.
             required: false
+            type: str
           disk_size_gb:
             description:
             - Specifies the size of the disk in base-2 GB.
             required: false
+            type: int
           disk_type:
             description:
             - Reference to a disk type.
             - Specifies the disk type to use to create the instance.
             - If not specified, the default is pd-standard.
             required: false
+            type: str
           source_image:
             description:
             - The source image to create this disk. When creating a new instance,
@@ -134,6 +151,7 @@ options:
               create a disk with one of the public operating system images, specify
               the image by its family name.
             required: false
+            type: str
             aliases:
             - image
             - image_family
@@ -145,12 +163,14 @@ options:
               you cannot create disks for instances in a managed instance group if
               the source images are encrypted with your own keys.
             required: false
+            type: dict
             suboptions:
               raw_key:
                 description:
                 - Specifies a 256-bit customer-supplied encryption key, encoded in
                   RFC 4648 base64 to either encrypt or decrypt this resource.
                 required: false
+                type: str
       interface:
         description:
         - Specifies the disk interface to use for attaching this disk, which is either
@@ -159,12 +179,14 @@ options:
           to attach a persistent disk in any other format than SCSI.
         - 'Some valid choices include: "SCSI", "NVME"'
         required: false
+        type: str
       mode:
         description:
         - The mode in which to attach this disk, either READ_WRITE or READ_ONLY. If
           not specified, the default is to attach the disk in READ_WRITE mode.
         - 'Some valid choices include: "READ_WRITE", "READ_ONLY"'
         required: false
+        type: str
       source:
         description:
         - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
@@ -177,44 +199,62 @@ options:
           name-of-resource` to a gcp_compute_disk task and then set this source field
           to "{{ name-of-resource }}"'
         required: false
+        type: dict
       type:
         description:
         - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
           the default is PERSISTENT.
         - 'Some valid choices include: "SCRATCH", "PERSISTENT"'
         required: false
+        type: str
   guest_accelerators:
     description:
     - List of the type and count of accelerator cards attached to the instance .
     required: false
+    type: list
     suboptions:
       accelerator_count:
         description:
         - The number of the guest accelerator cards exposed to this instance.
         required: false
+        type: int
       accelerator_type:
         description:
         - Full or partial URL of the accelerator type resource to expose to this instance.
         required: false
+        type: str
+  hostname:
+    description:
+    - The hostname of the instance to be created. The specified hostname must be RFC1035
+      compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+      when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+      when using zonal DNS.
+    required: false
+    type: str
+    version_added: 2.9
   labels:
     description:
     - Labels to apply to this instance. A list of key->value pairs.
     required: false
+    type: dict
     version_added: 2.9
   metadata:
     description:
     - The metadata key/value pairs to assign to instances that are created from this
       template. These pairs can consist of custom metadata or predefined keys.
     required: false
+    type: dict
   machine_type:
     description:
     - A reference to a machine type which defines VM kind.
     required: false
+    type: str
   min_cpu_platform:
     description:
     - Specifies a minimum CPU platform for the VM instance. Applicable values are
       the friendly names of CPU platforms .
     required: false
+    type: str
   name:
     description:
     - The name of the resource, provided by the client when initially creating the
@@ -224,12 +264,14 @@ options:
       letter, and all following characters must be a dash, lowercase letter, or digit,
       except the last character, which cannot be a dash.
     required: false
+    type: str
   network_interfaces:
     description:
     - An array of configurations for this interface. This specifies how this interface
       is configured to interact with other network services, such as connecting to
       the internet. Only one network interface is supported per instance.
     required: false
+    type: list
     suboptions:
       access_configs:
         description:
@@ -237,6 +279,7 @@ options:
           config, ONE_TO_ONE_NAT, is supported. If there are no accessConfigs specified,
           then this instance will have no external internet access.
         required: false
+        type: list
         suboptions:
           name:
             description:
@@ -244,6 +287,7 @@ options:
               is External NAT but you can use any arbitrary string you would like.
               For example, My external IP or Network Access.
             required: true
+            type: str
           nat_ip:
             description:
             - Reference to an address.
@@ -258,16 +302,19 @@ options:
               name-of-resource` to a gcp_compute_address task and then set this nat_ip
               field to "{{ name-of-resource }}"'
             required: false
+            type: dict
           type:
             description:
             - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
             - 'Some valid choices include: "ONE_TO_ONE_NAT"'
             required: true
+            type: str
       alias_ip_ranges:
         description:
         - An array of alias IP ranges for this network interface. Can only be specified
           for network interfaces on subnet-mode networks.
         required: false
+        type: list
         suboptions:
           ip_cidr_range:
             description:
@@ -277,30 +324,33 @@ options:
               This range may be a single IP address (e.g. 10.2.3.4), a netmask (e.g.
               /24) or a CIDR format string (e.g. 10.1.2.0/24).
             required: false
+            type: str
           subnetwork_range_name:
             description:
             - Optional subnetwork secondary range name specifying the secondary range
               from which to allocate the IP CIDR range for this alias IP range. If
               left unspecified, the primary range of the subnetwork will be used.
             required: false
+            type: str
       network:
         description:
-        - Specifies the title of an existing network. When creating an instance, if
-          neither the network nor the subnetwork is specified, the default network
-          global/networks/default is used; if the network is not specified but the
-          subnetwork is specified, the network is inferred.
+        - Specifies the title of an existing network. Not setting the network title
+          will select the default network interface, which could have SSH already
+          configured .
         - 'This field represents a link to a Network resource in GCP. It can be specified
           in two ways. First, you can place a dictionary with key ''selfLink'' and
           value of your resource''s selfLink Alternatively, you can add `register:
           name-of-resource` to a gcp_compute_network task and then set this network
           field to "{{ name-of-resource }}"'
         required: false
+        type: dict
       network_ip:
         description:
         - An IPv4 internal network address to assign to the instance for this network
           interface. If not specified by the user, an unused internal IP is assigned
           by the system.
         required: false
+        type: str
       subnetwork:
         description:
         - Reference to a VPC network.
@@ -313,10 +363,12 @@ options:
           name-of-resource` to a gcp_compute_subnetwork task and then set this subnetwork
           field to "{{ name-of-resource }}"'
         required: false
+        type: dict
   scheduling:
     description:
     - Sets the scheduling options for this instance.
     required: false
+    type: dict
     suboptions:
       automatic_restart:
         description:
@@ -333,6 +385,7 @@ options:
           and only possible behavior is TERMINATE.
         - For more information, see Setting Instance Scheduling Options.
         required: false
+        type: str
       preemptible:
         description:
         - Defines whether the instance is preemptible. This can only be set during
@@ -345,15 +398,40 @@ options:
     - A list of service accounts, with their specified scopes, authorized for this
       instance. Only one service account per VM instance is supported.
     required: false
+    type: list
     suboptions:
       email:
         description:
         - Email address of the service account.
         required: false
+        type: str
       scopes:
         description:
         - The list of scopes to be made available for this service account.
         required: false
+        type: list
+  shielded_instance_config:
+    description:
+    - Configuration for various parameters related to shielded instances.
+    required: false
+    type: dict
+    version_added: 2.9
+    suboptions:
+      enable_secure_boot:
+        description:
+        - Defines whether the instance has Secure Boot enabled.
+        required: false
+        type: bool
+      enable_vtpm:
+        description:
+        - Defines whether the instance has the vTPM enabled.
+        required: false
+        type: bool
+      enable_integrity_monitoring:
+        description:
+        - Defines whether the instance has integrity monitoring enabled.
+        required: false
+        type: bool
   status:
     description:
     - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
@@ -363,6 +441,7 @@ options:
     - 'Some valid choices include: "PROVISIONING", "STAGING", "RUNNING", "STOPPING",
       "SUSPENDING", "SUSPENDED", "TERMINATED"'
     required: false
+    type: str
     version_added: 2.8
   tags:
     description:
@@ -371,6 +450,7 @@ options:
       creation. The tags can be later modified by the setTags method. Each tag within
       the list must comply with RFC1035.
     required: false
+    type: dict
     suboptions:
       fingerprint:
         description:
@@ -380,15 +460,18 @@ options:
           every request to modify or update metadata. You must always provide an up-to-date
           fingerprint hash in order to update or change metadata.
         required: false
+        type: str
       items:
         description:
         - An array of tags. Each tag must be 1-63 characters long, and comply with
           RFC1035.
         required: false
+        type: list
   zone:
     description:
     - A reference to the zone where the machine resides.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -467,6 +550,11 @@ creationTimestamp:
   - Creation timestamp in RFC3339 text format.
   returned: success
   type: str
+deletionProtection:
+  description:
+  - Whether the resource should be protected against deletion.
+  returned: success
+  type: bool
 disks:
   description:
   - An array of disks that are associated with the instances that are created from
@@ -628,6 +716,14 @@ guestAccelerators:
       - Full or partial URL of the accelerator type resource to expose to this instance.
       returned: success
       type: str
+hostname:
+  description:
+  - The hostname of the instance to be created. The specified hostname must be RFC1035
+    compliant. If hostname is not specified, the default hostname is [INSTANCE_NAME].c.[PROJECT_ID].internal
+    when using the global DNS, and [INSTANCE_NAME].[ZONE].c.[PROJECT_ID].internal
+    when using zonal DNS.
+  returned: success
+  type: str
 id:
   description:
   - The unique identifier for the resource. This identifier is defined by the server.
@@ -740,10 +836,9 @@ networkInterfaces:
       type: str
     network:
       description:
-      - Specifies the title of an existing network. When creating an instance, if
-        neither the network nor the subnetwork is specified, the default network global/networks/default
-        is used; if the network is not specified but the subnetwork is specified,
-        the network is inferred.
+      - Specifies the title of an existing network. Not setting the network title
+        will select the default network interface, which could have SSH already configured
+        .
       returned: success
       type: dict
     networkIP:
@@ -806,6 +901,27 @@ serviceAccounts:
       - The list of scopes to be made available for this service account.
       returned: success
       type: list
+shieldedInstanceConfig:
+  description:
+  - Configuration for various parameters related to shielded instances.
+  returned: success
+  type: complex
+  contains:
+    enableSecureBoot:
+      description:
+      - Defines whether the instance has Secure Boot enabled.
+      returned: success
+      type: bool
+    enableVtpm:
+      description:
+      - Defines whether the instance has the vTPM enabled.
+      returned: success
+      type: bool
+    enableIntegrityMonitoring:
+      description:
+      - Defines whether the instance has integrity monitoring enabled.
+      returned: success
+      type: bool
 status:
   description:
   - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
@@ -870,6 +986,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             can_ip_forward=dict(type='bool', aliases=['ip_forward']),
+            deletion_protection=dict(type='bool'),
             disks=dict(
                 type='list',
                 elements='dict',
@@ -896,6 +1013,7 @@ def main():
                 ),
             ),
             guest_accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
+            hostname=dict(type='str'),
             labels=dict(type='dict'),
             metadata=dict(type='dict'),
             machine_type=dict(type='str'),
@@ -920,6 +1038,9 @@ def main():
                 type='dict', options=dict(automatic_restart=dict(type='bool'), on_host_maintenance=dict(type='str'), preemptible=dict(type='bool'))
             ),
             service_accounts=dict(type='list', elements='dict', options=dict(email=dict(type='str'), scopes=dict(type='list', elements='str'))),
+            shielded_instance_config=dict(
+                type='dict', options=dict(enable_secure_boot=dict(type='bool'), enable_vtpm=dict(type='bool'), enable_integrity_monitoring=dict(type='bool'))
+            ),
             status=dict(type='str'),
             tags=dict(type='dict', options=dict(fingerprint=dict(type='str'), items=dict(type='list', elements='str'))),
             zone=dict(required=True, type='str'),
@@ -973,10 +1094,14 @@ def update(module, link, kind, fetch):
 
 
 def update_fields(module, request, response):
+    if response.get('deletionProtection') != request.get('deletionProtection'):
+        deletion_protection_update(module, request, response)
     if response.get('labels') != request.get('labels'):
         label_fingerprint_update(module, request, response)
     if response.get('machineType') != request.get('machineType'):
         machine_type_update(module, request, response)
+    if response.get('shieldedInstanceConfig') != request.get('shieldedInstanceConfig'):
+        shielded_instance_config_update(module, request, response)
 
 
 def label_fingerprint_update(module, request, response):
@@ -1004,8 +1129,10 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#instance',
         u'canIpForward': module.params.get('can_ip_forward'),
+        u'deletionProtection': module.params.get('deletion_protection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(module.params.get('guest_accelerators', []), module).to_request(),
+        u'hostname': module.params.get('hostname'),
         u'labels': module.params.get('labels'),
         u'metadata': module.params.get('metadata'),
         u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params),
@@ -1014,6 +1141,7 @@ def resource_to_request(module):
         u'networkInterfaces': InstanceNetworkinterfacesArray(module.params.get('network_interfaces', []), module).to_request(),
         u'scheduling': InstanceScheduling(module.params.get('scheduling', {}), module).to_request(),
         u'serviceAccounts': InstanceServiceaccountsArray(module.params.get('service_accounts', []), module).to_request(),
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(module.params.get('shielded_instance_config', {}), module).to_request(),
         u'status': module.params.get('status'),
         u'tags': InstanceTags(module.params.get('tags', {}), module).to_request(),
     }
@@ -1088,8 +1216,10 @@ def response_to_hash(module, response):
         u'canIpForward': response.get(u'canIpForward'),
         u'cpuPlatform': response.get(u'cpuPlatform'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
+        u'deletionProtection': response.get(u'deletionProtection'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(response.get(u'guestAccelerators', []), module).from_response(),
+        u'hostname': response.get(u'hostname'),
         u'id': response.get(u'id'),
         u'labelFingerprint': response.get(u'labelFingerprint'),
         u'labels': response.get(u'labels'),
@@ -1100,6 +1230,7 @@ def response_to_hash(module, response):
         u'networkInterfaces': InstanceNetworkinterfacesArray(response.get(u'networkInterfaces', []), module).from_response(),
         u'scheduling': InstanceScheduling(response.get(u'scheduling', {}), module).from_response(),
         u'serviceAccounts': InstanceServiceaccountsArray(response.get(u'serviceAccounts', []), module).from_response(),
+        u'shieldedInstanceConfig': InstanceShieldedinstanceconfig(response.get(u'shieldedInstanceConfig', {}), module).from_response(),
         u'status': response.get(u'status'),
         u'statusMessage': response.get(u'statusMessage'),
         u'tags': InstanceTags(response.get(u'tags', {}), module).from_response(),
@@ -1139,7 +1270,11 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance')
+    response = fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instance')
+    if response:
+        return decode_response(response, module)
+    else:
+        return {}
 
 
 def wait_for_completion(status, op_result, module):
@@ -1235,6 +1370,33 @@ class InstancePower(object):
 
     def _stop_url(self):
         return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{name}/stop".format(**self.module.params)
+
+
+def deletion_protection_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(
+            [
+                "https://www.googleapis.com/compute/v1/",
+                "projects/{project}/zones/{zone}/instances/{name}/setDeletionProtection?deletionProtection={deletionProtection}",
+            ]
+        ).format(**module.params),
+        {},
+    )
+
+
+def shielded_instance_config_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/instances/{name}/updateShieldedInstanceConfig"]).format(
+            **module.params
+        ),
+        {
+            u'enableSecureBoot': navigate_hash(module.params, ['shielded_instance_config', 'enable_secure_boot']),
+            u'enableVtpm': navigate_hash(module.params, ['shielded_instance_config', 'enable_vtpm']),
+            u'enableIntegrityMonitoring': navigate_hash(module.params, ['shielded_instance_config', 'enable_integrity_monitoring']),
+        },
+    )
 
 
 class InstanceDisksArray(object):
@@ -1529,6 +1691,33 @@ class InstanceServiceaccountsArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'email': item.get(u'email'), u'scopes': item.get(u'scopes')})
+
+
+class InstanceShieldedinstanceconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get('enable_secure_boot'),
+                u'enableVtpm': self.request.get('enable_vtpm'),
+                u'enableIntegrityMonitoring': self.request.get('enable_integrity_monitoring'),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'enableSecureBoot': self.request.get(u'enableSecureBoot'),
+                u'enableVtpm': self.request.get(u'enableVtpm'),
+                u'enableIntegrityMonitoring': self.request.get(u'enableIntegrityMonitoring'),
+            }
+        )
 
 
 class InstanceTags(object):

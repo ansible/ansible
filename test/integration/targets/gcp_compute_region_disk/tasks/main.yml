@@ -16,7 +16,7 @@
 - name: delete a region disk
   gcp_compute_region_disk:
     name: "{{ resource_name }}"
-    size_gb: 50
+    size_gb: 500
     disk_encryption_key:
       raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
     region: us-central1
@@ -31,7 +31,7 @@
 - name: create a region disk
   gcp_compute_region_disk:
     name: "{{ resource_name }}"
-    size_gb: 50
+    size_gb: 500
     disk_encryption_key:
       raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
     region: us-central1
@@ -47,9 +47,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#disk'"
 - name: verify that region_disk was created
-  gcp_compute_region_disk_facts:
+  gcp_compute_region_disk_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1
@@ -67,7 +66,7 @@
 - name: create a region disk that already exists
   gcp_compute_region_disk:
     name: "{{ resource_name }}"
-    size_gb: 50
+    size_gb: 500
     disk_encryption_key:
       raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
     region: us-central1
@@ -83,12 +82,11 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#disk'"
 #----------------------------------------------------------
 - name: delete a region disk
   gcp_compute_region_disk:
     name: "{{ resource_name }}"
-    size_gb: 50
+    size_gb: 500
     disk_encryption_key:
       raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
     region: us-central1
@@ -104,9 +102,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that region_disk was deleted
-  gcp_compute_region_disk_facts:
+  gcp_compute_region_disk_info:
       filters:
          - name = {{ resource_name }}
       region: us-central1
@@ -124,7 +121,7 @@
 - name: delete a region disk that does not exist
   gcp_compute_region_disk:
     name: "{{ resource_name }}"
-    size_gb: 50
+    size_gb: 500
     disk_encryption_key:
       raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
     region: us-central1
@@ -140,4 +137,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

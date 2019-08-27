@@ -1,0 +1,1 @@
+vertica_info.py

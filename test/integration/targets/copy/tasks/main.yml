@@ -7,7 +7,6 @@
 
     - set_fact:
         local_temp_dir: '{{ tempfile_result.stdout }}'
-        # output_dir is hardcoded in test/runner/lib/executor.py and created there
         remote_dir: '{{ output_dir }}'
         symlinks:
           ansible-test-abs-link: /tmp/ansible-test-abs-link

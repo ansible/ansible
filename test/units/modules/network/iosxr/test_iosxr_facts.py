@@ -35,10 +35,13 @@ class TestIosxrFacts(TestIosxrModule):
         super(TestIosxrFacts, self).setUp()
 
         self.mock_run_commands = patch(
-            'ansible.modules.network.iosxr.iosxr_facts.run_commands')
+            'ansible.module_utils.network.iosxr.facts.legacy.base.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_get_capabilities = patch('ansible.modules.network.iosxr.iosxr_facts.get_capabilities')
+        self.mock_get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
+        self.get_resource_connection = self.mock_get_resource_connection.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.network.iosxr.facts.legacy.base.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
         self.get_capabilities.return_value = {
             'device_info': {
@@ -55,6 +58,7 @@ class TestIosxrFacts(TestIosxrModule):
 
         self.mock_run_commands.stop()
         self.mock_get_capabilities.stop()
+        self.mock_get_resource_connection.stop()
 
     def load_fixtures(self, commands=None):
 

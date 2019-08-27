@@ -22,7 +22,8 @@ description:
 options:
     name:
         description:
-            - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+            - Name of the service. This parameter takes the name of exactly one service to work with.
+            - When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: [ service, unit ]
     state:
         description:
@@ -270,7 +271,11 @@ from ansible.module_utils._text import to_native
 
 
 def is_running_service(service_status):
-    return service_status['ActiveState'] in set(['active', 'activating'])
+    return service_status['ActiveState'] in set(['active', 'activating', 'deactivating'])
+
+
+def is_deactivating_service(service_status):
+    return service_status['ActiveState'] in set(['deactivating'])
 
 
 def request_was_ignored(out):
@@ -498,7 +503,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                 elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']):
+                    if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
                 else:
                     if not is_running_service(result['status']):

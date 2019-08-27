@@ -1,11 +1,8 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-import json
 
 from ansible.modules.storage.netapp.netapp_e_syslog import Syslog
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
-import time
+from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
 from units.compat import mock

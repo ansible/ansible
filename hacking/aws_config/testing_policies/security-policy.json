@@ -108,6 +108,7 @@
                 "kms:GenerateRandom",
                 "kms:Get*",
                 "kms:List*",
+                "kms:PutKeyPolicy",
                 "kms:RetireGrant",
                 "kms:ScheduleKeyDeletion",
                 "kms:TagResource",
@@ -122,7 +123,20 @@
             "Effect": "Allow",
             "Action": [
                 "iam:ListServerCertificates",
-                "iam:UploadServerCertificate"
+                "iam:UploadServerCertificate",
+                "iam:UpdateServerCertificate",
+                "iam:DeleteServerCertificate",
+                "iam:GetServerCertificate"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToManagePasswordPolicy",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetAccountPasswordPolicy",
+                "iam:DeleteAccountPasswordPolicy",
+                "iam:UpdateAccountPasswordPolicy"
             ],
             "Resource": "*"
         }

@@ -19,12 +19,4 @@
     folder: "{{ item.folder }}"
   with_items: "{{ virtual_machines }}"
   register: poweroff_d1_c1_f1
-
 - debug: var=poweroff_d1_c1_f1
-
-# vcsim (v0.18.0) VMs are spawned PoweredOn
-- name: make sure changes were made
-  assert:
-    that:
-      - '"instance" in poweroff_d1_c1_f1.results[0]'
-      - '"instance" in poweroff_d1_c1_f1.results[1]'

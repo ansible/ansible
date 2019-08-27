@@ -1,0 +1,99 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup
+  hcloud_network:
+    name: "{{ hcloud_network_name }}"
+    ip_range: "10.0.0.0/8"
+    state: present
+  register: network
+- name: verify setup
+  assert:
+    that:
+    - network is success
+
+- name: test missing required parameters on create route
+  hcloud_route:
+    state: present
+  register: result
+  ignore_errors: yes
+- name: verify fail test missing required parameters on create route
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "missing required arguments: network, destination, gateway"'
+
+- name: test create route with checkmode
+  hcloud_route:
+    network: "{{ hcloud_network_name }}"
+    destination: "10.100.1.0/24"
+    gateway: "10.0.1.1"
+    state: present
+  register: result
+  check_mode: yes
+- name: verify test create route with checkmode
+  assert:
+    that:
+    - result is changed
+
+- name: test create route
+  hcloud_route:
+    network: "{{ hcloud_network_name }}"
+    destination: "10.100.1.0/24"
+    gateway: "10.0.1.1"
+    state: present
+  register: route
+- name: verify create route
+  assert:
+    that:
+    - route is changed
+    - route.hcloud_route.network == "{{ hcloud_network_name }}"
+    - route.hcloud_route.destination == "10.100.1.0/24"
+    - route.hcloud_route.gateway == "10.0.1.1"
+
+- name: test create route idempotency
+  hcloud_route:
+    network: "{{ hcloud_network_name }}"
+    destination: "10.100.1.0/24"
+    gateway: "10.0.1.1"
+    state: present
+  register: result
+- name: verify create route idempotency
+  assert:
+    that:
+    - result is not changed
+
+- name: test fail create route with wrong gateway
+  hcloud_route:
+    network: "{{ hcloud_network_name }}"
+    destination: "10.100.1.0/24"
+    gateway: "10.0.1.2"
+    state: present
+  register: route
+  ignore_errors: yes
+- name: verfiy fail create route with wrong gateway
+  assert:
+    that:
+    - route is failed
+
+- name: test absent route
+  hcloud_route:
+    network: "{{ hcloud_network_name }}"
+    destination: "10.100.1.0/24"
+    gateway: "10.0.1.1"
+    state: absent
+  register: result
+- name: verify test absent route
+  assert:
+    that:
+    - result is changed
+
+- name: cleanup
+  hcloud_network:
+    name: "{{hcloud_network_name}}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+      - result is success

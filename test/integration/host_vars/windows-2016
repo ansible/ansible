@@ -1,4 +1,0 @@
-# force 2016 to use NTLM + HTTP message encryption
-ansible_winrm_transport: ntlm
-ansible_winrm_scheme: http
-ansible_port: 5985

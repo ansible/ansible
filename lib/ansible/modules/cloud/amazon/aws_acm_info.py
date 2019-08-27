@@ -40,7 +40,7 @@ EXAMPLES = '''
   aws_acm_info:
     domain_name: "*.example_com"
 
-- name: obtain all certificates pending validiation
+- name: obtain all certificates pending validation
   aws_acm_info:
     statuses:
     - PENDING_VALIDATION

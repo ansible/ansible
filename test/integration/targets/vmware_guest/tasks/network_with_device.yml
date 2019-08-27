@@ -15,7 +15,7 @@
     datacenter: "{{ dc1 }}"
     state: poweredon
     folder: "{{ f0 }}"
-    name: network_with_device
+    name: test_vm1
     disk:
       - size: 10mb
         autoselect_datastore: yes
@@ -43,7 +43,7 @@
     datacenter: "{{ dc1 }}"
     state: poweredon
     folder: "{{ f0 }}"
-    name: network_with_device
+    name: test_vm1
     disk:
       - size: 10mb
         autoselect_datastore: yes

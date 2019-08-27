@@ -183,7 +183,7 @@ class Connection(NetworkConnectionBase):
 
             self.napalm.open()
 
-            self._sub_plugin = {'type': 'external', 'name': 'napalm', 'obj': self.napalm}
+            self._sub_plugin = {'name': 'napalm', 'obj': self.napalm}
             self.queue_message('vvvv', 'created napalm device for network_os %s' % self._network_os)
             self._connected = True
 

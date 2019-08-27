@@ -19,7 +19,7 @@ DOCUMENTATION = r'''
 module: vmware_vm_storage_policy_info
 short_description: Gather information about vSphere storage profile defined storage policy information.
 description:
-- Returns basic facts about vSphere storage profiles.
+- Returns basic information on vSphere storage profiles.
 - A vSphere storage profile defines storage policy information that describes storage requirements
   for virtual machines and storage capabilities of storage providers.
 version_added: '2.9'
@@ -46,7 +46,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 spbm_profiles:
-  description: list of dictionary of SPBM facts
+  description: list of dictionary of SPBM info
   returned: success
   type: list
   sample: [

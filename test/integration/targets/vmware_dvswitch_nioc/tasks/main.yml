@@ -35,9 +35,9 @@
     - &enable_nioc
       name: Enable NIOC
       vmware_dvswitch_nioc:
-        hostname: "{{ vcenter_server }}"
-        username: "{{ vcenter_user }}"
-        password: "{{ vcenter_pass }}"
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
         switch: dvswitch_0001
         version: version3
         validate_certs: no
@@ -74,9 +74,9 @@
     - &disable_nioc
       name: Disable NIOC
       vmware_dvswitch_nioc:
-        hostname: "{{ vcenter_server }}"
-        username: "{{ vcenter_user }}"
-        password: "{{ vcenter_pass }}"
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
         switch: dvswitch_0001
         validate_certs: no
         state: absent

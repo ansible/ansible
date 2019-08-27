@@ -2,7 +2,7 @@
 
 set -eux -o pipefail
 
-ansible-playbook setup.yml
+ansible-playbook setup.yml "$@"
 
 trap 'ansible-playbook cleanup.yml' EXIT
 
@@ -37,7 +37,7 @@ popd # "${galaxy_local_test_role_dir}"
 f_ansible_galaxy_status()
 {
 
-    printf "### Testing ansible-galaxy: %s\n" "${@}"
+    printf "\n\n\n### Testing ansible-galaxy: %s\n" "${@}"
 }
 
 # Galaxy install test case
@@ -47,7 +47,7 @@ f_ansible_galaxy_status "install of local git repo"
 galaxy_testdir=$(mktemp -d)
 pushd "${galaxy_testdir}"
 
-    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}"
+    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@"
 
     # Test that the role was installed to the expected directory
     [[ -d "${HOME}/.ansible/roles/${galaxy_local_test_role}" ]]
@@ -62,7 +62,7 @@ galaxy_testdir=$(mktemp -d)
 pushd "${galaxy_testdir}"
     mkdir -p "${galaxy_relative_rolespath}"
 
-    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" -p "${galaxy_relative_rolespath}"
+    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" -p "${galaxy_relative_rolespath}" "$@"
 
     # Test that the role was installed to the expected directory
     [[ -d "${galaxy_relative_rolespath}/${galaxy_local_test_role}" ]]
@@ -84,7 +84,7 @@ galaxy_testdir=$(mktemp -d)
 pushd "${galaxy_testdir}"
 
     git clone "${galaxy_local_test_role_git_repo}" "${galaxy_local_test_role}"
-    ansible-galaxy init roles-path-bug
+    ansible-galaxy init roles-path-bug "$@"
     pushd roles-path-bug
         cat <<EOF > ansible.cfg
 [defaults]
@@ -96,7 +96,7 @@ EOF
   name: ${galaxy_local_test_role}
 EOF
 
-        ansible-galaxy install -r requirements.yml -p roles/
+        ansible-galaxy install -r requirements.yml -p roles/ "$@"
     popd # roles-path-bug
 
     # Test that the role was installed to the expected directory
@@ -105,5 +105,93 @@ EOF
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
 
+#################################
+# ansible-galaxy collection tests
+#################################
+
+f_ansible_galaxy_status \
+    "collection init tests to make sure the relative dir logic works"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy collection init ansible_test.my_collection "$@"
+
+    # Test that the collection skeleton was created in the expected directory
+    for galaxy_collection_dir in "docs" "plugins" "roles"
+    do
+        [[ -d "${galaxy_testdir}/ansible_test/my_collection/${galaxy_collection_dir}" ]]
+    done
+
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
+
+f_ansible_galaxy_status \
+    "collection init tests to make sure the --init-path logic works"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy collection init ansible_test.my_collection --init-path "${galaxy_testdir}/test" "$@"
+
+    # Test that the collection skeleton was created in the expected directory
+    for galaxy_collection_dir in "docs" "plugins" "roles"
+    do
+        [[ -d "${galaxy_testdir}/test/ansible_test/my_collection/${galaxy_collection_dir}" ]]
+    done
+
+popd # ${galaxy_testdir}
+
+f_ansible_galaxy_status \
+    "collection build test creating artifact in current directory"
+
+pushd "${galaxy_testdir}/test/ansible_test/my_collection"
+
+    ansible-galaxy collection build "$@"
+
+    [[ -f "${galaxy_testdir}/test/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz" ]]
+
+popd # ${galaxy_testdir}/ansible_test/my_collection
+
+f_ansible_galaxy_status \
+    "collection build test to make sure we can specify a relative path"
+
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy collection build "test/ansible_test/my_collection" "$@"
+
+    [[ -f "${galaxy_testdir}/ansible_test-my_collection-1.0.0.tar.gz" ]]
+
+    # Make sure --force works
+    ansible-galaxy collection build "test/ansible_test/my_collection" --force "$@"
+
+    [[ -f "${galaxy_testdir}/ansible_test-my_collection-1.0.0.tar.gz" ]]
+
+f_ansible_galaxy_status \
+    "collection install from local tarball test"
+
+    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install | tee out.txt
+
+    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
+    grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
+
+
+f_ansible_galaxy_status \
+    "collection install with existing collection and without --force"
+
+    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install | tee out.txt
+
+    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
+    grep "Skipping 'ansible_test.my_collection' as it is already installed" out.txt
+
+f_ansible_galaxy_status \
+    "collection install with existing collection and with --force"
+
+    ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force | tee out.txt
+
+    [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
+    grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
+
+popd # ${galaxy_testdir}
+
+rm -fr "${galaxy_testdir}"
 
 rm -fr "${galaxy_local_test_role_dir}"

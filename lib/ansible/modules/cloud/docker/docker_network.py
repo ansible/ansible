@@ -286,6 +286,7 @@ from ansible.module_utils.docker.common import (
     docker_version,
     DifferenceTracker,
     clean_dict_booleans_for_docker_api,
+    RequestException,
 )
 
 try:
@@ -546,7 +547,7 @@ class DockerNetworkManager(object):
             if not self.check_mode:
                 resp = self.client.create_network(self.parameters.name, **params)
                 self.client.report_warnings(resp, ['Warning'])
-                self.existing_network = self.client.get_network(id=resp['Id'])
+                self.existing_network = self.client.get_network(network_id=resp['Id'])
             self.results['actions'].append("Created network %s with driver %s" % (self.parameters.name, self.parameters.driver))
             self.results['changed'] = True
 
@@ -688,6 +689,8 @@ def main():
         client.module.exit_json(**cm.results)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

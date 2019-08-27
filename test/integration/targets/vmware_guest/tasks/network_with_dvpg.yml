@@ -3,90 +3,124 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Clone from existing VM with DVPG
-- name: Deploy VM from template {{ vm1 | basename }}
-  vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
-    state: poweredon
-    folder: "{{ vm1 | dirname }}"
-    template: "{{ vm1 | basename }}"
-    name: "{{ vm_name }}"
-    disk:
-      - size: 10mb
-        autoselect_datastore: yes
-    guest_id: rhel7_64guest
-    hardware:
-      memory_mb: 512
-      num_cpus: 1
-    networks:
-      - name: "DC0_DVPG0"
-  register: no_vm_result
+- when: vcsim is not defined
+  block:
+    - name: create basic DVS portgroup
+      vmware_dvs_portgroup:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        switch_name: "{{ dvswitch1 }}"
+        portgroup_name: DC0_DVPG0
+        vlan_id: 0
+        num_ports: 32
+        portgroup_type: earlyBinding
+        state: present
+      register: dvs_pg_result_0001
 
-- debug: var=no_vm_result
+    - name: Deploy VM from template
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ dc1 }}"
+        state: poweredon
+        folder: "{{ f0 }}"
+        template: "{{ virtual_machines[0].name }}"
+        name: test_vm1
+        disk:
+          - size: 10gb
+            autoselect_datastore: yes
+        guest_id: rhel7_64guest
+        hardware:
+          memory_mb: 128
+          num_cpus: 1
+        networks:
+          - name: DC0_DVPG0
+      register: no_vm_result
+    - debug: var=no_vm_result
+    - assert:
+        that:
+          - no_vm_result is changed
 
-- assert:
-    that:
-      - "no_vm_result.changed"
+    # New clone with DVPG
+    - name: Deploy new VM with DVPG
+      vmware_guest:
+        esxi_hostname: "{{ esxi_hosts[0] }}"
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ dc1 }}"
+        state: poweredon
+        folder: "{{ f0 }}"
+        name: test_vm2
+        disk:
+          - size: 10gb
+            autoselect_datastore: yes
+        guest_id: rhel7_64guest
+        hardware:
+          memory_mb: 128
+          num_cpus: 1
+        networks:
+          - name: "DC0_DVPG0"
+            dvswitch_name: "{{ dvswitch1 }}"
+      register: no_vm_result
+    - debug: var=no_vm_result
+    - assert:
+        that:
+          - no_vm_result is changed
 
-# New clone with DVPG
-- set_fact:
-    vm_name: "VM_{{ 10000 | random }}"
-
-- debug: var=vm_name
-
-- name: Deploy new VM with DVPG
-  vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
-    state: poweredon
-    folder: "{{ vm1 | dirname }}"
-    name: "{{ vm_name }}"
-    disk:
-      - size: 10mb
-        autoselect_datastore: yes
-    guest_id: rhel7_64guest
-    hardware:
-      memory_mb: 512
-      num_cpus: 1
-    networks:
-      - name: "DC0_DVPG0"
-  register: no_vm_result
-
-- debug: var=no_vm_result
-
-- assert:
-    that:
-      - "no_vm_result.changed"
-
-- name: Deploy same {{ vm_name }} VM again
-  vmware_guest:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
-    state: poweredon
-    folder: "{{ vm1 | dirname }}"
-    name: "{{ vm_name }}"
-    disk:
-      - size: 10mb
-        autoselect_datastore: yes
-    guest_id: rhel7_64guest
-    hardware:
-      memory_mb: 512
-      num_cpus: 1
-    networks:
-      - name: "DC0_DVPG0"
-  register: no_vm_result
-
-- debug: var=no_vm_result
-
-- assert:
-    that:
-      - "not no_vm_result.changed"
+    - name: Deploy same VM again
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ dc1 }}"
+        state: poweredon
+        folder: "{{ f0 }}"
+        name: test_vm2
+        disk:
+          - size: 10gb
+            autoselect_datastore: yes
+        guest_id: rhel7_64guest
+        hardware:
+          memory_mb: 128
+          num_cpus: 1
+        networks:
+          - name: "DC0_DVPG0"
+      register: no_vm_result
+    - debug: var=no_vm_result
+    - assert:
+        that:
+          - not (no_vm_result is changed)
+  always:
+    - when: vcsim is not defined
+      name: Remove VM to free the portgroup
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: '{{ item }}'
+        force: yes
+        state: absent
+      with_items:
+        - test_vm1
+        - test_vm2
+    - when: vcsim is not defined
+      name: delete basic portgroup
+      vmware_dvs_portgroup:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        switch_name: "{{ dvswitch1 }}"
+        portgroup_name: DC0_DVPG0
+        vlan_id: 0
+        num_ports: 32
+        portgroup_type: earlyBinding
+        state: absent

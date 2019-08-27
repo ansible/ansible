@@ -708,7 +708,11 @@ class XenServerVM(XenServerObject):
                             }
 
                             new_disk_vbd['VDI'] = self.xapi_session.xenapi.VDI.create(new_disk_vdi)
-                            self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+                            vbd_ref_new = self.xapi_session.xenapi.VBD.create(new_disk_vbd)
+
+                            if self.vm_params['power_state'].lower() == "running":
+                                self.xapi_session.xenapi.VBD.plug(vbd_ref_new)
+
                     elif change.get('cdrom'):
                         vm_cdrom_params_list = [cdrom_params for cdrom_params in self.vm_params['VBDs'] if cdrom_params['type'] == "CD"]
 

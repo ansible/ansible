@@ -37,19 +37,23 @@ options:
         description:
             - The local user name to be changed.
         required: True
+        type: str
     local_user_password:
         description:
             - The password to be set.
         required: False
+        type: str
     local_user_description:
         description:
             - Description for the user.
         required: False
+        type: str
     state:
         description:
             - Indicate desired state of the user. If the user already exists when C(state=present), the user info is updated
         choices: ['present', 'absent']
         default: present
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

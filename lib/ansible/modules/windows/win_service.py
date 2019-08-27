@@ -111,11 +111,15 @@ options:
       a local or domain account.
     - Set to C(LocalSystem) to use the SYSTEM account.
     - A newly created service will default to C(LocalSystem).
+    - If using a custom user account, it must have the C(SeServiceLogonRight)
+      granted to be able to start up. You can use the M(win_user_right) module
+      to grant this user right for you.
     type: str
     version_added: '2.3'
 seealso:
 - module: service
 - module: win_nssm
+- module: win_user_right
 author:
 - Chris Hoffman (@chrishoffman)
 '''
@@ -167,6 +171,14 @@ EXAMPLES = r'''
   win_service:
     name: service name
   register: service_info
+
+# This is required to be set for non-service accounts that need to run as a service
+- name: Grant domain account the SeServiceLogonRight user right
+  win_user_right:
+    name: SeServiceLogonRight
+    users:
+    - DOMAIN\User
+    action: add
 
 - name: Set the log on user to a domain account
   win_service:

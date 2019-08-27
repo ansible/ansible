@@ -231,6 +231,8 @@
 - name: Delete interface aggregate
   iosxr_interface:
     aggregate:
+    - name: GigabitEthernet0/0/0/2
+    - name: GigabitEthernet0/0/0/3
     - name: GigabitEthernet0/0/0/4
     - name: GigabitEthernet0/0/0/5
     state: absent
@@ -246,6 +248,8 @@
 - name: Delete interface aggregate (idempotent)
   iosxr_interface:
     aggregate:
+    - name: GigabitEthernet0/0/0/2
+    - name: GigabitEthernet0/0/0/3
     - name: GigabitEthernet0/0/0/4
     - name: GigabitEthernet0/0/0/5
     state: absent

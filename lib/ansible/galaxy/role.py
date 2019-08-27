@@ -31,6 +31,7 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
+import ansible.constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
@@ -204,7 +205,7 @@ class GalaxyRole(object):
                 role_data = self.src
                 tmp_file = self.fetch(role_data)
             else:
-                api = GalaxyAPI(self.galaxy)
+                api = GalaxyAPI(self.galaxy, 'role_default', C.GALAXY_SERVER)
                 role_data = api.lookup_role_by_name(self.src)
                 if not role_data:
                     raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
@@ -230,13 +231,13 @@ class GalaxyRole(object):
                                 'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
                                 'install.' % ', '.join([v.vstring for v in loose_versions])
                             )
-                        self.version = str(loose_versions[-1])
+                        self.version = to_text(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
                     else:
                         self.version = 'master'
                 elif self.version != 'master':
-                    if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
+                    if role_versions and to_text(self.version) not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
                                                                                                                                          self.name,
                                                                                                                                          role_versions))

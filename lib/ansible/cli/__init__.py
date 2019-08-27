@@ -29,6 +29,7 @@ from ansible.release import __version__
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes
 from ansible.vars.manager import VariableManager
 
 try:
@@ -253,6 +254,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         except EOFError:
             pass
 
+        # we 'wrap' the passwords to prevent templating as
+        # they can contain special chars and trigger it incorrectly
+        if sshpass:
+            sshpass = AnsibleUnsafeBytes(sshpass)
+        if becomepass:
+            becomepass = AnsibleUnsafeBytes(becomepass)
+
         return (sshpass, becomepass)
 
     def validate_conflicts(self, op, runas_opts=False, fork_opts=False):
@@ -332,6 +340,16 @@ class CLI(with_metaclass(ABCMeta, object)):
                 options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in options.inventory]
             else:
                 options.inventory = C.DEFAULT_HOST_LIST
+
+        # Dup args set on the root parser and sub parsers results in the root parser ignoring the args. e.g. doing
+        # 'ansible-galaxy -vvv init' has no verbosity set but 'ansible-galaxy init -vvv' sets a level of 3. To preserve
+        # back compat with pre-argparse changes we manually scan and set verbosity based on the argv values.
+        if self.parser.prog in ['ansible-galaxy', 'ansible-vault'] and not options.verbosity:
+            verbosity_arg = next(iter([arg for arg in self.args if arg.startswith('-v')]), None)
+            if verbosity_arg:
+                display.deprecated("Setting verbosity before the arg sub command is deprecated, set the verbosity "
+                                   "after the sub command", "2.13")
+                options.verbosity = verbosity_arg.count('v')
 
         return options
 

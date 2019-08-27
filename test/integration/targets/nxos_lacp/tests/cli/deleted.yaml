@@ -1,0 +1,53 @@
+---
+- debug:
+    msg: "Start nxos_lacp deleted integration tests connection={{ ansible_connection }}"
+
+- name: Enable lacp feature
+  nxos_feature:
+    feature: lacp
+
+- block:
+  - name: Setup
+    cli_config:
+      config: lacp system-priority 11
+
+  - name: Gather lacp facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lacp
+
+  - name: deleted
+    nxos_lacp: &deleted
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp == result.before"
+        - "'no lacp system-priority' in result.commands"
+        - "result.changed == true"
+        - "result.commands|length == 1"
+
+  - name: Gather lacp post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "result.after|length == 0"
+
+  - name: Idempotence - deleted
+    nxos_lacp: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    nxos_feature:
+      feature: lacp
+      state: disabled

@@ -47,23 +47,45 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Name of the topic.
     required: true
+    type: str
   kms_key_name:
     description:
     - The resource name of the Cloud KMS CryptoKey to be used to protect access to
-      messsages published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
+      messages published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
       must have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
     - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
     required: false
+    type: str
     version_added: 2.9
   labels:
     description:
     - A set of key/value label pairs to assign to this Topic.
     required: false
+    type: dict
     version_added: 2.8
+  message_storage_policy:
+    description:
+    - Policy constraining the set of Google Cloud Platform regions where messages
+      published to the topic may be stored. If not present, then no constraints are
+      in effect.
+    required: false
+    type: dict
+    version_added: 2.9
+    suboptions:
+      allowed_persistence_regions:
+        description:
+        - A list of IDs of GCP regions where messages that are published to the topic
+          may be persisted in storage. Messages published by publishers running in
+          non-allowed GCP regions (or running outside of GCP altogether) will be routed
+          for storage in one of the allowed regions. An empty list means that no regions
+          are allowed, and is not a valid configuration.
+        required: true
+        type: list
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.topics)'
@@ -88,7 +110,7 @@ name:
   type: str
 kmsKeyName:
   description:
-  - The resource name of the Cloud KMS CryptoKey to be used to protect access to messsages
+  - The resource name of the Cloud KMS CryptoKey to be used to protect access to messages
     published on this topic. Your project's PubSub service account (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`)
     must have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
   - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
@@ -99,14 +121,31 @@ labels:
   - A set of key/value label pairs to assign to this Topic.
   returned: success
   type: dict
+messageStoragePolicy:
+  description:
+  - Policy constraining the set of Google Cloud Platform regions where messages published
+    to the topic may be stored. If not present, then no constraints are in effect.
+  returned: success
+  type: complex
+  contains:
+    allowedPersistenceRegions:
+      description:
+      - A list of IDs of GCP regions where messages that are published to the topic
+        may be persisted in storage. Messages published by publishers running in non-allowed
+        GCP regions (or running outside of GCP altogether) will be routed for storage
+        in one of the allowed regions. An empty list means that no regions are allowed,
+        and is not a valid configuration.
+      returned: success
+      type: list
 '''
 
 ################################################################################
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
+import re
 
 ################################################################################
 # Main
@@ -122,6 +161,7 @@ def main():
             name=dict(required=True, type='str'),
             kms_key_name=dict(type='str'),
             labels=dict(type='dict'),
+            message_storage_policy=dict(type='dict', options=dict(allowed_persistence_regions=dict(required=True, type='list', elements='str'))),
         )
     )
 
@@ -172,6 +212,8 @@ def updateMask(request, response):
     update_mask = []
     if request.get('labels') != response.get('labels'):
         update_mask.append('labels')
+    if request.get('messageStoragePolicy') != response.get('messageStoragePolicy'):
+        update_mask.append('messageStoragePolicy')
     return ','.join(update_mask)
 
 
@@ -181,8 +223,12 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {u'name': module.params.get('name'), u'kmsKeyName': module.params.get('kms_key_name'), u'labels': module.params.get('labels')}
-    request = encode_request(request, module)
+    request = {
+        u'name': name_pattern(module.params.get('name'), module),
+        u'kmsKeyName': module.params.get('kms_key_name'),
+        u'labels': module.params.get('labels'),
+        u'messageStoragePolicy': TopicMessagestoragepolicy(module.params.get('message_storage_policy', {}), module).to_request(),
+    }
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -219,8 +265,6 @@ def return_if_object(module, response, allow_not_found=False):
     except getattr(json.decoder, 'JSONDecodeError', ValueError):
         module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
-    result = decode_request(result, module)
-
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
 
@@ -230,7 +274,6 @@ def return_if_object(module, response, allow_not_found=False):
 def is_different(module, response):
     request = resource_to_request(module)
     response = response_to_hash(module, response)
-    request = decode_request(request, module)
 
     # Remove all output-only from response.
     response_vals = {}
@@ -249,18 +292,39 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'name': module.params.get('name'), u'kmsKeyName': module.params.get('kms_key_name'), u'labels': response.get(u'labels')}
+    return {
+        u'name': name_pattern(module.params.get('name'), module),
+        u'kmsKeyName': module.params.get('kms_key_name'),
+        u'labels': response.get(u'labels'),
+        u'messageStoragePolicy': TopicMessagestoragepolicy(response.get(u'messageStoragePolicy', {}), module).from_response(),
+    }
 
 
-def decode_request(response, module):
-    if 'name' in response:
-        response['name'] = response['name'].split('/')[-1]
-    return response
+def name_pattern(name, module):
+    if name is None:
+        return
+
+    regex = r"projects/.*/topics/.*"
+
+    if not re.match(regex, name):
+        name = "projects/{project}/topics/{name}".format(**module.params)
+
+    return name
 
 
-def encode_request(request, module):
-    request['name'] = '/'.join(['projects', module.params['project'], 'topics', module.params['name']])
-    return request
+class TopicMessagestoragepolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'allowedPersistenceRegions': self.request.get('allowed_persistence_regions')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'allowedPersistenceRegions': self.request.get(u'allowedPersistenceRegions')})
 
 
 if __name__ == '__main__':

@@ -34,11 +34,13 @@ options:
     - Name of the cluster.
     - Firewall settings are applied to every ESXi host system in given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - Firewall settings are applied to this ESXi host system.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
   rules:
     description:
     - A list of Rule set which needs to be managed.
@@ -47,6 +49,7 @@ options:
     - Additional IPs and networks can also be specified
     - Please see examples for more information.
     default: []
+    type: list
 extends_documentation_fragment: vmware.documentation
 '''
 

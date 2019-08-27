@@ -26,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_system_virtual_wan_link
 short_description: Configure redundant internet connections using SD-WAN (formerly virtual WAN link) in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system feature and virtual_wan_link category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -41,95 +41,124 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     system_virtual_wan_link:
         description:
             - Configure redundant internet connections using SD-WAN (formerly virtual WAN link).
         default: null
+        type: dict
         suboptions:
-            fail-alert-interfaces:
+            fail_alert_interfaces:
                 description:
                     - Physical interfaces that will be alerted.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Physical interface name. Source system.interface.name.
                         required: true
-            fail-detect:
+                        type: str
+            fail_detect:
                 description:
                     - Enable/disable SD-WAN Internet connection status checking (failure detection).
+                type: str
                 choices:
                     - enable
                     - disable
-            health-check:
+            health_check:
                 description:
                     - SD-WAN status checking or health checking. Identify a server on the Internet and determine how SD-WAN verifies that the FortiGate can
                        communicate with it.
+                type: list
                 suboptions:
-                    addr-mode:
+                    addr_mode:
                         description:
                             - Address mode (IPv4 or IPv6).
+                        type: str
                         choices:
                             - ipv4
                             - ipv6
                     failtime:
                         description:
-                            - Number of failures before server is considered lost (1 - 10, default = 5).
-                    http-get:
+                            - Number of failures before server is considered lost (1 - 3600).
+                        type: int
+                    http_agent:
+                        description:
+                            - String in the http-agent field in the HTTP header.
+                        type: str
+                    http_get:
                         description:
                             - URL used to communicate with the server if the protocol if the protocol is HTTP.
-                    http-match:
+                        type: str
+                    http_match:
                         description:
                             - Response string expected from the server if the protocol is HTTP.
+                        type: str
                     interval:
                         description:
-                            - Status check interval, or the time between attempting to connect to the server (1 - 3600 sec, default = 5).
+                            - Status check interval, or the time between attempting to connect to the server (1 - 3600 sec).
+                        type: int
                     members:
                         description:
                             - Member sequence number list.
+                        type: list
                         suboptions:
-                            seq-num:
+                            seq_num:
                                 description:
                                     - Member sequence number. Source system.virtual-wan-link.members.seq-num.
-                                required: true
+                                type: int
                     name:
                         description:
                             - Status check or health check name.
                         required: true
-                    packet-size:
+                        type: str
+                    packet_size:
                         description:
                             - Packet size of a twamp test session,
+                        type: int
                     password:
                         description:
                             - Twamp controller password in authentication mode
+                        type: str
                     port:
                         description:
                             - Port number used to communicate with the server over the selected protocol.
+                        type: int
                     protocol:
                         description:
                             - Protocol used to determine if the FortiGate can communicate with the server.
+                        type: str
                         choices:
                             - ping
                             - tcp-echo
@@ -139,73 +168,91 @@ options:
                             - ping6
                     recoverytime:
                         description:
-                            - Number of successful responses received before server is considered recovered (1 - 10, default = 5).
-                    security-mode:
+                            - Number of successful responses received before server is considered recovered (1 - 3600).
+                        type: int
+                    security_mode:
                         description:
                             - Twamp controller security mode.
+                        type: str
                         choices:
                             - none
                             - authentication
                     server:
                         description:
                             - IP address or FQDN name of the server.
+                        type: str
                     sla:
                         description:
                             - Service level agreement (SLA).
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - SLA ID.
                                 required: true
-                            jitter-threshold:
+                                type: int
+                            jitter_threshold:
                                 description:
-                                    - Jitter for SLA to make decision in milliseconds. (0 - 10000000, default = 5).
-                            latency-threshold:
+                                    - Jitter for SLA to make decision in milliseconds. (0 - 10000000).
+                                type: int
+                            latency_threshold:
                                 description:
-                                    - Latency for SLA to make decision in milliseconds. (0 - 10000000, default = 5).
-                            link-cost-factor:
+                                    - Latency for SLA to make decision in milliseconds. (0 - 10000000).
+                                type: int
+                            link_cost_factor:
                                 description:
                                     - Criteria on which to base link selection.
+                                type: str
                                 choices:
                                     - latency
                                     - jitter
                                     - packet-loss
-                            packetloss-threshold:
+                            packetloss_threshold:
                                 description:
-                                    - Packet loss for SLA to make decision in percentage. (0 - 100, default = 0).
-                    threshold-alert-jitter:
+                                    - Packet loss for SLA to make decision in percentage. (0 - 100).
+                                type: int
+                    threshold_alert_jitter:
                         description:
-                            - Alert threshold for jitter (ms, default = 0).
-                    threshold-alert-latency:
+                            - Alert threshold for jitter (ms).
+                        type: int
+                    threshold_alert_latency:
                         description:
-                            - Alert threshold for latency (ms, default = 0).
-                    threshold-alert-packetloss:
+                            - Alert threshold for latency (ms).
+                        type: int
+                    threshold_alert_packetloss:
                         description:
-                            - Alert threshold for packet loss (percentage, default = 0).
-                    threshold-warning-jitter:
+                            - Alert threshold for packet loss (percentage).
+                        type: int
+                    threshold_warning_jitter:
                         description:
-                            - Warning threshold for jitter (ms, default = 0).
-                    threshold-warning-latency:
+                            - Warning threshold for jitter (ms).
+                        type: int
+                    threshold_warning_latency:
                         description:
-                            - Warning threshold for latency (ms, default = 0).
-                    threshold-warning-packetloss:
+                            - Warning threshold for latency (ms).
+                        type: int
+                    threshold_warning_packetloss:
                         description:
-                            - Warning threshold for packet loss (percentage, default = 0).
-                    update-cascade-interface:
+                            - Warning threshold for packet loss (percentage).
+                        type: int
+                    update_cascade_interface:
                         description:
                             - Enable/disable update cascade interface.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    update-static-route:
+                    update_static_route:
                         description:
                             - Enable/disable updating the static route.
+                        type: str
                         choices:
                             - enable
                             - disable
-            load-balance-mode:
+            load_balance_mode:
                 description:
                     - Algorithm or mode to use for load balancing Internet traffic to SD-WAN members.
+                type: str
                 choices:
                     - source-ip-based
                     - weight-based
@@ -215,205 +262,262 @@ options:
             members:
                 description:
                     - Physical FortiGate interfaces added to the virtual-wan-link.
+                type: list
                 suboptions:
                     comment:
                         description:
                             - Comments.
+                        type: str
                     gateway:
                         description:
                             - The default gateway for this interface. Usually the default gateway of the Internet service provider that this interface is
                                connected to.
+                        type: str
                     gateway6:
                         description:
                             - IPv6 gateway.
-                    ingress-spillover-threshold:
+                        type: str
+                    ingress_spillover_threshold:
                         description:
                             - Ingress spillover threshold for this interface (0 - 16776000 kbit/s). When this traffic volume threshold is reached, new
                                sessions spill over to other interfaces in the SD-WAN.
+                        type: int
                     interface:
                         description:
                             - Interface name. Source system.interface.name.
+                        type: str
                     priority:
                         description:
                             - Priority of the interface (0 - 4294967295). Used for SD-WAN rules or priority rules.
-                    seq-num:
+                        type: int
+                    seq_num:
                         description:
                             - Sequence number(1-255).
-                        required: true
+                        type: int
                     source:
                         description:
                             - Source IP address used in the health-check packet to the server.
+                        type: str
                     source6:
                         description:
                             - Source IPv6 address used in the health-check packet to the server.
-                    spillover-threshold:
+                        type: str
+                    spillover_threshold:
                         description:
                             - Egress spillover threshold for this interface (0 - 16776000 kbit/s). When this traffic volume threshold is reached, new sessions
                                spill over to other interfaces in the SD-WAN.
+                        type: int
                     status:
                         description:
                             - Enable/disable this interface in the SD-WAN.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    volume-ratio:
+                    volume_ratio:
                         description:
                             - Measured volume ratio (this value / sum of all values = percentage of link volume, 0 - 255).
+                        type: int
                     weight:
                         description:
                             - Weight of this interface for weighted load balancing. (0 - 255) More traffic is directed to interfaces with higher weights.
+                        type: int
             service:
                 description:
                     - Create SD-WAN rules or priority rules (also called services) to control how sessions are distributed to physical interfaces in the
                        SD-WAN.
+                type: list
                 suboptions:
-                    addr-mode:
+                    addr_mode:
                         description:
                             - Address mode (IPv4 or IPv6).
+                        type: str
                         choices:
                             - ipv4
                             - ipv6
-                    bandwidth-weight:
+                    bandwidth_weight:
                         description:
                             - Coefficient of reciprocal of available bidirectional bandwidth in the formula of custom-profile-1.
-                    dscp-forward:
+                        type: int
+                    default:
+                        description:
+                            - Enable/disable use of SD-WAN as default service.
+                        type: str
+                        choices:
+                            - enable
+                            - disable
+                    dscp_forward:
                         description:
                             - Enable/disable forward traffic DSCP tag.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    dscp-forward-tag:
+                    dscp_forward_tag:
                         description:
                             - Forward traffic DSCP tag.
-                    dscp-reverse:
+                        type: str
+                    dscp_reverse:
                         description:
                             - Enable/disable reverse traffic DSCP tag.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    dscp-reverse-tag:
+                    dscp_reverse_tag:
                         description:
                             - Reverse traffic DSCP tag.
+                        type: str
                     dst:
                         description:
                             - Destination address name.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Address or address group name. Source firewall.address.name firewall.addrgrp.name.
                                 required: true
-                    dst-negate:
+                                type: str
+                    dst_negate:
                         description:
                             - Enable/disable negation of destination address match.
+                        type: str
                         choices:
                             - enable
                             - disable
                     dst6:
                         description:
                             - Destination address6 name.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Address6 or address6 group name. Source firewall.address6.name firewall.addrgrp6.name.
                                 required: true
-                    end-port:
+                                type: str
+                    end_port:
                         description:
                             - End destination port number.
+                        type: int
                     gateway:
                         description:
                             - Enable/disable SD-WAN service gateway.
+                        type: str
                         choices:
                             - enable
                             - disable
                     groups:
                         description:
                             - User groups.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Group name. Source user.group.name.
                                 required: true
-                    health-check:
+                                type: str
+                    health_check:
                         description:
                             - Health check. Source system.virtual-wan-link.health-check.name.
-                    hold-down-time:
+                        type: str
+                    hold_down_time:
                         description:
-                            - Waiting period in seconds when switching from the back-up member to the primary member (0 - 10000000, default = 0).
+                            - Waiting period in seconds when switching from the back-up member to the primary member (0 - 10000000).
+                        type: int
                     id:
                         description:
                             - Priority rule ID (1 - 4000).
                         required: true
-                    input-device:
+                        type: int
+                    input_device:
                         description:
                             - Source interface name.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Interface name. Source system.interface.name.
                                 required: true
-                    internet-service:
+                                type: str
+                    internet_service:
                         description:
                             - Enable/disable use of Internet service for application-based load balancing.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    internet-service-ctrl:
+                    internet_service_ctrl:
                         description:
                             - Control-based Internet Service ID list.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - Control-based Internet Service ID.
                                 required: true
-                    internet-service-ctrl-group:
+                                type: int
+                    internet_service_ctrl_group:
                         description:
                             - Control-based Internet Service group list.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Control-based Internet Service group name. Source application.group.name.
                                 required: true
-                    internet-service-custom:
+                                type: str
+                    internet_service_custom:
                         description:
                             - Custom Internet service name list.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Custom Internet service name. Source firewall.internet-service-custom.name.
                                 required: true
-                    internet-service-custom-group:
+                                type: str
+                    internet_service_custom_group:
                         description:
                             - Custom Internet Service group list.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Custom Internet Service group name. Source firewall.internet-service-custom-group.name.
                                 required: true
-                    internet-service-group:
+                                type: str
+                    internet_service_group:
                         description:
                             - Internet Service group list.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Internet Service group name. Source firewall.internet-service-group.name.
                                 required: true
-                    internet-service-id:
+                                type: str
+                    internet_service_id:
                         description:
                             - Internet service ID list.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - Internet service ID. Source firewall.internet-service.id.
                                 required: true
-                    jitter-weight:
+                                type: int
+                    jitter_weight:
                         description:
                             - Coefficient of jitter in the formula of custom-profile-1.
-                    latency-weight:
+                        type: int
+                    latency_weight:
                         description:
                             - Coefficient of latency in the formula of custom-profile-1.
-                    link-cost-factor:
+                        type: int
+                    link_cost_factor:
                         description:
                             - Link cost factor.
+                        type: str
                         choices:
                             - latency
                             - jitter
@@ -422,15 +526,18 @@ options:
                             - outbandwidth
                             - bibandwidth
                             - custom-profile-1
-                    link-cost-threshold:
+                    link_cost_threshold:
                         description:
-                            - Percentage threshold change of link cost values that will result in policy route regeneration (0 - 10000000, default = 10).
+                            - Percentage threshold change of link cost values that will result in policy route regeneration (0 - 10000000).
+                        type: int
                     member:
                         description:
                             - Member sequence number.
+                        type: int
                     mode:
                         description:
                             - Control how the priority rule sets the priority of interfaces in the SD-WAN.
+                        type: str
                         choices:
                             - auto
                             - manual
@@ -439,85 +546,105 @@ options:
                     name:
                         description:
                             - Priority rule name.
-                    packet-loss-weight:
+                        type: str
+                    packet_loss_weight:
                         description:
                             - Coefficient of packet-loss in the formula of custom-profile-1.
-                    priority-members:
+                        type: int
+                    priority_members:
                         description:
                             - Member sequence number list.
+                        type: list
                         suboptions:
-                            seq-num:
+                            seq_num:
                                 description:
                                     - Member sequence number. Source system.virtual-wan-link.members.seq-num.
-                                required: true
+                                type: int
                     protocol:
                         description:
                             - Protocol number.
-                    quality-link:
+                        type: int
+                    quality_link:
                         description:
                             - Quality grade.
-                    route-tag:
+                        type: int
+                    route_tag:
                         description:
                             - IPv4 route map route-tag.
+                        type: int
                     sla:
                         description:
                             - Service level agreement (SLA).
+                        type: list
                         suboptions:
-                            health-check:
+                            health_check:
                                 description:
                                     - Virtual WAN Link health-check. Source system.virtual-wan-link.health-check.name.
-                                required: true
+                                type: str
                             id:
                                 description:
                                     - SLA ID.
+                                type: int
                     src:
                         description:
                             - Source address name.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Address or address group name. Source firewall.address.name firewall.addrgrp.name.
                                 required: true
-                    src-negate:
+                                type: str
+                    src_negate:
                         description:
                             - Enable/disable negation of source address match.
+                        type: str
                         choices:
                             - enable
                             - disable
                     src6:
                         description:
                             - Source address6 name.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Address6 or address6 group name. Source firewall.address6.name firewall.addrgrp6.name.
                                 required: true
-                    start-port:
+                                type: str
+                    start_port:
                         description:
                             - Start destination port number.
+                        type: int
                     status:
                         description:
                             - Enable/disable SD-WAN service.
+                        type: str
                         choices:
                             - enable
                             - disable
                     tos:
                         description:
                             - Type of service bit pattern.
-                    tos-mask:
+                        type: str
+                    tos_mask:
                         description:
                             - Type of service evaluated bits.
+                        type: str
                     users:
                         description:
                             - User name.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - User name. Source user.local.name.
                                 required: true
+                                type: str
             status:
                 description:
                     - Enable/disable SD-WAN.
+                type: str
                 choices:
                     - disable
                     - enable
@@ -530,6 +657,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure redundant internet connections using SD-WAN (formerly virtual WAN link).
     fortios_system_virtual_wan_link:
@@ -539,136 +667,138 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       system_virtual_wan_link:
-        fail-alert-interfaces:
+        fail_alert_interfaces:
          -
             name: "default_name_4 (source system.interface.name)"
-        fail-detect: "enable"
-        health-check:
+        fail_detect: "enable"
+        health_check:
          -
-            addr-mode: "ipv4"
+            addr_mode: "ipv4"
             failtime: "8"
-            http-get: "<your_own_value>"
-            http-match: "<your_own_value>"
-            interval: "11"
+            http_agent: "<your_own_value>"
+            http_get: "<your_own_value>"
+            http_match: "<your_own_value>"
+            interval: "12"
             members:
              -
-                seq-num: "13 (source system.virtual-wan-link.members.seq-num)"
-            name: "default_name_14"
-            packet-size: "15"
+                seq_num: "14 (source system.virtual-wan-link.members.seq-num)"
+            name: "default_name_15"
+            packet_size: "16"
             password: "<your_own_value>"
-            port: "17"
+            port: "18"
             protocol: "ping"
-            recoverytime: "19"
-            security-mode: "none"
+            recoverytime: "20"
+            security_mode: "none"
             server: "192.168.100.40"
             sla:
              -
-                id:  "23"
-                jitter-threshold: "24"
-                latency-threshold: "25"
-                link-cost-factor: "latency"
-                packetloss-threshold: "27"
-            threshold-alert-jitter: "28"
-            threshold-alert-latency: "29"
-            threshold-alert-packetloss: "30"
-            threshold-warning-jitter: "31"
-            threshold-warning-latency: "32"
-            threshold-warning-packetloss: "33"
-            update-cascade-interface: "enable"
-            update-static-route: "enable"
-        load-balance-mode: "source-ip-based"
+                id:  "24"
+                jitter_threshold: "25"
+                latency_threshold: "26"
+                link_cost_factor: "latency"
+                packetloss_threshold: "28"
+            threshold_alert_jitter: "29"
+            threshold_alert_latency: "30"
+            threshold_alert_packetloss: "31"
+            threshold_warning_jitter: "32"
+            threshold_warning_latency: "33"
+            threshold_warning_packetloss: "34"
+            update_cascade_interface: "enable"
+            update_static_route: "enable"
+        load_balance_mode: "source-ip-based"
         members:
          -
             comment: "Comments."
             gateway: "<your_own_value>"
             gateway6: "<your_own_value>"
-            ingress-spillover-threshold: "41"
+            ingress_spillover_threshold: "42"
             interface: "<your_own_value> (source system.interface.name)"
-            priority: "43"
-            seq-num: "44"
+            priority: "44"
+            seq_num: "45"
             source: "<your_own_value>"
             source6: "<your_own_value>"
-            spillover-threshold: "47"
+            spillover_threshold: "48"
             status: "disable"
-            volume-ratio: "49"
-            weight: "50"
+            volume_ratio: "50"
+            weight: "51"
         service:
          -
-            addr-mode: "ipv4"
-            bandwidth-weight: "53"
-            dscp-forward: "enable"
-            dscp-forward-tag: "<your_own_value>"
-            dscp-reverse: "enable"
-            dscp-reverse-tag: "<your_own_value>"
+            addr_mode: "ipv4"
+            bandwidth_weight: "54"
+            default: "enable"
+            dscp_forward: "enable"
+            dscp_forward_tag: "<your_own_value>"
+            dscp_reverse: "enable"
+            dscp_reverse_tag: "<your_own_value>"
             dst:
              -
-                name: "default_name_59 (source firewall.address.name firewall.addrgrp.name)"
-            dst-negate: "enable"
+                name: "default_name_61 (source firewall.address.name firewall.addrgrp.name)"
+            dst_negate: "enable"
             dst6:
              -
-                name: "default_name_62 (source firewall.address6.name firewall.addrgrp6.name)"
-            end-port: "63"
+                name: "default_name_64 (source firewall.address6.name firewall.addrgrp6.name)"
+            end_port: "65"
             gateway: "enable"
             groups:
              -
-                name: "default_name_66 (source user.group.name)"
-            health-check: "<your_own_value> (source system.virtual-wan-link.health-check.name)"
-            hold-down-time: "68"
-            id:  "69"
-            input-device:
+                name: "default_name_68 (source user.group.name)"
+            health_check: "<your_own_value> (source system.virtual-wan-link.health-check.name)"
+            hold_down_time: "70"
+            id:  "71"
+            input_device:
              -
-                name: "default_name_71 (source system.interface.name)"
-            internet-service: "enable"
-            internet-service-ctrl:
+                name: "default_name_73 (source system.interface.name)"
+            internet_service: "enable"
+            internet_service_ctrl:
              -
-                id:  "74"
-            internet-service-ctrl-group:
+                id:  "76"
+            internet_service_ctrl_group:
              -
-                name: "default_name_76 (source application.group.name)"
-            internet-service-custom:
+                name: "default_name_78 (source application.group.name)"
+            internet_service_custom:
              -
-                name: "default_name_78 (source firewall.internet-service-custom.name)"
-            internet-service-custom-group:
+                name: "default_name_80 (source firewall.internet-service-custom.name)"
+            internet_service_custom_group:
              -
-                name: "default_name_80 (source firewall.internet-service-custom-group.name)"
-            internet-service-group:
+                name: "default_name_82 (source firewall.internet-service-custom-group.name)"
+            internet_service_group:
              -
-                name: "default_name_82 (source firewall.internet-service-group.name)"
-            internet-service-id:
+                name: "default_name_84 (source firewall.internet-service-group.name)"
+            internet_service_id:
              -
-                id:  "84 (source firewall.internet-service.id)"
-            jitter-weight: "85"
-            latency-weight: "86"
-            link-cost-factor: "latency"
-            link-cost-threshold: "88"
-            member: "89"
+                id:  "86 (source firewall.internet-service.id)"
+            jitter_weight: "87"
+            latency_weight: "88"
+            link_cost_factor: "latency"
+            link_cost_threshold: "90"
+            member: "91"
             mode: "auto"
-            name: "default_name_91"
-            packet-loss-weight: "92"
-            priority-members:
+            name: "default_name_93"
+            packet_loss_weight: "94"
+            priority_members:
              -
-                seq-num: "94 (source system.virtual-wan-link.members.seq-num)"
-            protocol: "95"
-            quality-link: "96"
-            route-tag: "97"
+                seq_num: "96 (source system.virtual-wan-link.members.seq-num)"
+            protocol: "97"
+            quality_link: "98"
+            route_tag: "99"
             sla:
              -
-                health-check: "<your_own_value> (source system.virtual-wan-link.health-check.name)"
-                id:  "100"
+                health_check: "<your_own_value> (source system.virtual-wan-link.health-check.name)"
+                id:  "102"
             src:
              -
-                name: "default_name_102 (source firewall.address.name firewall.addrgrp.name)"
-            src-negate: "enable"
+                name: "default_name_104 (source firewall.address.name firewall.addrgrp.name)"
+            src_negate: "enable"
             src6:
              -
-                name: "default_name_105 (source firewall.address6.name firewall.addrgrp6.name)"
-            start-port: "106"
+                name: "default_name_107 (source firewall.address6.name firewall.addrgrp6.name)"
+            start_port: "108"
             status: "enable"
             tos: "<your_own_value>"
-            tos-mask: "<your_own_value>"
+            tos_mask: "<your_own_value>"
             users:
              -
-                name: "default_name_111 (source user.local.name)"
+                name: "default_name_113 (source user.local.name)"
         status: "disable"
 '''
 
@@ -732,12 +862,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
 def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -745,12 +879,12 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_system_virtual_wan_link_data(json):
-    option_list = ['fail-alert-interfaces', 'fail-detect', 'health-check',
-                   'load-balance-mode', 'members', 'service',
+    option_list = ['fail_alert_interfaces', 'fail_detect', 'health_check',
+                   'load_balance_mode', 'members', 'service',
                    'status']
     dictionary = {}
 
@@ -761,10 +895,23 @@ def filter_system_virtual_wan_link_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def system_virtual_wan_link(data, fos):
     vdom = data['vdom']
     system_virtual_wan_link_data = data['system_virtual_wan_link']
-    filtered_data = filter_system_virtual_wan_link_data(system_virtual_wan_link_data)
+    filtered_data = underscore_to_hyphen(filter_system_virtual_wan_link_data(system_virtual_wan_link_data))
 
     return fos.set('system',
                    'virtual-wan-link',
@@ -772,76 +919,83 @@ def system_virtual_wan_link(data, fos):
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_system(data, fos):
-    login(data, fos)
 
     if data['system_virtual_wan_link']:
         resp = system_virtual_wan_link(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "system_virtual_wan_link": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "fail-alert-interfaces": {"required": False, "type": "list",
+                "fail_alert_interfaces": {"required": False, "type": "list",
                                           "options": {
                                               "name": {"required": True, "type": "str"}
                                           }},
-                "fail-detect": {"required": False, "type": "str",
+                "fail_detect": {"required": False, "type": "str",
                                 "choices": ["enable", "disable"]},
-                "health-check": {"required": False, "type": "list",
+                "health_check": {"required": False, "type": "list",
                                  "options": {
-                                     "addr-mode": {"required": False, "type": "str",
+                                     "addr_mode": {"required": False, "type": "str",
                                                    "choices": ["ipv4", "ipv6"]},
                                      "failtime": {"required": False, "type": "int"},
-                                     "http-get": {"required": False, "type": "str"},
-                                     "http-match": {"required": False, "type": "str"},
+                                     "http_agent": {"required": False, "type": "str"},
+                                     "http_get": {"required": False, "type": "str"},
+                                     "http_match": {"required": False, "type": "str"},
                                      "interval": {"required": False, "type": "int"},
                                      "members": {"required": False, "type": "list",
                                                  "options": {
-                                                     "seq-num": {"required": True, "type": "int"}
+                                                     "seq_num": {"required": False, "type": "int"}
                                                  }},
                                      "name": {"required": True, "type": "str"},
-                                     "packet-size": {"required": False, "type": "int"},
+                                     "packet_size": {"required": False, "type": "int"},
                                      "password": {"required": False, "type": "str"},
                                      "port": {"required": False, "type": "int"},
                                      "protocol": {"required": False, "type": "str",
                                                   "choices": ["ping", "tcp-echo", "udp-echo",
                                                               "http", "twamp", "ping6"]},
                                      "recoverytime": {"required": False, "type": "int"},
-                                     "security-mode": {"required": False, "type": "str",
+                                     "security_mode": {"required": False, "type": "str",
                                                        "choices": ["none", "authentication"]},
                                      "server": {"required": False, "type": "str"},
                                      "sla": {"required": False, "type": "list",
                                              "options": {
                                                  "id": {"required": True, "type": "int"},
-                                                 "jitter-threshold": {"required": False, "type": "int"},
-                                                 "latency-threshold": {"required": False, "type": "int"},
-                                                 "link-cost-factor": {"required": False, "type": "str",
+                                                 "jitter_threshold": {"required": False, "type": "int"},
+                                                 "latency_threshold": {"required": False, "type": "int"},
+                                                 "link_cost_factor": {"required": False, "type": "str",
                                                                       "choices": ["latency", "jitter", "packet-loss"]},
-                                                 "packetloss-threshold": {"required": False, "type": "int"}
+                                                 "packetloss_threshold": {"required": False, "type": "int"}
                                              }},
-                                     "threshold-alert-jitter": {"required": False, "type": "int"},
-                                     "threshold-alert-latency": {"required": False, "type": "int"},
-                                     "threshold-alert-packetloss": {"required": False, "type": "int"},
-                                     "threshold-warning-jitter": {"required": False, "type": "int"},
-                                     "threshold-warning-latency": {"required": False, "type": "int"},
-                                     "threshold-warning-packetloss": {"required": False, "type": "int"},
-                                     "update-cascade-interface": {"required": False, "type": "str",
+                                     "threshold_alert_jitter": {"required": False, "type": "int"},
+                                     "threshold_alert_latency": {"required": False, "type": "int"},
+                                     "threshold_alert_packetloss": {"required": False, "type": "int"},
+                                     "threshold_warning_jitter": {"required": False, "type": "int"},
+                                     "threshold_warning_latency": {"required": False, "type": "int"},
+                                     "threshold_warning_packetloss": {"required": False, "type": "int"},
+                                     "update_cascade_interface": {"required": False, "type": "str",
                                                                   "choices": ["enable", "disable"]},
-                                     "update-static-route": {"required": False, "type": "str",
+                                     "update_static_route": {"required": False, "type": "str",
                                                              "choices": ["enable", "disable"]}
                                  }},
-                "load-balance-mode": {"required": False, "type": "str",
+                "load_balance_mode": {"required": False, "type": "str",
                                       "choices": ["source-ip-based", "weight-based", "usage-based",
                                                   "source-dest-ip-based", "measured-volume-based"]},
                 "members": {"required": False, "type": "list",
@@ -849,119 +1003,121 @@ def main():
                                 "comment": {"required": False, "type": "str"},
                                 "gateway": {"required": False, "type": "str"},
                                 "gateway6": {"required": False, "type": "str"},
-                                "ingress-spillover-threshold": {"required": False, "type": "int"},
+                                "ingress_spillover_threshold": {"required": False, "type": "int"},
                                 "interface": {"required": False, "type": "str"},
                                 "priority": {"required": False, "type": "int"},
-                                "seq-num": {"required": True, "type": "int"},
+                                "seq_num": {"required": False, "type": "int"},
                                 "source": {"required": False, "type": "str"},
                                 "source6": {"required": False, "type": "str"},
-                                "spillover-threshold": {"required": False, "type": "int"},
+                                "spillover_threshold": {"required": False, "type": "int"},
                                 "status": {"required": False, "type": "str",
                                            "choices": ["disable", "enable"]},
-                                "volume-ratio": {"required": False, "type": "int"},
+                                "volume_ratio": {"required": False, "type": "int"},
                                 "weight": {"required": False, "type": "int"}
                             }},
                 "service": {"required": False, "type": "list",
                             "options": {
-                                "addr-mode": {"required": False, "type": "str",
+                                "addr_mode": {"required": False, "type": "str",
                                               "choices": ["ipv4", "ipv6"]},
-                                "bandwidth-weight": {"required": False, "type": "int"},
-                                "dscp-forward": {"required": False, "type": "str",
+                                "bandwidth_weight": {"required": False, "type": "int"},
+                                "default": {"required": False, "type": "str",
+                                            "choices": ["enable", "disable"]},
+                                "dscp_forward": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
-                                "dscp-forward-tag": {"required": False, "type": "str"},
-                                "dscp-reverse": {"required": False, "type": "str",
+                                "dscp_forward_tag": {"required": False, "type": "str"},
+                                "dscp_reverse": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
-                                "dscp-reverse-tag": {"required": False, "type": "str"},
+                                "dscp_reverse_tag": {"required": False, "type": "str"},
                                 "dst": {"required": False, "type": "list",
                                         "options": {
                                             "name": {"required": True, "type": "str"}
                                         }},
-                                "dst-negate": {"required": False, "type": "str",
+                                "dst_negate": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]},
                                 "dst6": {"required": False, "type": "list",
                                          "options": {
                                              "name": {"required": True, "type": "str"}
                                          }},
-                                "end-port": {"required": False, "type": "int"},
+                                "end_port": {"required": False, "type": "int"},
                                 "gateway": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                                 "groups": {"required": False, "type": "list",
                                            "options": {
                                                "name": {"required": True, "type": "str"}
                                            }},
-                                "health-check": {"required": False, "type": "str"},
-                                "hold-down-time": {"required": False, "type": "int"},
+                                "health_check": {"required": False, "type": "str"},
+                                "hold_down_time": {"required": False, "type": "int"},
                                 "id": {"required": True, "type": "int"},
-                                "input-device": {"required": False, "type": "list",
+                                "input_device": {"required": False, "type": "list",
                                                  "options": {
                                                      "name": {"required": True, "type": "str"}
                                                  }},
-                                "internet-service": {"required": False, "type": "str",
+                                "internet_service": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
-                                "internet-service-ctrl": {"required": False, "type": "list",
+                                "internet_service_ctrl": {"required": False, "type": "list",
                                                           "options": {
                                                               "id": {"required": True, "type": "int"}
                                                           }},
-                                "internet-service-ctrl-group": {"required": False, "type": "list",
+                                "internet_service_ctrl_group": {"required": False, "type": "list",
                                                                 "options": {
                                                                     "name": {"required": True, "type": "str"}
                                                                 }},
-                                "internet-service-custom": {"required": False, "type": "list",
+                                "internet_service_custom": {"required": False, "type": "list",
                                                             "options": {
                                                                 "name": {"required": True, "type": "str"}
                                                             }},
-                                "internet-service-custom-group": {"required": False, "type": "list",
+                                "internet_service_custom_group": {"required": False, "type": "list",
                                                                   "options": {
                                                                       "name": {"required": True, "type": "str"}
                                                                   }},
-                                "internet-service-group": {"required": False, "type": "list",
+                                "internet_service_group": {"required": False, "type": "list",
                                                            "options": {
                                                                "name": {"required": True, "type": "str"}
                                                            }},
-                                "internet-service-id": {"required": False, "type": "list",
+                                "internet_service_id": {"required": False, "type": "list",
                                                         "options": {
                                                             "id": {"required": True, "type": "int"}
                                                         }},
-                                "jitter-weight": {"required": False, "type": "int"},
-                                "latency-weight": {"required": False, "type": "int"},
-                                "link-cost-factor": {"required": False, "type": "str",
+                                "jitter_weight": {"required": False, "type": "int"},
+                                "latency_weight": {"required": False, "type": "int"},
+                                "link_cost_factor": {"required": False, "type": "str",
                                                      "choices": ["latency", "jitter", "packet-loss",
                                                                  "inbandwidth", "outbandwidth", "bibandwidth",
                                                                  "custom-profile-1"]},
-                                "link-cost-threshold": {"required": False, "type": "int"},
+                                "link_cost_threshold": {"required": False, "type": "int"},
                                 "member": {"required": False, "type": "int"},
                                 "mode": {"required": False, "type": "str",
                                          "choices": ["auto", "manual", "priority",
                                                      "sla"]},
                                 "name": {"required": False, "type": "str"},
-                                "packet-loss-weight": {"required": False, "type": "int"},
-                                "priority-members": {"required": False, "type": "list",
+                                "packet_loss_weight": {"required": False, "type": "int"},
+                                "priority_members": {"required": False, "type": "list",
                                                      "options": {
-                                                         "seq-num": {"required": True, "type": "int"}
+                                                         "seq_num": {"required": False, "type": "int"}
                                                      }},
                                 "protocol": {"required": False, "type": "int"},
-                                "quality-link": {"required": False, "type": "int"},
-                                "route-tag": {"required": False, "type": "int"},
+                                "quality_link": {"required": False, "type": "int"},
+                                "route_tag": {"required": False, "type": "int"},
                                 "sla": {"required": False, "type": "list",
                                         "options": {
-                                            "health-check": {"required": True, "type": "str"},
+                                            "health_check": {"required": False, "type": "str"},
                                             "id": {"required": False, "type": "int"}
                                         }},
                                 "src": {"required": False, "type": "list",
                                         "options": {
                                             "name": {"required": True, "type": "str"}
                                         }},
-                                "src-negate": {"required": False, "type": "str",
+                                "src_negate": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]},
                                 "src6": {"required": False, "type": "list",
                                          "options": {
                                              "name": {"required": True, "type": "str"}
                                          }},
-                                "start-port": {"required": False, "type": "int"},
+                                "start_port": {"required": False, "type": "int"},
                                 "status": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
                                 "tos": {"required": False, "type": "str"},
-                                "tos-mask": {"required": False, "type": "str"},
+                                "tos_mask": {"required": False, "type": "str"},
                                 "users": {"required": False, "type": "list",
                                           "options": {
                                               "name": {"required": True, "type": "str"}
@@ -976,14 +1132,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_system(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_system(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_system(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

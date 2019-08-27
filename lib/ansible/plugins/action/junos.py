@@ -31,7 +31,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
+CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_ping', 'junos_command']
 
 
 class ActionModule(ActionNetworkModule):
@@ -88,7 +88,7 @@ class ActionModule(ActionNetworkModule):
                     del self._task.args['provider']
 
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
-                    (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):
+                    (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES[0:2]):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (self._play_context.connection, self._task.action)}

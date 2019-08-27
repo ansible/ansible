@@ -1,0 +1,166 @@
+---
+- name: Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey.pem'
+
+- name: Generate publickey - PEM format
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate publickey - OpenSSH format
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey-ssh.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    format: OpenSSH
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('1.4.0', '>=')
+
+- name: Generate publickey - OpenSSH format - test idempotence (issue 33256)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey-ssh.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    format: OpenSSH
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('1.4.0', '>=')
+  register: publickey_ssh_idempotence
+
+- name: Generate publickey2 - standard
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey2.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Delete publickey2 - standard
+  openssl_publickey:
+    state: absent
+    path: '{{ output_dir }}/publickey2.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate privatekey3 - with passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey3.pem'
+    passphrase: ansible
+    cipher: aes256
+
+- name: Generate publickey3 - with passphrase protected privatekey
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey3.pub'
+    privatekey_path: '{{ output_dir }}/privatekey3.pem'
+    privatekey_passphrase: ansible
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate publickey3 - with passphrase protected privatekey - idempotence
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey3.pub'
+    privatekey_path: '{{ output_dir }}/privatekey3.pem'
+    privatekey_passphrase: ansible
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: publickey3_idempotence
+
+- name: Generate empty file that will hold a public key (issue 33072)
+  file:
+    path: '{{ output_dir }}/publickey4.pub'
+    state: touch
+
+- name: Generate publickey in empty existing file (issue 33072)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey4.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate privatekey 5 (ECC)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey5.pem'
+    type: ECC
+    curve: secp256r1
+
+- name: Generate publickey 5 - PEM format
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey5.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey5_1
+- name: Generate publickey 5 - PEM format (idempotent)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey5.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey5_2
+- name: Generate publickey 5 - PEM format (different private key)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey5.pub'
+    privatekey_path: '{{ output_dir }}/privatekey5.pem'
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey5_3
+
+- name: Generate privatekey with password
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: Generate publickey - PEM format (failed passphrase 1)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey_pw1.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    privatekey_passphrase: hunter2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: Generate publickey - PEM format (failed passphrase 2)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey_pw2.pub'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: wrong_password
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: Generate publickey - PEM format (failed passphrase 3)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey_pw3.pub'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_3
+
+- name: Create broken key
+  copy:
+    dest: "{{ output_dir }}/publickeybroken.pub"
+    content: "broken"
+- name: Regenerate broken key
+  openssl_publickey:
+    path: '{{ output_dir }}/publickeybroken.pub'
+    privatekey_path: '{{ output_dir }}/privatekey5.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: output_broken
+
+- name: Generate publickey - PEM format (for removal)
+  openssl_publickey:
+    path: '{{ output_dir }}/publickey_removal.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+- name: Generate publickey - PEM format (removal)
+  openssl_publickey:
+    state: absent
+    path: '{{ output_dir }}/publickey_removal.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: remove_1
+- name: Generate publickey - PEM format (removal, idempotent)
+  openssl_publickey:
+    state: absent
+    path: '{{ output_dir }}/publickey_removal.pub'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: remove_2

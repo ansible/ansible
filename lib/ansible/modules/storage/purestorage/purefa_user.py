@@ -61,7 +61,7 @@ EXAMPLES = r'''
     password: apassword
     role: storage_admin
     api: true
-    fb_url: 10.10.10.2
+    fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
   debug:
@@ -72,7 +72,7 @@ EXAMPLES = r'''
     name: ansible
     role: array_admin
     state: update
-    fb_url: 10.10.10.2
+    fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
 - name: Change password type for existing user (NOT IDEMPOTENT)
@@ -80,7 +80,7 @@ EXAMPLES = r'''
     name: ansible
     password: anewpassword
     old_password: apassword
-    fb_url: 10.10.10.2
+    fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
 - name: Change API token for existing user
@@ -88,7 +88,7 @@ EXAMPLES = r'''
     name: ansible
     api: true
     state: update
-    fb_url: 10.10.10.2
+    fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
   debug:
@@ -101,6 +101,8 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
+
+MIN_REQUIRED_API_VERSION = '1.14'
 
 
 def get_user(module, array):
@@ -200,6 +202,11 @@ def main():
 
     state = module.params['state']
     array = get_system(module)
+    api_version = array._list_available_rest_versions()
+
+    if MIN_REQUIRED_API_VERSION not in api_version:
+        module.fail_json(msg='FlashArray REST version not supported. '
+                             'Minimum version required: {0}'.format(MIN_REQUIRED_API_VERSION))
 
     if state == 'absent':
         delete_user(module, array)

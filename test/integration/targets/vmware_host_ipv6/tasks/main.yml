@@ -16,7 +16,7 @@
         cluster_name: "{{ ccr1 }}"
         validate_certs: no
         state: disabled
-      register: host_ipv6_facts
+      register: host_ipv6_info
 
     - name: Enable IPv6 support for a given host
       vmware_host_ipv6:
@@ -26,12 +26,12 @@
         esxi_hostname: '{{ esxi1 }}'
         validate_certs: no
         state: enabled
-      register: host_ipv6_facts
-    - debug: var=host_ipv6_facts
+      register: host_ipv6_info
+    - debug: var=host_ipv6_info
     - assert:
         that:
-          - host_ipv6_facts is defined
-          - host_ipv6_facts.changed
+          - host_ipv6_info is defined
+          - host_ipv6_info.changed
 
     - name: Enable IPv6 support for a given host in check mode
       vmware_host_ipv6:
@@ -41,13 +41,13 @@
         esxi_hostname: '{{ esxi1 }}'
         validate_certs: no
         state: enabled
-      register: host_ipv6_facts_check_mode
+      register: host_ipv6_info_check_mode
       check_mode: yes
-    - debug: var=host_ipv6_facts_check_mode
+    - debug: var=host_ipv6_info_check_mode
     - assert:
         that:
-          - host_ipv6_facts_check_mode is defined
-          - not (host_ipv6_facts_check_mode is changed)
+          - host_ipv6_info_check_mode is defined
+          - not (host_ipv6_info_check_mode is changed)
 
     - name: Enable IPv6 support for all hosts in given cluster
       vmware_host_ipv6:
@@ -57,12 +57,12 @@
         cluster_name: "{{ ccr1 }}"
         validate_certs: no
         state: enabled
-      register: hosts_ipv6_facts
-    - debug: var=hosts_ipv6_facts
+      register: hosts_ipv6_info
+    - debug: var=hosts_ipv6_info
     - assert:
         that:
-          - hosts_ipv6_facts is defined
-          - hosts_ipv6_facts.changed
+          - hosts_ipv6_info is defined
+          - hosts_ipv6_info.changed
 
     - name: Enable IPv6 support for all hosts in given cluster in check mode
       vmware_host_ipv6:
@@ -72,10 +72,10 @@
         cluster_name: "{{ ccr1 }}"
         validate_certs: no
         state: enabled
-      register: hosts_ipv6_facts_check_mode
+      register: hosts_ipv6_info_check_mode
       check_mode: yes
-    - debug: var=hosts_ipv6_facts_check_mode
+    - debug: var=hosts_ipv6_info_check_mode
     - assert:
         that:
-          - hosts_ipv6_facts_check_mode is defined
-          - not (hosts_ipv6_facts_check_mode is changed)
+          - hosts_ipv6_info_check_mode is defined
+          - not (hosts_ipv6_info_check_mode is changed)

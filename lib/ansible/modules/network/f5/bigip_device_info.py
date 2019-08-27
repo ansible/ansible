@@ -90,6 +90,7 @@ options:
       - traffic-groups
       - trunks
       - udp-profiles
+      - users
       - vcmp-guests
       - virtual-addresses
       - virtual-servers
@@ -153,6 +154,7 @@ options:
       - "!traffic-groups"
       - "!trunks"
       - "!udp-profiles"
+      - "!users"
       - "!vcmp-guests"
       - "!virtual-addresses"
       - "!virtual-servers"
@@ -6088,6 +6090,53 @@ udp_profiles:
       type: bool
       sample: yes
   sample: hash/dictionary of values
+users:
+  description: Details of the users on the system.
+  returned: When C(users) is specified in C(gather_subset).
+  type: complex
+  contains:
+    description:
+      description:
+        - Description of the resource.
+      returned: queried
+      type: str
+      sample: Admin user
+    full_path:
+      description:
+        - Full name of the resource as known to BIG-IP.
+      returned: queried
+      type: str
+      sample: admin
+    name:
+      description:
+        - Relative name of the resource in BIG-IP.
+      returned: queried
+      type: str
+      sample: admin
+    partition_access:
+      description:
+        - Partition that user has access to, including user role.
+      returned: queried
+      type: complex
+      contains:
+        name:
+          description:
+            - Name of partition
+          returned: queried
+          type: str
+          sample: all-partitions
+        role:
+          description:
+            - Role allowed to user on partition.
+          returned: queried
+          type: str
+          sample: auditor
+    shell:
+      description:
+        - The shell assigned to the user account.
+      returned: queried
+      type: str
+      sample: tmsh
 vcmp_guests:
   description: vCMP related information.
   returned: When C(vcmp-guests) is specified in C(gather_subset).
@@ -6165,6 +6214,12 @@ vcmp_guests:
       returned: queried
       type: str
       sample: bridged
+    vlans:
+      description:
+        - List of VLANs on which the guest is either enabled or disabled.
+      returned: queried
+      type: list
+      sample: ['/Common/vlan1', '/Common/vlan2']
     min_number_of_slots:
       description:
         - Specifies the minimum number of slots that the guest must be assigned to.
@@ -14529,6 +14584,88 @@ class TrunksFactManager(BaseManager):
             return {}
 
 
+class UsersParameters(BaseParameters):
+    api_map = {
+        'fullPath': 'full_path',
+        'partitionAccess': 'partition_access',
+    }
+
+    returnables = [
+        'full_path',
+        'name',
+        'description',
+        'partition_access',
+        'shell',
+    ]
+
+    @property
+    def partition_access(self):
+        result = []
+        if self._values['partition_access'] is None:
+            return []
+        for partition in self._values['partition_access']:
+            del partition['nameReference']
+            result.append(partition)
+        return result
+
+    @property
+    def shell(self):
+        if self._values['shell'] in [None, 'none']:
+            return None
+        return self._values['shell']
+
+
+class UsersFactManager(BaseManager):
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(UsersFactManager, self).__init__(**kwargs)
+        self.want = UsersParameters(params=self.module.params)
+
+    def exec_module(self):
+        facts = self._exec_module()
+        result = dict(users=facts)
+        return result
+
+    def _exec_module(self):
+        results = []
+        facts = self.read_facts()
+        for item in facts:
+            attrs = item.to_return()
+            results.append(attrs)
+        results = sorted(results, key=lambda k: k['full_path'])
+        return results
+
+    def read_facts(self):
+        results = []
+        collection = self.read_collection_from_device()
+        for resource in collection:
+            attrs = resource
+            params = UsersParameters(params=attrs)
+            results.append(params)
+        return results
+
+    def read_collection_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/auth/user".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'items' not in response:
+            return []
+        result = response['items']
+        return result
+
+
 class UdpProfilesParameters(BaseParameters):
     api_map = {
         'fullPath': 'full_path',
@@ -14672,6 +14809,7 @@ class VcmpGuestsParameters(BaseParameters):
         'mgmt_route',
         'mgmt_address',
         'mgmt_network',
+        'vlans',
         'min_number_of_slots',
         'number_of_slots',
         'ssl_mode',
@@ -15241,20 +15379,85 @@ class VirtualServersParameters(BaseParameters):
         return False
 
     def _read_current_message_routing_profiles_from_device(self):
-        collection1 = self.client.api.tm.ltm.profile.diameters.get_collection()
-        collection2 = self.client.api.tm.ltm.profile.sips.get_collection()
-        result = [x.name for x in collection1]
-        result += [x.name for x in collection2]
+        result = []
+        result += self._read_diameter_profiles_from_device()
+        result += self._read_sip_profiles_from_device()
+        return result
+
+    def _read_diameter_profiles_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/diameter/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        result = [x['name'] for x in response['items']]
+        return result
+
+    def _read_sip_profiles_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/sip/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        result = [x['name'] for x in response['items']]
         return result
 
     def _read_current_fastl4_profiles_from_device(self):
-        collection = self.client.api.tm.ltm.profile.fastl4s.get_collection()
-        result = [x.name for x in collection]
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/fastl4/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        result = [x['name'] for x in response['items']]
         return result
 
     def _read_current_fasthttp_profiles_from_device(self):
-        collection = self.client.api.tm.ltm.profile.fasthttps.get_collection()
-        result = [x.name for x in collection]
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/fasthttp/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        result = [x['name'] for x in response['items']]
         return result
 
     @property
@@ -15760,6 +15963,7 @@ class ModuleManager(object):
             'traffic-groups': TrafficGroupsFactManager,
             'trunks': TrunksFactManager,
             'udp-profiles': UdpProfilesFactManager,
+            'users': UsersFactManager,
             'vcmp-guests': VcmpGuestsFactManager,
             'virtual-addresses': VirtualAddressesFactManager,
             'virtual-servers': VirtualServersFactManager,
@@ -15959,6 +16163,7 @@ class ArgumentSpec(object):
                     'traffic-groups',
                     'trunks',
                     'udp-profiles',
+                    'users',
                     'vcmp-guests',
                     'virtual-addresses',
                     'virtual-servers',
@@ -16026,6 +16231,7 @@ class ArgumentSpec(object):
                     '!traffic-groups',
                     '!trunks',
                     '!udp-profiles',
+                    '!users',
                     '!vcmp-guests',
                     '!virtual-addresses',
                     '!virtual-servers',

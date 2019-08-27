@@ -1,0 +1,209 @@
+---
+merged:
+  before:
+    - name: "eth0"
+      enabled: true
+      speed: "auto"
+      duplex: "auto"
+
+    - name: "eth1"
+      enabled: true
+
+    - name: "eth2"
+      enabled: true
+
+  commands:
+    - "set interfaces ethernet eth1 description 'Configured by Ansible - Interface 1'"
+    - "set interfaces ethernet eth1 mtu '1500'"
+    - "set interfaces ethernet eth1 duplex 'auto'"
+    - "set interfaces ethernet eth1 speed 'auto'"
+    - "set interfaces ethernet eth1 vif 100 description 'Eth1 - VIF 100'"
+    - "set interfaces ethernet eth1 vif 100 mtu '400'"
+    - "set interfaces ethernet eth1 vif 101 description 'Eth1 - VIF 101'"
+    - "set interfaces ethernet eth2 description 'Configured by Ansible - Interface 2 (ADMIN DOWN)'"
+    - "set interfaces ethernet eth2 mtu '600'"
+    - "set interfaces ethernet eth2 disable"
+
+  after:
+    - name: "eth0"
+      enabled: true
+      duplex: "auto"
+      speed: "auto"
+
+    - name: "eth1"
+      description: "Configured by Ansible - Interface 1"
+      mtu: 1500
+      speed: "auto"
+      duplex: "auto"
+      enabled: true
+      vifs:
+        - vlan_id: 100
+          description: "Eth1 - VIF 100"
+          mtu: 400
+          enabled: true
+
+        - vlan_id: 101
+          description: "Eth1 - VIF 101"
+          enabled: true
+
+    - name: "eth2"
+      description: "Configured by Ansible - Interface 2 (ADMIN DOWN)"
+      mtu: 600
+      enabled: false
+
+populate:
+  - name: "eth1"
+    enabled: true
+    speed: "auto"
+    duplex: "auto"
+    description: "Configured by Ansible"
+    mtu: 1500
+    vifs:
+      - vlan_id: 200
+        enabled: true
+        description: "VIF - 200"
+
+  - name: "eth2"
+    enabled: true
+    speed: "auto"
+    duplex: "auto"
+    description: "Configured by Ansible"
+    mtu: 1500
+    vifs:
+      - vlan_id: 200
+        enabled: true
+        description: "VIF - 200"
+
+  - name: "eth0"
+    enabled: true
+    duplex: "auto"
+    speed: "auto"
+
+replaced:
+  commands:
+    - "delete interfaces ethernet eth1 mtu"
+    - "delete interfaces ethernet eth1 speed"
+    - "delete interfaces ethernet eth1 duplex"
+    - "delete interfaces ethernet eth1 vif 200 description"
+    - "set interfaces ethernet eth1 description 'Replaced by Ansible'"
+    - "set interfaces ethernet eth1 vif 100 description 'VIF 100 - Replaced by Ansible'"
+    - "delete interfaces ethernet eth2 speed"
+    - "delete interfaces ethernet eth2 duplex"
+    - "delete interfaces ethernet eth2 vif 200 description"
+    - "set interfaces ethernet eth2 description 'Replaced by Ansible'"
+    - "set interfaces ethernet eth2 mtu '1400'"
+
+  after:
+    - name: "eth1"
+      description: "Replaced by Ansible"
+      enabled: true
+      vifs:
+        - vlan_id: 100
+          enabled: true
+          description: "VIF 100 - Replaced by Ansible"
+
+        - vlan_id: 200
+          enabled: true
+
+    - name: "eth2"
+      mtu: 1400
+      description: "Replaced by Ansible"
+      enabled: true
+      vifs:
+        - vlan_id: 200
+          enabled: true
+
+    - name: "eth0"
+      enabled: true
+      duplex: "auto"
+      speed: "auto"
+
+overridden:
+  commands:
+    - "delete interfaces ethernet eth1 description"
+    - "delete interfaces ethernet eth1 speed"
+    - "delete interfaces ethernet eth1 duplex"
+    - "delete interfaces ethernet eth1 mtu"
+    - "delete interfaces ethernet eth1 vif 200 description"
+    - "delete interfaces ethernet eth2 speed"
+    - "delete interfaces ethernet eth2 duplex"
+    - "delete interfaces ethernet eth2 vif 200 description"
+    - "set interfaces ethernet eth2 description 'Overridden by Ansible'"
+    - "set interfaces ethernet eth2 mtu '1200'"
+
+  after:
+    - name: "eth0"
+      enabled: true
+      speed: "auto"
+      duplex: "auto"
+
+    - name: "eth1"
+      enabled: true
+      vifs:
+        - vlan_id: 200
+          enabled: true
+
+    - name: "eth2"
+      enabled: true
+      description: "Overridden by Ansible"
+      mtu: 1200
+      vifs:
+        - vlan_id: 200
+          enabled: true
+
+deleted:
+  commands:
+    - "delete interfaces ethernet eth1 description"
+    - "delete interfaces ethernet eth1 speed"
+    - "delete interfaces ethernet eth1 duplex"
+    - "delete interfaces ethernet eth1 mtu"
+    - "delete interfaces ethernet eth1 vif 200 description"
+    - "delete interfaces ethernet eth2 description"
+    - "delete interfaces ethernet eth2 speed"
+    - "delete interfaces ethernet eth2 duplex"
+    - "delete interfaces ethernet eth2 mtu"
+    - "delete interfaces ethernet eth2 vif 200 description"
+
+  after:
+    - name: "eth0"
+      enabled: true
+      speed: "auto"
+      duplex: "auto"
+
+    - name: "eth1"
+      enabled: true
+      vifs:
+        - vlan_id: 200
+          enabled: true
+
+    - name: "eth2"
+      enabled: true
+      vifs:
+        - vlan_id: 200
+          enabled: true
+
+round_trip:
+  after:
+    - name: "eth0"
+      enabled: true
+      speed: "auto"
+      duplex: "auto"
+
+    - name: "eth1"
+      description: "Interface 1 - Description (WILL BE REVERTED)"
+      enabled: true
+      mtu: 1200
+      vifs:
+        - vlan_id: 100
+          description: "Eth1 - VIF 100 (WILL BE REVERTED)"
+          mtu: 400
+          enabled: true
+
+        - vlan_id: 101
+          description: "Eth1 - VIF 101 (WILL BE REMOVED)"
+          enabled: true
+
+    - name: "eth2"
+      description: "Interface 2 (ADMIN DOWN) (WILL BE REVERTED)"
+      mtu: 600
+      enabled: false

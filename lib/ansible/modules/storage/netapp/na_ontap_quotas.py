@@ -204,7 +204,8 @@ class NetAppONTAPQuotas(object):
                 'quota-entry': {
                     'volume': self.parameters['volume'],
                     'quota-target': self.parameters['quota_target'],
-                    'quota-type': self.parameters['type']
+                    'quota-type': self.parameters['type'],
+                    'vserver': self.parameters['vserver']
                 }
             }
         }

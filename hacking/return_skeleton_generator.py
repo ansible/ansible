@@ -21,7 +21,7 @@
 # and creates a starting point for the RETURNS section of a module.
 # This can be provided as stdin or a file argument
 #
-# The easiest way to obtain the JSON output is to use hacking/test-module
+# The easiest way to obtain the JSON output is to use hacking/test-module.py
 #
 # You will likely want to adjust this to remove sensitive data or
 # ensure the `returns` value is correct, and to write a useful description

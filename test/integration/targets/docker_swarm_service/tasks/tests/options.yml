@@ -1,25 +1,12 @@
 ---
 
-- name: Registering container name
+- name: Registering service name
   set_fact:
     service_name: "{{ name_prefix ~ '-options' }}"
-    network_name_1: "{{ name_prefix ~ '-network-1' }}"
-    network_name_2: "{{ name_prefix ~ '-network-2' }}"
 
-- name: Registering container name
+- name: Registering service name
   set_fact:
     service_names: "{{ service_names + [service_name] }}"
-    network_names: "{{ network_names + [network_name_1, network_name_2] }}"
-
-- docker_network:
-    name: "{{ network_name }}"
-    driver: "overlay"
-    state: present
-  loop:
-    - "{{ network_name_1 }}"
-    - "{{ network_name_2 }}"
-  loop_control:
-    loop_var: network_name
 
 ####################################################################
 ## args ############################################################
@@ -1276,119 +1263,6 @@
       - mode_3 is changed
 
 ####################################################################
-## networks ########################################################
-####################################################################
-
-- name: networks
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks:
-      - "{{ network_name_1 }}"
-  register: networks_1
-
-- name: networks (idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks:
-      - "{{ network_name_1 }}"
-  register: networks_2
-
-- name: networks (change more)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks:
-      - "{{ network_name_1 }}"
-      - "{{ network_name_2 }}"
-  register: networks_3
-
-- name: networks (change more idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks:
-      - "{{ network_name_1 }}"
-      - "{{ network_name_2 }}"
-  register: networks_4
-
-- name: networks (change less)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks:
-      - "{{ network_name_2 }}"
-  register: networks_5
-
-- name: networks (change less idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks:
-      - "{{ network_name_2 }}"
-  register: networks_6
-
-- name: networks (empty)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks: []
-  register: networks_7
-
-- name: networks (empty idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks: []
-  register: networks_8
-
-- name: cleanup
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    state: absent
-  diff: no
-
-- assert:
-    that:
-      - networks_1 is changed
-      - networks_2 is not changed
-      - networks_3 is changed
-      - networks_4 is not changed
-      - networks_5 is changed
-      - networks_6 is not changed
-      - networks_7 is changed
-      - networks_8 is not changed
-
-- assert:
-    that:
-    - networks_3.rebuilt == false
-    - networks_5.rebuilt == false
-  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.7.0', '>=')
-
-- assert:
-    that:
-    - networks_3.rebuilt == true
-    - networks_5.rebuilt == true
-  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.7.0', '<')
-
-####################################################################
 ## stop_grace_period ###############################################
 ####################################################################
 
@@ -1590,6 +1464,28 @@
   register: publish_7
   ignore_errors: yes
 
+- name: publish (publishes the same port with both protocols)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    publish:
+      - protocol: udp
+        published_port: 60001
+        target_port: 60001
+        mode: host
+      - protocol: tcp
+        published_port: 60001
+        target_port: 60001
+        mode: host
+  register: publish_8
+  ignore_errors: yes
+- name: gather service info
+  docker_swarm_service_info:
+    name: "{{ service_name }}"
+  register: publish_8_info
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -1605,6 +1501,8 @@
       - publish_5 is not changed
       - publish_6 is changed
       - publish_7 is not changed
+      - publish_8 is changed
+      - (publish_8_info.service.Endpoint.Ports | length) == 2
   when: docker_api_version is version('1.25', '>=') and docker_py_version is version('3.0.0', '>=')
 - assert:
     that:
@@ -1891,30 +1789,3 @@
     - working_dir_1 is changed
     - working_dir_2 is not changed
     - working_dir_3 is changed
-
-####################################################################
-####################################################################
-####################################################################
-
-- name: Delete networks
-  docker_network:
-    name: "{{ network_name }}"
-    state: absent
-    force: yes
-  loop:
-    - "{{ network_name_1 }}"
-    - "{{ network_name_2 }}"
-  loop_control:
-    loop_var: network_name
-  ignore_errors: yes
-
-- name: Delete volumes
-  docker_volume:
-    name: "{{ volume_name }}"
-    state: absent
-  loop:
-    - "{{ volume_name_1 }}"
-    - "{{ volume_name_2 }}"
-  loop_control:
-    loop_var: volume_name
-  ignore_errors: yes

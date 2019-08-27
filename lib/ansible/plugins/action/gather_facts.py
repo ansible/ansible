@@ -69,9 +69,9 @@ class ActionModule(ActionBase):
                 mod_args = self._get_module_args(fact_module, task_vars)
                 res = self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False)
                 if res.get('failed', False):
-                    failed[fact_module] = res.get('msg')
+                    failed[fact_module] = res
                 elif res.get('skipped', False):
-                    skipped[fact_module] = res.get('msg')
+                    skipped[fact_module] = res
                 else:
                     result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
 
@@ -91,9 +91,9 @@ class ActionModule(ActionBase):
                     res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):
-                            failed[module] = res.get('msg')
+                            failed[module] = res
                         elif res.get('skipped', False):
-                            skipped[module] = res.get('msg')
+                            skipped[module] = res
                         else:
                             result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
                         del jobs[module]
@@ -105,16 +105,14 @@ class ActionModule(ActionBase):
 
         if skipped:
             result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
-            for skip in skipped:
-                result['msg'] += '  %s: %s\n' % (skip, skipped[skip])
+            result['skipped_modules'] = skipped
             if len(skipped) == len(modules):
                 result['skipped'] = True
 
         if failed:
             result['failed'] = True
             result['msg'] = "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
-            for fail in failed:
-                result['msg'] += '  %s: %s\n' % (fail, failed[fail])
+            result['failed_modules'] = failed
 
         # tell executor facts were gathered
         result['ansible_facts']['_ansible_facts_gathered'] = True

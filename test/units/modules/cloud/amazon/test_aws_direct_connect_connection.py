@@ -17,7 +17,6 @@
 
 from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import aws_direct_connect_connection
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 
 class FakeModule(object):

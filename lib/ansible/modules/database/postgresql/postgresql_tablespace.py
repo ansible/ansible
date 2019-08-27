@@ -395,7 +395,7 @@ def main():
         module.fail_json(msg="state=absent is mutually exclusive location, "
                              "owner, rename_to, and set")
 
-    conn_params = get_conn_params(module, module.params)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
     db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 

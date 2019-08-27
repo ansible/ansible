@@ -50,13 +50,9 @@ Synopsis
 --------
 {% if description -%}
 
-{%   if description is string -%}
-- @{ description | rst_ify }@
-{%   else %}
-{%     for desc in description %}
+{%   for desc in description %}
 - @{ desc | rst_ify }@
-{%     endfor %}
-{%   endif %}
+{%   endfor %}
 
 {% endif %}
 
@@ -120,6 +116,7 @@ Parameters
                     <b>@{ key }@</b>
                     <div style="font-size: small">
                         <span style="color: purple">@{ value.type | documented_type }@</span>
+                        {% if value.get('elements') %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
                         {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
                     </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
@@ -182,13 +179,9 @@ Parameters
                 {% endif %}
                 {# description #}
                 <td>
-                    {% if value.description is string %}
-                        <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
-                    {% else %}
-                        {% for desc in value.description %}
-                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-                        {% endfor %}
-                    {% endif %}
+                    {% for desc in value.description %}
+                        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endfor %}
                     {% if 'aliases' in value and value.aliases %}
                         <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
                     {% endif %}

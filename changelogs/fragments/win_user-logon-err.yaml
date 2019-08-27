@@ -1,0 +1,2 @@
+bugfixes:
+- win_user - Get proper error code when failing to validate the user's credentials

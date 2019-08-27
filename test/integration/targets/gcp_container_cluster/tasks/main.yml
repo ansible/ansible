@@ -50,7 +50,7 @@
     that:
       - result.changed == true
 - name: verify that cluster was created
-  gcp_container_cluster_facts:
+  gcp_container_cluster_info:
       location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -105,7 +105,7 @@
     that:
       - result.changed == true
 - name: verify that cluster was deleted
-  gcp_container_cluster_facts:
+  gcp_container_cluster_info:
       location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

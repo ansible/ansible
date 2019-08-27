@@ -19,7 +19,7 @@ options:
     description:
       - The name of a Web Application Firewall
   waf_regional:
-      description: Wether to use waf_regional module. Defaults to true
+      description: Whether to use waf_regional module. Defaults to true
       default: false
       required: no
       type: bool

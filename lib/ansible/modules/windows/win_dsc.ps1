@@ -19,11 +19,7 @@ Function ConvertTo-ArgSpecType {
     $arg_type = switch($CimType) {
         Boolean { "bool" }
         Char16 { [Func[[Object], [Char]]]{ [System.Char]::Parse($args[0].ToString()) } }
-        DateTime { [Func[[Object], [DateTime]]]{
-            # o == ISO 8601 format
-            [System.DateTime]::ParseExact($args[0].ToString(), "o", [CultureInfo]::InvariantCulture,
-                [System.Globalization.DateTimeStyles]::None)
-        }}
+        DateTime { [Func[[Object], [DateTime]]]{ [System.DateTime]($args[0].ToString()) } }
         Instance { "dict" }
         Real32 { "float" }
         Real64 { [Func[[Object], [Double]]]{ [System.Double]::Parse($args[0].ToString()) } }

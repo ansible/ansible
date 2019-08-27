@@ -76,9 +76,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#instanceTemplate'"
 - name: verify that instance_template was created
-  gcp_compute_instance_template_facts:
+  gcp_compute_instance_template_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -117,7 +116,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#instanceTemplate'"
 #----------------------------------------------------------
 - name: delete a instance template
   gcp_compute_instance_template:
@@ -144,9 +142,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that instance_template was deleted
-  gcp_compute_instance_template_facts:
+  gcp_compute_instance_template_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -185,7 +182,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

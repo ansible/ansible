@@ -119,6 +119,7 @@ options:
   statistics:
     description:
       - Specify the statistics collection for discovered device.
+    type: dict
     suboptions:
       enable:
         description:

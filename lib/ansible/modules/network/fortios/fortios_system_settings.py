@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_system_settings
 short_description: Configure VDOM settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure system feature and settings category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify system feature and settings category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,640 +41,769 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip adress.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     system_settings:
         description:
             - Configure VDOM settings.
         default: null
+        type: dict
         suboptions:
-            allow-subnet-overlap:
+            allow_linkdown_path:
+                description:
+                    - Enable/disable link down path.
+                type: str
+                choices:
+                    - enable
+                    - disable
+            allow_subnet_overlap:
                 description:
                     - Enable/disable allowing interface subnets to use overlapping IP addresses.
+                type: str
                 choices:
                     - enable
                     - disable
             asymroute:
                 description:
                     - Enable/disable IPv4 asymmetric routing.
+                type: str
                 choices:
                     - enable
                     - disable
-            asymroute-icmp:
+            asymroute_icmp:
                 description:
                     - Enable/disable ICMP asymmetric routing.
+                type: str
                 choices:
                     - enable
                     - disable
             asymroute6:
                 description:
                     - Enable/disable asymmetric IPv6 routing.
+                type: str
                 choices:
                     - enable
                     - disable
-            asymroute6-icmp:
+            asymroute6_icmp:
                 description:
                     - Enable/disable asymmetric ICMPv6 routing.
+                type: str
                 choices:
                     - enable
                     - disable
             bfd:
                 description:
                     - Enable/disable Bi-directional Forwarding Detection (BFD) on all interfaces.
+                type: str
                 choices:
                     - enable
                     - disable
-            bfd-desired-min-tx:
+            bfd_desired_min_tx:
                 description:
-                    - BFD desired minimal transmit interval (1 - 100000 ms, default = 50).
-            bfd-detect-mult:
+                    - BFD desired minimal transmit interval (1 - 100000 ms).
+                type: int
+            bfd_detect_mult:
                 description:
-                    - BFD detection multiplier (1 - 50, default = 3).
-            bfd-dont-enforce-src-port:
+                    - BFD detection multiplier (1 - 50).
+                type: int
+            bfd_dont_enforce_src_port:
                 description:
                     - Enable to not enforce verifying the source port of BFD Packets.
+                type: str
                 choices:
                     - enable
                     - disable
-            bfd-required-min-rx:
+            bfd_required_min_rx:
                 description:
-                    - BFD required minimal receive interval (1 - 100000 ms, default = 50).
-            block-land-attack:
+                    - BFD required minimal receive interval (1 - 100000 ms).
+                type: int
+            block_land_attack:
                 description:
                     - Enable/disable blocking of land attacks.
+                type: str
                 choices:
                     - disable
                     - enable
-            central-nat:
+            central_nat:
                 description:
                     - Enable/disable central NAT.
+                type: str
                 choices:
                     - enable
                     - disable
             comments:
                 description:
                     - VDOM comments.
-            compliance-check:
+                type: str
+            compliance_check:
                 description:
                     - Enable/disable PCI DSS compliance checking.
+                type: str
                 choices:
                     - enable
                     - disable
-            default-voip-alg-mode:
+            default_voip_alg_mode:
                 description:
                     - Configure how the FortiGate handles VoIP traffic when a policy that accepts the traffic doesn't include a VoIP profile.
+                type: str
                 choices:
                     - proxy-based
                     - kernel-helper-based
-            deny-tcp-with-icmp:
+            deny_tcp_with_icmp:
                 description:
                     - Enable/disable denying TCP by sending an ICMP communication prohibited packet.
+                type: str
                 choices:
                     - enable
                     - disable
             device:
                 description:
                     - Interface to use for management access for NAT mode. Source system.interface.name.
-            dhcp-proxy:
+                type: str
+            dhcp_proxy:
                 description:
                     - Enable/disable the DHCP Proxy.
+                type: str
                 choices:
                     - enable
                     - disable
-            dhcp-server-ip:
+            dhcp_server_ip:
                 description:
                     - DHCP Server IPv4 address.
-            dhcp6-server-ip:
+                type: str
+            dhcp6_server_ip:
                 description:
                     - DHCPv6 server IPv6 address.
-            discovered-device-timeout:
+                type: str
+            discovered_device_timeout:
                 description:
-                    - Timeout for discovered devices (1 - 365 days, default = 28).
-            ecmp-max-paths:
+                    - Timeout for discovered devices (1 - 365 days).
+                type: int
+            ecmp_max_paths:
                 description:
-                    - Maximum number of Equal Cost Multi-Path (ECMP) next-hops. Set to 1 to disable ECMP routing (1 - 100, default = 10).
-            email-portal-check-dns:
+                    - Maximum number of Equal Cost Multi-Path (ECMP) next-hops. Set to 1 to disable ECMP routing (1 - 100).
+                type: int
+            email_portal_check_dns:
                 description:
                     - Enable/disable using DNS to validate email addresses collected by a captive portal.
+                type: str
                 choices:
                     - disable
                     - enable
-            firewall-session-dirty:
+            firewall_session_dirty:
                 description:
                     - Select how to manage sessions affected by firewall policy configuration changes.
+                type: str
                 choices:
                     - check-all
                     - check-new
                     - check-policy-option
-            fw-session-hairpin:
+            fw_session_hairpin:
                 description:
                     - Enable/disable checking for a matching policy each time hairpin traffic goes through the FortiGate.
+                type: str
                 choices:
                     - enable
                     - disable
             gateway:
                 description:
                     - Transparent mode IPv4 default gateway IP address.
+                type: str
             gateway6:
                 description:
                     - Transparent mode IPv4 default gateway IP address.
-            gui-advanced-policy:
+                type: str
+            gui_advanced_policy:
                 description:
                     - Enable/disable advanced policy configuration on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-allow-unnamed-policy:
+            gui_allow_unnamed_policy:
                 description:
                     - Enable/disable the requirement for policy naming on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-antivirus:
+            gui_antivirus:
                 description:
                     - Enable/disable AntiVirus on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-ap-profile:
+            gui_ap_profile:
                 description:
                     - Enable/disable FortiAP profiles on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-application-control:
+            gui_application_control:
                 description:
                     - Enable/disable application control on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-default-policy-columns:
+            gui_default_policy_columns:
                 description:
                     - Default columns to display for policy lists on GUI.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Select column name.
                         required: true
-            gui-dhcp-advanced:
+                        type: str
+            gui_dhcp_advanced:
                 description:
                     - Enable/disable advanced DHCP options on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-dlp:
+            gui_dlp:
                 description:
                     - Enable/disable DLP on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-dns-database:
+            gui_dns_database:
                 description:
                     - Enable/disable DNS database settings on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-dnsfilter:
+            gui_dnsfilter:
                 description:
                     - Enable/disable DNS Filtering on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-domain-ip-reputation:
+            gui_domain_ip_reputation:
                 description:
                     - Enable/disable Domain and IP Reputation on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-dos-policy:
+            gui_dos_policy:
                 description:
                     - Enable/disable DoS policies on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-dynamic-profile-display:
+            gui_dynamic_profile_display:
                 description:
                     - Enable/disable RADIUS Single Sign On (RSSO) on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-dynamic-routing:
+            gui_dynamic_routing:
                 description:
                     - Enable/disable dynamic routing on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-email-collection:
+            gui_email_collection:
                 description:
                     - Enable/disable email collection on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-endpoint-control:
+            gui_endpoint_control:
                 description:
                     - Enable/disable endpoint control on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-endpoint-control-advanced:
+            gui_endpoint_control_advanced:
                 description:
                     - Enable/disable advanced endpoint control options on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-explicit-proxy:
+            gui_explicit_proxy:
                 description:
                     - Enable/disable the explicit proxy on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-fortiap-split-tunneling:
+            gui_fortiap_split_tunneling:
                 description:
                     - Enable/disable FortiAP split tunneling on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-fortiextender-controller:
+            gui_fortiextender_controller:
                 description:
                     - Enable/disable FortiExtender on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-icap:
+            gui_icap:
                 description:
                     - Enable/disable ICAP on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-implicit-policy:
+            gui_implicit_policy:
                 description:
                     - Enable/disable implicit firewall policies on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-ips:
+            gui_ips:
                 description:
                     - Enable/disable IPS on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-load-balance:
+            gui_load_balance:
                 description:
                     - Enable/disable server load balancing on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-local-in-policy:
+            gui_local_in_policy:
                 description:
                     - Enable/disable Local-In policies on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-local-reports:
+            gui_local_reports:
                 description:
                     - Enable/disable local reports on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-multicast-policy:
+            gui_multicast_policy:
                 description:
                     - Enable/disable multicast firewall policies on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-multiple-interface-policy:
+            gui_multiple_interface_policy:
                 description:
                     - Enable/disable adding multiple interfaces to a policy on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-multiple-utm-profiles:
+            gui_multiple_utm_profiles:
                 description:
                     - Enable/disable multiple UTM profiles on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-nat46-64:
+            gui_nat46_64:
                 description:
                     - Enable/disable NAT46 and NAT64 settings on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-object-colors:
+            gui_object_colors:
                 description:
                     - Enable/disable object colors on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-policy-based-ipsec:
+            gui_policy_based_ipsec:
                 description:
                     - Enable/disable policy-based IPsec VPN on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-policy-learning:
+            gui_policy_learning:
                 description:
                     - Enable/disable firewall policy learning mode on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-replacement-message-groups:
+            gui_replacement_message_groups:
                 description:
                     - Enable/disable replacement message groups on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-spamfilter:
+            gui_spamfilter:
                 description:
                     - Enable/disable Antispam on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-sslvpn-personal-bookmarks:
+            gui_sslvpn_personal_bookmarks:
                 description:
                     - Enable/disable SSL-VPN personal bookmark management on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-sslvpn-realms:
+            gui_sslvpn_realms:
                 description:
                     - Enable/disable SSL-VPN realms on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-switch-controller:
+            gui_switch_controller:
                 description:
                     - Enable/disable the switch controller on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-threat-weight:
+            gui_threat_weight:
                 description:
                     - Enable/disable threat weight on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-traffic-shaping:
+            gui_traffic_shaping:
                 description:
                     - Enable/disable traffic shaping on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-voip-profile:
+            gui_voip_profile:
                 description:
                     - Enable/disable VoIP profiles on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-vpn:
+            gui_vpn:
                 description:
                     - Enable/disable VPN tunnels on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-waf-profile:
+            gui_waf_profile:
                 description:
                     - Enable/disable Web Application Firewall on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-wan-load-balancing:
+            gui_wan_load_balancing:
                 description:
                     - Enable/disable SD-WAN on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-wanopt-cache:
+            gui_wanopt_cache:
                 description:
                     - Enable/disable WAN Optimization and Web Caching on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-webfilter:
+            gui_webfilter:
                 description:
                     - Enable/disable Web filtering on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-webfilter-advanced:
+            gui_webfilter_advanced:
                 description:
                     - Enable/disable advanced web filtering on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            gui-wireless-controller:
+            gui_wireless_controller:
                 description:
                     - Enable/disable the wireless controller on the GUI.
+                type: str
                 choices:
                     - enable
                     - disable
-            http-external-dest:
+            http_external_dest:
                 description:
                     - Offload HTTP traffic to FortiWeb or FortiCache.
+                type: str
                 choices:
                     - fortiweb
                     - forticache
-            ike-dn-format:
+            ike_dn_format:
                 description:
                     - Configure IKE ASN.1 Distinguished Name format conventions.
+                type: str
                 choices:
                     - with-space
                     - no-space
-            ike-quick-crash-detect:
+            ike_quick_crash_detect:
                 description:
                     - Enable/disable IKE quick crash detection (RFC 6290).
+                type: str
                 choices:
                     - enable
                     - disable
-            ike-session-resume:
+            ike_session_resume:
                 description:
                     - Enable/disable IKEv2 session resumption (RFC 5723).
+                type: str
                 choices:
                     - enable
                     - disable
-            implicit-allow-dns:
+            implicit_allow_dns:
                 description:
                     - Enable/disable implicitly allowing DNS traffic.
+                type: str
                 choices:
                     - enable
                     - disable
-            inspection-mode:
+            inspection_mode:
                 description:
                     - Inspection mode (proxy-based or flow-based).
+                type: str
                 choices:
                     - proxy
                     - flow
             ip:
                 description:
                     - IP address and netmask.
+                type: str
             ip6:
                 description:
                     - IPv6 address prefix for NAT mode.
-            link-down-access:
+                type: str
+            link_down_access:
                 description:
                     - Enable/disable link down access traffic.
+                type: str
                 choices:
                     - enable
                     - disable
-            lldp-transmission:
+            lldp_transmission:
                 description:
                     - Enable/disable Link Layer Discovery Protocol (LLDP) for this VDOM or apply global settings to this VDOM.
+                type: str
                 choices:
                     - enable
                     - disable
                     - global
-            mac-ttl:
+            mac_ttl:
                 description:
-                    - Duration of MAC addresses in Transparent mode (300 - 8640000 sec, default = 300).
+                    - Duration of MAC addresses in Transparent mode (300 - 8640000 sec).
+                type: int
             manageip:
                 description:
                     - Transparent mode IPv4 management IP address and netmask.
+                type: str
             manageip6:
                 description:
                     - Transparent mode IPv6 management IP address and netmask.
-            multicast-forward:
+                type: str
+            multicast_forward:
                 description:
                     - Enable/disable multicast forwarding.
+                type: str
                 choices:
                     - enable
                     - disable
-            multicast-skip-policy:
+            multicast_skip_policy:
                 description:
                     - Enable/disable allowing multicast traffic through the FortiGate without a policy check.
+                type: str
                 choices:
                     - enable
                     - disable
-            multicast-ttl-notchange:
+            multicast_ttl_notchange:
                 description:
                     - Enable/disable preventing the FortiGate from changing the TTL for forwarded multicast packets.
+                type: str
                 choices:
                     - enable
                     - disable
-            ngfw-mode:
+            ngfw_mode:
                 description:
                     - Next Generation Firewall (NGFW) mode.
+                type: str
                 choices:
                     - profile-based
                     - policy-based
             opmode:
                 description:
                     - Firewall operation mode (NAT or Transparent).
+                type: str
                 choices:
                     - nat
                     - transparent
-            prp-trailer-action:
+            prp_trailer_action:
                 description:
                     - Enable/disable action to take on PRP trailer.
+                type: str
                 choices:
                     - enable
                     - disable
-            sccp-port:
+            sccp_port:
                 description:
-                    - TCP port the SCCP proxy monitors for SCCP traffic (0 - 65535, default = 2000).
-            ses-denied-traffic:
+                    - TCP port the SCCP proxy monitors for SCCP traffic (0 - 65535).
+                type: int
+            ses_denied_traffic:
                 description:
                     - Enable/disable including denied session in the session table.
+                type: str
                 choices:
                     - enable
                     - disable
-            sip-helper:
+            sip_helper:
                 description:
                     - Enable/disable the SIP session helper to process SIP sessions unless SIP sessions are accepted by the SIP application layer gateway
                        (ALG).
+                type: str
                 choices:
                     - enable
                     - disable
-            sip-nat-trace:
+            sip_nat_trace:
                 description:
                     - Enable/disable recording the original SIP source IP address when NAT is used.
+                type: str
                 choices:
                     - enable
                     - disable
-            sip-ssl-port:
+            sip_ssl_port:
                 description:
-                    - TCP port the SIP proxy monitors for SIP SSL/TLS traffic (0 - 65535, default = 5061).
-            sip-tcp-port:
+                    - TCP port the SIP proxy monitors for SIP SSL/TLS traffic (0 - 65535).
+                type: int
+            sip_tcp_port:
                 description:
-                    - TCP port the SIP proxy monitors for SIP traffic (0 - 65535, default = 5060).
-            sip-udp-port:
+                    - TCP port the SIP proxy monitors for SIP traffic (0 - 65535).
+                type: int
+            sip_udp_port:
                 description:
-                    - UDP port the SIP proxy monitors for SIP traffic (0 - 65535, default = 5060).
-            snat-hairpin-traffic:
+                    - UDP port the SIP proxy monitors for SIP traffic (0 - 65535).
+                type: int
+            snat_hairpin_traffic:
                 description:
                     - Enable/disable source NAT (SNAT) for hairpin traffic.
+                type: str
                 choices:
                     - enable
                     - disable
-            ssl-ssh-profile:
+            ssl_ssh_profile:
                 description:
                     - Profile for SSL/SSH inspection. Source firewall.ssl-ssh-profile.name.
+                type: str
             status:
                 description:
                     - Enable/disable this VDOM.
+                type: str
                 choices:
                     - enable
                     - disable
-            strict-src-check:
+            strict_src_check:
                 description:
                     - Enable/disable strict source verification.
+                type: str
                 choices:
                     - enable
                     - disable
-            tcp-session-without-syn:
+            tcp_session_without_syn:
                 description:
                     - Enable/disable allowing TCP session without SYN flags.
+                type: str
                 choices:
                     - enable
                     - disable
-            utf8-spam-tagging:
+            utf8_spam_tagging:
                 description:
                     - Enable/disable converting antispam tags to UTF-8 for better non-ASCII character support.
+                type: str
                 choices:
                     - enable
                     - disable
-            v4-ecmp-mode:
+            v4_ecmp_mode:
                 description:
                     - IPv4 Equal-cost multi-path (ECMP) routing and load balancing mode.
+                type: str
                 choices:
                     - source-ip-based
                     - weight-based
                     - usage-based
                     - source-dest-ip-based
-            vpn-stats-log:
+            vpn_stats_log:
                 description:
                     - Enable/disable periodic VPN log statistics for one or more types of VPN. Separate names with a space.
+                type: str
                 choices:
                     - ipsec
                     - pptp
                     - l2tp
                     - ssl
-            vpn-stats-period:
+            vpn_stats_period:
                 description:
                     - Period to send VPN log statistics (60 - 86400 sec).
-            wccp-cache-engine:
+                type: int
+            wccp_cache_engine:
                 description:
                     - Enable/disable WCCP cache engine.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -690,6 +816,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure VDOM settings.
     fortios_system_settings:
@@ -699,119 +826,120 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       system_settings:
-        allow-subnet-overlap: "enable"
+        allow_linkdown_path: "enable"
+        allow_subnet_overlap: "enable"
         asymroute: "enable"
-        asymroute-icmp: "enable"
+        asymroute_icmp: "enable"
         asymroute6: "enable"
-        asymroute6-icmp: "enable"
+        asymroute6_icmp: "enable"
         bfd: "enable"
-        bfd-desired-min-tx: "9"
-        bfd-detect-mult: "10"
-        bfd-dont-enforce-src-port: "enable"
-        bfd-required-min-rx: "12"
-        block-land-attack: "disable"
-        central-nat: "enable"
+        bfd_desired_min_tx: "10"
+        bfd_detect_mult: "11"
+        bfd_dont_enforce_src_port: "enable"
+        bfd_required_min_rx: "13"
+        block_land_attack: "disable"
+        central_nat: "enable"
         comments: "<your_own_value>"
-        compliance-check: "enable"
-        default-voip-alg-mode: "proxy-based"
-        deny-tcp-with-icmp: "enable"
+        compliance_check: "enable"
+        default_voip_alg_mode: "proxy-based"
+        deny_tcp_with_icmp: "enable"
         device: "<your_own_value> (source system.interface.name)"
-        dhcp-proxy: "enable"
-        dhcp-server-ip: "<your_own_value>"
-        dhcp6-server-ip: "<your_own_value>"
-        discovered-device-timeout: "23"
-        ecmp-max-paths: "24"
-        email-portal-check-dns: "disable"
-        firewall-session-dirty: "check-all"
-        fw-session-hairpin: "enable"
+        dhcp_proxy: "enable"
+        dhcp_server_ip: "<your_own_value>"
+        dhcp6_server_ip: "<your_own_value>"
+        discovered_device_timeout: "24"
+        ecmp_max_paths: "25"
+        email_portal_check_dns: "disable"
+        firewall_session_dirty: "check-all"
+        fw_session_hairpin: "enable"
         gateway: "<your_own_value>"
         gateway6: "<your_own_value>"
-        gui-advanced-policy: "enable"
-        gui-allow-unnamed-policy: "enable"
-        gui-antivirus: "enable"
-        gui-ap-profile: "enable"
-        gui-application-control: "enable"
-        gui-default-policy-columns:
+        gui_advanced_policy: "enable"
+        gui_allow_unnamed_policy: "enable"
+        gui_antivirus: "enable"
+        gui_ap_profile: "enable"
+        gui_application_control: "enable"
+        gui_default_policy_columns:
          -
-            name: "default_name_36"
-        gui-dhcp-advanced: "enable"
-        gui-dlp: "enable"
-        gui-dns-database: "enable"
-        gui-dnsfilter: "enable"
-        gui-domain-ip-reputation: "enable"
-        gui-dos-policy: "enable"
-        gui-dynamic-profile-display: "enable"
-        gui-dynamic-routing: "enable"
-        gui-email-collection: "enable"
-        gui-endpoint-control: "enable"
-        gui-endpoint-control-advanced: "enable"
-        gui-explicit-proxy: "enable"
-        gui-fortiap-split-tunneling: "enable"
-        gui-fortiextender-controller: "enable"
-        gui-icap: "enable"
-        gui-implicit-policy: "enable"
-        gui-ips: "enable"
-        gui-load-balance: "enable"
-        gui-local-in-policy: "enable"
-        gui-local-reports: "enable"
-        gui-multicast-policy: "enable"
-        gui-multiple-interface-policy: "enable"
-        gui-multiple-utm-profiles: "enable"
-        gui-nat46-64: "enable"
-        gui-object-colors: "enable"
-        gui-policy-based-ipsec: "enable"
-        gui-policy-learning: "enable"
-        gui-replacement-message-groups: "enable"
-        gui-spamfilter: "enable"
-        gui-sslvpn-personal-bookmarks: "enable"
-        gui-sslvpn-realms: "enable"
-        gui-switch-controller: "enable"
-        gui-threat-weight: "enable"
-        gui-traffic-shaping: "enable"
-        gui-voip-profile: "enable"
-        gui-vpn: "enable"
-        gui-waf-profile: "enable"
-        gui-wan-load-balancing: "enable"
-        gui-wanopt-cache: "enable"
-        gui-webfilter: "enable"
-        gui-webfilter-advanced: "enable"
-        gui-wireless-controller: "enable"
-        http-external-dest: "fortiweb"
-        ike-dn-format: "with-space"
-        ike-quick-crash-detect: "enable"
-        ike-session-resume: "enable"
-        implicit-allow-dns: "enable"
-        inspection-mode: "proxy"
+            name: "default_name_37"
+        gui_dhcp_advanced: "enable"
+        gui_dlp: "enable"
+        gui_dns_database: "enable"
+        gui_dnsfilter: "enable"
+        gui_domain_ip_reputation: "enable"
+        gui_dos_policy: "enable"
+        gui_dynamic_profile_display: "enable"
+        gui_dynamic_routing: "enable"
+        gui_email_collection: "enable"
+        gui_endpoint_control: "enable"
+        gui_endpoint_control_advanced: "enable"
+        gui_explicit_proxy: "enable"
+        gui_fortiap_split_tunneling: "enable"
+        gui_fortiextender_controller: "enable"
+        gui_icap: "enable"
+        gui_implicit_policy: "enable"
+        gui_ips: "enable"
+        gui_load_balance: "enable"
+        gui_local_in_policy: "enable"
+        gui_local_reports: "enable"
+        gui_multicast_policy: "enable"
+        gui_multiple_interface_policy: "enable"
+        gui_multiple_utm_profiles: "enable"
+        gui_nat46_64: "enable"
+        gui_object_colors: "enable"
+        gui_policy_based_ipsec: "enable"
+        gui_policy_learning: "enable"
+        gui_replacement_message_groups: "enable"
+        gui_spamfilter: "enable"
+        gui_sslvpn_personal_bookmarks: "enable"
+        gui_sslvpn_realms: "enable"
+        gui_switch_controller: "enable"
+        gui_threat_weight: "enable"
+        gui_traffic_shaping: "enable"
+        gui_voip_profile: "enable"
+        gui_vpn: "enable"
+        gui_waf_profile: "enable"
+        gui_wan_load_balancing: "enable"
+        gui_wanopt_cache: "enable"
+        gui_webfilter: "enable"
+        gui_webfilter_advanced: "enable"
+        gui_wireless_controller: "enable"
+        http_external_dest: "fortiweb"
+        ike_dn_format: "with-space"
+        ike_quick_crash_detect: "enable"
+        ike_session_resume: "enable"
+        implicit_allow_dns: "enable"
+        inspection_mode: "proxy"
         ip: "<your_own_value>"
         ip6: "<your_own_value>"
-        link-down-access: "enable"
-        lldp-transmission: "enable"
-        mac-ttl: "89"
+        link_down_access: "enable"
+        lldp_transmission: "enable"
+        mac_ttl: "90"
         manageip: "<your_own_value>"
         manageip6: "<your_own_value>"
-        multicast-forward: "enable"
-        multicast-skip-policy: "enable"
-        multicast-ttl-notchange: "enable"
-        ngfw-mode: "profile-based"
+        multicast_forward: "enable"
+        multicast_skip_policy: "enable"
+        multicast_ttl_notchange: "enable"
+        ngfw_mode: "profile-based"
         opmode: "nat"
-        prp-trailer-action: "enable"
-        sccp-port: "98"
-        ses-denied-traffic: "enable"
-        sip-helper: "enable"
-        sip-nat-trace: "enable"
-        sip-ssl-port: "102"
-        sip-tcp-port: "103"
-        sip-udp-port: "104"
-        snat-hairpin-traffic: "enable"
-        ssl-ssh-profile: "<your_own_value> (source firewall.ssl-ssh-profile.name)"
+        prp_trailer_action: "enable"
+        sccp_port: "99"
+        ses_denied_traffic: "enable"
+        sip_helper: "enable"
+        sip_nat_trace: "enable"
+        sip_ssl_port: "103"
+        sip_tcp_port: "104"
+        sip_udp_port: "105"
+        snat_hairpin_traffic: "enable"
+        ssl_ssh_profile: "<your_own_value> (source firewall.ssl-ssh-profile.name)"
         status: "enable"
-        strict-src-check: "enable"
-        tcp-session-without-syn: "enable"
-        utf8-spam-tagging: "enable"
-        v4-ecmp-mode: "source-ip-based"
-        vpn-stats-log: "ipsec"
-        vpn-stats-period: "113"
-        wccp-cache-engine: "enable"
+        strict_src_check: "enable"
+        tcp_session_without_syn: "enable"
+        utf8_spam_tagging: "enable"
+        v4_ecmp_mode: "source-ip-based"
+        vpn_stats_log: "ipsec"
+        vpn_stats_period: "114"
+        wccp_cache_engine: "enable"
 '''
 
 RETURN = '''
@@ -874,14 +1002,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -889,47 +1019,48 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_system_settings_data(json):
-    option_list = ['allow-subnet-overlap', 'asymroute', 'asymroute-icmp',
-                   'asymroute6', 'asymroute6-icmp', 'bfd',
-                   'bfd-desired-min-tx', 'bfd-detect-mult', 'bfd-dont-enforce-src-port',
-                   'bfd-required-min-rx', 'block-land-attack', 'central-nat',
-                   'comments', 'compliance-check', 'default-voip-alg-mode',
-                   'deny-tcp-with-icmp', 'device', 'dhcp-proxy',
-                   'dhcp-server-ip', 'dhcp6-server-ip', 'discovered-device-timeout',
-                   'ecmp-max-paths', 'email-portal-check-dns', 'firewall-session-dirty',
-                   'fw-session-hairpin', 'gateway', 'gateway6',
-                   'gui-advanced-policy', 'gui-allow-unnamed-policy', 'gui-antivirus',
-                   'gui-ap-profile', 'gui-application-control', 'gui-default-policy-columns',
-                   'gui-dhcp-advanced', 'gui-dlp', 'gui-dns-database',
-                   'gui-dnsfilter', 'gui-domain-ip-reputation', 'gui-dos-policy',
-                   'gui-dynamic-profile-display', 'gui-dynamic-routing', 'gui-email-collection',
-                   'gui-endpoint-control', 'gui-endpoint-control-advanced', 'gui-explicit-proxy',
-                   'gui-fortiap-split-tunneling', 'gui-fortiextender-controller', 'gui-icap',
-                   'gui-implicit-policy', 'gui-ips', 'gui-load-balance',
-                   'gui-local-in-policy', 'gui-local-reports', 'gui-multicast-policy',
-                   'gui-multiple-interface-policy', 'gui-multiple-utm-profiles', 'gui-nat46-64',
-                   'gui-object-colors', 'gui-policy-based-ipsec', 'gui-policy-learning',
-                   'gui-replacement-message-groups', 'gui-spamfilter', 'gui-sslvpn-personal-bookmarks',
-                   'gui-sslvpn-realms', 'gui-switch-controller', 'gui-threat-weight',
-                   'gui-traffic-shaping', 'gui-voip-profile', 'gui-vpn',
-                   'gui-waf-profile', 'gui-wan-load-balancing', 'gui-wanopt-cache',
-                   'gui-webfilter', 'gui-webfilter-advanced', 'gui-wireless-controller',
-                   'http-external-dest', 'ike-dn-format', 'ike-quick-crash-detect',
-                   'ike-session-resume', 'implicit-allow-dns', 'inspection-mode',
-                   'ip', 'ip6', 'link-down-access',
-                   'lldp-transmission', 'mac-ttl', 'manageip',
-                   'manageip6', 'multicast-forward', 'multicast-skip-policy',
-                   'multicast-ttl-notchange', 'ngfw-mode', 'opmode',
-                   'prp-trailer-action', 'sccp-port', 'ses-denied-traffic',
-                   'sip-helper', 'sip-nat-trace', 'sip-ssl-port',
-                   'sip-tcp-port', 'sip-udp-port', 'snat-hairpin-traffic',
-                   'ssl-ssh-profile', 'status', 'strict-src-check',
-                   'tcp-session-without-syn', 'utf8-spam-tagging', 'v4-ecmp-mode',
-                   'vpn-stats-log', 'vpn-stats-period', 'wccp-cache-engine']
+    option_list = ['allow_linkdown_path', 'allow_subnet_overlap', 'asymroute',
+                   'asymroute_icmp', 'asymroute6', 'asymroute6_icmp',
+                   'bfd', 'bfd_desired_min_tx', 'bfd_detect_mult',
+                   'bfd_dont_enforce_src_port', 'bfd_required_min_rx', 'block_land_attack',
+                   'central_nat', 'comments', 'compliance_check',
+                   'default_voip_alg_mode', 'deny_tcp_with_icmp', 'device',
+                   'dhcp_proxy', 'dhcp_server_ip', 'dhcp6_server_ip',
+                   'discovered_device_timeout', 'ecmp_max_paths', 'email_portal_check_dns',
+                   'firewall_session_dirty', 'fw_session_hairpin', 'gateway',
+                   'gateway6', 'gui_advanced_policy', 'gui_allow_unnamed_policy',
+                   'gui_antivirus', 'gui_ap_profile', 'gui_application_control',
+                   'gui_default_policy_columns', 'gui_dhcp_advanced', 'gui_dlp',
+                   'gui_dns_database', 'gui_dnsfilter', 'gui_domain_ip_reputation',
+                   'gui_dos_policy', 'gui_dynamic_profile_display', 'gui_dynamic_routing',
+                   'gui_email_collection', 'gui_endpoint_control', 'gui_endpoint_control_advanced',
+                   'gui_explicit_proxy', 'gui_fortiap_split_tunneling', 'gui_fortiextender_controller',
+                   'gui_icap', 'gui_implicit_policy', 'gui_ips',
+                   'gui_load_balance', 'gui_local_in_policy', 'gui_local_reports',
+                   'gui_multicast_policy', 'gui_multiple_interface_policy', 'gui_multiple_utm_profiles',
+                   'gui_nat46_64', 'gui_object_colors', 'gui_policy_based_ipsec',
+                   'gui_policy_learning', 'gui_replacement_message_groups', 'gui_spamfilter',
+                   'gui_sslvpn_personal_bookmarks', 'gui_sslvpn_realms', 'gui_switch_controller',
+                   'gui_threat_weight', 'gui_traffic_shaping', 'gui_voip_profile',
+                   'gui_vpn', 'gui_waf_profile', 'gui_wan_load_balancing',
+                   'gui_wanopt_cache', 'gui_webfilter', 'gui_webfilter_advanced',
+                   'gui_wireless_controller', 'http_external_dest', 'ike_dn_format',
+                   'ike_quick_crash_detect', 'ike_session_resume', 'implicit_allow_dns',
+                   'inspection_mode', 'ip', 'ip6',
+                   'link_down_access', 'lldp_transmission', 'mac_ttl',
+                   'manageip', 'manageip6', 'multicast_forward',
+                   'multicast_skip_policy', 'multicast_ttl_notchange', 'ngfw_mode',
+                   'opmode', 'prp_trailer_action', 'sccp_port',
+                   'ses_denied_traffic', 'sip_helper', 'sip_nat_trace',
+                   'sip_ssl_port', 'sip_tcp_port', 'sip_udp_port',
+                   'snat_hairpin_traffic', 'ssl_ssh_profile', 'status',
+                   'strict_src_check', 'tcp_session_without_syn', 'utf8_spam_tagging',
+                   'v4_ecmp_mode', 'vpn_stats_log', 'vpn_stats_period',
+                   'wccp_cache_engine']
     dictionary = {}
 
     for attribute in option_list:
@@ -939,242 +1070,261 @@ def filter_system_settings_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def system_settings(data, fos):
     vdom = data['vdom']
     system_settings_data = data['system_settings']
-    filtered_data = filter_system_settings_data(system_settings_data)
+    filtered_data = underscore_to_hyphen(filter_system_settings_data(system_settings_data))
+
     return fos.set('system',
                    'settings',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_system(data, fos):
-    login(data)
 
-    methodlist = ['system_settings']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['system_settings']:
+        resp = system_settings(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "system_settings": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "allow-subnet-overlap": {"required": False, "type": "str",
+                "allow_linkdown_path": {"required": False, "type": "str",
+                                        "choices": ["enable", "disable"]},
+                "allow_subnet_overlap": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
                 "asymroute": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]},
-                "asymroute-icmp": {"required": False, "type": "str",
+                "asymroute_icmp": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
                 "asymroute6": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
-                "asymroute6-icmp": {"required": False, "type": "str",
+                "asymroute6_icmp": {"required": False, "type": "str",
                                     "choices": ["enable", "disable"]},
                 "bfd": {"required": False, "type": "str",
                         "choices": ["enable", "disable"]},
-                "bfd-desired-min-tx": {"required": False, "type": "int"},
-                "bfd-detect-mult": {"required": False, "type": "int"},
-                "bfd-dont-enforce-src-port": {"required": False, "type": "str",
+                "bfd_desired_min_tx": {"required": False, "type": "int"},
+                "bfd_detect_mult": {"required": False, "type": "int"},
+                "bfd_dont_enforce_src_port": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
-                "bfd-required-min-rx": {"required": False, "type": "int"},
-                "block-land-attack": {"required": False, "type": "str",
+                "bfd_required_min_rx": {"required": False, "type": "int"},
+                "block_land_attack": {"required": False, "type": "str",
                                       "choices": ["disable", "enable"]},
-                "central-nat": {"required": False, "type": "str",
+                "central_nat": {"required": False, "type": "str",
                                 "choices": ["enable", "disable"]},
                 "comments": {"required": False, "type": "str"},
-                "compliance-check": {"required": False, "type": "str",
+                "compliance_check": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "default-voip-alg-mode": {"required": False, "type": "str",
+                "default_voip_alg_mode": {"required": False, "type": "str",
                                           "choices": ["proxy-based", "kernel-helper-based"]},
-                "deny-tcp-with-icmp": {"required": False, "type": "str",
+                "deny_tcp_with_icmp": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
                 "device": {"required": False, "type": "str"},
-                "dhcp-proxy": {"required": False, "type": "str",
+                "dhcp_proxy": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
-                "dhcp-server-ip": {"required": False, "type": "str"},
-                "dhcp6-server-ip": {"required": False, "type": "str"},
-                "discovered-device-timeout": {"required": False, "type": "int"},
-                "ecmp-max-paths": {"required": False, "type": "int"},
-                "email-portal-check-dns": {"required": False, "type": "str",
+                "dhcp_server_ip": {"required": False, "type": "str"},
+                "dhcp6_server_ip": {"required": False, "type": "str"},
+                "discovered_device_timeout": {"required": False, "type": "int"},
+                "ecmp_max_paths": {"required": False, "type": "int"},
+                "email_portal_check_dns": {"required": False, "type": "str",
                                            "choices": ["disable", "enable"]},
-                "firewall-session-dirty": {"required": False, "type": "str",
+                "firewall_session_dirty": {"required": False, "type": "str",
                                            "choices": ["check-all", "check-new", "check-policy-option"]},
-                "fw-session-hairpin": {"required": False, "type": "str",
+                "fw_session_hairpin": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
                 "gateway": {"required": False, "type": "str"},
                 "gateway6": {"required": False, "type": "str"},
-                "gui-advanced-policy": {"required": False, "type": "str",
+                "gui_advanced_policy": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "gui-allow-unnamed-policy": {"required": False, "type": "str",
+                "gui_allow_unnamed_policy": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                "gui-antivirus": {"required": False, "type": "str",
+                "gui_antivirus": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
-                "gui-ap-profile": {"required": False, "type": "str",
+                "gui_ap_profile": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "gui-application-control": {"required": False, "type": "str",
+                "gui_application_control": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "gui-default-policy-columns": {"required": False, "type": "list",
+                "gui_default_policy_columns": {"required": False, "type": "list",
                                                "options": {
                                                    "name": {"required": True, "type": "str"}
                                                }},
-                "gui-dhcp-advanced": {"required": False, "type": "str",
+                "gui_dhcp_advanced": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "gui-dlp": {"required": False, "type": "str",
+                "gui_dlp": {"required": False, "type": "str",
                             "choices": ["enable", "disable"]},
-                "gui-dns-database": {"required": False, "type": "str",
+                "gui_dns_database": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "gui-dnsfilter": {"required": False, "type": "str",
+                "gui_dnsfilter": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
-                "gui-domain-ip-reputation": {"required": False, "type": "str",
+                "gui_domain_ip_reputation": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                "gui-dos-policy": {"required": False, "type": "str",
+                "gui_dos_policy": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "gui-dynamic-profile-display": {"required": False, "type": "str",
+                "gui_dynamic_profile_display": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
-                "gui-dynamic-routing": {"required": False, "type": "str",
+                "gui_dynamic_routing": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "gui-email-collection": {"required": False, "type": "str",
+                "gui_email_collection": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "gui-endpoint-control": {"required": False, "type": "str",
+                "gui_endpoint_control": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "gui-endpoint-control-advanced": {"required": False, "type": "str",
+                "gui_endpoint_control_advanced": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                "gui-explicit-proxy": {"required": False, "type": "str",
+                "gui_explicit_proxy": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "gui-fortiap-split-tunneling": {"required": False, "type": "str",
+                "gui_fortiap_split_tunneling": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
-                "gui-fortiextender-controller": {"required": False, "type": "str",
+                "gui_fortiextender_controller": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
-                "gui-icap": {"required": False, "type": "str",
+                "gui_icap": {"required": False, "type": "str",
                              "choices": ["enable", "disable"]},
-                "gui-implicit-policy": {"required": False, "type": "str",
+                "gui_implicit_policy": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "gui-ips": {"required": False, "type": "str",
+                "gui_ips": {"required": False, "type": "str",
                             "choices": ["enable", "disable"]},
-                "gui-load-balance": {"required": False, "type": "str",
+                "gui_load_balance": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "gui-local-in-policy": {"required": False, "type": "str",
+                "gui_local_in_policy": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "gui-local-reports": {"required": False, "type": "str",
+                "gui_local_reports": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "gui-multicast-policy": {"required": False, "type": "str",
+                "gui_multicast_policy": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "gui-multiple-interface-policy": {"required": False, "type": "str",
+                "gui_multiple_interface_policy": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                "gui-multiple-utm-profiles": {"required": False, "type": "str",
+                "gui_multiple_utm_profiles": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
-                "gui-nat46-64": {"required": False, "type": "str",
+                "gui_nat46_64": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
-                "gui-object-colors": {"required": False, "type": "str",
+                "gui_object_colors": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "gui-policy-based-ipsec": {"required": False, "type": "str",
+                "gui_policy_based_ipsec": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "gui-policy-learning": {"required": False, "type": "str",
+                "gui_policy_learning": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "gui-replacement-message-groups": {"required": False, "type": "str",
+                "gui_replacement_message_groups": {"required": False, "type": "str",
                                                    "choices": ["enable", "disable"]},
-                "gui-spamfilter": {"required": False, "type": "str",
+                "gui_spamfilter": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "gui-sslvpn-personal-bookmarks": {"required": False, "type": "str",
+                "gui_sslvpn_personal_bookmarks": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                "gui-sslvpn-realms": {"required": False, "type": "str",
+                "gui_sslvpn_realms": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "gui-switch-controller": {"required": False, "type": "str",
+                "gui_switch_controller": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "gui-threat-weight": {"required": False, "type": "str",
+                "gui_threat_weight": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "gui-traffic-shaping": {"required": False, "type": "str",
+                "gui_traffic_shaping": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "gui-voip-profile": {"required": False, "type": "str",
+                "gui_voip_profile": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "gui-vpn": {"required": False, "type": "str",
+                "gui_vpn": {"required": False, "type": "str",
                             "choices": ["enable", "disable"]},
-                "gui-waf-profile": {"required": False, "type": "str",
+                "gui_waf_profile": {"required": False, "type": "str",
                                     "choices": ["enable", "disable"]},
-                "gui-wan-load-balancing": {"required": False, "type": "str",
+                "gui_wan_load_balancing": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "gui-wanopt-cache": {"required": False, "type": "str",
+                "gui_wanopt_cache": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "gui-webfilter": {"required": False, "type": "str",
+                "gui_webfilter": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
-                "gui-webfilter-advanced": {"required": False, "type": "str",
+                "gui_webfilter_advanced": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "gui-wireless-controller": {"required": False, "type": "str",
+                "gui_wireless_controller": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "http-external-dest": {"required": False, "type": "str",
+                "http_external_dest": {"required": False, "type": "str",
                                        "choices": ["fortiweb", "forticache"]},
-                "ike-dn-format": {"required": False, "type": "str",
+                "ike_dn_format": {"required": False, "type": "str",
                                   "choices": ["with-space", "no-space"]},
-                "ike-quick-crash-detect": {"required": False, "type": "str",
+                "ike_quick_crash_detect": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "ike-session-resume": {"required": False, "type": "str",
+                "ike_session_resume": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "implicit-allow-dns": {"required": False, "type": "str",
+                "implicit_allow_dns": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "inspection-mode": {"required": False, "type": "str",
+                "inspection_mode": {"required": False, "type": "str",
                                     "choices": ["proxy", "flow"]},
                 "ip": {"required": False, "type": "str"},
                 "ip6": {"required": False, "type": "str"},
-                "link-down-access": {"required": False, "type": "str",
+                "link_down_access": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "lldp-transmission": {"required": False, "type": "str",
+                "lldp_transmission": {"required": False, "type": "str",
                                       "choices": ["enable", "disable", "global"]},
-                "mac-ttl": {"required": False, "type": "int"},
+                "mac_ttl": {"required": False, "type": "int"},
                 "manageip": {"required": False, "type": "str"},
                 "manageip6": {"required": False, "type": "str"},
-                "multicast-forward": {"required": False, "type": "str",
+                "multicast_forward": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "multicast-skip-policy": {"required": False, "type": "str",
+                "multicast_skip_policy": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "multicast-ttl-notchange": {"required": False, "type": "str",
+                "multicast_ttl_notchange": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "ngfw-mode": {"required": False, "type": "str",
+                "ngfw_mode": {"required": False, "type": "str",
                               "choices": ["profile-based", "policy-based"]},
                 "opmode": {"required": False, "type": "str",
                            "choices": ["nat", "transparent"]},
-                "prp-trailer-action": {"required": False, "type": "str",
+                "prp_trailer_action": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "sccp-port": {"required": False, "type": "int"},
-                "ses-denied-traffic": {"required": False, "type": "str",
+                "sccp_port": {"required": False, "type": "int"},
+                "ses_denied_traffic": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "sip-helper": {"required": False, "type": "str",
+                "sip_helper": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
-                "sip-nat-trace": {"required": False, "type": "str",
+                "sip_nat_trace": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
-                "sip-ssl-port": {"required": False, "type": "int"},
-                "sip-tcp-port": {"required": False, "type": "int"},
-                "sip-udp-port": {"required": False, "type": "int"},
-                "snat-hairpin-traffic": {"required": False, "type": "str",
+                "sip_ssl_port": {"required": False, "type": "int"},
+                "sip_tcp_port": {"required": False, "type": "int"},
+                "sip_udp_port": {"required": False, "type": "int"},
+                "snat_hairpin_traffic": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "ssl-ssh-profile": {"required": False, "type": "str"},
+                "ssl_ssh_profile": {"required": False, "type": "str"},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},
-                "strict-src-check": {"required": False, "type": "str",
+                "strict_src_check": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "tcp-session-without-syn": {"required": False, "type": "str",
+                "tcp_session_without_syn": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "utf8-spam-tagging": {"required": False, "type": "str",
+                "utf8_spam_tagging": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "v4-ecmp-mode": {"required": False, "type": "str",
+                "v4_ecmp_mode": {"required": False, "type": "str",
                                  "choices": ["source-ip-based", "weight-based", "usage-based",
                                              "source-dest-ip-based"]},
-                "vpn-stats-log": {"required": False, "type": "str",
+                "vpn_stats_log": {"required": False, "type": "str",
                                   "choices": ["ipsec", "pptp", "l2tp",
                                               "ssl"]},
-                "vpn-stats-period": {"required": False, "type": "int"},
-                "wccp-cache-engine": {"required": False, "type": "str",
+                "vpn_stats_period": {"required": False, "type": "int"},
+                "wccp_cache_engine": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]}
 
             }
@@ -1183,15 +1333,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_system(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_system(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_system(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

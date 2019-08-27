@@ -50,7 +50,7 @@ options:
     - Add a port if it is specified in expected state but not in current state.
     - Delete a port if it is specified in current state but not in expected state.
     - For split action, it represents the ports to be split from current broadcast domain and added to the new broadcast domain.
-    - if all ports are removed or splited from a broadcast domain, the broadcast domain will be deleted automatically.
+    - if all ports are removed or split from a broadcast domain, the broadcast domain will be deleted automatically.
 '''
 
 EXAMPLES = """
@@ -145,7 +145,7 @@ class NetAppOntapBroadcastDomain(object):
         """
         Return details about the broadcast domain
         :param broadcast_domain: specific broadcast domain to get.
-        :return: Details about the broadcas domain. None if not found.
+        :return: Details about the broadcast domain. None if not found.
         :rtype: dict
         """
         if broadcast_domain is None:

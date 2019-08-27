@@ -58,7 +58,7 @@ options:
   passphrase:
     description:
       - Specifies the passphrase that is necessary to load the specified UCS file.
-    type: bool
+    type: str
   reset_trust:
     description:
       - When specified, the device and trust domain certs and keys are not

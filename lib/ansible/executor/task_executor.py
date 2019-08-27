@@ -26,8 +26,9 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
@@ -150,9 +151,7 @@ class TaskExecutor:
                 res['changed'] = False
 
             def _clean_res(res, errors='surrogate_or_strict'):
-                if isinstance(res, UnsafeProxy):
-                    return res._obj
-                elif isinstance(res, binary_type):
+                if isinstance(res, binary_type):
                     return to_text(res, errors=errors)
                 elif isinstance(res, dict):
                     for k in res:
@@ -267,8 +266,8 @@ class TaskExecutor:
 
         if items:
             for idx, item in enumerate(items):
-                if item is not None and not isinstance(item, UnsafeProxy):
-                    items[idx] = UnsafeProxy(item)
+                if item is not None and not isinstance(item, AnsibleUnsafe):
+                    items[idx] = wrap_var(item)
 
         return items
 
@@ -324,6 +323,7 @@ class TaskExecutor:
 
             task_vars[loop_var] = item
             if index_var:
+                task_vars['ansible_index_var'] = index_var
                 task_vars[index_var] = item_index
 
             if extended:
@@ -382,6 +382,7 @@ class TaskExecutor:
             res['ansible_loop_var'] = loop_var
             if index_var:
                 res[index_var] = item_index
+                res['ansible_index_var'] = index_var
             if extended:
                 res['ansible_loop'] = task_vars['ansible_loop']
 
@@ -408,6 +409,20 @@ class TaskExecutor:
             )
             results.append(res)
             del task_vars[loop_var]
+
+            # clear 'connection related' plugin variables for next iteration
+            if self._connection:
+                clear_plugins = {
+                    'connection': self._connection._load_name,
+                    'shell': self._connection._shell._load_name
+                }
+                if self._connection.become:
+                    clear_plugins['become'] = self._connection.become._load_name
+
+                for plugin_type, plugin_name in iteritems(clear_plugins):
+                    for var in C.config.get_plugin_vars(plugin_type, plugin_name):
+                        if var in task_vars and var not in self._job_vars:
+                            del task_vars[var]
 
         self._task.no_log = no_log
 
@@ -927,7 +942,7 @@ class TaskExecutor:
 
         option_vars = C.config.get_plugin_vars('connection', connection._load_name)
         plugin = connection._sub_plugin
-        if plugin['type'] != 'external':
+        if plugin.get('type'):
             option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
 
         options = {}
@@ -1052,8 +1067,13 @@ def start_connection(play_context, variables):
 
     env = os.environ.copy()
     env.update({
+        # HACK; most of these paths may change during the controller's lifetime
+        # (eg, due to late dynamic role includes, multi-playbook execution), without a way
+        # to invalidate/update, ansible-connection won't always see the same plugins the controller
+        # can.
         'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
         'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
+        'ANSIBLE_COLLECTIONS_PATHS': os.pathsep.join(AnsibleCollectionLoader().n_collection_paths),
         'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
         'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
         'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),

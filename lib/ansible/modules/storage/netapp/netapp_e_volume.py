@@ -106,6 +106,13 @@ options:
             - Values must be between or equal to 10 and 99.
         default: 95
         version_added: 2.8
+    owning_controller:
+        description:
+            - Specifies which controller will be the primary owner of the volume
+            - Not specifying will allow the controller to choose ownership.
+        required: false
+        choices: ["A", "B"]
+        version_added: 2.9
     ssd_cache_enabled:
         description:
             - Whether an existing SSD cache should be enabled on the volume (fails if no SSD cache defined)
@@ -130,14 +137,21 @@ options:
             - This option has no effect on thinly provisioned volumes since the architecture for thin volumes cannot
               benefit from read ahead caching.
         type: bool
-        default: false
+        default: true
         version_added: 2.8
     write_cache_enable:
         description:
             - Indicates whether write-back caching should be enabled for the volume.
         type: bool
-        default: false
+        default: true
         version_added: 2.8
+    cache_without_batteries:
+        description:
+            - Indicates whether caching should be used without battery backup.
+            - Warning, M(cache_without_batteries==true) and the storage system looses power and there is no battery backup, data will be lost!
+        type: bool
+        default: false
+        version_added: 2.9
     workload_name:
         description:
             - Label for the workload defined by the metadata.
@@ -164,6 +178,13 @@ options:
         type: bool
         default: false
         version_added: 2.8
+    initialization_timeout:
+        description:
+            - Duration in seconds before the wait_for_initialization operation will terminate.
+            - M(wait_for_initialization==True) to have any effect on module's operations.
+        type: int
+        required: false
+        version_added: 2.9
 """
 EXAMPLES = """
 - name: Create simple volume with workload tags (volume meta data)
@@ -244,9 +265,7 @@ msg:
     returned: always
     sample: "Standard volume [workload_vol_1] has been created."
 """
-
-import time
-
+from time import sleep
 from ansible.module_utils.netapp import NetAppESeriesModule
 from ansible.module_utils._text import to_native
 
@@ -263,6 +282,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                            type="str"),
             size=dict(type="float"),
             segment_size_kb=dict(type="int", default=128),
+            owning_controller=dict(required=False, choices=['A', 'B']),
             ssd_cache_enabled=dict(type="bool", default=False),
             data_assurance_enabled=dict(type="bool", default=False),
             thin_provision=dict(type="bool", default=False),
@@ -271,11 +291,13 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             thin_volume_expansion_policy=dict(type="str", choices=["automatic", "manual"]),
             thin_volume_growth_alert_threshold=dict(type="int", default=95),
             read_cache_enable=dict(type="bool", default=True),
-            read_ahead_enable=dict(type="bool", default=False),
-            write_cache_enable=dict(type="bool", default=False),
+            read_ahead_enable=dict(type="bool", default=True),
+            write_cache_enable=dict(type="bool", default=True),
+            cache_without_batteries=dict(type="bool", default=False),
             workload_name=dict(type="str", required=False),
             metadata=dict(type="dict", require=False),
-            wait_for_initialization=dict(type="bool", default=False))
+            wait_for_initialization=dict(type="bool", default=False),
+            initialization_timeout=dict(type="int", required=False))
 
         required_if = [
             ["state", "present", ["storage_pool_name", "size"]],
@@ -294,12 +316,17 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.size_unit = args["size_unit"]
         self.segment_size_kb = args["segment_size_kb"]
         if args["size"]:
-            self.size_b = int(args["size"] * self.SIZE_UNIT_MAP[self.size_unit])
+            self.size_b = self.convert_to_aligned_bytes(args["size"])
+
+        self.owning_controller_id = None
+        if args["owning_controller"]:
+            self.owning_controller_id = "070000000000000000000001" if args["owning_controller"] == "A" else "070000000000000000000002"
 
         self.read_cache_enable = args["read_cache_enable"]
         self.read_ahead_enable = args["read_ahead_enable"]
         self.write_cache_enable = args["write_cache_enable"]
         self.ssd_cache_enabled = args["ssd_cache_enabled"]
+        self.cache_without_batteries = args["cache_without_batteries"]
         self.data_assurance_enabled = args["data_assurance_enabled"]
 
         self.thin_provision = args["thin_provision"]
@@ -309,14 +336,14 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.thin_volume_max_repo_size_b = None
 
         if args["thin_volume_repo_size"]:
-            self.thin_volume_repo_size_b = args["thin_volume_repo_size"] * self.SIZE_UNIT_MAP[self.size_unit]
+            self.thin_volume_repo_size_b = self.convert_to_aligned_bytes(args["thin_volume_repo_size"])
         if args["thin_volume_max_repo_size"]:
-            self.thin_volume_max_repo_size_b = int(args["thin_volume_max_repo_size"] *
-                                                   self.SIZE_UNIT_MAP[self.size_unit])
+            self.thin_volume_max_repo_size_b = self.convert_to_aligned_bytes(args["thin_volume_max_repo_size"])
 
         self.workload_name = args["workload_name"]
         self.metadata = args["metadata"]
         self.wait_for_initialization = args["wait_for_initialization"]
+        self.initialization_timeout = args["initialization_timeout"]
 
         # convert metadata to a list of dictionaries containing the keys "key" and "value" corresponding to
         #   each of the workload attributes dictionary entries
@@ -354,6 +381,13 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.pool_detail = None
         self.workload_id = None
 
+    def convert_to_aligned_bytes(self, size):
+        """Convert size to the truncated byte size that aligns on the segment size."""
+        size_bytes = int(size * self.SIZE_UNIT_MAP[self.size_unit])
+        segment_size_bytes = int(self.segment_size_kb * self.SIZE_UNIT_MAP["kb"])
+        segment_count = int(size_bytes / segment_size_bytes)
+        return segment_count * segment_size_bytes
+
     def get_volume(self):
         """Retrieve volume details from storage array."""
         volumes = list()
@@ -381,37 +415,44 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             self.module.fail_json(msg="Timed out waiting for the volume %s to become available. Array [%s]."
                                       % (self.name, self.ssid))
         if not self.get_volume():
-            time.sleep(5)
+            sleep(5)
             self.wait_for_volume_availability(retries=retries - 1)
 
     def wait_for_volume_action(self, timeout=None):
         """Waits until volume action is complete is complete.
         :param: int timeout: Wait duration measured in seconds. Waits indefinitely when None.
         """
-        action = None
+        action = "unknown"
         percent_complete = None
-
-        while action != 'none':
-            time.sleep(5)
+        while action != "complete":
+            sleep(5)
 
             try:
-                rc, expansion = self.request("storage-systems/%s/volumes/%s/expand"
-                                             % (self.ssid, self.volume_detail["id"]))
-                action = expansion["action"]
-                percent_complete = expansion["percentComplete"]
+                rc, operations = self.request("storage-systems/%s/symbol/getLongLivedOpsProgress" % self.ssid)
+
+                # Search long lived operations for volume
+                action = "complete"
+                for operation in operations["longLivedOpsProgress"]:
+                    if operation["volAction"] is not None:
+                        for key in operation.keys():
+                            if (operation[key] is not None and "volumeRef" in operation[key] and
+                                    (operation[key]["volumeRef"] == self.volume_detail["id"] or
+                                     ("storageVolumeRef" in self.volume_detail and operation[key]["volumeRef"] == self.volume_detail["storageVolumeRef"]))):
+                                action = operation["volAction"]
+                                percent_complete = operation["init"]["percentComplete"]
             except Exception as err:
                 self.module.fail_json(msg="Failed to get volume expansion progress. Volume [%s]. Array Id [%s]."
                                           " Error[%s]." % (self.name, self.ssid, to_native(err)))
 
-            if timeout <= 0:
-                self.module.warn("Expansion action, %s, failed to complete during the allotted time. Time remaining"
-                                 " [%s]. Array Id [%s]." % (action, percent_complete, self.ssid))
-                self.module.fail_json(msg="Expansion action failed to complete. Time remaining [%s]. Array Id [%s]."
-                                          % (percent_complete, self.ssid))
-            if timeout:
-                timeout -= 5
-            self.module.log("Expansion action, %s, is %s complete." % (action, percent_complete))
+            if timeout is not None:
+                if timeout <= 0:
+                    self.module.warn("Expansion action, %s, failed to complete during the allotted time. Time remaining"
+                                     " [%s]. Array Id [%s]." % (action, percent_complete, self.ssid))
+                    self.module.fail_json(msg="Expansion action failed to complete. Time remaining [%s]. Array Id [%s]." % (percent_complete, self.ssid))
+                if timeout:
+                    timeout -= 5
 
+            self.module.log("Expansion action, %s, is %s complete." % (action, percent_complete))
         self.module.log("Expansion action is complete.")
 
     def get_storage_pool(self):
@@ -565,6 +606,11 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                 self.ssd_cache_enabled != self.volume_detail["flashCached"]):
             change = True
 
+        # controller ownership
+        if self.owning_controller_id and self.owning_controller_id != self.volume_detail["preferredManager"]:
+            change = True
+            request_body.update(dict(owningControllerId=self.owning_controller_id))
+
         if self.workload_name:
             request_body.update(dict(metaTags=[dict(key="workloadId", value=self.workload_id),
                                                dict(key="volumeTypeId", value="volume")]))
@@ -581,9 +627,13 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             if self.thin_volume_expansion_policy != self.volume_detail["expansionPolicy"]:
                 change = True
                 request_body.update(dict(expansionPolicy=self.thin_volume_expansion_policy))
-        elif self.read_ahead_enable != (int(self.volume_detail["cacheSettings"]["readAheadMultiplier"]) > 0):
-            change = True
-            request_body["cacheSettings"].update(dict(readAheadEnable=self.read_ahead_enable))
+        else:
+            if self.read_ahead_enable != (int(self.volume_detail["cacheSettings"]["readAheadMultiplier"]) > 0):
+                change = True
+                request_body["cacheSettings"].update(dict(readAheadEnable=self.read_ahead_enable))
+            if self.cache_without_batteries != self.volume_detail["cacheSettings"]["cwob"]:
+                change = True
+                request_body["cacheSettings"].update(dict(cacheWithoutBatteries=self.cache_without_batteries))
 
         return request_body if change else dict()
 
@@ -709,10 +759,6 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                     self.module.fail_json(msg="Failed to expand volume.  Volume [%s].  Array Id [%s]. Error[%s]."
                                               % (self.name, self.ssid, to_native(err)))
 
-                if self.wait_for_initialization:
-                    self.module.log("Waiting for expansion operation to complete.")
-                    self.wait_for_volume_action()
-
                 self.module.log("Volume storage capacities have been expanded.")
 
     def delete_volume(self):
@@ -786,6 +832,10 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                     if self.get_expand_volume_changes():
                         self.expand_volume()
                         msg = msg[:-1] + " and was expanded." if msg else "Volume [%s] was expanded."
+
+                if self.wait_for_initialization:
+                    self.module.log("Waiting for volume operation to complete.")
+                    self.wait_for_volume_action(timeout=self.initialization_timeout)
 
             elif self.state == 'absent':
                 self.delete_volume()

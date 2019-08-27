@@ -151,7 +151,7 @@ The base class does some minimal assignment for reuse in other methods.
         self.templar = Templar(loader=loader)
 
 It is up to the plugin now to deal with the inventory source provided and translate that into the Ansible inventory.
-To facilitate this the example below uses a few helper functions:
+To facilitate this, the example below uses a few helper functions:
 
 .. code-block:: python
 

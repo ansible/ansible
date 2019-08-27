@@ -1,0 +1,670 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Integration tests for postgresql_user module.
+
+- vars:
+    test_user: hello_user
+    test_group1: group1
+    test_group2: group2
+    test_table: test
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: yes
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: postgres
+
+  block:
+  #
+  # Common tests
+  #
+  - name: Create role in check_mode
+    <<: *task_parameters
+    check_mode: yes
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: check that the user doesn't exist
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_user }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  - name: Create role in actual mode
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: check that the user exists
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_user }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Try to create role again in check_mode
+    <<: *task_parameters
+    check_mode: yes
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+  - name: check that the user exists
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_user }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Try to create role again
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+  - name: check that the user exists
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_user }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Drop role in check_mode
+    <<: *task_parameters
+    check_mode: yes
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      state: absent
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: check that the user actually exists
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_user }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Drop role in actual mode
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      state: absent
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: check that the user doesn't exist
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_user }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  - name: Try to drop role in check mode again
+    <<: *task_parameters
+    check_mode: yes
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      state: absent
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+  - name: Try to drop role in actual mode again
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      state: absent
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+  #
+  # password, no_password_changes, encrypted, expires parameters
+  #
+
+  - name: Create role with password, passed as hashed md5
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      password: md59543f1d82624df2b31672ec0f7050460
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check that the user exist with a proper password
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}' and rolpassword = 'md59543f1d82624df2b31672ec0f7050460'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Test no_password_changes
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      password: u123
+      no_password_changes: yes
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+
+  - name: Check that nothing changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}' and rolpassword = 'md59543f1d82624df2b31672ec0f7050460'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Storing unencrypted passwords is not available from PostgreSQL 10
+  - name: Change password, passed as unencrypted
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      password: myunencryptedpass
+      encrypted: no
+    when: postgres_version_resp.stdout is version('10', '<')
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+    when: postgres_version_resp.stdout is version('10', '<')
+
+  - name: Check that the user exist with the unencrypted password
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}' and rolpassword = 'myunencryptedpass'"
+    when: postgres_version_resp.stdout is version('10', '<')
+
+  - assert:
+      that:
+      - result.rowcount == 1
+    when: postgres_version_resp.stdout is version('10', '<')
+
+  - name: Change password, explicit encrypted=yes
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      password: myunencryptedpass
+      encrypted: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check that the user exist with encrypted password
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}' and rolpassword != 'myunencryptedpass'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Change rolvaliduntil attribute
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      expires: 'Jan 31 2020'
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check the prev step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}'
+        AND rolvaliduntil::text like '2020-01-31%'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Try to set the same rolvaliduntil value again
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      expires: 'Jan 31 2020'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check that nothing changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}'
+        AND rolvaliduntil::text like '2020-01-31%'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  #
+  # role_attr_flags
+  #
+  - name: Set role attributes
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      role_attr_flags: CREATEROLE,CREATEDB
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check the prev step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}'
+        AND rolcreaterole = 't' and rolcreatedb = 't'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Set the same role attributes again
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      role_attr_flags: CREATEROLE,CREATEDB
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check the prev step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}'
+        AND rolcreaterole = 't' and rolcreatedb = 't'
+
+  - name: Set role attributes
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      role_attr_flags: NOCREATEROLE,NOCREATEDB
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check the prev step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}'
+        AND rolcreaterole = 'f' and rolcreatedb = 'f'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Set role attributes
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      role_attr_flags: NOCREATEROLE,NOCREATEDB
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_user }}'
+
+  - name: Check the prev step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT rolname FROM pg_authid WHERE rolname = '{{ test_user }}'
+        AND rolcreaterole = 'f' and rolcreatedb = 'f'
+
+  #
+  # priv
+  #
+  - name: Create test table
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      columns:
+      - id int
+
+  - name: Insert data to test table
+    <<: *task_parameters
+    postgresql_query:
+      query: "INSERT INTO {{ test_table }} (id) VALUES ('1')"
+      <<: *pg_parameters
+
+  - name: Check that test_user is not allowed to read the data
+    <<: *task_parameters
+    postgresql_query:
+      db: postgres
+      login_user: '{{ pg_user }}'
+      session_role: '{{ test_user }}'
+      query: 'SELECT * FROM {{ test_table }}'
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - "'permission denied' in result.msg"
+
+  - name: Grant privileges
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      priv: '{{ test_table }}:SELECT'
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: Check that test_user is allowed to read the data
+    <<: *task_parameters
+    postgresql_query:
+      db: postgres
+      login_user: '{{ pg_user }}'
+      session_role: '{{ test_user }}'
+      query: 'SELECT * FROM {{ test_table }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Grant the same privileges again
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      priv: '{{ test_table }}:SELECT'
+
+  - assert:
+      that:
+      - result is not changed
+
+  - name: Remove test table
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      state: absent
+
+  #
+  # fail_on_user
+  #
+  - name: Create test table, set owner as test_user
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      owner: '{{ test_user }}'
+
+  - name: Test fail_on_user
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      state: absent
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - result.msg == 'Unable to remove user'
+      
+  - name: Test fail_on_user
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      fail_on_user: no
+      
+  - assert:
+      that:
+      - result is not changed
+
+  #
+  # Test groups parameter
+  #
+  - name: Create test group
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group2 }}'
+      role_attr_flags: NOLOGIN
+
+  - name: Create role test_group1 and grant test_group2 to test_group1 in check_mode
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group1 }}'
+      groups: '{{ test_group2 }}'
+      role_attr_flags: NOLOGIN
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_group1 }}'
+      - result.queries == ['CREATE USER "{{ test_group1 }}" NOLOGIN', 'GRANT "{{ test_group2 }}" TO "{{ test_group1 }}"']
+
+  - name: check that the user doesn't exist
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_group1 }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT grolist FROM pg_group WHERE groname = '{{ test_group2 }}' AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  - name: Create role test_group1 and grant test_group2 to test_group1
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group1 }}'
+      groups: '{{ test_group2 }}'
+      role_attr_flags: NOLOGIN
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_group1 }}'
+      - result.queries == ['CREATE USER "{{ test_group1 }}" NOLOGIN', 'GRANT "{{ test_group2 }}" TO "{{ test_group1 }}"']
+
+  - name: check that the user exists
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT rolname FROM pg_roles WHERE rolname = '{{ test_group1 }}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT grolist FROM pg_group WHERE groname = '{{ test_group2 }}' AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Grant test_group2 to test_group1 again
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_group1 }}'
+      groups: '{{ test_group2 }}'
+
+  - assert:
+      that:
+      - result is not changed
+      - result.user == '{{ test_group1 }}'
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT grolist FROM pg_group WHERE groname = '{{ test_group2 }}' AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  - name: Grant groups to existent role
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user }}'
+      groups:
+      - '{{ test_group1 }}'
+      - '{{ test_group2 }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.user == '{{ test_user }}'
+      - result.queries == ['GRANT "{{ test_group1 }}" TO "{{ test_user }}"', 'GRANT "{{ test_group2 }}" TO "{{ test_user }}"']
+
+  - name: check membership
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT * FROM pg_group WHERE groname in ('{{ test_group1 }}', '{{ test_group2 }}') AND grolist != '{}'"
+
+  - assert:
+      that:
+      - result.rowcount == 2
+
+  always:
+  #
+  # Clean up
+  #
+  - name: Drop test table
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      state: absent
+
+  - name: Drop test user
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ item }}'
+      state: absent
+    loop:
+    - '{{ test_user }}'
+    - '{{ test_group1 }}'
+    - '{{ test_group2 }}'

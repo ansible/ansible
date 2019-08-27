@@ -52,7 +52,7 @@ Help
 Extending validate-modules
 ==========================
 
-The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/sanity/validate-modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
+The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
 
 
 Codes
@@ -133,6 +133,8 @@ Errors
   336       argument in argument_spec is not a valid python identifier
   337       Type value is defined in ``argument_spec`` but documentation doesn't specify a type
   338       documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
+  339       Value for "elements" is valid only when value of "type" is ``list``
+  340       argument in argument_spec has sub-options but documentation does not define sub-options
   ..
 ---------   -------------------
   **4xx**   **Syntax**

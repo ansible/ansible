@@ -69,6 +69,7 @@ options:
     description:
       - Minutes to schedule downtime for.
       - Only usable with the C(downtime) action.
+    type: int
     default: 30
   services:
     description:
@@ -205,7 +206,6 @@ EXAMPLES = '''
     command: DISABLE_FAILURE_PREDICTION
 '''
 
-import types
 import time
 import os.path
 import stat
@@ -285,7 +285,6 @@ def main():
     host = module.params['host']
     servicegroup = module.params['servicegroup']
     start = module.params['start']
-    minutes = module.params['minutes']
     services = module.params['services']
     cmdfile = module.params['cmdfile']
     command = module.params['command']
@@ -298,7 +297,7 @@ def main():
     # command = command
     #
     # AnsibleModule will verify most stuff, we need to verify
-    # 'minutes' and 'service' manually.
+    # 'service' manually.
 
     ##################################################################
     if action not in ['command', 'silence_nagios', 'unsilence_nagios']:
@@ -309,14 +308,7 @@ def main():
         # Make sure there's an actual service selected
         if not services:
             module.fail_json(msg='no service selected to set downtime for')
-        # Make sure minutes is a number
-        try:
-            m = int(minutes)
-            if not isinstance(m, types.IntType):
-                module.fail_json(msg='minutes must be a number')
-        except Exception:
-            module.fail_json(msg='invalid entry for minutes')
-        # Make sure start is also a number
+        # Make sure start is a number
         try:
             s = int(start)
             if not isinstance(s, types.IntType):
@@ -336,14 +328,7 @@ def main():
         # Make sure there's an actual servicegroup selected
         if not servicegroup:
             module.fail_json(msg='no servicegroup selected to set downtime for')
-        # Make sure minutes is a number
-        try:
-            m = int(minutes)
-            if not isinstance(m, types.IntType):
-                module.fail_json(msg='minutes must be a number')
-        except Exception:
-            module.fail_json(msg='invalid entry for minutes')
-        # Make sure start is also a number
+        # Make sure start is a number
         try:
             s = int(start)
             if not isinstance(s, types.IntType):
@@ -396,7 +381,6 @@ class Nagios(object):
         self.host = kwargs['host']
         self.servicegroup = kwargs['servicegroup']
         self.start = int(kwargs['start'])
-        self.minutes = int(kwargs['minutes'])
         self.cmdfile = kwargs['cmdfile']
         self.command = kwargs['command']
 

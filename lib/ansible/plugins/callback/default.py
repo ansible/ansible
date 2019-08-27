@@ -16,7 +16,26 @@ DOCUMENTATION = '''
       - default_callback
     requirements:
       - set as stdout in configuration
+    options:
+      check_mode_markers:
+        name: Show markers when running in check mode
+        description:
+        - "Toggle to control displaying markers when running in check mode. The markers are C(DRY RUN)
+        at the beggining and ending of playbook execution (when calling C(ansible-playbook --check))
+        and C(CHECK MODE) as a suffix at every play and task that is run in check mode."
+        type: bool
+        default: no
+        version_added: 2.9
+        env:
+          - name: ANSIBLE_CHECK_MODE_MARKERS
+        ini:
+          - key: check_mode_markers
+            section: defaults
 '''
+
+# NOTE: check_mode_markers functionality is also implemented in the following derived plugins:
+#       debug.py, yaml.py, dense.py. Maybe their documentation needs updating, too.
+
 
 from ansible import constants as C
 from ansible import context
@@ -33,10 +52,12 @@ from ansible.utils.color import colorize, hostcolor
 
 # these are used to provide backwards compat with old plugins that subclass from default
 # but still don't use the new config system and/or fail to document the options
+# TODO: Change the default of check_mode_markers to True in a future release (2.13)
 COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('display_ok_hosts', True),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
-                  ('display_failed_stderr', False),)
+                  ('display_failed_stderr', False),
+                  ('check_mode_markers', False),)
 
 
 class CallbackModule(CallbackBase):
@@ -213,7 +234,11 @@ class CallbackModule(CallbackBase):
         if task_name is None:
             task_name = task.get_name().strip()
 
-        self._display.banner(u"%s [%s%s]" % (prefix, task_name, args))
+        if task.check_mode and self.check_mode_markers:
+            checkmsg = " [CHECK MODE]"
+        else:
+            checkmsg = ""
+        self._display.banner(u"%s [%s%s]%s" % (prefix, task_name, args, checkmsg))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
@@ -233,10 +258,14 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
-        if not name:
-            msg = u"PLAY"
+        if play.check_mode and self.check_mode_markers:
+            checkmsg = " [CHECK MODE]"
         else:
-            msg = u"PLAY [%s]" % name
+            checkmsg = ""
+        if not name:
+            msg = u"PLAY%s" % checkmsg
+        else:
+            msg = u"PLAY [%s]%s" % (name, checkmsg)
 
         self._play = play
 
@@ -378,6 +407,9 @@ class CallbackModule(CallbackBase):
                 self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n', ''))
             self._display.display("", screen_only=True)
 
+        if context.CLIARGS['check'] and self.check_mode_markers:
+            self._display.banner("DRY RUN")
+
     def v2_playbook_on_start(self, playbook):
         if self._display.verbosity > 1:
             from os.path import basename
@@ -393,6 +425,9 @@ class CallbackModule(CallbackBase):
                 val = context.CLIARGS[argument]
                 if val:
                     self._display.display('%s: %s' % (argument, val), color=C.COLOR_VERBOSE, screen_only=True)
+
+        if context.CLIARGS['check'] and self.check_mode_markers:
+            self._display.banner("DRY RUN")
 
     def v2_runner_retry(self, result):
         task_name = result.task_name or result._task

@@ -9,7 +9,6 @@ __metaclass__ = type
 
 import pytest
 
-from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
 from ansible.module_utils.common.network import is_mac
 
 testcase_is_valid_mac_addr = [

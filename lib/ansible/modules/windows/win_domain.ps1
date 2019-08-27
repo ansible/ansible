@@ -124,10 +124,10 @@ if (-not $forest) {
     } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
         # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
         # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
-        if ($_.Exception.ExitCode -eq 15) {
+        if ($_.Exception.ExitCode -in @(15, 19)) {
             $result.reboot_required = $true
         } else {
-            Fail-Json -obj $result -message "Failed to install ADDSForest with DCPromo: $($_.Exception.Message)"
+            Fail-Json -obj $result -message "Failed to install ADDSForest, DCPromo exited with $($_.Exception.ExitCode): $($_.Exception.Message)"
         }
     }
 

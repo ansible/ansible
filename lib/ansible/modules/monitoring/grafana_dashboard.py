@@ -65,7 +65,7 @@ options:
   uid:
     version_added: 2.7
     description:
-      - uid of the dasboard to export when C(state) is C(export) or C(absent).
+      - uid of the dashboard to export when C(state) is C(export) or C(absent).
   path:
     description:
       - The path to the json file containing the Grafana dashboard to import or export.
@@ -423,7 +423,7 @@ def main():
     except GrafanaMalformedJson as e:
         module.fail_json(
             failed=True,
-            msg="error : json file does not contain a meta section with a slug parameter, or you did'nt specify the slug parameter"
+            msg="error : json file does not contain a meta section with a slug parameter, or you did not specify the slug parameter"
         )
         return
     except GrafanaDeleteException as e:

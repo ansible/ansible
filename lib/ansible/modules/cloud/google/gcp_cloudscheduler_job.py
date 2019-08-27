@@ -51,31 +51,37 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - The name of the job.
     required: true
+    type: str
   description:
     description:
     - A human-readable description for the job. This string must not contain more
       than 500 characters.
     required: false
+    type: str
   schedule:
     description:
     - Describes the schedule on which the job will be executed.
     required: false
+    type: str
   time_zone:
     description:
     - Specifies the time zone to be used in interpreting schedule.
     - The value of this field must be a time zone name from the tz database.
     required: false
     default: Etc/UTC
+    type: str
   retry_config:
     description:
     - By default, if a job does not complete successfully, meaning that an acknowledgement
       is not received from the handler, then it will be retried with exponential backoff
       according to the settings .
     required: false
+    type: dict
     suboptions:
       retry_count:
         description:
@@ -83,6 +89,7 @@ options:
           exponential backoff procedure described by maxDoublings.
         - Values greater than 5 and negative values are not allowed.
         required: false
+        type: int
       max_retry_duration:
         description:
         - The time limit for retrying a failed job, measured from time when an execution
@@ -90,16 +97,19 @@ options:
           until both limits are reached.
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         required: false
+        type: str
       min_backoff_duration:
         description:
         - The minimum amount of time to wait before retrying a job after it fails.
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         required: false
+        type: str
       max_backoff_duration:
         description:
         - The maximum amount of time to wait before retrying a job after it fails.
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         required: false
+        type: str
       max_doublings:
         description:
         - The time between retries will double maxDoublings times.
@@ -107,11 +117,13 @@ options:
           times, then increases linearly, and finally retries retries at intervals
           of maxBackoffDuration up to retryCount times.
         required: false
+        type: int
   pubsub_target:
     description:
     - Pub/Sub target If the job providers a Pub/Sub target the cron will publish a
       message to the provided topic .
     required: false
+    type: dict
     suboptions:
       topic_name:
         description:
@@ -119,31 +131,37 @@ options:
           when a job is delivered. The topic name must be in the same format as required
           by PubSub's PublishRequest.name, for example projects/PROJECT_ID/topics/TOPIC_ID.
         required: true
+        type: str
       data:
         description:
         - The message payload for PubsubMessage.
         - Pubsub message must contain either non-empty data, or at least one attribute.
         required: false
+        type: str
       attributes:
         description:
         - Attributes for PubsubMessage.
         - Pubsub message must contain either non-empty data, or at least one attribute.
         required: false
+        type: dict
   app_engine_http_target:
     description:
     - App Engine HTTP target.
     - If the job providers a App Engine HTTP target the cron will send a request to
       the service instance .
     required: false
+    type: dict
     suboptions:
       http_method:
         description:
         - Which HTTP method to use for the request.
         required: false
+        type: str
       app_engine_routing:
         description:
         - App Engine Routing setting for the job.
         required: false
+        type: dict
         suboptions:
           service:
             description:
@@ -151,64 +169,116 @@ options:
             - By default, the job is sent to the service which is the default service
               when the job is attempted.
             required: false
+            type: str
           version:
             description:
             - App version.
             - By default, the job is sent to the version which is the default version
               when the job is attempted.
             required: false
+            type: str
           instance:
             description:
             - App instance.
             - By default, the job is sent to an instance which is available when the
               job is attempted.
             required: false
+            type: str
       relative_uri:
         description:
         - The relative URI.
         required: true
+        type: str
       body:
         description:
         - HTTP request body. A request body is allowed only if the HTTP method is
           POST or PUT. It will result in invalid argument error to set a body on a
           job with an incompatible HttpMethod.
         required: false
+        type: str
       headers:
         description:
         - HTTP request headers.
         - This map contains the header field names and values. Headers can be set
           when the job is created.
         required: false
+        type: dict
   http_target:
     description:
     - HTTP target.
     - If the job providers a http_target the cron will send a request to the targeted
       url .
     required: false
+    type: dict
     suboptions:
       uri:
         description:
         - The full URI path that the request will be sent to.
         required: true
+        type: str
       http_method:
         description:
         - Which HTTP method to use for the request.
         required: false
+        type: str
       body:
         description:
         - HTTP request body. A request body is allowed only if the HTTP method is
           POST, PUT, or PATCH. It is an error to set body on a job with an incompatible
           HttpMethod.
         required: false
+        type: str
       headers:
         description:
         - This map contains the header field names and values. Repeated headers are
           not supported, but a header value can contain commas.
         required: false
+        type: dict
+      oauth_token:
+        description:
+        - Contains information needed for generating an OAuth token.
+        - This type of authorization should be used when sending requests to a GCP
+          endpoint.
+        required: false
+        type: dict
+        suboptions:
+          service_account_email:
+            description:
+            - Service account email to be used for generating OAuth token.
+            - The service account must be within the same project as the job.
+            required: false
+            type: str
+          scope:
+            description:
+            - OAuth scope to be used for generating OAuth access token. If not specified,
+              "U(https://www.googleapis.com/auth/cloud-platform") will be used.
+            required: false
+            type: str
+      oidc_token:
+        description:
+        - Contains information needed for generating an OpenID Connect token.
+        - This type of authorization should be used when sending requests to third
+          party endpoints or Cloud Run.
+        required: false
+        type: dict
+        suboptions:
+          service_account_email:
+            description:
+            - Service account email to be used for generating OAuth token.
+            - The service account must be within the same project as the job.
+            required: false
+            type: str
+          audience:
+            description:
+            - Audience to be used when generating OIDC token. If not specified, the
+              URI specified in target will be used.
+            required: false
+            type: str
   region:
     description:
     - Region where the scheduler job resides .
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/scheduler/docs/reference/rest/)'
@@ -417,6 +487,45 @@ httpTarget:
         not supported, but a header value can contain commas.
       returned: success
       type: dict
+    oauthToken:
+      description:
+      - Contains information needed for generating an OAuth token.
+      - This type of authorization should be used when sending requests to a GCP endpoint.
+      returned: success
+      type: complex
+      contains:
+        serviceAccountEmail:
+          description:
+          - Service account email to be used for generating OAuth token.
+          - The service account must be within the same project as the job.
+          returned: success
+          type: str
+        scope:
+          description:
+          - OAuth scope to be used for generating OAuth access token. If not specified,
+            "U(https://www.googleapis.com/auth/cloud-platform") will be used.
+          returned: success
+          type: str
+    oidcToken:
+      description:
+      - Contains information needed for generating an OpenID Connect token.
+      - This type of authorization should be used when sending requests to third party
+        endpoints or Cloud Run.
+      returned: success
+      type: complex
+      contains:
+        serviceAccountEmail:
+          description:
+          - Service account email to be used for generating OAuth token.
+          - The service account must be within the same project as the job.
+          returned: success
+          type: str
+        audience:
+          description:
+          - Audience to be used when generating OIDC token. If not specified, the
+            URI specified in target will be used.
+          returned: success
+          type: str
 region:
   description:
   - Region where the scheduler job resides .
@@ -468,7 +577,15 @@ def main():
                 ),
             ),
             http_target=dict(
-                type='dict', options=dict(uri=dict(required=True, type='str'), http_method=dict(type='str'), body=dict(type='str'), headers=dict(type='dict'))
+                type='dict',
+                options=dict(
+                    uri=dict(required=True, type='str'),
+                    http_method=dict(type='str'),
+                    body=dict(type='str'),
+                    headers=dict(type='dict'),
+                    oauth_token=dict(type='dict', options=dict(service_account_email=dict(type='str'), scope=dict(type='str'))),
+                    oidc_token=dict(type='dict', options=dict(service_account_email=dict(type='str'), audience=dict(type='str'))),
+                ),
             ),
             region=dict(required=True, type='str'),
         ),
@@ -737,6 +854,8 @@ class JobHttptarget(object):
                 u'httpMethod': self.request.get('http_method'),
                 u'body': self.request.get('body'),
                 u'headers': self.request.get('headers'),
+                u'oauthToken': JobOauthtoken(self.request.get('oauth_token', {}), self.module).to_request(),
+                u'oidcToken': JobOidctoken(self.request.get('oidc_token', {}), self.module).to_request(),
             }
         )
 
@@ -747,8 +866,40 @@ class JobHttptarget(object):
                 u'httpMethod': self.request.get(u'httpMethod'),
                 u'body': self.request.get(u'body'),
                 u'headers': self.request.get(u'headers'),
+                u'oauthToken': JobOauthtoken(self.module.params.get('oauth_token', {}), self.module).to_request(),
+                u'oidcToken': JobOidctoken(self.module.params.get('oidc_token', {}), self.module).to_request(),
             }
         )
+
+
+class JobOauthtoken(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get('service_account_email'), u'scope': self.request.get('scope')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get(u'serviceAccountEmail'), u'scope': self.request.get(u'scope')})
+
+
+class JobOidctoken(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get('service_account_email'), u'audience': self.request.get('audience')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get(u'serviceAccountEmail'), u'audience': self.request.get(u'audience')})
 
 
 if __name__ == '__main__':

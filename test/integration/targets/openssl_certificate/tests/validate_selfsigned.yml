@@ -30,6 +30,11 @@
       - selfsigned_certificate.notBefore == selfsigned_certificate_idempotence.notBefore
       - selfsigned_certificate.notAfter == selfsigned_certificate_idempotence.notAfter
 
+- name: Make sure that changes in CSR are detected even if private key is specified
+  assert:
+    that:
+      - selfsigned_certificate_csr_minimal_change is changed
+
 - block:
   - name: (Selfsigned validation, {{select_crypto_backend}}) Validate certificate v2 (test - certificate version == 2)
     shell: 'openssl x509 -noout  -in {{ output_dir}}/cert_v2.pem -text | grep "Version" | sed "s/.*: \(.*\) .*/\1/g"'
@@ -121,3 +126,13 @@
       - selfsigned_backup_4.backup_file is string
       - selfsigned_backup_5 is not changed
       - selfsigned_backup_5.backup_file is undefined
+
+- name: Check create subject key identifier
+  assert:
+    that:
+      - selfsigned_subject_key_identifier_1 is changed
+      - selfsigned_subject_key_identifier_2 is not changed
+      - selfsigned_subject_key_identifier_3 is changed
+      - selfsigned_subject_key_identifier_4 is not changed
+      - selfsigned_subject_key_identifier_5 is changed
+  when: select_crypto_backend != 'pyopenssl'

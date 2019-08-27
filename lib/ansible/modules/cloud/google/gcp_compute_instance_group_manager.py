@@ -52,6 +52,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   base_instance_name:
     description:
     - The base instance name to use for instances in this group. The value must be
@@ -59,11 +60,13 @@ options:
       four-character string to the base instance name.
     - The base instance name must comply with RFC1035.
     required: true
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   instance_template:
     description:
     - The instance template that is specified for this managed instance group. The
@@ -75,42 +78,50 @@ options:
       name-of-resource` to a gcp_compute_instance_template task and then set this
       instance_template field to "{{ name-of-resource }}"'
     required: true
+    type: dict
   name:
     description:
     - The name of the managed instance group. The name must be 1-63 characters long,
       and comply with RFC1035.
     required: true
+    type: str
   named_ports:
     description:
     - Named ports configured for the Instance Groups complementary to this Instance
       Group Manager.
     required: false
+    type: list
     suboptions:
       name:
         description:
         - The name for this named port. The name must be 1-63 characters long, and
           comply with RFC1035.
         required: false
+        type: str
       port:
         description:
         - The port number, which can be a value between 1 and 65535.
         required: false
+        type: int
   target_pools:
     description:
     - TargetPool resources to which instances in the instanceGroup field are added.
       The target pools automatically apply to all of the instances in the managed
       instance group.
     required: false
+    type: list
   target_size:
     description:
     - The target number of running instances for this managed instance group. Deleting
       or abandoning instances reduces this number. Resizing the group changes this
       number.
     required: false
+    type: int
   zone:
     description:
     - The zone the managed instance group resides.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

@@ -196,7 +196,7 @@ status:
 '''
 
 import time
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -339,7 +339,7 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
                 elif key == "max_size_bytes":
                     self.parameters["max_size_bytes"] = kwargs[key]
                 elif key == "elastic_pool_name":
-                    self.parameters["elastic_pool_name"] = kwargs[key]
+                    self.parameters["elastic_pool_id"] = kwargs[key]
                 elif key == "read_scale":
                     self.parameters["read_scale"] = 'Enabled' if kwargs[key] else 'Disabled'
                 elif key == "sample_name":
@@ -357,6 +357,9 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
 
         if "location" not in self.parameters:
             self.parameters["location"] = resource_group.location
+
+        if "elastic_pool_id" in self.parameters:
+            self.format_elastic_pool_id()
 
         old_response = self.get_sqldatabase()
 
@@ -485,6 +488,14 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
             return response.as_dict()
 
         return False
+
+    def format_elastic_pool_id(self):
+        parrent_id = format_resource_id(val=self.server_name,
+                                        subscription_id=self.subscription_id,
+                                        namespace="Microsoft.Sql",
+                                        types="servers",
+                                        resource_group=self.resource_group)
+        self.parameters['elastic_pool_id'] = parrent_id + "/elasticPools/" + self.parameters['elastic_pool_id']
 
 
 def _snake_to_camel(snake, capitalize_first=False):

@@ -32,12 +32,18 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is a required parameter, if parameter C(uuid) is not supplied.
+     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
      type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is a required parameter, if parameter C(name) is not supplied.
+     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
      type: str
    folder:
      description:
@@ -92,6 +98,19 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     folder: "{{ folder_name }}"
     name: "{{ vm_name }}"
+    local_path: "/tmp/"
+  delegate_to: localhost
+  register: take_screenshot
+
+- name: Take a screenshot of the virtual machine console using MoID
+  vmware_guest_screenshot:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    folder: "{{ folder_name }}"
+    moid: vm-42
     local_path: "/tmp/"
   delegate_to: localhost
   register: take_screenshot
@@ -244,18 +263,24 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str'),
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
         local_path=dict(type='str'),
     )
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uuid']])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ]
+    )
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
     if not vm:
-        module.fail_json(msg='Unable to find the specified virtual machine uuid: %s, name: %s '
-                             % ((module.params.get('uuid')), (module.params.get('name'))))
+        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
+        module.fail_json(msg='Unable to find the specified virtual machine : %s' % vm_id)
 
     result = pyv.take_vm_screenshot()
     if result['failed']:

@@ -50,6 +50,7 @@ options:
         C(tmsh) command C(load sys config from-terminal merge).
       - If you need to read configuration from a file or template, use
         Ansible's C(file) or C(template) lookup plugins respectively.
+    type: str
   verify:
     description:
       - Validates the specified configuration to see whether they are

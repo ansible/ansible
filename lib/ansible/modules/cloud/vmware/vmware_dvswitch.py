@@ -53,7 +53,7 @@ options:
             - The version of the Distributed Switch to create.
             - Can be 6.0.0, 5.5.0, 5.1.0, 5.0.0 with a vCenter running vSphere 6.0 and 6.5.
             - Can be 6.6.0, 6.5.0, 6.0.0 with a vCenter running vSphere 6.7.
-            - The version must macht the version of the ESXi hosts you want to connect.
+            - The version must match the version of the ESXi hosts you want to connect.
             - The version of the vCenter server is used if not specified.
             - Required only if C(state) is set to C(present).
         version_added: 2.5
@@ -114,7 +114,7 @@ options:
         type: str
     contact:
         description:
-            - Dictionary which configures administrtor contact name and description for the Distributed Switch.
+            - Dictionary which configures administrator contact name and description for the Distributed Switch.
             - 'Valid attributes are:'
             - '- C(name) (str): Administrator name.'
             - '- C(description) (str): Description or other details.'
