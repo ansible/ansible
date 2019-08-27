@@ -1,0 +1,30 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_image_info
+
+
+- name: Get image informations and register it in a variable
+  scaleway_image_info:
+    region: par1
+  register: images
+
+- name: Display images variable
+  debug:
+    var: images
+
+- name: Ensure retrieval of images info is success
+  assert:
+    that:
+      - images is success
+
+- name: Get image informations from ams1 and register it in a variable
+  scaleway_image_info:
+    region: ams1
+  register: images_ams1
+
+- name: Display images variable from ams1
+  debug:
+    var: images_ams1
+
+- name: Ensure retrieval of images info is success
+  assert:
+    that:
+      - images_ams1 is success

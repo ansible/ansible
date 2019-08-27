@@ -124,6 +124,20 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * purefb_facts use :ref:`purefb_info <purefb_info_module>` instead.
 
+* scaleway_image_facts use :ref:`scaleway_image_info <scaleway_image_info_module>` instead.
+
+* scaleway_ip_facts use :ref:`scaleway_ip_info <scaleway_ip_info_module>` instead.
+
+* scaleway_organization_facts use :ref:`scaleway_organization_info <scaleway_organization_info_module>` instead.
+
+* scaleway_security_group_facts use :ref:`scaleway_security_group_info <scaleway_security_group_info_module>` instead.
+
+* scaleway_server_facts use :ref:`scaleway_server_info <scaleway_server_info_module>` instead.
+
+* scaleway_snapshot_facts use :ref:`scaleway_snapshot_info <scaleway_snapshot_info_module>` instead.
+
+* scaleway_volume_facts use :ref:`scaleway_volume_info <scaleway_volume_info_module>` instead.
+
 * vcenter_extension_facts use :ref:`vcenter_extension_info <vcenter_extension_info_module>` instead.
 
 * vmware_about_facts use :ref:`vmware_about_info <vmware_about_info_module>` instead.
