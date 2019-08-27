@@ -522,7 +522,7 @@ def main():
     # Check the load balancing method and service down action supplied is valid
     if module.params.get('load_balancing') not in LOAD_BALANCING_METHODS:
         module.fail_json(msg='Invalid load_balancing value. Load Balancing method must be one of {0}'.format(LOAD_BALANCING_METHODS))
-    if module.params.get('service_down_action') not in LOAD_BALANCING_METHODS:
+    if module.params.get('service_down_action') not in VIP_POOL_SERVICE_DOWN_ACTIONS:
         module.fail_json(msg='Invalid service_down_action value. Service Down action must be one of {0}'.format(LOAD_BALANCING_METHODS))
 
     if credentials is False:

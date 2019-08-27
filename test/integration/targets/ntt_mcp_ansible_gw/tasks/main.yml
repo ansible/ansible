@@ -6,24 +6,62 @@
     region: na
     datacenter: NA12
     image: "CentOS 7 64-bit 2 CPU"
-    cnd: "myCND2"
-    cnd_description: "My CND2"
-    vlan: "myVLAN2"
+    cnd: ansible_gw_cnd
+    cnd_description: "Ansible Module Testing"
+    vlan: ansible_gw_vlan
     # Do NOT modify these
     ansible_gateway: "ansible_gateway"
   tasks:
-  - name: Generate Host Password
-    set_fact:
-      host_password: "{{lookup('password', './host_passwd_file chars=ascii_letters,.:{}()-_+=')}}"
+  - local_action: stat path=host_passwd_file
+    register: host_password
+    become: no
+    tags:
+      - create
+      - pwd
+
+  - set_fact:
+      pwd_alias_list: []
+    when: not host_password.stat.exists
     tags:
       - testing
       - create
+      - pwd
+
+  - set_fact:
+      pwd_alias_list: "{{ pwd_alias_list + [
+                          lookup('password', '/dev/null length=4 chars=' ~ item) ]
+                          }}"
+    loop:
+      - ascii_letters
+      - digits
+      - hexdigits
+      - ',.:{}()-_+='
+    when: not host_password.stat.exists
+    tags:
+      - testing
+      - create
+      - pwd
+
+  - set_fact:
+      host_password: "{{ pwd_alias_list|shuffle|join('') }}"
+    when: not host_password.stat.exists
+    tags:
+      - testing
+      - create
+      - pwd
 
   - name: Show host password
     debug:
       var: host_password
     tags:
       - create
+      - pwd
+
+  - name: Save Password
+    local_action: copy content="{{host_password}}" dest="host_passwd_file" mode="0600"
+    tags:
+      - create
+      - pwd
 
   - local_action: stat path=public_ipv4
     register: public_ipv4_state

@@ -38,7 +38,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      ip_address: 168.128.31.151
+      ip_address: 168.128.29.247
       state: absent
     register: ipam
     tags:
@@ -54,7 +54,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      id: 62989e46-1425-11e5-8c14-b8ca3a5d9ef8
+      id: 62917e68-1425-11e5-8c14-b8ca3a5d9ef8
       state: absent
     register: ipam
     tags:

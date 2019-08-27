@@ -1411,6 +1411,8 @@ class NTTMCPClient():
 
         response = self.api_get_call(url)
         if response != None:
+            if response.json().get('responseCode') == 'RESOURCE_NOT_FOUND':
+                return []
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
@@ -2451,8 +2453,11 @@ class NTTMCPClient():
 
         response = self.api_get_call(url, params)
         try:
-            return response.json()
-        except Exception:
+            if response:
+                if response.json().get('responseCode') == 'RESOURCE_NOT_FOUND':
+                    return []
+                return response.json()
+        except (KeyError, AttributeError, NTTMCPAPIException):
             return {}
 
 
@@ -2591,7 +2596,8 @@ class NTTMCPClient():
         if network_domain_id is None:
             raise NTTMCPAPIException('Network Domain is required')
 
-        # Any supplied name trumps a supplied version and ip_address
+        params['networkDomainId'] = network_domain_id
+
         if name:
             params['name'] = name
 
