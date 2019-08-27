@@ -31,32 +31,34 @@ requirements:
 options:
     backup:
         description:
-            - pathination to store a backup of the initial certificate, if I(path) pointed to an existing file certificate.
+            - Path to store a backup of the initial certificate, if I(path) pointed to an existing file certificate.
         type: bool
         default: false
     force:
         description:
             - If force is used, a certificate is requested regardless of whether I(path) points to an existing valid certificate.
-            - If C(request_type=RENEW), a forced renew will fail if the certificate being renewed has been issued within the past 30 days.
+            - If C(request_type=renew), a forced renew will fail if the certificate being renewed has been issued within the past 30 days, regardless of the
+              value of I(remaining_days) or the return value of I(cert_days) - the ECS API does not support the "renew" operation for certificates that are not
+              at least 30 days old.
         type: bool
         default: false
     path:
         description:
-            - pathination to put the certificate file as a PEM encoded cert
+            - Path to put the certificate file as a PEM encoded cert
             - If the certificate at this location is not an Entrust issued certificate, a new certificate will always be requested regardless of validity.
             - If there is already an Entrust certificate at this location, whether it is replaced is dependent upon the I(remaining_days) calculation.
             - If an existing certificate is being replaced (see I(remaining_days), I(force), I(tracking_id)), the operation taken to replace it is dependent
               on I(request_type)
         type: path
         required: true
-    chain_path:
+    full_chain_path:
         description:
-            - pathination to put the full certificate chain of the certificate, intermediates, and roots.
+            - Path to put the full certificate chain of the certificate, intermediates, and roots.
         type: path
     csr:
         description:
             - Base-64 encoded Certificate Signing Request (CSR). I(csr) is accepted with or without PEM formatting around the Base-64 string.
-            - If no I(csr) is provided when C(request_type=REISSUE) or C(request_type=RENEW), the certificate will be generated with the same public key as
+            - If no I(csr) is provided when C(request_type=reissue) or C(request_type=renew), the certificate will be generated with the same public key as
               the certificate being renewed or reissued.
             - If I(subject_alt_name) is specified, it will override the subject alternate names in the CSR.
             - If I(eku) is specified, it will override the extended key usage in the CSR.
@@ -67,14 +69,14 @@ options:
     tracking_id:
         description:
             - Tracking ID of certificate to reissue or renew.
-            - I(tracking_id) is invalid if C(request_type=NEW).
+            - I(tracking_id) is invalid if C(request_type=new) or C(request_type=validate_only).
             - If there is a certificate present in I(path) and it is an ECS certificate, I(tracking_id) will be ignored.
             - If there is not a certificate present in I(path) or there is but it is from another provider, the certificate represented by I(tracking_id) will
               be renewed or reissued and saved to I(path)
             - If there is not a certificate present in I(path) and the I(force) and I(remaining_days) parameters do not indicate a new certificate is needed,
               the certificate referenced by I(tracking_id) certificate will be saved to I(path).
             - This can be used when a known certificate is not currently present on a server, but you want to renew or reissue it to be managed by an ansible
-              playbook. For example, if you specify C(request_type=RENEW), I(tracking_id) of an issued certificate, and I(path) to a file that does not exist,
+              playbook. For example, if you specify C(request_type=renew), I(tracking_id) of an issued certificate, and I(path) to a file that does not exist,
               the first run of a task will download the certificate specified by I(tracking_id) (assuming it is still valid), and future runs of the task will
               (if applicable - see I(force) and I(remaining_days)) renew the certificate now present in I(path).
         type: int
@@ -82,7 +84,7 @@ options:
         description:
             - The number of days the certificate must have left being valid. If C(cert_days < remaining_days) then a new certificate will be
               obtained using I(request_type).
-            - If C(request_type=RENEW), a renew will fail if the certificate being renewed has been issued within the past 30 days, so do not set a
+            - If C(request_type=renew), a renew will fail if the certificate being renewed has been issued within the past 30 days, so do not set a
               I(remaining_days) value that is within 30 days of the full lifetime of the certificate being acted upon. (e.g. if you are requesting Certificates
               with a 90 day lifetime, do not set remaining_days to a value C(60) or higher).
             - The I(force) option may be used to ensure that a new certificate is always obtained.
@@ -92,21 +94,22 @@ options:
         description:
             - Operation performed if I(tracking_id) references a valid certificate to reissue, or there is already a certificate present in I(path) but either
               I(force) is specified or C(cert_days < remaining_days).
-            - Specifying C(request_type=NEW) means a certificate request will always be submitted and a new certificate issued.
-            - Specifying C(request_type=RENEW) means that an existing certificate (specified by I(tracking_id) if present, otherwise I(path)) will be renewed.
+            - Specifying C(request_type=validate_only) means the request will be validated against the ECS API, but no certificate will be issued.
+            - Specifying C(request_type=new) means a certificate request will always be submitted and a new certificate issued.
+            - Specifying C(request_type=renew) means that an existing certificate (specified by I(tracking_id) if present, otherwise I(path)) will be renewed.
               If there is no certificate to renew, a new certificate is requested.
-            - Specifying C(request_type=REISSUE) means that an existing certificate (specified by I(tracking_id) if present, otherwise I(path)) will be
+            - Specifying C(request_type=reissue) means that an existing certificate (specified by I(tracking_id) if present, otherwise I(path)) will be
               reissued.
               If there is no certificate to reissue, a new certificate is requested.
             - If a certificate was issued within the past 30 days, the 'renew' operation is not a valid operation and will fail.
             - Note that C(reissue) is an operation that will result in the revocation of the certificate that is reissued, be cautious with it's use.
-            - I(check_mode) is only supported if C(request_type=NEW)
+            - I(check_mode) is only supported if C(request_type=new)
             - For example, setting C(request_type=renew) and C(remaining_days=30) and pointing to the same certificate on multiple playbook runs means that on
               the first run new certificate will be requested. It will then be left along on future runs until it is within 30 days of expiry, then the
               ECS "renew" operation will be performed.
         type: str
-        choices: [ 'NEW', 'RENEW', 'REISSUE']
-        default: NEW
+        choices: [ 'new', 'renew', 'reissue', 'validate_only']
+        default: new
     cert_type:
         description:
             - The type of certificate product to request.
@@ -303,8 +306,9 @@ options:
                 type: str
     cert_expiry:
         description:
-            - The date the certificate should be set to expire, as an RFC3339 compliant date. For example, C(2020-02-23).
-            - I(cert_expiry) is only supported for requests of C(request_type=NEW) or C(request_type=RENEW). If C(request_type=REISSUE),
+            - The date the certificate should be set to expire, as an RFC3339 compliant date or date-time. For example,
+              C(2020-02-23), C(2020-02-23T15:00:00.05Z).
+            - I(cert_expiry) is only supported for requests of C(request_type=new) or C(request_type=renew). If C(request_type=reissue),
               I(cert_expiry) will be used for the first certificate issuance, but subsequent issuances will have the same expiry as the initial
               certificate.
             - A reissued certificate will always have the same expiry as the original certificate.
@@ -317,7 +321,7 @@ options:
         description:
             - The lifetime of the certificate.
             - Applies to all certificates for accounts with a non-pooling inventory model.
-            - I(cert_lifetime) is only supported for requests of C(request_type=NEW) or C(request_type=RENEW). If C(request_type=REISSUE), I(cert_lifetime) will
+            - I(cert_lifetime) is only supported for requests of C(request_type=new) or C(request_type=renew). If C(request_type=reissue), I(cert_lifetime) will
               be used for the first certificate issuance, but subsequent issuances will have the same expiry as the initial certificate.
             - Applies to certificates of I(cert_type)=C(CDS_INDIVIDUAL, CDS_GROUP, CDS_ENT_LITE, CDS_ENT_PRO, SMIME_ENT) for accounts with a pooling inventory
               model.
@@ -342,7 +346,7 @@ EXAMPLES = r'''
   ecs_certificate:
     backup: true
     path: /etc/ssl/crt/ansible.com.crt
-    chain_path: /etc/ssl/crt/ansible.com.chain.crt
+    full_chain_path: /etc/ssl/crt/ansible.com.chain.crt
     csr: /etc/ssl/csr/ansible.com.csr
     cert_type: EV_SSL
     requester_name: Jo Doe
@@ -354,13 +358,13 @@ EXAMPLES = r'''
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
 - name: If there is no certificate present in path, request a new certificate of type EV_SSL. Otherwise, if there is an Entrust managed certificate in path and
-        it is within 63 days of expiration, request a RENEW of that certificate.
+        it is within 63 days of expiration, request a renew of that certificate.
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
     cert_type: EV_SSL
     cert_expiry: '2020-08-20'
-    request_type: RENEW
+    request_type: renew
     remaining_days: 63
     requester_name: Jo Doe
     requester_email: jdoe@ansible.com
@@ -371,12 +375,12 @@ EXAMPLES = r'''
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
 - name: If there is no certificate present in path, download certificate specified by tracking_id if it is still valid. Otherwise, if the certificate is within
-        79 days of expiration, request a RENEW of that certificate and save it in path. This can be used to "migrate" a certificate to be Ansible managed.
+        79 days of expiration, request a renew of that certificate and save it in path. This can be used to "migrate" a certificate to be Ansible managed.
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
     tracking_id: 2378915
-    request_type: RENEW
+    request_type: renew
     remaining_days: 79
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
@@ -388,7 +392,7 @@ EXAMPLES = r'''
     path: /etc/ssl/crt/ansible.com.crt
     force: true
     tracking_id: 2378915
-    request_type: REISSUE
+    request_type: reissue
     entrust_api_user: apiusername
     entrust_api_key: a^lv*32!cd9LnT
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
@@ -411,7 +415,7 @@ EXAMPLES = r'''
 - name: Request a new certificate with a number of CSR parameters overridden and tracking information
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
-    chain_path: /etc/ssl/crt/ansible.com.chain.crt
+    full_chain_path: /etc/ssl/crt/ansible.com.chain.crt
     csr: /etc/ssl/csr/ansible.com.csr
     subject_alt_name:
       - ansible.testcertificates.com
@@ -454,9 +458,9 @@ backup_file:
     returned: changed and if I(backup) is C(true)
     type: str
     sample: /path/to/www.ansible.com.crt.2019-03-09@11:22~
-backup_chain_file:
+backup_full_chain_file:
     description: Name of the backup file created for the certificate chain.
-    returned: changed and if I(backup) is C(true) and I(chain_path) is set.
+    returned: changed and if I(backup) is C(true) and I(full_chain_path) is set.
     type: str
     sample: /path/to/ca.chain.crt.2019-03-09@11:22~
 tracking_id:
@@ -478,7 +482,7 @@ cert_status:
     description:
         - The certificate status in ECS.
         - 'Current possible values (which may be expanded in the future) are: C(ACTIVE), C(APPROVED), C(DEACTIVATED), C(DECLINED), C(EXPIRED), C(NA),
-          C(PENDING), C(PENDING_QUORUM), C(READY), C(REISSUED), C(REISSUING), C(RENEWED), C(RENEWING), C(REVOKED), C(SUSPENDED)'
+          C(PENDING), C(PENDING_QUORUM), C(READY), C(reissueD), C(REISSUING), C(renewED), C(renewING), C(REVOKED), C(SUSPENDED)'
     returned: success
     type: str
     sample: ACTIVE
@@ -502,6 +506,7 @@ from ansible.module_utils.ecs.api import (
 import datetime
 import json
 import os
+import re
 import time
 import traceback
 from distutils.version import LooseVersion
@@ -521,6 +526,15 @@ else:
     CRYPTOGRAPHY_FOUND = True
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
+
+
+def validate_cert_expiry(cert_expiry):
+    search_string_partial = re.compile('^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\Z')
+    search_string_full = re.compile('^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):'
+                                    '([0-5][0-9]|60)(.[0-9]+)?(([Zz])|([+|-]([01][0-9]|2[0-3]):[0-5][0-9]))\Z')
+    if search_string_partial.match(cert_expiry) or search_string_full.match(cert_expiry):
+        return True
+    return False
 
 
 def calculate_cert_days(expires_after):
@@ -551,7 +565,7 @@ class EcsCertificate(object):
 
     def __init__(self, module):
         self.path = module.params['path']
-        self.chain_path = module.params['chain_path']
+        self.full_chain_path = module.params['full_chain_path']
         self.force = module.params['force']
         self.backup = module.params['backup']
         self.request_type = module.params['request_type']
@@ -566,7 +580,7 @@ class EcsCertificate(object):
         self.cert_days = None
         self.cert_details = None
         self.backup_file = None
-        self.backup_chain_file = None
+        self.backup_full_chain_file = None
 
         self.cert = None
         self.ecs_client = None
@@ -630,7 +644,7 @@ class EcsCertificate(object):
         body = {}
         if module.params['eku']:
             body['eku'] = module.params['eku']
-        if self.request_type == 'NEW':
+        if self.request_type == 'new':
             body['certType'] = module.params['cert_type']
         body['clientId'] = module.params['client_id']
         body.update(convert_module_param_to_json_bool(module, 'ctLog', 'ct_log'))
@@ -644,7 +658,7 @@ class EcsCertificate(object):
         elif module.params['cert_expiry']:
             body['certExpiryDate'] = module.params['cert_expiry']
         # If neither cerTLifetime or certExpiryDate was specified and the request type is new, default to 365 days
-        elif self.request_type != 'REISSUE':
+        elif self.request_type != 'reissue':
             gmt_now = datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))
             expiry = gmt_now + datetime.timedelta(days=365)
             body['certExpiryDate'] = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
@@ -709,15 +723,15 @@ class EcsCertificate(object):
             # Check if the path is already a cert
             # tracking_id may be set as a parameter or by get_cert_details if an entrust cert is in 'path'. If tracking ID is null
             # We will be performing a reissue operation.
-            if self.request_type != 'NEW' and not self.tracking_id:
-                module.warn('No existing Entrust certificate found in path={0} and no tracking_id was provided, setting request_type to "NEW" for this task'
+            if self.request_type != 'new' and not self.tracking_id:
+                module.warn('No existing Entrust certificate found in path={0} and no tracking_id was provided, setting request_type to "new" for this task'
                             'run. Future playbook runs that point to the pathination file in {1} will use request_type={2}'
                             .format(self.path, self.path, self.request_type))
-                self.request_type = 'NEW'
-            elif self.request_type == 'NEW' and self.tracking_id:
-                module.warn('Existing certificate being acted upon, but request_type is "NEW", so will be a new certificate issuance rather than a'
-                            'REISSUE or RENEW')
-            # Use cases where request type is NEW and no existing certificate, or where request type is REISSUE/RENEW and a valid
+                self.request_type = 'new'
+            elif self.request_type == 'new' and self.tracking_id:
+                module.warn('Existing certificate being acted upon, but request_type is "new", so will be a new certificate issuance rather than a'
+                            'reissue or renew')
+            # Use cases where request type is new and no existing certificate, or where request type is reissue/renew and a valid
             # existing certificate is found, do not need warnings.
 
             body.update(self.convert_tracking_params(module))
@@ -725,40 +739,37 @@ class EcsCertificate(object):
             body.update(self.convert_general_params(module))
             body.update(self.convert_expiry_params(module))
 
-            if module.check_mode:
-                body['validateOnly'] = 'true'
+            if not module.check_mode:
                 try:
-                    result = self.ecs_client.NewCertRequest(Body=body)
-                    self.changed = True
-                except RestOperationException as e:
-                    module.fail_json(msg='Failed to request new certificate from Entrust (ECS) {0}'.format(e.message))
-            else:
-                try:
-                    if self.request_type == 'NEW':
+                    if self.request_type == 'validate_only':
+                        body['validateOnly'] = 'true'
                         result = self.ecs_client.NewCertRequest(Body=body)
-                    elif self.request_type == 'RENEW':
+                    if self.request_type == 'new':
+                        result = self.ecs_client.NewCertRequest(Body=body)
+                    elif self.request_type == 'renew':
                         result = self.ecs_client.RenewCertRequest(trackingId=self.tracking_id, Body=body)
-                    elif self.request_type == 'REISSUE':
+                    elif self.request_type == 'reissue':
                         result = self.ecs_client.ReissueCertRequest(trackingId=self.tracking_id, Body=body)
                     self.tracking_id = result.get('trackingId')
                     self.set_cert_details(module)
                 except RestOperationException as e:
                     module.fail_json(msg='Failed to request new certificate from Entrust (ECS) {0}'.format(e.message))
 
-                if self.backup:
-                    self.backup_file = module.backup_local(self.path)
-                crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
-                if self.chain_path:
+                if self.request_type != 'validate_only':
                     if self.backup:
-                        self.backup_chain_file = module.backup_local(self.chain_path)
-                    crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.chain_path)
-                self.changed = True
+                        self.backup_file = module.backup_local(self.path)
+                    crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
+                    if self.full_chain_path:
+                        if self.backup:
+                            self.backup_full_chain_file = module.backup_local(self.full_chain_path)
+                        crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.full_chain_path)
+                    self.changed = True
         # If there is no certificate present in path but a tracking ID was specified, save it to disk
         elif not os.path.exists(self.path) and self.tracking_id:
             if not module.check_mode:
                 crypto_utils.write_file(module, to_bytes(self.cert_details.get('endEntityCert')))
-                if self.chain_path:
-                    crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.chain_path)
+                if self.full_chain_path:
+                    crypto_utils.write_file(module, to_bytes(self.cert_details.get('chainCerts')), path=self.full_chain_path)
             self.changed = True
 
     def dump(self):
@@ -773,7 +784,7 @@ class EcsCertificate(object):
         }
         if self.backup_file:
             result['backup_file'] = self.backup_file
-            result['backup_chain_file'] = self.backup_chain_file
+            result['backup_full_chain_file'] = self.backup_full_chain_file
         return result
 
 
@@ -822,10 +833,10 @@ def ecs_certificate_argument_spec():
         backup=dict(type='bool', default=False),
         force=dict(type='bool', default=False),
         path=dict(type='path', required=True),
-        chain_path=dict(type='path'),
+        full_chain_path=dict(type='path'),
         tracking_id=dict(type='int'),
         remaining_days=dict(type='int', default=30),
-        request_type=dict(type='str', default='NEW', choices=['NEW', 'RENEW', 'REISSUE']),
+        request_type=dict(type='str', default='new', choices=['new', 'renew', 'reissue', 'validate_only']),
         cert_type=dict(type='str', choices=['STANDARD_SSL',
                                             'ADVANTAGE_SSL',
                                             'UC_SSL',
@@ -866,7 +877,8 @@ def main():
     module = AnsibleModule(
         argument_spec=ecs_argument_spec,
         required_if=(
-            ['request_type', 'NEW', ['cert_type']],
+            ['request_type', 'new', ['cert_type']],
+            ['request_type', 'validate_only', ['cert_type']],
             ['cert_type', 'CODE_SIGNING', ['end_user_key_storage_agreement']],
             ['cert_type', 'EV_CODE_SIGNING', ['end_user_key_storage_agreement']],
         ),
@@ -880,12 +892,17 @@ def main():
         module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
                          exception=CRYPTOGRAPHY_IMP_ERR)
 
+    # If validate_only is used, pointing to an existing tracking_id is an invalid operation
+    if module.params['tracking_id']:
+        if module.params['request_type'] == 'new' or module.params['request_type'] == 'validate_only':
+            module.fail_json(msg='The tracking_id field is invalid when request_type="{0}".'.format(module.params['request_type']))
+
     # A reissued request can not specify an expiration date or lifetime
-    if module.params['request_type'] == 'REISSUE':
+    if module.params['request_type'] == 'reissue':
         if module.params['cert_expiry']:
-            module.fail_json(msg='The cert_expiry field is invalid when request_type="REISSUE".')
+            module.fail_json(msg='The cert_expiry field is invalid when request_type="reissue".')
         elif module.params['cert_lifetime']:
-            module.fail_json(msg='The cert_lifetime field is invalid when request_type="REISSUE".')
+            module.fail_json(msg='The cert_lifetime field is invalid when request_type="reissue".')
     # Only a reissued request can omit the CSR
     else:
         module_params_csr = module.params['csr']
@@ -904,6 +921,10 @@ def main():
 
     if module.params['org'] and module.params['client_id'] != 1 and module.params['cert_type'] != 'PD_SSL':
         module.fail_json(msg='The "org" parameter is not supported when client_id parameter is set to a value other than 1, unless cert_type is "PD_SSL".')
+
+    if module.params['cert_expiry']:
+        if not validate_cert_expiry(module.params['cert_expiry']):
+            module.fail_json(msg='The "cert_expiry" parameter of "{0}" is not a valid date or date-time'.format(module.params['cert_expiry']))
 
     certificate = EcsCertificate(module)
     certificate.request_cert(module)
