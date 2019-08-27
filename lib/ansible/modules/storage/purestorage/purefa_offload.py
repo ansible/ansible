@@ -139,7 +139,6 @@ def create_offload(module, array):
             module.fail_json(msg='Offload Network interface not enabled. Please resolve.')
     except Exception:
         module.fail_json(msg='Offload Network interface not correctly configured. Please resolve.')
-    ra_facts = {}
     if module.params['protocol'] == 'nfs':
         try:
             array.connect_nfs_offload(module.params['name'],
@@ -161,7 +160,7 @@ def create_offload(module, array):
         except Exception:
             module.fail_json(msg='Failed to create S3 offload {0}. '
                                  'Please perform diagnostic checks.'.format(module.params['name']))
-    module.exit_json(changed=changed, ansible_facts=ra_facts)
+    module.exit_json(changed=changed)
 
 
 def update_offload(module, array):
