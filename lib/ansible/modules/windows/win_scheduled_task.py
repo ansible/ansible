@@ -266,9 +266,9 @@ options:
     description:
     - The password for the user account to run the scheduled task as.
     - This is required when running a task without the user being logged in,
-      excluding the builtin service accounts.
+      excluding the builtin service accounts and Group Managed Service Accounts (gMSA).
     - If set, will always result in a change unless C(update_password) is set
-      to C(no) and no othr changes are required for the service.
+      to C(no) and no other changes are required for the service.
     type: str
     version_added: '2.4'
   update_password:
@@ -376,7 +376,7 @@ options:
   priority:
     description:
     - The priority level (0-10) of the task.
-    - When creating a new task the default if C(7).
+    - When creating a new task the default is C(7).
     - See U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa383512.aspx)
       for details on the priority levels.
     type: int
@@ -430,6 +430,9 @@ notes:
 - The option names and structure for actions and triggers of a service follow
   the C(RegisteredTask) naming standard and requirements, it would be useful to
   read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
+- A Group Managed Service Account (gMSA) can be used by setting C(logon_type) to C(password)
+  and omitting the password parameter. For more information on gMSAs,
+  see U(https://techcommunity.microsoft.com/t5/Core-Infrastructure-and-Security/Windows-Server-2012-Group-Managed-Service-Accounts/ba-p/255910)
 seealso:
 - module: win_scheduled_task_stat
 author:
@@ -479,6 +482,12 @@ EXAMPLES = r'''
     name: TaskName2
     username: DOMAIN\User
     logon_type: s4u
+
+- name: Change above task to use a gMSA, where the password is managed automatically
+  win_scheduled_task:
+    name: TaskName2
+    username: DOMAIN\gMsaSvcAcct$
+    logon_type: password
 
 - name: Create task with multiple triggers
   win_scheduled_task:
