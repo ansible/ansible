@@ -388,10 +388,22 @@ def params_to_launch_data(module, template_params):
     if module.params.get('iam_instance_profile'):
         template_params['iam_instance_profile'] = determine_iam_role(module, module.params['iam_instance_profile'])
     params = snake_dict_to_camel_dict(
-        dict((k, v) for k, v in template_params.items() if v is not None),
+        remove_none(template_params),
         capitalize_first=True,
     )
     return params
+
+
+def remove_none(obj):
+    if isinstance(obj, (list, tuple, set)):
+        return type(obj)(remove_none(x) for x in obj if x is not None)
+    elif isinstance(obj, dict):
+        return type(obj)(
+            (remove_none(k), remove_none(v))
+            for k, v in obj.items() if k is not None and v is not None
+        )
+    else:
+        return obj
 
 
 def delete_template(module):
