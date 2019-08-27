@@ -446,9 +446,9 @@ def _command_coverage_combine_powershell(args):
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=powershell' in f]
 
-    def _default_stub_value(line_count):
+    def _default_stub_value(lines):
         val = {}
-        for line in range(line_count):
+        for line in range(lines):
             val[line] = 0
         return val
 
@@ -545,7 +545,7 @@ def _command_coverage_combine_powershell(args):
 
 def _generage_powershell_xml(coverage_file):
     """
-    :type input_path: str
+    :type coverage_file: str
     :rtype: Element
     """
     with open(coverage_file, 'rb') as coverage_fd:
@@ -671,7 +671,7 @@ def _add_cobertura_package(packages, package_name, package_data):
 
 def _generate_powershell_output_report(args, coverage_file):
     """
-    :type args: CoverageConfig
+    :type args: CoverageReportConfig
     :type coverage_file: str
     :rtype: str
     """
