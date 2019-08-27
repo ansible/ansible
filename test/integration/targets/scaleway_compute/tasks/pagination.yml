@@ -19,7 +19,7 @@
     wait: true
 
 - name: Get server informations of the first page
-  scaleway_server_facts:
+  scaleway_server_info:
     region: par1
     query_parameters:
       per_page: 1
@@ -33,7 +33,7 @@
       - first_page is success
 
 - name: Get server informations of the second page
-  scaleway_server_facts:
+  scaleway_server_info:
     region: par1
     query_parameters:
       per_page: 1
@@ -48,7 +48,7 @@
 
 - assert:
     that:
-      - first_page.ansible_facts.scaleway_server_facts[0].id != second_page.ansible_facts.scaleway_server_facts[0].id
+      - first_page.scaleway_server_info[0].id != second_page.scaleway_server_info[0].id
 
 - name: Delete first server
   scaleway_compute:
