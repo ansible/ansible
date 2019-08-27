@@ -90,6 +90,8 @@ EXAMPLES = '''
   ovirt_event_info:
     search: "severity=alert"
   register: result
+- debug:
+    msg: "{{ result.ovirt_events }}"
 '''
 
 RETURN = '''
