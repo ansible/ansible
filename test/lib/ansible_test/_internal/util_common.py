@@ -121,13 +121,13 @@ def named_temporary_file(args, prefix, suffix, directory, content):
 
 def write_json_test_results(category, name, content):  # type: (ResultType, str, t.Union[t.List[t.Any], t.Dict[str, t.Any]]) -> None
     """Write the given json content to the specified test results path, creating directories as needed."""
-    path = os.path.join(data_context().results, category.name, name)
+    path = os.path.join(category.path, name)
     write_json_file(path, content, create_directories=True)
 
 
 def write_text_test_results(category, name, content):  # type: (ResultType, str, str) -> None
     """Write the given text content to the specified test results path, creating directories as needed."""
-    path = os.path.join(data_context().results, category.name, name)
+    path = os.path.join(category.path, name)
     write_text_file(path, content, create_directories=True)
 
 
