@@ -96,6 +96,7 @@ function cleanup
         if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
+                flags="${flags%-powershell.xml}"
                 flags="${flags%.xml}"
                 # remove numbered component from stub files when converting to tags
                 flags="${flags//stub-[0-9]*/stub}"

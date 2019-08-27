@@ -29,13 +29,18 @@ value is a base64 string of the module util code.
 
 .PARAMETER ModuleName
 [String] The name of the module that is being executed.
+
+.PARAMETER Breakpoints
+A list of line breakpoints to add to the runspace debugger. This is used to
+track module and module_utils coverage.
 #>
 param(
     [Object[]]$Scripts,
     [System.Collections.ArrayList][AllowEmptyCollection()]$Variables,
     [System.Collections.IDictionary]$Environment,
     [System.Collections.IDictionary]$Modules,
-    [String]$ModuleName
+    [String]$ModuleName,
+    [System.Management.Automation.LineBreakpoint[]]$Breakpoints = @()
 )
 
 Write-AnsibleLog "INFO - creating new PowerShell pipeline for $ModuleName" "module_wrapper"
@@ -90,6 +95,23 @@ $ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').Ad
 # add the scripts and run
 foreach ($script in $Scripts) {
     $ps.AddScript($script).AddStatement() > $null
+}
+
+if ($Breakpoints.Count -gt 0) {
+    Write-AnsibleLog "INFO - adding breakpoint to runspace that will run the modules" "module_wrapper"
+    if ($PSVersionTable.PSVersion.Major -eq 3) {
+        # The SetBreakpoints method was only added in PowerShell v4+. We need to rely on a private method to
+        # achieve the same functionality in this older PowerShell version. This should be removed once we drop
+        # support for PowerShell v3.
+        $set_method = $ps.Runspace.Debugger.GetType().GetMethod(
+            'AddLineBreakpoint', [System.Reflection.BindingFlags]'Instance, NonPublic'
+        )
+        foreach ($b in $Breakpoints) {
+            $set_method.Invoke($ps.Runspace.Debugger, [Object[]]@(,$b)) > $null
+        }
+    } else {
+        $ps.Runspace.Debugger.SetBreakpoints($Breakpoints)
+    }
 }
 
 Write-AnsibleLog "INFO - start module exec with Invoke() - $ModuleName" "module_wrapper"
