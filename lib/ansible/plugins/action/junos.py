@@ -49,7 +49,7 @@ class ActionModule(ActionNetworkModule):
             pc.network_os = 'junos'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
 
-            if provider['transport'] == 'cli' and module_name in CLI_SUPPORTED_MODULES:
+            if provider['transport'] == 'cli' and module_name not in CLI_SUPPORTED_MODULES:
                 return {'failed': True, 'msg': "Transport type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (provider['transport'], module_name)}
