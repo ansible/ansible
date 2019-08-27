@@ -14,12 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_subnets_facts
-short_description: Retrieve facts about one or more OpenStack subnets.
+module: os_subnets_info
+short_description: Retrieve information about one or more OpenStack subnets.
 version_added: "2.0"
 author: "Davide Agnello (@dagnello)"
 description:
-    - Retrieve facts about one or more subnets from OpenStack.
+    - Retrieve information about one or more subnets from OpenStack.
+    - This module was called C(os_subnets_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_subnets_info) module no longer returns C(ansible_facts)!
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -43,34 +45,36 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-- name: Gather facts about previously created subnets
-  os_subnets_facts:
+- name: Gather information about previously created subnets
+  os_subnets_info:
     auth:
       auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
+  register: result
 
 - name: Show openstack subnets
   debug:
-    var: openstack_subnets
+    msg: "{{ result.openstack_subnets }}"
 
-- name: Gather facts about a previously created subnet by name
-  os_subnets_facts:
+- name: Gather information about a previously created subnet by name
+  os_subnets_info:
     auth:
       auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
     name: subnet1
+  register: result
 
 - name: Show openstack subnets
   debug:
-    var: openstack_subnets
+    msg: "{{ result.openstack_subnets }}"
 
-- name: Gather facts about a previously created subnet with filter
+- name: Gather information about a previously created subnet with filter
   # Note: name and filters parameters are not mutually exclusive
-  os_subnets_facts:
+  os_subnets_info:
     auth:
       auth_url: https://identity.example.com
       username: user
@@ -78,15 +82,16 @@ EXAMPLES = '''
       project_name: someproject
     filters:
       tenant_id: 55e2ce24b2a245b09f181bf025724cbe
+  register: result
 
 - name: Show openstack subnets
   debug:
-    var: openstack_subnets
+    msg: "{{ result.openstack_subnets }}"
 '''
 
 RETURN = '''
 openstack_subnets:
-    description: has all the openstack facts about the subnets
+    description: has all the openstack information about the subnets
     returned: always, but can be null
     type: complex
     contains:
@@ -143,13 +148,20 @@ def main():
         filters=dict(required=False, type='dict', default=None)
     )
     module = AnsibleModule(argument_spec)
+    is_old_facts = module._name == 'os_subnets_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_subnets_facts' module has been renamed to 'os_subnets_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         subnets = cloud.search_subnets(module.params['name'],
                                        module.params['filters'])
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_subnets=subnets))
+        if is_old_facts:
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_subnets=subnets))
+        else:
+            module.exit_json(changed=False, openstack_subnets=subnets)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

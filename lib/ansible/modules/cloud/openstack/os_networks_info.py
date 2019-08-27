@@ -14,12 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_networks_facts
-short_description: Retrieve facts about one or more OpenStack networks.
+module: os_networks_info
+short_description: Retrieve information about one or more OpenStack networks.
 version_added: "2.0"
 author: "Davide Agnello (@dagnello)"
 description:
-    - Retrieve facts about one or more networks from OpenStack.
+    - Retrieve information about one or more networks from OpenStack.
+    - This module was called C(os_networks_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_networks_info) module no longer returns C(ansible_facts)!
 requirements:
     - "python >= 2.7"
     - "sdk"
@@ -41,34 +43,36 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-- name: Gather facts about previously created networks
-  os_networks_facts:
+- name: Gather information about previously created networks
+  os_networks_info:
     auth:
       auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
+  register: result
 
 - name: Show openstack networks
   debug:
-    var: openstack_networks
+    msg: "{{ result.openstack_networks }}"
 
-- name: Gather facts about a previously created network by name
-  os_networks_facts:
+- name: Gather information about a previously created network by name
+  os_networks_info:
     auth:
       auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
     name:  network1
+  register: result
 
 - name: Show openstack networks
   debug:
-    var: openstack_networks
+    msg: "{{ result.openstack_networks }}"
 
-- name: Gather facts about a previously created network with filter
+- name: Gather information about a previously created network with filter
   # Note: name and filters parameters are Not mutually exclusive
-  os_networks_facts:
+  os_networks_info:
     auth:
       auth_url: https://identity.example.com
       username: user
@@ -79,15 +83,16 @@ EXAMPLES = '''
       subnets:
         - 057d4bdf-6d4d-4728-bb0f-5ac45a6f7400
         - 443d4dc0-91d4-4998-b21c-357d10433483
+  register: result
 
 - name: Show openstack networks
   debug:
-    var: openstack_networks
+    msg: "{{ result.openstack_networks }}"
 '''
 
 RETURN = '''
 openstack_networks:
-    description: has all the openstack facts about the networks
+    description: has all the openstack information about the networks
     returned: always, but can be null
     type: complex
     contains:
@@ -128,13 +133,20 @@ def main():
         filters=dict(required=False, type='dict', default=None)
     )
     module = AnsibleModule(argument_spec)
+    is_old_facts = module._name == 'os_networks_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_networks_facts' module has been renamed to 'os_networks_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         networks = cloud.search_networks(module.params['name'],
                                          module.params['filters'])
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_networks=networks))
+        if is_old_facts:
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_networks=networks))
+        else:
+            module.exit_json(changed=False, openstack_networks=networks)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

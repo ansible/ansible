@@ -400,6 +400,33 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``one_image_facts`` module was renamed to :ref:`one_image_info <one_image_info_module>`.
 * The ``onepassword_facts`` module was renamed to :ref:`onepassword_info <onepassword_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
+* The ``os_flavor_facts`` module was renamed to :ref:`os_flavor_info <os_flavor_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_image_facts`` module was renamed to :ref:`os_image_info <os_image_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_keystone_domain_facts`` module was renamed to :ref:`os_keystone_domain_info <os_keystone_domain_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_networks_facts`` module was renamed to :ref:`os_networks_info <os_networks_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_port_facts`` module was renamed to :ref:`os_port_info <os_port_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_project_facts`` module was renamed to :ref:`os_project_info <os_project_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_server_facts`` module was renamed to :ref:`os_server_info <os_server_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_subnets_facts`` module was renamed to :ref:`os_subnets_info <os_subnets_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``os_user_facts`` module was renamed to :ref:`os_user_info <os_user_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``python_requirements_facts`` module was renamed to :ref:`python_requirements_info <python_requirements_info_module>`.
 * The ``rds_instance_facts`` module was renamed to :ref:`rds_instance_info <rds_instance_info_module>`.
 * The ``rds_snapshot_facts`` module was renamed to :ref:`rds_snapshot_info <rds_snapshot_info_module>`.
