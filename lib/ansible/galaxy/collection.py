@@ -379,9 +379,12 @@ class CollectionRequirement:
 
 
 def get_available_api_versions(galaxy_api):
+    headers = {}
+    headers.update(galaxy_api._auth_header(required=False))
+
     url = _urljoin(galaxy_api.api_server, "api")
     try:
-        return_data = open_url(url, validate_certs=galaxy_api.validate_certs)
+        return_data = open_url(url, headers=headers, validate_certs=galaxy_api.validate_certs)
     except urllib_error.HTTPError as err:
         if err.code != 401:
             _handle_http_error(err, galaxy_api, {},
