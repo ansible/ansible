@@ -31,8 +31,12 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter_name: '{{ dc1 }}'
-    switch_name: '{{ dvswitch1 }}'
     state: absent
+    switch_name: '{{ item }}'
+  loop:
+    - '{{ dvswitch1 }}'
+    - dvswitch_0001
+    - dvswitch_0002
   ignore_errors: yes
 
 - name: Remove the vSwitches
