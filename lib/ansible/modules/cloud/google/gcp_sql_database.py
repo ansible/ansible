@@ -18,104 +18,122 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_sql_database
 description:
-    - Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
+- Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
 short_description: Creates a GCP Database
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    charset:
-        description:
-            - The MySQL charset value.
-        required: false
-    collation:
-        description:
-            - The MySQL collation value.
-        required: false
-    name:
-        description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
-        required: false
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-        required: true
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+    type: str
+  charset:
+    description:
+    - The charset value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+      and Postgres' [Character Set Support](U(https://www.postgresql.org/docs/9.6/static/multibyte.html))
+      for more details and supported values. Postgres databases only support a value
+      of `UTF8` at creation time.
+    required: false
+    type: str
+  collation:
+    description:
+    - The collation value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+      and Postgres' [Collation Support](U(https://www.postgresql.org/docs/9.6/static/collation.html))
+      for more details and supported values. Postgres databases only support a value
+      of `en_US.UTF8` at creation time.
+    required: false
+    type: str
+  name:
+    description:
+    - The name of the database in the Cloud SQL instance.
+    - This does not include the project ID or instance name.
+    required: true
+    type: str
+  instance:
+    description:
+    - The name of the Cloud SQL instance. This does not include the project ID.
+    required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: "instance-database"
-      settings:
-        ip_configuration:
-          authorized_networks:
-          - name: google dns server
-            value: 8.8.8.8/32
-        tier: db-n1-standard-1
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{resource_name}}-3"
+    settings:
+      ip_configuration:
+        authorized_networks:
+        - name: google dns server
+          value: 8.8.8.8/32
+      tier: db-n1-standard-1
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instance
 
 - name: create a database
   gcp_sql_database:
-      name: "test_object"
-      charset: utf8
-      instance: "{{ instance }}"
-      project: "test_project"
-      auth_kind: "service_account"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    charset: utf8
+    instance: "{{ instance.name }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
-    charset:
-        description:
-            - The MySQL charset value.
-        returned: success
-        type: str
-    collation:
-        description:
-            - The MySQL collation value.
-        returned: success
-        type: str
-    name:
-        description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
-        returned: success
-        type: str
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-        returned: success
-        type: dict
+charset:
+  description:
+  - The charset value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+    and Postgres' [Character Set Support](U(https://www.postgresql.org/docs/9.6/static/multibyte.html))
+    for more details and supported values. Postgres databases only support a value
+    of `UTF8` at creation time.
+  returned: success
+  type: str
+collation:
+  description:
+  - The collation value. See MySQL's [Supported Character Sets and Collations](U(https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html))
+    and Postgres' [Collation Support](U(https://www.postgresql.org/docs/9.6/static/collation.html))
+    for more details and supported values. Postgres databases only support a value
+    of `en_US.UTF8` at creation time.
+  returned: success
+  type: str
+name:
+  description:
+  - The name of the database in the Cloud SQL instance.
+  - This does not include the project ID or instance name.
+  returned: success
+  type: str
+instance:
+  description:
+  - The name of the Cloud SQL instance. This does not include the project ID.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -139,8 +157,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             charset=dict(type='str'),
             collation=dict(type='str'),
-            name=dict(type='str'),
-            instance=dict(required=True, type='dict')
+            name=dict(required=True, type='str'),
+            instance=dict(required=True, type='str'),
         )
     )
 
@@ -156,7 +174,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -180,8 +199,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'sql')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="SQL objects can't be updated to ensure data safety")
 
 
 def delete(module, link, kind):
@@ -192,43 +210,35 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'sql#database',
+        u'instance': module.params.get('instance'),
         u'charset': module.params.get('charset'),
         u'collation': module.params.get('collation'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'sql')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name'),
-        'name': module.params['name']
-    }
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**module.params)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -236,7 +246,7 @@ def return_if_object(module, response, kind):
         return None
 
     # SQL only: return on 403 if not exist
-    if response.status_code == 403:
+    if allow_not_found and response.status_code == 403:
         return None
 
     try:
@@ -246,8 +256,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -273,11 +281,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {
-        u'charset': response.get(u'charset'),
-        u'collation': response.get(u'collation'),
-        u'name': response.get(u'name')
-    }
+    return {u'charset': response.get(u'charset'), u'collation': response.get(u'collation'), u'name': module.params.get('name')}
 
 
 def async_op_url(module, extra_data=None):
@@ -302,11 +306,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
-        op_result = fetch_resource(module, op_uri, 'sql#operation')
+        op_result = fetch_resource(module, op_uri, 'sql#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

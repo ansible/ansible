@@ -24,29 +24,29 @@ options:
     description:
       - Name of the ssh key.
     required: true
+    type: str
   ssh_key:
     description:
       - SSH public key.
       - Required if C(state=present).
-    required: false
+    type: str
   state:
     description:
       - State of the ssh key.
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = '''
 - name: ensure an SSH key is present
-  local_action:
-    module: vultr_ssh_key
+  vultr_ssh_key:
     name: my ssh key
     ssh_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
 - name: ensure an SSH key is absent
-  local_action:
-    module: vultr_ssh_key
+  vultr_ssh_key:
     name: my ssh key
     state: absent
 '''
@@ -61,7 +61,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -73,10 +73,16 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_ssh_key:
   description: Response from Vultr API
@@ -86,22 +92,22 @@ vultr_ssh_key:
     id:
       description: ID of the ssh key
       returned: success
-      type: string
+      type: str
       sample: 5904bc6ed9234
     name:
       description: Name of the ssh key
       returned: success
-      type: string
+      type: str
       sample: my ssh key
     date_created:
       description: Date the ssh key was created
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
     ssh_key:
       description: SSH public key
       returned: success
-      type: string
+      type: str
       sample: "ssh-rsa AA... someother@example.com"
 '''
 
@@ -205,9 +211,9 @@ class AnsibleVultrSshKey(Vultr):
 def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
-        ssh_key=dict(),
-        state=dict(choices=['present', 'absent'], default='present'),
+        name=dict(type='str', required=True),
+        ssh_key=dict(type='str',),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(

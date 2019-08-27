@@ -20,16 +20,13 @@ Actual
 - 2018-06-18 Release Candidate 3
 - 2018-06-25 Release Candidate 4
 - 2018-06-26 Release Candidate 5
-
-Expected
-========
-
 - 2018-06-28 Final Release
 
 
 Release Manager
 ---------------
-Matt Clay (IRC/GitHub: @mattclay)
+* 2.6.0-2.6.12 Matt Clay (IRC/GitHub: @mattclay)
+* 2.6.13+ Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)
 
 
 Engine improvements

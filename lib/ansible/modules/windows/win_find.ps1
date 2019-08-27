@@ -48,11 +48,11 @@ namespace Ansible.Command {
         [DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern int GetFinalPathNameByHandle(IntPtr handle, [In, Out] StringBuilder path, int bufLen, int flags);
 
-        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)] 
-        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess, 
+        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess,
         int dwShareMode, IntPtr SecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, IntPtr hTemplateFile);
 
-        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) { 
+        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) {
             SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
             if(directoryHandle.IsInvalid)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -63,9 +63,9 @@ namespace Ansible.Command {
             if (size<0)
                 throw new Win32Exception(Marshal.GetLastWin32Error()); // The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\" // More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
             if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\')
-                return path.ToString().Substring(4); 
-            else 
-                return path.ToString(); 
+                return path.ToString().Substring(4);
+            else
+                return path.ToString();
         }
     }
 }
@@ -78,13 +78,13 @@ $env:TMP = $original_tmp
 Function Assert-Age($info) {
     $valid_match = $true
 
-    if ($age -ne $null) {
+    if ($null -ne $age) {
         $seconds_per_unit = @{'s'=1; 'm'=60; 'h'=3600; 'd'=86400; 'w'=604800}
         $seconds_pattern = '^(-?\d+)(s|m|h|d|w)?$'
         $match = $age -match $seconds_pattern
         if ($match) {
             [int]$specified_seconds = $matches[1]
-            if ($matches[2] -eq $null) {
+            if ($null -eq $matches[2]) {
                 $chosen_unit = 's'
             } else {
                 $chosen_unit = $matches[2]
@@ -148,7 +148,7 @@ Function Assert-Hidden($info) {
 Function Assert-Pattern($info) {
     $valid_match = $false
 
-    if ($patterns -ne $null) {
+    if ($null -ne $patterns) {
         foreach ($pattern in $patterns) {
             if ($use_regex -eq $true) {
                 # Use -match for regex matching
@@ -172,13 +172,13 @@ Function Assert-Pattern($info) {
 Function Assert-Size($info) {
     $valid_match = $true
 
-    if ($size -ne $null) {
+    if ($null -ne $size) {
         $bytes_per_unit = @{'b'=1; 'k'=1024; 'm'=1024*1024; 'g'=1024*1024*1024; 't'=1024*1024*1024*1024}
         $size_pattern = '^(-?\d+)(b|k|m|g|t)?$'
         $match = $size -match $size_pattern
         if ($match) {
-            [int]$specified_size = $matches[1] 
-            if ($matches[2] -eq $null) {
+            [int]$specified_size = $matches[1]
+            if ($null -eq $matches[2]) {
                 $chosen_byte = 'b'
             } else {
                 $chosen_byte = $matches[2]
@@ -254,20 +254,24 @@ Function Get-FileStat($file) {
     } elseif ($file.PSIsContainer) {
         $isdir = $true
 
-        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($file.Fullname -replace '\\', '\\')'"
-        if ($share_info -ne $null) {
+        $share_info = Get-CIMInstance -Class Win32_Share -Filter "Path='$($file.Fullname -replace '\\', '\\')'"
+        if ($null -ne $share_info) {
             $isshared = $true
             $file_stat.sharename = $share_info.Name
         }
-        
-        # only get the size of a directory if there are files (not directories) inside the folder
-        $dir_files_sum = Get-ChildItem $file.FullName -Recurse | Where-Object { -not $_.PSIsContainer }
 
-        if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
-            $file_stat.size = 0
-        } else {
-            $file_stat.size = ($dir_files_sum | Measure-Object -property length -sum).Sum
+        # only get the size of a directory if there are files (not directories) inside the folder
+        # Get-ChildItem -LiteralPath does not work properly on older OS', use .NET instead
+        $dir_files = @()
+        try {
+            $dir_files = $file.EnumerateFiles("*", [System.IO.SearchOption]::AllDirectories)
+        } catch [System.IO.DirectoryNotFoundException] { # Broken ReparsePoint/Symlink, cannot enumerate
+      	} catch [System.UnauthorizedAccessException] {}  # No ListDirectory permissions, Get-ChildItem ignored this
+        $size = 0
+        foreach ($dir_file in $dir_files) {
+            $size += $dir_file.Length
         }
+        $file_stat.size = $size
     } else {
         $file_stat.size = $file.length
         $file_stat.extension = $file.Extension
@@ -291,8 +295,16 @@ Function Get-FileStat($file) {
 
 Function Get-FilesInFolder($path) {
     $items = @()
-    foreach ($item in (Get-ChildItem -Force -Path $path -ErrorAction SilentlyContinue)) {
-        if ($item.PSIsContainer -and $recurse) {
+
+    # Get-ChildItem -LiteralPath can bomb out on older OS', use .NET instead
+    $dir = New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $path
+    $dir_files = @()
+    try {
+        $dir_files = $dir.EnumerateFileSystemInfos("*", [System.IO.SearchOption]::TopDirectoryOnly)
+    } catch [System.IO.DirectoryNotFoundException] { # Broken ReparsePoint/Symlink, cannot enumerate
+    } catch [System.UnauthorizedAccessException] {}  # No ListDirectory permissions, Get-ChildItem ignored this
+    foreach ($item in $dir_files) {
+        if ($item -is [System.IO.DirectoryInfo] -and $recurse) {
             if (($item.Attributes -like '*ReparsePoint*' -and $follow) -or ($item.Attributes -notlike '*ReparsePoint*')) {
                 # File is a link and we want to follow a link OR file is not a link
                 $items += $item.FullName
@@ -311,8 +323,8 @@ Function Get-FilesInFolder($path) {
 
 $paths_to_check = @()
 foreach ($path in $paths) {
-    if (Test-Path $path) {
-        if ((Get-Item -Force $path).PSIsContainer) {
+    if (Test-Path -LiteralPath $path) {
+        if ((Get-Item -LiteralPath $path -Force).PSIsContainer) {
             $paths_to_check += Get-FilesInFolder -path $path
         } else {
             Fail-Json $result "Argument path $path is a file not a directory"
@@ -321,11 +333,11 @@ foreach ($path in $paths) {
         Fail-Json $result "Argument path $path does not exist cannot get information on"
     }
 }
-$paths_to_check = $paths_to_check | Select-Object -Unique
+$paths_to_check = $paths_to_check | Select-Object -Unique | Sort-Object
 
 foreach ($path in $paths_to_check) {
     try {
-        $file = Get-Item -Force -Path $path
+        $file = Get-Item -LiteralPath $path -Force
         $info = Get-FileStat -file $file
     } catch {
         Add-Warning -obj $result -message "win_find failed to check some files, these files were ignored and will not be part of the result output"
@@ -336,7 +348,7 @@ foreach ($path in $paths_to_check) {
     $result.examined = $new_examined
 
     if ($info -ne $false) {
-        $files = $result.Files        
+        $files = $result.Files
         $files += $info
 
         $new_matched = $result.matched + 1

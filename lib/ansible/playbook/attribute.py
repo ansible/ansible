@@ -41,6 +41,7 @@ class Attribute:
         alias=None,
         extend=False,
         prepend=False,
+        static=False,
     ):
 
         """
@@ -51,7 +52,9 @@ class Attribute:
         :kwarg isa: The type of the attribute.  Allowable values are a string
             representation of any yaml basic datatype, python class, or percent.
             (Enforced at post-validation time).
-        :kwarg private: (not used)
+        :kwarg private: Not used at runtime.  The docs playbook keyword dumper uses it to determine
+            that a keyword should not be documented.  mpdehaan had plans to remove attributes marked
+            private from the ds so they would not have been available at all.
         :kwarg default: Default value if unspecified in the YAML document.
         :kwarg required: Whether or not the YAML document must contain this field.
             If the attribute is None when post-validated, an error will be raised.
@@ -86,20 +89,10 @@ class Attribute:
         self.alias = alias
         self.extend = extend
         self.prepend = prepend
+        self.static = static
 
-        if default is not None and self.isa in _CONTAINERS:
-            if default:
-                self.default = deepcopy(default)
-            else:
-                # Don't need to deepcopy default if the container is empty
-                # Note: switch to try: except once Python3 is more widespread
-                if hasattr(default, 'copy'):
-                    self.default = default.copy()
-                else:
-                    # list on python2 does not have .copy()
-                    self.default = copy(default)
-        else:
-            self.default = default
+        if default is not None and self.isa in _CONTAINERS and not callable(default):
+            raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
 
     def __eq__(self, other):
         return other.priority == self.priority

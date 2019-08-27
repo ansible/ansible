@@ -35,8 +35,8 @@ Roles expect files to be in certain directory names. Roles must include at least
 
 - ``tasks`` - contains the main list of tasks to be executed by the role.
 - ``handlers`` - contains handlers, which may be used by this role or even anywhere outside this role.
-- ``defaults`` - default variables for the role (see :doc:`playbooks_variables` for more information).
-- ``vars`` - other variables for the role (see :doc:`playbooks_variables` for more information).
+- ``defaults`` - default variables for the role (see :ref:`playbooks_variables` for more information).
+- ``vars`` - other variables for the role (see :ref:`playbooks_variables` for more information).
 - ``files`` - contains files which can be deployed via this role.
 - ``templates`` - contains templates which can be deployed via this role.
 - ``meta`` - defines some meta data for this role. See below for more details.
@@ -70,8 +70,8 @@ The classic (original) way to use roles is via the ``roles:`` option for a given
     ---
     - hosts: webservers
       roles:
-         - common
-         - webservers
+        - common
+        - webservers
 
 This designates the following behaviors, for each role 'x':
 
@@ -149,13 +149,13 @@ Or, using the newer syntax::
     - hosts: webservers
       tasks:
       - include_role:
-           name: foo_app_instance
+          name: foo_app_instance
         vars:
           dir: '/opt/a'
           app_port: 5000
       ...
 
-You can conditionally import a role and execute it's tasks::
+You can conditionally import a role and execute its tasks::
 
     ---
 
@@ -173,9 +173,11 @@ Finally, you may wish to assign tags to the tasks inside the roles you specify. 
 
     - hosts: webservers
       roles:
-        - role: bar
-          tags: ["foo"]
-        # using YAML shorthand, this is equivalent to the above
+        - role: foo
+          tags:
+            - bar
+            - baz
+        # using YAML shorthand, this is equivalent to the above:
         - { role: foo, tags: ["bar", "baz"] }
 
 Or, again, using the newer syntax::
@@ -282,8 +284,8 @@ Role dependencies allow you to automatically pull in other roles when using a ro
 
 .. note::
     Role dependencies must use the classic role definition style.
-
-Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above.
+    
+Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 .. note::
     Always remember that when using ``allow_duplicates: true``, it needs to be in the dependent role's ``meta/main.yml``, not the parent.
@@ -332,7 +334,7 @@ The resulting order of execution would be as follows::
 Note that we did not have to use ``allow_duplicates: true`` for ``wheel``, because each instance defined by ``car`` uses different parameter values.
 
 .. note::
-   Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
+   Variable inheritance and scope are detailed in the :ref:`playbooks_variables`.
 
 .. _embedding_modules_and_plugins_in_roles:
 
@@ -397,7 +399,7 @@ Ansible Galaxy
 
 The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
 
-Read the Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>_ page for more information
+Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information
 
 .. seealso::
 

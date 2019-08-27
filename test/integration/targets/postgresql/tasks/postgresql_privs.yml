@@ -1,0 +1,702 @@
+# Setup
+- name: Create DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Create a user to be owner of objects
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: CREATEDB,LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Create a user to be given permissions and other tests
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+#############################
+# Test of solving bug 27327 #
+#############################
+
+# Create the test table and view:
+- name: Create table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: test_table1
+    columns:
+    - id int
+
+- name: Create view
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: "CREATE VIEW test_view AS SELECT id FROM test_table1"
+
+# Test check_mode:
+- name: Grant SELECT on test_view, check_mode
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_privs:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    state: present
+    privs: SELECT
+    type: table
+    objs: test_view
+    roles: "{{ db_user2 }}"
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+
+# Check:
+- name: Check that nothing was changed after the prev step
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: "SELECT grantee FROM information_schema.role_table_grants WHERE table_name='test_view' AND grantee = '{{ db_user2 }}'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# Test true mode:
+- name: Grant SELECT on test_view
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_privs:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    state: present
+    privs: SELECT
+    type: table
+    objs: test_view
+    roles: "{{ db_user2 }}"
+  register: result
+
+- assert:
+    that:
+    - result is changed
+
+# Check:
+- name: Check that nothing was changed after the prev step
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: "SELECT grantee FROM information_schema.role_table_grants WHERE table_name='test_view' AND grantee = '{{ db_user2 }}'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Test true mode:
+- name: Try to grant SELECT again
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_privs:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    state: present
+    privs: SELECT
+    type: table
+    objs: test_view
+    roles: "{{ db_user2 }}"
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+
+# Cleanup:
+- name: Drop test view
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: "DROP VIEW test_view"
+
+- name: Drop test table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: test_table1
+    state: absent
+
+######################################################
+# Test foreign data wrapper and foreign server privs #
+######################################################
+
+# Foreign data wrapper setup
+- name: Create foreign data wrapper extension
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE EXTENSION postgres_fdw" | psql -d "{{ db_name }}"
+
+- name: Create dummy foreign data wrapper
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+- name: Create foreign server
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE SERVER dummy_server FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+# Test
+- name: Grant foreign data wrapper privileges
+  postgresql_privs:
+    state: present
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is changed
+
+- name: Get foreign data wrapper privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT fdwacl FROM pg_catalog.pg_foreign_data_wrapper
+      WHERE fdwname = ANY (ARRAY['dummy']) ORDER BY fdwname
+  register: fdw_result
+
+- assert:
+    that:
+      - "fdw_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' in fdw_result.stdout_lines[-2]"
+
+# Test
+- name: Grant foreign data wrapper privileges second time
+  postgresql_privs:
+    state: present
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is not changed
+
+# Test
+- name: Revoke foreign data wrapper privileges
+  postgresql_privs:
+    state: absent
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is changed
+
+- name: Get foreign data wrapper privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT fdwacl FROM pg_catalog.pg_foreign_data_wrapper
+      WHERE fdwname = ANY (ARRAY['dummy']) ORDER BY fdwname
+  register: fdw_result
+
+- assert:
+    that:
+      - "fdw_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' not in fdw_result.stdout_lines[-2]"
+
+# Test
+- name: Revoke foreign data wrapper privileges for second time
+  postgresql_privs:
+    state: absent
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is not changed
+
+# Test
+- name: Grant foreign server privileges
+  postgresql_privs:
+    state: present
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is changed
+
+- name: Get foreign server privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT srvacl FROM pg_catalog.pg_foreign_server
+      WHERE srvname = ANY (ARRAY['dummy_server']) ORDER BY srvname
+  register: fs_result
+
+- assert:
+    that:
+      - "fs_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' in fs_result.stdout_lines[-2]"
+
+# Test
+- name: Grant foreign server privileges for second time
+  postgresql_privs:
+    state: present
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is not changed
+
+# Test
+- name: Revoke foreign server privileges
+  postgresql_privs:
+    state: absent
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is changed
+
+- name: Get foreign server privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT srvacl FROM pg_catalog.pg_foreign_server
+      WHERE srvname = ANY (ARRAY['dummy_server']) ORDER BY srvname
+  register: fs_result
+
+- assert:
+    that:
+      - "fs_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' not in fs_result.stdout_lines[-2]"
+
+# Test
+- name: Revoke foreign server privileges for second time
+  postgresql_privs:
+    state: absent
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - result is not changed
+
+# Foreign data wrapper cleanup
+- name: Drop foreign server
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "DROP SERVER dummy_server" | psql -d "{{ db_name }}"
+
+- name: Drop dummy foreign data wrapper
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "DROP FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+- name: Drop foreign data wrapper extension
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "DROP EXTENSION postgres_fdw" | psql -d "{{ db_name }}"
+
+##########################################
+# Test ALL_IN_SCHEMA for 'function' type #
+##########################################
+
+# Function ALL_IN_SCHEMA Setup
+- name: Create function for test
+  postgresql_query:
+    query: CREATE FUNCTION public.a() RETURNS integer LANGUAGE SQL AS 'SELECT 2';
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+
+# Test
+- name: Grant execute to all functions
+  postgresql_privs:
+    type: function
+    state: present
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result is changed
+
+- name: Check that all functions have execute privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT proacl FROM pg_proc WHERE proname = 'a'" -t
+  register: result
+
+- assert:
+    that: "'{{ db_user2 }}=X/{{ db_user3 }}' in '{{ result.stdout_lines[0] }}'"
+
+# Test
+- name: Grant execute to all functions again
+  postgresql_privs:
+    type: function
+    state: present
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result is not changed
+
+# Test
+- name: Revoke execute to all functions
+  postgresql_privs:
+    type: function
+    state: absent
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result is changed
+
+# Test
+- name: Revoke execute to all functions again
+  postgresql_privs:
+    type: function
+    state: absent
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that: result is not changed
+
+# Function ALL_IN_SCHEMA cleanup
+- name: Remove function for test
+  postgresql_query:
+    query: DROP FUNCTION public.a();
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+
+#################################################
+# Test ALL_IN_SCHEMA for 'partioned tables type #
+#################################################
+
+# Partioning tables is a feature introduced in Postgresql 10.
+# (see https://www.postgresql.org/docs/10/ddl-partitioning.html )
+# The test below check for this version
+
+# Function ALL_IN_SCHEMA Setup
+- name: Create partioned table for test purpose
+  postgresql_query:
+    query: CREATE TABLE public.testpt (id int not null, logdate date not null) PARTITION BY RANGE (logdate);
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Test
+- name: Grant execute to all tables in check mode
+  postgresql_privs:
+    type: table
+    state: present
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
+  check_mode: yes
+
+# Checks
+- name: Check that all partitioned tables don't have select privileges after the check mode task
+  postgresql_query:
+    query: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_name='testpt' and privilege_type='SELECT' and grantee = %(grantuser)s
+    db: "{{ db_name }}"
+    login_user: '{{ db_user2 }}'
+    login_password: password
+    named_args:
+        grantuser: '{{ db_user2 }}'
+  become: yes
+  become_user: "{{ pg_user }}"
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+
+# Test
+- name: Grant execute to all tables
+  postgresql_privs:
+    type: table
+    state: present
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Checks
+- assert:
+    that: result is changed
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- name: Check that all partitioned tables have select privileges
+  postgresql_query:
+    query: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_name='testpt' and privilege_type='SELECT' and grantee = %(grantuser)s
+    db: "{{ db_name }}"
+    login_user: '{{ db_user2 }}'
+    login_password: password
+    named_args:
+        grantuser: '{{ db_user2 }}'
+  become: yes
+  become_user: "{{ pg_user }}"
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Test
+- name: Grant execute to all tables again to see no changes are reported
+  postgresql_privs:
+    type: table
+    state: present
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Checks
+- assert:
+    that: result is not changed
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Test
+- name: Revoke SELECT to all tables
+  postgresql_privs:
+    type: table
+    state: absent
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Checks
+- assert:
+    that: result is changed
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- name: Check that all partitioned tables don't have select privileges
+  postgresql_query:
+    query: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_name='testpt' and privilege_type='SELECT' and grantee = %(grantuser)s
+    db: "{{ db_name }}"
+    login_user: '{{ db_user2 }}'
+    login_password: password
+    named_args:
+        grantuser: '{{ db_user2 }}'
+  become: yes
+  become_user: "{{ pg_user }}"
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Test
+- name: Revoke SELECT to all tables and no changes are reported
+  postgresql_privs:
+    type: table
+    state: absent
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that: result is not changed
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Table ALL_IN_SCHEMA cleanup
+- name: Remove table for test
+  postgresql_query:
+    query: DROP TABLE public.testpt;
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
+  
+# Cleanup
+- name: Remove user given permissions
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: absent
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Remove user owner of objects
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: absent
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Destroy DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"

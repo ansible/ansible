@@ -29,13 +29,6 @@ options:
         - Create or modify an organization.
         choices: ['present', 'query']
         default: present
-    org_name:
-        description:
-        - Name of organization.
-        - If C(clone) is specified, C(org_name) is the name of the new organization.
-    org_id:
-        description:
-        - ID of organization.
     net_name:
         description:
         - Name of network which MX firewall is in.
@@ -145,37 +138,37 @@ data:
         comment:
             description: Comment to describe the firewall rule.
             returned: always
-            type: string
+            type: str
             sample: Block traffic to server
         src_cidr:
             description: Comma separated list of CIDR notation source networks.
             returned: always
-            type: string
+            type: str
             sample: 192.0.1.1/32,192.0.1.2/32
         src_port:
             description: Comma separated list of source ports.
             returned: always
-            type: string
+            type: str
             sample: 80,443
         dest_cidr:
             description: Comma separated list of CIDR notation destination networks.
             returned: always
-            type: string
+            type: str
             sample: 192.0.1.1/32,192.0.1.2/32
         dest_port:
             description: Comma separated list of destination ports.
             returned: always
-            type: string
+            type: str
             sample: 80,443
         protocol:
             description: Network protocol for which to match against.
             returned: always
-            type: string
+            type: str
             sample: tcp
         policy:
             description: Action to take when rule is matched.
             returned: always
-            type: string
+            type: str
         syslog_enabled:
             description: Whether to log to syslog when rule is matched.
             returned: always
@@ -211,10 +204,10 @@ def assemble_payload(meraki):
 
 
 def get_rules(meraki, net_id):
-        path = meraki.construct_path('get_all', net_id=net_id)
-        response = meraki.request(path, method='GET')
-        if meraki.status == 200:
-            return response
+    path = meraki.construct_path('get_all', net_id=net_id)
+    response = meraki.request(path, method='GET')
+    if meraki.status == 200:
+        return response
 
 
 def main():
@@ -303,7 +296,6 @@ def main():
         update = False
         if meraki.params['syslog_default_rule'] is not None:
             payload['syslogDefaultRule'] = meraki.params['syslog_default_rule']
-            # meraki.fail_json(msg='Payload', payload=payload)
         try:
             if len(rules) - 1 != len(payload['rules']):  # Quick and simple check to avoid more processing
                 update = True
@@ -311,19 +303,21 @@ def main():
                 if rules[len(rules) - 1]['syslogEnabled'] != meraki.params['syslog_default_rule']:
                     update = True
             if update is False:
+                default_rule = rules[len(rules) - 1].copy()
                 del rules[len(rules) - 1]  # Remove default rule for comparison
                 for r in range(len(rules) - 1):
                     if meraki.is_update_required(rules[r], payload['rules'][r]) is True:
                         update = True
+                rules.append(default_rule)
         except KeyError:
             pass
-            # if meraki.params['syslog_default_rule']:
-            #     meraki.fail_json(msg='Compare', original=rules, proposed=payload)
         if update is True:
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = rules
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

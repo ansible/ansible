@@ -69,7 +69,10 @@ EXAMPLES = """
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using only ascii letters
-  mysql_user: name={{ client }} password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}" priv='{{ client }}_{{ tier }}_{{ role }}.*:ALL'
+  mysql_user:
+    name: "{{ client }}"
+    password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
+    priv: '{{ client }}_{{ tier }}_{{ role }}.*:ALL'
 
 - name: create a mysql user with a random password using only digits
   mysql_user:
@@ -265,7 +268,7 @@ def _get_lock(b_path):
     """Get the lock for writing password file."""
     first_process = False
     b_pathdir = os.path.dirname(b_path)
-    lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.md5(b_path).hexdigest())
+    lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
     if not os.path.exists(lockfile) and b_path != to_bytes('/dev/null'):
         try:

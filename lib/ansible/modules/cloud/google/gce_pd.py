@@ -188,7 +188,7 @@ def main():
                     is_attached = True
                     json_output['attached_mode'] = d['mode']
                     json_output['attached_to_instance'] = inst.name
-        except:
+        except Exception:
             pass
 
     # find disk if it already exists
@@ -210,7 +210,7 @@ def main():
             size_gb = int(round(float(size_gb)))
             if size_gb < 1:
                 raise Exception
-        except:
+        except Exception:
             module.fail_json(msg="Must supply a size_gb larger than 1 GB",
                              changed=False)
 

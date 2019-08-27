@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,13 +16,6 @@ module: aci_tenant_span_src_group
 short_description: Manage SPAN source groups (span:SrcGrp)
 description:
 - Manage SPAN source groups on Cisco ACI fabrics.
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(span:SrcGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   admin_state:
@@ -33,25 +26,40 @@ options:
   description:
     description:
     - The description for Span source group.
+    type: str
     aliases: [ descr ]
   dst_group:
     description:
     - The Span destination group to associate with the source group.
+    type: str
   src_group:
     description:
     - The name of the Span source group.
+    type: str
     aliases: [ name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(span:SrcGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -99,7 +107,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -148,17 +156,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -168,23 +176,23 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        src_group=dict(type='str', aliases=['name']),  # Not required for querying all objects
+        admin_state=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
         dst_group=dict(type='str'),
-        src_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(

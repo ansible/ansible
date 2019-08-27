@@ -27,14 +27,14 @@ version_added: 2.4
 short_description: Reboot a HUAWEI CloudEngine switches.
 description:
     - Reboot a HUAWEI CloudEngine switches.
-author: Gong Jianjun (@CloudEngine-Ansible)
+author: Gong Jianjun (@QijunPan)
 requirements: ["ncclient"]
 options:
     confirm:
         description:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         type: bool
-        default: false
+        required: true
     save_config:
         description:
             - Flag indicating whether to save the configuration.
@@ -68,7 +68,7 @@ RETURN = '''
 rebooted:
     description: Whether the device was instructed to reboot.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -134,8 +134,8 @@ def main():
     """ main """
 
     argument_spec = dict(
-        confirm=dict(required=True, type='bool', default='false'),
-        save_config=dict(required=False, type='bool', default='false')
+        confirm=dict(required=True, type='bool'),
+        save_config=dict(default=False, type='bool')
     )
 
     argument_spec.update(ce_argument_spec)

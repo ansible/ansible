@@ -1,0 +1,87 @@
+# Test code for the vmware_host_active_directory module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Active Directory domain isn't available
+
+- when:
+    - vcsim is not defined
+    - active_directory_domain is defined
+  block:
+    - name: Join an AD domain in check mode
+      vmware_host_active_directory:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        ad_domain: '{{ active_directory_domain }}'
+        ad_user: '{{ active_directory_user }}'
+        ad_password: '{{ active_directory_password }}'
+        ad_state: present
+        validate_certs: no
+      register: host_active_directory_info_check_mode
+      check_mode: yes
+
+    - debug: var=host_active_directory_info_check_mode
+
+    - assert:
+        that:
+          - host_active_directory_info_check_mode is defined
+          - host_active_directory_info_check_mode.changed
+
+    - name: Join an AD domain
+      vmware_host_active_directory:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        ad_domain: example.local
+        ad_user: adjoin
+        ad_password: Password123$
+        ad_state: present
+        validate_certs: no
+      register: host_active_directory_info
+      ignore_errors: true
+
+    - debug: var=host_active_directory_info
+
+    - assert:
+        that:
+          - host_active_directory_info is defined
+          - host_active_directory_info.changed
+
+    - name: Leave AD domain in check mode
+      vmware_host_active_directory:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        ad_state: absent
+        validate_certs: no
+      register: host_active_directory_info_2_check_mode
+      check_mode: yes
+
+    - debug: var=host_active_directory_info_2_check_mode
+
+    - assert:
+        that:
+          - host_active_directory_info_2_check_mode is defined
+          - host_active_directory_info_2_check_mode.changed
+
+    - name: Leave AD domain
+      vmware_host_active_directory:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        ad_state: absent
+        validate_certs: no
+      register: host_active_directory_info_2
+      ignore_errors: true
+
+    - debug: var=host_active_directory_info_2
+
+    - assert:
+        that:
+          - host_active_directory_info_2 is defined
+          - host_active_directory_info_2.changed

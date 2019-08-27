@@ -17,7 +17,7 @@ author: "Rob White (@wimnat)"
 options:
   path:
     description:
-      - The path to the role. For more information about paths, see U(http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
+      - The path to the role. For more information about paths, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
     default: "/"
   name:
     description:
@@ -104,32 +104,32 @@ iam_role:
     contains:
         path:
             description: the path to the role
-            type: string
+            type: str
             returned: always
             sample: /
         role_name:
             description: the friendly name that identifies the role
-            type: string
+            type: str
             returned: always
             sample: myrole
         role_id:
             description: the stable and unique string identifying the role
-            type: string
+            type: str
             returned: always
             sample: ABCDEFF4EZ4ABCDEFV4ZC
         arn:
             description: the Amazon Resource Name (ARN) specifying the role
-            type: string
+            type: str
             returned: always
             sample: "arn:aws:iam::1234567890:role/mynewrole"
         create_date:
             description: the date and time, in ISO 8601 date-time format, when the role was created
-            type: string
+            type: str
             returned: always
             sample: "2016-08-14T04:36:28+00:00"
         assume_role_policy_document:
             description: the policy that grants an entity permission to assume the role
-            type: string
+            type: str
             returned: always
             sample: {
                         'statement': [
@@ -158,7 +158,7 @@ iam_role:
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, sort_json_policy_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, compare_policies
 from ansible.module_utils.ec2 import AWSRetry
 
 import json
@@ -171,8 +171,7 @@ except ImportError:
 
 
 def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
-
-    if sort_json_policy_dict(current_policy_doc) == sort_json_policy_dict(json.loads(new_policy_doc)):
+    if not compare_policies(current_policy_doc, json.loads(new_policy_doc)):
         return True
     else:
         return False
@@ -211,6 +210,7 @@ def convert_friendly_names_to_arns(connection, module, policy_names):
 
 
 def remove_policies(connection, module, policies_to_remove, params):
+    changed = False
     for policy in policies_to_remove:
         try:
             if not module.check_mode:
@@ -221,7 +221,8 @@ def remove_policies(connection, module, policies_to_remove, params):
         except BotoCoreError as e:
             module.fail_json(msg="Unable to detach policy {0} from {1}: {2}".format(policy, params['RoleName'], to_native(e)),
                              exception=traceback.format_exc())
-        return True
+        changed = True
+    return changed
 
 
 def create_or_update_role(connection, module):
@@ -337,7 +338,7 @@ def create_or_update_role(connection, module):
                 connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Check Description update
-    if not role.get('MadeInCheckMode') and params.get('Description') and role['Description'] != params['Description']:
+    if not role.get('MadeInCheckMode') and params.get('Description') and role.get('Description') != params['Description']:
         try:
             if not module.check_mode:
                 connection.update_role_description(RoleName=params['RoleName'], Description=params['Description'])

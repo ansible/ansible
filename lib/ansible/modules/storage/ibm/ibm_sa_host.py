@@ -16,11 +16,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ibm_sa_host
-short_description: Adds hosts to or removes them from IBM Spectrum Accelerate storage systems.
+short_description: Adds hosts to or removes them from IBM Spectrum Accelerate Family storage systems.
 version_added: "2.7"
 
 description:
-    - "This module adds hosts to or removes them from IBM Spectrum Accelerate storage systems."
+    - "This module adds hosts to or removes them from IBM Spectrum Accelerate Family storage systems."
 
 options:
     host:
@@ -58,7 +58,7 @@ extends_documentation_fragment:
     - ibm_storage
 
 author:
-    - Tzur Eliyahu (tzure@il.ibm.com)
+    - Tzur Eliyahu (@tzure)
 '''
 
 EXAMPLES = '''

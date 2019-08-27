@@ -1,0 +1,14 @@
+---
+- debug:
+    msg: "Start junos_l2_interfaces base config ansible_connection={{ ansible_connection }}"
+
+- name: Configure vlan
+  junos_config:
+    lines:
+      - set vlans vlan100 vlan-id 100
+      - set vlans vlan200 vlan-id 200
+      - set vlans vlan300 vlan-id 300
+      - set vlans vlan400 vlan-id 400
+
+- debug:
+    msg: "End junos_l2_interfaces base config ansible_connection={{ ansible_connection }}"

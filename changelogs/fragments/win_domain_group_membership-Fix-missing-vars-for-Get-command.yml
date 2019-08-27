@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_domain_group_membership - Fix missing @extra_vars on Get-ADObject to support dirrent domain and credentials for retrival (https://github.com/ansible/ansible/issues/57404)"

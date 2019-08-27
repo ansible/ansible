@@ -36,6 +36,7 @@ options:
         description:
             - Name of the host as defined in vCenter.
         required: True
+        type: str
     vsan:
         description:
             - Specify which VSAN compliant mode to enter.
@@ -45,6 +46,7 @@ options:
             - 'noAction'
         required: False
         aliases: [ 'vsan_mode' ]
+        type: str
     evacuate:
         description:
             - If set to C(True), evacuate all powered off VMs.
@@ -56,6 +58,7 @@ options:
             - Specify a timeout for the operation.
         required: False
         default: 0
+        type: int
     state:
         description:
             - Enter or exit maintenance mode.
@@ -64,6 +67,7 @@ options:
             - absent
         default: present
         required: False
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -85,17 +89,17 @@ RETURN = '''
 hostsystem:
     description: Name of vim reference
     returned: always
-    type: string
+    type: str
     sample: "'vim.HostSystem:host-236'"
 hostname:
     description: Name of host in vCenter
     returned: always
-    type: string
+    type: str
     sample: "esxi.local.domain"
 status:
     description: Action taken
     returned: always
-    type: string
+    type: str
     sample: "ENTER"
 '''
 

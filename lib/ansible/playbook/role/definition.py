@@ -27,27 +27,24 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+from ansible.utils.collection_loader import get_collection_role_path, AnsibleCollectionRef
 from ansible.utils.path import unfrackpath
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+from ansible.utils.display import Display
 
 __all__ = ['RoleDefinition']
 
+display = Display()
 
-class RoleDefinition(Base, Become, Conditional, Taggable):
+
+class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     _role = FieldAttribute(isa='string')
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
         super(RoleDefinition, self).__init__()
 
@@ -56,8 +53,10 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         self._loader = loader
 
         self._role_path = None
+        self._role_collection = None
         self._role_basedir = role_basedir
         self._role_params = dict()
+        self._collection_list = collection_list
 
     # def __repr__(self):
     #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
@@ -130,8 +129,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if self._variable_manager:
             all_vars = self._variable_manager.get_vars(play=self._play)
             templar = Templar(loader=self._loader, variables=all_vars)
-            if templar._contains_vars(role_name):
-                role_name = templar.template(role_name)
+            role_name = templar.template(role_name)
 
         return role_name
 
@@ -142,6 +140,31 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
         '''
+
+        # create a templar class to template the dependency names, in
+        # case they contain variables
+        if self._variable_manager is not None:
+            all_vars = self._variable_manager.get_vars(play=self._play)
+        else:
+            all_vars = dict()
+
+        templar = Templar(loader=self._loader, variables=all_vars)
+        role_name = templar.template(role_name)
+
+        role_tuple = None
+
+        # try to load as a collection-based role first
+        if self._collection_list or AnsibleCollectionRef.is_valid_fqcr(role_name):
+            role_tuple = get_collection_role_path(role_name, self._collection_list)
+
+        if role_tuple:
+            # we found it, stash collection data and return the name/path tuple
+            self._role_collection = role_tuple[2]
+            return role_tuple[0:2]
+
+        # FUTURE: refactor this to be callable from internal so we can properly order ansible.legacy searches with the collections keyword
+        if self._collection_list and 'ansible.legacy' not in self._collection_list:
+            raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(self._collection_list)), obj=self._ds)
 
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
@@ -161,16 +184,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # in the loader (which should be the playbook dir itself) but without
         # the roles/ dir appended
         role_search_paths.append(self._loader.get_basedir())
-
-        # create a templar class to template the dependency names, in
-        # case they contain variables
-        if self._variable_manager is not None:
-            all_vars = self._variable_manager.get_vars(play=self._play)
-        else:
-            all_vars = dict()
-
-        templar = Templar(loader=self._loader, variables=all_vars)
-        role_name = templar.template(role_name)
 
         # now iterate through the possible paths and return the first one we find
         for path in role_search_paths:

@@ -1,0 +1,240 @@
+---
+- block:
+  - name: 'Generate privatekey'
+    openssl_privatekey:
+      path: "{{ output_dir }}/ansible_pkey.pem"
+
+  - name: 'Generate privatekey2'
+    openssl_privatekey:
+      path: "{{ output_dir }}/ansible_pkey2.pem"
+
+  - name: 'Generate privatekey3'
+    openssl_privatekey:
+      path: "{{ output_dir }}/ansible_pkey3.pem"
+
+  - name: 'Generate CSR'
+    openssl_csr:
+      path: "{{ output_dir }}/ansible.csr"
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      commonName: 'www.ansible.com'
+
+  - name: 'Generate CSR 2'
+    openssl_csr:
+      path: "{{ output_dir }}/ansible2.csr"
+      privatekey_path: "{{ output_dir }}/ansible_pkey2.pem"
+      commonName: 'www2.ansible.com'
+
+  - name: 'Generate CSR 3'
+    openssl_csr:
+      path: "{{ output_dir }}/ansible3.csr"
+      privatekey_path: "{{ output_dir }}/ansible_pkey3.pem"
+      commonName: 'www3.ansible.com'
+
+  - name: 'Generate certificate'
+    openssl_certificate:
+      path: "{{ output_dir }}/{{ item.name }}.crt"
+      privatekey_path: "{{ output_dir }}/{{ item.pkey }}"
+      csr_path: "{{ output_dir }}/{{ item.name }}.csr"
+      provider: selfsigned
+    loop:
+      - name: ansible
+        pkey: ansible_pkey.pem
+      - name: ansible2
+        pkey: ansible_pkey2.pem
+      - name: ansible3
+        pkey: ansible_pkey3.pem
+
+  - name: 'Generate PKCS#12 file'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    register: p12_standard
+
+  - name: 'Generate PKCS#12 file again, idempotency'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    register: p12_standard_idempotency
+
+  - name: 'Generate PKCS#12 file (force)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: True
+    register: p12_force
+
+  - name: 'Generate PKCS#12 file (force + change mode)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: True
+      mode: 0644
+    register: p12_force_and_mode
+
+  - name: 'Dump PKCS#12'
+    openssl_pkcs12:
+      src: "{{ output_dir }}/ansible.p12"
+      path: "{{ output_dir }}/ansible_parse.pem"
+      action: 'parse'
+      state: 'present'
+
+  - name: 'Generate PKCS#12 file with multiple certs'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_multi_certs.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      ca_certificates:
+        - "{{ output_dir }}/ansible2.crt"
+        - "{{ output_dir }}/ansible3.crt"
+      state: present
+    register: p12_multiple_certs
+
+  - name: 'Generate PKCS#12 file with multiple certs, again (idempotency)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_multi_certs.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      ca_certificates:
+        - "{{ output_dir }}/ansible2.crt"
+        - "{{ output_dir }}/ansible3.crt"
+      state: present
+    register: p12_multiple_certs_idempotency
+
+  - name: 'Dump PKCS#12 with multiple certs'
+    openssl_pkcs12:
+      src: "{{ output_dir }}/ansible_multi_certs.p12"
+      path: "{{ output_dir }}/ansible_parse_multi_certs.pem"
+      action: 'parse'
+      state: 'present'
+
+  - name: Generate privatekey with password
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekeypw.pem'
+      passphrase: hunter2
+      cipher: auto
+      select_crypto_backend: cryptography
+
+  - name: 'Generate PKCS#12 file (password fail 1)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_pw1.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      privatekey_passphrase: hunter2
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    ignore_errors: yes
+    register: passphrase_error_1
+
+  - name: 'Generate PKCS#12 file (password fail 2)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_pw2.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+      privatekey_passphrase: wrong_password
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    ignore_errors: yes
+    register: passphrase_error_2
+
+  - name: 'Generate PKCS#12 file (password fail 3)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_pw3.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    ignore_errors: yes
+    register: passphrase_error_3
+
+  - name: 'Generate PKCS#12 file, no privatekey'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_no_pkey.p12"
+      friendly_name: 'abracadabra'
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    register: p12_no_pkey
+
+  - name: 'Create broken PKCS#12'
+    copy:
+      dest: "{{ output_dir }}/broken.p12"
+      content: "broken"
+  - name: 'Regenerate broken PKCS#12'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/broken.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: True
+      mode: 0644
+    register: output_broken
+
+  - name: 'Generate PKCS#12 file'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      backup: yes
+    register: p12_backup_1
+  - name: 'Generate PKCS#12 file (idempotent)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      backup: yes
+    register: p12_backup_2
+  - name: 'Generate PKCS#12 file (change)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      friendly_name: 'abra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: yes  # FIXME: idempotency does not work, so we have to force! (https://github.com/ansible/ansible/issues/53221)
+      backup: yes
+    register: p12_backup_3
+  - name: 'Generate PKCS#12 file (remove)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      state: absent
+      backup: yes
+    register: p12_backup_4
+  - name: 'Generate PKCS#12 file (remove, idempotent)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      state: absent
+      backup: yes
+    register: p12_backup_5
+
+  - import_tasks: ../tests/validate.yml
+
+  always:
+  - name: 'Delete PKCS#12 file'
+    openssl_pkcs12:
+      state: absent
+      path: '{{ output_dir }}/{{ item }}.p12'
+    loop:
+      - 'ansible'
+      - 'ansible_no_pkey'
+      - 'ansible_multi_certs'
+      - 'ansible_pw1'
+      - 'ansible_pw2'
+      - 'ansible_pw3'

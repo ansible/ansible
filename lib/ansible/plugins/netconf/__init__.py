@@ -24,13 +24,17 @@ from functools import wraps
 
 from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
-
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import missing_required_lib
 
 try:
     from ncclient.operations import RPCError
-    from ncclient.xml_ import to_xml, to_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    from ncclient.xml_ import to_xml, to_ele, NCElement
+    HAS_NCCLIENT = True
+    NCCLIENT_IMP_ERR = None
+except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
+    NCCLIENT_IMP_ERR = err
 
 try:
     from lxml.etree import Element, SubElement, tostring, fromstring
@@ -43,6 +47,15 @@ def ensure_connected(func):
     def wrapped(self, *args, **kwargs):
         if not self._connection._connected:
             self._connection._connect()
+        return func(self, *args, **kwargs)
+    return wrapped
+
+
+def ensure_ncclient(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if not HAS_NCCLIENT:
+            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
         return func(self, *args, **kwargs)
     return wrapped
 
@@ -102,8 +115,12 @@ class NetconfBase(AnsiblePlugin):
 
     def __init__(self, connection):
         self._connection = connection
-        self.m = self._connection._manager
 
+    @property
+    def m(self):
+        return self._connection._manager
+
+    @ensure_ncclient
     @ensure_connected
     def rpc(self, name):
         """
@@ -206,9 +223,22 @@ class NetconfBase(AnsiblePlugin):
         """
         if rpc_command is None:
             raise ValueError('rpc_command value must be provided')
-        req = fromstring(rpc_command)
-        resp = self.m.dispatch(req, source=source, filter=filter)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+
+        resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
+
+        if isinstance(resp, NCElement):
+            # In case xml reply is transformed or namespace is removed in
+            # ncclient device specific handler return modified xml response
+            result = resp.data_xml
+        elif hasattr(resp, 'data_ele') and resp.data_ele:
+            # if data node is present in xml response return the xml string
+            # with data node as root
+            result = resp.data_xml
+        else:
+            # return raw xml string received from host with rpc-reply as the root node
+            result = resp.xml
+
+        return result
 
     @ensure_connected
     def lock(self, target="candidate"):

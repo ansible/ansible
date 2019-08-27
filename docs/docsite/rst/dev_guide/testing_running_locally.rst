@@ -57,7 +57,7 @@ Interactive Shell
 Use the ``ansible-test shell`` command to get an interactive shell in the same environment used to run tests. Examples:
 
 * ``ansible-test shell --docker`` - Open a shell in the default docker container.
-* ``ansible-test shell --tox --python 3.6`` - Open a shell in the Python 3.6 ``tox`` environment.
+* ``ansible-test shell --tox 3.6`` - Open a shell in the Python 3.6 ``tox`` environment.
 
 
 Code Coverage
@@ -65,12 +65,12 @@ Code Coverage
 
 Code coverage reports make it easy to identify untested code for which more tests should
 be written.  Online reports are available but only cover the ``devel`` branch (see
-:doc:`testing`).  For new code local reports are needed.
+:ref:`developing_testing`).  For new code local reports are needed.
 
 Add the ``--coverage`` option to any test command to collect code coverage data.  If you
 aren't using the ``--tox`` or ``--docker`` options which create an isolated python
 environment then you may have to use the ``--requirements`` option to ensure that the
-correct version of the coverage module is installed
+correct version of the coverage module is installed::
 
    ansible-test units --coverage apt
    ansible-test integration --coverage aws_lambda --tox --requirements

@@ -26,6 +26,21 @@ options:
     description: Flag to control if the lookup will observe HTTP proxy environment variables when present.
     type: boolean
     default: True
+  username:
+    description: Username to use for HTTP authentication.
+    type: string
+    default: None
+    version_added: "2.8"
+  password:
+    description: Password to use for HTTP authentication.
+    type: string
+    default: None
+    version_added: "2.8"
+  headers:
+    description: HTTP request headers
+    type: dictionary
+    default: {}
+    version_added: "2.9"
 """
 
 EXAMPLES = """
@@ -35,6 +50,12 @@ EXAMPLES = """
 
 - name: display ip ranges
   debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
+
+- name: url lookup using authentication
+  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+
+- name: url lookup using headers
+  debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
 """
 
 RETURN = """
@@ -47,12 +68,9 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class LookupModule(LookupBase):
@@ -65,7 +83,11 @@ class LookupModule(LookupBase):
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
             try:
-                response = open_url(term, validate_certs=self.get_option('validate_certs'), use_proxy=self.get_option('use_proxy'))
+                response = open_url(term, validate_certs=self.get_option('validate_certs'),
+                                    use_proxy=self.get_option('use_proxy'),
+                                    url_username=self.get_option('username'),
+                                    url_password=self.get_option('password'),
+                                    headers=self.get_option('headers'))
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:

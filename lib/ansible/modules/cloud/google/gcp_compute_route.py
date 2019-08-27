@@ -18,213 +18,240 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_compute_route
 description:
-    - Represents a Route resource.
-    - A route is a rule that specifies how certain packets should be handled by the virtual
-      network. Routes are associated with virtual machines by tag, and the set of routes
-      for a particular virtual machine is called its routing table. For each packet leaving
-      a virtual machine, the system searches that virtual machine's routing table for
-      a single best matching route.
-    - Routes match packets by destination IP address, preferring smaller or more specific
-      ranges over larger ones. If there is a tie, the system selects the route with the
-      smallest priority value. If there is still a tie, it uses the layer three and four
-      packet headers to select just one of the remaining matching routes. The packet is
-      then forwarded as specified by the next_hop field of the winning route -- either
-      to another virtual machine destination, a virtual machine gateway or a Compute Engine-operated
-      gateway. Packets that do not match any route in the sending virtual machine's routing
-      table will be dropped.
-    - A Route resource must have exactly one specification of either nextHopGateway, nextHopInstance,
-      nextHopIp, or nextHopVpnTunnel.
+- Represents a Route resource.
+- A route is a rule that specifies how certain packets should be handled by the virtual
+  network. Routes are associated with virtual machines by tag, and the set of routes
+  for a particular virtual machine is called its routing table. For each packet leaving
+  a virtual machine, the system searches that virtual machine's routing table for
+  a single best matching route.
+- Routes match packets by destination IP address, preferring smaller or more specific
+  ranges over larger ones. If there is a tie, the system selects the route with the
+  smallest priority value. If there is still a tie, it uses the layer three and four
+  packet headers to select just one of the remaining matching routes. The packet is
+  then forwarded as specified by the next_hop field of the winning route -- either
+  to another virtual machine destination, a virtual machine gateway or a Compute Engine-operated
+  gateway. Packets that do not match any route in the sending virtual machine's routing
+  table will be dropped.
+- A Route resource must have exactly one specification of either nextHopGateway, nextHopInstance,
+  nextHopIp, or nextHopVpnTunnel.
 short_description: Creates a GCP Route
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    dest_range:
-        description:
-            - The destination range of outgoing packets that this route applies to.
-            - Only IPv4 is supported.
-        required: true
+  state:
     description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        required: false
-        version_added: 2.7
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    network:
-        description:
-            - The network that this route applies to.
-        required: true
-    priority:
-        description:
-            - The priority of this route. Priority is used to break ties in cases where there
-              is more than one matching route of equal prefix length.
-            - In the case of two routes with equal prefix length, the one with the lowest-numbered
-              priority value wins.
-            - Default value is 1000. Valid range is 0 through 65535.
-        required: false
-    tags:
-        description:
-            - A list of instance tags to which this route applies.
-        required: false
-    next_hop_gateway:
-        description:
-            - URL to a gateway that should handle matching packets.
-            - 'Currently, you can only specify the internet gateway, using a full or partial valid
-              URL:  * U(https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway)
-              * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
-              .'
-        required: false
-    next_hop_instance:
-        description:
-            - URL to an instance that should handle matching packets.
-            - 'You can specify this as a full or partial URL. For example:  * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
-              instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
-              .'
-        required: false
-    next_hop_ip:
-        description:
-            - Network IP address of an instance that should handle matching packets.
-        required: false
-    next_hop_vpn_tunnel:
-        description:
-            - URL to a VpnTunnel that should handle matching packets.
-        required: false
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+    type: str
+  dest_range:
+    description:
+    - The destination range of outgoing packets that this route applies to.
+    - Only IPv4 is supported.
+    required: true
+    type: str
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource.
+    required: false
+    type: str
+    version_added: 2.7
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+    type: str
+  network:
+    description:
+    - The network that this route applies to.
+    - 'This field represents a link to a Network resource in GCP. It can be specified
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
+    required: true
+    type: dict
+  priority:
+    description:
+    - The priority of this route. Priority is used to break ties in cases where there
+      is more than one matching route of equal prefix length.
+    - In the case of two routes with equal prefix length, the one with the lowest-numbered
+      priority value wins.
+    - Default value is 1000. Valid range is 0 through 65535.
+    required: false
+    type: int
+  tags:
+    description:
+    - A list of instance tags to which this route applies.
+    required: false
+    type: list
+  next_hop_gateway:
+    description:
+    - URL to a gateway that should handle matching packets.
+    - 'Currently, you can only specify the internet gateway, using a full or partial
+      valid URL: * U(https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway)
+      * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
+      .'
+    required: false
+    type: str
+  next_hop_instance:
+    description:
+    - URL to an instance that should handle matching packets.
+    - 'You can specify this as a full or partial URL. For example: * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
+      instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
+      .'
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_instance task and then set this next_hop_instance field to
+      "{{ name-of-resource }}"'
+    required: false
+    type: dict
+  next_hop_ip:
+    description:
+    - Network IP address of an instance that should handle matching packets.
+    required: false
+    type: str
+  next_hop_vpn_tunnel:
+    description:
+    - URL to a VpnTunnel that should handle matching packets.
+    - 'This field represents a link to a VpnTunnel resource in GCP. It can be specified
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_vpn_tunnel task and then set this next_hop_vpn_tunnel field
+      to "{{ name-of-resource }}"'
+    required: false
+    type: dict
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)"
-    - "Using Routes: U(https://cloud.google.com/vpc/docs/using-routes)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)'
+- 'Using Routes: U(https://cloud.google.com/vpc/docs/using-routes)'
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-route"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-route
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a route
   gcp_compute_route:
-      name: "test_object"
-      dest_range: 192.168.6.0/24
-      next_hop_gateway: global/gateways/default-internet-gateway
-      network: "{{ network }}"
-      tags:
-      - backends
-      - databases
-      project: "test_project"
-      auth_kind: "service_account"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    dest_range: 192.168.6.0/24
+    next_hop_gateway: global/gateways/default-internet-gateway
+    network: "{{ network }}"
+    tags:
+    - backends
+    - databases
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
-    dest_range:
-        description:
-            - The destination range of outgoing packets that this route applies to.
-            - Only IPv4 is supported.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        returned: success
-        type: str
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    network:
-        description:
-            - The network that this route applies to.
-        returned: success
-        type: dict
-    priority:
-        description:
-            - The priority of this route. Priority is used to break ties in cases where there
-              is more than one matching route of equal prefix length.
-            - In the case of two routes with equal prefix length, the one with the lowest-numbered
-              priority value wins.
-            - Default value is 1000. Valid range is 0 through 65535.
-        returned: success
-        type: int
-    tags:
-        description:
-            - A list of instance tags to which this route applies.
-        returned: success
-        type: list
-    next_hop_gateway:
-        description:
-            - URL to a gateway that should handle matching packets.
-            - 'Currently, you can only specify the internet gateway, using a full or partial valid
-              URL:  * U(https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway)
-              * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
-              .'
-        returned: success
-        type: str
-    next_hop_instance:
-        description:
-            - URL to an instance that should handle matching packets.
-            - 'You can specify this as a full or partial URL. For example:  * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
-              instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
-              .'
-        returned: success
-        type: str
-    next_hop_ip:
-        description:
-            - Network IP address of an instance that should handle matching packets.
-        returned: success
-        type: str
-    next_hop_vpn_tunnel:
-        description:
-            - URL to a VpnTunnel that should handle matching packets.
-        returned: success
-        type: str
-    next_hop_network:
-        description:
-            - URL to a Network that should handle matching packets.
-        returned: success
-        type: str
+destRange:
+  description:
+  - The destination range of outgoing packets that this route applies to.
+  - Only IPv4 is supported.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource.
+  returned: success
+  type: str
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+network:
+  description:
+  - The network that this route applies to.
+  returned: success
+  type: dict
+priority:
+  description:
+  - The priority of this route. Priority is used to break ties in cases where there
+    is more than one matching route of equal prefix length.
+  - In the case of two routes with equal prefix length, the one with the lowest-numbered
+    priority value wins.
+  - Default value is 1000. Valid range is 0 through 65535.
+  returned: success
+  type: int
+tags:
+  description:
+  - A list of instance tags to which this route applies.
+  returned: success
+  type: list
+nextHopGateway:
+  description:
+  - URL to a gateway that should handle matching packets.
+  - 'Currently, you can only specify the internet gateway, using a full or partial
+    valid URL: * U(https://www.googleapis.com/compute/v1/projects/project/global/gateways/default-internet-gateway)
+    * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
+    .'
+  returned: success
+  type: str
+nextHopInstance:
+  description:
+  - URL to an instance that should handle matching packets.
+  - 'You can specify this as a full or partial URL. For example: * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
+    instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
+    .'
+  returned: success
+  type: dict
+nextHopIp:
+  description:
+  - Network IP address of an instance that should handle matching packets.
+  returned: success
+  type: str
+nextHopVpnTunnel:
+  description:
+  - URL to a VpnTunnel that should handle matching packets.
+  returned: success
+  type: dict
+nextHopNetwork:
+  description:
+  - URL to a Network that should handle matching packets.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -253,9 +280,9 @@ def main():
             priority=dict(type='int'),
             tags=dict(type='list', elements='str'),
             next_hop_gateway=dict(type='str'),
-            next_hop_instance=dict(type='str'),
+            next_hop_instance=dict(type='dict'),
             next_hop_ip=dict(type='str'),
-            next_hop_vpn_tunnel=dict(type='str')
+            next_hop_vpn_tunnel=dict(type='dict'),
         )
     )
 
@@ -271,7 +298,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -295,8 +323,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):
@@ -314,21 +342,21 @@ def resource_to_request(module):
         u'priority': module.params.get('priority'),
         u'tags': module.params.get('tags'),
         u'nextHopGateway': module.params.get('next_hop_gateway'),
-        u'nextHopInstance': module.params.get('next_hop_instance'),
+        u'nextHopInstance': replace_resource_dict(module.params.get(u'next_hop_instance', {}), 'selfLink'),
         u'nextHopIp': module.params.get('next_hop_ip'),
-        u'nextHopVpnTunnel': module.params.get('next_hop_vpn_tunnel')
+        u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -339,9 +367,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/routes".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -351,13 +379,11 @@ def return_if_object(module, response, kind):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -391,10 +417,10 @@ def response_to_hash(module, response):
         u'priority': module.params.get('priority'),
         u'tags': module.params.get('tags'),
         u'nextHopGateway': module.params.get('next_hop_gateway'),
-        u'nextHopInstance': module.params.get('next_hop_instance'),
+        u'nextHopInstance': replace_resource_dict(module.params.get(u'next_hop_instance', {}), 'selfLink'),
         u'nextHopIp': module.params.get('next_hop_ip'),
-        u'nextHopVpnTunnel': module.params.get('next_hop_vpn_tunnel'),
-        u'nextHopNetwork': response.get(u'nextHopNetwork')
+        u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink'),
+        u'nextHopNetwork': response.get(u'nextHopNetwork'),
     }
 
 
@@ -420,11 +446,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

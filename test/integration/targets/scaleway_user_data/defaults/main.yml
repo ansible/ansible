@@ -1,0 +1,15 @@
+---
+
+cloud_init_script: '''
+#cloud-config
+
+# final_message
+# default: cloud-init boot finished at $TIMESTAMP. Up $UPTIME seconds
+# this message is written by cloud-final when the system is finished
+# its first boot
+final_message: "The system is finally up, after $UPTIME seconds"
+'''
+scaleway_image_id: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+scaleway_organization: '{{ scw_org }}'
+scaleway_region: ams1
+scaleway_commerial_type: START1-S

@@ -70,53 +70,120 @@ options:
     localfs:
         description:
             - "Dictionary with values for localfs storage type:"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
             - "Note that these parameters are not idempotent."
+        suboptions:
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
         version_added: "2.4"
     nfs:
         description:
             - "Dictionary with values for NFS storage type:"
-            - "C(address) - Address of the NFS server. E.g.: myserver.mydomain.com"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
-            - "C(version) - NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
-            - "C(timeout) - The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
-            - "C(retrans) - The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
-            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            address:
+                description:
+                    - "Address of the NFS server. E.g.: myserver.mydomain.com"
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
+            version:
+                description:
+                    - "NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
+            timeout:
+                description:
+                    - "The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
+            retrans:
+                description:
+                    - "The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
+            mount_options:
+                description:
+                    - "Option which will be passed when mounting storage."
     iscsi:
         description:
             - "Dictionary with values for iSCSI storage type:"
-            - "C(address) - Address of the iSCSI storage server."
-            - "C(port) - Port of the iSCSI storage server."
-            - "C(target) - The target IQN for the storage device."
-            - "C(lun_id) - LUN id(s)."
-            - "C(username) - A CHAP user name for logging into a target."
-            - "C(password) - A CHAP password for logging into a target."
-            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overridden before adding."
-            - C(target_lun_map) - List of dictionary containing targets and LUNs."
             - "Note that these parameters are not idempotent."
-            - "Parameter C(target_lun_map) is supported since Ansible 2.5."
-
+        suboptions:
+            address:
+                description:
+                    - Address of the iSCSI storage server.
+            port:
+                description:
+                    - Port of the iSCSI storage server.
+            target:
+                description:
+                    - The target IQN for the storage device.
+            lun_id:
+                description:
+                    - LUN id(s).
+            username:
+                description:
+                    - A CHAP user name for logging into a target.
+            password:
+                description:
+                    - A CHAP password for logging into a target.
+            override_luns:
+                description:
+                    - If I(True) ISCSI storage domain luns will be overridden before adding.
+                type: bool
+            target_lun_map:
+                description:
+                    - List of dictionary containing targets and LUNs.
+                version_added: 2.5
     posixfs:
         description:
             - "Dictionary with values for PosixFS storage type:"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
-            - "C(vfs_type) - Virtual File System type."
-            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
+            vfs_type:
+                description:
+                    - Virtual File System type.
+            mount_options:
+                description:
+                    - Option which will be passed when mounting storage.
     glusterfs:
         description:
             - "Dictionary with values for GlusterFS storage type:"
-            - "C(address) - Address of the Gluster server. E.g.: myserver.mydomain.com"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
-            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            address:
+                description:
+                    - "Address of the Gluster server. E.g.: myserver.mydomain.com"
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
+            mount_options:
+                description:
+                    - Option which will be passed when mounting storage.
+    managed_block_storage:
+        description:
+            - "Dictionary with values for managed block storage type"
+            - "Note: available from ovirt 4.3"
+        suboptions:
+            driver_options:
+                description:
+                    - "The options to be passed when creating a storage domain using a cinder driver."
+                    - "List of dictionary containing C(name) and C(value) of driver option"
+            driver_sensitive_options:
+                description:
+                    - "Parameters containing sensitive information, to be passed when creating a storage domain using a cinder driver."
+                    - "List of dictionary containing C(name) and C(value) of driver sensitive option"
+        version_added: "2.9"
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
-            - "C(lun_id) - LUN id."
-            - "C(override_luns) - If I(True) FCP storage domain LUNs will be overridden before adding."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            lun_id:
+                description:
+                    - LUN id.
+            override_luns:
+                description:
+                    - If I(True) FCP storage domain LUNs will be overridden before adding.
+                type: bool
     wipe_after_delete:
         description:
             - "Boolean flag which indicates whether the storage domain should wipe the data after delete."
@@ -272,6 +339,26 @@ EXAMPLES = '''
       address: 10.34.63.199
       path: /path/iso
 
+# Create managed storage domain
+# Available from ovirt 4.3 and ansible 2.9
+- ovirt_storage_domain:
+    name: my_managed_domain
+    host: myhost
+    data_center: mydatacenter
+    managed_block_storage:
+      driver_options:
+        - name: rbd_pool
+          value: pool1
+        - name: rbd_user
+          value: admin
+        - name: volume_driver
+          value: cinder.volume.drivers.rbd.RBDDriver
+        - name: rbd_keyring_conf
+          value: /etc/ceph/keyring
+      driver_sensitive_options:
+        - name: secret_password
+          value: password
+
 # Remove storage domain
 - ovirt_storage_domain:
     state: absent
@@ -311,6 +398,7 @@ from ansible.module_utils.ovirt import (
     equal,
     get_entity,
     get_id_by_name,
+    OvirtRetry,
     ovirt_full_argument_spec,
     search_by_name,
     search_by_attributes,
@@ -321,12 +409,12 @@ from ansible.module_utils.ovirt import (
 class StorageDomainModule(BaseModule):
 
     def _get_storage_type(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs', 'managed_block_storage']:
             if self.param(sd_type) is not None:
                 return sd_type
 
     def _get_storage(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs', 'managed_block_storage']:
             if self.param(sd_type) is not None:
                 return self.param(sd_type)
 
@@ -379,10 +467,22 @@ class StorageDomainModule(BaseModule):
             warning_low_space_indicator=self.param('warning_low_space'),
             import_=True if self.param('state') == 'imported' else None,
             id=self.param('id') if self.param('state') == 'imported' else None,
-            type=otypes.StorageDomainType(self.param('domain_function')),
+            type=otypes.StorageDomainType(storage_type if storage_type == 'managed_block_storage' else self.param('domain_function')),
             host=otypes.Host(name=self.param('host')),
             discard_after_delete=self.param('discard_after_delete'),
             storage=otypes.HostStorage(
+                driver_options=[
+                    otypes.Property(
+                        name=do.get('name'),
+                        value=do.get('value')
+                    ) for do in storage.get('driver_options')
+                ] if storage.get('driver_options') else None,
+                driver_sensitive_options=[
+                    otypes.Property(
+                        name=dso.get('name'),
+                        value=dso.get('value')
+                    ) for dso in storage.get('driver_sensitive_options')
+                ] if storage.get('driver_sensitive_options') else None,
                 type=otypes.StorageType(storage_type),
                 logical_units=[
                     otypes.LogicalUnit(
@@ -439,7 +539,7 @@ class StorageDomainModule(BaseModule):
             else:
                 raise Exception(
                     "Can't bring storage to state `%s`, because Datacenter "
-                    "%s is not UP"
+                    "%s is not UP" % (self.param('state'), dc.name)
                 )
 
     def _attached_sds_service(self, dc_name):
@@ -565,6 +665,13 @@ def control_state(sd_module):
         return
 
     sd_service = sd_module._service.service(sd.id)
+
+    # In the case of no status returned, it's an attached storage domain.
+    # Redetermine the corresponding serivce and entity:
+    if sd.status is None:
+        sd_service = sd_module._attached_sd_service(sd)
+        sd = get_entity(sd_service)
+
     if sd.status == sdstate.LOCKED:
         wait(
             service=sd_service,
@@ -610,6 +717,9 @@ def main():
         localfs=dict(default=None, type='dict'),
         nfs=dict(default=None, type='dict'),
         iscsi=dict(default=None, type='dict'),
+        managed_block_storage=dict(default=None, type='dict', options=dict(
+            driver_options=dict(type='list'),
+            driver_sensitive_options=dict(type='list', no_log=True))),
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
@@ -669,7 +779,10 @@ def main():
         elif state == 'maintenance':
             sd_id = storage_domains_module.create()['id']
             storage_domains_module.post_create_check(sd_id)
-            ret = storage_domains_module.action(
+
+            ret = OvirtRetry.backoff(tries=5, delay=1, backoff=2)(
+                storage_domains_module.action
+            )(
                 action='deactivate',
                 action_condition=lambda s: s.status == sdstate.ACTIVE,
                 wait_condition=lambda s: s.status == sdstate.MAINTENANCE,

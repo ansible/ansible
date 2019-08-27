@@ -1,0 +1,2 @@
+repo_command:
+  RedHat7: yum-config-manager --enable rhui-REGION-rhel-server-extras

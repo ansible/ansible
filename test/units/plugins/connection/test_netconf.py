@@ -21,15 +21,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import sys
-import re
-import json
+import pytest
 
-from io import StringIO
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
-from ansible.errors import AnsibleConnectionFailure
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock, PropertyMock
 from ansible.playbook.play_context import PlayContext
+
+pytest.importorskip("ncclient")
 
 PY3 = sys.version_info[0] == 3
 
@@ -58,25 +56,20 @@ class TestNetconfConnectionClass(unittest.TestCase):
 
     def test_netconf_init(self):
         pc = PlayContext()
-        new_stdin = StringIO()
+        conn = connection_loader.get('netconf', pc, '/dev/null')
 
-        conn = netconf.Connection(pc, new_stdin)
-
-        self.assertEqual('default', conn._network_os)
+        self.assertEqual('auto', conn._network_os)
         self.assertIsNone(conn._manager)
         self.assertFalse(conn._connected)
 
     @patch("ansible.plugins.connection.netconf.netconf_loader")
     def test_netconf__connect(self, mock_netconf_loader):
         pc = PlayContext()
-        new_stdin = StringIO()
-
-        conn = connection_loader.get('netconf', pc, new_stdin)
+        conn = connection_loader.get('netconf', pc, '/dev/null')
 
         mock_manager = MagicMock()
         mock_manager.session_id = '123456789'
         netconf.manager.connect = MagicMock(return_value=mock_manager)
-        conn._play_context.network_os = 'default'
 
         rc, out, err = conn._connect()
 
@@ -87,9 +80,8 @@ class TestNetconfConnectionClass(unittest.TestCase):
 
     def test_netconf_exec_command(self):
         pc = PlayContext()
-        new_stdin = StringIO()
+        conn = connection_loader.get('netconf', pc, '/dev/null')
 
-        conn = netconf.Connection(pc, new_stdin)
         conn._connected = True
 
         mock_reply = MagicMock(name='reply')
@@ -105,9 +97,8 @@ class TestNetconfConnectionClass(unittest.TestCase):
 
     def test_netconf_exec_command_invalid_request(self):
         pc = PlayContext()
-        new_stdin = StringIO()
+        conn = connection_loader.get('netconf', pc, '/dev/null')
 
-        conn = netconf.Connection(pc, new_stdin)
         conn._connected = True
 
         mock_manager = MagicMock(name='self._manager')

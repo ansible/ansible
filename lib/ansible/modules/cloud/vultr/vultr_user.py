@@ -24,14 +24,17 @@ options:
     description:
       - Name of the user
     required: true
+    type: str
   email:
     description:
       - Email of the user.
       - Required if C(state=present).
+    type: str
   password:
     description:
       - Password of the user.
       - Only considered while creating a user or when C(force=yes).
+    type: str
   force:
     description:
       - Password will only be changed with enforcement.
@@ -57,11 +60,13 @@ options:
       - dns
       - upgrade
     aliases: [ acl ]
+    type: list
   state:
     description:
       - State of the user.
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vultr
 '''
 
@@ -96,7 +101,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -108,10 +113,16 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_user:
   description: Response from Vultr API
@@ -121,22 +132,22 @@ vultr_user:
     id:
       description: ID of the user.
       returned: success
-      type: string
+      type: str
       sample: 5904bc6ed9234
     api_key:
       description: API key of the user.
       returned: only after resource was created
-      type: string
+      type: str
       sample: 567E6K567E6K567E6K567E6K567E6K
     name:
       description: Name of the user.
       returned: success
-      type: string
+      type: str
       sample: john
     email:
       description: Email of the user.
       returned: success
-      type: string
+      type: str
       sample: "john@exmaple.com"
     api_enabled:
       description: Whether the API is enabled or not.
@@ -287,13 +298,13 @@ class AnsibleVultrUser(Vultr):
 def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
-        email=dict(),
-        password=dict(no_log=True),
+        name=dict(type='str', required=True),
+        email=dict(type='str',),
+        password=dict(type='str', no_log=True),
         force=dict(type='bool', default=False),
         api_enabled=dict(type='bool', default=True),
         acls=dict(type='list', choices=ACLS, aliases=['acl']),
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(

@@ -6,9 +6,9 @@ Working with Patterns
 .. contents:: Topics
 
 Patterns in Ansible are how we decide which hosts to manage.  This can mean what hosts to communicate with, but in terms
-of :doc:`playbooks` it actually means what hosts to apply a particular configuration or IT process to.
+of :ref:`playbooks<playbooks_intro>` it actually means what hosts to apply a particular configuration or IT process to.
 
-We'll go over how to use the command line in :doc:`intro_adhoc` section, however, basically it looks like this::
+We'll go over how to use the command line in :ref:`intro_adhoc` section, however, basically it looks like this::
 
     ansible <pattern_goes_here> -m <module_name> -a <arguments>
 
@@ -52,16 +52,16 @@ You can do combinations::
 
     webservers:dbservers:&staging:!phoenix
 
-The above configuration means "all machines in the groups 'webservers' and 'dbservers' are to be managed if they are in
-the group 'staging' also, but the machines are not to be managed if they are in the group 'phoenix' ... whew!
+The above configuration means "all machines in the groups 'webservers' and 'dbservers' are to be managed if they are also in
+the group 'staging', but the machines are not to be managed if they are in the group 'phoenix'." Whew!
 
-You can also use variables if you want to pass some group specifiers via the "-e" argument to ansible-playbook, but this
+You can also use variables if you want to pass some group specifiers via the ``-e`` argument to ansible-playbook, but this
 is uncommonly used::
 
     webservers:!{{excluded}}:&{{required}}
 
-You also don't have to manage by strictly defined groups.  Individual host names, IPs and groups, can also be referenced using
-wildcards
+You also don't have to manage by strictly defined groups.  Individual host names, IPs, and groups can also be referenced using
+wildcards:
 
 .. code-block:: none
 
@@ -88,7 +88,7 @@ You can refer to hosts within the group by adding a subscript to the group name:
     webservers[1:]      # == webbing,weber
     webservers[:3]      # == cobweb,webbing,weber
 
-Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
+Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a ``~``::
 
     ~(web|db).*\.example\.com
 
@@ -96,19 +96,19 @@ While we're jumping a bit ahead, additionally, you can add an exclusion criteria
 
     ansible-playbook site.yml --limit datacenter2
 
-And if you want to read the list of hosts from a file, prefix the file name with '@'.::
+And if you want to read the list of hosts from a file, prefix the file name with ``@``::
 
     ansible-playbook site.yml --limit @retry_hosts.txt
 
-Easy enough.  See :doc:`intro_adhoc` and then :doc:`playbooks` for how to apply this knowledge.
+Easy enough.  See :ref:`intro_adhoc` and then :ref:`playbooks_intro` for how to apply this knowledge.
 
-.. note:: You can use ',' instead of ':' as a host list separator. The ',' is preferred specially when dealing with ranges and ipv6.
+.. note:: You can use a comma (``,``) as a host list separator instead of a colon (``:``). The comma is preferred when dealing with ranges and IPv6 addresses.
 
 .. seealso::
 
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of basic commands
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learning ansible's configuration management language
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

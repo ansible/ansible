@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -7,108 +9,121 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: cyberark_user
 short_description: Module for CyberArk User Management using PAS Web Services SDK
-author: Edward Nunez @ CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @erasmix)
+author:
+  - Edward Nunez (@enunez-cyberark) CyberArk BizDev
+  - Cyberark Bizdev (@cyberark-bizdev)
+  - erasmix (@erasmix)
 version_added: 2.4
 description:
-    - CyberArk User Management using PAS Web Services SDK. It currently supports the following
-      actions Get User Details, Add User, Update User, Delete User.
-
+    - CyberArk User Management using PAS Web Services SDK.
+    - It currently supports the following actions Get User Details, Add User, Update User, Delete User.
 
 options:
     username:
-        required: True
         description:
             - The name of the user who will be queried (for details), added, updated or deleted.
-    state:
-        default: present
-        choices: [present, absent]
-        description:
-            - Specifies the state needed for the user
-              present for create user, absent for delete user.
-    cyberark_session:
+        type: str
         required: True
+    state:
+        description:
+            - Specifies the state needed for the user present for create user, absent for delete user.
+        type: str
+        choices: [ absent, present ]
+        default: present
+    cyberark_session:
         description:
             - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session,
               please see M(cyberark_authentication) module for an example of cyberark_session.
+        type: dict
+        required: True
     initial_password:
         description:
-            - The password that the new user will use to log on the first time. This password must meet the password policy requirements.
-              this parameter is required when state is present -- Add User.
+            - The password that the new user will use to log on the first time.
+            - This password must meet the password policy requirements.
+            - This parameter is required when state is present -- Add User.
+        type: str
     new_password:
         description:
             - The user updated password. Make sure that this password meets the password policy requirements.
+        type: str
     email:
         description:
             - The user email address.
+        type: str
     first_name:
         description:
             - The user first name.
+        type: str
     last_name:
         description:
             - The user last name.
+        type: str
     change_password_on_the_next_logon:
-        type: bool
-        default: 'no'
         description:
             - Whether or not the user must change their password in their next logon.
-              Valid values = true/false.
+        type: bool
+        default: no
     expiry_date:
         description:
             - The date and time when the user account will expire and become disabled.
+        type: str
     user_type_name:
-        default: EPVUser
         description:
             - The type of user.
+            - The parameter defaults to C(EPVUser).
+        type: str
     disabled:
-        type: bool
-        default: 'no'
         description:
-            - Whether or not the user will be disabled. Valid values = true/false.
+            - Whether or not the user will be disabled.
+        type: bool
+        default: no
     location:
         description:
             - The Vault Location for the user.
+        type: str
     group_name:
         description:
             - The name of the group the user will be added to.
+        type: str
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Logon to CyberArk Vault using PAS Web Services SDK
   cyberark_authentication:
-    api_base_url: "https://components.cyberark.local"
-    use_shared_logon_authentication: true
+    api_base_url: https://components.cyberark.local
+    use_shared_logon_authentication: yes
 
 - name: Create user & immediately add it to a group
   cyberark_user:
-    username: "username"
-    initial_password: "password"
-    user_type_name: "EPVUser"
-    change_password_on_the_next_logon: false
-    group_name: "GroupOfUsers"
+    username: username
+    initial_password: password
+    user_type_name: EPVUser
+    change_password_on_the_next_logon: no
+    group_name: GroupOfUser
     state: present
-    cyberark_session: "{{ cyberark_session }}"
+    cyberark_session: '{{ cyberark_session }}'
 
 - name: Make sure user is present and reset user credential if present
   cyberark_user:
-    username: "Username"
-    new_password: "password"
-    disabled: false
+    username: Username
+    new_password: password
+    disabled: no
     state: present
-    cyberark_session: "{{ cyberark_session }}"
+    cyberark_session: '{{ cyberark_session }}'
 
 - name: Logoff from CyberArk Vault
   cyberark_authentication:
     state: absent
-    cyberark_session: "{{ cyberark_session }}"
+    cyberark_session: '{{ cyberark_session }}'
 '''
 
-RETURN = '''
+RETURN = r'''
 changed:
     description: Whether there was a change done.
     type: bool
@@ -130,7 +145,6 @@ status_code:
 '''
 
 import json
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
@@ -184,7 +198,6 @@ def user_details(module):
             msg=("Unknown error while performing user_details."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             headers=headers,
-            exception=traceback.format_exc(),
             status_code=-1)
 
 
@@ -282,7 +295,6 @@ def user_add_or_update(module, HTTPMethod):
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             payload=payload,
             headers=headers,
-            exception=traceback.format_exc(),
             status_code=-1)
 
 
@@ -337,7 +349,6 @@ def user_delete(module):
             msg=("Unknown error while performing user_delete."
                  "\n*** end_point=%s%s\n%s" % (api_base_url, end_point, to_text(unknown_exception))),
             headers=headers,
-            exception=traceback.format_exc(),
             status_code=-1)
 
 
@@ -387,7 +398,6 @@ def user_add_to_group(module):
                      "\n*** end_point=%s%s\n ==> %s" % (api_base_url, end_point, exception_text)),
                 payload=payload,
                 headers=headers,
-                exception=traceback.format_exc(),
                 status_code=http_exception.code)
 
     except Exception as unknown_exception:
@@ -402,47 +412,51 @@ def user_add_to_group(module):
 
 def main():
 
-    fields = {
-        "username": {"required": True, "type": "str"},
-        "state": {"type": "str",
-                  "choices": ["present", "absent"],
-                  "default": "present"},
-        "cyberark_session": {"required": True, "type": "dict"},
-        "initial_password": {"type": "str", "no_log": True},
-        "new_password": {"type": "str", "no_log": True},
-        "email": {"type": "str"},
-        "first_name": {"type": "str"},
-        "last_name": {"type": "str"},
-        "change_password_on_the_next_logon": {"type": "bool"},
-        "expiry_date": {"type": "str"},
-        "user_type_name": {"type": "str"},
-        "disabled": {"type": "bool"},
-        "location": {"type": "str"},
-        "group_name": {"type": "str"},
-    }
+    module = AnsibleModule(
+        argument_spec=dict(
+            username=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            cyberark_session=dict(type='dict', required=True),
+            initial_password=dict(type='str', no_log=True),
+            new_password=dict(type='str', no_log=True),
+            email=dict(type='str'),
+            first_name=dict(type='str'),
+            last_name=dict(type='str'),
+            change_password_on_the_next_logon=dict(type='bool'),
+            expiry_date=dict(type='str'),
+            user_type_name=dict(type='str'),
+            disabled=dict(type='bool'),
+            location=dict(type='str'),
+            group_name=dict(type='str'),
+        ),
+    )
 
-    module = AnsibleModule(argument_spec=fields)
-
-    state = module.params["state"]
-
-    changed = False
-    result = {}
+    state = module.params['state']
+    new_password = module.params['new_password']
+    group_name = module.params['group_name']
 
     if (state == "present"):
         (changed, result, status_code) = user_details(module)
-        if (status_code == 200):  # user already exists
-            if ("new_password" in module.params):
-                # if new_password specified, proceed to update user credential
+
+        if (status_code == 200):
+            # User already exists
+
+            # If new_password specified, proceed to update user credential
+            if (new_password is not None):
                 (changed, result, status_code) = user_add_or_update(module, "PUT")
-            if ("group_name" in module.params and module.params["group_name"] is not None):
-                # if user exists, add to group if needed
+
+            if (group_name is not None):
+                # If user exists, add to group if needed
                 (changed, ignored_result, ignored_status_code) = user_add_to_group(module)
+
         elif (status_code == 404):
-            # user does not exist, proceed to create it
+            # User does not exist, proceed to create it
             (changed, result, status_code) = user_add_or_update(module, "POST")
-            if (status_code == 201 and "group_name" in module.params and module.params["group_name"] is not None):
-                # if user was created, add to group if needed
+
+            if (status_code == 201 and group_name is not None):
+                # If user was created, add to group if needed
                 (changed, ignored_result, ignored_status_code) = user_add_to_group(module)
+
     elif (state == "absent"):
         (changed, result, status_code) = user_delete(module)
 

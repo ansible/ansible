@@ -1,21 +1,21 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - Create/Delete vserver peer
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_vserver_peer
 options:
   state:
@@ -27,20 +27,21 @@ options:
     description:
       - Specifies name of the source Vserver in the relationship.
   applications:
-    choices: ['snapmirror', 'file_copy', 'lun_copy']
+    choices: ['snapmirror', 'file_copy', 'lun_copy', 'flexcache']
     description:
       - List of applications which can make use of the peering relationship.
+      - FlexCache supported from ONTAP 9.5 onwards.
   peer_vserver:
     description:
       - Specifies name of the peer Vserver in the relationship.
   peer_cluster:
     description:
       - Specifies name of the peer Cluster.
-      - If peer Cluster is not given, it considers local Cluster.
+      - Required for creating the vserver peer relationship with a remote cluster
   dest_hostname:
     description:
      - Destination hostname or IP address.
-     - Required for creating the vserver peer relationship
+     - Required for creating the vserver peer relationship with a remote cluster
   dest_username:
     description:
      - Destination username.
@@ -96,13 +97,13 @@ class NetAppONTAPVserverPeer(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str'),
             peer_vserver=dict(required=True, type='str'),
             peer_cluster=dict(required=False, type='str'),
-            applications=dict(required=False, type='list', choices=['snapmirror', 'file_copy', 'lun_copy']),
+            applications=dict(required=False, type='list', choices=['snapmirror', 'file_copy', 'lun_copy', 'flexcache']),
             dest_hostname=dict(required=False, type='str'),
             dest_username=dict(required=False, type='str'),
             dest_password=dict(required=False, type='str', no_log=True)
@@ -110,9 +111,6 @@ class NetAppONTAPVserverPeer(object):
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            required_if=[
-                ('state', 'present', ['dest_hostname'])
-            ],
             supports_check_mode=True
         )
 
@@ -122,14 +120,16 @@ class NetAppONTAPVserverPeer(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
             if self.parameters.get('dest_hostname'):
                 self.module.params['hostname'] = self.parameters['dest_hostname']
                 if self.parameters.get('dest_username'):
                     self.module.params['username'] = self.parameters['dest_username']
                 if self.parameters.get('dest_password'):
                     self.module.params['password'] = self.parameters['dest_password']
-                self.dest_server = netapp_utils.setup_ontap_zapi(module=self.module)
+                self.dest_server = netapp_utils.setup_na_ontap_zapi(module=self.module)
+                # reset to source host connection for asup logs
+                self.module.params['hostname'] = self.parameters['hostname']
 
     def vserver_peer_get_iter(self):
         """
@@ -204,6 +204,8 @@ class NetAppONTAPVserverPeer(object):
         """
         if self.parameters.get('applications') is None:
             self.module.fail_json(msg='applications parameter is missing')
+        if self.parameters.get('peer_cluster') is not None and self.parameters.get('dest_hostname') is None:
+            self.module.fail_json(msg='dest_hostname is required for peering a vserver in remote cluster')
         if self.parameters.get('peer_cluster') is None:
             self.parameters['peer_cluster'] = self.get_peer_cluster_name()
         vserver_peer_create = netapp_utils.zapi.NaElement.create_node_with_children(
@@ -221,6 +223,12 @@ class NetAppONTAPVserverPeer(object):
             self.module.fail_json(msg='Error creating vserver peer %s: %s'
                                       % (self.parameters['vserver'], to_native(error)),
                                   exception=traceback.format_exc())
+
+    def is_remote_peer(self):
+        if self.parameters.get('dest_hostname') is None or \
+                (self.parameters['dest_hostname'] == self.parameters['hostname']):
+            return False
+        return True
 
     def vserver_peer_accept(self):
         """
@@ -242,11 +250,16 @@ class NetAppONTAPVserverPeer(object):
         """
         Apply action to create/delete or accept vserver peer
         """
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event("na_ontap_vserver_peer", cserver)
         current = self.vserver_peer_get()
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
         if cd_action == 'create':
             self.vserver_peer_create()
-            self.vserver_peer_accept()
+            # accept only if the peer relationship is on a remote cluster
+            if self.is_remote_peer():
+                self.vserver_peer_accept()
         elif cd_action == 'delete':
             self.vserver_peer_delete()
 

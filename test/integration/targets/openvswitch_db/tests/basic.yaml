@@ -21,7 +21,7 @@
 
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Create bridge again (idempotent)
   openvswitch_db:
@@ -35,7 +35,50 @@
 
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
+
+- name: Change key value with quotes
+  openvswitch_db:
+    table: open_vswitch
+    record: .
+    col: other_config
+    key: pmd-cpu-mask
+    value: "0xaaa00000000"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Change keyvalue with quotes(idempotent)
+  openvswitch_db:
+    table: open_vswitch
+    record: .
+    col: other_config
+    key: pmd-cpu-mask
+    value: "0xaaa00000000"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result is not changed
+
+- name: Remove key value with quotes
+  openvswitch_db:
+    table: open_vswitch
+    record: .
+    col: other_config
+    key: pmd-cpu-mask
+    value: "0xaaa00000000"
+    state: absent
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result is changed
 
 - name: Change column value in a map
   openvswitch_db:
@@ -49,7 +92,7 @@
 
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Change column value in a map again (idempotent)
   openvswitch_db:
@@ -63,33 +106,33 @@
 
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
 - name: Change column value
   openvswitch_db:
     table: Bridge
     record: br-test
     col: stp_enable
-    value: 'true'
+    value: true
   become: yes
   register: result
 
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Change column value again (idempotent)
   openvswitch_db:
     table: Bridge
     record: br-test
     col: stp_enable
-    value: 'true'
+    value: true
   become: yes
   register: result
 
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
 - name: Try to set value on a map type without a key (negative)
   ignore_errors: true
@@ -103,7 +146,7 @@
 
 - assert:
     that:
-      - "result.failed == true"
+      - result is failed
 
 - name: Remove bridge
   openvswitch_db:
@@ -118,7 +161,7 @@
 
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Remove bridge again (idempotent)
   openvswitch_db:
@@ -133,7 +176,7 @@
 
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
 - name: Tear down test bridge
   command: ovs-vsctl del-br br-test

@@ -23,33 +23,50 @@ __metaclass__ = type
 import ast
 import base64
 import datetime
-import imp
 import json
 import os
 import shlex
 import zipfile
-import random
 import re
-from distutils.version import LooseVersion
+import pkgutil
 from io import BytesIO
 
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
+from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
-from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
-from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
+from ansible.plugins.loader import module_utils_loader
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
 from ansible.executor import action_write_locks
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
+
+try:
+    import importlib.util
+    import importlib.machinery
+    imp = None
+except ImportError:
+    import imp
+
+
+# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
+try:
+    from importlib import import_module
+except ImportError:
+    import_module = __import__
+
+# if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
+display = Display()
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
@@ -70,7 +87,7 @@ _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils
 
 ANSIBALLZ_TEMPLATE = u'''%(shebang)s
 %(coding)s
-_ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_WRAPPER
+_ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
 # This code is part of Ansible, but is an independent component.
 # The code in this particular templatable string, and this templatable string
 # only, is BSD licensed.  Modules which end up using this snippet, which is
@@ -99,6 +116,7 @@ _ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_W
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 def _ansiballz_main():
+%(rlimit)s
     import os
     import os.path
     import sys
@@ -134,18 +152,20 @@ def _ansiballz_main():
         sys.path = [p for p in sys.path if p != scriptdir]
 
     import base64
-    import imp
     import shutil
     import tempfile
     import zipfile
 
     if sys.version_info < (3,):
+        # imp is used on Python<3
+        import imp
         bytes = str
         MOD_DESC = ('.py', 'U', imp.PY_SOURCE)
         PY3 = False
     else:
+        # importlib is only used on Python>=3
+        import importlib.util
         unicode = str
-        MOD_DESC = ('.py', 'r', imp.PY_SOURCE)
         PY3 = True
 
     ZIPDATA = """%(zipdata)s"""
@@ -185,8 +205,13 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        with open(module, 'rb') as mod:
-            imp.load_module('__main__', mod, module, MOD_DESC)
+        if sys.version_info >= (3,):
+            spec = importlib.util.spec_from_file_location('__main__', module)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        else:
+            with open(module, 'rb') as mod:
+                imp.load_module('__main__', mod, module, MOD_DESC)
 
         # Ansible modules must exit themselves
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -281,9 +306,15 @@ def _ansiballz_main():
             basic._ANSIBLE_ARGS = json_params
 
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            import imp
-            with open(script_path, 'r') as f:
-                importer = imp.load_module('__main__', f, script_path, ('.py', 'r', imp.PY_SOURCE))
+            if PY3:
+                import importlib.util
+                spec = importlib.util.spec_from_file_location('__main__', script_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+            else:
+                import imp
+                with open(script_path, 'r') as f:
+                    imp.load_module('__main__', f, script_path, ('.py', 'r', imp.PY_SOURCE))
 
             # Ansible modules must exit themselves
             print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -342,7 +373,12 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         os.environ['COVERAGE_FILE'] = '%(coverage_output)s'
 
         import atexit
-        import coverage
+
+        try:
+            import coverage
+        except ImportError:
+            print('{"msg": "Could not import `coverage` module.", "failed": true}')
+            sys.exit(1)
 
         cov = coverage.Coverage(config_file='%(coverage_config)s')
 
@@ -353,6 +389,34 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         atexit.register(atexit_coverage)
 
         cov.start()
+'''
+
+ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
+        try:
+            if PY3:
+                if importlib.util.find_spec('coverage') is None:
+                    raise ImportError
+            else:
+                imp.find_module('coverage')
+        except ImportError:
+            print('{"msg": "Could not find `coverage` module.", "failed": true}')
+            sys.exit(1)
+'''
+
+ANSIBALLZ_RLIMIT_TEMPLATE = '''
+    import resource
+
+    existing_soft, existing_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+
+    # adjust soft limit subject to existing hard limit
+    requested_soft = min(existing_hard, %(rlimit_nofile)d)
+
+    if requested_soft != existing_soft:
+        try:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (requested_soft, existing_hard))
+        except ValueError:
+            # some platforms (eg macOS) lie about their hard limit
+            pass
 '''
 
 
@@ -403,10 +467,14 @@ class ModuleDepFinder(ast.NodeVisitor):
 
     def visit_Import(self, node):
         # import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
-        for alias in (a for a in node.names if a.name.startswith('ansible.module_utils.')):
-            py_mod = alias.name[self.IMPORT_PREFIX_SIZE:]
-            py_mod = tuple(py_mod.split('.'))
-            self.submodules.add(py_mod)
+        for alias in node.names:
+            if alias.name.startswith('ansible.module_utils.'):
+                py_mod = alias.name[self.IMPORT_PREFIX_SIZE:]
+                py_mod = tuple(py_mod.split('.'))
+                self.submodules.add(py_mod)
+            elif alias.name.startswith('ansible_collections.'):
+                # keep 'ansible_collections.' as a sentinel prefix to trigger collection-loaded MU path
+                self.submodules.add(tuple(alias.name.split('.')))
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -427,83 +495,26 @@ class ModuleDepFinder(ast.NodeVisitor):
                 # from ansible.module_utils import MODLIB [,MODLIB2] [as asname]
                 for alias in node.names:
                     self.submodules.add((alias.name,))
+
+        elif node.module.startswith('ansible_collections.'):
+            # TODO: finish out the subpackage et al cases
+            if node.module.endswith('plugins.module_utils'):
+                # from ansible_collections.ns.coll.plugins.module_utils import MODULE [as aname] [,MODULE2] [as aname]
+                py_mod = tuple(node.module.split('.'))
+                for alias in node.names:
+                    self.submodules.add(py_mod + (alias.name,))
+            else:
+                # from ansible_collections.ns.coll.plugins.module_utils.MODULE import IDENTIFIER [as aname]
+                self.submodules.add(tuple(node.module.split('.')))
+
         self.generic_visit(node)
-
-
-class PSModuleDepFinder():
-
-    def __init__(self):
-        self.modules = dict()
-        self.ps_version = None
-        self.os_version = None
-        self.become = False
-
-        self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
-        self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
-        self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
-        self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
-
-    def scan_module(self, module_data):
-        lines = module_data.split(b'\n')
-        module_utils = set()
-
-        for line in lines:
-            module_util_match = self._re_module.match(line)
-            if module_util_match:
-                # tolerate windows line endings by stripping any remaining newline chars
-                module_util_name = to_text(module_util_match.group(1).rstrip())
-                if module_util_name not in self.modules.keys():
-                    module_utils.add(module_util_name)
-
-            ps_version_match = self._re_ps_version.match(line)
-            if ps_version_match:
-                self._parse_version_match(ps_version_match, "ps_version")
-
-            os_version_match = self._re_os_version.match(line)
-            if os_version_match:
-                self._parse_version_match(os_version_match, "os_version")
-
-            # once become is set, no need to keep on checking recursively
-            if not self.become:
-                become_match = self._re_become.match(line)
-                if become_match:
-                    self.become = True
-
-        # recursively drill into each Requires to see if there are any more
-        # requirements
-        for m in set(module_utils):
-            m = to_text(m)
-            mu_path = ps_module_utils_loader.find_plugin(m, ".psm1")
-            if not mu_path:
-                raise AnsibleError('Could not find imported module support code for \'%s\'.' % m)
-
-            module_util_data = to_bytes(_slurp(mu_path))
-            self.modules[m] = module_util_data
-            self.scan_module(module_util_data)
-
-    def _parse_version_match(self, match, attribute):
-        new_version = to_text(match.group(1)).rstrip()
-
-        # PowerShell cannot cast a string of "1" to Version, it must have at
-        # least the major.minor for it to be valid so we append 0
-        if match.group(2) is None:
-            new_version = "%s.0" % new_version
-
-        existing_version = getattr(self, attribute, None)
-        if existing_version is None:
-            setattr(self, attribute, new_version)
-        else:
-            # determine which is the latest version and set that
-            if LooseVersion(new_version) > LooseVersion(existing_version):
-                setattr(self, attribute, new_version)
 
 
 def _slurp(path):
     if not os.path.exists(path):
         raise AnsibleError("imported module support code does not exist at %s" % os.path.abspath(path))
-    fd = open(path, 'rb')
-    data = fd.read()
-    fd.close()
+    with open(path, 'rb') as fd:
+        data = fd.read()
     return data
 
 
@@ -515,18 +526,80 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
        file rather than trust that we reformatted what they already have
        correctly.
     """
-    interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter).strip()
+    interpreter_name = os.path.basename(interpreter).strip()
 
-    if interpreter_config not in task_vars:
-        return (None, interpreter)
+    # FUTURE: add logical equivalence for python3 in the case of py3-only modules
 
-    interpreter = templar.template(task_vars[interpreter_config].strip())
-    shebang = u'#!' + interpreter
+    # check for first-class interpreter config
+    interpreter_config_key = "INTERPRETER_%s" % interpreter_name.upper()
+
+    if C.config.get_configuration_definitions().get(interpreter_config_key):
+        # a config def exists for this interpreter type; consult config for the value
+        interpreter_out = C.config.get_config_value(interpreter_config_key, variables=task_vars)
+        discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
+
+        interpreter_out = templar.template(interpreter_out.strip())
+
+        facts_from_task_vars = task_vars.get('ansible_facts', {})
+
+        # handle interpreter discovery if requested
+        if interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
+            if discovered_interpreter_config not in facts_from_task_vars:
+                # interpreter discovery is desired, but has not been run for this host
+                raise InterpreterDiscoveryRequiredError("interpreter discovery needed",
+                                                        interpreter_name=interpreter_name,
+                                                        discovery_mode=interpreter_out)
+            else:
+                interpreter_out = facts_from_task_vars[discovered_interpreter_config]
+    else:
+        # a config def does not exist for this interpreter type; consult vars for a possible direct override
+        interpreter_config = u'ansible_%s_interpreter' % interpreter_name
+
+        if interpreter_config not in task_vars:
+            return None, interpreter
+
+        interpreter_out = templar.template(task_vars[interpreter_config].strip())
+
+    shebang = u'#!' + interpreter_out
 
     if args:
         shebang = shebang + u' ' + u' '.join(args)
 
-    return (shebang, interpreter)
+    return shebang, interpreter_out
+
+
+class ModuleInfo:
+    def __init__(self, name, paths):
+        self.py_src = False
+        self.pkg_dir = False
+        path = None
+
+        if imp is None:
+            self._info = info = importlib.machinery.PathFinder.find_spec(name, paths)
+            if info is not None:
+                self.py_src = os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES
+                self.pkg_dir = info.origin.endswith('/__init__.py')
+                path = info.origin
+            else:
+                raise ImportError("No module named '%s'" % name)
+        else:
+            self._info = info = imp.find_module(name, paths)
+            self.py_src = info[2][2] == imp.PY_SOURCE
+            self.pkg_dir = info[2][2] == imp.PKG_DIRECTORY
+            if self.pkg_dir:
+                path = os.path.join(info[1], '__init__.py')
+            else:
+                path = info[1]
+
+        self.path = path
+
+    def get_source(self):
+        if imp and self.py_src:
+            try:
+                return self._info[0].read()
+            finally:
+                self._info[0].close()
+        return _slurp(self.path)
 
 
 def recursive_finder(name, data, py_module_names, py_module_cache, zf):
@@ -535,7 +608,10 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     the module its module_utils files needs.
     """
     # Parse the module and find the imports of ansible.module_utils
-    tree = ast.parse(data)
+    try:
+        tree = ast.parse(data)
+    except (SyntaxError, IndentationError) as e:
+        raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
     finder = ModuleDepFinder()
     finder.visit(tree)
 
@@ -557,14 +633,28 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         if py_module_name[0] == 'six':
             # Special case the python six library because it messes up the
             # import process in an incompatible way
-            module_info = imp.find_module('six', module_utils_paths)
+            module_info = ModuleInfo('six', module_utils_paths)
             py_module_name = ('six',)
             idx = 0
         elif py_module_name[0] == '_six':
             # Special case the python six library because it messes up the
             # import process in an incompatible way
-            module_info = imp.find_module('_six', [os.path.join(p, 'six') for p in module_utils_paths])
+            module_info = ModuleInfo('_six', [os.path.join(p, 'six') for p in module_utils_paths])
             py_module_name = ('six', '_six')
+            idx = 0
+        elif py_module_name[0] == 'ansible_collections':
+            # FIXME: replicate module name resolution like below for granular imports
+            # this is a collection-hosted MU; look it up with get_data
+            package_name = '.'.join(py_module_name[:-1])
+            resource_name = py_module_name[-1] + '.py'
+            try:
+                # FIXME: need this in py2 for some reason TBD, but we shouldn't (get_data delegates to wrong loader without it)
+                pkg = import_module(package_name)
+                module_info = pkgutil.get_data(package_name, resource_name)
+            except FileNotFoundError:
+                # FIXME: implement package fallback code
+                raise AnsibleError('unable to load collection-hosted module_util {0}.{1}'.format(to_native(package_name),
+                                                                                                 to_native(resource_name)))
             idx = 0
         else:
             # Check whether either the last or the second to last identifier is
@@ -573,8 +663,8 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 if len(py_module_name) < idx:
                     break
                 try:
-                    module_info = imp.find_module(py_module_name[-idx],
-                                                  [os.path.join(p, *py_module_name[:-idx]) for p in module_utils_paths])
+                    module_info = ModuleInfo(py_module_name[-idx],
+                                             [os.path.join(p, *py_module_name[:-idx]) for p in module_utils_paths])
                     break
                 except ImportError:
                     continue
@@ -588,56 +678,75 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 msg.append(py_module_name[-1])
             raise AnsibleError(' '.join(msg))
 
-        # Found a byte compiled file rather than source.  We cannot send byte
-        # compiled over the wire as the python version might be different.
-        # imp.find_module seems to prefer to return source packages so we just
-        # error out if imp.find_module returns byte compiled files (This is
-        # fragile as it depends on undocumented imp.find_module behaviour)
-        if module_info[2][2] not in (imp.PY_SOURCE, imp.PKG_DIRECTORY):
-            msg = ['Could not find python source for imported module support code for %s.  Looked for' % name]
+        if isinstance(module_info, bytes):  # collection-hosted, just the code
+            # HACK: maybe surface collection dirs in here and use existing find_module code?
+            normalized_name = py_module_name
+            normalized_data = module_info
+            normalized_path = os.path.join(*py_module_name)
+            py_module_cache[normalized_name] = (normalized_data, normalized_path)
+            normalized_modules.add(normalized_name)
+
+            # HACK: walk back up the package hierarchy to pick up package inits; this won't do the right thing
+            # for actual packages yet...
+            accumulated_pkg_name = []
+            for pkg in py_module_name[:-1]:
+                accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
+                normalized_name = tuple(accumulated_pkg_name[:] + ['__init__'])  # extra machinations to get a hashable type (list is not)
+                if normalized_name not in py_module_cache:
+                    normalized_path = os.path.join(*accumulated_pkg_name)
+                    # HACK: possibly preserve some of the actual package file contents; problematic for extend_paths and others though?
+                    normalized_data = ''
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
+
+        else:
+            # Found a byte compiled file rather than source.  We cannot send byte
+            # compiled over the wire as the python version might be different.
+            # imp.find_module seems to prefer to return source packages so we just
+            # error out if imp.find_module returns byte compiled files (This is
+            # fragile as it depends on undocumented imp.find_module behaviour)
+            if not module_info.pkg_dir and not module_info.py_src:
+                msg = ['Could not find python source for imported module support code for %s.  Looked for' % name]
+                if idx == 2:
+                    msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
+                else:
+                    msg.append(py_module_name[-1])
+                raise AnsibleError(' '.join(msg))
+
             if idx == 2:
-                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
-            else:
-                msg.append(py_module_name[-1])
-            raise AnsibleError(' '.join(msg))
+                # We've determined that the last portion was an identifier and
+                # thus, not part of the module name
+                py_module_name = py_module_name[:-1]
 
-        if idx == 2:
-            # We've determined that the last portion was an identifier and
-            # thus, not part of the module name
-            py_module_name = py_module_name[:-1]
+            # If not already processed then we've got work to do
+            # If not in the cache, then read the file into the cache
+            # We already have a file handle for the module open so it makes
+            # sense to read it now
+            if py_module_name not in py_module_cache:
+                if module_info.pkg_dir:
+                    # Read the __init__.py instead of the module file as this is
+                    # a python package
+                    normalized_name = py_module_name + ('__init__',)
+                    if normalized_name not in py_module_names:
+                        normalized_data = module_info.get_source()
+                        py_module_cache[normalized_name] = (normalized_data, module_info.path)
+                        normalized_modules.add(normalized_name)
+                else:
+                    normalized_name = py_module_name
+                    if normalized_name not in py_module_names:
+                        normalized_data = module_info.get_source()
+                        py_module_cache[normalized_name] = (normalized_data, module_info.path)
+                        normalized_modules.add(normalized_name)
 
-        # If not already processed then we've got work to do
-        # If not in the cache, then read the file into the cache
-        # We already have a file handle for the module open so it makes
-        # sense to read it now
-        if py_module_name not in py_module_cache:
-            if module_info[2][2] == imp.PKG_DIRECTORY:
-                # Read the __init__.py instead of the module file as this is
-                # a python package
-                normalized_name = py_module_name + ('__init__',)
-                if normalized_name not in py_module_names:
-                    normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
-                    normalized_data = _slurp(normalized_path)
-                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                    normalized_modules.add(normalized_name)
-            else:
-                normalized_name = py_module_name
-                if normalized_name not in py_module_names:
-                    normalized_path = module_info[1]
-                    normalized_data = module_info[0].read()
-                    module_info[0].close()
-                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                    normalized_modules.add(normalized_name)
-
-            # Make sure that all the packages that this module is a part of
-            # are also added
-            for i in range(1, len(py_module_name)):
-                py_pkg_name = py_module_name[:-i] + ('__init__',)
-                if py_pkg_name not in py_module_names:
-                    pkg_dir_info = imp.find_module(py_pkg_name[-1],
-                                                   [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
-                    normalized_modules.add(py_pkg_name)
-                    py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+                # Make sure that all the packages that this module is a part of
+                # are also added
+                for i in range(1, len(py_module_name)):
+                    py_pkg_name = py_module_name[:-i] + ('__init__',)
+                    if py_pkg_name not in py_module_names:
+                        pkg_dir_info = ModuleInfo(py_pkg_name[-1],
+                                                  [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
+                        normalized_modules.add(py_pkg_name)
+                        py_module_cache[py_pkg_name] = (pkg_dir_info.get_source(), pkg_dir_info.path)
 
     # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
     # variable in basic.py.  If a module doesn't import basic.py, then the AnsiBallZ wrapper will
@@ -650,9 +759,9 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     # from the separate python module and mirror the args into its global variable for backwards
     # compatibility.
     if ('basic',) not in py_module_names:
-        pkg_dir_info = imp.find_module('basic', module_utils_paths)
+        pkg_dir_info = ModuleInfo('basic', module_utils_paths)
         normalized_modules.add(('basic',))
-        py_module_cache[('basic',)] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+        py_module_cache[('basic',)] = (pkg_dir_info.get_source(), pkg_dir_info.path)
     # End of AnsiballZ hack
 
     #
@@ -664,10 +773,16 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     unprocessed_py_module_names = normalized_modules.difference(py_module_names)
 
     for py_module_name in unprocessed_py_module_names:
+        # HACK: this seems to work as a way to identify a collections-based import, but a stronger identifier would be better
+        if not py_module_cache[py_module_name][1].startswith('/'):
+            dir_prefix = ''
+        else:
+            dir_prefix = 'ansible/module_utils'
+
         py_module_path = os.path.join(*py_module_name)
         py_module_file_name = '%s.py' % py_module_path
 
-        zf.writestr(os.path.join("ansible/module_utils",
+        zf.writestr(os.path.join(dir_prefix,
                     py_module_file_name), py_module_cache[py_module_name][0])
         display.vvvvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
 
@@ -686,69 +801,6 @@ def _is_binary(b_module_data):
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
     start = b_module_data[:1024]
     return bool(start.translate(None, textchars))
-
-
-def _create_powershell_wrapper(b_module_data, module_args, environment,
-                               async_timeout, become, become_method,
-                               become_user, become_password, become_flags,
-                               scan_dependencies=True):
-    # creates the manifest/wrapper used in PowerShell modules to enable things
-    # like become and async - this is also called in action/script.py
-    exec_manifest = dict(
-        module_entry=to_text(base64.b64encode(b_module_data)),
-        powershell_modules=dict(),
-        module_args=module_args,
-        actions=['exec'],
-        environment=environment
-    )
-
-    exec_manifest['exec'] = to_text(base64.b64encode(to_bytes(leaf_exec)))
-
-    if async_timeout > 0:
-        exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["async_watchdog"] = to_text(
-            base64.b64encode(to_bytes(async_watchdog)))
-        exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_wrapper"] = to_text(
-            base64.b64encode(to_bytes(async_wrapper)))
-        exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
-        exec_manifest["async_timeout_sec"] = async_timeout
-
-    if become and become_method == 'runas':
-        exec_manifest["actions"].insert(0, 'become')
-        exec_manifest["become_user"] = become_user
-        exec_manifest["become_password"] = become_password
-        exec_manifest['become_flags'] = become_flags
-        exec_manifest["become"] = to_text(
-            base64.b64encode(to_bytes(become_wrapper)))
-
-    finder = PSModuleDepFinder()
-
-    # we don't want to scan for any module_utils or other module related flags
-    # if scan_dependencies=False - action/script sets to False
-    if scan_dependencies:
-        finder.scan_module(b_module_data)
-
-    for name, data in finder.modules.items():
-        b64_data = to_text(base64.b64encode(data))
-        exec_manifest['powershell_modules'][name] = b64_data
-
-    exec_manifest['min_ps_version'] = finder.ps_version
-    exec_manifest['min_os_version'] = finder.os_version
-    if finder.become and 'become' not in exec_manifest['actions']:
-        exec_manifest['actions'].insert(0, 'become')
-        exec_manifest['become_user'] = 'SYSTEM'
-        exec_manifest['become_password'] = None
-        exec_manifest['become_flags'] = None
-        exec_manifest['become'] = to_text(
-            base64.b64encode(to_bytes(become_wrapper)))
-
-    # FUTURE: smuggle this back as a dict instead of serializing here;
-    # the connection plugin may need to modify it
-    b_json = to_bytes(json.dumps(exec_manifest))
-    b_data = exec_wrapper.replace(b"$json_raw = ''",
-                                  b"$json_raw = @'\r\n%s\r\n'@" % b_json)
-    return b_data
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
@@ -773,7 +825,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         module_style = 'new'
         module_substyle = 'python'
         b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
-    elif b'from ansible.module_utils.' in b_module_data:
+    # FUTURE: combined regex for this stuff, or a "looks like Python, let's inspect further" mechanism
+    elif b'from ansible.module_utils.' in b_module_data or b'from ansible_collections.' in b_module_data\
+            or b'import ansible_collections.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
     elif REPLACER_WINDOWS in b_module_data:
@@ -782,7 +836,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
     elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
             or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
-            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE):
+            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
+            or re.search(b'#AnsibleRequires -Powershell', b_module_data, re.IGNORECASE) \
+            or re.search(b'#AnsibleRequires -CSharpUtil', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
@@ -802,7 +858,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        python_repred_params = repr(json.dumps(params))
+        try:
+            python_repred_params = repr(json.dumps(params))
+        except TypeError as e:
+            raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
 
         try:
             compression_method = getattr(zipfile, module_compression)
@@ -817,7 +876,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
             display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
-            zipdata = open(cached_module_filename, 'rb').read()
+            with open(cached_module_filename, 'rb') as module_data:
+                zipdata = module_data.read()
         else:
             if module_name in action_write_locks.action_write_locks:
                 display.debug('ANSIBALLZ: Using lock for %s' % module_name)
@@ -879,7 +939,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 # the write lock.  Go ahead and read the data from disk
                 # instead of re-creating it.
                 try:
-                    zipdata = open(cached_module_filename, 'rb').read()
+                    with open(cached_module_filename, 'rb') as f:
+                        zipdata = f.read()
                 except IOError:
                     raise AnsibleError('A different worker process failed to create module file. '
                                        'Look at traceback for that process for debugging information.')
@@ -894,15 +955,35 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         interpreter_parts = interpreter.split(u' ')
         interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
+        # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
+        rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
+
+        if not isinstance(rlimit_nofile, int):
+            rlimit_nofile = int(templar.template(rlimit_nofile))
+
+        if rlimit_nofile:
+            rlimit = ANSIBALLZ_RLIMIT_TEMPLATE % dict(
+                rlimit_nofile=rlimit_nofile,
+            )
+        else:
+            rlimit = ''
+
         coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
 
         if coverage_config:
-            # Enable code coverage analysis of the module.
-            # This feature is for internal testing and may change without notice.
-            coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
-                coverage_config=coverage_config,
-                coverage_output=os.environ['_ANSIBLE_COVERAGE_OUTPUT']
-            )
+            coverage_output = os.environ['_ANSIBLE_COVERAGE_OUTPUT']
+
+            if coverage_output:
+                # Enable code coverage analysis of the module.
+                # This feature is for internal testing and may change without notice.
+                coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
+                    coverage_config=coverage_config,
+                    coverage_output=coverage_output,
+                )
+            else:
+                # Verify coverage is available without importing it.
+                # This will detect when a module would fail with coverage enabled with minimal overhead.
+                coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
         else:
             coverage = ''
 
@@ -921,6 +1002,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             minute=now.minute,
             second=now.second,
             coverage=coverage,
+            rlimit=rlimit,
         )))
         b_module_data = output.getvalue()
 
@@ -932,10 +1014,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         shebang = u'#!powershell'
         # create the common exec wrapper payload and set that as the module_data
         # bytes
-        b_module_data = _create_powershell_wrapper(
+        b_module_data = ps_manifest._create_powershell_wrapper(
             b_module_data, module_args, environment, async_timeout, become,
             become_method, become_user, become_password, become_flags,
-            scan_dependencies=True
+            module_substyle
         )
 
     elif module_substyle == 'jsonargs':
@@ -1024,3 +1106,32 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         b_module_data = b"\n".join(b_lines)
 
     return (b_module_data, module_style, shebang)
+
+
+def get_action_args_with_defaults(action, args, defaults, templar):
+
+    tmp_args = {}
+    module_defaults = {}
+
+    # Merge latest defaults into dict, since they are a list of dicts
+    if isinstance(defaults, list):
+        for default in defaults:
+            module_defaults.update(default)
+
+    # if I actually have defaults, template and merge
+    if module_defaults:
+        module_defaults = templar.template(module_defaults)
+
+        # deal with configured group defaults first
+        if action in C.config.module_defaults_groups:
+            for group in C.config.module_defaults_groups.get(action, []):
+                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
+
+        # handle specific action defaults
+        if action in module_defaults:
+            tmp_args.update(module_defaults[action].copy())
+
+    # direct args override all
+    tmp_args.update(args)
+
+    return tmp_args

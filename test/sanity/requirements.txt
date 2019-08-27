@@ -1,0 +1,4 @@
+packaging  # needed for update-bundled and changelog
+sphinx ; python_version >= '3.5' # docs build requires python 3+
+sphinx-notfound-page ; python_version >= '3.5' # docs build requires python 3+
+straight.plugin ; python_version >= '3.5' # needed for hacking/build-ansible.py which will host changelog generation and requires python 3+

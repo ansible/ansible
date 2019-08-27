@@ -20,6 +20,7 @@ options:
   name:
     description:
       - Name of the local group to manage membership on.
+    type: str
     required: yes
   members:
     description:
@@ -29,13 +30,21 @@ options:
       - Accepts service users as NT AUTHORITY\username.
       - Accepts all local, domain and service user types as username,
         favoring domain lookups when in a domain.
-    required: yes
     type: list
+    required: yes
   state:
     description:
       - Desired state of the members in the group.
-    choices: [ absent, present ]
+      - C(pure) was added in Ansible 2.8.
+      - When C(state) is C(pure), only the members specified will exist,
+        and all other existing members not specified are removed.
+    type: str
+    choices: [ absent, present, pure ]
     default: present
+seealso:
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_group
 author:
     - Andrew Saraceni (@andrewsaraceni)
 '''
@@ -56,23 +65,30 @@ EXAMPLES = r'''
       - DOMAIN\TestGroup
       - NT AUTHORITY\SYSTEM
     state: absent
+
+- name: Ensure only a domain user exists in a local group
+  win_group_membership:
+    name: Remote Desktop Users
+    members:
+      - DOMAIN\TestUser
+    state: pure
 '''
 
 RETURN = r'''
 name:
     description: The name of the target local group.
     returned: always
-    type: string
+    type: str
     sample: Administrators
 added:
-    description: A list of members added when C(state) is C(present); this is
-      empty if no members are added.
+    description: A list of members added when C(state) is C(present) or
+      C(pure); this is empty if no members are added.
     returned: success and C(state) is C(present)
     type: list
     sample: ["SERVERNAME\\NewLocalAdmin", "DOMAIN\\TestUser"]
 removed:
-    description: A list of members removed when C(state) is C(absent); this is
-      empty if no members are removed.
+    description: A list of members removed when C(state) is C(absent) or
+      C(pure); this is empty if no members are removed.
     returned: success and C(state) is C(absent)
     type: list
     sample: ["DOMAIN\\TestGroup", "NT AUTHORITY\\SYSTEM"]

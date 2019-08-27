@@ -23,7 +23,6 @@ Function Write-DebugLog {
     $msg = "$date_str $msg"
 
     Write-Debug $msg
-
     if($log_path) {
         Add-Content $log_path $msg
     }
@@ -41,15 +40,16 @@ Function Get-MissingFeatures {
     }
 
     $missing_features = @($features | Where-Object InstallState -ne Installed)
-    
+
     return ,$missing_features # no, the comma's not a typo- allows us to return an empty array
 }
 
 Function Ensure-FeatureInstallation {
     # ensure RSAT-ADDS and AD-Domain-Services features are installed
 
-    Write-DebugLog "Ensuring required Windows features are installed..." 
+    Write-DebugLog "Ensuring required Windows features are installed..."
     $feature_result = Install-WindowsFeature $required_features
+    $result.reboot_required = $feature_result.RestartNeeded
 
     If(-not $feature_result.Success) {
         Exit-Json -message ("Error installing AD-Domain-Services and RSAT-ADDS features: {0}" -f ($feature_result | Out-String))
@@ -60,7 +60,7 @@ Function Ensure-FeatureInstallation {
 Function Get-DomainControllerDomain {
     Write-DebugLog "Checking for domain controller role and domain name"
 
-    $sys_cim = Get-WmiObject Win32_ComputerSystem
+    $sys_cim = Get-CIMInstance Win32_ComputerSystem
 
     $is_dc = $sys_cim.DomainRole -in (4,5) # backup/primary DC
     # this will be our workgroup or joined-domain if we're not a DC
@@ -107,6 +107,7 @@ $read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -defau
 $site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failifempty $read_only
 
 $state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
+
 $log_path = Get-AnsibleParam -obj $params -name "log_path"
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
@@ -211,7 +212,20 @@ Try {
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                try
+                {
+                    $null = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
+                    # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
+                    # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
+                    if ($_.Exception.ExitCode -eq 15) {
+                        $result.reboot_required = $true
+                    } else {
+                        Fail-Json -obj $result -message "Failed to install ADDSDomainController with DCPromo: $($_.Exception.Message)"
+                    }
+                }
+                # If $_.FullyQualifiedErrorId -eq 'Test.VerifyUserCredentialPermissions.DCPromo.General.25,Microsoft.DirectoryServices.Deployment.PowerShell.Commands.InstallADDSDomainControllerCommand'
+                # the module failed to resolve the given dns domain name
 
                 Write-DebugLog "Installation complete, trying to start the Netlogon service"
                 # The Netlogon service is set to auto start but is not started. This is
@@ -256,7 +270,7 @@ Try {
             $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
 
             Write-DebugLog "Uninstalling domain controller..."
-            $uninstall_result = Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
+            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }
@@ -271,4 +285,3 @@ Catch {
 
     Throw
 }
-

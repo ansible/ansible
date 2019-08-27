@@ -1,7 +1,7 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2017 Julien Stroheker, <juliens@microsoft.com>
-#
+# -*- coding: utf-8 -*
+
+# Copyright: (c) 2017, Julien Stroheker <juliens@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,9 +16,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_acs
 version_added: "2.4"
-short_description: Manage an Azure Container Service Instance (ACS).
+short_description: Manage an Azure Container Service(ACS) instance
 description:
-    - Create, update and delete an Azure Container Service Instance.
+    - Create, update and delete an Azure Container Service(ACS) instance.
 
 options:
     resource_group:
@@ -27,11 +27,11 @@ options:
         required: true
     name:
         description:
-            - Name of the Container Services instance.
+            - Name of the Azure Container Services(ACS) instance.
         required: true
     state:
         description:
-            - Assert the state of the ACS. Use 'present' to create or update an ACS and 'absent' to delete it.
+            - Assert the state of the ACS. Use C(present) to create or update an ACS and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -41,7 +41,8 @@ options:
             - Valid azure location. Defaults to location of the resource group.
     orchestration_platform:
         description:
-            - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+            - Specifies the Container Orchestration Platform to use. Currently can be either C(DCOS), C(Kubernetes) or C(Swarm).
+            - The I(service_principal) must be defined if set to C(Kubernetes).
         choices:
             - 'DCOS'
             - 'Kubernetes'
@@ -54,7 +55,7 @@ options:
         suboptions:
             count:
                 description:
-                  - Number of masters (VMs) in the container service cluster. Allowed values are 1, 3, and 5.
+                    - Number of masters (VMs) in the container service cluster. Allowed values are C(1), C(3), and C(5).
                 required: true
                 choices:
                   - 1
@@ -62,21 +63,21 @@ options:
                   - 5
             vm_size:
                 description:
-                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                    - The VM Size of each of the Agent Pool VM's (e.g. C(Standard_F1) / C(Standard_D2v2)).
                 required: true
                 version_added: 2.5
             dns_prefix:
                 description:
-                  - The DNS Prefix to use for the Container Service master nodes.
+                    - The DNS Prefix to use for the Container Service master nodes.
                 required: true
     linux_profile:
         description:
-            - The linux profile suboptions.
+            - The Linux profile suboptions.
         required: true
         suboptions:
             admin_username:
                 description:
-                  - The Admin Username for the Cluster.
+                    - The Admin Username for the Cluster.
                 required: true
             ssh_key:
                 description:
@@ -89,7 +90,7 @@ options:
         suboptions:
             name:
                 description:
-                  - Unique name of the agent pool profile in the context of the subscription and resource group.
+                    - Unique name of the agent pool profile in the context of the subscription and resource group.
                 required: true
             count:
                 description:
@@ -101,20 +102,19 @@ options:
                 required: true
             vm_size:
                 description:
-                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                    - The VM Size of each of the Agent Pool VM's (e.g. C(Standard_F1) / C(Standard_D2v2)).
                 required: true
     service_principal:
         description:
             - The service principal suboptions.
+            - Required when I(orchestration_platform=Kubernetes).
         suboptions:
             client_id:
                 description:
                     - The ID for the Service Principal.
-                required: false
             client_secret:
                 description:
                     - The secret password associated with the service principal.
-                required: false
     diagnostics_profile:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
@@ -126,7 +126,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Julien Stroheker (@julienstroheker)"
+    - Julien Stroheker (@julienstroheker)
 
 '''
 
@@ -135,7 +135,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice1
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: Kubernetes
         master_profile:
             - count: 3
@@ -160,7 +160,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice2
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: DCOS
         master_profile:
             - count: 3
@@ -182,7 +182,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice3
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: Swarm
         master_profile:
             - count: 3
@@ -208,7 +208,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice3
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
         orchestration_platform: Swarm
         master_profile:
@@ -229,7 +229,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 state:
-    description: Current state of the azure container service
+    description: Current state of the Azure Container Service(ACS).
     returned: always
     type: dict
 '''
@@ -469,13 +469,11 @@ class AzureRMContainerService(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             orchestration_platform=dict(
                 type='str',
@@ -495,8 +493,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                 required=True
             ),
             service_principal=dict(
-                type='list',
-                required=False
+                type='list'
             ),
             diagnostics_profile=dict(
                 type='bool',
@@ -550,7 +547,7 @@ class AzureRMContainerService(AzureRMModuleBase):
 
             mastercount = self.master_profile[0].get('count')
             if mastercount != 1 and mastercount != 3 and mastercount != 5:
-                self.fail('Master Count number wrong : {} / should be 1 3 or 5'.format(mastercount))
+                self.fail('Master Count number wrong : {0} / should be 1 3 or 5'.format(mastercount))
 
             # For now Agent Pool cannot be more than 1, just remove this part in the future if it change
             agentpoolcount = len(self.agent_pool_profiles)

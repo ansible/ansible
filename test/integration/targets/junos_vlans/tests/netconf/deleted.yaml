@@ -1,0 +1,33 @@
+---
+- debug:
+    msg: "START junos_vlans deleted integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- block:
+    - name: Delete the provided configuration with the exisiting running configuration
+      junos_vlans: &deleted
+        config:
+        state: deleted
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - not result.after
+
+    - name: Delete the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_vlans: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_vlans deleted integration tests on connection={{ ansible_connection }}"

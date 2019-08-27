@@ -70,6 +70,9 @@ notes:
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
       one solution is to add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
       the hg module, with the following command: ssh-keyscan remote_host.com >> /etc/ssh/ssh_known_hosts."
+    - As per 01 Dec 2018, Bitbucket has dropped support for TLSv1 and TLSv1.1 connections. As such,
+      if the underlying system still uses a Python version below 2.7.9, you will have issues checking out
+      bitbucket repositories. See U(https://bitbucket.org/blog/deprecating-tlsv1-tlsv1-1-2018-12-01).
 '''
 
 EXAMPLES = '''

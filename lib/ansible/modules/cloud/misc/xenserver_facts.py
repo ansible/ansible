@@ -21,7 +21,7 @@ description:
   - Reads data out of XenAPI, can be used instead of multiple xe commands.
 author:
     - Andy Hill (@andyhky)
-    - Tim Rupp
+    - Tim Rupp (@caphrim007)
     - Robin Lee (@cheese)
 options: {}
 '''
@@ -46,7 +46,6 @@ EXAMPLES = '''
 # }
 '''
 
-import platform
 
 HAVE_XENAPI = False
 try:
@@ -55,6 +54,7 @@ try:
 except ImportError:
     pass
 
+from ansible.module_utils import distro
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -70,8 +70,7 @@ class XenServerFacts:
 
     @property
     def version(self):
-        # Be aware! Deprecated in Python 2.6!
-        result = platform.dist()[1]
+        result = distro.linux_distribution()[1]
         return result
 
     @property

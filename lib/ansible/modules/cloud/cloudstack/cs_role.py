@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,52 +15,57 @@ module: cs_role
 short_description: Manages user roles on Apache CloudStack based clouds.
 description:
   - Create, update, delete user roles.
-version_added: "2.3"
-author: "René Moser (@resmo)"
+version_added: '2.3'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the role.
+    type: str
     required: true
   id:
     description:
       - ID of the role.
-      - If provided, C(id) is used as key.
-    aliases: [ 'uuid' ]
+      - If provided, I(id) is used as key.
+    type: str
+    aliases: [ uuid ]
   role_type:
     description:
       - Type of the role.
       - Only considered for creation.
+    type: str
     default: User
-    choices: [ 'User', 'DomainAdmin', 'ResourceAdmin', 'Admin' ]
+    choices: [ User, DomainAdmin, ResourceAdmin, Admin ]
   description:
     description:
       - Description of the role.
+    type: str
   state:
     description:
       - State of the role.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure an user role is present
-- local_action:
-    module: cs_role
+- name: Ensure an user role is present
+  cs_role:
     name: myrole_user
+  delegate_to: localhost
 
-# Ensure a role having particular ID is named as myrole_user
-- local_action:
-    module: cs_role
+- name: Ensure a role having particular ID is named as myrole_user
+  cs_role:
     name: myrole_user
     id: 04589590-ac63-4ffc-93f5-b698b8ac38b6
+  delegate_to: localhost
 
-# Ensure a role is absent
-- local_action:
-    module: cs_role
+- name: Ensure a role is absent
+  cs_role:
     name: myrole_user
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -82,22 +73,22 @@ RETURN = '''
 id:
   description: UUID of the role.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the role.
   returned: success
-  type: string
+  type: str
   sample: myrole
 description:
   description: Description of the role.
   returned: success
-  type: string
+  type: str
   sample: "This is my role description"
 role_type:
   description: Type of the role.
   returned: success
-  type: string
+  type: str
   sample: User
 '''
 

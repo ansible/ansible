@@ -16,13 +16,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_host
-short_description: Zabbix host creates/updates/deletes
+short_description: Create/update/delete Zabbix hosts
 description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
 author:
-    - "(@cove)"
-    - Tony Minfei Ding
+    - "Cove (@cove)"
+    - Tony Minfei Ding (!UNKNOWN)
     - Harrison Gu (@harrisongu)
     - Werner Dijkerman (@dj-wasabi)
     - Eike Frost (@eikef)
@@ -33,7 +33,7 @@ options:
     host_name:
         description:
             - Name of the host in Zabbix.
-            - host_name is the unique identifier used and cannot be updated using this module.
+            - I(host_name) is the unique identifier used and cannot be updated using this module.
         required: true
     visible_name:
         description:
@@ -58,7 +58,7 @@ options:
         description:
             - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
             - Please review the interface documentation for more information on the supported properties
-            - 'https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory'
+            - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory)
         version_added: '2.5'
     status:
         description:
@@ -76,13 +76,65 @@ options:
         description:
             - The name of the Zabbix proxy to be used.
     interfaces:
+        type: list
         description:
             - List of interfaces to be created for the host (see example below).
-            - 'Available keys are: I(dns), I(ip), I(main), I(port), I(type), I(useip), and I(bulk).'
-            - Please review the interface documentation for more information on the supported properties
-            - 'https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface'
-            - If an interface definition is incomplete, this module will attempt to fill in sensible values.
-            - I(type) can also be C(agent), C(snmp), C(ipmi), or C(jmx) instead of its numerical value.
+            - For more information, review host interface documentation at
+            - U(https://www.zabbix.com/documentation/4.0/manual/api/reference/hostinterface/object)
+        suboptions:
+            type:
+                description:
+                    - Interface type to add
+                    - Numerical values are also accepted for interface type
+                    - 1 = agent
+                    - 2 = snmp
+                    - 3 = ipmi
+                    - 4 = jmx
+                choices: ['agent', 'snmp', 'ipmi', 'jmx']
+                required: true
+            main:
+                type: int
+                description:
+                    - Whether the interface is used as default.
+                    - If multiple interfaces with the same type are provided, only one can be default.
+                    - 0 (not default), 1 (default)
+                default: 0
+                choices: [0, 1]
+            useip:
+                type: int
+                description:
+                    - Connect to host interface with IP address instead of DNS name.
+                    - 0 (don't use ip), 1 (use ip)
+                default: 0
+                choices: [0, 1]
+            ip:
+                type: str
+                description:
+                    - IP address used by host interface.
+                    - Required if I(useip=1).
+                default: ''
+            dns:
+                type: str
+                description:
+                    - DNS name of the host interface.
+                    - Required if I(useip=0).
+                default: ''
+            port:
+                type: str
+                description:
+                    - Port used by host interface.
+                    - If not specified, default port for each type of interface is used
+                    - 10050 if I(type='agent')
+                    - 161 if I(type='snmp')
+                    - 623 if I(type='ipmi')
+                    - 12345 if I(type='jmx')
+            bulk:
+                type: int
+                description:
+                    - Whether to use bulk SNMP requests.
+                    - 0 (don't use bulk requests), 1 (use bulk requests)
+                choices: [0, 1]
+                default: 1
         default: []
     tls_connect:
         description:
@@ -109,14 +161,15 @@ options:
     tls_psk:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
-            - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
+            - The preshared key, at least 32 hex digits. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
-    tls_issuer:
+    ca_cert:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        aliases: [ tls_issuer ]
     tls_subject:
         description:
             - Required certificate subject.
@@ -222,27 +275,19 @@ EXAMPLES = '''
     tls_psk: 123456789abcdef123456789abcdef12
 '''
 
+
+import atexit
 import copy
+import traceback
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
-
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, no higher version so far),
-    # it does not support the 'hostinterface' api calls,
-    # so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
-    class ZabbixAPIExtends(ZabbixAPI):
-        hostinterface = None
-
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-            self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
-
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class Host(object):
@@ -642,7 +687,7 @@ def main():
             tls_accept=dict(type='int', default=1),
             tls_psk_identity=dict(type='str', required=False),
             tls_psk=dict(type='str', required=False),
-            tls_issuer=dict(type='str', required=False),
+            ca_cert=dict(type='str', required=False, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False),
             inventory_zabbix=dict(required=False, type='dict'),
             timeout=dict(type='int', default=10),
@@ -656,7 +701,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -678,7 +723,7 @@ def main():
     tls_accept = module.params['tls_accept']
     tls_psk_identity = module.params['tls_psk_identity']
     tls_psk = module.params['tls_psk']
-    tls_issuer = module.params['tls_issuer']
+    tls_issuer = module.params['ca_cert']
     tls_subject = module.params['tls_subject']
     inventory_zabbix = module.params['inventory_zabbix']
     status = module.params['status']
@@ -694,8 +739,8 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
@@ -814,12 +859,12 @@ def main():
                                          description, host_name, inventory_mode, inventory_zabbix,
                                          tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,
                                          ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password):
-                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
-                                            ipmi_username, ipmi_password)
                 host.update_host(host_name, group_ids, status, host_id,
                                  interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
                                  tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
+                                            ipmi_username, ipmi_password)
                 host.update_inventory_mode(host_id, inventory_mode)
                 host.update_inventory_zabbix(host_id, inventory_zabbix)
 

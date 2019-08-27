@@ -25,18 +25,15 @@ __metaclass__ = type
 import getpass
 import json
 
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible import context
+from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import input
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlparse
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.utils.color import stringc
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class GalaxyLogin(object):
@@ -48,12 +45,13 @@ class GalaxyLogin(object):
         self.galaxy = galaxy
         self.github_username = None
         self.github_password = None
+        self._validate_certs = not context.CLIARGS['ignore_certs']
 
         if github_token is None:
             self.get_credentials()
 
     def get_credentials(self):
-        display.display(u'\n\n' + "We need your " + stringc("Github login", 'bright cyan') +
+        display.display(u'\n\n' + "We need your " + stringc("GitHub login", 'bright cyan') +
                         " to identify you.", screen_only=True)
         display.display("This information will " + stringc("not be sent to Galaxy", 'bright cyan') +
                         ", only to " + stringc("api.github.com.", "yellow"), screen_only=True)
@@ -62,17 +60,17 @@ class GalaxyLogin(object):
                         " if you do not want to enter your password." + u'\n\n', screen_only=True)
 
         try:
-            self.github_username = input("Github Username: ")
-        except:
+            self.github_username = input("GitHub Username: ")
+        except Exception:
             pass
 
         try:
             self.github_password = getpass.getpass("Password for %s: " % self.github_username)
-        except:
+        except Exception:
             pass
 
         if not self.github_username or not self.github_password:
-            raise AnsibleError("Invalid Github credentials. Username and password are required.")
+            raise AnsibleError("Invalid GitHub credentials. Username and password are required.")
 
     def remove_github_token(self):
         '''
@@ -81,7 +79,8 @@ class GalaxyLogin(object):
         '''
         try:
             tokens = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
-                               url_password=self.github_password, force_basic_auth=True,))
+                                        url_password=self.github_password, force_basic_auth=True,
+                                        validate_certs=self._validate_certs))
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['message'])
@@ -90,8 +89,9 @@ class GalaxyLogin(object):
             if token['note'] == 'ansible-galaxy login':
                 display.vvvvv('removing token: %s' % token['token_last_eight'])
                 try:
-                    open_url('https://api.github.com/authorizations/%d' % token['id'], url_username=self.github_username,
-                             url_password=self.github_password, method='DELETE', force_basic_auth=True)
+                    open_url('https://api.github.com/authorizations/%d' % token['id'],
+                             url_username=self.github_username, url_password=self.github_password, method='DELETE',
+                             force_basic_auth=True, validate_certs=self._validate_certs)
                 except HTTPError as e:
                     res = json.load(e)
                     raise AnsibleError(res['message'])
@@ -104,7 +104,8 @@ class GalaxyLogin(object):
         args = json.dumps({"scopes": ["public_repo"], "note": "ansible-galaxy login"})
         try:
             data = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
-                             url_password=self.github_password, force_basic_auth=True, data=args))
+                                      url_password=self.github_password, force_basic_auth=True, data=args,
+                                      validate_certs=self._validate_certs))
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['message'])

@@ -1,0 +1,141 @@
+- block:
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: true
+    # Make custom ENIs and attach via the `network` parameter
+    - ec2_eni:
+        delete_on_termination: true
+        subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        security_groups:
+          - "{{ sg.group_id }}"
+        <<: *aws_connection_info
+      register: eni_a
+    - ec2_eni:
+        delete_on_termination: true
+        subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        security_groups:
+          - "{{ sg.group_id }}"
+        <<: *aws_connection_info
+      register: eni_b
+    - ec2_eni:
+        delete_on_termination: true
+        subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        security_groups:
+          - "{{ sg.group_id }}"
+        <<: *aws_connection_info
+      register: eni_c
+
+    - ec2_key:
+        name: "{{ resource_prefix }}_test_key"
+        <<: *aws_connection_info
+
+    - name: Make instance in the testing subnet created in the test VPC
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-eni-vpc"
+        key_name: "{{ resource_prefix }}_test_key"
+        network:
+          interfaces:
+            - id: "{{ eni_a.interface.id }}"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        availability_zone: '{{ aws_region }}b'
+        tags:
+          TestId: "{{ resource_prefix }}"
+        instance_type: t2.micro
+        wait: false
+        <<: *aws_connection_info
+      register: in_test_vpc
+
+    - name: "Gather {{ resource_prefix }}-test-eni-vpc info"
+      ec2_instance_info:
+        filters:
+          "tag:Name": '{{ resource_prefix }}-test-eni-vpc'
+        <<: *aws_connection_info
+      register: in_test_vpc_instance
+
+    - assert:
+        that:
+          - 'in_test_vpc_instance.instances.0.key_name == "{{ resource_prefix }}_test_key"'
+          - '(in_test_vpc_instance.instances.0.network_interfaces | length) == 1'
+
+    - name: Add a second interface
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-eni-vpc"
+        network:
+          interfaces:
+            - id: "{{ eni_a.interface.id }}"
+            - id: "{{ eni_b.interface.id }}"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        tags:
+          TestId: "{{ resource_prefix }}"
+        instance_type: t2.micro
+        wait: false
+        <<: *aws_connection_info
+      register: add_interface
+      until: add_interface is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: Make instance in the testing subnet created in the test VPC(check mode)
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-eni-vpc-checkmode"
+        key_name: "{{ resource_prefix }}_test_key"
+        network:
+          interfaces:
+            - id: "{{ eni_c.interface.id }}"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        availability_zone: '{{ aws_region }}b'
+        tags:
+          TestId: "{{ resource_prefix }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+      check_mode: yes
+
+    - name: "fact presented ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-eni-vpc"
+        <<: *aws_connection_info
+      register: presented_instance_fact
+
+    - name: "fact checkmode ec2 instance"
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-eni-vpc-checkmode"
+        <<: *aws_connection_info
+      register: checkmode_instance_fact
+
+    - name: "Confirm existence of instance id."
+      assert:
+        that:
+          - "{{ presented_instance_fact.instances | length }} > 0"
+          - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+    - name: Terminate instance
+      ec2_instance:
+        filters:
+          tag:TestId: "{{ resource_prefix }}"
+        state: absent
+        wait: false
+        <<: *aws_connection_info
+      register: result
+
+  always:
+    - name: Terminate instance
+      ec2_instance:
+        instance_ids: "{{ in_test_vpc.instance_ids }}"
+        state: absent
+        wait: false
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: yes
+
+    - ec2_key:
+        name: "{{ resource_prefix }}_test_key"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes

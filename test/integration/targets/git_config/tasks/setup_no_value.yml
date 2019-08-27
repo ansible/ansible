@@ -1,0 +1,8 @@
+---
+# ------
+# set up : deleting gitconfig file
+- name: set up without value
+  file:
+    path: ~/.gitconfig
+    state: absent
+...

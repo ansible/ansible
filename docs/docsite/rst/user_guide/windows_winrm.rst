@@ -1,3 +1,5 @@
+.. _windows_winrm:
+
 Windows Remote Management
 =========================
 Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
@@ -16,7 +18,9 @@ configuration is required to use WinRM with Ansible.
 
 Ansible uses the `pywinrm <https://github.com/diyan/pywinrm>`_ package to
 communicate with Windows servers over WinRM. It is not installed by default
-with the Ansible package, but can be installed by running the following::
+with the Ansible package, but can be installed by running the following:
+
+.. code-block:: shell
 
    pip install "pywinrm>=0.3.0"
 
@@ -52,7 +56,9 @@ also the most insecure. This is because the username and password are simply
 base64 encoded, and if a secure channel is not in use (eg, HTTPS) then it can be
 decoded by anyone. Basic authentication can only be used for local accounts (not domain accounts).
 
-The following example shows host vars configured for basic authentication::
+The following example shows host vars configured for basic authentication:
+
+.. code-block:: yaml+jinja
 
     ansible_user: LocalUsername
     ansible_password: Password
@@ -60,9 +66,7 @@ The following example shows host vars configured for basic authentication::
     ansible_winrm_transport: basic
 
 Basic authentication is not enabled by default on a Windows host but can be
-enabled by running the following in PowerShell:
-
-.. code-block:: guess
+enabled by running the following in PowerShell::
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
 
@@ -71,7 +75,9 @@ Certificate
 Certificate authentication uses certificates as keys similar to SSH key
 pairs, but the file format and key generation process is different.
 
-The following example shows host vars configured for certificate authentication::
+The following example shows host vars configured for certificate authentication:
+
+.. code-block:: yaml+jinja
 
     ansible_connection: winrm
     ansible_winrm_cert_pem: /path/to/certificate/public/key.pem
@@ -79,9 +85,7 @@ The following example shows host vars configured for certificate authentication:
     ansible_winrm_transport: certificate
 
 Certificate authentication is not enabled by default on a Windows host but can
-be enabled by running the following in PowerShell:
-
-.. code-block:: guess
+be enabled by running the following in PowerShell::
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
 
@@ -111,7 +115,7 @@ To generate a certificate with ``OpenSSL``:
 
 .. code-block:: shell
 
-    # set the name of the local user that will have the key mapped to
+    # Set the name of the local user that will have the key mapped to
     USERNAME="username"
 
     cat > openssl.conf << EOL
@@ -129,13 +133,13 @@ To generate a certificate with ``OpenSSL``:
 
 To generate a certificate with ``New-SelfSignedCertificate``:
 
-.. code-block:: guess
+.. code-block:: powershell
 
-    # set the name of the local user that will have the key mapped
+    # Set the name of the local user that will have the key mapped
     $username = "username"
     $output_path = "C:\temp"
 
-    # instead of generating a file, the cert will be added to the personal
+    # Instead of generating a file, the cert will be added to the personal
     # LocalComputer folder in the certificate store
     $cert = New-SelfSignedCertificate -Type Custom `
         -Subject "CN=$username" `
@@ -144,14 +148,14 @@ To generate a certificate with ``New-SelfSignedCertificate``:
         -KeyAlgorithm RSA `
         -KeyLength 2048
 
-    # export the public key
+    # Export the public key
     $pem_output = @()
     $pem_output += "-----BEGIN CERTIFICATE-----"
     $pem_output += [System.Convert]::ToBase64String($cert.RawData) -replace ".{64}", "$&`n"
     $pem_output += "-----END CERTIFICATE-----"
     [System.IO.File]::WriteAllLines("$output_path\cert.pem", $pem_output)
 
-    # export the private key in a PFX file
+    # Export the private key in a PFX file
     [System.IO.File]::WriteAllBytes("$output_path\cert.pfx", $cert.Export("Pfx"))
 
 
@@ -169,7 +173,7 @@ both the issuing certificate and public key are the same.
 
 Following example shows how to import the issuing certificate:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
     $cert.Import("cert.pem")
@@ -187,7 +191,7 @@ Following example shows how to import the issuing certificate:
 
 The code to import the client certificate public key is:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
     $cert.Import("cert.pem")
@@ -202,17 +206,13 @@ The code to import the client certificate public key is:
 
 Mapping a Certificate to an Account
 +++++++++++++++++++++++++++++++++++
-Once the certificate has been imported, it needs to be mapped to the local user account.
-
-This can be done with the following PowerShell command:
-
-.. code-block:: guess
+Once the certificate has been imported, map it to the local user account::
 
     $username = "username"
     $password = ConvertTo-SecureString -String "password" -AsPlainText -Force
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
 
-    # this is the issuer thumbprint which in the case of a self generated cert
+    # This is the issuer thumbprint which in the case of a self generated cert
     # is the public key thumbprint, additional logic may be required for other
     # scenarios
     $thumbprint = (Get-ChildItem -Path cert:\LocalMachine\root | Where-Object { $_.Subject -eq "CN=$username" }).Thumbprint
@@ -247,7 +247,9 @@ Kerberos has several advantages over using NTLM:
   the authentication stage.
 * Unlike Kerberos, NTLM does not allow credential delegation.
 
-This example shows host variables configured to use NTLM authentication::
+This example shows host variables configured to use NTLM authentication:
+
+.. code-block:: yaml+jinja
 
     ansible_user: LocalUsername
     ansible_password: Password
@@ -264,7 +266,9 @@ is available through WinRM.
 Kerberos requires some additional setup work on the Ansible host before it can be
 used properly.
 
-The following example shows host vars configured for Kerberos authentication::
+The following example shows host vars configured for Kerberos authentication:
+
+.. code-block:: yaml+jinja
 
     ansible_user: username@MY.DOMAIN.COM
     ansible_password: Password
@@ -328,7 +332,7 @@ that it can communicate with a domain. This configuration is done through the
 
 To configure Kerberos, in the section that starts with:
 
-::
+.. code-block:: ini
 
     [realms]
 
@@ -336,7 +340,7 @@ Add the full domain name and the fully qualified domain names of the primary
 and secondary Active Directory domain controllers. It should look something
 like this:
 
-::
+.. code-block:: ini
 
     [realms]
         MY.DOMAIN.COM = {
@@ -346,13 +350,13 @@ like this:
 
 In the section that starts with:
 
-::
+.. code-block:: ini
 
     [domain_realm]
 
 Add a line like the following for each domain that Ansible needs access for:
 
-::
+.. code-block:: ini
 
     [domain_realm]
         .my.domain.com = MY.DOMAIN.COM
@@ -443,7 +447,9 @@ not compromised and are trusted.
 CredSSP can be used for both local and domain accounts and also supports
 message encryption over HTTP.
 
-To use CredSSP authentication, the host vars are configured like so::
+To use CredSSP authentication, the host vars are configured like so:
+
+.. code-block:: yaml+jinja
 
     ansible_user: Username
     ansible_password: Password
@@ -457,7 +463,7 @@ There are some extra host variables that can be set as shown below::
 CredSSP authentication is not enabled by default on a Windows host, but can
 be enabled by running the following in PowerShell:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     Enable-WSManCredSSP -Role Server -Force
 
@@ -485,24 +491,8 @@ There are two ways that older hosts can be used with CredSSP:
   over TLS 1.0. This is the only option when connecting to Windows Server 2008, which
   has no way of supporting TLS 1.2
 
-To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
-`KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1-1-and-tls-1-2-in-windows-7-or-wind>`_
-needs to be installed.
-
-Once the update has been applied and the Windows host rebooted, run the following
-PowerShell commands to enable TLS 1.2:
-
-.. code-block:: guess
-
-    $reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProvider\SCHANNEL\Protocols\TLS 1.2"
-    New-Item -Path $reg_path
-    New-Item -Path "$reg_path\Server"
-    New-Item -Path "$reg_path\Client"
-
-    New-ItemProperty -Path "$reg_path\Server" -Name "Enabled" -Value 1 -PropertyType DWord
-    New-ItemProperty -Path "$reg_path\Server" -Name "DisabledByDefault" -Value 0 -PropertyType DWord
-    New-ItemProperty -Path "$reg_path\Client" -Name "Enabled" -Value 1 -PropertyType DWord
-    New-ItemProperty -Path "$reg_path\Client" -Name "DisabledByDefault" -Value 0 -PropertyType DWord
+See :ref:`winrm_tls12` for more information on how to enable TLS 1.2 on the
+Windows host.
 
 Set CredSSP Certificate
 +++++++++++++++++++++++
@@ -513,15 +503,13 @@ another certificate.
     certificate. With CredSSP, message transport still occurs over the WinRM listener,
     but the TLS-encrypted messages inside the channel use the service-level certificate.
 
-To explicitly set the certificate to use for CredSSP:
+To explicitly set the certificate to use for CredSSP::
 
-.. code-block:: guess
-
-    # note the value $certificate_thumbprint will be different in each
+    # Note the value $certificate_thumbprint will be different in each
     # situation, this needs to be set based on the cert that is used.
     $certificate_thumbprint = "7C8DCBD5427AFEE6560F4AF524E325915F51172C"
 
-    # set the thumbprint value
+    # Set the thumbprint value
     Set-Item -Path WSMan:\localhost\Service\CertificateThumbprint -Value $certificate_thumbprint
 
 Non-Administrator Accounts
@@ -529,7 +517,7 @@ Non-Administrator Accounts
 WinRM is configured by default to only allow connections from accounts in the local
 ``Administrators`` group. This can be changed by running:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     winrm configSDDL default
 
@@ -562,10 +550,9 @@ in the host vars.
 
 A last resort is to disable the encryption requirement on the Windows host. This
 should only be used for development and debugging purposes, as anything sent
-from Ansible can viewed by anyone on the network. To disable the encryption
-requirement, run the following from PowerShell on the target host:
-
-.. code-block:: guess
+from Ansible can be viewed, manipulated and also the remote session can completely
+be taken over by anyone on the same network. To disable the encryption
+requirement::
 
     Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
 
@@ -580,16 +567,18 @@ username, password, and connection type of the remote hosts. These variables
 are most easily set up in the inventory, but can be set on the ``host_vars``/
 ``group_vars`` level.
 
-When setting up the inventory, the following variables are required::
+When setting up the inventory, the following variables are required:
 
-    # it is suggested that these be encrypted with ansible-vault:
+.. code-block:: yaml+jinja
+
+    # It is suggested that these be encrypted with ansible-vault:
     # ansible-vault edit group_vars/windows.yml
     ansible_connection: winrm
 
-    # may also be passed on the command-line via --user
+    # May also be passed on the command-line via --user
     ansible_user: Administrator
 
-    # may also be supplied at runtime with --ask-pass
+    # May also be supplied at runtime with --ask-pass
     ansible_password: SecretPasswordGoesHere
 
 
@@ -649,7 +638,7 @@ for additional configuration of WinRM connections:
 * ``ansible_winrm_send_cbt``: When using ``ntlm`` or ``kerberos`` over HTTPS,
   the authentication library will try to send channel binding tokens to
   mitigate against man in the middle attacks. This flag controls whether these
-  bindings will be sent or not (default: ``True``).
+  bindings will be sent or not (default: ``yes``).
 
 * ``ansible_winrm_*``: Any additional keyword arguments supported by
   ``winrm.Protocol`` may be provided in place of ``*``
@@ -676,7 +665,9 @@ using the `ipaddress <https://docs.python.org/3/library/ipaddress.html>`_
 package and pass to pywinrm correctly.
 
 When defining a host using an IPv6 address, just add the IPv6 address as you
-would an IPv4 address or hostname::
+would an IPv4 address or hostname:
+
+.. code-block:: ini
 
     [windows-server]
     2001:db8::1
@@ -725,6 +716,132 @@ is located in the install path of the Python package
     Certificate validation will fail if the server's certificate issuer is
     only added to the system's truststore.
 
+.. _winrm_tls12:
+
+TLS 1.2 Support
+```````````````
+As WinRM runs over the HTTP protocol, using HTTPS means that the TLS protocol
+is used to encrypt the WinRM messages. TLS will automatically attempt to
+negotiate the best protocol and cipher suite that is available to both the
+client and the server. If a match cannot be found then Ansible will error out
+with a message similar to::
+
+    HTTPSConnectionPool(host='server', port=5986): Max retries exceeded with url: /wsman (Caused by SSLError(SSLError(1, '[SSL: UNSUPPORTED_PROTOCOL] unsupported protocol (_ssl.c:1056)')))
+
+Commonly this is when the Windows host has not been configured to support
+TLS v1.2 but it could also mean the Ansible controller has an older OpenSSL
+version installed.
+
+Windows 8 and Windows Server 2012 come with TLS v1.2 installed and enabled by
+default but older hosts, like Server 2008 R2 and Windows 7, have to be enabled
+manually.
+
+.. Note:: There is a bug with the TLS 1.2 patch for Server 2008 which will stop
+    Ansible from connecting to the Windows host. This means that Server 2008
+    cannot be configured to use TLS 1.2. Server 2008 R2 and Windows 7 are not
+    affected by this issue and can use TLS 1.2.
+
+To verify what protocol the Windows host supports, you can run the following
+command on the Ansible controller::
+
+    openssl s_client -connect <hostname>:5986
+
+The output will contain information about the TLS session and the ``Protocol``
+line will display the version that was negotiated::
+
+    New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-SHA
+    Server public key is 2048 bit
+    Secure Renegotiation IS supported
+    Compression: NONE
+    Expansion: NONE
+    No ALPN negotiated
+    SSL-Session:
+        Protocol  : TLSv1
+        Cipher    : ECDHE-RSA-AES256-SHA
+        Session-ID: 962A00001C95D2A601BE1CCFA7831B85A7EEE897AECDBF3D9ECD4A3BE4F6AC9B
+        Session-ID-ctx:
+        Master-Key: ....
+        Start Time: 1552976474
+        Timeout   : 7200 (sec)
+        Verify return code: 21 (unable to verify the first certificate)
+    ---
+
+    New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+    Server public key is 2048 bit
+    Secure Renegotiation IS supported
+    Compression: NONE
+    Expansion: NONE
+    No ALPN negotiated
+    SSL-Session:
+        Protocol  : TLSv1.2
+        Cipher    : ECDHE-RSA-AES256-GCM-SHA384
+        Session-ID: AE16000050DA9FD44D03BB8839B64449805D9E43DBD670346D3D9E05D1AEEA84
+        Session-ID-ctx:
+        Master-Key: ....
+        Start Time: 1552976538
+        Timeout   : 7200 (sec)
+        Verify return code: 21 (unable to verify the first certificate)
+
+If the host is returning ``TLSv1`` then it should be configured so that
+TLS v1.2 is enable. You can do this by running the following PowerShell
+script:
+
+.. code-block:: powershell
+
+    Function Enable-TLS12 {
+        param(
+            [ValidateSet("Server", "Client")]
+            [String]$Component = "Server"
+        )
+
+        $protocols_path = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols'
+        New-Item -Path "$protocols_path\TLS 1.2\$Component" -Force
+        New-ItemProperty -Path "$protocols_path\TLS 1.2\$Component" -Name Enabled -Value 1 -Type DWORD -Force
+        New-ItemProperty -Path "$protocols_path\TLS 1.2\$Component" -Name DisabledByDefault -Value 0 -Type DWORD -Force
+    }
+
+    Enable-TLS12 -Component Server
+
+    # Not required but highly recommended to enable the Client side TLS 1.2 components
+    Enable-TLS12 -Component Client
+
+    Restart-Computer
+
+The below Ansible tasks can also be used to enable TLS v1.2:
+
+.. code-block:: yaml+jinja
+
+    - name: enable TLSv1.2 support
+      win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\{{ item.type }}
+        name: '{{ item.property }}'
+        data: '{{ item.value }}'
+        type: dword
+        state: present
+        register: enable_tls12
+      loop:
+      - type: Server
+        property: Enabled
+        value: 1
+      - type: Server
+        property: DisabledByDefault
+        value: 0
+      - type: Client
+        property: Enabled
+        value: 1
+      - type: Client
+        property: DisabledByDefault
+        value: 0
+
+    - name: reboot if TLS config was applied
+      win_reboot:
+      when: enable_tls12 is changed
+
+There are other ways to configure the TLS protocols as well as the cipher
+suites that are offered by the Windows host. One tool that can give you a GUI
+to manage these settings is `IIS Crypto <https://www.nartac.com/Products/IISCrypto/>`_
+from Nartac Software.
+
 Limitations
 ```````````
 Due to the design of the WinRM protocol , there are a few limitations
@@ -764,11 +881,9 @@ Some of these limitations can be mitigated by doing one of the following:
 
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

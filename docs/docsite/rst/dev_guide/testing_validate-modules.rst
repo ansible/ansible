@@ -1,5 +1,7 @@
 :orphan:
 
+.. _testing_validate-modules:
+
 ****************
 validate-modules
 ****************
@@ -8,7 +10,7 @@ validate-modules
 
 Python program to help test or validate Ansible modules.
 
-``validate-modules`` is one of the ``ansible-test`` Sanity Tests, see :doc:`testing_sanity` for more information.
+``validate-modules`` is one of the ``ansible-test`` Sanity Tests, see :ref:`testing_sanity` for more information.
 
 Originally developed by Matt Martz (@sivel)
 
@@ -50,7 +52,7 @@ Help
 Extending validate-modules
 ==========================
 
-The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/sanity/validate-modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
+The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
 
 
 Codes
@@ -117,7 +119,7 @@ Errors
   322       argument is listed in the argument_spec, but not documented in the module
   323       argument is listed in DOCUMENTATION.options, but not accepted by the module
   324       Value for "default" from the argument_spec does not match the documentation
-  325       argument_spec defines type="bool" but documentation does not
+  325       argument_spec defines type different than documentation does
   326       Value for "choices" from the argument_spec does not match the documentation
   327       Default value from the documentation is not compatible with type defined in the argument_spec
   328       Choices value from the documentation is not compatible with type defined in the argument_spec
@@ -126,7 +128,13 @@ Errors
   331       argument in argument_spec must be a dictionary/hash when used
   332       ``AnsibleModule`` schema validation error
   333       ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
-
+  334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
+  335       argument_spec implies type="str" but documentation defines it as different data type
+  336       argument in argument_spec is not a valid python identifier
+  337       Type value is defined in ``argument_spec`` but documentation doesn't specify a type
+  338       documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
+  339       Value for "elements" is valid only when value of "type" is ``list``
+  340       argument in argument_spec has sub-options but documentation does not define sub-options
   ..
 ---------   -------------------
   **4xx**   **Syntax**

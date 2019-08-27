@@ -6,7 +6,7 @@ Playbook Roles and Include Statements
 .. contents:: Topics
 
 
-The documentation regarding roles and includes for playbooks have moved. Their new location is here: :doc:`playbooks_reuse`. Please update any links you may have made directly to this page.
+The documentation regarding roles and includes for playbooks have moved. Their new location is here: :ref:`playbooks_reuse`. Please update any links you may have made directly to this page.
 
 .. seealso::
 

@@ -16,21 +16,23 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $arguments = Get-AnsibleParam -obj $params -name "arguments"
 $expected_return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "list" -default @(0, 3010)
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $product_id = Get-AnsibleParam -obj $params -name "product_id" -type "str" -aliases "productid"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present" -aliases "ensure"
 $username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user_name"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($username -ne $null) -aliases "user_password"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($null -ne $username) -aliases "user_password"
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
+$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 
 $result = @{
     changed = $false
     reboot_required = $false
 }
 
-if ($arguments -ne $null) {
+if ($null -ne $arguments) {
     # convert a list to a string and escape the values
     if ($arguments -is [array]) {
         $arguments = Argv-ToString -arguments $arguments
@@ -52,7 +54,7 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 [Net.ServicePointManager]::SecurityProtocol = $security_protcols
 
 $credential = $null
-if ($username -ne $null) {
+if ($null -ne $username) {
     $sec_user_password = ConvertTo-SecureString -String $password -AsPlainText -Force
     $credential = New-Object -TypeName PSCredential -ArgumentList $username, $sec_user_password
 }
@@ -67,13 +69,13 @@ foreach ($rc in ($expected_return_code)) {
     }
 }
 
-if ($path -eq $null) {
-    if (-not ($state -eq "absent" -and $product_id -ne $null)) {
+if ($null -eq $path) {
+    if (-not ($state -eq "absent" -and $null -ne $product_id)) {
         Fail-Json -obj $result -message "path can only be null when state=absent and product_id is not null"
     }
 }
 
-if ($creates_version -ne $null -and $creates_path -eq $null) {
+if ($null -ne $creates_version -and $null -eq $creates_path) {
     Fail-Json -obj $result -Message "creates_path must be set when creates_version is set"
 }
 
@@ -136,8 +138,8 @@ Function Test-RegistryProperty($path, $name) {
     # if the property exists and false if the property does not
     try {
         $value = (Get-Item -Path $path).GetValue($name)
-        # need to do it this way return ($value -eq $null) does not work
-        if ($value -eq $null) {
+        # need to do it this way return ($null -eq $value) does not work
+        if ($null -eq $value) {
             return $false
         } else {
             return $true
@@ -148,7 +150,7 @@ Function Test-RegistryProperty($path, $name) {
     }
 }
 
-Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_path, $creates_version, $creates_service) {
+Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credential, $creates_path, $creates_version, $creates_service) {
     # will get some metadata about the program we are trying to install or remove
     $metadata = @{
         installed = $false
@@ -160,7 +162,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
     }
 
     # set the location type and validate the path
-    if ($path -ne $null) {
+    if ($null -ne $path) {
         if ($path.EndsWith(".msi", [System.StringComparison]::CurrentCultureIgnoreCase)) {
             $metadata.msi = $true
         } else {
@@ -176,7 +178,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             }
         } elseif ($path.StartsWith("/") -or $path.StartsWith("\\")) {
             $metadata.location_type = [LocationType]::Unc
-            if ($credential -ne $null) {
+            if ($null -ne $credential) {
                 # Test-Path doesn't support supplying -Credentials, need to create PSDrive before testing
                 $file_path = Split-Path -Path $path
                 $file_name = Split-Path -Path $path -Leaf
@@ -208,24 +210,24 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
     }
 
     # try and get the product id
-    if ($product_id -ne $null) {
+    if ($null -ne $product_id) {
         $metadata.product_id = $product_id
     } else {
         # we can get the product_id if the path is an msi and is either a local file or unc file with credential delegation
-        if (($metadata.msi -eq $true) -and (($metadata.location_type -eq [LocationType]::Local) -or ($metadata.location_type -eq [LocationType]::Unc -and $credential -eq $null))) {
+        if (($metadata.msi -eq $true) -and (($metadata.location_type -eq [LocationType]::Local) -or ($metadata.location_type -eq [LocationType]::Unc -and $null -eq $credential))) {
             Add-Type -TypeDefinition $msi_tools
             try {
                 $metadata.product_id = [Ansible.MsiTools]::GetPackageProperty($path, "ProductCode")
             } catch {
                 Fail-Json -obj $result -message "failed to get product_id from MSI at $($path): $($_.Exception.Message)"
             }
-        } elseif ($creates_path -eq $null -and $creates_service -eq $null) {
+        } elseif ($null -eq $creates_path -and $null -eq $creates_service) {
             # we need to fail without the product id at this point
             Fail-Json $result "product_id is required when the path is not an MSI or the path is an MSI but not local"
         }
     }
 
-    if ($metadata.product_id -ne $null) {
+    if ($null -ne $metadata.product_id) {
         $uninstall_key = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
         $uninstall_key_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($metadata.product_id)"
         if (Test-Path -Path $uninstall_key) {
@@ -247,11 +249,11 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
     }
 
     # use the creates_* to determine if the program is installed
-    if ($creates_path -ne $null) {
+    if ($null -ne $creates_path) {
         $path_exists = Test-Path -Path $creates_path
         $metadata.installed = $path_exists
 
-        if ($creates_version -ne $null -and $path_exists -eq $true) {
+        if ($null -ne $creates_version -and $path_exists -eq $true) {
             if (Test-Path -Path $creates_path -PathType Leaf) {
                 $existing_version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($creates_path).FileVersion
                 $version_matched = $creates_version -eq $existing_version
@@ -261,15 +263,15 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             }
         }
     }
-    if ($creates_service -ne $null) {
+    if ($null -ne $creates_service) {
         $existing_service = Get-Service -Name $creates_service -ErrorAction SilentlyContinue
-        $service_exists = $existing_service -ne $null
+        $service_exists = $null -ne $existing_service
         $metadata.installed = $service_exists
     }
 
 
     # finally throw error if path is not valid unless we want to uninstall the package and it already is
-    if ($metadata.path_error -ne $null -and (-not ($state -eq "absent" -and $metadata.installed -eq $false))) {
+    if ($null -ne $metadata.path_error -and (-not ($state -eq "absent" -and $metadata.installed -eq $false))) {
         Fail-Json -obj $result -message $metadata.path_error
     }
 
@@ -304,7 +306,7 @@ if ($state -eq "absent") {
         try {
             # If path is on a network and we specify credentials or path is a
             # URL and not an MSI we need to get a temp local copy
-            if ($program_metadata.location_type -eq [LocationType]::Unc -and $credential -ne $null) {
+            if ($program_metadata.location_type -eq [LocationType]::Unc -and $null -ne $credential) {
                 $file_name = Split-Path -Path $path -Leaf
                 $local_path = [System.IO.Path]::GetRandomFileName()
                 Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode
@@ -325,12 +327,14 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are uninstalling an msi
-                $temp_path = [System.IO.Path]::GetTempPath()
-                $log_file = [System.IO.Path]::GetRandomFileName()
-                $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                $cleanup_artifacts += $log_path
+                if ( -Not $log_path ) {
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
+                }
 
-                if ($program_metadata.product_id -ne $null) {
+                if ($null -ne $program_metadata.product_id) {
                     $id = $program_metadata.product_id
                 } else {
                     $id = $local_path
@@ -343,18 +347,23 @@ if ($state -eq "absent") {
             }
 
             if (-not $check_mode) {
-                $uninstall_command = Argv-ToString -arguments $uninstall_arguments
-                if ($arguments -ne $null) {
-                    $uninstall_command += " $arguments"
+                $command_args = @{
+                    command = Argv-ToString -arguments $uninstall_arguments
+                }
+                if ($null -ne $arguments) {
+                    $command_args['command'] += " $arguments"
+                }
+                if ($chdir) {
+                    $command_args['working_directory'] = $chdir
                 }
 
                 try {
-                    $process_result = Run-Command -command $uninstall_command
+                    $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run uninstall process ($uninstall_command): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run uninstall process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
-                if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
+                if (($null -ne $log_path) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
                     $log_content = $null
@@ -364,7 +373,7 @@ if ($state -eq "absent") {
                 if ($valid_return_codes -notcontains $process_result.rc) {
                     $result.stdout = Convert-Encoding -string $process_result.stdout
                     $result.stderr = Convert-Encoding -string $process_result.stderr
-                    if ($log_content -ne $null) {
+                    if ($null -ne $log_content) {
                         $result.log = $log_content
                     }
                     Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see rc, stdout and stderr for more details"
@@ -394,7 +403,7 @@ if ($state -eq "absent") {
         try {
             # If path is on a network and we specify credentials or path is a
             # URL and not an MSI we need to get a temp local copy
-            if ($program_metadata.location_type -eq [LocationType]::Unc -and $credential -ne $null) {
+            if ($program_metadata.location_type -eq [LocationType]::Unc -and $null -ne $credential) {
                 $file_name = Split-Path -Path $path -Leaf
                 $local_path = [System.IO.Path]::GetRandomFileName()
                 Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode
@@ -412,11 +421,13 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are installing an msi
-                $temp_path = [System.IO.Path]::GetTempPath()
-                $log_file = [System.IO.Path]::GetRandomFileName()
-                $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                if ( -Not $log_path ) {
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
+                }
 
-                $cleanup_artifacts += $log_path
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
             } else {
                 $log_path = $null
@@ -424,18 +435,23 @@ if ($state -eq "absent") {
             }
 
             if (-not $check_mode) {
-                $install_command = Argv-ToString -arguments $install_arguments
-                if ($arguments -ne $null) {
-                    $install_command += " $arguments"
+                $command_args = @{
+                    command = Argv-ToString -arguments $install_arguments
+                }
+                if ($null -ne $arguments) {
+                    $command_args['command'] += " $arguments"
+                }
+                if ($chdir) {
+                    $command_args['working_directory'] = $chdir
                 }
 
                 try {
-                    $process_result = Run-Command -command $install_command
+                    $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run install process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
-                if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
+                if (($null -ne $log_path) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
                     $log_content = $null
@@ -445,7 +461,7 @@ if ($state -eq "absent") {
                 if ($valid_return_codes -notcontains $process_result.rc) {
                     $result.stdout = Convert-Encoding -string $process_result.stdout
                     $result.stderr = Convert-Encoding -string $process_result.stderr
-                    if ($log_content -ne $null) {
+                    if ($null -ne $log_content) {
                         $result.log = $log_content
                     }
                     Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see rc, stdout and stderr for more details"

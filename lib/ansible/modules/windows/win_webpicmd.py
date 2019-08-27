@@ -27,13 +27,16 @@ options:
   name:
     description:
       - Name of the package to be installed.
+    type: str
     required: yes
+seealso:
+- module: win_package
 author:
 - Peter Mounce (@petemounce)
 '''
 
 EXAMPLES = r'''
-  # Install URLRewrite2.
+- name: Install URLRewrite2.
   win_webpicmd:
     name: URLRewrite2
 '''

@@ -24,14 +24,16 @@ description:
 options:
   src:
     description:
-      - The file on the remote system to fetch. This I(must) be a file, not a
-        directory.
+      - The file on the remote system to fetch. This I(must) be a file, not a directory.
+    type: path
     required: true
+    aliases: [ path ]
 notes:
    - This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the
      original file size.
    - This module is also supported for Windows targets.
-   - "See also: M(fetch)"
+seealso:
+- module: fetch
 author:
     - Ansible Core Team
     - Michael DeHaan (@mpdehaan)
@@ -78,7 +80,9 @@ def main():
     if not os.access(source, os.R_OK):
         module.fail_json(msg="file is not readable: %s" % source)
 
-    data = base64.b64encode(open(source, 'rb').read())
+    with open(source, 'rb') as source_fh:
+        source_content = source_fh.read()
+    data = base64.b64encode(source_content)
 
     module.exit_json(content=data, source=source, encoding='base64')
 

@@ -135,6 +135,9 @@
   stat: path='/var/cache/apt/pkgcache.bin'
   register: cache_before
 
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+
 - name: 'name=<spec> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' state=present
   register: result
@@ -166,6 +169,9 @@
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
   register: cache_before
+
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
 
 - name: 'name=<spec> filename=<filename> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present

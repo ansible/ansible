@@ -1,0 +1,152 @@
+---
+- name: (Assertonly, {{select_crypto_backend}}) - Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey.pem'
+
+- name: (Assertonly, {{select_crypto_backend}}) - Generate privatekey with password
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: (Assertonly, {{select_crypto_backend}}) - Generate CSR (no extensions)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_noext.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+    useCommonNameForSAN: no
+
+- name: (Assertonly, {{select_crypto_backend}}) - Generate CSR (with SANs)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_sans.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+    subject_alt_name:
+      - "DNS:ansible.com"
+      - "IP:127.0.0.1"
+      - "IP:::1"
+    useCommonNameForSAN: no
+
+- name: (Assertonly, {{select_crypto_backend}}) - Generate selfsigned certificate (no extensions)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    csr_path: '{{ output_dir }}/csr_noext.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (Assertonly, {{select_crypto_backend}}) - Generate selfsigned certificate (with SANs)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_sans.pem'
+    csr_path: '{{ output_dir }}/csr_sans.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that subject_alt_name is there (should fail)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    provider: assertonly
+    subject_alt_name:
+      - "DNS:example.com"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: extension_missing_san
+
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that subject_alt_name is there
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_sans.pem'
+    provider: assertonly
+    subject_alt_name:
+      - "DNS:ansible.com"
+      - "IP:127.0.0.1"
+      - "IP:::1"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: extension_san
+
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that subject_alt_name is there (strict)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_sans.pem'
+    provider: assertonly
+    subject_alt_name:
+      - "DNS:ansible.com"
+      - "IP:127.0.0.1"
+      - "IP:::1"
+    subject_alt_name_strict: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: extension_san_strict
+
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that key_usage is there (should fail)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    provider: assertonly
+    key_usage:
+      - digitalSignature
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: extension_missing_ku
+
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that extended_key_usage is there (should fail)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    provider: assertonly
+    extended_key_usage:
+      - biometricInfo
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: extension_missing_eku
+
+- assert:
+    that:
+      - extension_missing_san is failed
+      - "'Found no subjectAltName extension' in extension_missing_san.msg"
+      - extension_san is succeeded
+      - extension_san_strict is succeeded
+      - extension_missing_ku is failed
+      - "'Found no keyUsage extension' in extension_missing_ku.msg"
+      - extension_missing_eku is failed
+      - "'Found no extendedKeyUsage extension' in extension_missing_eku.msg"
+
+- name: (Assertonly, {{select_crypto_backend}}) - Check private key passphrase fail 1
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    privatekey_passphrase: hunter2
+    provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: (Assertonly, {{select_crypto_backend}}) - Check private key passphrase fail 2
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: wrong_password
+    provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: (Assertonly, {{select_crypto_backend}}) - Check private key passphrase fail 3
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_3
+
+- name: (Assertonly, {{select_crypto_backend}}) -
+  assert:
+    that:
+      - passphrase_error_1 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_1.msg"
+      - passphrase_error_2 is failed
+      - "'assphrase' in passphrase_error_2.msg or 'assword' in passphrase_error_2.msg or 'serializ' in passphrase_error_2.msg"
+      - passphrase_error_3 is failed
+      - "'assphrase' in passphrase_error_3.msg or 'assword' in passphrase_error_3.msg or 'serializ' in passphrase_error_3.msg"

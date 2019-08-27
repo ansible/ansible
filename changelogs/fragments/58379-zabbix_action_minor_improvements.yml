@@ -1,0 +1,3 @@
+minor_changes:
+  - zabbix_action - ``esc_period`` is now required to reflect actual Zabbix API call
+  - zabbix_action - support for new condition operators (``matches``, ``does not match``, ``Yes``, ``No``) added in Zabbix 4.0 and Zabbix 4.2 (https://www.zabbix.com/documentation/4.2/manual/api/reference/action/object#action_filter_condition)

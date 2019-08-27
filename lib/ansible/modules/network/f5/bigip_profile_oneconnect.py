@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,12 +23,14 @@ options:
   name:
     description:
       - Specifies the name of the OneConnect profile.
+    type: str
     required: True
   parent:
     description:
       - Specifies the profile from which this profile inherits settings.
       - When creating a new profile, if this parameter is not specified, the default
         is the system-supplied C(oneconnect) profile.
+    type: str
   source_mask:
     description:
       - Specifies a value that the system applies to the source address to determine
@@ -42,9 +44,11 @@ options:
         connections originating from the same source address.
       - When you are using a SNAT or SNAT pool, the server-side source address is
         translated first and then the OneConnect mask is applied to the translated address.
+    type: str
   description:
     description:
       - Description of the profile.
+    type: str
   maximum_size:
     description:
       - Specifies the maximum number of connections that the system holds in the
@@ -53,6 +57,7 @@ options:
         response is completed.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: int
   maximum_age:
     description:
       - Specifies the maximum number of seconds allowed for a connection in the connection
@@ -61,11 +66,13 @@ options:
         connection from the re-use pool.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: int
   maximum_reuse:
     description:
       - Specifies the maximum number of times that a server-side connection can be reused.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: int
   idle_timeout_override:
     description:
       - Specifies the number of seconds that a connection is idle before the connection
@@ -76,6 +83,7 @@ options:
       - When C(disabled), specifies that there is no timeout override for the connection.
       - When C(indefinite), Specifies that a connection may be idle with no timeout
         override.
+    type: str
   limit_type:
     description:
       - When C(none), simultaneous in-flight requests and responses over TCP connections
@@ -91,6 +99,7 @@ options:
         short expiration timeouts.
       - When creating a new profile, if this parameter is not specified, the default
         is provided by the parent profile.
+    type: str
     choices:
       - none
       - idle
@@ -107,15 +116,17 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the profile exists.
       - When C(absent), ensures the profile is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -125,10 +136,11 @@ EXAMPLES = r'''
 - name: Create a OneConnect profile
   bigip_profile_oneconnect:
     name: foo
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -136,12 +148,12 @@ RETURN = r'''
 source_mask:
   description: Value that the system applies to the source address to determine its eligibility for reuse.
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.255
 description:
   description: Description of the profile.
   returned: changed
-  type: string
+  type: str
   sample: My profile
 maximum_size:
   description: Maximum number of connections that the system holds in the connection reuse pool.
@@ -161,12 +173,12 @@ maximum_reuse:
 idle_timeout_override:
   description: The new idle timeout override.
   returned: changed
-  type: string
+  type: str
   sample: disabled
 limit_type:
   description: New limit type of the profile.
   returned: changed
-  type: string
+  type: str
   sample: idle
 share_pools:
   description: Share connections among similar virtual servers.
@@ -179,31 +191,21 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -215,7 +217,7 @@ class Parameters(AnsibleF5Parameters):
         'defaultsFrom': 'parent',
         'limitType': 'limit_type',
         'idleTimeoutOverride': 'idle_timeout_override',
-        'sharePools': 'share_pools'
+        'sharePools': 'share_pools',
     }
 
     api_attributes = [
@@ -227,7 +229,7 @@ class Parameters(AnsibleF5Parameters):
         'idleTimeoutOverride',
         'maxAge',
         'maxReuse',
-        'sharePools'
+        'sharePools',
     ]
 
     returnables = [
@@ -238,7 +240,8 @@ class Parameters(AnsibleF5Parameters):
         'maximum_reuse',
         'limit_type',
         'idle_timeout_override',
-        'share_pools'
+        'share_pools',
+        'parent',
     ]
 
     updatables = [
@@ -249,7 +252,7 @@ class Parameters(AnsibleF5Parameters):
         'maximum_reuse',
         'limit_type',
         'idle_timeout_override',
-        'share_pools'
+        'share_pools',
     ]
 
 
@@ -381,7 +384,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -423,13 +426,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -453,11 +453,19 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
-        result = self.client.api.tm.ltm.profile.one_connects.one_connect.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/one-connect/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -485,19 +493,43 @@ class ModuleManager(object):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.ltm.profile.one_connects.one_connect.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/one-connect/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403, 404]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.ltm.profile.one_connects.one_connect.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/one-connect/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 404]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def absent(self):
         if self.exists():
@@ -505,20 +537,34 @@ class ModuleManager(object):
         return False
 
     def remove_from_device(self):
-        resource = self.client.api.tm.ltm.profile.one_connects.one_connect.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/one-connect/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.profile.one_connects.one_connect.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/one-connect/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -556,19 +602,14 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

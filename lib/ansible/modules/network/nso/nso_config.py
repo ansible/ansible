@@ -25,7 +25,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
@@ -94,11 +94,11 @@ changes:
         path:
             description: Path to value changed
             returned: always
-            type: string
+            type: str
         from:
             description: Previous value if any, else null
             returned: When previous value is present on value change
-            type: string
+            type: str
         to:
             description: Current value if any, else null.
             returned: When new value is present on value change
@@ -131,11 +131,11 @@ diffs:
         path:
             description: keypath to service changed
             returned: always
-            type: string
+            type: str
         diff:
             description: configuration difference triggered the re-deploy
             returned: always
-            type: string
+            type: str
 '''
 
 from ansible.module_utils.network.nso.nso import connect, verify_version, nso_argument_spec
@@ -176,7 +176,7 @@ class NsoConfig(object):
         return self._changes, self._diffs
 
     def _data_write(self, values):
-        th = self._client.new_trans(mode='read_write')
+        th = self._client.get_trans(mode='read_write')
 
         for value in values:
             if value.state == State.SET:

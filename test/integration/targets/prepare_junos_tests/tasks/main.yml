@@ -8,6 +8,8 @@
   tags: netconf
 
 - name: wait for netconf server to come up
-  pause:
-    seconds: 10
-  tags: netconf
+  delegate_to: localhost
+  wait_for:
+    host: "{{ hostvars[item].ansible_host }}"
+    port: 830
+  with_inventory_hostnames: junos

@@ -33,7 +33,7 @@ description:
   - If the lookup fails due to lack of permissions or due to an AWS client error then the aws_ssm
     will generate an error, normally crashing the current ansible task.  This is normally the right
     thing since ignoring a value that IAM isn't giving access to could cause bigger problems and
-    wrong behavour or loss of data.  If you want to continue in this case then you will have to set
+    wrong behaviour or loss of data.  If you want to continue in this case then you will have to set
     up two ansible tasks, one which sets a variable and ignores failures one which uses the value
     of that variable with a default.  See the examples below.
 
@@ -70,6 +70,9 @@ EXAMPLES = '''
 - name: lookup ssm parameter store in nominated aws profile
   debug: msg="{{ lookup('aws_ssm', 'Hello', aws_profile='myprofile' ) }}"
 
+- name: lookup ssm parameter store using explicit aws credentials
+  debug: msg="{{ lookup('aws_ssm', 'Hello', aws_access_key=my_aws_access_key, aws_secret_key=my_aws_secret_key, aws_security_token=my_security_token ) }}"
+
 - name: lookup ssm parameter store with all options.
   debug: msg="{{ lookup('aws_ssm', 'Hello', decrypt=false, region='us-east-2', aws_profile='myprofile') }}"
 
@@ -85,7 +88,7 @@ EXAMPLES = '''
   ignore_errors: true
 
 - name: show fact default to "access failed" if we don't have access
-  debug: msg="{{ "the secret was:" ~ temp_secret | default('couldn\'t access secret') }}"
+  debug: msg="{{ 'the secret was:' ~ temp_secret | default('could not access secret') }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path
   debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region='ap-southeast-2', bypath=true, recursive=true ) }}"
@@ -93,9 +96,13 @@ EXAMPLES = '''
 - name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
   debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region='ap-southeast-2', shortnames=true, bypath=true, recursive=true ) }}"
 
-- name: Iterate over a parameter hierarchy
-  debug: msg='key contains {{item.Name}} with value {{item.Value}} '
-  loop: '{{ query("aws_ssm", "/TEST/test-list", region="ap-southeast-2", bypath=true) }}'
+- name: Iterate over a parameter hierarchy (one iteration per parameter)
+  debug: msg='Key contains {{ item.key }} , with value {{ item.value }}'
+  loop: '{{ lookup("aws_ssm", "/demo/", region="ap-southeast-2", bypath=True) | dict2items }}'
+
+- name: Iterate over multiple paths as dictionaries (one iteration per path)
+  debug: msg='Path contains {{ item }}'
+  loop: '{{ lookup("aws_ssm", "/demo/", "/demo1/", bypath=True)}}'
 
 '''
 
@@ -103,12 +110,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 try:
     from botocore.exceptions import ClientError
@@ -116,6 +118,8 @@ try:
     import boto3
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
+
+display = Display()
 
 
 def _boto3_conn(region, credentials):
@@ -147,7 +151,7 @@ class LookupModule(LookupBase):
                 e.g. ['parameter_name', 'parameter_name_too' ]
             :kwarg variables: ansible variables active at the time of the lookup
             :kwarg aws_secret_key: identity of the AWS key to use
-            :kwarg aws_access_key: AWS seret key (matching identity)
+            :kwarg aws_access_key: AWS secret key (matching identity)
             :kwarg aws_security_token: AWS session key if using STS
             :kwarg decrypt: Set to True to get decrypted parameters
             :kwarg region: AWS region in which to do the lookup

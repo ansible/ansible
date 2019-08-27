@@ -1,0 +1,101 @@
+{
+    "fmgr_get_task_status": [
+        {
+            "url": "/task/task/247",
+            "paramgram_used": {
+                "custom_endpoint": null,
+                "object": "task",
+                "task_id": "247",
+                "adom": "ansible",
+                "device_ip": null,
+                "custom_dict": null,
+                "device_unique_name": null,
+                "nodes": null,
+                "device_serial": null
+            },
+            "datagram_sent": {
+                "adom": "ansible"
+            },
+            "raw_response": {
+                "src": "device manager",
+                "num_warn": 0,
+                "num_lines": 1,
+                "adom": 133,
+                "tot_percent": 100,
+                "pid": 0,
+                "end_tm": 1550716014,
+                "num_err": 0,
+                "percent": 100,
+                "state": "done",
+                "start_tm": 1550716010,
+                "flags": 0,
+                "user": "ansible",
+                "title": "upddevtitle",
+                "line": [
+                    {
+                        "name": "FGT3",
+                        "err": 0,
+                        "ip": "10.7.220.153",
+                        "oid": 0,
+                        "percent": 100,
+                        "detail": "updatesuccess",
+                        "state": "done",
+                        "vdom": null
+                    }
+                ],
+                "num_done": 1,
+                "id": 247,
+                "history": [
+                    {
+                        "percent": 100,
+                        "detail": "2019-02-20 18:26:54:updatesuccess",
+                        "vdom": null,
+                        "name": "FGT3"
+                    }
+                ]
+            },
+            "post_method": "get"
+        }
+    ],
+    "fmgr_get_custom": [
+        {
+            "url": "/dvmdb/adom/ansible/script",
+            "raw_response": [
+                {
+                   "filter_hostname": null,
+                   "filter_device": 0,
+                   "filter_serial": null,
+                   "name": "TestScript",
+                   "type": "cli",
+                   "oid": 365,
+                   "filter_osver": "unknown",
+                   "content": "get system status",
+                   "modification_time": "2019-02-13 23:45:29",
+                   "filter_build": -1,
+                   "filter_platform": "",
+                   "desc": "Create by Ansible",
+                   "script_schedule": null,
+                   "filter_ostype": "unknown",
+                   "target": "remote_device"
+                }
+            ],
+            "datagram_sent": {
+                "type": "cli"
+            },
+            "paramgram_used": {
+                "custom_endpoint": "/dvmdb/adom/ansible/script",
+                "device_ip": null,
+                "device_unique_name": null,
+                "task_id": null,
+                "adom": "ansible",
+                "nodes": null,
+                "object": "custom",
+                "device_serial": null,
+                "custom_dict": {
+                    "type": "cli"
+                }
+            },
+            "post_method": "get"
+        }
+    ]
+}

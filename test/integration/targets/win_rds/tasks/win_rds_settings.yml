@@ -1,0 +1,66 @@
+- name: run tests with cleanup
+  block:
+  - name: gather facts
+    setup:
+      filter: ansible_hostname
+
+  - name: ensure testing folders exists
+    win_file:
+      path: '{{test_win_rds_settings_path}}'
+      state: directory
+
+  - name: deploy test artifacts
+    win_template:
+      src: '{{item}}.j2'
+      dest: '{{test_win_rds_settings_path}}\{{item | basename}}'
+    with_items:
+    - rds_base_cfg.xml
+
+  - name: import RDS test configuration
+    win_shell: |
+      $ts = Get-WmiObject Win32_TSGatewayServer -namespace root\cimv2\TerminalServices
+      $import_xml = Get-Content {{test_win_rds_settings_path}}\rds_base_cfg.xml
+      $import_result = $ts.Import(45, $import_xml)
+      exit $import_result.ReturnValue
+
+  - name: write certreq file
+    win_copy:
+      content: |-
+        [NewRequest]
+        Subject = "CN={{ rds_cert_suject }}"
+        KeyLength = 2048
+        KeyAlgorithm = RSA
+        MachineKeySet = true
+        RequestType = Cert
+        KeyUsage = 0xA0 ; Digital Signature, Key Encipherment
+        [EnhancedKeyUsageExtension]
+        OID=1.3.6.1.5.5.7.3.1 ; Server Authentication
+      dest: '{{test_win_rds_settings_path}}\certreq.txt'
+
+  - name: create self signed cert from certreq
+    win_command: certreq -new -machine {{test_win_rds_settings_path}}\certreq.txt {{test_win_rds_settings_path}}\certreqresp.txt
+
+  - name: register certificate thumbprint
+    raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN={{ rds_cert_suject }}"})[0].Thumbprint'
+    register: rds_cert_thumbprint
+
+  - name: run tests
+    include_tasks: win_rds_settings_tests.yml
+
+  always:
+  - name: restore RDS base configuration
+    win_shell: |
+      $ts = Get-WmiObject Win32_TSGatewayServer -namespace root\cimv2\TerminalServices
+      $import_xml = Get-Content {{test_win_rds_settings_path}}\rds_base_cfg.xml
+      $import_result = $ts.Import(45, $import_xml)
+      exit $import_result.ReturnValue
+
+  - name: remove certificate
+    raw: 'remove-item cert:\localmachine\my\{{ item }} -force -ea silentlycontinue'
+    with_items:
+      - "{{ rds_cert_thumbprint.stdout_lines[0] }}"
+
+  - name: cleanup test artifacts
+    win_file:
+      path: '{{test_win_rds_settings_path}}'
+      state: absent

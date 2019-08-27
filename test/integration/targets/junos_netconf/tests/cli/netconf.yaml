@@ -1,11 +1,9 @@
 ---
 - debug: msg="START netconf/netconf.yaml on connection={{ ansible_connection }}"
 
-
 - name: Ensure netconf is enabled
   junos_netconf:
     state: present
-  register: result
 
 - name: idempotent tests
   junos_netconf:
@@ -18,9 +16,36 @@
 
 ###################################
 
-- name: wait for netconf server to come up
-  pause:
-    seconds: 10
+- name: wait for netconf port tcp/830 to be open
+  wait_for:
+    host: "{{ hostvars[item].ansible_host }}"
+    port: 830
+  with_inventory_hostnames: junos
+
+- name: Reset ansible connections
+  meta: reset_connection
+
+- name: Ensure we can communicate over netconf
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=false"
+
+- name: Disable netconf (check mode)
+  junos_netconf:
+    state: absent
+  register: result
+  check_mode: yes
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: wait for netconf port tcp/830 to be open
+  wait_for:
+    host: "{{ hostvars[item].ansible_host }}"
+    port: 830
+  with_inventory_hostnames: junos
+
+- name: Reset ansible connections
+  meta: reset_connection
 
 - name: Ensure we can communicate over netconf
   include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=false"
@@ -44,9 +69,42 @@
     that:
       - "result.changed == false"
 
-- name: wait for persistent socket to timeout
-  pause:
-    seconds: 120
+- name: wait for netconf port tcp/830 to be closed
+  wait_for:
+    host: "{{ hostvars[item].ansible_host }}"
+    port: 830
+    state: stopped
+  with_inventory_hostnames: junos
+
+- name: Reset ansible connections
+  meta: reset_connection
+
+- name: Ensure we can NOT talk via netconf
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=true"
+
+- assert:
+    that:
+      - "result.failed == true"
+
+- name: Enable netconf (check mode)
+  junos_netconf:
+    state: present
+  register: result
+  check_mode: yes
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: wait for netconf port tcp/830 to be closed
+  wait_for:
+    host: "{{ hostvars[item].ansible_host }}"
+    port: 830
+    state: stopped
+  with_inventory_hostnames: junos
+
+- name: Reset ansible connections
+  meta: reset_connection
 
 - name: Ensure we can NOT talk via netconf
   include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=true"
@@ -58,6 +116,5 @@
 - name: re-enable netconf
   junos_netconf:
     state: present
-  register: result
 
 - debug: msg="END netconf/netconfg.yaml on connection={{ ansible_connection }}"

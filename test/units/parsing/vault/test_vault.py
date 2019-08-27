@@ -29,8 +29,8 @@ import tempfile
 from binascii import hexlify
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils import six
@@ -247,7 +247,7 @@ class TestFileVaultSecret(unittest.TestCase):
 
     def test_file_not_found(self):
         tmp_file = tempfile.NamedTemporaryFile()
-        filename = tmp_file.name
+        filename = os.path.realpath(tmp_file.name)
         tmp_file.close()
 
         fake_loader = DictDataLoader({filename: 'sdfadf'})
@@ -390,7 +390,7 @@ class TestGetFileVaultSecret(unittest.TestCase):
 
     def test_file_not_found(self):
         tmp_file = tempfile.NamedTemporaryFile()
-        filename = tmp_file.name
+        filename = os.path.realpath(tmp_file.name)
         tmp_file.close()
 
         fake_loader = DictDataLoader({filename: 'sdfadf'})

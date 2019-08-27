@@ -34,10 +34,12 @@ from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
-
+from ansible.utils.singleton import Singleton
+from ansible.utils.unsafe_proxy import wrap_var
 
 try:
     # Python 2
@@ -56,18 +58,27 @@ class FilterBlackList(logging.Filter):
 
 
 logger = None
-# TODO: make this a logging callback instead
+# TODO: make this a callback event instead
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-        mypid = str(os.getpid())
-        user = getpass.getuser()
-        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        logging.basicConfig(filename=path, level=logging.INFO, format='%(asctime)s p=%(user)s u=%(process)d | %(message)s')
+        logger = logging.LoggerAdapter(logging.getLogger('ansible'), {'user': getpass.getuser()})
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+
+# map color to log levels
+color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
+                      C.COLOR_WARN: logging.WARNING,
+                      C.COLOR_OK: logging.INFO,
+                      C.COLOR_SKIP: logging.WARNING,
+                      C.COLOR_UNREACHABLE: logging.ERROR,
+                      C.COLOR_DEBUG: logging.DEBUG,
+                      C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_DEPRECATE: logging.WARNING,
+                      C.COLOR_VERBOSE: logging.INFO}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
@@ -77,7 +88,7 @@ b_COW_PATHS = (
 )
 
 
-class Display:
+class Display(with_metaclass(Singleton, object)):
 
     def __init__(self, verbosity=0):
 
@@ -99,9 +110,9 @@ class Display:
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
                 self.cows_available = set([to_text(c) for c in out.split()])
-                if C.ANSIBLE_COW_WHITELIST:
+                if C.ANSIBLE_COW_WHITELIST and any(C.ANSIBLE_COW_WHITELIST):
                     self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
-            except:
+            except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
 
@@ -118,7 +129,7 @@ class Display:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
@@ -129,7 +140,7 @@ class Display:
             msg = stringc(msg, color)
 
         if not log_only:
-            if not msg.endswith(u'\n'):
+            if not msg.endswith(u'\n') and newline:
                 msg2 = msg + u'\n'
             else:
                 msg2 = msg
@@ -159,19 +170,24 @@ class Display:
                     raise
 
         if logger and not screen_only:
-            msg2 = nocolor.lstrip(u'\n')
+            # We first convert to a byte string so that we get rid of
+            # color and characters that are invalid in the user's locale
+            msg2 = to_bytes(nocolor.lstrip(u'\n'))
 
-            msg2 = to_bytes(msg2)
             if sys.version_info >= (3,):
                 # Convert back to text string on python3
-                # We first convert to a byte string so that we get rid of
-                # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
-            if color == C.COLOR_ERROR:
-                logger.error(msg2)
-            else:
-                logger.info(msg2)
+            lvl = logging.INFO
+            if color:
+                # set logger level based on color (not great)
+                try:
+                    lvl = color_to_log_level[color]
+                except KeyError:
+                    # this should not happen, but JIC
+                    raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
+            # actually log
+            logger.log(lvl, msg2)
 
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)
@@ -199,11 +215,13 @@ class Display:
                 self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
+
+        to_stderr = C.VERBOSE_TO_STDERR
         if self.verbosity > caplevel:
             if host is None:
-                self.display(msg, color=C.COLOR_VERBOSE)
+                self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
@@ -246,7 +264,7 @@ class Display:
 
     def banner(self, msg, color=None, cows=True):
         '''
-        Prints a header-looking line with cowsay or stars wit hlength depending on terminal width (3 minimum)
+        Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
         '''
         if self.b_cowsay and cows:
             try:
@@ -303,7 +321,7 @@ class Display:
         else:
             return input(prompt_string)
 
-    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
 
         result = None
         if sys.__stdin__.isatty():
@@ -341,6 +359,9 @@ class Display:
 
         # handle utf-8 chars
         result = to_text(result, errors='surrogate_or_strict')
+
+        if unsafe:
+            result = wrap_var(result)
         return result
 
     @staticmethod

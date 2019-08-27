@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlserver_facts
 version_added: "2.7"
-short_description: Get Azure MySQL Server facts.
+short_description: Get Azure MySQL Server facts
 description:
     - Get facts of MySQL Server.
 
@@ -37,39 +37,40 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Get instance of MySQL Server
     azure_rm_mysqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       name: server_name
 
   - name: List instances of MySQL Server
     azure_rm_mysqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
 servers:
-    description: A list of dictionaries containing facts for MySQL servers.
+    description:
+        - A list of dictionaries containing facts for MySQL servers.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
         resource_group:
             description:
                 - Resource group name.
             returned: always
             type: str
-            sample: testresourcegroup
+            sample: myResourceGroup
         name:
             description:
                 - Resource name.
@@ -90,13 +91,13 @@ servers:
             contains:
                 name:
                     description:
-                        - The name of the SKU
+                        - The name of the SKU.
                     returned: always
                     type: str
                     sample: GP_Gen4_2
                 tier:
                     description:
-                        - The tier of the particular SKU
+                        - The tier of the particular SKU.
                     returned: always
                     type: str
                     sample: GeneralPurpose
@@ -106,6 +107,24 @@ servers:
                     returned: always
                     type: int
                     sample: 2
+        storage_mb:
+            description:
+                - The maximum storage allowed for a server.
+            returned: always
+            type: int
+            sample: 128000
+        enforce_ssl:
+            description:
+                - Enable SSL enforcement.
+            returned: always
+            type: bool
+            sample: False
+        admin_username:
+            description:
+                - The administrator's login name of a server.
+            returned: always
+            type: str
+            sample: serveradmin
         version:
             description:
                 - Server version.
@@ -125,7 +144,8 @@ servers:
             type: str
             sample: myabdud1223.mys.database.azure.com
         tags:
-            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            description:
+                - Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
             sample: { tag1: abc }
 '''
@@ -134,7 +154,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -142,7 +161,7 @@ except ImportError:
     pass
 
 
-class AzureRMServersFacts(AzureRMModuleBase):
+class AzureRMMySqlServerFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -164,7 +183,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMServersFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlServerFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -229,7 +248,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMServersFacts()
+    AzureRMMySqlServerFacts()
 
 
 if __name__ == '__main__':

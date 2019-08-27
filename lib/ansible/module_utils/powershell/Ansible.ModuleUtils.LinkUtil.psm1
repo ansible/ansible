@@ -1,5 +1,5 @@
- # Copyright (c) 2017 Ansible Project
- # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+# Copyright (c) 2017 Ansible Project
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 #Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
@@ -246,7 +246,7 @@ namespace Ansible
                 finally
                 {
                     FindClose(findHandle);
-                }                
+                }
             }
 
             if (result.Count > 1)
@@ -271,7 +271,7 @@ namespace Ansible
                 IntPtr.Zero);
 
             if (fileHandle.IsInvalid)
-                throw new LinkUtilWin32Exception(String.Format("CreateFile({0}) failed", linkPath));            
+                throw new LinkUtilWin32Exception(String.Format("CreateFile({0}) failed", linkPath));
 
             REPARSE_DATA_BUFFER buffer = new REPARSE_DATA_BUFFER();
             UInt32 bytesReturned;
@@ -408,7 +408,6 @@ namespace Ansible
     Add-Type -TypeDefinition $link_util
     $env:TMP = $original_tmp
 
-    Import-PrivilegeUtil
     # enable the SeBackupPrivilege if it is disabled
     $state = Get-AnsiblePrivilege -Name SeBackupPrivilege
     if ($state -eq $false) {
@@ -426,22 +425,22 @@ Function Remove-Link($link_path) {
 }
 
 Function New-Link($link_path, $link_target, $link_type) {
-    if (-not (Test-Path -Path $link_target)) {
+    if (-not (Test-Path -LiteralPath $link_target)) {
         throw "link_target '$link_target' does not exist, cannot create link"
     }
-    
+
     switch($link_type) {
         "link" {
             $type = [Ansible.LinkType]::SymbolicLink
         }
         "junction" {
-            if (Test-Path -Path $link_target -PathType Leaf) {
+            if (Test-Path -LiteralPath $link_target -PathType Leaf) {
                 throw "cannot set the target for a junction point to a file"
             }
             $type = [Ansible.LinkType]::JunctionPoint
         }
         "hard" {
-            if (Test-Path -Path $link_target -PathType Container) {
+            if (Test-Path -LiteralPath $link_target -PathType Container) {
                 throw "cannot set the target for a hard link to a directory"
             }
             $type = [Ansible.LinkType]::HardLink

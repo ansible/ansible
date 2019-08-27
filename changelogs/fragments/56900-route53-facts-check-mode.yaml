@@ -1,0 +1,2 @@
+bugfixes:
+  - route53_facts - the module did not advertise check mode support, causing it not to be run in check mode.

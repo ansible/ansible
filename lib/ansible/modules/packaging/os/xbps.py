@@ -72,7 +72,7 @@ RETURN = '''
 msg:
     description: Message about results
     returned: success
-    type: string
+    type: str
     sample: "System Upgraded"
 packages:
     description: Packages that are affected/would be affected

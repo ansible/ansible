@@ -27,7 +27,6 @@ if ($diff_mode) {
 }
 
 Function Run-SecEdit($arguments) {
-    $rc = $null
     $stdout = $null
     $stderr = $null
     $log_path = [IO.Path]::GetTempFileName()
@@ -102,7 +101,7 @@ Function ConvertTo-Ini($ini) {
             $value_key = $value.Name
             $value_value = $value.Value
 
-            if ($value_value -ne $null) {
+            if ($null -ne $value_value) {
                 $content += "$value_key = $value_value"
             }
         }
@@ -134,6 +133,10 @@ Function ConvertFrom-Ini($file_path) {
     return $ini
 }
 
+if ($section -eq "Privilege Rights") {
+    Add-Warning -obj $result -message "Using this module to edit rights and privileges is error-prone, use the win_user_right module instead"
+}
+
 $will_change = $false
 $secedit_ini = Export-SecEdit
 if (-not ($secedit_ini.ContainsKey($section))) {
@@ -161,7 +164,7 @@ if ($secedit_ini.$section.ContainsKey($key)) {
     if ($diff_mode) {
         $result.diff.prepared = @"
 [$section]
-+$key = $value        
++$key = $value
 "@
     }
     $secedit_ini.$section.$key = $value

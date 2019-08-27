@@ -18,7 +18,7 @@ module: manageiq_alerts
 short_description: Configuration of alerts in ManageIQ
 extends_documentation_fragment: manageiq
 version_added: '2.5'
-author: Elad Alfassa (ealfassa@redhat.com)
+author: Elad Alfassa (@elad661) <ealfassa@redhat.com
 description:
   - The manageiq_alerts module supports adding, updating and deleting alerts in ManageIQ.
 
@@ -80,7 +80,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Add an alert with a "miq expression" to ManageIQ
   manageiq_alerts:
@@ -107,7 +107,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete an alert from ManageIQ
   manageiq_alerts:
@@ -117,7 +117,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''

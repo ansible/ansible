@@ -1,0 +1,102 @@
+# Test code for the vmware_vspan_session module.
+# Copyright: (c) 2018, Peter Gyorgy <gyorgy.peter@edu.bme.hu>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+
+- name: add distributed vSwitch
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    state: present
+    switch_name: dvswitch_0001
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0001
+- debug: var=dvs_result_0001
+- name: ensure distributed vswitch is present
+  assert:
+    that:
+        - "{{ dvs_result_0001.changed == true }}"
+
+- name: Create vlan portgroup with all security and port policies
+  vmware_dvs_portgroup:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    portgroup_name: vlan-123-portrgoup
+    switch_name: dvswitch_0001
+    vlan_id: 123
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: yes
+    port_policy:
+      block_override: yes
+      ipfix_override: yes
+      live_port_move: yes
+      network_rp_override: yes
+      port_config_reset_at_disconnect: yes
+      security_override: yes
+      shaping_override: yes
+      traffic_filter_override: yes
+      uplink_teaming_override: yes
+      vendor_config_override: yes
+      vlan_override: yes
+  register: portgroup_create_result
+
+- name: ensure portgroup was created
+  assert:
+    that:
+        - portgroup_create_result.changed
+
+- when: vcsim is not defined
+  block:
+    - name: create a session.
+      vmware_vspan_session:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: False
+        switch: dvswitch_0001
+        name: "session_0001"
+        state: "present"
+        enabled: True
+        description: "basic_description"
+        source_port_transmitted: 13
+        source_port_received: 13
+        destination_port: 12
+      register: vspan_session_create_result
+    - debug: var=vspan_session_create_result
+    - name: ensure session was created
+      assert:
+        that:
+            - vspan_session_create_result.changed
+
+    - name: delete a session.
+      vmware_vspan_session:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: False
+        switch: dvswitch_0001
+        name: "session_0001"
+        state: "absent"
+      register: vspan_session_delete_result
+    - name: ensure session was deleted
+      assert:
+        that:
+            - vspan_session_delete_result.changed

@@ -8,10 +8,7 @@
   tasks:
     - name: store the vcenter container ip
       set_fact:
-        vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-    - debug:
-        var: vcsim
+        vcsim: "{{ lookup('env', 'VCENTER_HOST') }}"
 
     - name: Check that there are 'all' and 'otherGuest' groups present in inventory
       assert:
@@ -19,3 +16,9 @@
       with_items:
       - all
       - otherGuest
+
+    - name: Check if Hostname and other details are populated in hostvars
+      assert:
+        that:
+        - hostvars[item].name is defined
+      with_items: "{{  groups['all'] }}"

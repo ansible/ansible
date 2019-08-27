@@ -128,7 +128,7 @@ RETURN = '''
 table_status:
     description: The current status of the table.
     returned: success
-    type: string
+    type: str
     sample: ACTIVE
 '''
 
@@ -459,7 +459,7 @@ def main():
                 module.fail_json(msg='boto3 connection does not have tag_resource(), likely due to using an old version')
             boto3_sts = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoCredentialsError as e:
-            module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
+            module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
     else:
         boto3_dynamodb = None
         boto3_sts = None

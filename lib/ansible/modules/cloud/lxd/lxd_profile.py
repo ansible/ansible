@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
+# Copyright: (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -67,16 +67,24 @@ options:
           - The unix domain socket path or the https URL for the LXD server.
         required: false
         default: unix:/var/lib/lxd/unix.socket
-    key_file:
+    snap_url:
+        description:
+          - The unix domain socket path when LXD is installed by snap package manager.
+        required: false
+        default: unix:/var/snap/lxd/common/lxd/unix.socket
+        version_added: '2.8'
+    client_key:
         description:
           - The client certificate key file path.
         required: false
         default: '"{}/.config/lxc/client.key" .format(os.environ["HOME"])'
-    cert_file:
+        aliases: [ key_file ]
+    client_cert:
         description:
           - The client certificate file path.
         required: false
         default: '"{}/.config/lxc/client.crt" .format(os.environ["HOME"])'
+        aliases: [ cert_file ]
     trust_password:
         description:
           - The client trusted password.
@@ -117,9 +125,9 @@ EXAMPLES = '''
   - name: create macvlan profile
     lxd_profile:
       url: https://127.0.0.1:8443
-      # These cert_file and key_file values are equal to the default values.
-      #cert_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
-      #key_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
+      # These client_cert and client_key values are equal to the default values.
+      #client_cert: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
+      #client_key: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
       trust_password: mypassword
       name: macvlan
       state: present
@@ -155,7 +163,7 @@ RETURN = '''
 old_state:
   description: The old state of the profile
   returned: success
-  type: string
+  type: str
   sample: "absent"
 logs:
   description: The logs of requests and responses.
@@ -199,10 +207,18 @@ class LXDProfileManagement(object):
         self.state = self.module.params['state']
         self.new_name = self.module.params.get('new_name', None)
 
-        self.url = self.module.params['url']
-        self.key_file = self.module.params.get('key_file', None)
-        self.cert_file = self.module.params.get('cert_file', None)
+        self.key_file = self.module.params.get('client_key', None)
+        self.cert_file = self.module.params.get('client_cert', None)
         self.debug = self.module._verbosity >= 4
+
+        try:
+            if os.path.exists(self.module.params['snap_url'].replace('unix:', '')):
+                self.url = self.module.params['snap_url']
+            else:
+                self.url = self.module.params['url']
+        except Exception as e:
+            self.module.fail_json(msg=e.msg)
+
         try:
             self.client = LXDClient(
                 self.url, key_file=self.key_file, cert_file=self.cert_file,
@@ -263,7 +279,7 @@ class LXDProfileManagement(object):
 
     def _rename_profile(self):
         config = {'name': self.new_name}
-        self.client.do('POST', '/1.0/profiles/{}'.format(self.name), config)
+        self.client.do('POST', '/1.0/profiles/{0}'.format(self.name), config)
         self.actions.append('rename')
         self.name = self.new_name
 
@@ -284,11 +300,11 @@ class LXDProfileManagement(object):
         config = self.old_profile_json.copy()
         for k, v in self.config.items():
             config[k] = v
-        self.client.do('PUT', '/1.0/profiles/{}'.format(self.name), config)
+        self.client.do('PUT', '/1.0/profiles/{0}'.format(self.name), config)
         self.actions.append('apply_profile_configs')
 
     def _delete_profile(self):
-        self.client.do('DELETE', '/1.0/profiles/{}'.format(self.name))
+        self.client.do('DELETE', '/1.0/profiles/{0}'.format(self.name))
         self.actions.append('delete')
 
     def run(self):
@@ -352,13 +368,19 @@ def main():
                 type='str',
                 default='unix:/var/lib/lxd/unix.socket'
             ),
-            key_file=dict(
+            snap_url=dict(
                 type='str',
-                default='{}/.config/lxc/client.key'.format(os.environ['HOME'])
+                default='unix:/var/snap/lxd/common/lxd/unix.socket'
             ),
-            cert_file=dict(
+            client_key=dict(
                 type='str',
-                default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.key'.format(os.environ['HOME']),
+                aliases=['key_file']
+            ),
+            client_cert=dict(
+                type='str',
+                default='{0}/.config/lxc/client.crt'.format(os.environ['HOME']),
+                aliases=['cert_file']
             ),
             trust_password=dict(type='str', no_log=True)
         ),

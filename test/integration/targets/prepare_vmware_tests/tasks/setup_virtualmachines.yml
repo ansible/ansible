@@ -1,0 +1,54 @@
+---
+- name: Create VMs
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    folder: '{{ item.folder }}'
+    name: '{{ item.name }}'
+    state: poweredoff
+    guest_id: debian8_64Guest
+    disk:
+    - size_gb: 1
+      type: thin
+      datastore: '{{ ds2 }}'
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+      scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[{{ ds1 }}] fedora.iso"
+    networks:
+    - name: VM Network
+  with_items: '{{ virtual_machines }}'
+
+
+- name: Create VMs in cluster
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    folder: '{{ item.folder }}'
+    cluster: '{{ item.cluster }}'
+    name: '{{ item.name }}'
+    state: poweredoff
+    guest_id: debian8_64Guest
+    disk:
+    - size_gb: 1
+      type: thin
+      datastore: '{{ ds2 }}'
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+      scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[{{ ds1 }}] fedora.iso"
+    networks:
+    - name: VM Network
+  with_items: '{{ virtual_machines_in_cluster }}'

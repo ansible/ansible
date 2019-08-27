@@ -35,17 +35,20 @@ options:
     - Name of the cluster.
     - Service settings are applied to every ESXi host system/s in given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - Service settings are applied to this ESXi host system.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
   state:
     description:
     - Desired state of service.
     - "State value 'start' and 'present' has same effect."
     - "State value 'stop' and 'absent' has same effect."
     choices: [ absent, present, restart, start, stop ]
+    type: str
     default: 'start'
   service_policy:
     description:
@@ -54,11 +57,13 @@ options:
     - If set C(automatic), then service should run if and only if it has open firewall ports.
     - If set C(off), then Service should not be started when the host starts up.
     choices: [ 'automatic', 'off', 'on' ]
+    type: str
   service_name:
     description:
-    - Name of Service to be managed. This is brief identifier for the service, for example, ntpd, vxsyslogd etc.
+    - Name of Service to be managed. This is a brief identifier for the service, for example, ntpd, vxsyslogd etc.
     - This value should be a valid ESXi service name.
     required: True
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -148,20 +153,24 @@ class VmwareServiceManager(PyVmomi):
                 try:
                     if self.desired_state in ['start', 'present']:
                         if not actual_service_state:
-                            host_service_system.StartService(id=self.service_name)
+                            if not self.module.check_mode:
+                                host_service_system.StartService(id=self.service_name)
                             changed_state = True
                     elif self.desired_state in ['stop', 'absent']:
                         if actual_service_state:
-                            host_service_system.StopService(id=self.service_name)
+                            if not self.module.check_mode:
+                                host_service_system.StopService(id=self.service_name)
                             changed_state = True
                     elif self.desired_state == 'restart':
-                        host_service_system.RestartService(id=self.service_name)
+                        if not self.module.check_mode:
+                            host_service_system.RestartService(id=self.service_name)
                         changed_state = True
 
                     if self.desired_policy:
                         if actual_service_policy != self.desired_policy:
-                            host_service_system.UpdateServicePolicy(id=self.service_name,
-                                                                    policy=self.desired_policy)
+                            if not self.module.check_mode:
+                                host_service_system.UpdateServicePolicy(id=self.service_name,
+                                                                        policy=self.desired_policy)
                             changed_state = True
 
                     host_service_state.append(changed_state)
@@ -205,7 +214,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_host_service = VmwareServiceManager(module)

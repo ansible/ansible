@@ -20,9 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.cnos import cnos_config
 
 from .cnos_module import TestCnosModule, load_fixture

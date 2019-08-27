@@ -1,0 +1,934 @@
+{
+    "add_device": [
+        {
+            "url": "/dvm/cmd/add/device/",
+            "raw_response": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "os_ver": 6,
+                    "ip": "10.7.220.151",
+                    "mgmt.__data[6]": 1,
+                    "vm_mem": 1003,
+                    "maxvdom": 10,
+                    "conn_mode": 1,
+                    "platform_id": 112,
+                    "branch_pt": 231,
+                    "hostname": "ansible-fgt01",
+                    "source": 1,
+                    "mgmt_id": 1014939351,
+                    "version": 600,
+                    "build": 231,
+                    "mgmt_mode": 3,
+                    "adm_usr": "admin",
+                    "av_ver": "1.00000(2018-04-09 18:07)",
+                    "mgmt.__data[4]": 1052262400,
+                    "oid": 403,
+                    "conn_status": 1,
+                    "beta": -1,
+                    "dev_status": 1,
+                    "platform_str": "FortiGate-VM64",
+                    "last_checked": 1550698141,
+                    "vm_mem_limit": 6144,
+                    "mgmt.__data[0]": 3870643,
+                    "name": "FGT1",
+                    "tab_status": "<unknown>",
+                    "patch": 4,
+                    "vm_cpu_limit": 4,
+                    "vm_status": 3,
+                    "ips_ver": "6.00741(2015-12-01 02:30)",
+                    "flags": 2097169,
+                    "sn": "FGVM04TM18000391",
+                    "mr": 0,
+                    "os_type": 0,
+                    "vm_cpu": 1
+                }
+            },
+            "datagram_sent": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "name": "FGT1",
+                    "ip": "10.7.220.151",
+                    "flags": 24,
+                    "sn": null,
+                    "mgmt_mode": "fmgfaz",
+                    "adm_usr": "admin"
+                },
+                "flags": [
+                    "create_task",
+                    "nonblocking"
+                ],
+                "odd_request_form": "True",
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.151",
+                "device_unique_name": "FGT1",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "exec"
+        },
+        {
+            "url": "/dvm/cmd/add/device/",
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.152",
+                "device_unique_name": "FGT2",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "datagram_sent": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "name": "FGT2",
+                    "ip": "10.7.220.152",
+                    "flags": 24,
+                    "sn": null,
+                    "mgmt_mode": "fmgfaz",
+                    "adm_usr": "admin"
+                },
+                "flags": [
+                    "create_task",
+                    "nonblocking"
+                ],
+                "odd_request_form": "True",
+                "adom": "ansible"
+            },
+            "raw_response": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "ip": "10.7.220.152",
+                    "mgmt.__data[6]": 1,
+                    "vm_mem": 1003,
+                    "maxvdom": 10,
+                    "conn_mode": 1,
+                    "vm_cpu_limit": 4,
+                    "vm_cpu": 1,
+                    "branch_pt": 231,
+                    "hostname": "ansible-fgt02",
+                    "source": 1,
+                    "mgmt_id": 1879100317,
+                    "version": 600,
+                    "build": 231,
+                    "mgmt_mode": 3,
+                    "adm_usr": "admin",
+                    "av_ver": "1.00000(2018-04-09 18:07)",
+                    "oid": 415,
+                    "conn_status": 1,
+                    "beta": -1,
+                    "dev_status": 1,
+                    "platform_str": "FortiGate-VM64",
+                    "last_checked": 1550698177,
+                    "patch": 4,
+                    "vm_mem_limit": 6144,
+                    "mgmt.__data[0]": 3870643,
+                    "name": "FGT2",
+                    "tab_status": "<unknown>",
+                    "mgmt.__data[4]": 1052262400,
+                    "platform_id": 112,
+                    "vm_status": 3,
+                    "ips_ver": "6.00741(2015-12-01 02:30)",
+                    "flags": 2097169,
+                    "sn": "FGVM04TM18000392",
+                    "mr": 0,
+                    "os_type": 0,
+                    "os_ver": 6
+                }
+            },
+            "post_method": "exec"
+        },
+        {
+            "url": "/dvm/cmd/add/device/",
+            "raw_response": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "os_ver": 6,
+                    "ip": "10.7.220.153",
+                    "mgmt.__data[6]": 1,
+                    "vm_mem": 1003,
+                    "maxvdom": 10,
+                    "conn_mode": 1,
+                    "platform_id": 112,
+                    "branch_pt": 231,
+                    "hostname": "ansible-fgt03",
+                    "source": 1,
+                    "mgmt_id": 104863251,
+                    "version": 600,
+                    "build": 231,
+                    "mgmt_mode": 3,
+                    "adm_usr": "admin",
+                    "av_ver": "1.00000(2018-04-09 18:07)",
+                    "mgmt.__data[4]": 1052262400,
+                    "oid": 427,
+                    "conn_status": 1,
+                    "beta": -1,
+                    "dev_status": 1,
+                    "platform_str": "FortiGate-VM64",
+                    "last_checked": 1550698204,
+                    "vm_mem_limit": 6144,
+                    "mgmt.__data[0]": 3870643,
+                    "name": "FGT3",
+                    "tab_status": "<unknown>",
+                    "patch": 4,
+                    "vm_cpu_limit": 4,
+                    "vm_status": 3,
+                    "ips_ver": "6.00741(2015-12-01 02:30)",
+                    "flags": 2097169,
+                    "sn": "FGVM04TM18000393",
+                    "mr": 0,
+                    "os_type": 0,
+                    "vm_cpu": 1
+                }
+            },
+            "datagram_sent": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "name": "FGT3",
+                    "ip": "10.7.220.153",
+                    "flags": 24,
+                    "sn": null,
+                    "mgmt_mode": "fmgfaz",
+                    "adm_usr": "admin"
+                },
+                "flags": [
+                    "create_task",
+                    "nonblocking"
+                ],
+                "odd_request_form": "True",
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.153",
+                "device_unique_name": "FGT3",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "exec"
+        }
+    ],
+    "discover_device": [
+        {
+            "url": "/dvm/cmd/discover/device/",
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.151",
+                "device_unique_name": "FGT1",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "datagram_sent": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "ip": "10.7.220.151",
+                    "adm_usr": "admin"
+                },
+                "odd_request_form": "True"
+            },
+            "raw_response": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "ip": "10.7.220.151",
+                    "vm_mem": 1003,
+                    "maxvdom": 10,
+                    "conn_mode": 1,
+                    "vm_cpu_limit": 4,
+                    "vm_cpu": 1,
+                    "branch_pt": 231,
+                    "hostname": "ansible-fgt01",
+                    "source": 1,
+                    "version": 600,
+                    "build": 231,
+                    "adm_usr": "admin",
+                    "av_ver": "1.00000(2018-04-09 18:07)",
+                    "conn_status": 1,
+                    "beta": -1,
+                    "dev_status": 1,
+                    "platform_str": "FortiGate-VM64",
+                    "last_checked": 1550698136,
+                    "vm_mem_limit": 6144,
+                    "name": "ansible-fgt01",
+                    "tab_status": "<unknown>",
+                    "patch": 4,
+                    "platform_id": 112,
+                    "vm_status": 3,
+                    "ips_ver": "6.00741(2015-12-01 02:30)",
+                    "flags": 2097153,
+                    "sn": "FGVM04TM18000391",
+                    "mr": 0,
+                    "os_type": 0,
+                    "os_ver": 6
+                }
+            },
+            "post_method": "exec"
+        },
+        {
+            "url": "/dvm/cmd/discover/device/",
+            "raw_response": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "os_ver": 6,
+                    "ip": "10.7.220.152",
+                    "vm_mem": 1003,
+                    "maxvdom": 10,
+                    "conn_mode": 1,
+                    "platform_id": 112,
+                    "branch_pt": 231,
+                    "hostname": "ansible-fgt02",
+                    "source": 1,
+                    "version": 600,
+                    "build": 231,
+                    "adm_usr": "admin",
+                    "av_ver": "1.00000(2018-04-09 18:07)",
+                    "conn_status": 1,
+                    "beta": -1,
+                    "dev_status": 1,
+                    "platform_str": "FortiGate-VM64",
+                    "last_checked": 1550698173,
+                    "vm_mem_limit": 6144,
+                    "name": "ansible-fgt02",
+                    "tab_status": "<unknown>",
+                    "patch": 4,
+                    "vm_cpu_limit": 4,
+                    "vm_status": 3,
+                    "ips_ver": "6.00741(2015-12-01 02:30)",
+                    "flags": 2097153,
+                    "sn": "FGVM04TM18000392",
+                    "mr": 0,
+                    "os_type": 0,
+                    "vm_cpu": 1
+                }
+            },
+            "datagram_sent": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "ip": "10.7.220.152",
+                    "adm_usr": "admin"
+                },
+                "odd_request_form": "True"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.152",
+                "device_unique_name": "FGT2",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "exec"
+        },
+        {
+            "url": "/dvm/cmd/discover/device/",
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.153",
+                "device_unique_name": "FGT3",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "datagram_sent": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "ip": "10.7.220.153",
+                    "adm_usr": "admin"
+                },
+                "odd_request_form": "True"
+            },
+            "raw_response": {
+                "device": {
+                    "adm_pass": "fortinet",
+                    "ip": "10.7.220.153",
+                    "vm_mem": 1003,
+                    "maxvdom": 10,
+                    "conn_mode": 1,
+                    "vm_cpu_limit": 4,
+                    "vm_cpu": 1,
+                    "branch_pt": 231,
+                    "hostname": "ansible-fgt03",
+                    "source": 1,
+                    "version": 600,
+                    "build": 231,
+                    "adm_usr": "admin",
+                    "av_ver": "1.00000(2018-04-09 18:07)",
+                    "conn_status": 1,
+                    "beta": -1,
+                    "dev_status": 1,
+                    "platform_str": "FortiGate-VM64",
+                    "last_checked": 1550698200,
+                    "vm_mem_limit": 6144,
+                    "name": "ansible-fgt03",
+                    "tab_status": "<unknown>",
+                    "patch": 4,
+                    "platform_id": 112,
+                    "vm_status": 3,
+                    "ips_ver": "6.00741(2015-12-01 02:30)",
+                    "flags": 2097153,
+                    "sn": "FGVM04TM18000393",
+                    "mr": 0,
+                    "os_type": 0,
+                    "os_ver": 6
+                }
+            },
+            "post_method": "exec"
+        }
+    ],
+    "get_device": [
+        {
+            "url": "/dvmdb/adom/ansible/device/FGT1",
+            "raw_response": {
+                "adm_pass": [
+                   "ENC",
+                   "tUEPOPpQM6XsNwOPcWyrWoPoKo2DMjtFqOYEzLfF+99FpTkDmKa+GTmwBMLV1ns0OYrNgWnk6RPbRjSZSvu2LPYvCcWfQONLEZ1HlczZ00kEtDRCvRxG6l7FGtcj1Pl7QO9khy2lKWx4/lbPmLNqCzwCmlkAO5fGXR3nCbWPXH5BrRwO"
+                ],
+                "faz.perm": 0,
+                "foslic_ram": 0,
+                "foslic_type": "temporary",
+                "last_checked": 1550635232,
+                "psk": "",
+                "opts": 0,
+                "ip": "10.7.220.151",
+                "foslic_utm": null,
+                "logdisk_size": 30235,
+                "mgmt.__data[6]": 1,
+                "foslic_last_sync": 0,
+                "app_ver": "",
+                "ips_ext": 0,
+                "vm_mem": 1003,
+                "mgmt.__data[4]": 1052262400,
+                "maxvdom": 10,
+                "conn_mode": "passive",
+                "location_from": "GUI(10.0.0.151)",
+                "mgmt.__data[1]": 0,
+                "mgmt.__data[2]": 0,
+                "faz.full_act": 0,
+                "os_ver": "6.0",
+                "node_flags": 0,
+                "hostname": "ansible-fgt01",
+                "mgmt.__data[5]": 0,
+                "mgmt_id": 2076985412,
+                "hw_rev_minor": 0,
+                "mgmt_if": "port1",
+                "source": "faz",
+                "ha_mode": "standalone",
+                "version": 600,
+                "build": 231,
+                "latitude": "47.473991",
+                "foslic_cpu": 0,
+                "last_resync": 1550634702,
+                "desc": "",
+                "adm_usr": "admin",
+                "vm_lic_expire": 0,
+                "ha_slave": null,
+                "av_ver": "1.00000(2018-04-09 18:07)",
+                "fsw_cnt": 0,
+                "tunnel_cookie": "",
+                "foslic_inst_time": 0,
+                "lic_flags": 0,
+                "checksum": "89 1f b7 b7 2a a6 af 54 c5 a5 aa e3 32 92 c7 55",
+                "oid": 366,
+                "conn_status": "up",
+                "fex_cnt": 0,
+                "mgmt.__data[3]": 0,
+                "beta": -1,
+                "ha_group_name": "",
+                "dev_status": "installed",
+                "platform_str": "FortiGate-VM64",
+                "mgmt.__data[7]": 0,
+                "faz.used": 0,
+                "fap_cnt": 0,
+                "foslic_dr_site": "disable",
+                "mgmt_mode": "fmgfaz",
+                "vdom": [
+                    {
+                        "status": null,
+                        "oid": 3,
+                        "name": "root",
+                        "node_flags": 0,
+                        "devid": "FGT1",
+                        "tab_status": null,
+                        "comments": "",
+                        "flags": null,
+                        "opmode": "nat",
+                        "ext_flags": 1,
+                        "rtm_prof_id": 0
+                    }
+                ],
+                "hdisk_size": 30720,
+                "vm_mem_limit": 6144,
+                "mgmt.__data[0]": 3870643,
+                "ha_group_id": 0,
+                "name": "FGT1",
+                "faz.quota": 0,
+                "mgt_vdom": "root",
+                "tab_status": "",
+                "tunnel_ip": "169.254.0.5",
+                "longitude": "-122.260963",
+                "patch": 4,
+                "vm_cpu_limit": 4,
+                "vm_status": 3,
+                "lic_region": "",
+                "hw_rev_major": 0,
+                "flags": [
+                    "has_hdd",
+                    "reload"
+                ],
+                "sn": "FGVM04TM18000391",
+                "mr": 0,
+                "conf_status": "insync",
+                "os_type": "fos",
+                "ips_ver": "6.00741(2015-12-01 02:30)",
+                "db_status": "nomod",
+                "branch_pt": 231,
+                "vm_cpu": 1
+            },
+            "datagram_sent": {
+                "filter": [
+                    "name",
+                    "==",
+                    "FGT1"
+                ],
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.151",
+                "device_unique_name": "FGT1",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "get"
+        },
+        {
+            "url": "/dvmdb/adom/ansible/device/FGT2",
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.152",
+                "device_unique_name": "FGT2",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "datagram_sent": {
+                "filter": [
+                    "name",
+                    "==",
+                    "FGT2"
+                ],
+                "adom": "ansible"
+            },
+            "raw_response": {
+                "adm_pass": [
+                    "ENC",
+                    "F27zJSIl5O8O5rlXIi7BzHIUO5d3ZAuNxoniR42zOxGHyqZCx1OyA81b7v6dNwE30nBhjqfD+IDRmSPEW6qxKIQ2UV5eh8zgDNj8i5lj5gTvbLN5A4BR4CMLQo7nYTTomHUJQrGPfYskuxm74JGik+di9TrqOhvpZL8d1zj3XHx5pq+d"
+                ],
+                "faz.perm": 0,
+                "hostname": "ansible-fgt02",
+                "foslic_type": "temporary",
+                "mgmt.__data[7]": 0,
+                "av_ver": "1.00000(2018-04-09 18:07)",
+                "ip": "10.7.220.152",
+                "foslic_utm": null,
+                "logdisk_size": 30235,
+                "mgmt.__data[6]": 1,
+                "fsw_cnt": 0,
+                "app_ver": "",
+                "ips_ext": 0,
+                "vm_mem": 1003,
+                "maxvdom": 10,
+                "conn_mode": "passive",
+                "mgt_vdom": "root",
+                "mgmt.__data[1]": 0,
+                "hw_rev_major": 0,
+                "name": "FGT2",
+                "node_flags": 0,
+                "foslic_ram": 0,
+                "mgmt.__data[5]": 0,
+                "ha_mode": "standalone",
+                "hw_rev_minor": 0,
+                "mgmt_if": "port1",
+                "source": "faz",
+                "mgmt_id": 1555154046,
+                "version": 600,
+                "build": 231,
+                "latitude": "47.473991",
+                "foslic_cpu": 0,
+                "last_resync": 1550634728,
+                "hdisk_size": 30720,
+                "adm_usr": "admin",
+                "vm_lic_expire": 0,
+                "sn": "FGVM04TM18000392",
+                "ha_slave": null,
+                "psk": "",
+                "foslic_last_sync": 0,
+                "tunnel_cookie": "",
+                "vm_mem_limit": 6144,
+                "mr": 0,
+                "lic_flags": 0,
+                "oid": 378,
+                "conn_status": "up",
+                "fex_cnt": 0,
+                "vm_cpu": 1,
+                "beta": -1,
+                "ha_group_name": "",
+                "dev_status": "retrieved",
+                "platform_str": "FortiGate-VM64",
+                "last_checked": 1550634728,
+                "branch_pt": 231,
+                "faz.used": 0,
+                "patch": 4,
+                "fap_cnt": 0,
+                "foslic_dr_site": "disable",
+                "mgmt_mode": "fmgfaz",
+                "vdom": [
+                    {
+                        "status": null,
+                        "oid": 3,
+                        "name": "root",
+                        "node_flags": 4,
+                        "devid": "FGT2",
+                        "tab_status": null,
+                        "comments": "",
+                        "flags": null,
+                        "opmode": "nat",
+                        "ext_flags": 1,
+                        "rtm_prof_id": 0
+                    }
+                ],
+                "desc": "",
+                "foslic_inst_time": 0,
+                "mgmt.__data[0]": 3870643,
+                "ha_group_id": 0,
+                "location_from": "GUI(10.0.0.151)",
+                "faz.quota": 0,
+                "faz.full_act": 0,
+                "tab_status": "",
+                "tunnel_ip": "169.254.0.3",
+                "longitude": "-122.260963",
+                "mgmt.__data[4]": 1052262400,
+                "vm_cpu_limit": 4,
+                "vm_status": 3,
+                "lic_region": "",
+                "mgmt.__data[2]": 0,
+                "flags": [
+                    "has_hdd",
+                    "reload"
+                ],
+                "opts": 0,
+                "checksum": "56 e9 a7 14 e2 61 05 f9 ec 2b 00 1e 36 bc af c8",
+                "conf_status": "insync",
+                "os_type": "fos",
+                "ips_ver": "6.00741(2015-12-01 02:30)",
+                "db_status": "mod",
+                "mgmt.__data[3]": 0,
+                "os_ver": "6.0"
+            },
+            "post_method": "get"
+        },
+        {
+            "url": "/dvmdb/adom/ansible/device/FGT3",
+            "raw_response": {
+                "adm_pass": [
+                   "ENC",
+                   "F27zJSIl5O8O5rlXIi7BzHIUO5d3ZAuNxoniR42zOxGHyqZCx1OyA81b7v6dNwE30nBhjqfD+IDRmSPEW6qxKIQ2UV5eh8zgDNj8i5lj5gTvbLN5A4BR4CMLQo7nYTTomHUJQrGPfYskuxm74JGik+di9TrqOhvpZL8d1zj3XHx5pq+d"
+                ],
+                "faz.perm": 0,
+                "foslic_ram": 0,
+                "foslic_type": "temporary",
+                "last_checked": 1550634754,
+                "psk": "",
+                "opts": 0,
+                "ip": "10.7.220.153",
+                "foslic_utm": null,
+                "logdisk_size": 30235,
+                "mgmt.__data[6]": 1,
+                "foslic_last_sync": 0,
+                "app_ver": "",
+                "ips_ext": 0,
+                "vm_mem": 1003,
+                "mgmt.__data[4]": 1052262400,
+                "desc": "",
+                "maxvdom": 10,
+                "conn_mode": "passive",
+                "location_from": "GUI(10.0.0.151)",
+                "mgmt.__data[1]": 0,
+                "os_ver": "6.0",
+                "faz.full_act": 0,
+                "node_flags": 0,
+                "hostname": "ansible-fgt03",
+                "mgmt.__data[5]": 0,
+                "mgmt_id": 1175062219,
+                "hw_rev_minor": 0,
+                "mgmt_if": "port1",
+                "source": "faz",
+                "ha_mode": "standalone",
+                "version": 600,
+                "build": 231,
+                "latitude": "47.473991",
+                "foslic_cpu": 0,
+                "last_resync": 1550634754,
+                "hdisk_size": 30720,
+                "adm_usr": "admin",
+                "vm_lic_expire": 0,
+                "conf_status": "insync",
+                "ha_slave": null,
+                "av_ver": "1.00000(2018-04-09 18:07)",
+                "fsw_cnt": 0,
+                "tunnel_cookie": "",
+                "foslic_inst_time": 0,
+                "lic_flags": 0,
+                "oid": 390,
+                "conn_status": "up",
+                "fex_cnt": 0,
+                "mgmt.__data[3]": 0,
+                "beta": -1,
+                "ha_group_name": "",
+                "dev_status": "retrieved",
+                "platform_str": "FortiGate-VM64",
+                "mgmt.__data[7]": 0,
+                "faz.used": 0,
+                "fap_cnt": 0,
+                "foslic_dr_site": "disable",
+                "mgmt_mode": "fmgfaz",
+                "vdom": [
+                    {
+                        "status": null,
+                        "oid": 3,
+                        "name": "root",
+                        "node_flags": 4,
+                        "devid": "FGT3",
+                        "tab_status": null,
+                        "comments": "",
+                        "flags": null,
+                        "opmode": "nat",
+                        "ext_flags": 1,
+                        "rtm_prof_id": 0
+                    }
+                ],
+                "name": "FGT3",
+                "vm_mem_limit": 6144,
+                "mgmt.__data[0]": 3870643,
+                "ha_group_id": 0,
+                "mgmt.__data[2]": 0,
+                "faz.quota": 0,
+                "checksum": "30 fc af f5 58 e4 1e 2d 46 c0 07 4b b6 4b c2 1b",
+                "tab_status": "",
+                "tunnel_ip": "169.254.0.4",
+                "longitude": "-122.260963",
+                "patch": 4,
+                "vm_cpu_limit": 4,
+                "vm_status": 3,
+                "lic_region": "",
+                "mgt_vdom": "root",
+                "flags": [
+                    "has_hdd",
+                    "reload"
+                ],
+                "sn": "FGVM04TM18000393",
+                "mr": 0,
+                "hw_rev_major": 0,
+                "os_type": "fos",
+                "ips_ver": "6.00741(2015-12-01 02:30)",
+                "db_status": "mod",
+                "branch_pt": 231,
+                "vm_cpu": 1
+            },
+            "datagram_sent": {
+                "filter": [
+                    "name",
+                    "==",
+                    "FGT3"
+                ],
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.153",
+                "device_unique_name": "FGT3",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "get"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/dvmdb/adom/ansible/device/FGT1"
+            },
+            "datagram_sent": {
+                "filter": [
+                    "name",
+                    "==",
+                    "FGT1"
+                ],
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.151",
+                "device_unique_name": "FGT1",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "get"
+        },
+        {
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.152",
+                "device_unique_name": "FGT2",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "datagram_sent": {
+                "filter": [
+                    "name",
+                    "==",
+                    "FGT2"
+                ],
+                "adom": "ansible"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/dvmdb/adom/ansible/device/FGT2"
+            },
+            "post_method": "get"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/dvmdb/adom/ansible/device/FGT3"
+            },
+            "datagram_sent": {
+                "filter": [
+                    "name",
+                    "==",
+                    "FGT3"
+                ],
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.153",
+                "device_unique_name": "FGT3",
+                "mode": "add",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "get"
+        }
+    ],
+    "delete_device": [
+        {
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "root",
+                "device_ip": "10.7.220.151",
+                "device_unique_name": "FGT1",
+                "mode": "delete",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "datagram_sent": {
+                "device": "FGT1",
+                "flags": [
+                    "create_task",
+                    "nonblocking"
+                ],
+                "adom": "root"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvm/cmd/del/device/"
+            },
+            "post_method": "exec"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvm/cmd/del/device/"
+            },
+            "datagram_sent": {
+                "device": "FGT2",
+                "flags": [
+                    "create_task",
+                    "nonblocking"
+                ],
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.152",
+                "device_unique_name": "FGT2",
+                "mode": "delete",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "post_method": "exec"
+        },
+        {
+            "paramgram_used": {
+                "device_username": "admin",
+                "adom": "ansible",
+                "device_ip": "10.7.220.153",
+                "device_unique_name": "FGT3",
+                "mode": "delete",
+                "device_serial": null,
+                "device_password": "fortinet"
+            },
+            "datagram_sent": {
+                "device": "FGT3",
+                "flags": [
+                    "create_task",
+                    "nonblocking"
+                ],
+                "adom": "ansible"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvm/cmd/del/device/"
+            },
+            "post_method": "exec"
+        }
+    ]
+}

@@ -1,0 +1,172 @@
+- set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(8, True, '') }}"
+
+- name: Create IoT Hub (check mode)
+  azure_rm_iothub:
+      name: "hub{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      ip_filters:
+        - name: filter1
+          action: reject
+          ip_mask: 40.60.80.10
+  check_mode: yes
+  register: iothub
+
+- assert:
+    that:
+        - iothub.changed
+
+- name: Query IoT Hub
+  azure_rm_iothub_info:
+      name: "hub{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+  register: iothub
+  ignore_errors: yes
+
+- name: Create IoT Hub
+  azure_rm_iothub:
+      name: "hub{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      ip_filters:
+        - name: filter1
+          action: reject
+          ip_mask: 40.60.80.10
+  register: iothub
+
+- assert:
+    that:
+        - iothub.changed
+
+- name: Create IoT Hub (idempontent)
+  azure_rm_iothub:
+      name: "hub{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      ip_filters:
+        - name: filter1
+          action: reject
+          ip_mask: 40.60.80.10
+  register: iothub
+
+- assert:
+    that:
+        - not iothub.changed
+
+- name: Query IoT Hub
+  azure_rm_iothub_info:
+      name: "hub{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      list_keys: yes
+  register: iothub
+
+- assert:
+    that:
+        - iothub.iothubs | length == 1
+
+- set_fact:
+    registry_write_name: "{{ item.key_name }}"
+    registry_write_key: "{{ item.primary_key }}"
+  with_items: "{{ iothub.iothubs[0]['keys'] }}"
+  when: item.rights == 'RegistryWrite, ServiceConnect, DeviceConnect'
+
+- name: Create devices
+  azure_rm_iotdevice:
+      hub: "hub{{ rpfx }}"
+      hub_policy_name: "{{ registry_write_name }}"
+      hub_policy_key: "{{ registry_write_key }}"
+      name: "mydevice{{ item }}"
+      twin_tags:
+          location:
+              country: US
+              city: Redmond
+          sensor: humidity
+  with_items:
+    - 1
+    - 2
+
+- name: Query devices
+  azure_rm_iotdevice_info:
+      hub: "hub{{ rpfx }}"
+      hub_policy_name: "{{ registry_write_name }}"
+      hub_policy_key: "{{ registry_write_key }}"
+  register: devices
+
+- assert:
+     that:
+        - devices.iot_devices | length == 2
+
+- name: Query devices
+  azure_rm_iotdevice_info:
+      hub: "hub{{ rpfx }}"
+      name: "mydevice1"
+      hub_policy_name: "{{ registry_write_name }}"
+      hub_policy_key: "{{ registry_write_key }}"
+  register: devices
+
+- assert:
+     that:
+        - devices.iot_devices | length == 1
+        - devices.iot_devices[0].deviceId == 'mydevice1'
+
+- name: Query devices twin
+  azure_rm_iotdevice_info:
+      hub: "hub{{ rpfx }}"
+      query: "SELECT * FROM devices WHERE tags.location.country = 'US'"
+      hub_policy_name: "{{ registry_write_name }}"
+      hub_policy_key: "{{ registry_write_key }}"
+  register: devices
+
+- assert:
+     that:
+        - devices.iot_devices | length == 2
+
+- name: Update devices
+  azure_rm_iotdevice:
+      hub: "hub{{ rpfx }}"
+      hub_policy_name: "{{ registry_write_name }}"
+      hub_policy_key: "{{ registry_write_key }}"
+      name: "mydevice{{ item }}"
+      edge_enabled: yes
+      twin_tags:
+          location:
+              country: China
+              city: Shanghai
+          sensor: humidity
+  with_items:
+    - 1
+    - 3
+
+- name: Query devices twin
+  azure_rm_iotdevice_info:
+      hub: "hub{{ rpfx }}"
+      query: "SELECT * FROM devices WHERE tags.location.country = 'US'"
+      hub_policy_name: "{{ registry_write_name }}"
+      hub_policy_key: "{{ registry_write_key }}"
+  register: devices
+
+- assert:
+     that:
+        - devices.iot_devices | length == 1
+        - devices.iot_devices[0].deviceId == 'mydevice2'
+
+- name: Delete IoT Hub (check mode)
+  azure_rm_iothub:
+      name: "hub{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      state: absent
+  check_mode: yes
+  register: iothub
+
+- assert:
+    that:
+        - iothub.changed
+
+- name: Delete IoT Hub
+  azure_rm_iothub:
+      name: "hub{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      state: absent
+  register: iothub
+
+- assert:
+    that:
+        - iothub.changed

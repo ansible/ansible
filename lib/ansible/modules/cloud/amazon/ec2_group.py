@@ -81,6 +81,7 @@ options:
     required: false
     default: 'true'
     aliases: []
+    type: bool
   purge_rules_egress:
     version_added: "1.8"
     description:
@@ -88,6 +89,7 @@ options:
     required: false
     default: 'true'
     aliases: []
+    type: bool
   tags:
     version_added: "2.4"
     description:
@@ -227,6 +229,7 @@ EXAMPLES = '''
 
 - name: "Delete group by its id"
   ec2_group:
+    region: eu-west-1
     group_id: sg-33b4ee5b
     state: absent
 '''
@@ -235,17 +238,17 @@ RETURN = '''
 group_name:
   description: Security group name
   sample: My Security Group
-  type: string
+  type: str
   returned: on create/update
 group_id:
   description: Security group id
   sample: sg-abcd1234
-  type: string
+  type: str
   returned: on create/update
 description:
   description: Description of security group
   sample: My Security Group
-  type: string
+  type: str
   returned: on create/update
 tags:
   description: Tags associated with the security group
@@ -257,7 +260,7 @@ tags:
 vpc_id:
   description: ID of VPC to which the security group belongs
   sample: vpc-abcd1234
-  type: string
+  type: str
   returned: on create/update
 ip_permissions:
   description: Inbound rules associated with the security group.
@@ -301,7 +304,8 @@ from ansible.module_utils.aws.iam import get_aws_account_id
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.network.common.utils import to_ipv6_network, to_subnet
+from ansible.module_utils.common.network import to_ipv6_subnet, to_subnet
+from ansible.module_utils.compat.ipaddress import ip_network, IPv6Network
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 
@@ -720,14 +724,26 @@ def validate_ip(module, cidr_ip):
     split_addr = cidr_ip.split('/')
     if len(split_addr) == 2:
         # this_ip is a IPv4 or IPv6 CIDR that may or may not have host bits set
-        # Get the network bits.
+        # Get the network bits if IPv4, and validate if IPv6.
         try:
             ip = to_subnet(split_addr[0], split_addr[1])
+            if ip != cidr_ip:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(
+                                cidr_ip, ip))
         except ValueError:
-            ip = to_ipv6_network(split_addr[0]) + "/" + split_addr[1]
-        if ip != cidr_ip:
-            module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
-                        "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
+            # to_subnet throws a ValueError on IPv6 networks, so we should be working with v6 if we get here
+            try:
+                isinstance(ip_network(to_text(cidr_ip)), IPv6Network)
+                ip = cidr_ip
+            except ValueError:
+                # If a host bit is set on something other than a /128, IPv6Network will throw a ValueError
+                # The ipv6_cidr in this case probably looks like "2001:DB8:A0B:12F0::1/64" and we just want the network bits
+                ip6 = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
+                if ip6 != cidr_ip:
+                    module.warn("One of your IPv6 CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                                "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip6))
+                return ip6
         return ip
     return cidr_ip
 
@@ -856,7 +872,7 @@ def group_exists(client, module, vpc_id, group_id, name):
         groups = dict((group['GroupId'], group) for group in all_groups)
         groups.update(dict((group['GroupName'], group) for group in all_groups))
         if vpc_id:
-            vpc_wins = dict((group['GroupName'], group) for group in all_groups if group['VpcId'] == vpc_id)
+            vpc_wins = dict((group['GroupName'], group) for group in all_groups if group.get('VpcId') and group['VpcId'] == vpc_id)
             groups.update(vpc_wins)
         # maintain backwards compatibility by using the last matching group
         return security_groups[-1], groups
@@ -935,7 +951,7 @@ def get_diff_final_resource(client, module, security_group):
                     'vpc_id': rule_sg.get('vpc_id', module.params['vpc_id']),
                     'vpc_peering_connection_id': rule_sg.get('vpc_peering_connection_id')
                 }]
-                for k, v in format_rule['user_id_group_pairs'][0].items():
+                for k, v in list(format_rule['user_id_group_pairs'][0].items()):
                     if v is None:
                         format_rule['user_id_group_pairs'][0].pop(k)
             final_rules.append(format_rule)
@@ -1107,8 +1123,6 @@ def main():
         # List comprehensions for rules to add, rules to modify, and rule ids to determine purging
         new_ingress_permissions = [to_permission(r) for r in (set(named_tuple_ingress_list) - set(current_ingress))]
         new_egress_permissions = [to_permission(r) for r in (set(named_tuple_egress_list) - set(current_egress))]
-        present_ingress = list(set(named_tuple_ingress_list).union(set(current_ingress)))
-        present_egress = list(set(named_tuple_egress_list).union(set(current_egress)))
 
         if module.params.get('rules_egress') is None and 'VpcId' in group:
             # when no egress rules are specified and we're in a VPC,
@@ -1125,7 +1139,10 @@ def main():
         present_egress = list(set(named_tuple_egress_list).union(set(current_egress)))
 
         if purge_rules:
-            revoke_ingress = [to_permission(r) for r in set(present_ingress) - set(named_tuple_ingress_list)]
+            revoke_ingress = []
+            for p in present_ingress:
+                if not any([rule_cmp(p, b) for b in named_tuple_ingress_list]):
+                    revoke_ingress.append(to_permission(p))
         else:
             revoke_ingress = []
         if purge_rules_egress and module.params.get('rules_egress') is not None:
@@ -1135,9 +1152,18 @@ def main():
                     if r != Rule((None, None), '-1', '0.0.0.0/0', 'ipv4', None)
                 ]
             else:
-                revoke_egress = [to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list)]
+                revoke_egress = []
+                for p in present_egress:
+                    if not any([rule_cmp(p, b) for b in named_tuple_egress_list]):
+                        revoke_egress.append(to_permission(p))
         else:
             revoke_egress = []
+
+        # named_tuple_ingress_list and named_tuple_egress_list got updated by
+        # method update_rule_descriptions, deep copy these two lists to new
+        # variables for the record of the 'desired' ingress and egress sg permissions
+        desired_ingress = deepcopy(named_tuple_ingress_list)
+        desired_egress = deepcopy(named_tuple_egress_list)
 
         changed |= update_rule_descriptions(module, group['GroupId'], present_ingress, named_tuple_ingress_list, present_egress, named_tuple_egress_list)
 
@@ -1156,7 +1182,8 @@ def main():
             # When it is created we wait for the default egress rule to be added by AWS
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         elif changed and not module.check_mode:
-            security_group = wait_for_rule_propagation(module, group, named_tuple_ingress_list, named_tuple_egress_list, purge_rules, purge_rules_egress)
+            # keep pulling until current security group rules match the desired ingress and egress rules
+            security_group = wait_for_rule_propagation(module, group, desired_ingress, desired_egress, purge_rules, purge_rules_egress)
         else:
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group, ignore_list=['Tags'])

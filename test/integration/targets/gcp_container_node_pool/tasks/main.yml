@@ -15,46 +15,44 @@
 # Pre-test setup
 - name: create a cluster
   gcp_container_cluster:
-      name: "cluster-nodepool"
-      initial_node_count: 4
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: cluster-nodepool
+    initial_node_count: 4
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: cluster
 - name: delete a node pool
   gcp_container_node_pool:
-      name: "{{ resource_name }}"
-      initial_node_count: 4
-      cluster: "{{ cluster }}"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: my-pool
+    initial_node_count: 4
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a node pool
   gcp_container_node_pool:
-      name: "{{ resource_name }}"
-      initial_node_count: 4
-      cluster: "{{ cluster }}"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: my-pool
+    initial_node_count: 4
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
 - name: verify that node_pool was created
-  gcp_container_node_pool_facts:
-      filters:
-         - name = {{ resource_name }}
-      cluster: {{ cluster }}
-      zone: us-central1-a
+  gcp_container_node_pool_info:
+      cluster: "{{ cluster }}"
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -64,18 +62,18 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - "'my-pool' in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a node pool that already exists
   gcp_container_node_pool:
-      name: "{{ resource_name }}"
-      initial_node_count: 4
-      cluster: "{{ cluster }}"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: my-pool
+    initial_node_count: 4
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -84,25 +82,23 @@
 #----------------------------------------------------------
 - name: delete a node pool
   gcp_container_node_pool:
-      name: "{{ resource_name }}"
-      initial_node_count: 4
-      cluster: "{{ cluster }}"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: my-pool
+    initial_node_count: 4
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
 - name: verify that node_pool was deleted
-  gcp_container_node_pool_facts:
-      filters:
-         - name = {{ resource_name }}
-      cluster: {{ cluster }}
-      zone: us-central1-a
+  gcp_container_node_pool_info:
+      cluster: "{{ cluster }}"
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -112,18 +108,18 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - "'my-pool' not in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a node pool that does not exist
   gcp_container_node_pool:
-      name: "{{ resource_name }}"
-      initial_node_count: 4
-      cluster: "{{ cluster }}"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: my-pool
+    initial_node_count: 4
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -131,13 +127,15 @@
       - result.changed == false
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a cluster
   gcp_container_cluster:
-      name: "cluster-nodepool"
-      initial_node_count: 4
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: cluster-nodepool
+    initial_node_count: 4
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: cluster
+  ignore_errors: true

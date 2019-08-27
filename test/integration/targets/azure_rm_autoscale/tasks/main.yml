@@ -18,7 +18,7 @@
     virtual_network: testVnet
 
 - name: Create VMSS
-  azure_rm_virtualmachine_scaleset:
+  azure_rm_virtualmachinescaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}
     vm_size: Standard_DS1_v2
@@ -199,7 +199,7 @@
       - not output.changed
 
 - name: Clean VMSS
-  azure_rm_virtualmachine_scaleset:
+  azure_rm_virtualmachinescaleset:
     resource_group: "{{ resource_group }}"
     vm_size: Standard_DS1_v2
     name: testVMSS{{ rpfx }}

@@ -24,6 +24,10 @@ try:
 except ImportError:
     argcomplete = None
 
+from ansible import constants as C
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes, to_text
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 CHANGELOG_DIR = os.path.join(BASE_DIR, 'changelogs')
 CONFIG_PATH = os.path.join(CHANGELOG_DIR, 'config.yaml')
@@ -173,7 +177,12 @@ def load_plugins(version, force_reload):
         LOGGER.info('refreshing plugin cache')
 
         plugins_data['version'] = version
-        plugins_data['plugins'] = json.loads(subprocess.check_output([os.path.join(BASE_DIR, 'bin', 'ansible-doc'), '--json']))
+        plugins_data['plugins'] = {}
+
+        for plugin_type in C.DOCUMENTABLE_PLUGINS:
+            output = subprocess.check_output([os.path.join(BASE_DIR, 'bin', 'ansible-doc'),
+                                              '--json', '--metadata-dump', '-t', plugin_type])
+            plugins_data['plugins'][plugin_type] = json.loads(to_text(output))
 
         # remove empty namespaces from plugins
         for section in plugins_data['plugins'].values():
@@ -278,8 +287,8 @@ def generate_changelog(changes, plugins, fragments):
     generator = ChangelogGenerator(config, changes, plugins, fragments)
     rst = generator.generate()
 
-    with open(changelog_path, 'w') as changelog_fd:
-        changelog_fd.write(rst)
+    with open(changelog_path, 'wb') as changelog_fd:
+        changelog_fd.write(to_bytes(rst))
 
 
 class ChangelogFragmentLinter(object):
@@ -298,14 +307,26 @@ class ChangelogFragmentLinter(object):
         errors = []
 
         for section, lines in fragment.content.items():
-            if section not in self.config.sections:
-                errors.append((fragment.path, 0, 0, 'invalid section: %s' % section))
+            if section == self.config.prelude_name:
+                if not isinstance(lines, string_types):
+                    errors.append((fragment.path, 0, 0, 'section "%s" must be type str not %s' % (section, type(lines).__name__)))
+            else:
+                # doesn't account for prelude but only the RM should be adding those
+                if not isinstance(lines, list):
+                    errors.append((fragment.path, 0, 0, 'section "%s" must be type list not %s' % (section, type(lines).__name__)))
+
+                if section not in self.config.sections:
+                    errors.append((fragment.path, 0, 0, 'invalid section: %s' % section))
 
             if isinstance(lines, list):
                 for line in lines:
+                    if not isinstance(line, string_types):
+                        errors.append((fragment.path, 0, 0, 'section "%s" list items must be type str not %s' % (section, type(line).__name__)))
+                        continue
+
                     results = rstcheck.check(line, filename=fragment.path, report_level=docutils.utils.Reporter.WARNING_LEVEL)
                     errors += [(fragment.path, 0, 0, result[1]) for result in results]
-            else:
+            elif isinstance(lines, string_types):
                 results = rstcheck.check(lines, filename=fragment.path, report_level=docutils.utils.Reporter.WARNING_LEVEL)
                 errors += [(fragment.path, 0, 0, result[1]) for result in results]
 

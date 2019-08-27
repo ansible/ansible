@@ -58,6 +58,7 @@ extends_documentation_fragment: tower
 '''
 
 EXAMPLES = '''
+# Launch a job template
 - name: Launch a job
   tower_job_launch:
     job_template: "My Job Template"
@@ -65,7 +66,19 @@ EXAMPLES = '''
 
 - name: Wait for job max 120s
   tower_job_wait:
-    job_id: job.id
+    job_id: "{{ job.id }}"
+    timeout: 120
+
+# Launch job template with inventory and credential for prompt on launch
+- name: Launch a job with inventory and credential
+  tower_job_launch:
+    job_template: "My Job Template"
+    inventory: "My Inventory"
+    credential: "My Credential"
+  register: job
+- name: Wait for job max 120s
+  tower_job_wait:
+    job_id: "{{ job.id }}"
     timeout: 120
 '''
 
@@ -78,7 +91,7 @@ id:
 status:
     description: status of newly launched job
     returned: success
-    type: string
+    type: str
     sample: pending
 '''
 
@@ -87,7 +100,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -96,10 +109,10 @@ except ImportError:
 
 def main():
     argument_spec = dict(
-        job_template=dict(required=True),
+        job_template=dict(required=True, type='str'),
         job_type=dict(choices=['run', 'check', 'scan']),
-        inventory=dict(),
-        credential=dict(),
+        inventory=dict(type='str', default=None),
+        credential=dict(type='str', default=None),
         limit=dict(),
         tags=dict(type='list'),
         extra_vars=dict(type='list'),
@@ -126,15 +139,16 @@ def main():
             for field in lookup_fields:
                 try:
                     name = params.pop(field)
-                    result = tower_cli.get_resource(field).get(name=name)
-                    params[field] = result['id']
+                    if name:
+                        result = tower_cli.get_resource(field).get(name=name)
+                        params[field] = result['id']
                 except exc.NotFound as excinfo:
                     module.fail_json(msg='Unable to launch job, {0}/{1} was not found: {2}'.format(field, name, excinfo), changed=False)
 
             result = job.launch(no_input=True, **params)
             json_output['id'] = result['id']
             json_output['status'] = result['status']
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Unable to launch job: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

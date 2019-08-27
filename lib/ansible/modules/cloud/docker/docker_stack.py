@@ -18,108 +18,108 @@ module: docker_stack
 author: "Dario Zanzico (@dariko)"
 short_description: docker stack module
 description:
--   Manage docker stacks using the 'docker stack' command
-    on the target node
-    (see examples)
+  - Manage docker stacks using the 'docker stack' command
+    on the target node (see examples).
 version_added: "2.8"
 options:
-    name:
-        required: true
-        description:
-        -   Stack name
-    state:
-        description:
-        -   Service state.
-        default: "present"
-        choices:
-        -   present
-        -   absent
-    compose:
-        required: true
-        default: []
-        description:
-        -   List of compose definitions. Any element may be a string
-            referring to the path of the compose file on the target host
-            or the YAML contents of a compose file nested as dictionary.
-    prune:
-        required: false
-        default: false
-        description:
-        -   If true will add the C(--prune) option to the C(docker stack deploy) command.
-            This will have docker remove the services not present in the
-            current stack definition.
-        type: bool
-    with_registry_auth:
-        required: false
-        default: false
-        description:
-        -   If true will add the C(--with-registry-auth) option to the C(docker stack deploy) command.
-            This will have docker send registry authentication details to Swarm agents.
-        type: bool
-    resolve_image:
-        required: false
-        choices: ["always", "changed", "never"]
-        description:
-        -   If set will add the C(--resolve-image) option to the C(docker stack deploy) command.
-            This will have docker query the registry to resolve image digest and
-            supported platforms. If not set, docker use "always" by default.
-    absent_retries:
-        required: false
-        default: 0
-        description:
-        -   If C(>0) and C(state==absent) the module will retry up to
-            C(absent_retries) times to delete the stack until all the
-            resources have been effectively deleted.
-            If the last try still reports the stack as not completely
-            removed the module will fail.
-    absent_retries_interval:
-        required: false
-        default: 1
-        description:
-        -   Interval in seconds between C(absent_retries)
+  name:
+    description:
+      - Stack name
+    type: str
+    required: yes
+  state:
+    description:
+      - Service state.
+    type: str
+    default: "present"
+    choices:
+      - present
+      - absent
+  compose:
+    description:
+      - List of compose definitions. Any element may be a string
+        referring to the path of the compose file on the target host
+        or the YAML contents of a compose file nested as dictionary.
+    type: list
+    default: []
+  prune:
+    description:
+      - If true will add the C(--prune) option to the C(docker stack deploy) command.
+        This will have docker remove the services not present in the
+        current stack definition.
+    type: bool
+    default: no
+  with_registry_auth:
+    description:
+      - If true will add the C(--with-registry-auth) option to the C(docker stack deploy) command.
+        This will have docker send registry authentication details to Swarm agents.
+    type: bool
+    default: no
+  resolve_image:
+    description:
+      - If set will add the C(--resolve-image) option to the C(docker stack deploy) command.
+        This will have docker query the registry to resolve image digest and
+        supported platforms. If not set, docker use "always" by default.
+    type: str
+    choices: ["always", "changed", "never"]
+  absent_retries:
+    description:
+      - If C(>0) and C(state==absent) the module will retry up to
+        C(absent_retries) times to delete the stack until all the
+        resources have been effectively deleted.
+        If the last try still reports the stack as not completely
+        removed the module will fail.
+    type: int
+    default: 0
+  absent_retries_interval:
+    description:
+      - Interval in seconds between C(absent_retries)
+    type: int
+    default: 1
 
 requirements:
--   jsondiff
--   pyyaml
+  - jsondiff
+  - pyyaml
 '''
 
 RETURN = '''
-docker_stack_spec_diff:
+stack_spec_diff:
     description: |
         dictionary containing the differences between the 'Spec' field
         of the stack services before and after applying the new stack
         definition.
     sample: >
-        "docker_stack_specs_diff":
+        "stack_spec_diff":
         {'test_stack_test_service': {u'TaskTemplate': {u'ContainerSpec': {delete: [u'Env']}}}}
     returned: on change
     type: dict
 '''
 
 EXAMPLES = '''
--   name: deploy 'stack1' stack from file
+  - name: Deploy stack from a compose file
     docker_stack:
-        state: present
-        name: stack1
-        compose:
-        -   /opt/stack.compose
+      state: present
+      name: mystack
+      compose:
+        - /opt/docker-compose.yml
 
--   name: deploy 'stack2' from base file and yaml overrides
+  - name: Deploy stack from base compose file and override the web service
     docker_stack:
-        state: present
-        name: stack2
-        compose:
-        -   /opt/stack.compose
-        -   version: '3'
-            services:
-                web:
-                    image: nginx:latest
-                    environment:
-                        ENVVAR: envvar
+      state: present
+      name: mystack
+      compose:
+        - /opt/docker-compose.yml
+        - version: '3'
+          services:
+            web:
+              image: nginx:latest
+              environment:
+                ENVVAR: envvar
 
--   name: deprovision 'stack1'
+  - name: Remove stack
     docker_stack:
-        state: absent
+      name: mystack
+      state: absent
 '''
 
 
@@ -209,12 +209,12 @@ def docker_stack_rm(module, stack_name, retries, interval):
 def main():
     module = AnsibleModule(
         argument_spec={
-            'name': dict(required=True, type='str'),
-            'compose': dict(required=False, type='list', default=[]),
-            'prune': dict(default=False, type='bool'),
-            'with_registry_auth': dict(default=False, type='bool'),
+            'name': dict(type='str', required=True),
+            'compose': dict(type='list', default=[]),
+            'prune': dict(type='bool', default=False),
+            'with_registry_auth': dict(type='bool', default=False),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
-            'state': dict(default='present', choices=['present', 'absent']),
+            'state': dict(tpye='str', default='present', choices=['present', 'absent']),
             'absent_retries': dict(type='int', default=0),
             'absent_retries_interval': dict(type='int', default=1)
         },
@@ -277,9 +277,9 @@ def main():
         else:
             module.exit_json(
                 changed=True,
-                docker_stack_spec_diff=json_diff(before_stack_services,
-                                                 after_stack_services,
-                                                 dump=True))
+                stack_spec_diff=json_diff(before_stack_services,
+                                          after_stack_services,
+                                          dump=True))
 
     else:
         if docker_stack_services(module, name):

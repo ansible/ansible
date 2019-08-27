@@ -68,7 +68,7 @@ RETURN = '''
 id:
     description: The pool UUID.
     returned: On success when I(state) is 'present'
-    type: string
+    type: str
     sample: "39007a7e-ee4f-4d13-8283-b4da2e037c69"
 listener:
     description: Dictionary describing the pool.
@@ -77,15 +77,15 @@ listener:
     contains:
         id:
             description: Unique UUID.
-            type: string
+            type: str
             sample: "39007a7e-ee4f-4d13-8283-b4da2e037c69"
         name:
             description: Name given to the pool.
-            type: string
+            type: str
             sample: "test"
         description:
             description: The pool description.
-            type: string
+            type: str
             sample: "description"
         loadbalancers:
             description: A list of load balancer IDs.
@@ -101,19 +101,19 @@ listener:
             sample: [{"id": "b32eef7e-d2a6-4ea4-a301-60a873f89b3b"}]
         loadbalancer_id:
             description: The load balancer ID the pool belongs to. This field is set when the pool doesn't belong to any listener in the load balancer.
-            type: string
+            type: str
             sample: "7c4be3f8-9c2f-11e8-83b3-44a8422643a4"
         listener_id:
             description: The listener ID the pool belongs to.
-            type: string
+            type: str
             sample: "956aa716-9c2f-11e8-83b3-44a8422643a4"
         provisioning_status:
             description: The provisioning status of the pool.
-            type: string
+            type: str
             sample: "ACTIVE"
         operating_status:
             description: The operating status of the pool.
-            type: string
+            type: str
             sample: "ONLINE"
         is_admin_state_up:
             description: The administrative state of the pool.
@@ -121,11 +121,11 @@ listener:
             sample: true
         protocol:
             description: The protocol for the pool.
-            type: string
+            type: str
             sample: "HTTP"
         lb_algorithm:
             description: The load balancing algorithm for the pool.
-            type: string
+            type: str
             sample: "ROUND_ROBIN"
 '''
 

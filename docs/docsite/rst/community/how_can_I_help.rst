@@ -1,3 +1,5 @@
+.. _how_can_i_help:
+
 ***************
 How can I help?
 ***************
@@ -28,6 +30,13 @@ There are many forums online where Ansible users ask and answer questions. Reach
 
 You can find the official :ref:`Ansible communication channels <communication>`.
 
+Review, fix, and maintain the documentation
+===========================================
+
+Typos are everywhere, even in the Ansible documentation. We work hard to keep the documentation up-to-date, but you may also find out-dated examples. We offer easy ways to :ref:`report and/or fix documentation errors <community_documentation_contributions>`.
+
+.. _ansible_community_meetup:
+
 Participate in your local meetup
 ================================
 
@@ -57,10 +66,12 @@ Once you've learned about the development process and have contributed code to a
 
 To learn more about the responsibilities of being an Ansible module maintainer, please read our :ref:`module maintainer guidelines <maintainers>`.
 
+.. _community_working_groups:
+
 Join a working group
 ====================
 
-Working groups are a way for Ansible community members to self-organize around particular topics of interest. We have working groups around various topics. To join or create a working group, please read the `Ansible working group guidelines <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_.
+Working groups are a way for Ansible community members to self-organize around particular topics of interest. We have working groups around various topics. To join or create a working group, please read the :ref:`Ansible Working Groups<working_group_list>`.
 
 
 Teach Ansible to others

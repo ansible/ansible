@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - fixed issue where allow_unauthenticated did not apply to dependencies when installing a deb directly

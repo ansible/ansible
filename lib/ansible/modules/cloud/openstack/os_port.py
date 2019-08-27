@@ -37,6 +37,7 @@ options:
    admin_state_up:
      description:
         - Sets admin state.
+     type: bool
    mac_address:
      description:
         - MAC address of this port.
@@ -47,6 +48,7 @@ options:
    no_security_groups:
      description:
         - Do not associate a security group with this port.
+     type: bool
      default: 'no'
    allowed_address_pairs:
      description:
@@ -78,6 +80,16 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+   vnic_type:
+     description:
+       - The type of the port that should be created
+     choices: [normal, direct, direct-physical, macvtap, baremetal, virtio-forwarder]
+     version_added: "2.8"
+   port_security_enabled:
+     description:
+       - Whether to enable or disable the port security on the network.
+     type: bool
+     version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -140,21 +152,33 @@ EXAMPLES = '''
     security_groups:
       - 1496e8c7-4918-482a-9172-f4f00fc4a3a5
       - 057d4bdf-6d4d-472...
+
+# Create port of type 'direct'
+- os_port:
+    state: present
+    auth:
+      auth_url: https://identity.example.com
+      username: admin
+      password: admin
+      project_name: admin
+    name: port1
+    network: foo
+    vnic_type: direct
 '''
 
 RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: Name given to the port.
     returned: success
-    type: string
+    type: str
 network_id:
     description: Network ID this port belongs in.
     returned: success
-    type: string
+    type: str
 security_groups:
     description: Security group(s) associated with this port.
     returned: success
@@ -162,7 +186,7 @@ security_groups:
 status:
     description: Port's status.
     returned: success
-    type: string
+    type: str
 fixed_ips:
     description: Fixed ip(s) associated with this port.
     returned: success
@@ -170,13 +194,21 @@ fixed_ips:
 tenant_id:
     description: Tenant id associated with this port.
     returned: success
-    type: string
+    type: str
 allowed_address_pairs:
     description: Allowed address pairs with this port.
     returned: success
     type: list
 admin_state_up:
     description: Admin state up flag for this port.
+    returned: success
+    type: bool
+vnic_type:
+    description: Type of the created port
+    returned: success
+    type: str
+port_security_enabled:
+    description: Port security state on the network.
     returned: success
     type: bool
 '''
@@ -193,7 +225,9 @@ def _needs_update(module, port, cloud):
     compare_simple = ['admin_state_up',
                       'mac_address',
                       'device_owner',
-                      'device_id']
+                      'device_id',
+                      'binding:vnic_type',
+                      'port_security_enabled']
     compare_dict = ['allowed_address_pairs',
                     'extra_dhcp_opts']
     compare_list = ['security_groups']
@@ -258,7 +292,9 @@ def _compose_port_args(module, cloud):
                            'allowed_address_pairs',
                            'extra_dhcp_opts',
                            'device_owner',
-                           'device_id']
+                           'device_id',
+                           'binding:vnic_type',
+                           'port_security_enabled']
     for optional_param in optional_parameters:
         if module.params[optional_param] is not None:
             port_kwargs[optional_param] = module.params[optional_param]
@@ -291,6 +327,10 @@ def main():
         device_owner=dict(default=None),
         device_id=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
+        vnic_type=dict(default=None,
+                       choices=['normal', 'direct', 'direct-physical',
+                                'macvtap', 'baremetal', 'virtio-forwarder']),
+        port_security_enabled=dict(default=None, type='bool')
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -314,6 +354,10 @@ def main():
                 get_security_group_id(module, cloud, v)
                 for v in module.params['security_groups']
             ]
+
+        # Neutron API accept 'binding:vnic_type' as an argument
+        # for the port type.
+        module.params['binding:vnic_type'] = module.params.pop('vnic_type')
 
         port = None
         network_id = None

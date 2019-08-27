@@ -1,0 +1,2 @@
+bugfixes:
+    - aws_ses_identity module works when region is provided using config or environment variables rather than the region parameter (https://github.com/ansible/ansible/issues/51531)

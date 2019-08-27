@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_interface_ospf
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -51,6 +51,91 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
         set_module_args(dict(interface='ethernet1/32', ospf=1, area=1))
         self.execute_module(changed=True, commands=['interface Ethernet1/32', 'ip router ospf 1 area 0.0.0.1'])
 
+    def test_bfd_1(self):
+        # default -> enable
+        set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, bfd='enable'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33', 'ip router ospf 1 area 0.0.0.1', 'ip ospf bfd'])
+
+        # default -> disable
+        set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, bfd='disable'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33', 'ip router ospf 1 area 0.0.0.1', 'ip ospf bfd disable'])
+
+    def test_bfd_2(self):
+        # default -> default
+        set_module_args(dict(interface='ethernet1/33.101', ospf=1, area=1, bfd='default'))
+        self.execute_module(changed=False)
+
+        # enable -> default
+        set_module_args(dict(interface='ethernet1/36', ospf=1, area=1, bfd='default'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/36', 'no ip ospf bfd'])
+
+        # disable -> default
+        set_module_args(dict(interface='ethernet1/37', ospf=1, area=1, bfd='default'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/37', 'no ip ospf bfd'])
+
+    def test_bfd_3(self):
+        # enable -> idempotence
+        set_module_args(dict(interface='ethernet1/36', ospf=1, area=1, bfd='enable'))
+        self.execute_module(changed=False)
+
+        # disable -> idempotence
+        set_module_args(dict(interface='ethernet1/37', ospf=1, area=1, bfd='disable'))
+        self.execute_module(changed=False)
+
+    def test_bfd_4(self):
+        # None -> absent
+        set_module_args(dict(interface='ethernet1/33.101', ospf=1, area=1, state='absent'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33.101', 'no ip router ospf 1 area 0.0.0.1'])
+
+        # enable -> absent
+        set_module_args(dict(interface='ethernet1/36', ospf=1, area=1, bfd='enable', state='absent'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/36', 'no ip router ospf 1 area 0.0.0.1', 'no ip ospf bfd'])
+
+        # disable -> absent
+        set_module_args(dict(interface='ethernet1/37', ospf=1, area=1, bfd='disable', state='absent'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/37', 'no ip router ospf 1 area 0.0.0.1', 'no ip ospf bfd'])
+
+    def test_absent_1(self):
+        # area only -> absent
+        set_module_args(dict(interface='ethernet1/33.101', ospf=1, area=1, state='absent'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33.101', 'no ip router ospf 1 area 0.0.0.1'])
+
+        # None -> absent
+        set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, state='absent'))
+        self.execute_module(changed=False)
+
     def test_loopback_interface_failed(self):
         set_module_args(dict(interface='loopback0', ospf=1, area=0, passive_interface=True))
         self.execute_module(failed=True, changed=False)
+        set_module_args(dict(interface='loopback0', ospf=1, area=0, network='broadcast'))
+        self.execute_module(failed=True, changed=False)
+
+    def test_nxos_interface_ospf_passive(self):
+        # default -> True
+        set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, passive_interface=True))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33',
+                                                    'ip router ospf 1 area 0.0.0.1',
+                                                    'ip ospf passive-interface'])
+        # default -> False
+        set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, passive_interface=False))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33',
+                                                    'ip router ospf 1 area 0.0.0.1',
+                                                    'no ip ospf passive-interface'])
+        # True -> False
+        set_module_args(dict(interface='ethernet1/34', ospf=1, area=1, passive_interface=False))
+        self.execute_module(changed=True, commands=['interface Ethernet1/34',
+                                                    'no ip ospf passive-interface'])
+        # True -> default (absent)
+        set_module_args(dict(interface='ethernet1/34', ospf=1, area=1, state='absent'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/34',
+                                                    'no ip router ospf 1 area 0.0.0.1',
+                                                    'default ip ospf passive-interface'])
+        # False -> True
+        set_module_args(dict(interface='ethernet1/35', ospf=1, area=1, passive_interface=True))
+        self.execute_module(changed=True, commands=['interface Ethernet1/35',
+                                                    'ip ospf passive-interface'])
+        # False -> default (absent)
+        set_module_args(dict(interface='ethernet1/35', ospf=1, area=1, state='absent'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/35',
+                                                    'no ip router ospf 1 area 0.0.0.1',
+                                                    'default ip ospf passive-interface'])

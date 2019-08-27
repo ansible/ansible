@@ -61,6 +61,7 @@ options:
     description:
       - Purge VRFs not defined in the I(aggregate) parameter.
     default: no
+    type: bool
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -143,7 +144,6 @@ def map_obj_to_commands(updates, module):
     for w in want:
         name = w['name']
         rd = w['rd']
-        interfaces = w['interfaces']
 
         obj_in_have = search_obj_in_list(name, have)
 

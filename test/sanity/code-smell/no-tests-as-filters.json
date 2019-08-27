@@ -1,7 +1,0 @@
-{
-    "extensions": [
-        ".yml",
-        ".yaml"
-    ],
-    "output": "path-line-column-message"
-}

@@ -23,28 +23,33 @@ options:
   command:
     description:
      - A command to be executed in the future.
+    type: str
   script_file:
     description:
      - An existing script file to be executed in the future.
+    type: str
   count:
     description:
      - The count of units in the future to execute the command or script file.
+    type: int
     required: true
   units:
     description:
      - The type of units in the future to execute the command or script file.
-    choices: [ minutes, hours, days, weeks ]
+    type: str
     required: true
+    choices: [ minutes, hours, days, weeks ]
   state:
     description:
      - The state dictates if the command or script file should be evaluated as present(added) or absent(deleted).
+    type: str
     choices: [ absent, present ]
     default: present
   unique:
     description:
      - If a matching job is present a new job will not be added.
     type: bool
-    default: 'no'
+    default: no
 requirements:
  - at
 author:
@@ -52,18 +57,18 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Schedule a command to execute in 20 minutes as root.
+- name: Schedule a command to execute in 20 minutes as root
   at:
     command: ls -d / >/dev/null
     count: 20
     units: minutes
 
-- name: Match a command to an existing job and delete the job.
+- name: Match a command to an existing job and delete the job
   at:
     command: ls -d / >/dev/null
     state: absent
 
-- name: Schedule a command to execute in 20 minutes making sure it is unique in the queue.
+- name: Schedule a command to execute in 20 minutes making sure it is unique in the queue
   at:
     command: ls -d / >/dev/null
     count: 20
@@ -108,7 +113,8 @@ def get_matching_jobs(module, at_cmd, script_file):
         return matching_jobs
 
     # Read script_file into a string.
-    script_file_string = open(script_file).read().strip()
+    with open(script_file) as script_fh:
+        script_file_string = script_fh.read().strip()
 
     # Loop through the jobs.
     #   If the script text is contained in a job add job number to list.
@@ -139,7 +145,7 @@ def main():
             script_file=dict(type='str'),
             count=dict(type='int'),
             units=dict(type='str', choices=['minutes', 'hours', 'days', 'weeks']),
-            state=dict(type='str', default='present', choices=['present', 'absent']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
             unique=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['command', 'script_file']],

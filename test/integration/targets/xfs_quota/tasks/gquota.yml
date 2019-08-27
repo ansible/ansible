@@ -1,0 +1,158 @@
+---
+- name: 'Create disk image'
+  command: >
+    dd if=/dev/zero of={{ remote_tmp_dir }}/img-gquota bs=1M count=20
+
+- name: 'Create XFS filesystem'
+  filesystem:
+    dev: '{{ remote_tmp_dir }}/img-gquota'
+    fstype: xfs
+
+- block:
+    - name: 'Mount filesystem'
+      mount:
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        src: '{{ remote_tmp_dir }}/img-gquota'
+        path: '{{ remote_tmp_dir }}/gquota'
+        fstype: xfs
+        opts: gquota
+        state: mounted
+      become: True
+
+    - name: 'Apply default group limits'
+      xfs_quota:
+        bsoft: '{{ gquota_default_bsoft }}'
+        bhard: '{{ gquota_default_bhard }}'
+        isoft: '{{ gquota_default_isoft }}'
+        ihard: '{{ gquota_default_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
+        rtbsoft: '{{ gquota_default_rtbsoft }}'
+        rtbhard: '{{ gquota_default_rtbhard }}'
+        type: group
+      become: True
+      register: test_gquota_default_before
+
+    - name: Assert default group limits results
+      assert:
+        that:
+          - test_gquota_default_before.changed
+          - test_gquota_default_before.bsoft == gquota_default_bsoft|human_to_bytes
+          - test_gquota_default_before.bhard == gquota_default_bhard|human_to_bytes
+          - test_gquota_default_before.isoft == gquota_default_isoft
+          - test_gquota_default_before.ihard == gquota_default_ihard
+          - test_gquota_default_before.rtbsoft == gquota_default_rtbsoft|human_to_bytes
+          - test_gquota_default_before.rtbhard == gquota_default_rtbhard|human_to_bytes
+
+    - name: 'Apply group limits'
+      xfs_quota:
+        bsoft: '{{ gquota_group_bsoft }}'
+        bhard: '{{ gquota_group_bhard }}'
+        isoft: '{{ gquota_group_isoft }}'
+        ihard: '{{ gquota_group_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
+        name: xfsquotauser
+        rtbsoft: '{{ gquota_group_rtbsoft }}'
+        rtbhard: '{{ gquota_group_rtbhard }}'
+        type: group
+      become: True
+      register: test_gquota_group_before
+
+    - name: Assert group limits results for xfsquotauser
+      assert:
+        that:
+          - test_gquota_group_before.changed
+          - test_gquota_group_before.bsoft == gquota_group_bsoft|human_to_bytes
+          - test_gquota_group_before.bhard == gquota_group_bhard|human_to_bytes
+          - test_gquota_group_before.isoft == gquota_group_isoft
+          - test_gquota_group_before.ihard == gquota_group_ihard
+          - test_gquota_group_before.rtbsoft == gquota_group_rtbsoft|human_to_bytes
+          - test_gquota_group_before.rtbhard == gquota_group_rtbhard|human_to_bytes
+
+    - name: 'Re-apply default group limits'
+      xfs_quota:
+        bsoft: '{{ gquota_default_bsoft }}'
+        bhard: '{{ gquota_default_bhard }}'
+        isoft: '{{ gquota_default_isoft }}'
+        ihard: '{{ gquota_default_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
+        rtbsoft: '{{ gquota_default_rtbsoft }}'
+        rtbhard: '{{ gquota_default_rtbhard }}'
+        type: group
+      become: True
+      register: test_gquota_default_after
+
+    - name: Assert default group limits results after re-apply
+      assert:
+        that:
+          - not test_gquota_default_after.changed
+
+    - name: 'Re-apply group limits'
+      xfs_quota:
+        bsoft: '{{ gquota_group_bsoft }}'
+        bhard: '{{ gquota_group_bhard }}'
+        isoft: '{{ gquota_group_isoft }}'
+        ihard: '{{ gquota_group_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
+        name: xfsquotauser
+        rtbsoft: '{{ gquota_group_rtbsoft }}'
+        rtbhard: '{{ gquota_group_rtbhard }}'
+        type: group
+      become: True
+      register: test_gquota_group_after
+
+    - name: Assert group limits results for xfsquotauser after re-apply
+      assert:
+        that:
+          - not test_gquota_group_after.changed
+
+    - name: 'Reset default group limits'
+      xfs_quota:
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
+        state: absent
+        type: group
+      become: True
+      register: test_reset_gquota_default
+
+    - name: Assert reset of default group limits results
+      assert:
+        that:
+          - test_reset_gquota_default.changed
+          - test_reset_gquota_default.bsoft == 0
+          - test_reset_gquota_default.bhard == 0
+          - test_reset_gquota_default.isoft == 0
+          - test_reset_gquota_default.ihard == 0
+          - test_reset_gquota_default.rtbsoft == 0
+          - test_reset_gquota_default.rtbhard == 0
+
+    - name: 'Reset group limits for xfsquotauser'
+      xfs_quota:
+        mountpoint: '{{ remote_tmp_dir }}/gquota'
+        name: xfsquotauser
+        state: absent
+        type: group
+      become: True
+      register: test_reset_gquota_group
+
+    - name: Assert reset of default group limits results
+      assert:
+        that:
+          - test_reset_gquota_group.changed
+          - test_reset_gquota_group.bsoft == 0
+          - test_reset_gquota_group.bhard == 0
+          - test_reset_gquota_group.isoft == 0
+          - test_reset_gquota_group.ihard == 0
+          - test_reset_gquota_group.rtbsoft == 0
+          - test_reset_gquota_group.rtbhard == 0
+
+  always:
+    - name: 'Unmount filesystem'
+      mount:
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        path: '{{ remote_tmp_dir }}/gquota'
+        state: unmounted
+      become: True
+
+    - name: Remove disk image
+      file:
+        path: '{{ remote_tmp_dir }}/img-gquota'
+        state: absent

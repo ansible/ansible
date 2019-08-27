@@ -29,7 +29,7 @@ short_description: Manages interface DLDP configuration on HUAWEI CloudEngine sw
 description:
     - Manages interface DLDP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhou Zhijin (@CloudEngine-Ansible)
+    - Zhou Zhijin (@QijunPan)
 notes:
     - If C(state=present, enable=disable), interface DLDP enable will be turned off and
       related interface DLDP confuration will be cleared.
@@ -161,7 +161,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -454,7 +454,7 @@ class DldpInterface(object):
 
         # get global DLDP info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/dldp/dldpInterfaces/dldpInterface")
+        topo = root.find("dldp/dldpInterfaces/dldpInterface")
         if topo is None:
             self.module.fail_json(
                 msg="Error: Get current DLDP configration failed.")

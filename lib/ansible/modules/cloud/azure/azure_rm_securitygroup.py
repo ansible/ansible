@@ -11,26 +11,26 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
 ---
 module: azure_rm_securitygroup
 version_added: "2.1"
-short_description: Manage Azure network security groups.
+short_description: Manage Azure network security groups
 description:
-    - Create, update or delete a network security group. A security group contains Access Control List (ACL) rules
-      that allow or deny network traffic to subnets or individual network interfaces. A security group is created
-      with a set of default security rules and an empty set of security rules. Shape traffic flow by adding
-      rules to the empty set of security rules.
+    - Create, update or delete a network security group.
+    - A security group contains Access Control List (ACL) rules that allow or deny network traffic to subnets or individual network interfaces.
+    - A security group is created with a set of default security rules and an empty set of security rules.
+    - Shape traffic flow by adding rules to the empty set of security rules.
 
 options:
     default_rules:
         description:
-            - The set of default rules automatically added to a security group at creation. In general default
-              rules will not be modified. Modify rules to shape the flow of traffic to or from a subnet or NIC. See
-              rules below for the makeup of a rule dict.
+            - The set of default rules automatically added to a security group at creation.
+            - In general default rules will not be modified. Modify rules to shape the flow of traffic to or from a subnet or NIC.
+            - See rules below for the makeup of a rule dict.
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
@@ -57,66 +57,82 @@ options:
         suboptions:
             name:
                 description:
-                  - Unique name for the rule.
+                    - Unique name for the rule.
                 required: true
             description:
                 description:
-                  - Short description of the rule's purpose.
+                    - Short description of the rule's purpose.
             protocol:
-                description: Accepted traffic protocol.
+                description:
+                    - Accepted traffic protocol.
                 choices:
-                  - Udp
-                  - Tcp
-                  - "*"
+                    - Udp
+                    - Tcp
+                    - "*"
                 default: "*"
             source_port_range:
                 description:
-                  - Port or range of ports from which traffic originates.
-                  - It can accept string type or a list of string type.
+                    - Port or range of ports from which traffic originates.
+                    - It can accept string type or a list of string type.
                 default: "*"
             destination_port_range:
                 description:
-                  - Port or range of ports to which traffic is headed.
-                  - It can accept string type or a list of string type.
+                    - Port or range of ports to which traffic is headed.
+                    - It can accept string type or a list of string type.
                 default: "*"
             source_address_prefix:
                 description:
-                  - The CIDR or source IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
-                  - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
-                  - If this is an ingress rule, specifies where network traffic originates from.
-                  - It can accept string type or a list of string type.
+                    - The CIDR or source IP range.
+                    - Asterisk C(*) can also be used to match all source IPs.
+                    - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
+                    - If this is an ingress rule, specifies where network traffic originates from.
+                    - It can accept string type or a list of string type.
                 default: "*"
             destination_address_prefix:
                 description:
-                  - The destination address prefix.
-                  - CIDR or destination IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
-                  - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
-                  - It can accept string type or a list of string type.
+                    - The destination address prefix.
+                    - CIDR or destination IP range.
+                    - Asterisk C(*) can also be used to match all source IPs.
+                    - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
+                    - It can accept string type or a list of string type.
                 default: "*"
+            source_application_security_groups:
+                description:
+                    - List of the source application security groups.
+                    - It could be list of resource id.
+                    - It could be list of names in same resource group.
+                    - It could be list of dict containing resource_group and name.
+                    - It is mutually exclusive with C(source_address_prefix) and C(source_address_prefixes).
+                type: list
+            destination_application_security_groups:
+                description:
+                    - List of the destination application security groups.
+                    - It could be list of resource id.
+                    - It could be list of names in same resource group.
+                    - It could be list of dict containing I(resource_group) and I(name).
+                    - It is mutually exclusive with C(destination_address_prefix) and C(destination_address_prefixes).
+                type: list
             access:
                 description:
-                  - Whether or not to allow the traffic flow.
+                    - Whether or not to allow the traffic flow.
                 choices:
-                  - Allow
-                  - Deny
+                    - Allow
+                    - Deny
                 default: Allow
             priority:
                 description:
-                  - Order in which to apply the rule. Must a unique integer between 100 and 4096 inclusive.
+                    - Order in which to apply the rule. Must a unique integer between 100 and 4096 inclusive.
                 required: true
             direction:
                 description:
-                  - Indicates the direction of the traffic flow.
+                    - Indicates the direction of the traffic flow.
                 choices:
-                  - Inbound
-                  - Outbound
+                    - Inbound
+                    - Outbound
                 default: Inbound
     state:
         description:
-            - Assert the state of the security group. Set to 'present' to create or update a security group. Set to
-              'absent' to remove a security group.
+            - Assert the state of the security group. Set to C(present) to create or update a security group. Set to C(absent) to remove a security group.
         default: present
         choices:
             - absent
@@ -127,8 +143,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -136,7 +152,7 @@ EXAMPLES = '''
 
 # Create a security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       purge_rules: yes
       rules:
@@ -168,7 +184,7 @@ EXAMPLES = '''
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       rules:
           - name: DenySSH
@@ -190,157 +206,203 @@ EXAMPLES = '''
 
 # Delete security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       state: absent
 '''
 
 RETURN = '''
 state:
-    description: Current state of the security group.
+    description:
+        - Current state of the security group.
     returned: always
-    type: dict
-    sample: {
-        "default_rules": [
-            {
-                "access": "Allow",
-                "description": "Allow inbound traffic from all VMs in VNET",
-                "destination_address_prefix": "VirtualNetwork",
-                "destination_port_range": "*",
-                "direction": "Inbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetInBound",
-                "name": "AllowVnetInBound",
-                "priority": 65000,
-                "protocol": "*",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "VirtualNetwork",
-                "source_port_range": "*"
-            },
-            {
-                "access": "Allow",
-                "description": "Allow inbound traffic from azure load balancer",
-                "destination_address_prefix": "*",
-                "destination_port_range": "*",
-                "direction": "Inbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowAzureLoadBalancerInBound",
-                "name": "AllowAzureLoadBalancerInBound",
-                "priority": 65001,
-                "protocol": "*",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "AzureLoadBalancer",
-                "source_port_range": "*"
-            },
-            {
-                "access": "Deny",
-                "description": "Deny all inbound traffic",
-                "destination_address_prefix": "*",
-                "destination_port_range": "*",
-                "direction": "Inbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllInBound",
-                "name": "DenyAllInBound",
-                "priority": 65500,
-                "protocol": "*",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "*",
-                "source_port_range": "*"
-            },
-            {
-                "access": "Allow",
-                "description": "Allow outbound traffic from all VMs to all VMs in VNET",
-                "destination_address_prefix": "VirtualNetwork",
-                "destination_port_range": "*",
-                "direction": "Outbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetOutBound",
-                "name": "AllowVnetOutBound",
-                "priority": 65000,
-                "protocol": "*",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "VirtualNetwork",
-                "source_port_range": "*"
-            },
-            {
-                "access": "Allow",
-                "description": "Allow outbound traffic from all VMs to Internet",
-                "destination_address_prefix": "Internet",
-                "destination_port_range": "*",
-                "direction": "Outbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowInternetOutBound",
-                "name": "AllowInternetOutBound",
-                "priority": 65001,
-                "protocol": "*",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "*",
-                "source_port_range": "*"
-            },
-            {
-                "access": "Deny",
-                "description": "Deny all outbound traffic",
-                "destination_address_prefix": "*",
-                "destination_port_range": "*",
-                "direction": "Outbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllOutBound",
-                "name": "DenyAllOutBound",
-                "priority": 65500,
-                "protocol": "*",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "*",
-                "source_port_range": "*"
-            }
-        ],
-        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup",
-        "location": "westus",
-        "name": "mysecgroup",
-        "network_interfaces": [],
-        "rules": [
-            {
-                "access": "Deny",
-                "description": null,
-                "destination_address_prefix": "*",
-                "destination_port_range": "22",
-                "direction": "Inbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/DenySSH",
-                "name": "DenySSH",
-                "priority": 100,
-                "protocol": "Tcp",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "*",
-                "source_port_range": "*"
-            },
-            {
-                "access": "Allow",
-                "description": null,
-                "destination_address_prefix": "*",
-                "destination_port_range": "22",
-                "direction": "Inbound",
-                "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/AllowSSH",
-                "name": "AllowSSH",
-                "priority": 101,
-                "protocol": "Tcp",
-                "provisioning_state": "Succeeded",
-                "source_address_prefix": "174.109.158.0/24",
-                "source_port_range": "*"
-            }
-        ],
-        "subnets": [],
-        "tags": {
-            "delete": "on-exit",
-            "foo": "bar",
-            "testing": "testing"
-        },
-        "type": "Microsoft.Network/networkSecurityGroups"
-    }
+    type: complex
+    contains:
+        default_rules:
+            description:
+                - The default security rules of network security group.
+            returned: always
+            type: list
+            sample: [
+                    {
+                        "access": "Allow",
+                        "description": "Allow inbound traffic from all VMs in VNET",
+                        "destination_address_prefix": "VirtualNetwork",
+                        "destination_port_range": "*",
+                        "direction": "Inbound",
+                        "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetInBound",
+                        "name": "AllowVnetInBound",
+                        "priority": 65000,
+                        "protocol": "*",
+                        "provisioning_state": "Succeeded",
+                        "source_address_prefix": "VirtualNetwork",
+                        "source_port_range": "*"
+                    },
+                    {
+                        "access": "Allow",
+                        "description": "Allow inbound traffic from azure load balancer",
+                        "destination_address_prefix": "*",
+                        "destination_port_range": "*",
+                        "direction": "Inbound",
+                        "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowAzureLoadBalancerInBound",
+                        "name": "AllowAzureLoadBalancerInBound",
+                        "priority": 65001,
+                        "protocol": "*",
+                        "provisioning_state": "Succeeded",
+                        "source_address_prefix": "AzureLoadBalancer",
+                        "source_port_range": "*"
+                    },
+                    {
+                        "access": "Deny",
+                        "description": "Deny all inbound traffic",
+                        "destination_address_prefix": "*",
+                        "destination_port_range": "*",
+                        "direction": "Inbound",
+                        "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllInBound",
+                        "name": "DenyAllInBound",
+                        "priority": 65500,
+                        "protocol": "*",
+                        "provisioning_state": "Succeeded",
+                        "source_address_prefix": "*",
+                        "source_port_range": "*"
+                    },
+                    {
+                        "access": "Allow",
+                        "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                        "destination_address_prefix": "VirtualNetwork",
+                        "destination_port_range": "*",
+                        "direction": "Outbound",
+                        "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetOutBound",
+                        "name": "AllowVnetOutBound",
+                        "priority": 65000,
+                        "protocol": "*",
+                        "provisioning_state": "Succeeded",
+                        "source_address_prefix": "VirtualNetwork",
+                        "source_port_range": "*"
+                    },
+                    {
+                        "access": "Allow",
+                        "description": "Allow outbound traffic from all VMs to Internet",
+                        "destination_address_prefix": "Internet",
+                        "destination_port_range": "*",
+                        "direction": "Outbound",
+                        "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowInternetOutBound",
+                        "name": "AllowInternetOutBound",
+                        "priority": 65001,
+                        "protocol": "*",
+                        "provisioning_state": "Succeeded",
+                        "source_address_prefix": "*",
+                        "source_port_range": "*"
+                    },
+                    {
+                        "access": "Deny",
+                        "description": "Deny all outbound traffic",
+                        "destination_address_prefix": "*",
+                        "destination_port_range": "*",
+                        "direction": "Outbound",
+                        "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllOutBound",
+                        "name": "DenyAllOutBound",
+                        "priority": 65500,
+                        "protocol": "*",
+                        "provisioning_state": "Succeeded",
+                        "source_address_prefix": "*",
+                        "source_port_range": "*"
+                    }
+                ]
+        id:
+            description:
+                - The resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup"
+        location:
+            description:
+                - The resource location.
+            returned: always
+            type: str
+            sample: "westus"
+        name:
+            description:
+                - Name of the secrurity group.
+            returned: always
+            type: str
+            sample: "mysecgroup"
+        network_interfaces:
+            description:
+                - A collection of references to network interfaces.
+            returned: always
+            type: list
+            sample: []
+        rules:
+            description:
+                - A collection of security rules of the network security group.
+            returned: always
+            type: list
+            sample: [
+                {
+                    "access": "Deny",
+                    "description": null,
+                    "destination_address_prefix": "*",
+                    "destination_port_range": "22",
+                    "direction": "Inbound",
+                    "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/DenySSH",
+                    "name": "DenySSH",
+                    "priority": 100,
+                    "protocol": "Tcp",
+                    "provisioning_state": "Succeeded",
+                    "source_address_prefix": "*",
+                    "source_port_range": "*"
+                },
+                {
+                    "access": "Allow",
+                    "description": null,
+                    "destination_address_prefix": "*",
+                    "destination_port_range": "22",
+                    "direction": "Inbound",
+                    "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/AllowSSH",
+                    "name": "AllowSSH",
+                    "priority": 101,
+                    "protocol": "Tcp",
+                    "provisioning_state": "Succeeded",
+                    "source_address_prefix": "174.109.158.0/24",
+                    "source_port_range": "*"
+                }
+                ]
+        subnets:
+            description:
+                - A collection of references to subnets.
+            returned: always
+            type: list
+            sample: []
+        tags:
+            description:
+                - Tags to assign to the security group.
+            returned: always
+            type: dict
+            sample: {
+                     "delete": "on-exit",
+                     "foo": "bar",
+                     "testing": "testing"
+                    }
+        type:
+            description:
+                - The resource type.
+            returned: always
+            type: str
+            sample: "Microsoft.Network/networkSecurityGroups"
 '''  # NOQA
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import is_valid_resource_id
     from azure.mgmt.network import NetworkManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -372,6 +434,12 @@ def validate_rule(self, rule, rule_type=None):
     check_plural('source_address_prefix', 'source_address_prefixes')
     check_plural('source_port_range', 'source_port_ranges')
     check_plural('destination_port_range', 'destination_port_ranges')
+
+    # when source(destination)_application_security_groups set, remove the default value * of source(destination)_address_prefix
+    if rule.get('source_application_security_groups') and rule.get('source_address_prefix') == '*':
+        rule['source_address_prefix'] = None
+    if rule.get('destination_application_security_groups') and rule.get('destination_address_prefix') == '*':
+        rule['destination_address_prefix'] = None
 
 
 def compare_rules_change(old_list, new_list, purge_list):
@@ -425,6 +493,10 @@ def compare_rules(old_rule, rule):
         changed = True
     if set(rule.get('destination_port_ranges') or []) != set(old_rule.get('destination_port_ranges') or []):
         changed = True
+    if set(rule.get('source_application_security_groups') or []) != set(old_rule.get('source_application_security_groups') or []):
+        changed = True
+    if set(rule.get('destination_application_security_groups') or []) != set(old_rule.get('destination_application_security_groups') or []):
+        changed = True
     return changed
 
 
@@ -446,6 +518,12 @@ def create_rule_instance(self, rule):
         destination_address_prefixes=rule.get('destination_address_prefixes', None),
         source_port_ranges=rule.get('source_port_ranges', None),
         destination_port_ranges=rule.get('destination_port_ranges', None),
+        source_application_security_groups=[
+            self.nsg_models.ApplicationSecurityGroup(id=p)
+            for p in rule.get('source_application_security_groups')] if rule.get('source_application_security_groups') else None,
+        destination_application_security_groups=[
+            self.nsg_models.ApplicationSecurityGroup(id=p)
+            for p in rule.get('destination_application_security_groups')] if rule.get('destination_application_security_groups') else None,
         access=rule.get('access', None),
         priority=rule.get('priority', None),
         direction=rule.get('direction', None),
@@ -475,6 +553,9 @@ def create_rule_dict_from_obj(rule):
         destination_port_ranges=rule.destination_port_ranges,
         source_address_prefixes=rule.source_address_prefixes,
         destination_address_prefixes=rule.destination_address_prefixes,
+        source_application_security_groups=[p.id for p in rule.source_application_security_groups] if rule.source_application_security_groups else None,
+        destination_application_security_groups=[
+            p.id for p in rule.destination_application_security_groups] if rule.destination_application_security_groups else None,
         access=rule.access,
         priority=rule.priority,
         direction=rule.direction,
@@ -522,6 +603,8 @@ rule_spec = dict(
     destination_port_range=dict(type='raw', default='*'),
     source_address_prefix=dict(type='raw', default='*'),
     destination_address_prefix=dict(type='raw', default='*'),
+    source_application_security_groups=dict(type='list', elements='raw'),
+    destination_application_security_groups=dict(type='list', elements='raw'),
     access=dict(type='str', choices=['Allow', 'Deny'], default='Allow'),
     priority=dict(type='int', required=True),
     direction=dict(type='str', choices=['Inbound', 'Outbound'], default='Inbound')
@@ -559,8 +642,14 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             state=dict()
         )
 
+        mutually_exclusive = [["source_application_security_group", "source_address_prefix"],
+                              ["source_application_security_group", "source_address_prefixes"],
+                              ["destination_application_security_group", "destination_address_prefix"],
+                              ["destination_application_security_group", "destination_address_prefixes"]]
+
         super(AzureRMSecurityGroup, self).__init__(self.module_arg_spec,
-                                                   supports_check_mode=True)
+                                                   supports_check_mode=True,
+                                                   mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
         # tighten up poll interval for security groups; default 30s is an eternity
@@ -585,6 +674,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                     validate_rule(self, rule)
                 except Exception as exc:
                     self.fail("Error validating rule {0} - {1}".format(rule, str(exc)))
+                self.convert_asg_to_id(rule)
 
         if self.default_rules:
             for rule in self.default_rules:
@@ -592,6 +682,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                     validate_rule(self, rule, 'default')
                 except Exception as exc:
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
+                self.convert_asg_to_id(rule)
 
         try:
             nsg = self.network_client.network_security_groups.get(self.resource_group, self.name)
@@ -695,8 +786,27 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             poller = self.network_client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
         except CloudError as exc:
-            raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error deleting security group {0} - {1}".format(self.name, str(exc)))
+
         return result
+
+    def convert_asg_to_id(self, rule):
+        def convert_to_id(rule, key):
+            if rule.get(key):
+                ids = []
+                for p in rule.get(key):
+                    if isinstance(p, dict):
+                        ids.append("/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationSecurityGroups/{2}".format(
+                            self.subscription_id, p.get('resource_group'), p.get('name')))
+                    elif isinstance(p, str):
+                        if is_valid_resource_id(p):
+                            ids.append(p)
+                        else:
+                            ids.append("/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationSecurityGroups/{2}".format(
+                                self.subscription_id, self.resource_group, p))
+                rule[key] = ids
+        convert_to_id(rule, 'source_application_security_groups')
+        convert_to_id(rule, 'destination_application_security_groups')
 
 
 def main():

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -27,35 +27,39 @@ options:
   filename:
     description:
       - Name of the qkview to create on the remote BIG-IP.
+    type: str
     default: "localhost.localdomain.qkview"
   dest:
     description:
       - Destination on your local filesystem when you want to save the qkview.
+    type: path
     required: True
   asm_request_log:
     description:
       - When C(True), includes the ASM request log data. When C(False),
         excludes the ASM request log data.
-    default: no
     type: bool
+    default: no
   max_file_size:
     description:
       - Max file size, in bytes, of the qkview to create. By default, no max
         file size is specified.
+    type: int
     default: 0
   complete_information:
     description:
       - Include complete information in the qkview.
-    default: no
     type: bool
+    default: no
   exclude_core:
     description:
       - Exclude core files from the qkview.
-    default: no
     type: bool
+    default: no
   exclude:
     description:
       - Exclude various file from the qkview.
+    type: list
     choices:
       - all
       - audit
@@ -65,10 +69,14 @@ options:
     description:
       - If C(no), the file will only be transferred if the destination does not
         exist.
-    default: yes
     type: bool
+    default: yes
 notes:
   - This module does not include the "max time" or "restrict to blade" options.
+  - If you are using this module with either Ansible Tower or Ansible AWX, you
+    should be aware of how these Ansible products execute jobs in restricted
+    environments. More informat can be found here
+    https://clouddocs.f5.com/products/orchestration/ansible/devel/usage/module-usage-with-tower.html
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -82,6 +90,10 @@ EXAMPLES = r'''
       - audit
       - secure
     dest: /tmp/localhost.localdomain.qkview
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -92,6 +104,7 @@ RETURN = r'''
 import os
 import re
 import socket
+import ssl
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -106,20 +119,14 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.icontrol import download_file
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.icontrol import download_file
 
@@ -211,7 +218,7 @@ class Parameters(AnsibleF5Parameters):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -247,7 +254,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
@@ -272,7 +279,11 @@ class BaseManager(object):
     def present(self):
         if os.path.exists(self.want.dest) and not self.want.force:
             raise F5ModuleError(
-                "The specified 'dest' file already exists"
+                "The specified 'dest' file already exists."
+            )
+        if not os.path.exists(os.path.dirname(self.want.dest)):
+            raise F5ModuleError(
+                "The directory of your 'dest' file does not exist."
             )
         if self.want.exclude:
             choices = ['all', 'audit', 'secure', 'bash_history']
@@ -455,9 +466,14 @@ class BaseManager(object):
         while True:
             try:
                 resp = self.client.api.get(uri, timeout=10)
-            except socket.timeout:
+            except (socket.timeout, ssl.SSLError):
                 continue
-            response = resp.json()
+            try:
+                response = resp.json()
+            except ValueError:
+                # It is possible that the API call can return invalid JSON.
+                # This invalid JSON appears to be just empty strings.
+                continue
             if response['_taskState'] == 'FAILED':
                 raise F5ModuleError(
                     "qkview creation task failed unexpectedly."
@@ -578,14 +594,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

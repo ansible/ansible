@@ -1,0 +1,171 @@
+- name: Install requests and pika
+  pip:
+    name: requests,pika<1.0.0
+    state: present
+
+- name: RabbitMQ basic publish test
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    body: "Hello world from ansible module rabbitmq_publish"
+    content_type: "text/plain"
+  register: rabbit_basic_output1
+
+- assert:
+    that:
+      - "rabbit_basic_output1 is not failed"
+      - "'publish_test' in rabbit_basic_output1.result.msg"
+      - "'publish_test' in rabbit_basic_output1.result.queue"
+      - "'text/plain' in rabbit_basic_output1.result.content_type"
+
+
+# Testing random queue
+- name: Publish to random queue
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    body: "RANDOM QUEUE POST"
+    content_type: "text/plain"
+  register: rabbit_random_queue_output
+
+- assert:
+    that:
+      - "rabbit_random_queue_output is not failed"
+      - "'amq.gen' in rabbit_random_queue_output.result.msg"
+      - "'amq.gen' in rabbit_random_queue_output.result.queue"
+      - "'text/plain' in rabbit_random_queue_output.result.content_type"
+
+- name: Copy binary to remote
+  copy:
+    src: "{{ role_path }}/files/image.gif"
+    dest: "{{ remote_tmp_dir }}/image.gif"
+
+- name: Publish binary to a queue
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: publish_test
+    src: "{{ remote_tmp_dir }}/image.gif"
+  register: rabbitmq_publish_file
+
+- assert:
+    that:
+      - "rabbitmq_publish_file is not failed"
+      - "'publish_test' in rabbitmq_publish_file.result.queue"
+      - "'image/gif' in rabbitmq_publish_file.result.content_type"
+
+- name: Raise error for src and body defined
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    src: "{{ remote_tmp_dir }}/image.gif"
+    body: blah
+  register: rabbit_basic_fail_output1
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "rabbit_basic_fail_output1 is failed"
+      - "'parameters are mutually exclusive' in rabbit_basic_fail_output1.msg"
+
+- name: Publish a file that does not exist
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    src: 'aaaaaaajax-loader.gif'
+  register: file_missing_fail
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_missing_fail is failed"
+      - "'Unable to open file' in file_missing_fail.msg"
+
+- name: Publish with proto/host/port/user/pass
+  rabbitmq_publish:
+    proto: amqp
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    vhost: '%2F'
+    queue: publish_test
+    body: Testing with proto/host/port/username/password/vhost
+  register: host_port_output
+
+- assert:
+    that:
+      - "host_port_output is not failed"
+
+- name: Publish with host/port/user but missing proto
+  rabbitmq_publish:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    vhost: '%2F'
+    queue: publish_test
+    body: Testing with proto/host/port/username/password/vhost
+  ignore_errors: yes
+  register: host_port_missing_proto_output
+
+- assert:
+    that:
+      - "host_port_missing_proto_output is failed"
+      - "'Connection parameters must be passed via' in host_port_missing_proto_output.msg"
+
+- name: Publish with proto/host/port/user and url
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    proto: amqp
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    vhost: '%2F'
+    queue: publish_test
+    body: Testing with proto/host/port/username/password/vhost
+  ignore_errors: yes
+  register: host_and_url_output
+
+- assert:
+    that:
+      - "host_and_url_output is failed"
+      - "'cannot be specified at the same time' in host_and_url_output.msg"
+
+- name: Publish headers to queue
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    body: blah
+    headers:
+      myHeader: Value1
+      secondHeader: Value2
+  register: test_headers1
+  ignore_errors: yes
+
+- name: Publish headers with file
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    src: "{{ remote_tmp_dir }}/image.gif"
+    headers:
+      myHeader: Value1
+      secondHeader: Value2
+  register: test_headers2
+  ignore_errors: yes
+
+- name: Collect all messages off the publish queue
+  set_fact:
+    messages: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2F', queue='publish_test') }}"
+
+- name: Check contents of published messages
+  assert:
+    that:
+      - messages|length == 5
+      - "'Hello world from ansible module rabbitmq_publish' in messages[0]['msg']"
+      - "'text/plain' in messages[0]['content_type']"
+      - "'image/gif' in messages[1]['content_type']"
+      - "'image.gif' in messages[1]['headers']['filename']"
+      - "'Testing with proto/host/port/username/password/vhost' in messages[2]['msg']"
+#      - messages[3]['headers']['myHeader'] is defined
+#      - messages[4]['headers']['filename'] is defined
+#      - messages[4]['headers']['secondHeader'] is defined

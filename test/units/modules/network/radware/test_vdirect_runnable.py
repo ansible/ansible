@@ -17,16 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 BASE_PARAMS = {'vdirect_ip': None, 'vdirect_user': None, 'vdirect_password': None,
                'vdirect_wait': None, 'vdirect_secondary_ip': None,
                'vdirect_https_port': None, 'vdirect_http_port': None,
-               'vdirect_timeout': None, 'vdirect_use_ssl': None, 'vdirect_validate_certs': None}
+               'vdirect_timeout': None, 'vdirect_use_ssl': None, 'validate_certs': None}
 
 RUNNABLE_PARAMS = {'runnable_type': 'ConfigurationTemplate', 'runnable_name': 'runnable',
                    'action_name': None, 'parameters': None}
@@ -47,7 +46,7 @@ MODULE_RESULT = {"msg": "Configuration template run completed.", "parameters": {
 
 
 @patch('vdirect_client.rest_client.RestClient')
-class RestClient ():
+class RestClient:
     def __init__(self, vdirect_ip=None, vdirect_user=None, vdirect_password=None, wait=None,
                  secondary_vdirect_ip=None, https_port=None, http_port=None,
                  timeout=None, https=None, strict_http_results=None,
@@ -56,7 +55,7 @@ class RestClient ():
 
 
 @patch('vdirect_client.rest_client.Runnable')
-class Runnable ():
+class Runnable:
     available_actions_result = None
     action_info_result = None
     runnable_objects_result = None

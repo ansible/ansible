@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: rhsm_repository
 short_description: Manage RHSM repositories using the subscription-manager command
 description:
-  - Manage(Enable/Disable) RHSM repositories to the Red Hat Subscription
+  - Manage (Enable/Disable) RHSM repositories to the Red Hat Subscription
     Management entitlement platform using the C(subscription-manager) command.
 version_added: '2.5'
 author: Giovanni Sciortino (@giovannisciortino)
@@ -39,6 +39,14 @@ options:
       - To operate on several repositories this can accept a comma separated
         list or a YAML list.
     required: True
+  purge:
+    description:
+      - Disable all currently enabled repositories that are not not specified in C(name).
+        Only set this to C(True) if passing in a list of repositories to the C(name) field.
+        Using this with C(loop) will most likely not have the desired result.
+    type: bool
+    default: False
+    version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -58,19 +66,15 @@ EXAMPLES = '''
 
 - name: Disable all repositories except rhel-7-server-rpms
   rhsm_repository:
-    name: "{{ item }}"
-    state: disabled
-  with_items: "{{
-    rhsm_repository.repositories |
-    map(attribute='id') |
-    difference(['rhel-7-server-rpms']) }}"
+    name: rhel-7-server-rpms
+    purge: True
 '''
 
 RETURN = '''
 repositories:
   description:
     - The list of RHSM repositories with their states.
-    - When this module is used to change the repositories states, this list contains the updated states after the changes.
+    - When this module is used to change the repository states, this list contains the updated states after the changes.
   returned: success
   type: list
 '''
@@ -115,10 +119,10 @@ def get_repository_list(module, list_parameter):
         '+----------------------------------------------------------+',
         '    Available Repositories in /etc/yum.repos.d/redhat.repo'
     ]
-    repo_id_re_str = r'Repo ID:   (.*)'
-    repo_name_re_str = r'Repo Name: (.*)'
-    repo_url_re_str = r'Repo URL:  (.*)'
-    repo_enabled_re_str = r'Enabled:   (.*)'
+    repo_id_re = re.compile(r'Repo ID:\s+(.*)')
+    repo_name_re = re.compile(r'Repo Name:\s+(.*)')
+    repo_url_re = re.compile(r'Repo URL:\s+(.*)')
+    repo_enabled_re = re.compile(r'Enabled:\s+(.*)')
 
     repo_id = ''
     repo_name = ''
@@ -126,41 +130,42 @@ def get_repository_list(module, list_parameter):
     repo_enabled = ''
 
     repo_result = []
-
-    for line in out.split('\n'):
-        if line in skip_lines:
+    for line in out.splitlines():
+        if line == '' or line in skip_lines:
             continue
 
-        repo_id_re = re.match(repo_id_re_str, line)
-        if repo_id_re:
-            repo_id = repo_id_re.group(1)
+        repo_id_match = repo_id_re.match(line)
+        if repo_id_match:
+            repo_id = repo_id_match.group(1)
             continue
 
-        repo_name_re = re.match(repo_name_re_str, line)
-        if repo_name_re:
-            repo_name = repo_name_re.group(1)
+        repo_name_match = repo_name_re.match(line)
+        if repo_name_match:
+            repo_name = repo_name_match.group(1)
             continue
 
-        repo_url_re = re.match(repo_url_re_str, line)
-        if repo_url_re:
-            repo_url = repo_url_re.group(1)
+        repo_url_match = repo_url_re.match(line)
+        if repo_url_match:
+            repo_url = repo_url_match.group(1)
             continue
 
-        repo_enabled_re = re.match(repo_enabled_re_str, line)
-        if repo_enabled_re:
-            repo_enabled = repo_enabled_re.group(1)
+        repo_enabled_match = repo_enabled_re.match(line)
+        if repo_enabled_match:
+            repo_enabled = repo_enabled_match.group(1)
 
-        repo = {
-            "id": repo_id,
-            "name": repo_name,
-            "url": repo_url,
-            "enabled": True if repo_enabled == '1' else False
-        }
-        repo_result.append(repo)
+            repo = {
+                "id": repo_id,
+                "name": repo_name,
+                "url": repo_url,
+                "enabled": True if repo_enabled == '1' else False
+            }
+
+            repo_result.append(repo)
+
     return repo_result
 
 
-def repository_modify(module, state, name):
+def repository_modify(module, state, name, purge=False):
     name = set(name)
     current_repo_list = get_repository_list(module, 'list')
     updated_repo_list = deepcopy(current_repo_list)
@@ -199,6 +204,20 @@ def repository_modify(module, state, name):
                 results.append("Repository '%s' is enabled for this system" % repo['id'])
                 rhsm_arguments += ['--enable', repo['id']]
 
+    # Disable all enabled repos on the system that are not in the task and not
+    # marked as disabled by the task
+    if purge:
+        enabled_repo_ids = set(repo['id'] for repo in updated_repo_list if repo['enabled'])
+        matched_repoids_set = set(matched_existing_repo.keys())
+        difference = enabled_repo_ids.difference(matched_repoids_set)
+        if len(difference) > 0:
+            for repoid in difference:
+                changed = True
+                diff_before.join("Repository '{repoid}'' is enabled for this system\n".format(repoid=repoid))
+                diff_after.join("Repository '{repoid}' is disabled for this system\n".format(repoid=repoid))
+                results.append("Repository '{repoid}' is disabled for this system".format(repoid=repoid))
+                rhsm_arguments.extend(['--disable', repoid])
+
     diff = {'before': diff_before,
             'after': diff_after,
             'before_header': "RHSM repositories",
@@ -206,7 +225,7 @@ def repository_modify(module, state, name):
 
     if not module.check_mode:
         rc, out, err = run_subscription_manager(module, rhsm_arguments)
-        results = out.split('\n')
+        results = out.splitlines()
     module.exit_json(results=results, changed=changed, repositories=updated_repo_list, diff=diff)
 
 
@@ -215,13 +234,15 @@ def main():
         argument_spec=dict(
             name=dict(type='list', required=True),
             state=dict(choices=['enabled', 'disabled', 'present', 'absent'], default='enabled'),
+            purge=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
     name = module.params['name']
     state = module.params['state']
+    purge = module.params['purge']
 
-    repository_modify(module, state, name)
+    repository_modify(module, state, name, purge)
 
 
 if __name__ == '__main__':

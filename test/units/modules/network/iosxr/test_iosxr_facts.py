@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from units.modules.utils import set_module_args
 from .iosxr_module import TestIosxrModule, load_fixture
 from ansible.modules.network.iosxr import iosxr_facts
@@ -35,13 +35,30 @@ class TestIosxrFacts(TestIosxrModule):
         super(TestIosxrFacts, self).setUp()
 
         self.mock_run_commands = patch(
-            'ansible.modules.network.iosxr.iosxr_facts.run_commands')
+            'ansible.module_utils.network.iosxr.facts.legacy.base.run_commands')
         self.run_commands = self.mock_run_commands.start()
+
+        self.mock_get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
+        self.get_resource_connection = self.mock_get_resource_connection.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.network.iosxr.facts.legacy.base.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {
+            'device_info': {
+                'network_os': 'iosxr',
+                'network_os_hostname': 'iosxr01',
+                'network_os_image': 'bootflash:disk0/xrvr-os-mbi-6.1.3/mbixrvr-rp.vm',
+                'network_os_version': '6.1.3[Default]'
+            },
+            'network_api': 'cliconf'
+        }
 
     def tearDown(self):
         super(TestIosxrFacts, self).tearDown()
 
         self.mock_run_commands.stop()
+        self.mock_get_capabilities.stop()
+        self.mock_get_resource_connection.stop()
 
     def load_fixtures(self, commands=None):
 

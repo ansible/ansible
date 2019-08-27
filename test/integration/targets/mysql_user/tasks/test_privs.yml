@@ -18,14 +18,25 @@
 
 # ============================================================
 - name: create user with basic select privileges
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:SELECT state=present
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    priv: '*.*:SELECT'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
   when: current_append_privs ==  "yes"
 
 - include: assert_user.yml user_name={{user_name_2}} priv='SELECT'
   when: current_append_privs ==  "yes"
  
 - name: create user with current privileges (expect changed=true)
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:{{current_privilege}} append_privs={{current_append_privs}} state=present
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    priv: '*.*:{{current_privilege}}'
+    append_privs: '{{current_append_privs}}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message for current privileges 
@@ -44,7 +55,11 @@
   when: current_append_privs ==  "yes"
 
 - name: create database using user current privileges
-  mysql_db: name={{ db_name }} state=present login_user={{ user_name_2 }} login_password={{ user_password_2 }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: present
+    login_user: '{{ user_name_2 }}'
+    login_password: '{{ user_password_2 }}'
   ignore_errors: true 
 
 - name: run command to test that database was not created
@@ -56,14 +71,24 @@
 
 # ============================================================
 - name: Add privs to a specific table (expect changed)
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=jmainguy.jmainguy:ALL state=present
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    priv: 'jmainguy.jmainguy:ALL'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: Assert that priv changed
   assert: { that: "result.changed == true" }
 
 - name: Add privs to a specific table (expect ok)
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=jmainguy.jmainguy:ALL state=present
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    priv: 'jmainguy.jmainguy:ALL'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: Assert that priv did not change
@@ -71,18 +96,35 @@
 
 # ============================================================
 - name: update user with all privileges 
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:ALL state=present
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    priv: '*.*:ALL'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
 
 - include: assert_user.yml user_name={{user_name_2}} priv='ALL PRIVILEGES'
 
 - name: create database using user
-  mysql_db: name={{ db_name }} state=present login_user={{ user_name_2 }} login_password={{ user_password_2 }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: present
+    login_user: '{{ user_name_2 }}'
+    login_password: '{{ user_password_2 }}'
 
 - name: run command to test database was created using user new privileges
   command: mysql "-e SHOW CREATE DATABASE {{ db_name }};" 
 
 - name: drop database using user
-  mysql_db: name={{ db_name }} state=absent login_user={{ user_name_2 }} login_password={{ user_password_2 }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: absent
+    login_user: '{{ user_name_2 }}'
+    login_password: '{{ user_password_2 }}'
 
 - name: remove username
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} state=absent
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'

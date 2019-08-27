@@ -1,0 +1,3 @@
+minor_changes:
+  - purefa_user - change module parameter I(api_token) to I(api) and to stop clash with known variable.
+  - purefa_user - change resulting facts from I(api_token) to I(user_api) for clarity (https://github.com/ansible/ansible/pull/57588)

@@ -1,0 +1,18 @@
+:source: @{ source }@
+
+{# avoids rST "isn't included in any toctree" errors for module docs #}
+:orphan:
+
+.. _@{ module }@_@{ plugin_type }@_alias_@{ alias }@:
+
+{% if short_description %}
+{%   set title = alias + ' -- ' + short_description | rst_ify %}
+{% else %}
+{%   set title = alias %}
+{% endif %}
+
+@{ title }@
+@{ '+' * title|length }@
+
+This is an alias for :ref:`@{ module }@ <@{ module }@_@{ plugin_type }@>`.
+This name has been **deprecated**. Please update your tasks to use the new name ``@{ module }@`` instead.

@@ -3,6 +3,8 @@
 # Makefile for Ansible
 #
 # useful targets:
+#   make clean ---------------- clean up
+#   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
 #   make srpm ----------------- produce a SRPM
 #   make rpm  ----------------- produce RPMs
@@ -10,7 +12,6 @@
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
-#   make pyflakes, make pep8 -- source code checks
 
 ########################################################
 # variable section
@@ -18,6 +19,7 @@
 NAME = ansible
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
+SDIST_DIR ?= 'dist'
 
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
@@ -29,9 +31,10 @@ ASCII2MAN = rst2man.py $< $@
 else
 ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
-GENERATE_CLI = docs/bin/generate_man.py
 
 PYTHON=python
+GENERATE_CLI = hacking/build-ansible.py generate-man
+
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # fetch version from project release.py as single source-of-truth
@@ -48,7 +51,7 @@ RELEASE ?= 1
 
 # Get the branch information from git
 ifneq ($(shell which git),)
-GIT_DATE := $(shell git log -n 1 --format="%ai")
+GIT_DATE := $(shell git log -n 1 --format="%ci")
 GIT_HASH := $(shell git log -n 1 --format="%h")
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.\/]//g')
 GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
@@ -57,7 +60,7 @@ GITINFO = ""
 endif
 
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
-DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
+DATE := $(shell date -j -r $(shell git log -n 1 --format="%ct") +%Y%m%d%H%M)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
@@ -122,7 +125,7 @@ ifneq ($(REPOTAG),)
 endif
 
 # ansible-test parameters
-ANSIBLE_TEST ?= test/runner/ansible-test
+ANSIBLE_TEST ?= bin/ansible-test
 TEST_FLAGS ?=
 
 # ansible-test units parameters (make test / make test-py3)
@@ -169,18 +172,6 @@ authors:
 %.1: %.1.rst lib/ansible/release.py
 	$(ASCII2MAN)
 
-.PHONY: loc
-loc:
-	sloccount lib library bin
-
-.PHONY: pep8
-pep8:
-	$(ANSIBLE_TEST) sanity --test pep8 --python $(PYTHON_VERSION) $(TEST_FLAGS)
-
-.PHONY: pyflakes
-pyflakes:
-	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
-
 .PHONY: clean
 clean:
 	@echo "Cleaning up distutils stuff"
@@ -217,7 +208,6 @@ clean:
 	rm -f AUTHORS.TXT
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
-	$(MAKE) -C docs/api clean
 
 .PHONY: python
 python:
@@ -231,9 +221,20 @@ install_manpages:
 	gzip -9 $(wildcard ./docs/man/man1/ansible*.1)
 	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
 
+.PHONY: sdist_check
+sdist_check:
+	$(PYTHON) packaging/sdist/check-link-behavior.py
+
 .PHONY: sdist
-sdist: clean docs
-	$(PYTHON) setup.py sdist
+sdist: sdist_check clean docs
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
+
+# Official releases generate the changelog as the last commit before the release.
+# Snapshots shouldn't result in new checkins so the changelog is generated as
+# part of creating the tarball.
+.PHONY: snapshot
+snapshot: sdist_check clean docs changelog
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist --dist-dir=$(SDIST_DIR)
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
@@ -241,7 +242,7 @@ sdist_upload: clean docs
 
 .PHONY: changelog
 changelog:
-	packaging/release/changelogs/changelog.py release -vv && packaging/release/changelogs/changelog.py generate -vv
+	PYTHONPATH=./lib packaging/release/changelogs/changelog.py release -vv && PYTHONPATH=./lib packaging/release/changelogs/changelog.py generate -vv
 
 .PHONY: rpmcommon
 rpmcommon: sdist
@@ -398,4 +399,3 @@ alldocs: docs webdocs
 
 version:
 	@echo $(VERSION)
-

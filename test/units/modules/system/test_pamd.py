@@ -1,5 +1,5 @@
 from __future__ import (absolute_import, division, print_function)
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.modules.system.pamd import PamdRule
 from ansible.modules.system.pamd import PamdLine
@@ -349,5 +349,7 @@ session    required pam_unix.so"""
 
     def test_remove_rule(self):
         self.assertTrue(self.pamd.remove('account', 'required', 'pam_unix.so'))
+        # Second run should not change anything
+        self.assertFalse(self.pamd.remove('account', 'required', 'pam_unix.so'))
         test_rule = PamdRule('account', 'required', 'pam_unix.so')
         self.assertNotIn(str(test_rule), str(self.pamd))

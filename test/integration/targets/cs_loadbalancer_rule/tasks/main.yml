@@ -1,4 +1,26 @@
 ---
+- name: ensure instance is expunged
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-lb"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify ensure instance is expunged
+  assert:
+    that:
+    - instance is successful
+
+- name: ensure network is absent
+  cs_network:
+    name: "{{ cs_resource_prefix }}_net_lb"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: lb_net
+- name: verify ensure network is absent
+  assert:
+    that:
+    - lb_net is successful
+
 - name: test create network for lb
   cs_network:
     name: "{{ cs_resource_prefix }}_net_lb"
@@ -20,6 +42,9 @@
     zone: "{{ cs_common_zone_adv }}"
     network: "{{ cs_resource_prefix }}_net_lb"
   register: instance
+  until: instance is success
+  retries: 20
+  delay: 5
 - name: verify setup instance in lb
   assert:
     that:
@@ -33,7 +58,7 @@
     network: "{{ cs_resource_prefix }}_net_lb"
     zone: "{{ cs_common_zone_adv }}"
   register: ip_address
-- name: verify setup instance in lb
+- name: verify setup get ip address in lb
   assert:
     that:
     - ip_address is successful
@@ -328,3 +353,40 @@
     that:
     - lb is successful
     - lb is not changed
+
+- name: cleanup ip address
+  cs_ip_address:
+    network: "{{ cs_resource_prefix }}_net_lb"
+    zone: "{{ cs_common_zone_adv }}"
+    ip_address: "{{ ip_address.ip_address }}"
+    state: absent
+  register: ip_address
+- name: verify cleanup ip address
+  assert:
+    that:
+    - ip_address is successful
+    - instance is changed
+
+- name: cleanup instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-lb"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify cleanup instance
+  assert:
+    that:
+    - instance is successful
+    - instance is changed
+
+- name: cleanup network
+  cs_network:
+    name: "{{ cs_resource_prefix }}_net_lb"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: lb_net
+- name: verify cleanup network
+  assert:
+    that:
+    - lb_net is successful
+    - lb_net is changed

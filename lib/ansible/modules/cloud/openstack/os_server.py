@@ -382,6 +382,20 @@ EXAMPLES = '''
           ifdown eth0 && ifup eth0
           {% endraw %}
 
+# Create a new instance with server group for (anti-)affinity
+# server group ID is returned from os_server_group module.
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        state: present
+        name: vm1
+        image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+        flavor: 4
+        scheduler_hints:
+          group: f5c8c61a-9230-400a-8ed2-3b023c190a7f
+
 # Deletes an instance via its ID
 - name: remove an instance
   hosts: localhost
@@ -434,7 +448,10 @@ def _network_args(module, cloud):
                 module.fail_json(
                     msg='Could not find network by net-name: %s' %
                     net['net-name'])
-            args.append({'net-id': by_name['id']})
+            resolved_net = net.copy()
+            del resolved_net['net-name']
+            resolved_net['net-id'] = by_name['id']
+            args.append(resolved_net)
         elif net.get('port-id'):
             args.append(net)
         elif net.get('port-name'):
@@ -443,7 +460,10 @@ def _network_args(module, cloud):
                 module.fail_json(
                     msg='Could not find port by port-name: %s' %
                     net['port-name'])
-            args.append({'port-id': by_name['id']})
+            resolved_net = net.copy()
+            del resolved_net['port-name']
+            resolved_net['port-id'] = by_name['id']
+            args.append(resolved_net)
     return args
 
 
@@ -625,11 +645,7 @@ def _check_security_groups(module, cloud, server):
         return changed, server
 
     module_security_groups = set(module.params['security_groups'])
-    # Workaround a bug in shade <= 1.20.0
-    if server.security_groups is not None:
-        server_security_groups = set(sg.name for sg in server.security_groups)
-    else:
-        server_security_groups = set()
+    server_security_groups = set(sg['name'] for sg in server.security_groups)
 
     add_sgs = module_security_groups - server_security_groups
     remove_sgs = server_security_groups - module_security_groups

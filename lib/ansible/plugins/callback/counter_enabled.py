@@ -10,7 +10,6 @@ from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 from ansible.template import Templar
-from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.playbook.task_include import TaskInclude
 
 DOCUMENTATION = '''
@@ -20,8 +19,8 @@ DOCUMENTATION = '''
     version_added: "2.7"
     description:
       - Use this callback when you need a kind of progress bar on a large environments.
-      - You will know how many tasks has the playbook to run, and wich one is actually running.
-      - You will know how many hosts may run a task, and wich of them is actually running.
+      - You will know how many tasks has the playbook to run, and which one is actually running.
+      - You will know how many hosts may run a task, and which of them is actually running.
     extends_documentation_fragment:
       - default_callback
     requirements:
@@ -85,21 +84,25 @@ class CallbackModule(CallbackBase):
         for host in hosts:
             stat = stats.summarize(host)
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s %s %s" % (
                 hostcolor(host, stat),
                 colorize(u'ok', stat['ok'], C.COLOR_OK),
                 colorize(u'changed', stat['changed'], C.COLOR_CHANGED),
                 colorize(u'unreachable', stat['unreachable'], C.COLOR_UNREACHABLE),
-                colorize(u'failed', stat['failures'], C.COLOR_ERROR)),
+                colorize(u'failed', stat['failures'], C.COLOR_ERROR),
+                colorize(u'rescued', stat['rescued'], C.COLOR_OK),
+                colorize(u'ignored', stat['ignored'], C.COLOR_WARN)),
                 screen_only=True
             )
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s %s %s" % (
                 hostcolor(host, stat, False),
                 colorize(u'ok', stat['ok'], None),
                 colorize(u'changed', stat['changed'], None),
                 colorize(u'unreachable', stat['unreachable'], None),
-                colorize(u'failed', stat['failures'], None)),
+                colorize(u'failed', stat['failures'], None),
+                colorize(u'rescued', stat['rescued'], None),
+                colorize(u'ignored', stat['ignored'], None)),
                 log_only=True
             )
 
@@ -127,7 +130,7 @@ class CallbackModule(CallbackBase):
         # args can be specified as no_log in several places: in the task or in
         # the argument spec.  We can check whether the task is no_log but the
         # argument spec can't be because that is only run on the target
-        # machine and we haven't run it thereyet at this time.
+        # machine and we haven't run it there yet at this time.
         #
         # So we give people a config option to affect display of the args so
         # that they can secure this if they feel that their stdout is insecure
@@ -174,7 +177,7 @@ class CallbackModule(CallbackBase):
         else:
             self._clean_results(result._result, result._task.action)
 
-            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+            if self._run_is_verbose(result):
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
@@ -222,7 +225,7 @@ class CallbackModule(CallbackBase):
                 self._process_items(result)
             else:
                 msg = "skipping: %d/%d [%s]" % (self._host_counter, self._host_total, result._host.get_name())
-                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                if self._run_is_verbose(result):
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
 

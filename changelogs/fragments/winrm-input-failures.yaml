@@ -1,0 +1,2 @@
+bugfixes:
+- winrm - Fix issue when attempting to parse CLIXML on send input failure

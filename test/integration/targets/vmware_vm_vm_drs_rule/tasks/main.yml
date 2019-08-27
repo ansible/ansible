@@ -3,75 +3,142 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # TODO: vcsim does not support manage DRS rule
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+        setup_datastore: true
+        setup_virtualmachines: true
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-- debug: var=vcsim
+    - &create_drs_rule
+      name: Create a DRS Affinity rule for vms
+      vmware_vm_vm_drs_rule:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        drs_rule_name: drs_rule_0001
+        cluster_name: "{{ ccr1 }}"
+        vms: "{{ virtual_machines_in_cluster | map(attribute='name') | list }}"
+        enabled: True
+        affinity_rule: True
+        mandatory: True
+      register: drs_rule_0001_results
 
-- name: wait for flask server
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+    - debug: var=drs_rule_0001_results
 
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
+    - name: Check if changes are made
+      assert:
+        that:
+          - drs_rule_0001_results.changed
 
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=2&cluster=1&folder=0&ds=2&pool=2
-  register: vcsim_instance
+    - <<: *create_drs_rule
+      name: Create a DRS Affinity rule for vms again
 
-- name: wait for vcsim server
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
+    - name: Check if no changes are made if drs rule is created again
+      assert:
+        that:
+          - not drs_rule_0001_results.changed
 
-- debug: var=vcsim_instance
+    - &update_drs_rule
+      name: Update a DRS Affinity rule for vms
+      vmware_vm_vm_drs_rule:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        drs_rule_name: drs_rule_0001
+        cluster_name: "{{ ccr1 }}"
+        vms: "{{ virtual_machines_in_cluster | map(attribute='name') | list }}"
+        enabled: False
+        affinity_rule: True
+        mandatory: False
+      register: drs_rule_0001_results
 
-- name: Create a DRS Affinity rule for vms
-  vmware_vm_vm_drs_rule:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    drs_rule_name: drs_rule_0001
-    cluster_name: DC0_C0
-    vms:
-      - DC0_C0_RP0_VM0
-      - DC0_C0_RP0_VM1
-    enabled: True
-    affinity_rule: True
-    mandatory: True
-  register: drs_rule_0001_results
+    - name: Check if changes are made if drs rule is created
+      assert:
+        that:
+            - drs_rule_0001_results.changed
 
-- debug: var=drs_rule_0001_results
+    - <<: *update_drs_rule
+      name: Update a DRS Affinity rule for vms again
 
-- assert:
-    that:
-        - "{{ drs_rule_0001_results.changed }}"
+    - name: Check if no changes are made if drs rule is created again
+      assert:
+        that:
+            - not drs_rule_0001_results.changed
 
-- name: Create a DRS Anti-Affinity rule for vms
-  vmware_vm_vm_drs_rule:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    drs_rule_name: drs_rule_0001
-    cluster_name: DC0_C0
-    vms:
-      - DC0_C0_RP0_VM0
-      - DC0_C0_RP0_VM1
-    enabled: False
-    affinity_rule: False
-    mandatory: False
-  register: drs_rule_0002_results
+    - &delete_drs_rule
+      name: Delete a DRS Affinity rule for vms
+      vmware_vm_vm_drs_rule:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        drs_rule_name: drs_rule_0001
+        cluster_name: "{{ ccr1 }}"
+        state: absent
+      register: drs_rule_0001_results
 
-- debug: var=drs_rule_0002_results
+    - name: Check if DRS rule is delete
+      assert:
+        that:
+            - drs_rule_0001_results.changed
 
-- assert:
-    that:
-        - "{{ drs_rule_0002_results.changed }}"
+    - <<: *delete_drs_rule
+      name: Delete a DRS Affinity rule for vms again
+
+    - name: Check if DRS rule is not delete again
+      assert:
+        that:
+            - not drs_rule_0001_results.changed
+
+    - &create_anti_drs_rule
+      name: Create a DRS Anti-Affinity rule for vms
+      vmware_vm_vm_drs_rule:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        drs_rule_name: drs_rule_0002
+        cluster_name: "{{ ccr1 }}"
+        vms: "{{ virtual_machines_in_cluster | map(attribute='name') | list }}"
+        enabled: True
+        affinity_rule: False
+        mandatory: False
+      register: drs_rule_0002_results
+
+    - debug: var=drs_rule_0002_results
+
+    - name: Check if DRS Anti-Affinity rule is created
+      assert:
+        that:
+            - drs_rule_0002_results.changed
+
+    - <<: *create_anti_drs_rule
+      name: Create a DRS Anti-Affinity rule for vms again
+
+    - debug: var=drs_rule_0002_results
+
+    - name: Check if no changes are made if DRS Anti-Affinity rule is created again
+      assert:
+        that:
+            - not drs_rule_0002_results.changed
+
+    - name: Delete a DRS Anti-Affinity rule for vms
+      vmware_vm_vm_drs_rule:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        drs_rule_name: drs_rule_0002
+        cluster_name: "{{ ccr1 }}"
+        state: absent
+      register: drs_rule_0002_results
+
+    - name: Check if DRS rule is not delete
+      assert:
+        that:
+            - drs_rule_0002_results.changed

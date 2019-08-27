@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_scheduled_task - Fix start/end bountry triggers to allow for timezone sync (https://github.com/ansible/ansible/issues/49327)"

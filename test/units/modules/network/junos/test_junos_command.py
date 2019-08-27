@@ -24,7 +24,7 @@ try:
 except ImportError:
     from xml.etree.ElementTree import fromstring
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.junos import junos_command
 from units.modules.utils import set_module_args
 from .junos_module import TestJunosModule, load_fixture

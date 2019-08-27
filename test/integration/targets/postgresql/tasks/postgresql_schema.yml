@@ -1,0 +1,308 @@
+---
+
+# Setup
+- name: Create DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
+
+- name: Create a user to be owner of a schema
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+# Test: CREATE SCHEMA in checkmode
+- name: Create a new schema with name "acme" in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+      - result.schema == 'acme'
+
+- name: Check that the new schema "acme" not exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Test: CREATE SCHEMA
+- name: Create a new schema with name "acme"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+      - result.schema == 'acme'
+      - result.queries == [ 'CREATE SCHEMA "acme"' ]
+
+- name: Check that the new schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Test: DROP SCHEMA in checkmode
+- name: Drop schema "acme" in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    state: absent
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is not changed
+
+- name: Check that the new schema "acme" still exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Test: DROP SCHEMA
+- name: Drop schema "acme"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    state: absent
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+      - result.queries == [ 'DROP SCHEMA "acme"' ]
+
+- name: Check that no schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Test: CREATE SCHEMA; WITH TABLE for DROP CASCADE test
+- name: Create a new schema "acme"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Create table in schema for DROP CASCADE check
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "CREATE TABLE acme.table1()"
+  register: result2
+
+# Checks
+- assert:
+    that:
+      - result is changed
+      - result.schema == 'acme'
+      - result.queries == [ 'CREATE SCHEMA "acme"' ]
+      - result2.changed == true
+      - result2.statusmessage == 'CREATE TABLE'
+
+- name: Check that the new schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name,schema_owner FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+
+- assert:
+    that:
+      - result.rowcount == 1
+
+- name: Check that the new table "table1" in schema 'acme' exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'acme' AND tablename = 'table1')"
+  register: result
+
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Test: DROP SCHEMA ... CASCADE;
+- name: Drop schema "acme" with cascade
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    state: absent
+    cascade_drop: yes
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+      - result.queries == [ 'DROP SCHEMA "acme" CASCADE' ]
+
+- name: Check that no schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Test: CREATE SCHEMA WITH OWNER ...;
+- name: Create a new schema "acme" with a user "{{ db_user2 }}" who will own it
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    owner: "{{ db_user2 }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+      - result.schema == 'acme'
+      - result.queries == [ 'CREATE SCHEMA "acme" AUTHORIZATION "{{ db_user2 }}"' ]
+
+- name: Check that the new schema "acme" exists and "{{ db_user2 }}" own it
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name,schema_owner FROM information_schema.schemata WHERE schema_name = 'acme' AND schema_owner = '{{ db_user2 }}'"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Test: DROP SCHEMA
+- name: Drop schema "acme"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    state: absent
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result is changed
+      - result.queries == [ 'DROP SCHEMA "acme"' ]
+
+- name: Check that no schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.rowcount == 0
+
+
+# Cleanup
+- name: Remove user
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: absent
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Destroy DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"

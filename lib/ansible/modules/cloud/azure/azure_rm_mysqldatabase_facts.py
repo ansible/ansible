@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqldatabase_facts
 version_added: "2.7"
-short_description: Get Azure MySQL Database facts.
+short_description: Get Azure MySQL Database facts
 description:
     - Get facts of MySQL Database.
 
@@ -38,35 +38,36 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Get instance of MySQL Database
     azure_rm_mysqldatabase_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       server_name: server_name
       name: database_name
 
   - name: List instances of MySQL Database
     azure_rm_mysqldatabase_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       server_name: server_name
 '''
 
 RETURN = '''
 databases:
-    description: A list of dictionaries containing facts for MySQL Databases.
+    description:
+        - A list of dictionaries containing facts for MySQL Databases.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testser
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testser
                     ver/databases/db1"
         resource_group:
             description:
@@ -91,7 +92,7 @@ databases:
                 - The charset of the database.
             returned: always
             type: str
-            sample: UTF8
+            sample: utf8
         collation:
             description:
                 - The collation of the database.
@@ -104,7 +105,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -112,7 +112,7 @@ except ImportError:
     pass
 
 
-class AzureRMDatabasesFacts(AzureRMModuleBase):
+class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -135,7 +135,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMDatabasesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -195,7 +195,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDatabasesFacts()
+    AzureRMMySqlDatabaseFacts()
 
 
 if __name__ == '__main__':

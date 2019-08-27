@@ -1,0 +1,408 @@
+- name: openssh_cert integration tests
+  when: not (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6")
+  block:
+  - name: Generate keypair (check mode)
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      type: rsa
+    check_mode: yes
+  - name: Generate keypair
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      type: rsa
+  - name: Generate keypair (idempotent)
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      type: rsa
+  - name: Generate keypair (idempotent, check mode)
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      type: rsa
+    check_mode: yes
+  - name: Generate always valid cert (check mode)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+    check_mode: yes
+  - name: Generate always valid cert
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+  - name: Generate always valid cert (idempotent)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+  - name: Generate always valid cert (idempotent, check mode)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+    check_mode: yes
+  - name: Generate restricted validity cert with valid_at (check mode)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: +0s
+      valid_to: +32w
+      valid_at: +2w
+    check_mode: yes
+  - name: Generate restricted validity cert with valid_at
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: +0s
+      valid_to: +32w
+      valid_at: +2w
+  - name: Generate restricted validity cert with valid_at (idempotent)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: +0s
+      valid_to: +32w
+      valid_at: +2w
+  - name: Generate restricted validity cert with valid_at (idempotent, check mode)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: +0s
+      valid_to: +32w
+      valid_at: +2w
+    check_mode: yes
+  - name: Generate always valid cert only for example.com and examplehost (check mode)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+      principals:
+          - example.com
+          - examplehost
+    check_mode: yes
+  - name: Generate always valid cert only for example.com and examplehost
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+      principals:
+          - example.com
+          - examplehost
+  - name: Generate always valid cert only for example.com and examplehost (idempotent)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+      principals:
+          - example.com
+          - examplehost
+  - name: Generate always valid cert only for example.com and examplehost (idempotent, check mode)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+      principals:
+          - example.com
+          - examplehost
+    check_mode: yes
+  - name: Generate always valid cert only for example.com and examplehost (idempotent, switch)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: always
+      valid_to: forever
+      principals:
+          - examplehost
+          - example.com
+  - name: Generate OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019 (check mode)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+    check_mode: yes
+  - name: Generate OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+  - name: Generate OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019 (idempotent)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+  - name: Generate OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019 (idempotent, check mode)
+    openssh_cert:
+      type: host
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+    check_mode: yes
+  - name: Generate an OpenSSH user Certificate with clear and force-command option (check mode)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      options:
+          - "clear"
+          - "force-command=/tmp/bla/foo"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+    check_mode: yes
+  - name: Generate an OpenSSH user Certificate with clear and force-command option
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      options:
+          - "clear"
+          - "force-command=/tmp/bla/foo"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+  - name: Generate an OpenSSH user Certificate with clear and force-command option (idempotent)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      options:
+          - "clear"
+          - "force-command=/tmp/bla/foo"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+  - name: Generate an OpenSSH user Certificate with clear and force-command option (idempotent, check mode)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      options:
+          - "clear"
+          - "force-command=/tmp/bla/foo"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+    check_mode: yes
+  - name: Generate an OpenSSH user Certificate with clear and force-command option (idempotent, switch)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert'
+      options:
+          - "force-command=/tmp/bla/foo"
+          - "clear"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
+  - name: Generate cert without serial
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_no_serial'
+      valid_from: always
+      valid_to: forever
+    register: rc_no_serial_number
+  - name: check default serial
+    assert:
+      that:
+        - "'Serial: 0' in rc_no_serial_number.info"
+      msg: OpenSSH user certificate contains the default serial number.
+  - name: Generate cert without serial (idempotent)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_no_serial'
+      valid_from: always
+      valid_to: forever
+    register: rc_no_serial_number_idempotent
+  - name: check idempotent
+    assert:
+      that:
+        - rc_no_serial_number_idempotent is not changed
+      msg: OpenSSH certificate generation without serial number is idempotent.
+  - name: Generate cert with serial 42
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_serial_42'
+      valid_from: always
+      valid_to: forever
+      serial_number: 42
+    register: rc_serial_number
+  - name: check serial 42
+    assert:
+      that:
+        - "'Serial: 42' in rc_serial_number.info"
+      msg: OpenSSH user certificate contains the serial number from the params.
+  - name: Generate cert with serial 42 (idempotent)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_serial_42'
+      valid_from: always
+      valid_to: forever
+      serial_number: 42
+    register: rc_serial_number_idempotent
+  - name: check idempotent
+    assert:
+      that:
+        - rc_serial_number_idempotent is not changed
+      msg: OpenSSH certificate generation with serial number is idempotent.
+  - name: Generate cert with changed serial number
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_serial_42'
+      valid_from: always
+      valid_to: forever
+      serial_number: 1337
+    register: rc_serial_number_changed
+  - name: check changed
+    assert:
+      that:
+        - rc_serial_number_changed is changed
+      msg: OpenSSH certificate regenerated upon serial number change.
+  - name: Generate cert with removed serial number
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_serial_42'
+      valid_from: always
+      valid_to: forever
+      serial_number: 0
+    register: rc_serial_number_removed
+  - name: check changed
+    assert:
+      that:
+        - rc_serial_number_removed is changed
+      msg: OpenSSH certificate regenerated upon serial number removal.
+  - name: Generate a new cert with serial number
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_serial_ignore'
+      valid_from: always
+      valid_to: forever
+      serial_number: 42
+  - name: Generate cert again, omitting the parameter serial_number (idempotent)
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_serial_ignore'
+      valid_from: always
+      valid_to: forever
+    register: rc_serial_number_ignored
+  - name: check idempotent
+    assert:
+      that:
+        - rc_serial_number_ignored is not changed
+      msg: OpenSSH certificate generation with omitted serial number is idempotent.
+  - name: Remove certificate (check mode)
+    openssh_cert:
+      state: absent
+      path: '{{ output_dir }}/id_cert'
+      #type: user
+      #signing_key: '{{ output_dir }}/id_key'
+      #public_key: '{{ output_dir }}/id_key.pub'
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
+    check_mode: yes
+  - name: Remove certificate
+    openssh_cert:
+      state: absent
+      path: '{{ output_dir }}/id_cert'
+      #type: user
+      #signing_key: '{{ output_dir }}/id_key'
+      #public_key: '{{ output_dir }}/id_key.pub'
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
+  - name: Remove certificate (idempotent)
+    openssh_cert:
+      state: absent
+      path: '{{ output_dir }}/id_cert'
+      #type: user
+      #signing_key: '{{ output_dir }}/id_key'
+      #public_key: '{{ output_dir }}/id_key.pub'
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
+  - name: Remove certificate (idempotent, check mode)
+    openssh_cert:
+      state: absent
+      path: '{{ output_dir }}/id_cert'
+      #type: user
+      #signing_key: '{{ output_dir }}/id_key'
+      #public_key: '{{ output_dir }}/id_key.pub'
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
+    check_mode: yes
+  - name: Remove keypair (check mode)
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      state: absent
+    check_mode: yes
+  - name: Remove keypair
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      state: absent
+  - name: Remove keypair (idempotent)
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      state: absent
+  - name: Remove keypair (idempotent, check mode)
+    openssh_keypair:
+      path: '{{ output_dir }}/id_key'
+      state: absent
+    check_mode: yes

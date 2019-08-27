@@ -52,11 +52,11 @@ Starting a new module
 To create a new module:
 
 1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/cloud/azure/``
-2. Create your new module file: ``$ touch my_new_test_module.py``
+2. Create your new module file: ``$ touch my_test.py``
 3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
 4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean, concise module code.
 
-.. code:: python
+.. code-block:: python
 
     #!/usr/bin/python
 
@@ -71,19 +71,19 @@ To create a new module:
 
     DOCUMENTATION = '''
     ---
-    module: my_sample_module
+    module: my_test
 
-    short_description: This is my sample module
+    short_description: This is my test module
 
     version_added: "2.4"
 
     description:
-        - "This is my longer description explaining my sample module"
+        - "This is my longer description explaining my test module"
 
     options:
         name:
             description:
-                - This is the message to send to the sample module
+                - This is the message to send to the test module
             required: true
         new:
             description:
@@ -100,18 +100,18 @@ To create a new module:
     EXAMPLES = '''
     # Pass in a message
     - name: Test with a message
-      my_new_test_module:
+      my_test:
         name: hello world
 
     # pass in a message and have changed true
     - name: Test with a message and changed output
-      my_new_test_module:
+      my_test:
         name: hello world
         new: true
 
     # fail the module
     - name: Test failure of the module
-      my_new_test_module:
+      my_test:
         name: fail me
     '''
 
@@ -119,8 +119,11 @@ To create a new module:
     original_message:
         description: The original name param that was passed in
         type: str
+        returned: always
     message:
-        description: The output message that the sample module generates
+        description: The output message that the test module generates
+        type: str
+        returned: always
     '''
 
     from ansible.module_utils.basic import AnsibleModule
@@ -156,7 +159,7 @@ To create a new module:
         # want to make any changes to the environment, just return the current
         # state with no modifications
         if module.check_mode:
-            return result
+            module.exit_json(**result)
 
         # manipulate or modify the state as needed (this is going to be the
         # part where your module will do what it needs to do)
@@ -194,7 +197,7 @@ Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exer
 Exercising module code locally
 ------------------------------
 
-If you module does not need to target a remote host, you can quickly and easily exercise you code locally like this:
+If your module does not need to target a remote host, you can quickly and easily exercise your code locally like this:
 
 -  Create an arguments file, a basic JSON config file that passes parameters to your module so you can run it. Name the arguments file ``/tmp/args.json`` and add the following content:
 
@@ -211,9 +214,9 @@ If you module does not need to target a remote host, you can quickly and easily 
    development) activate it: ``$ . venv/bin/activate``
 -  Setup the environment for development: ``$ . hacking/env-setup``
 -  Run your test module locally and directly:
-   ``$ python -m ansible.modules.cloud.azure.my_new_test_module /tmp/args.json``
+   ``$ python -m ansible.modules.cloud.azure.my_test /tmp/args.json``
 
-This should return output something like this:
+This should return output like this:
 
 .. code:: json
 
@@ -232,7 +235,7 @@ The next step in testing your new module is to consume it with an Ansible playbo
       hosts: localhost
       tasks:
       - name: run the new module
-        my_new_test_module:
+        my_test:
           name: 'hello'
           new: true
         register: testout
@@ -246,7 +249,7 @@ Testing basics
 ====================
 
 These two examples will get you started with testing your module code. Please review our :ref:`testing <developing_testing>` section for more detailed
-information, including instructions for :ref:`testing documentation <testing_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
+information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
 
 Sanity tests
 ------------
@@ -271,7 +274,7 @@ You can add unit tests for your module in ``./test/units/modules``. You must fir
 To run pytest against a single test module, you can do the following (provide the path to the test module appropriately):
 
 ``$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
-test/units/modules/.../test/my_new_test_module.py``
+test/units/modules/.../test/my_test.py``
 
 Contributing back to Ansible
 ============================
@@ -304,5 +307,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
+Thank you to Thomas Stringer (`@trstringer <https://github.com/trstringer>`_) for contributing source
 material for this topic.

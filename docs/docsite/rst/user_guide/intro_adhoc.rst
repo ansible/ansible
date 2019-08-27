@@ -6,7 +6,7 @@ Introduction To Ad-Hoc Commands
 .. contents:: Topics
 
 The following examples show how to use `/usr/bin/ansible` for running
-ad hoc tasks. 
+ad hoc tasks.
 
 What's an ad-hoc command?
 
@@ -27,9 +27,9 @@ For configuration management and deployments, though, you'll want to pick up on
 using '/usr/bin/ansible-playbook' -- the concepts you will learn here will
 port over directly to the playbook language.
 
-(See :doc:`playbooks` for more information about those)
+(See :ref:`working_with_playbooks` for more information about those)
 
-If you haven't read :doc:`intro_inventory` already, please look that over a bit first
+If you haven't read :ref:`intro_inventory` already, please look that over a bit first
 and then we'll get going.
 
 .. _parallelism_and_shell_commands:
@@ -75,7 +75,7 @@ It is also possible to become a user other than root using
 .. note::
 
     Rarely, some users have security rules where they constrain their sudo/pbrun/doas environment to running specific command paths only.
-    This does not work with ansible's no-bootstrapping philosophy and hundreds of different modules.
+    This does not work with Ansible's no-bootstrapping philosophy and hundreds of different modules.
     If doing this, use Ansible from a special account that does not have this constraint.
     One way of doing this without sharing access to unauthorized users would be gating Ansible with :ref:`ansible_tower`, which
     can hold on to an SSH credential and let members of certain organizations use it on their behalf without having direct access.
@@ -91,7 +91,7 @@ take a little longer.  Feel free to push this value as high as your system can h
 You can also select what Ansible "module" you want to run.  Normally commands also take a ``-m`` for module name, but
 the default module name is 'command', so we didn't need to
 specify that all of the time.  We'll use ``-m`` in later examples to
-run some other :doc:`modules`.
+run some other modules.
 
 .. note::
    The :ref:`command module <command_module>` does not support extended shell syntax like piping and
@@ -104,7 +104,7 @@ Using the :ref:`shell module <shell_module>` looks like this::
     $ ansible raleigh -m shell -a 'echo $TERM'
 
 When running any command with the Ansible *ad hoc* CLI (as opposed to
-:doc:`Playbooks <playbooks>`), pay particular attention to shell quoting rules, so
+:ref:`Playbooks <working_with_playbooks>`), pay particular attention to shell quoting rules, so
 the local shell doesn't eat a variable before it gets passed to Ansible.
 For example, using double rather than single quotes in the above example would
 evaluate the variable on the box you were on.
@@ -168,9 +168,9 @@ Ensure a package is not installed::
 
     $ ansible webservers -m yum -a "name=acme state=absent"
 
-Ansible has modules for managing packages under many platforms.  If there isn't 
-a module for your package manager, you can install packages using the 
-command module or (better!) contribute a module for your package manager. 
+Ansible has modules for managing packages under many platforms.  If there isn't
+a module for your package manager, you can install packages using the
+command module or (better!) contribute a module for your package manager.
 Stop by the mailing list for info/details.
 
 .. _users_and_groups:
@@ -186,7 +186,7 @@ exist::
 
     $ ansible all -m user -a "name=foo state=absent"
 
-See the :doc:`modules` section for details on all of the available options, including
+See the :ref:`Module Docs <modules_by_category>` section for details on all of the available options, including
 how to manipulate groups and group membership.
 
 .. _from_source_control:
@@ -227,7 +227,7 @@ Time Limited Background Operations
 
 Long running operations can be run in the background, and it is possible to
 check their status later. For example, to execute ``long_running_operation``
-asynchronously in the background, with a timeout of 3600 seconds (``-B``), 
+asynchronously in the background, with a timeout of 3600 seconds (``-B``),
 and without polling (``-P``)::
 
     $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
@@ -251,7 +251,7 @@ very quickly. After the time limit (in seconds) runs out (``-B``), the process o
 the remote nodes will be terminated.
 
 Typically you'll only be backgrounding long-running
-shell commands or software upgrades.  Backgrounding the copy module does not do a background file transfer.  :doc:`Playbooks <playbooks>` also support polling, and have a simplified syntax for this.
+shell commands or software upgrades.  Backgrounding the copy module does not do a background file transfer. :ref:`Playbooks <working_with_playbooks>` also support polling, and have a simplified syntax for this.
 
 .. _checking_facts:
 
@@ -265,7 +265,7 @@ system.  These can be used to implement conditional execution of tasks but also 
 
 It's also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
-Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`Playbooks <playbooks>`. 
+Read more about facts at :ref:`playbooks_variables` once you're ready to read up on :ref:`Playbooks <playbooks_intro>`.
 
 .. seealso::
 

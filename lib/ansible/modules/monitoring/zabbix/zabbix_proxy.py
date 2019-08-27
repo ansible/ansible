@@ -28,12 +28,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_proxy
-short_description: Zabbix proxy creates/deletes/gets/updates
+short_description: Create/delete/get/update Zabbix proxies
 description:
    - This module allows you to create, modify, get and delete Zabbix proxy entries.
 version_added: "2.5"
 author:
-    - "Alen Komic"
+    - "Alen Komic (@akomic)"
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
@@ -44,7 +44,7 @@ options:
         required: true
     description:
         description:
-            - Description of the proxy..
+            - Description of the proxy.
         required: false
     status:
         description:
@@ -64,10 +64,11 @@ options:
         required: false
         choices: ['no_encryption','PSK','certificate']
         default: 'no_encryption'
-    tls_issuer:
+    ca_cert:
         description:
             - Certificate issuer.
         required: false
+        aliases: [ tls_issuer ]
     tls_subject:
         description:
             - Certificate subject.
@@ -102,7 +103,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Create a new proxy or update an existing proxies info
+- name: Create a new proxy or update an existing proxy
   local_action:
     module: zabbix_proxy
     server_url: http://monitor.example.com
@@ -124,12 +125,16 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+import atexit
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 try:
     from zabbix_api import ZabbixAPI
 
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 
@@ -176,8 +181,8 @@ class Proxy(object):
                 self._module.exit_json(changed=True)
             self._zapi.proxy.delete([proxy_id])
             self._module.exit_json(changed=True,
-                                   result="Successfully deleted" +
-                                          " proxy %s" % proxy_name)
+                                   result="Successfully deleted"
+                                          + " proxy %s" % proxy_name)
         except Exception as e:
             self._module.fail_json(msg="Failed to delete proxy %s: %s" %
                                        (proxy_name, str(e)))
@@ -248,7 +253,7 @@ def main():
                              choices=['no_encryption', 'PSK', 'certificate']),
             tls_accept=dict(default='no_encryption',
                             choices=['no_encryption', 'PSK', 'certificate']),
-            tls_issuer=dict(type='str', required=False, default=None),
+            ca_cert=dict(type='str', required=False, default=None, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False, default=None),
             tls_psk_identity=dict(type='str', required=False, default=None),
             tls_psk=dict(type='str', required=False, default=None),
@@ -259,9 +264,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module" +
-                             " (check docs or install with:" +
-                             " pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -274,7 +277,7 @@ def main():
     status = module.params['status']
     tls_connect = module.params['tls_connect']
     tls_accept = module.params['tls_accept']
-    tls_issuer = module.params['tls_issuer']
+    tls_issuer = module.params['ca_cert']
     tls_subject = module.params['tls_subject']
     tls_psk_identity = module.params['tls_psk_identity']
     tls_psk = module.params['tls_psk']
@@ -307,6 +310,7 @@ def main():
                         passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

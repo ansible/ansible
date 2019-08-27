@@ -35,22 +35,23 @@ options:
     required: true
   state:
     description:
-      - Create or delete Lambda function
+      - Create or delete Lambda function.
     default: present
     choices: [ 'present', 'absent' ]
   runtime:
     description:
-      - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs.
-        Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
-      - Required when C(state=present)
+      - The runtime environment for the Lambda function you are uploading.
+      - Required when creating a function. Uses parameters as described in boto3 docs.
+      - Required when C(state=present).
+      - For supported list of runtimes, see U(https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).
   role:
     description:
       - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
         resources. You may use the bare ARN if the role belongs to the same AWS account.
-      - Required when C(state=present)
+      - Required when C(state=present).
   handler:
     description:
-      - The function within your code that Lambda calls to begin execution
+      - The function within your code that Lambda calls to begin execution.
   zip_file:
     description:
       - A .zip file containing your deployment package
@@ -58,13 +59,13 @@ options:
     aliases: [ 'src' ]
   s3_bucket:
     description:
-      - Amazon S3 bucket name where the .zip file containing your deployment package is stored
+      - Amazon S3 bucket name where the .zip file containing your deployment package is stored.
       - If C(state=present) then either zip_file or s3_bucket must be present.
-      - s3_bucket and s3_key are required together
+      - C(s3_bucket) and C(s3_key) are required together.
   s3_key:
     description:
-      - The Amazon S3 object (the deployment package) key name you want to upload
-      - s3_bucket and s3_key are required together
+      - The Amazon S3 object (the deployment package) key name you want to upload.
+      - C(s3_bucket) and C(s3_key) are required together.
   s3_object_version:
     description:
       - The Amazon S3 object (the deployment package) version you want to upload.
@@ -77,7 +78,7 @@ options:
     default: 3
   memory_size:
     description:
-      - The amount of memory, in MB, your Lambda function is given
+      - The amount of memory, in MB, your Lambda function is given.
     default: 128
   vpc_subnet_ids:
     description:
@@ -97,7 +98,7 @@ options:
     version_added: "2.3"
   tags:
     description:
-      - tag dict to apply to the function (requires botocore 1.5.40 or above)
+      - tag dict to apply to the function (requires botocore 1.5.40 or above).
     version_added: "2.5"
 author:
     - 'Steyn Huizinga (@steynovich)'
@@ -125,7 +126,7 @@ EXAMPLES = '''
     environment_variables: '{{ item.env_vars }}'
     tags:
       key1: 'value1'
-  with_items:
+  loop:
     - name: HelloWorld
       zip_file: hello-code.zip
       env_vars:
@@ -137,7 +138,7 @@ EXAMPLES = '''
         key1: "1"
         key2: "2"
 
-# To remove previously added tags pass a empty dict
+# To remove previously added tags pass an empty dict
 - name: remove tags
   lambda:
     name: 'Lambda function'
@@ -153,7 +154,7 @@ EXAMPLES = '''
   lambda:
     name: '{{ item }}'
     state: absent
-  with_items:
+  loop:
     - HelloWorld
     - ByeBye
 '''
@@ -205,6 +206,7 @@ from ansible.module_utils.ec2 import compare_aws_tags
 import base64
 import hashlib
 import traceback
+import re
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError, ValidationError, ParamValidationError
@@ -212,33 +214,41 @@ except ImportError:
     pass  # protected by AnsibleAWSModule
 
 
-def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
-    """return the account id we are currently working on
+def get_account_info(module, region=None, endpoint=None, **aws_connect_kwargs):
+    """return the account information (account id and partition) we are currently working on
 
-    get_account_id tries too find out the account that we are working
+    get_account_info tries too find out the account that we are working
     on.  It's not guaranteed that this will be easy so we try in
-    several different ways.  Giving either IAM or STS privilages to
+    several different ways.  Giving either IAM or STS privileges to
     the account should be enough to permit this.
     """
     account_id = None
+    partition = None
     try:
         sts_client = boto3_conn(module, conn_type='client', resource='sts',
                                 region=region, endpoint=endpoint, **aws_connect_kwargs)
-        account_id = sts_client.get_caller_identity().get('Account')
+        caller_id = sts_client.get_caller_identity()
+        account_id = caller_id.get('Account')
+        partition = caller_id.get('Arn').split(':')[1]
     except ClientError:
         try:
             iam_client = boto3_conn(module, conn_type='client', resource='iam',
                                     region=region, endpoint=endpoint, **aws_connect_kwargs)
-            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+            arn, partition, service, reg, account_id, resource = iam_client.get_user()['User']['Arn'].split(':')
         except ClientError as e:
             if (e.response['Error']['Code'] == 'AccessDenied'):
                 except_msg = to_native(e.message)
-                account_id = except_msg.search(r"arn:aws:iam::([0-9]{12,32}):\w+/").group(1)
+                m = except_msg.search(r"arn:(aws(-([a-z\-]+))?):iam::([0-9]{12,32}):\w+/")
+                account_id = m.group(4)
+                partition = m.group(1)
             if account_id is None:
                 module.fail_json_aws(e, msg="getting account information")
+            if partition is None:
+                module.fail_json_aws(e, msg="getting account information: partition")
         except Exception as e:
             module.fail_json_aws(e, msg="getting account information")
-    return account_id
+
+    return account_id, partition
 
 
 def get_current_function(connection, function_name, qualifier=None):
@@ -376,12 +386,12 @@ def main():
         module.fail_json_aws(e, msg="Trying to connect to AWS")
 
     if state == 'present':
-        if role.startswith('arn:aws:iam'):
+        if re.match(r'^arn:aws(-([a-z\-]+))?:iam', role):
             role_arn = role
         else:
             # get account ID and assemble ARN
-            account_id = get_account_id(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
+            account_id, partition = get_account_info(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            role_arn = 'arn:{0}:iam::{1}:role/{2}'.format(partition, account_id, role)
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -554,6 +564,7 @@ def main():
                                               'SecurityGroupIds': vpc_security_group_ids}})
 
         # Finally try to create function
+        current_version = None
         try:
             if not check_mode:
                 response = client.create_function(**func_kwargs)

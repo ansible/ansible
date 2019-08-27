@@ -28,7 +28,7 @@ short_description: Manages BGP configuration on HUAWEI CloudEngine switches.
 description:
     - Manages BGP configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
@@ -187,7 +187,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -1254,7 +1254,7 @@ class Bgp(object):
             return result
         else:
             re_find = re.findall(
-                r'.*<asNumber>(.*)</asNumber>.*\s*<bgpEnable>(.*)</bgpEnable>.*', xml_str)
+                r'.*<bgpEnable>(.*)</bgpEnable>.*\s*<asNumber>(.*)</asNumber>.*', xml_str)
 
             if re_find:
                 return re_find
@@ -2127,9 +2127,12 @@ def main():
 
         bgp_enable_exist = ce_bgp_obj.get_bgp_enable(module=module)
         existing["bgp enable"] = bgp_enable_exist
-
-        asnumber_exist = bgp_enable_exist[0][0]
-        bgpenable_exist = bgp_enable_exist[0][1]
+        if bgp_enable_exist:
+            asnumber_exist = bgp_enable_exist[0][0]
+            bgpenable_exist = bgp_enable_exist[0][1]
+        else:
+            asnumber_exist = None
+            bgpenable_exist = None
 
         if state == "present":
             bgp_enable_new = (as_number, "true")
@@ -2300,7 +2303,9 @@ def main():
 
     if end_tmp:
         end_state["bgp instance other"] = end_tmp
-
+    if end_state == existing:
+        changed = False
+        updates = list()
     results = dict()
     results['proposed'] = proposed
     results['existing'] = existing

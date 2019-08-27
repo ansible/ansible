@@ -90,9 +90,9 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory. If the directory does not exist, it is created.
     type: bool
     default: 'no'
   running_config:
@@ -156,6 +156,28 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -205,6 +227,14 @@ EXAMPLES = """
 - name: save running to startup when modified
   slxos_config:
     save_when: modified
+
+- name: configurable backup path
+  slxos_config:
+    lines: hostname {{ inventory_hostname }}
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -221,17 +251,13 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/slxos_config.2018-02-12@18:26:34
 """
-import re
-import time
 
 from ansible.module_utils.network.slxos.slxos import run_commands, get_config, load_config
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems
 
 __metaclass__ = type
 
@@ -282,6 +308,10 @@ def save_config(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -300,6 +330,7 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
 
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 

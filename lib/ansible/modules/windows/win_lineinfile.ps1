@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Backup
 
 function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_mode) {
 	Try {
@@ -42,14 +43,14 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 	# Commit changes to the path
 	$cleanpath = $path.Replace("/", "\");
 	Try {
-		Copy-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Copy-Item -Path $temppath -Destination $cleanpath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot write to: $cleanpath ($($_.Exception.Message))";
 	}
 
 	Try {
-		Remove-Item $temppath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Remove-Item -Path $temppath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot remove temporary file: $temppath ($($_.Exception.Message))";
@@ -57,19 +58,6 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 
 	return $joined;
 
-}
-
-
-# Backup the file specified with a date/time filename
-function BackupFile($path, $check_mode) {
-	$backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-	Try {
-		Copy-Item $path $backuppath -WhatIf:$check_mode;
-	}
-	Catch {
-		Fail-Json @{} "Cannot copy backup file! ($($_.Exception.Message))";
-	}
-	return $backuppath;
 }
 
 
@@ -99,7 +87,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	# Read the dest file lines using the indicated encoding into a mutable ArrayList.
 	$before = [System.IO.File]::ReadAllLines($cleanpath, $encodingobj)
-	If ($before -eq $null) {
+	If ($null -eq $before) {
 		$lines = New-Object System.Collections.ArrayList;
 	}
 	Else {
@@ -128,7 +116,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 	}
 
 	# index[0] is the line num where regexp has been found
-	# index[1] is the line num where insertafter/inserbefore has been found
+	# index[1] is the line num where insertafter/insertbefore has been found
 	$index = -1, -1;
 	$lineno = 0;
 
@@ -183,7 +171,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 		$result.msg = "line added";
 	}
 	ElseIf ($insertafter -eq "EOF" -or $index[1] -eq -1) {
-		$lines.Add($line);
+		$lines.Add($line) > $null;
 		$result.changed = $true;
 		$result.msg = "line added";
 	}
@@ -198,10 +186,20 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
-		$after = WriteLines $lines $path $linesep $encodingobj $validate $check_mode;
+		$writelines_params = @{
+			outlines = $lines
+			path = $path
+			linesep = $linesep
+			encodingobj = $encodingobj
+			validate = $validate
+			check_mode = $check_mode
+		}
+		$after = WriteLines @writelines_params;
 
 		if ($diff_support) {
 			$result.diff.after = $after;
@@ -234,7 +232,7 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 	# interchangeable in windows pathnames, but .NET framework internals do not support that.
 	$cleanpath = $path.Replace("/", "\");
 	$before = [System.IO.File]::ReadAllLines($cleanpath, $encodingobj);
-	If ($before -eq $null) {
+	If ($null -eq $before) {
 		$lines = New-Object System.Collections.ArrayList;
 	}
 	Else {
@@ -265,11 +263,11 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 			$match_found = $line -ceq $cur_line;
 		}
 		If ($match_found) {
-			$found.Add($cur_line);
+			$found.Add($cur_line) > $null;
 			$result.changed = $true;
 		}
 		Else {
-			$left.Add($cur_line);
+			$left.Add($cur_line) > $null;
 		}
 	}
 
@@ -278,10 +276,20 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
-		$after = WriteLines $left $path $linesep $encodingobj $validate $check_mode;
+		$writelines_params = @{
+			outlines = $left
+			path = $path
+			linesep = $linesep
+			encodingobj = $encodingobj
+			validate = $validate
+			check_mode = $check_mode
+		}
+		$after = WriteLines @writelines_params;
 
 		if ($diff_support) {
 			$result.diff.after = $after;
@@ -351,7 +359,7 @@ ElseIf (Test-Path -LiteralPath $path) {
 			$max_preamble_len = $plen;
 		}
 		If ($plen -gt 0) {
-			$sortedlist.Add(-($plen * 1000000 + $encoding.CodePage), $encoding);
+			$sortedlist.Add(-($plen * 1000000 + $encoding.CodePage), $encoding) > $null;
 		}
 	}
 
@@ -403,7 +411,22 @@ If ($state -eq "present") {
 		$insertafter = "EOF";
 	}
 
-	Present $path $regexp $line $insertafter $insertbefore $create $backup $backrefs $validate $encodingobj $linesep $check_mode $diff_support;
+	$present_params = @{
+		path = $path
+		regexp = $regexp
+		line = $line
+		insertafter = $insertafter
+		insertbefore = $insertbefore
+		create = $create
+		backup = $backup
+		backrefs = $backrefs
+		validate = $validate
+		encodingobj = $encodingobj
+		linesep = $linesep
+		check_mode = $check_mode
+		diff_support = $diff_support
+	}
+	Present @present_params;
 
 }
 ElseIf ($state -eq "absent") {
@@ -412,5 +435,16 @@ ElseIf ($state -eq "absent") {
 		Fail-Json @{} "one of line= or regexp= is required with state=absent";
 	}
 
-	Absent $path $regexp $line $backup $validate $encodingobj $linesep $check_mode $diff_support;
+	$absent_params = @{
+		path = $path
+		regexp = $regexp
+		line = $line
+		backup = $backup
+		validate = $validate
+		encodingobj = $encodingobj
+		linesep = $linesep
+		check_mode = $check_mode
+		diff_support = $diff_support
+	}
+	Absent @absent_params;
 }

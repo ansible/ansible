@@ -28,17 +28,14 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.utils.display import Display
 
 try:
     from library.module_utils.network.f5.common import f5_provider_spec
-except:
+except Exception:
     from ansible.module_utils.network.f5.common import f5_provider_spec
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(_ActionModule):

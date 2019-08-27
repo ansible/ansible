@@ -1,0 +1,766 @@
+- name: Prepare random number
+  set_fact:
+    lab_name: "lab{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    vn_name: "vn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    vm_name: "vn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    artifacts_name: myartifacts
+    github_token: "{{ lookup('env','GITHUB_ACCESS_TOKEN') }}"
+  run_once: yes
+
+- name: Create instance of Lab -- check mode
+  azure_rm_devtestlab:
+    resource_group: "{{ resource_group }}"
+    name: "{{ lab_name }}"
+    location: eastus
+    storage_type: standard
+    premium_data_disks: no
+  check_mode: yes
+  register: output
+- name: Check if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Lab
+  azure_rm_devtestlab:
+    resource_group: "{{ resource_group }}"
+    name: "{{ lab_name }}"
+    location: eastus
+    storage_type: standard
+    premium_data_disks: no
+  register: output_lab
+- name: Check if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Lab
+  azure_rm_devtestlab:
+    resource_group: "{{ resource_group }}"
+    name: "{{ lab_name }}"
+    location: eastus
+    storage_type: standard
+    premium_data_disks: no
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Update lab - premium_data_disks
+  azure_rm_devtestlab:
+    resource_group: "{{ resource_group }}"
+    name: "{{ lab_name }}"
+    location: eastus
+    storage_type: standard
+    premium_data_disks: yes
+  register: output
+- name: Assert the change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: List DevTest Lab in a resource group
+  azure_rm_devtestlab_facts:
+    resource_group: "{{ resource_group }}"
+  register: output_lab
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output_lab.changed == False
+      - output_lab.labs[0]['id'] != None
+      - output_lab.labs[0]['resource_group'] != None
+      - output_lab.labs[0]['name'] != None
+      - output_lab.labs[0]['location'] != None
+      - output_lab.labs[0]['storage_type'] != None
+      - output_lab.labs[0]['premium_data_disks'] != None
+      - output_lab.labs[0]['provisioning_state'] != None
+      - output_lab.labs[0]['vault_name'] != None
+
+- name: Get DevTest Lab facts
+  azure_rm_devtestlab_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ lab_name }}"
+  register: output_lab
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output_lab.changed == False
+      - output_lab.labs[0]['id'] != None
+      - output_lab.labs[0]['resource_group'] != None
+      - output_lab.labs[0]['name'] != None
+      - output_lab.labs[0]['location'] != None
+      - output_lab.labs[0]['storage_type'] != None
+      - output_lab.labs[0]['premium_data_disks'] != None
+      - output_lab.labs[0]['provisioning_state'] != None
+      - output_lab.labs[0]['artifacts_storage_account'] != None
+      - output_lab.labs[0]['default_premium_storage_account'] != None
+      - output_lab.labs[0]['default_storage_account'] != None
+      - output_lab.labs[0]['premium_data_disk_storage_account'] != None
+      - output_lab.labs[0]['vault_name'] != None
+
+# azure_rm_devtestlabpolicy
+- name: Create instance of DevTest Lab Policy
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    fact_name: user_owned_lab_vm_count
+    threshold: 5
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of DevTest Lab Policy -- idempotent
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    fact_name: user_owned_lab_vm_count
+    threshold: 5
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was not reported
+  assert:
+    that:
+      - not output.changed
+
+- name: Create instance of DevTest Lab Policy -- change value
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    fact_name: user_owned_lab_vm_count
+    threshold: 6
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of DevTest Lab Policy
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    state: absent
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+# azure_rm_devtestlabschedule
+- name: Create instance of DevTest Lab Schedule
+  azure_rm_devtestlabschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: lab_vms_shutdown
+    time: "1030"
+    time_zone_id: "UTC+12"
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Update instance of DevTest Lab Schedule -- idempotent
+  azure_rm_devtestlabschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: lab_vms_shutdown
+    time: "1030"
+    time_zone_id: "UTC+12"
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - not output.changed
+
+- name: Update instance of DevTest Lab Schedule -- change time
+  azure_rm_devtestlabschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: lab_vms_shutdown
+    time: "1130"
+    time_zone_id: "UTC+12"
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of DevTest Lab Schedule
+  azure_rm_devtestlabschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: lab_vms_shutdown
+    state: absent
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of DevTest Labs virtual network
+  azure_rm_devtestlabvirtualnetwork:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vn_name }}"
+    location: eastus
+    description: My DevTest Lab
+  register: output
+- name: Assert the change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Update instance of DevTest Labs virtual network with same parameters
+  azure_rm_devtestlabvirtualnetwork:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vn_name }}"
+    location: eastus
+    description: My DevTest Lab
+  register: output
+- name: Assert that nothing was changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Update instance of DevTest Labs virtual network with changed description
+  azure_rm_devtestlabvirtualnetwork:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vn_name }}"
+    location: eastus
+    description: My DevTest Lab Updated
+  register: output
+- name: Assert that nothing was changed
+  assert:
+    that:
+      - output.changed
+
+- name: Get DevTest Lab Virtual Network facts
+  azure_rm_devtestlabvirtualnetwork_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vn_name }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.virtualnetworks[0]['id'] != None
+      - output.virtualnetworks[0]['resource_group'] != None
+      - output.virtualnetworks[0]['lab_name'] != None
+      - output.virtualnetworks[0]['name'] != None
+      - output.virtualnetworks[0]['external_provider_resource_id'] != None
+      - output.virtualnetworks[0]['description'] != None
+      - output.virtualnetworks[0]['provisioning_state'] != None
+
+- name: List all Virtual Networks in DevTest Lab
+  azure_rm_devtestlabvirtualnetwork_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.virtualnetworks[0]['id'] != None
+      - output.virtualnetworks[0]['resource_group'] != None
+      - output.virtualnetworks[0]['lab_name'] != None
+      - output.virtualnetworks[0]['name'] != None
+      - output.virtualnetworks[0]['external_provider_resource_id'] != None
+      - output.virtualnetworks[0]['description'] != None
+      - output.virtualnetworks[0]['provisioning_state'] != None
+
+- name: Create instance of DevTest Labs artifacts source
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    uri: https://github.com/Azure/azure_preview_modules.git
+    source_type: github
+    folder_path: /tasks
+    security_token: "{{ github_token }}"
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+
+- name: Update instance of DevTest Labs artifacts source with same parameters
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    uri: https://github.com/Azure/azure_preview_modules.git
+    source_type: github
+    folder_path: /tasks
+    security_token: "{{ github_token }}"
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert that nothing was changed
+  assert:
+    that:
+      - output.changed == false
+  when: "github_token | length > 0"
+
+- name: Update instance of DevTest Labs artifacts source, add display name, change folder
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    uri: https://github.com/Azure/azure_preview_modules.git
+    source_type: github
+    folder_path: /library
+    security_token: "{{ github_token }}"
+    display_name: My Artifacts Source
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert that nothing was changed
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+
+- name:
+  set_fact:
+    artifact_source:
+      - source_name: "{{ artifacts_name }}"
+        source_path: "/Artifacts/linux-install-mongodb"
+  when: "github_token | length > 0"
+
+- name:
+  set_fact:
+    artifact_source: null
+  when: "github_token | length == 0"
+
+- name: Create instance of DTL Virtual Machine
+  azure_rm_devtestlabvirtualmachine:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+    notes: Virtual machine notes, just something....
+    os_type: linux
+    vm_size: Standard_A2_v2
+    user_name: dtladmin
+    password: ZSasfovobocu$$21!
+    lab_subnet:
+      virtual_network_name: "{{ vn_name }}"
+      name: "{{ vn_name }}Subnet"
+    disallow_public_ip_address: no
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      os_type: Linux
+      version: latest
+    artifacts: "{{ artifact_source }}"
+    allow_claim: no
+    expiration_date: "2029-02-22T01:49:12.117974Z"
+  register: output
+  when: "github_token | length > 0"
+
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+
+- name: Update instance of DTL Virtual Machine with same parameters
+  azure_rm_devtestlabvirtualmachine:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+    notes: Virtual machine notes, just something....
+    os_type: linux
+    vm_size: Standard_A2_v2
+    user_name: dtladmin
+    password: ZSasfovobocu$$21!
+    lab_subnet:
+      virtual_network_name: "{{ vn_name }}"
+      name: "{{ vn_name }}Subnet"
+    disallow_public_ip_address: no
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      os_type: Linux
+      version: latest
+    artifacts: "{{ artifact_source }}"
+    allow_claim: no
+    expiration_date: "2029-02-22T01:49:12.117974Z"
+  register: output
+  when: "github_token | length > 0"
+
+- name: Assert that nothing has changed
+  assert:
+    that:
+      - output.changed == false
+  when: "github_token | length > 0"
+
+- name: Update instance of DTL Virtual Machine - change notes
+  azure_rm_devtestlabvirtualmachine:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+    notes: Virtual machine notes, just something.... more text
+    os_type: linux
+    vm_size: Standard_A2_v2
+    user_name: dtladmin
+    password: ZSasfovobocu$$21!
+    lab_subnet:
+      virtual_network_name: "{{ vn_name }}"
+      name: "{{ vn_name }}Subnet"
+    disallow_public_ip_address: no
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      os_type: Linux
+      version: latest
+    artifacts: "{{ artifact_source }}"
+    allow_claim: no
+    expiration_date: "2029-02-22T01:49:12.117974Z"
+  register: output
+  when: "github_token | length > 0"
+
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+
+- name: Get Facts of DTL Virtual Machine
+  azure_rm_devtestlabvirtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+  register: output_vm
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output_vm.changed == False
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['resource_group'] != None
+      - output_vm.virtualmachines[0]['lab_name'] != None
+      - output_vm.virtualmachines[0]['name'] != None
+      - output_vm.virtualmachines[0]['compute_vm_id'] != None
+      - output_vm.virtualmachines[0]['compute_vm_resource_group'] != None
+      - output_vm.virtualmachines[0]['compute_vm_name'] != None
+      - output_vm.virtualmachines[0]['disallow_public_ip_address'] != None
+      - output_vm.virtualmachines[0]['expiration_date'] != None
+      - output_vm.virtualmachines[0]['fqdn'] != None
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['image'] != None
+      - output_vm.virtualmachines[0]['notes'] != None
+      - output_vm.virtualmachines[0]['os_type'] != None
+      - output_vm.virtualmachines[0]['provisioning_state'] != None
+      - output_vm.virtualmachines[0]['storage_type'] != None
+      - output_vm.virtualmachines[0]['user_name'] != None
+      - output_vm.virtualmachines[0]['vm_size'] != None
+  when: "github_token | length > 0"
+
+- name: List Facts of DTL Virtual Machine
+  azure_rm_devtestlabvirtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+  register: output_vm
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output_vm.changed == False
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['resource_group'] != None
+      - output_vm.virtualmachines[0]['lab_name'] != None
+      - output_vm.virtualmachines[0]['name'] != None
+      - output_vm.virtualmachines[0]['compute_vm_id'] != None
+      - output_vm.virtualmachines[0]['disallow_public_ip_address'] != None
+      - output_vm.virtualmachines[0]['expiration_date'] != None
+      - output_vm.virtualmachines[0]['fqdn'] != None
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['image'] != None
+      - output_vm.virtualmachines[0]['notes'] != None
+      - output_vm.virtualmachines[0]['os_type'] != None
+      - output_vm.virtualmachines[0]['provisioning_state'] != None
+      - output_vm.virtualmachines[0]['storage_type'] != None
+      - output_vm.virtualmachines[0]['user_name'] != None
+      - output_vm.virtualmachines[0]['vm_size'] != None
+  when: "github_token | length > 0"
+
+
+- name: List all artifact sources
+  azure_rm_devtestlabartifactsource_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifactsources[0]['id'] != None
+      - output.artifactsources[0]['resource_group'] != None
+      - output.artifactsources[0]['lab_name'] != None
+      - output.artifactsources[0]['name'] != None
+      - output.artifactsources[0]['display_name'] != None
+      - output.artifactsources[0]['source_type'] != None
+      - output.artifactsources[0]['is_enabled'] != None
+      - output.artifactsources[0]['uri'] != None
+      - output.artifactsources[0]['folder_path'] != None
+      - output.artifactsources[0]['provisioning_state'] != None
+      - output.artifactsources | length >= 2
+
+- name: Get artifacts source facts
+  azure_rm_devtestlabartifactsource_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: public repo
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifactsources[0]['id'] != None
+      - output.artifactsources[0]['resource_group'] != None
+      - output.artifactsources[0]['lab_name'] != None
+      - output.artifactsources[0]['name'] != None
+      - output.artifactsources[0]['display_name'] != None
+      - output.artifactsources[0]['source_type'] != None
+      - output.artifactsources[0]['is_enabled'] != None
+      - output.artifactsources[0]['uri'] != None
+      - output.artifactsources[0]['folder_path'] != None
+      - output.artifactsources[0]['provisioning_state'] != None
+
+- name: Delete instance of DevTest Labs artifacts source
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    state: absent
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert that change was correctly registered
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+
+- name: List ARM Template facts
+  azure_rm_devtestlabarmtemplate_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public environment repo"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.armtemplates[0]['id'] != None
+      - output.armtemplates[0]['resource_group'] != None
+      - output.armtemplates[0]['lab_name'] != None
+      - output.armtemplates[0]['artifact_source_name'] != None
+      - output.armtemplates[0]['name'] != None
+      - output.armtemplates[0]['display_name'] != None
+      - output.armtemplates[0]['description'] != None
+      - output.armtemplates[0]['publisher'] != None
+      - "output.armtemplates | length > 1"
+
+- name: Get ARM Template facts
+  azure_rm_devtestlabarmtemplate_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public environment repo"
+    name: ServiceFabric-LabCluster
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.armtemplates[0]['id'] != None
+      - output.armtemplates[0]['resource_group'] != None
+      - output.armtemplates[0]['lab_name'] != None
+      - output.armtemplates[0]['artifact_source_name'] != None
+      - output.armtemplates[0]['name'] != None
+      - output.armtemplates[0]['display_name'] != None
+      - output.armtemplates[0]['description'] != None
+      - output.armtemplates[0]['publisher'] != None
+      - "output.armtemplates | length == 1"
+
+
+
+- name: Get Artifact facts
+  azure_rm_devtestlabartifact_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public repo"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifacts[0]['id'] != None
+      - output.artifacts[0]['resource_group'] != None
+      - output.artifacts[0]['lab_name'] != None
+      - output.artifacts[0]['artifact_source_name'] != None
+      - output.artifacts[0]['name'] != None
+      - output.artifacts[0]['description'] != None
+      - output.artifacts[0]['file_path'] != None
+      - output.artifacts[0]['publisher'] != None
+      - output.artifacts[0]['target_os_type'] != None
+      - output.artifacts[0]['publisher'] != None
+      - "output.artifacts | length > 1"
+
+- name: Get Artifact facts
+  azure_rm_devtestlabartifact_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public repo"
+    name: windows-webdeploy
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifacts[0]['id'] != None
+      - output.artifacts[0]['resource_group'] != None
+      - output.artifacts[0]['lab_name'] != None
+      - output.artifacts[0]['artifact_source_name'] != None
+      - output.artifacts[0]['name'] != None
+      - output.artifacts[0]['description'] != None
+      - output.artifacts[0]['file_path'] != None
+      - output.artifacts[0]['publisher'] != None
+      - output.artifacts[0]['target_os_type'] != None
+      - output.artifacts[0]['publisher'] != None
+      - "output.artifacts | length == 1"
+
+- name: Create instance of DevTest Lab Environment
+  azure_rm_devtestlabenvironment:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    user_name: "@me"
+    name: myEnvironment
+    location: eastus
+    deployment_template: "{{ output_lab.labs[0].id }}/artifactSources/public environment repo/armTemplates/WebApp"
+  register: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+
+- name: Create instance of DevTest Lab Environment - idempotent
+  azure_rm_devtestlabenvironment:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    user_name: "@me"
+    name: myEnvironment
+    location: eastus
+    deployment_template:
+      artifact_source_name: public environment repo
+      name: WebApp
+  register: output
+- name: Assert if the change was not detected
+  assert:
+    that:
+      - not output.changed
+  when: "github_token | length > 0"
+
+- name: Delete instance of DevTest Lab Environment
+  azure_rm_devtestlabenvironment:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    user_name: "@me"
+    name: myEnvironment
+    state: absent
+  register: output
+- name: Assert that change was detected
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+
+- name: Create instance of DevTest Lab Image
+  azure_rm_devtestlabcustomimage:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: myImage
+    source_vm: "{{ output_vm.virtualmachines[0]['name'] }}"
+    linux_os_state: non_deprovisioned
+  register: output
+- name: Assert that change was detected
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
+  
+- name: Create instance of DevTest Lab Image -- idempotent
+  azure_rm_devtestlabcustomimage:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: myImage
+    source_vm: "{{ output_vm.virtualmachines[0]['name'] }}"
+    linux_os_state: non_deprovisioned
+  register: output
+- name: Assert that change was detected
+  assert:
+    that:
+      - not output.changed
+  when: "github_token | length > 0"
+
+- name: Delete instance of Lab -- check mode
+  azure_rm_devtestlab:
+    resource_group: "{{ resource_group }}"
+    state: absent
+    name: "{{ lab_name }}"
+  check_mode: yes
+  register: output
+- name: Assert if the change was correctly reported in check mode
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Lab
+  azure_rm_devtestlab:
+    resource_group: "{{ resource_group }}"
+    name: "{{ lab_name }}"
+    state: absent
+  register: output
+- name: Assert the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of Lab
+  azure_rm_devtestlab:
+    resource_group: "{{ resource_group }}"
+    name: "{{ lab_name }}unexisting"
+    state: absent 
+  register: output
+- name: Assert thes state has not changed
+  assert:
+    that:
+      - output.changed == false

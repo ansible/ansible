@@ -76,7 +76,7 @@ try:
     from nailgun import entities
     from nailgun.config import ServerConfig
     HAS_NAILGUN_PACKAGE = True
-except:
+except Exception:
     HAS_NAILGUN_PACKAGE = False
 
 from ansible.module_utils.basic import AnsibleModule
@@ -91,7 +91,7 @@ class NailGun(object):
 
     def find_organization(self, name, **params):
         org = self._entities.Organization(self._server, name=name, **params)
-        response = org.search(set(), {'search': 'name={}'.format(name)})
+        response = org.search(set(), {'search': 'name={0}'.format(name)})
 
         if len(response) == 1:
             return response[0]

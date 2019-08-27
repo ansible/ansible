@@ -1,0 +1,80 @@
+{
+    "fmgr_web_proxy_profile_modify": [
+        {
+            "paramgram_used": {
+                "header-via-request": null,
+                "name": "Ansible_Web_Proxy_Profile",
+                "header-front-end-https": null,
+                "log-header-change": null,
+                "adom": "root",
+                "headers": {
+                    "action": null,
+                    "content": null,
+                    "name": null
+                },
+                "mode": "delete",
+                "header-via-response": null,
+                "header-x-authenticated-user": null,
+                "strip-encoding": null,
+                "header-x-forwarded-for": null,
+                "header-x-authenticated-groups": null,
+                "header-client-ip": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/web-proxy/profile/Ansible_Web_Proxy_Profile"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/web-proxy/profile"
+            },
+            "datagram_sent": {
+                "header-via-request": "remove",
+                "name": "Ansible_Web_Proxy_Profile",
+                "header-front-end-https": "add",
+                "log-header-change": "enable",
+                "headers": {
+                    "action": "add-to-request",
+                    "content": "test",
+                    "name": "test_header"
+                },
+                "header-via-response": "pass",
+                "header-x-authenticated-user": "remove",
+                "strip-encoding": "enable",
+                "header-x-forwarded-for": "pass",
+                "header-x-authenticated-groups": "add",
+                "header-client-ip": "pass"
+            },
+            "paramgram_used": {
+                "header-via-request": "remove",
+                "header-client-ip": "pass",
+                "header-front-end-https": "add",
+                "header-x-authenticated-groups": "add",
+                "name": "Ansible_Web_Proxy_Profile",
+                "log-header-change": "enable",
+                "adom": "root",
+                "headers": {
+                    "action": "add-to-request",
+                    "content": "test",
+                    "name": "test_header"
+                },
+                "mode": "set",
+                "header-via-response": "pass",
+                "header-x-authenticated-user": "remove",
+                "strip-encoding": "enable",
+                "header-x-forwarded-for": "pass"
+            },
+            "post_method": "set"
+        }
+    ]
+}

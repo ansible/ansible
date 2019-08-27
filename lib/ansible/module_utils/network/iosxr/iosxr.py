@@ -29,7 +29,6 @@
 import json
 import re
 from difflib import Differ
-from copy import deepcopy
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
@@ -145,19 +144,19 @@ def get_connection(module):
     if hasattr(module, 'connection'):
         return module.connection
 
-    capabilities = get_device_capabilities(module)
+    capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'cliconf':
         module.connection = Connection(module._socket_path)
     elif network_api == 'netconf':
         module.connection = NetconfConnection(module._socket_path)
     else:
-        module.fail_json(msg='Invalid connection type {!s}'.format(network_api))
+        module.fail_json(msg='Invalid connection type {0!s}'.format(network_api))
 
     return module.connection
 
 
-def get_device_capabilities(module):
+def get_capabilities(module):
     if hasattr(module, 'capabilities'):
         return module.capabilities
     try:
@@ -317,12 +316,12 @@ def etree_findall(root, node):
 
 
 def is_cliconf(module):
-    capabilities = get_device_capabilities(module)
-    return True if capabilities.get('network_api') == 'cliconf' else False
+    capabilities = get_capabilities(module)
+    return (capabilities.get('network_api') == 'cliconf')
 
 
 def is_netconf(module):
-    capabilities = get_device_capabilities(module)
+    capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'netconf':
         if not HAS_NCCLIENT:
@@ -345,8 +344,12 @@ def get_config_diff(module, running=None, candidate=None):
         return response
     elif is_netconf(module):
         if running and candidate:
-            running_data = running.split("\n", 1)[1].rsplit("\n", 1)[0]
-            candidate_data = candidate.split("\n", 1)[1].rsplit("\n", 1)[0]
+            # ignore rpc-reply root node and diff from data element onwards
+            running_data_ele = etree.fromstring(to_bytes(running.strip())).getchildren()[0]
+            candidate_data_ele = etree.fromstring(to_bytes(candidate.strip())).getchildren()[0]
+
+            running_data = to_text(etree.tostring(running_data_ele)).strip()
+            candidate_data = to_text(etree.tostring(candidate_data_ele)).strip()
             if running_data != candidate_data:
                 d = Differ()
                 diff = list(d.compare(running_data.splitlines(), candidate_data.splitlines()))
@@ -358,7 +361,10 @@ def get_config_diff(module, running=None, candidate=None):
 def discard_config(module):
     conn = get_connection(module)
     try:
-        conn.discard_changes()
+        if is_netconf(module):
+            conn.discard_changes(remove_ns=True)
+        else:
+            conn.discard_changes()
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
@@ -370,9 +376,9 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
     try:
         if is_netconf(module):
             if check:
-                reply = conn.validate()
+                reply = conn.validate(remove_ns=True)
             else:
-                reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
+                reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist, remove_ns=True)
         elif is_cliconf(module):
             if check:
                 module.fail_json(msg="Validate configuration is not supported with network_cli connection type")
@@ -389,7 +395,10 @@ def get_oper(module, filter=None):
 
     if filter is not None:
         try:
-            response = conn.get(filter)
+            if is_netconf(module):
+                response = conn.get(filter=filter, remove_ns=True)
+            else:
+                response = conn.get(filter)
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     else:
@@ -404,7 +413,7 @@ def get_config(module, config_filter=None, source='running'):
     # Note: Does not cache config in favour of latest config on every get operation.
     try:
         if is_netconf(module):
-            out = to_xml(conn.get_config(source=source, filter=config_filter))
+            out = to_xml(conn.get_config(source=source, filter=config_filter, remove_ns=True))
         elif is_cliconf(module):
             out = conn.get_config(source=source, flags=config_filter)
         cfg = out.strip()
@@ -423,7 +432,7 @@ def check_existing_commit_labels(conn, label):
 
 
 def load_config(module, command_filter, commit=False, replace=False,
-                comment=None, admin=False, running=None, nc_get_filter=None,
+                comment=None, admin=False, exclusive=False, running=None, nc_get_filter=None,
                 label=None):
 
     conn = get_connection(module)
@@ -436,7 +445,7 @@ def load_config(module, command_filter, commit=False, replace=False,
 
         try:
             for filter in to_list(command_filter):
-                conn.edit_config(filter)
+                conn.edit_config(config=filter, remove_ns=True)
 
             candidate = get_config(module, source='candidate', config_filter=nc_get_filter)
             diff = get_config_diff(module, running, candidate)
@@ -462,9 +471,15 @@ def load_config(module, command_filter, commit=False, replace=False,
                         ' and rerun task' % label
                     )
 
-            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
+            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin,
+                                        exclusive=exclusive, replace=replace, comment=comment, label=label)
             if module._diff:
                 diff = response.get('diff')
+
+            # Overwrite the default diff by the IOS XR commit diff.
+            # See plugins/cliconf/iosxr.py for this key set: show_commit_config_diff
+            diff = response.get('show_commit_config_diff')
+
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 

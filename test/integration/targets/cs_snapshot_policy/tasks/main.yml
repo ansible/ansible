@@ -4,7 +4,6 @@
     name: "{{ cs_resource_prefix }}-vm-snapshot-policy"
     template: "{{ cs_common_template }}"
     service_offering: "{{ cs_common_service_offering }}"
-    zone: "{{ cs_common_zone_adv }}"
   register: instance
 - name: verify setup instance
   assert:

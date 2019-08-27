@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -22,47 +22,56 @@ options:
   name:
     description:
       - Monitor name.
+    type: str
     required: True
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(udp)
         parent on the C(Common) partition.
+    type: str
     default: /Common/udp
   description:
     description:
       - The description of the monitor.
+    type: str
     version_added: 2.7
   send:
     description:
       - The send string for the monitor call. When creating a new monitor, if
         this value is not provided, the default C(default send string) will be used.
+    type: str
   receive:
     description:
       - The receive string for the monitor call.
+    type: str
   receive_disable:
     description:
       - This setting works like C(receive), except that the system marks the node
         or pool member disabled when its response matches the C(receive_disable)
         string but not C(receive). To use this setting, you must specify both
         C(receive_disable) and C(receive).
+    type: str
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'.
+    type: str
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified.
+    type: str
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this
         template will run. If this parameter is not provided when creating
         a new monitor, then the default value will be 5. This value B(must)
         be less than the C(timeout) value.
+    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -72,6 +81,7 @@ options:
         number to any number you want, however, it should be 3 times the
         interval number of seconds plus 1 second. If this parameter is not
         provided when creating a new monitor, then the default value will be 16.
+    type: int
   time_until_up:
     description:
       - Specifies the amount of time in seconds after the first successful
@@ -79,19 +89,22 @@ options:
         node to be marked up immediately after a valid response is received
         from the node. If this parameter is not provided when creating
         a new monitor, then the default value will be 0.
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
     version_added: 2.5
 notes:
   - Requires BIG-IP software version >= 12
@@ -106,19 +119,21 @@ EXAMPLES = r'''
   bigip_monitor_udp:
     state: present
     ip: 10.10.10.10
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_udp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove UDP Monitor
   bigip_monitor_udp:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_udp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -126,7 +141,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: http
 description:
   description: The description of the monitor.
@@ -136,7 +151,7 @@ description:
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -163,24 +178,20 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.compare import cmp_str_with_none
     from library.module_utils.network.f5.ipaddress import is_valid_ip
 
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
@@ -192,17 +203,35 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'recv', 'send',
-        'destination', 'description',
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'recv',
+        'send',
+        'destination',
+        'description',
     ]
 
     returnables = [
-        'parent', 'send', 'receive', 'ip', 'port', 'interval', 'timeout',
-        'time_until_up', 'description',
+        'parent',
+        'send',
+        'receive',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
     ]
 
     updatables = [
-        'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up',
+        'destination',
+        'send',
+        'receive',
+        'interval',
+        'timeout',
+        'time_until_up',
         'description',
     ]
 
@@ -278,11 +307,21 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -371,11 +410,15 @@ class Difference(object):
         except AttributeError:
             return attr1
 
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -582,7 +625,7 @@ class ArgumentSpec(object):
             receive=dict(),
             receive_disable=dict(required=False),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),
@@ -608,16 +651,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

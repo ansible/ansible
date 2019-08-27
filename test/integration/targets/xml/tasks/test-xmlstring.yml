@@ -1,4 +1,12 @@
 ---
+  - name: Copy expected results to remote
+    copy:
+      src: "results/{{ item }}"
+      dest: "/tmp/{{ item }}"
+    with_items:
+      - test-pretty-print.xml
+      - test-pretty-print-only.xml
+
   # NOTE: Jinja2 templating eats trailing newlines
   - name: Read from xmlstring (not using pretty_print)
     xml:
@@ -6,11 +14,10 @@
       xpath: .
     register: xmlresponse
 
-
   - name: Compare to expected result
     copy:
       content: "{{ xmlresponse.xmlstring }}\n"
-      dest: '{{ role_path }}/results/test-pretty-print-only.xml'
+      dest: '/tmp/test-pretty-print-only.xml'
     check_mode: yes
     diff: yes
     register: comparison
@@ -33,7 +40,7 @@
   - name: Compare to expected result
     copy:
       content: '{{ xmlresponse.xmlstring }}'
-      dest: '{{ role_path }}/results/test-pretty-print-only.xml'
+      dest: '/tmp/test-pretty-print-only.xml'
     check_mode: yes
     diff: yes
     register: comparison
@@ -60,7 +67,7 @@
   - name: Compare to expected result
     copy:
       content: '{{ xmlresponse_modification.xmlstring }}'
-      dest: '{{ role_path }}/results/test-pretty-print.xml'
+      dest: '/tmp/test-pretty-print.xml'
     check_mode: yes
     diff: yes
     register: comparison

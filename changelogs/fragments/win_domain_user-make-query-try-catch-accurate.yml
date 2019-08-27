@@ -1,0 +1,2 @@
+minor_changes:
+- "win_domain_user - Make the query user try catch block more accurate for missing identity (https://github.com/ansible/ansible/issues/57719)"

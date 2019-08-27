@@ -1,0 +1,1 @@
+sns_topic_name: "{{ resource_prefix }}-topic"

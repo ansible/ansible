@@ -29,7 +29,7 @@ options:
   name:
     description:
      - Name to give the instance (alphanumeric, dashes, underscore).
-     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID_).
+     - To keep sanity on the Linode Web Console, name is prepended with C(LinodeID-).
     required: true
   displaygroup:
     description:
@@ -151,6 +151,8 @@ requirements:
 author:
 - Vincent Viallet (@zbal)
 notes:
+  - Please note, linode-python does not have python 3 support.
+  - This module uses the now deprecated v3 of the Linode API.
   - C(LINODE_API_KEY) env variable can be used instead.
   - Please review U(https://www.linode.com/api/linode) for determining the required parameters.
 '''
@@ -262,14 +264,17 @@ EXAMPLES = '''
 
 import os
 import time
+import traceback
 
+LINODE_IMP_ERR = None
 try:
     from linode import api as linode_api
     HAS_LINODE = True
 except ImportError:
+    LINODE_IMP_ERR = traceback.format_exc()
     HAS_LINODE = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def randompass():
@@ -365,7 +370,7 @@ def linodeServers(module, api, state, name,
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
-                api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
+                api.linode_update(LinodeId=linode_id, Label='%s-%s' % (linode_id, name))
                 # Update Linode with Ansible configuration options
                 api.linode_update(LinodeId=linode_id, LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
                 # Save server
@@ -600,13 +605,13 @@ def main():
             ssh_pub_key=dict(type='str'),
             swap=dict(type='int', default=512),
             wait=dict(type='bool', default=True),
-            wait_timeout=dict(default=300),
+            wait_timeout=dict(type='int', default=300),
             watchdog=dict(type='bool', default=True),
         ),
     )
 
     if not HAS_LINODE:
-        module.fail_json(msg='linode-python required for this module')
+        module.fail_json(msg=missing_required_lib('linode-python'), exception=LINODE_IMP_ERR)
 
     state = module.params.get('state')
     api_key = module.params.get('api_key')

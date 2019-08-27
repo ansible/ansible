@@ -82,11 +82,11 @@ RETURN = '''
 payload:
     description: Mattermost payload
     returned: success
-    type: string
+    type: str
 webhook_url:
     description: URL the webhook is sent to
     returned: success
-    type: string
+    type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule

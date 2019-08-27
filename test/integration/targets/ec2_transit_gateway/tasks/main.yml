@@ -1,0 +1,175 @@
+---
+# tasks file for test_ec2_transit_gateway
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: generate unique value for testing
+  set_fact:
+    tgw_description: "{{ resource_prefix }}-tgw"
+
+- block:
+    - name: test create transit gateway without permissions
+      ec2_transit_gateway:
+        description: "{{ tgw_description }}"
+        region: "{{ aws_region }}"
+      register: result
+      ignore_errors: yes
+
+    - name: assert nice message returned
+      assert:
+        that:
+          - result is failed
+          - "result.msg != 'MODULE FAILURE'"
+
+    - name: test create transit gateway without region
+      ec2_transit_gateway:
+        description: "{{ tgw_description }}"
+      register: result
+      ignore_errors: yes
+
+    - name: assert failure when called with minimal parameters but no region
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("The ec2_transit_gateway module requires a region")'
+
+    - name: test create transit gateway without tags
+      ec2_transit_gateway:
+        description: "{{ tgw_description }}"
+        <<: *aws_connection_info
+      register: create_result
+    - name: assert changed is True
+      assert:
+        that:
+          - create_result.changed == True
+
+    - name: test update transit gateway with tags by description
+      ec2_transit_gateway:
+        description: "{{ tgw_description }}"
+        tags:
+          Name: Ansible Test TGW
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+          - result.transit_gateway.tags | length == 1
+          - "'Name' in result.transit_gateway.tags"
+
+    - name: test update transit gateway with new tag and purge_tags false
+      ec2_transit_gateway:
+        transit_gateway_id: '{{ create_result.transit_gateway.transit_gateway_id }}'
+        purge_tags: False
+        tags:
+          status: ok to delete
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is True and have 2 tags
+      assert:
+        that:
+          - result.changed == True
+          - result.transit_gateway.tags | length == 2
+          - "'Name' in result.transit_gateway.tags"
+
+    - name: test update transit gateway with purge_tags true
+      ec2_transit_gateway:
+        transit_gateway_id: '{{ create_result.transit_gateway.transit_gateway_id }}'
+        purge_tags: True
+        tags:
+          status: ok to delete
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is True and TGW tag is absent
+      assert:
+        that:
+          - result.changed == True
+          - result.transit_gateway.tags | length == 1
+          - "'Name' not in result.transit_gateway.tags"
+
+    - name: test idempotence
+      ec2_transit_gateway:
+        description: "{{ tgw_description }}"
+        purge_tags: True
+        tags:
+          status: ok to delete
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is False
+      assert:
+        that:
+          - result.changed == False
+
+  # ==== Combine ec2_transit_gateway_info ======================
+    - name: test success with no parameters
+      ec2_transit_gateway_info:
+        <<: *aws_connection_info
+      register: result
+    - name: assert success with no parameters
+      assert:
+        that:
+          - 'result.changed == false'
+          - 'result.transit_gateways != []'
+
+    - name: test success with single filter
+      ec2_transit_gateway_info:
+        filters:
+          transit-gateway-id: "{{ create_result.transit_gateway.transit_gateway_id }}"
+        <<: *aws_connection_info
+      register: result
+    - name: assert success with transit_gateway_id filter
+      assert:
+        that:
+          - 'result.changed == false'
+          - 'result.transit_gateways != []'
+
+    - name: test empty result set for non-existent tgw id via filter
+      ec2_transit_gateway_info:
+        filters:
+          transit-gateway-id: tgw-00000011111111122
+        <<: *aws_connection_info
+      register: result
+    - name: assert success with transit_gateway_id filter
+      assert:
+        that:
+          - 'result.changed == false'
+          - 'result.transit_gateways == []'
+
+    - name: test NotFound exception caught and returned empty result set
+      ec2_transit_gateway_info:
+        transit_gateway_id: tgw-00000011111111122
+        <<: *aws_connection_info
+      register: result
+    - name: assert success with transit_gateway_id filter
+      assert:
+        that:
+          - 'result.changed == false'
+          - 'result.transit_gateways == []'
+
+    - name: test success with multiple filters
+      ec2_transit_gateway_info:
+        filters:
+          options.dns-support: enable
+          options.vpn-ecmp-support: enable
+        <<: *aws_connection_info
+      register: result
+    - name: assert success with transit_gateway_id filter
+      assert:
+        that:
+          - 'result.changed == false'
+          - 'result.transit_gateways != []'
+  always:
+    ###### TEARDOWN STARTS HERE ######
+    - name: delete transit gateway 
+      ec2_transit_gateway:
+        description: "{{ tgw_description }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes

@@ -93,7 +93,7 @@
 
 - name: download binary the outputs argv to stdout
   win_get_url:
-    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_module_utils/PrintArgv.exe
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_module_utils/PrintArgv.exe
     dest: C:\ansible testing\PrintArgv.exe
 
 - name: call module with CommandUtil tests
@@ -116,7 +116,6 @@
 
 - name: call module with symbolic link tests
   symbolic_link_test:
-    path: C:\ansible testing
   register: symbolic_link
 
 - assert:
@@ -143,3 +142,33 @@
 - assert:
     that:
     - privilege_util_test.data == 'success'
+
+- name: call module with C# reference
+  csharp_util:
+  register: csharp_res
+
+- name: assert call module with C# reference
+  assert:
+    that:
+    - not csharp_res is failed
+    - csharp_res.res == '{"a":"a","b":1}'
+
+- name: call module with AddType tests
+  add_type_test:
+  register: add_type_test
+
+- name: assert call module with AddType tests
+  assert:
+    that:
+    - not add_type_test is failed
+    - add_type_test.res == 'success'
+
+- name: call module with BackupFile tests
+  backup_file_test:
+  register: backup_file_test
+
+- name: assert call module with BackupFile tests
+  assert:
+    that:
+    - not backup_file_test is failed
+    - backup_file_test.res == 'success'

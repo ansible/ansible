@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -27,13 +27,16 @@ options:
         range for other systems that can communicate with this system.
       - To specify all addresses, use the value C(all).
       - IP address can be specified, such as 172.27.1.10.
-      - IP rangees can be specified, such as 172.27.*.* or 172.27.0.0/255.255.0.0.
+      - IP ranges can be specified, such as 172.27.*.* or 172.27.0.0/255.255.0.0.
+    type: list
   auth_name:
     description:
       - Sets the BIG-IP authentication realm name.
+    type: str
   auth_pam_idle_timeout:
     description:
       - Sets the GUI timeout for automatic logout, in seconds.
+    type: int
   auth_pam_validate_ip:
     description:
       - Sets the authPamValidateIp setting.
@@ -45,6 +48,7 @@ options:
   fast_cgi_timeout:
     description:
       - Sets the timeout of FastCGI.
+    type: int
   hostname_lookup:
     description:
       - Sets whether or not to display the hostname, if possible.
@@ -52,10 +56,20 @@ options:
   log_level:
     description:
       - Sets the minimum httpd log level.
-    choices: ['alert', 'crit', 'debug', 'emerg', 'error', 'info', 'notice', 'warn']
+    type: str
+    choices:
+      - alert
+      - crit
+      - debug
+      - emerg
+      - error
+      - info
+      - notice
+      - warn
   max_clients:
     description:
       - Sets the maximum number of clients that can connect to the GUI at once.
+    type: int
   redirect_http_to_https:
     description:
       - Whether or not to redirect http requests to the GUI to https.
@@ -63,6 +77,7 @@ options:
   ssl_port:
     description:
       - The HTTPS port to listen on.
+    type: int
   ssl_cipher_suite:
     description:
       - Specifies the ciphers that the system uses.
@@ -77,6 +92,7 @@ options:
         ECDHE-ECDSA-AES128-SHA256,ECDHE-ECDSA-AES256-SHA384,AES128-GCM-SHA256,
         AES256-GCM-SHA384,AES128-SHA,AES256-SHA,AES128-SHA256,AES256-SHA256,
         ECDHE-RSA-DES-CBC3-SHA,ECDHE-ECDSA-DES-CBC3-SHA,DES-CBC3-SHA).
+    type: raw
     version_added: 2.6
   ssl_protocols:
     description:
@@ -87,6 +103,7 @@ options:
         recommended way to provide the cipher suite. See examples for usage.
       - Use the value C(default) to set the SSL protocols to the system default.
         This value is equivalent to specifying a list of C(all,-SSLv2,-SSLv3).
+    type: raw
     version_added: 2.6
 notes:
   - Requires the requests Python package on the host. This is as easy as
@@ -103,64 +120,71 @@ EXAMPLES = r'''
 - name: Set the BIG-IP authentication realm name
   bigip_device_httpd:
     auth_name: BIG-IP
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set the auth pam timeout to 3600 seconds
   bigip_device_httpd:
     auth_pam_idle_timeout: 1200
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set the validate IP settings
   bigip_device_httpd:
     auth_pam_validate_ip: on
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set SSL cipher suite by list
   bigip_device_httpd:
-    password: secret
-    server: lb.mydomain.com
-    user: admin
     ssl_cipher_suite:
       - ECDHE-RSA-AES128-GCM-SHA256
       - ECDHE-RSA-AES256-GCM-SHA384
       - ECDHE-RSA-AES128-SHA
       - AES256-SHA256
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set SSL cipher suite by string
   bigip_device_httpd:
-    password: secret
-    server: lb.mydomain.com
-    user: admin
     ssl_cipher_suite: ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA:AES256-SHA256
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set SSL protocols by list
   bigip_device_httpd:
-    password: secret
-    server: lb.mydomain.com
-    user: admin
     ssl_protocols:
       - all
       - -SSLv2
       - -SSLv3
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set SSL protocols by string
   bigip_device_httpd:
-    password: secret
-    server: lb.mydomain.com
-    user: admin
-    ssl_cipher_suite: all -SSLv2 -SSLv3
+    ssl_protocols: all -SSLv2 -SSLv3
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -168,12 +192,12 @@ RETURN = r'''
 auth_pam_idle_timeout:
   description: The new number of seconds for GUI timeout.
   returned: changed
-  type: string
+  type: str
   sample: 1200
 auth_name:
   description: The new authentication realm name.
   returned: changed
-  type: string
+  type: str
   sample: 'foo'
 auth_pam_validate_ip:
   description: The new authPamValidateIp setting.
@@ -198,7 +222,7 @@ hostname_lookup:
 log_level:
   description: The new minimum httpd log level.
   returned: changed
-  type: string
+  type: str
   sample: crit
 max_clients:
   description: The new maximum number of clients that can connect to the GUI at once.
@@ -218,12 +242,17 @@ ssl_port:
 ssl_cipher_suite:
   description: The new ciphers that the system uses.
   returned: changed
-  type: string
+  type: str
   sample: ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA
+ssl_cipher_suite_list:
+  description: List of the new ciphers that the system uses.
+  returned: changed
+  type: str
+  sample: ['ECDHE-RSA-AES256-GCM-SHA384', 'ECDHE-RSA-AES128-SHA']
 ssl_protocols:
   description: The new list of SSL protocols to accept on the management console.
   returned: changed
-  type: string
+  type: str
   sample: all -SSLv2 -SSLv3
 '''
 
@@ -236,18 +265,12 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -276,7 +299,7 @@ class Parameters(AnsibleF5Parameters):
         'auth_pam_idle_timeout', 'auth_pam_validate_ip', 'auth_name',
         'auth_pam_dashboard_timeout', 'fast_cgi_timeout', 'hostname_lookup',
         'log_level', 'max_clients', 'redirect_http_to_https', 'ssl_port',
-        'allow', 'ssl_cipher_suite', 'ssl_protocols'
+        'allow', 'ssl_cipher_suite', 'ssl_protocols', 'ssl_cipher_suite_list',
     ]
 
     updatables = [
@@ -394,11 +417,11 @@ class ModuleParameters(Parameters):
                 "ssl_cipher_suite may not be set to 'none'"
             )
         if ciphers == 'default':
-            ciphers = ':'.join(sorted(Parameters._ciphers.split(':')))
+            ciphers = ':'.join(Parameters._ciphers.split(':'))
         elif isinstance(self._values['ssl_cipher_suite'], string_types):
-            ciphers = ':'.join(sorted(ciphers.split(':')))
+            ciphers = ':'.join(ciphers.split(':'))
         else:
-            ciphers = ':'.join(sorted(ciphers))
+            ciphers = ':'.join(ciphers)
         return ciphers
 
     @property
@@ -414,11 +437,11 @@ class ModuleParameters(Parameters):
                 "ssl_protocols may not be set to 'none'"
             )
         if protocols == 'default':
-            protocols = ' '.join(sorted(Parameters._protocols.split(' ')))
+            protocols = ' '.join(Parameters._protocols.split(' '))
         elif isinstance(protocols, string_types):
-            protocols = ' '.join(sorted(protocols.split(' ')))
+            protocols = ' '.join(protocols.split(' '))
         else:
-            protocols = ' '.join(sorted(protocols))
+            protocols = ' '.join(protocols)
         return protocols
 
 
@@ -454,15 +477,19 @@ class UsableChanges(Changes):
 class ReportableChanges(Changes):
     @property
     def ssl_cipher_suite(self):
-        default = ':'.join(sorted(Parameters._ciphers.split(':')))
+        default = ':'.join(Parameters._ciphers.split(':'))
         if self._values['ssl_cipher_suite'] == default:
             return 'default'
         else:
             return self._values['ssl_cipher_suite']
 
     @property
+    def ssl_cipher_suite_list(self):
+        return self._values['ssl_cipher_suite'].split(':')
+
+    @property
     def ssl_protocols(self):
-        default = ' '.join(sorted(Parameters._protocols.split(' ')))
+        default = ' '.join(Parameters._protocols.split(' '))
         if self._values['ssl_protocols'] == default:
             return 'default'
         else:
@@ -509,7 +536,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -685,14 +712,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

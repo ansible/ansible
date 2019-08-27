@@ -39,9 +39,12 @@ command via ``python3``.  For example:
 Using Python 3 on the managed machines with commands and playbooks
 ------------------------------------------------------------------
 
-* Set the ``ansible_python_interpreter`` configuration option to :command:`/usr/bin/python3`. The
-  ``ansible_python_interpreter`` configuration option is usually set as an inventory
-  variable associated with a host or group of hosts:
+* Ansible will automatically detect and use Python 3 on many platforms that ship with it. To explicitly configure a
+  Python 3 interpreter, set the ``ansible_python_interpreter`` inventory variable at a group or host level to the
+  location of a Python 3 interpreter, such as :command:`/usr/bin/python3`. The default interpreter path may also be
+  set in ``ansible.cfg``.
+
+.. seealso:: :ref:`interpreter_discovery` for more information.
 
 .. code-block:: ini
 

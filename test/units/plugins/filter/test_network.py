@@ -22,9 +22,9 @@ import sys
 
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5
-from ansible.errors import AnsibleFilterError
+from units.compat import unittest
+from ansible.plugins.filter.network import (HAS_PASSLIB, parse_xml, type5_pw, hash_salt,
+                                            comp_type5, vlan_parser)
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'network')
 
@@ -83,6 +83,7 @@ class TestNetworkParseFilter(unittest.TestCase):
         self.assertEqual("parse_xml works on string input, but given input of : %s" % type(output), str(e.exception))
 
 
+@pytest.mark.skipif(not HAS_PASSLIB, reason="Current type5_pw filter needs passlib to function")
 class TestNetworkType5(unittest.TestCase):
 
     def test_defined_salt_success(self):
@@ -146,6 +147,7 @@ class TestHashSalt(unittest.TestCase):
         self.assertEqual("Could not parse salt out password correctly from $nTc1$Z28sUTcWfXlvVe2x.3XAa.", str(e.exception))
 
 
+@pytest.mark.skipif(not HAS_PASSLIB, reason="Current comp_type5 filter needs passlib to function")
 class TestCompareType5(unittest.TestCase):
 
     def test_compare_type5_boolean(self):
@@ -160,8 +162,26 @@ class TestCompareType5(unittest.TestCase):
         parsed = comp_type5(unencrypted_password, encrypted_password, True)
         self.assertEqual(parsed, '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.')
 
-    def test_compate_type5_fail(self):
+    def test_compare_type5_fail(self):
         unencrypted_password = 'invalid_password'
         encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         parsed = comp_type5(unencrypted_password, encrypted_password)
         self.assertEqual(parsed, False)
+
+
+class TestVlanParser(unittest.TestCase):
+
+    def test_compression(self):
+        raw_list = [1, 2, 3]
+        parsed_list = ['1-3']
+        self.assertEqual(vlan_parser(raw_list), parsed_list)
+
+    def test_single_line(self):
+        raw_list = [100, 1688, 3002, 3003, 3004, 3005, 3102, 3103, 3104, 3105, 3802, 3900, 3998, 3999]
+        parsed_list = ['100,1688,3002-3005,3102-3105,3802,3900,3998,3999']
+        self.assertEqual(vlan_parser(raw_list), parsed_list)
+
+    def test_multi_line(self):
+        raw_list = [100, 1688, 3002, 3004, 3005, 3050, 3102, 3104, 3105, 3151, 3802, 3900, 3998, 3999]
+        parsed_list = ['100,1688,3002,3004,3005,3050,3102,3104,3105,3151', '3802,3900,3998,3999']
+        self.assertEqual(vlan_parser(raw_list), parsed_list)

@@ -1,0 +1,2 @@
+bugfixes:
+  - "pip - Validate that all items in the ``name`` option are strings."

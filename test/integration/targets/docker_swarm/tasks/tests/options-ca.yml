@@ -1,0 +1,159 @@
+- debug:
+    msg: Running tests/options-ca.yml
+
+- name: options-ca
+  when: pyopenssl_version.stdout is version('0.15', '>=') or
+        cryptography_version.stdout is version('1.6', '>=')
+  block:
+  - name: Generate privatekey
+    openssl_privatekey:
+      path: "{{ output_dir }}/ansible_{{ key }}.key"
+      size: 2048
+      mode: "0666"
+    loop:
+    - key1
+    - key2
+    loop_control:
+      loop_var: key
+
+  - name: Generate CSR
+    openssl_csr:
+      path: "{{ output_dir }}/ansible_{{ key }}.csr"
+      privatekey_path: "{{ output_dir }}/ansible_{{ key }}.key"
+      basic_constraints:
+      - "CA:TRUE"
+      key_usage:
+      - keyCertSign
+    loop:
+    - key1
+    - key2
+    loop_control:
+      loop_var: key
+
+  - name: Generate self-signed certificate
+    openssl_certificate:
+      path: "{{ output_dir }}/ansible_{{ key }}.pem"
+      privatekey_path: "{{ output_dir }}/ansible_{{ key }}.key"
+      csr_path: "{{ output_dir }}/ansible_{{ key }}.csr"
+      provider: selfsigned
+    loop:
+    - key1
+    - key2
+    loop_control:
+      loop_var: key
+
+  ###################################################################
+  ## signing_ca_cert and signing_ca_key #############################
+  ###################################################################
+  - name: signing_ca_cert and signing_ca_key (check mode)
+    docker_swarm:
+      advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+      state: present
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
+      timeout: 120
+    check_mode: yes
+    diff: yes
+    register: output_1
+    ignore_errors: yes
+
+  - name: signing_ca_cert and signing_ca_key
+    docker_swarm:
+      advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+      state: present
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
+      timeout: 120
+    diff: yes
+    register: output_2
+    ignore_errors: yes
+
+  - name: Private key
+    debug: msg="{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
+  - name: Cert
+    debug: msg="{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+  - docker_swarm_info:
+    register: output
+    ignore_errors: yes
+  - debug: var=output
+
+  # Idempotence for CA cert and key don't work yet! FIXME
+
+  #- name: signing_ca_cert and signing_ca_key (idempotent)
+  #  docker_swarm:
+  #    state: present
+  #    signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+  #    signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
+  #    timeout: 120
+  #  diff: yes
+  #  register: output_3
+  #  ignore_errors: yes
+
+  #- name: signing_ca_cert and signing_ca_key (idempotent, check mode)
+  #  docker_swarm:
+  #    state: present
+  #    signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+  #    signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
+  #    timeout: 120
+  #  check_mode: yes
+  #  diff: yes
+  #  register: output_4
+  #  ignore_errors: yes
+
+  - name: signing_ca_cert and signing_ca_key (change, check mode)
+    docker_swarm:
+      state: present
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key2.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key2.key') }}"
+      timeout: 120
+    check_mode: yes
+    diff: yes
+    register: output_5
+    ignore_errors: yes
+
+  - name: signing_ca_cert and signing_ca_key (change)
+    docker_swarm:
+      state: present
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key2.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key2.key') }}"
+      timeout: 120
+    diff: yes
+    register: output_6
+    ignore_errors: yes
+
+  - name: assert signing_ca_cert and signing_ca_key
+    assert:
+      that:
+         - 'output_1 is changed'
+         - 'output_1.actions[0] | regex_search("New Swarm cluster created: ")'
+         - 'output_1.diff.before is defined'
+         - 'output_1.diff.after is defined'
+         - 'output_2 is changed'
+         - 'output_2.actions[0] | regex_search("New Swarm cluster created: ")'
+         - 'output_2.diff.before is defined'
+         - 'output_2.diff.after is defined'
+         #- 'output_3 is not changed'
+         #- 'output_3.actions[0] == "No modification"'
+         #- 'output_3.diff.before is defined'
+         #- 'output_3.diff.after is defined'
+         #- 'output_4 is not changed'
+         #- 'output_4.actions[0] == "No modification"'
+         #- 'output_4.diff.before is defined'
+         #- 'output_4.diff.after is defined'
+         - 'output_5 is changed'
+         - 'output_5.actions[0] == "Swarm cluster updated"'
+         - 'output_5.diff.before is defined'
+         - 'output_5.diff.after is defined'
+         - 'output_6 is changed'
+         - 'output_6.actions[0] == "Swarm cluster updated"'
+         - 'output_6.diff.before is defined'
+         - 'output_6.diff.after is defined'
+    when: docker_py_version is version('2.6.0', '>=')
+  - assert:
+      that:
+      - output_1 is failed
+      - "('version is ' ~ docker_py_version ~ ' ') in output_1.msg"
+      - "'Minimum version required is 2.6.0 ' in output_1.msg"
+    when: docker_py_version is version('2.6.0', '<')
+
+  - include_tasks: cleanup.yml

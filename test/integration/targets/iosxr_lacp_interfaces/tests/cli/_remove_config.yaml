@@ -1,0 +1,32 @@
+---
+- name: Remove Bundles
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      no interface Bundle-Ether10
+      no interface Bundle-Ether11
+      no interface Bundle-Ether12
+
+- name: Remove LACP interface config
+  iosxr_config:
+    lines: 
+      - no lacp period
+      - shutdown
+    parents: "interface GigabitEthernet{{ item }}"
+  loop:
+    - 0/0/0/0
+    - 0/0/0/1
+
+# To make sure our assertions are not affected by
+# spill overs from previous tests
+- name: Remove unwanted interfaces from config
+  iosxr_config:
+    lines:
+      - "no interface GigabitEthernet{{ item }}"
+  loop:
+    - 0/0/0/2
+    - 0/0/0/3
+    - 0/0/0/4
+    - 0/0/0/5
+  ignore_errors: yes

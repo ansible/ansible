@@ -82,11 +82,11 @@ ansible_net_version:
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
-  type: string
+  type: str
 ansible_net_image:
   description: The image file the device is running
   returned: always
-  type: string
+  type: str
 
 # hardware
 ansible_net_filesystems:
@@ -252,13 +252,13 @@ class Interfaces(FactsBase):
         data = self.responses[0]
         interfaces = self.parse_interfaces(data)
 
-        for key in interfaces.keys():
+        for key in list(interfaces.keys()):
             if "ManagementEthernet" in key:
                 temp_parsed = interfaces[key]
                 del interfaces[key]
                 interfaces.update(self.parse_mgmt_interfaces(temp_parsed))
 
-        for key in interfaces.keys():
+        for key in list(interfaces.keys()):
             if "Vlan" in key:
                 temp_parsed = interfaces[key]
                 del interfaces[key]

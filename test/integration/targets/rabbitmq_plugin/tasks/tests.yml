@@ -6,6 +6,7 @@
     rabbitmq_plugin:
       name: "{{ plugin_name }}"
       state: enabled
+      new_only: True
     register: result
 
   - name: Get rabbitmq-plugins output
@@ -18,13 +19,14 @@
         - result is changed
         - result is success
         - '"{{ plugin_name }}" in result.enabled'
-        - result.disabled== []
+        - result.disabled == []
         - '"[E" in cli_result.stdout'
 
   - name: Enable plugin (idempotency)
     rabbitmq_plugin:
       name: "{{ plugin_name }}"
       state: enabled
+      new_only: True
     register: result
 
   - name: Check idempotency

@@ -1,0 +1,31 @@
+                                         Link    Physical    Physical    Media               Flow Control
+Port       Name                          State   Mode        Status      Type                Status
+---------  ----------------------------  ------  ----------  ----------  ------------------  ------------
+0/1        VMOTION ESX1                  Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/2        DATA ESX1                     Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/3        VMOTION ESX2                  Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/4        DATA ESX2                     Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/5        VMOTION ESX3                  Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/6        DATA ESX3                     Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/7        VMOTION ESX4                  Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/8        DATA ESX4                     Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/9        SAVE                          Up      Auto D      10G Full    2.5G-BaseFX         Inactive
+0/10                                     Down    Auto D                  2.5G-BaseFX         Inactive
+0/11                                     Down    Auto D                  2.5G-BaseFX         Inactive
+0/12                                     Down    Auto D                  2.5G-BaseFX         Inactive
+0/13                                     Down    Auto D                  2.5G-BaseFX         Inactive
+0/14                                     Down    Auto                    Unknown             Inactive
+0/15                                     Down    Auto                    Unknown             Inactive
+0/15       UPLINK VIDEO WITH A VERY LON  Up      Auto        1000 Full   Unknown             Inactive
+0/16       UPLINK LOCAL                  Up      Auto        1000 Full   Unknown             Inactive
+3/1                                      Down
+3/2                                      Down
+3/3                                      Down
+3/4                                      Down
+3/5                                      Down
+3/6                                      Down
+4/1                                      Up      10 Half     10 Half
+
+Flow Control:Disabled
+
+

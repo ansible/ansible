@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -29,8 +29,8 @@ options:
   admin_state:
     description:
     - The admin_state setting
-    - The enabled admin_state indicates the timezone confguration is utilized by UCS Manager.
-    - The disabled admin_state indicates the timezone confguration is ignored by UCS Manager.
+    - The enabled admin_state indicates the timezone configuration is utilized by UCS Manager.
+    - The disabled admin_state indicates the timezone configuration is ignored by UCS Manager.
     choices: [disabled, enabled]
     default: enabled
 

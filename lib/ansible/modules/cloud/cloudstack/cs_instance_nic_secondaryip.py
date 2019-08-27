@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2017, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,70 +15,80 @@ module: cs_instance_nic_secondaryip
 short_description: Manages secondary IPs of an instance on Apache CloudStack based clouds.
 description:
     - Add and remove secondary IPs to and from a NIC of an instance.
-version_added: "2.4"
-author: "René Moser (@resmo)"
+version_added: '2.4'
+author: René Moser (@resmo)
 options:
   vm:
     description:
       - Name of instance.
+    type: str
     required: true
     aliases: [ name ]
   network:
     description:
       - Name of the network.
       - Required to find the NIC if instance has multiple networks assigned.
+    type: str
   vm_guest_ip:
     description:
       - Secondary IP address to be added to the instance nic.
       - If not set, the API always returns a new IP address and idempotency is not given.
+    type: str
     aliases: [ secondary_ip ]
   vpc:
     description:
-      - Name of the VPC the C(vm) is related to.
+      - Name of the VPC the I(vm) is related to.
+    type: str
   domain:
     description:
       - Domain the instance is related to.
+    type: str
   account:
     description:
       - Account the instance is related to.
+    type: str
   project:
     description:
       - Name of the project the instance is deployed in.
+    type: str
   zone:
     description:
       - Name of the zone in which the instance is deployed in.
       - If not set, default zone is used.
+    type: str
   state:
     description:
       - State of the ipaddress.
+    type: str
     default: present
     choices: [ present, absent ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    type: bool
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Assign a specific IP to the default NIC of the VM
-  local_action:
-    module: cs_instance_nic_secondaryip
+  cs_instance_nic_secondaryip:
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
+  delegate_to: localhost
 
 # Note: If vm_guest_ip is not set, you will get a new IP address on every run.
 - name: Assign an IP to the default NIC of the VM
-  local_action:
-    module: cs_instance_nic_secondaryip
+  cs_instance_nic_secondaryip:
     vm: customer_xy
+  delegate_to: localhost
 
 - name: Remove a specific IP from the default NIC
-  local_action:
-    module: cs_instance_nic_secondaryip
+  cs_instance_nic_secondaryip:
     vm: customer_xy
     vm_guest_ip: 10.10.10.10
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -100,52 +96,52 @@ RETURN = '''
 id:
   description: UUID of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 vm:
   description: Name of the VM.
   returned: success
-  type: string
+  type: str
   sample: web-01
 ip_address:
   description: Primary IP of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 10.10.10.10
 netmask:
   description: Netmask of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 mac_address:
   description: MAC address of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 02:00:33:31:00:e4
 vm_guest_ip:
   description: Secondary IP of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 10.10.10.10
 network:
   description: Name of the network if not default.
   returned: success
-  type: string
+  type: str
   sample: sync network
 domain:
   description: Domain the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

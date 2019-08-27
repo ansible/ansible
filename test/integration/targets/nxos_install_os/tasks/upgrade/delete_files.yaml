@@ -6,5 +6,6 @@
       - allow delete boot-image
       - "delete {{ item }}"
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
   with_items: "{{ delete_image_list }}"

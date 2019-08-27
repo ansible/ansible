@@ -68,6 +68,7 @@ options:
       - If I(use_ssl) is set to C(True), connections to this server will be
         made using SSL connections. If omitted the proxysql database default
         for I(use_ssl) is C(False).
+    type: bool
   max_latency_ms:
     description:
       - Ping time is monitored regularly. If a host has a ping time greater

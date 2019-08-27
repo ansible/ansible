@@ -17,7 +17,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script type="text/javascript" src="//www.redhat.com/dtm.js"></script>
-  <meta class="swiftype" name="published_at" data-type="date" content="2017-12-13" /> 
+  <meta class="swiftype" name="published_at" data-type="date" content="2017-12-13" />
   <meta class="swiftype" name="version" data-type="string" content="3.2.2">
 
   <!-- Google Tag Manager Data Layer -->
@@ -113,7 +113,7 @@
 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
 
   <!-- Google Tag Manager -->
   <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PSB293" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -131,7 +131,7 @@
     </div>
 
   <a class="DocSite-nav" href="/" style="padding-bottom: 30px;">
-      
+
     <img class="DocSiteNav-logo"
       src="{{ pathto('_static/', 1) }}images/logo_invert.png"
       alt="Ansible Logo">
@@ -145,32 +145,28 @@
 
     {# SIDE NAV, TOGGLES ON MOBILE #}
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      
+
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search">
           {% block sidebartitle %}
 
-      <div style="background-color:#5bbdbf;height=80px;margin:'auto auto auto auto'">
-        <a class="DocSiteProduct-header DocSiteProduct-header--core" href="/">
-            <div class="DocSiteProduct-productName">
+          <div style="background-color:#5bbdbf;height=80px;margin:'auto auto auto auto'">
+            <a class="DocSiteProduct-header DocSiteProduct-header--core" href="/">
+              <div class="DocSiteProduct-productName">
                 <div class="DocSiteProduct-logoText">
-                    Ansible  
-                    <div class="DocSiteProduct-CurrentVersion" align="right">
-                      devel
-                  </div>
+                  Ansible
+                  <div class="DocSiteProduct-CurrentVersion" align="right">{{ current_version }}</div>
                 </div>
-            </div>
-        </a>
+              </div>
+            </a>
+          </div>
 
-          <div class="DocSiteProduct-CheckVersionPara">For previous versions, see the  <a class="DocSiteProduct-versionheader" href="/#coreversionselect">documentation archive.</a></div>
-      </div>
+          {% include "ansible_versions.html" %}
 
-      <div class="wy-side-nav-search" style="background-color#5bbdbf;height=80px;margin:'auto auto auto auto'">
-      <!-- <a href="{{ pathto(master_doc) }}" class="icon icon-home"> {{ project }}</a> -->
-      {% include "searchbox.html" %}
-    </div>
+          <div class="wy-side-nav-search" style="background-color#5bbdbf;height=80px;margin:'auto auto auto auto'">
+            {% include "searchbox.html" %}
+          </div>
 
-    
           {% endblock %}
         </div>
 
@@ -194,19 +190,18 @@
             {% endif %}
           {% endblock %}
         </div>
-            <!-- changeable widget -->
-    <div id="sideBanner">
-    <br/>
-    <a href="https://www.ansible.com/docs-left?utm_source=docs">
-      <img style="border-width:0px;" src="https://cdn2.hubspot.net/hubfs/330046/docs-graphics/ASB-docs-left-rail.png" />
-    </a>
-    </div>
+        <!-- changeable widget -->
 
-
+        <div id="sideBanner">
+          <br/>
+          <a href="https://www.ansible.com/docs-left?utm_source=docs">
+            <img style="border-width:0px;" src="https://cdn2.hubspot.net/hubfs/330046/docs-graphics/ASB-docs-left-rail.png" />
+          </a>
+          <br/><br/><br/>
+        </div>
       </div>
-      &nbsp;
     </nav>
-      </div>
+  </div>
 
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
@@ -237,6 +232,8 @@
         </div> -->
 
           {% include "breadcrumbs.html" %}
+          
+          {% include "ansible_banner.html" %}
           <div id="page-content">
           {% block body %}{% endblock %}
           </div>
@@ -248,7 +245,6 @@
     </section>
 
   </div>
-  {% include "versions.html" %}
 
   {% if not embedded %}
 

@@ -31,8 +31,8 @@ options:
     description:
       - Only for partial backup, you can restrict by giving expected configuration path (ex. firewall address).
     default: ""
-notes:
-  - This module requires pyFG python library
+requirements:
+  - pyFG
 """
 
 EXAMPLES = """
@@ -65,11 +65,11 @@ RETURN = """
 running_config:
   description: full config string
   returned: always
-  type: string
+  type: str
 change_string:
   description: The commands really executed by the module
   returned: only if config changed
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -82,7 +82,7 @@ try:
     from pyFG.fortios import logger
     from pyFG.exceptions import CommandExecutionException, FailedCommit, ForcedCommit
     HAS_PYFG = True
-except:
+except Exception:
     HAS_PYFG = False
 
 
@@ -124,7 +124,7 @@ def main():
     # connect
     try:
         f.open()
-    except:
+    except Exception:
         module.fail_json(msg='Error connecting device')
 
     # get  config
@@ -132,7 +132,7 @@ def main():
         f.load_config(path=module.params['filter'])
         result['running_config'] = f.running_config.to_text()
 
-    except:
+    except Exception:
         module.fail_json(msg='Error reading running config')
 
     # backup config
@@ -145,7 +145,7 @@ def main():
         try:
             conf_str = module.params['src']
             f.load_config(in_candidate=True, config_text=conf_str)
-        except:
+        except Exception:
             module.fail_json(msg="Can't open configuration file, or configuration invalid")
 
         # get updates lines

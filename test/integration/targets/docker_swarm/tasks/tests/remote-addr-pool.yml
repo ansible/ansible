@@ -1,0 +1,90 @@
+- debug:
+    msg: Running tests/remote-addr-pool.yml
+
+####################################################################
+## default_addr_pool ###############################################
+####################################################################
+
+- name: default_addr_pool
+  docker_swarm:
+    state: present
+    default_addr_pool:
+      - "2.0.0.0/16"
+  diff: yes
+  register: output_1
+  ignore_errors: yes
+
+- name: default_addr_pool (idempotent)
+  docker_swarm:
+    state: present
+    default_addr_pool:
+      - "2.0.0.0/16"
+  diff: yes
+  register: output_2
+  ignore_errors: yes
+
+- name: assert default_addr_pool
+  assert:
+    that:
+       - 'output_1 is changed'
+       - 'output_2 is not changed'
+       - 'output_2.swarm_facts.DefaultAddrPool == ["2.0.0.0/16"]'
+  when:
+    - docker_api_version is version('1.39', '>=')
+    - docker_py_version is version('4.0.0', '>=')
+
+- name: assert default_addr_pool failed when unsupported
+  assert:
+    that:
+    - 'output_1 is failed'
+    - "'Minimum version required' in output_1.msg"
+  when: docker_api_version is version('1.39', '<') or
+        docker_py_version is version('4.0.0', '<')
+
+####################################################################
+## subnet_size #####################################################
+####################################################################
+- name: Leave swarm
+  docker_swarm:
+    state: absent
+    force: yes
+    default_addr_pool:
+      - "2.0.0.0/16"
+  diff: yes
+
+- name: subnet_size
+  docker_swarm:
+    state: present
+    force: yes
+    subnet_size: 26
+  diff: yes
+  register: output_1
+  ignore_errors: yes
+
+- name: subnet_size (idempotent)
+  docker_swarm:
+    state: present
+    subnet_size: 26
+  diff: yes
+  register: output_2
+  ignore_errors: yes
+
+- name: assert subnet_size
+  assert:
+    that:
+       - 'output_1 is changed'
+       - 'output_2 is not changed'
+       - 'output_2.swarm_facts.SubnetSize == 26'
+  when:
+    - docker_api_version is version('1.39', '>=')
+    - docker_py_version is version('4.0.0', '>=')
+
+- name: assert subnet_size failed when unsupported
+  assert:
+    that:
+    - output_1 is failed
+    - "'Minimum version required' in output_1.msg"
+  when: docker_api_version is version('1.39', '<') or
+        docker_py_version is version('4.0.0', '<')
+
+- include_tasks: cleanup.yml

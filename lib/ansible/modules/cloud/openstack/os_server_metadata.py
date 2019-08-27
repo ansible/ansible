@@ -44,7 +44,7 @@ options:
      required: false
 requirements:
     - "python >= 2.7"
-    - "shade"
+    - "openstack"
 '''
 
 EXAMPLES = '''
@@ -87,7 +87,7 @@ RETURN = '''
 server_id:
     description: The compute instance id where the change was made
     returned: success
-    type: string
+    type: str
     sample: "324c4e91-3e03-4f62-9a4d-06119a8a8d16"
 metadata:
     description: The metadata of compute instance after the change

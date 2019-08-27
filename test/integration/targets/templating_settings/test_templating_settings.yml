@@ -1,7 +1,6 @@
 ---
 - name: 'Test templating in name'
-  hosts: localhost
-  connection: local
+  hosts: testhost
   vars:
     a_list:
       - 'part'

@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -63,6 +63,7 @@ options:
         somebody could come back later and confirm the subscription. Sorry.
         Blame Amazon."
     default: 'yes'
+    type: bool
 extends_documentation_fragment:
   - aws
   - ec2
@@ -98,7 +99,7 @@ EXAMPLES = """
 RETURN = '''
 sns_arn:
     description: The ARN of the topic you are modifying
-    type: string
+    type: str
     returned: always
     sample: "arn:aws:sns:us-east-2:111111111111:my_topic_name"
 sns_topic:
@@ -119,36 +120,36 @@ sns_topic:
     delivery_policy:
       description: Delivery policy for the SNS topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: >
         {"http":{"defaultHealthyRetryPolicy":{"minDelayTarget":20,"maxDelayTarget":20,"numRetries":3,"numMaxDelayRetries":0,
         "numNoDelayRetries":0,"numMinDelayRetries":0,"backoffFunction":"linear"},"disableSubscriptionOverrides":false}}
     display_name:
       description: Display name for SNS topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: My topic name
     name:
       description: Topic name
       returned: always
-      type: string
+      type: str
       sample: ansible-test-dummy-topic
     owner:
       description: AWS account that owns the topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: '111111111111'
     policy:
       description: Policy for the SNS topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: >
         {"Version":"2012-10-17","Id":"SomePolicyId","Statement":[{"Sid":"ANewSid","Effect":"Allow","Principal":{"AWS":"arn:aws:iam::111111111111:root"},
         "Action":"sns:Subscribe","Resource":"arn:aws:sns:us-east-2:111111111111:ansible-test-dummy-topic","Condition":{"StringEquals":{"sns:Protocol":"email"}}}]}
     state:
       description: whether the topic is present or absent
       returned: always
-      type: string
+      type: str
       sample: present
     subscriptions:
       description: List of subscribers to the topic in this AWS account
@@ -163,13 +164,13 @@ sns_topic:
     subscriptions_confirmed:
       description: Count of confirmed subscriptions
       returned: when topic is owned by this AWS account
-      type: list
-      sample: []
+      type: str
+      sample: '0'
     subscriptions_deleted:
       description: Count of deleted subscriptions
       returned: when topic is owned by this AWS account
-      type: list
-      sample: []
+      type: str
+      sample: '0'
     subscriptions_existing:
       description: List of existing subscriptions
       returned: always
@@ -183,7 +184,7 @@ sns_topic:
     subscriptions_pending:
       description: Count of pending subscriptions
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: '0'
     subscriptions_purge:
       description: Whether or not purge_subscriptions was set
@@ -193,7 +194,7 @@ sns_topic:
     topic_arn:
       description: ARN of the SNS topic (equivalent to sns_arn)
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: arn:aws:sns:us-east-2:111111111111:ansible-test-dummy-topic
     topic_created:
       description: Whether the topic was created
@@ -215,7 +216,7 @@ try:
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import compare_policies, AWSRetry, camel_dict_to_snake_dict
 
 
@@ -367,13 +368,15 @@ class SnsTopicManager(object):
     def _list_topic_subscriptions(self):
         try:
             return self._list_topic_subscriptions_with_backoff()
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        except is_boto3_error_code('AuthorizationError'):
             try:
                 # potentially AuthorizationError when listing subscriptions for third party topic
                 return [sub for sub in self._list_subscriptions_with_backoff()
                         if sub['TopicArn'] == self.topic_arn]
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg="Couldn't get subscriptions list for topic %s" % self.topic_arn)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
+            self.module.fail_json_aws(e, msg="Couldn't get subscriptions list for topic %s" % self.topic_arn)
 
     def _delete_subscriptions(self):
         # NOTE: subscriptions in 'PendingConfirmation' timeout in 3 days

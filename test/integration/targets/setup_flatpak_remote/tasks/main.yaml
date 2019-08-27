@@ -1,0 +1,22 @@
+- name: Set up dummy flatpak repository remote
+  block:
+
+    - name: Copy repo into place
+      unarchive:
+        src: repo.tar.xz
+        dest: "{{ remote_tmp_dir }}"
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Create deterministic link to temp directory
+      file:
+        state: link
+        src: "{{ remote_tmp_dir }}/"
+        path: "/tmp/flatpak"
+        owner: root
+        group: root
+        mode: 0644
+      notify: remove temporary flatpak link
+
+  become: true

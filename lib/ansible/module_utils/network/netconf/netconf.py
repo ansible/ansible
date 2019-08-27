@@ -76,7 +76,7 @@ def locked_config(module, target=None):
         unlock_configuration(module, target=target)
 
 
-def get_config(module, source, filter, lock=False):
+def get_config(module, source, filter=None, lock=False):
     conn = get_connection(module)
     try:
         locked = False
@@ -131,7 +131,7 @@ def sanitize_xml(data):
         # remove attributes
         attribute = element.attrib
         if attribute:
-            for key in attribute:
+            for key in list(attribute):
                 if key not in IGNORE_XML_ATTRIBUTE:
                     attribute.pop(key)
     return to_text(tostring(tree), errors='surrogate_then_replace').strip()

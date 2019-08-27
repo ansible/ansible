@@ -1,0 +1,25 @@
+---
+- import_tasks: setup_no_value.yml
+
+- name: setting value without state
+  git_config:
+    name: "{{ option_name }}"
+    value: "{{ option_value }}"
+    scope: "{{ option_scope }}"
+  register: set_result
+
+- name: getting value without state
+  git_config:
+    name: "{{ option_name }}"
+    scope: "{{ option_scope }}"
+  register: get_result
+
+- name: assert set changed and value is correct
+  assert:
+    that:
+      - set_result.changed == true
+      - set_result.diff.before == "\n"
+      - set_result.diff.after == option_value + "\n"
+      - get_result.changed == false
+      - get_result.config_value == option_value
+...

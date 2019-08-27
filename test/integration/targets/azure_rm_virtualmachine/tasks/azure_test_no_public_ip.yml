@@ -1,0 +1,41 @@
+- include_tasks: setup.yml
+
+- name: Create virtual machine without public ip address and with boot diagnostics enabled
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    vm_size: Standard_A0
+    admin_username: adminuser
+    admin_password: Password123!
+    short_hostname: testvm
+    os_type: Linux
+    public_ip_allocation_method: Disabled
+    storage_account_name: "{{ storage_account }}"
+    availability_set: "{{ availability_set }}"
+    virtual_network: "{{ network_name }}"
+    boot_diagnostics:
+      enabled: yes
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: create_vm_public_result
+
+- name: Ensure VM was created properly
+  assert:
+    that:
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.consoleScreenshotBlobUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
+      - not 'publicIPAddress' in create_vm_public_result.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
+
+- name: Delete VM with no public ip
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+    remove_on_absent: all_autocreated
+  async: 5000
+  poll: 0

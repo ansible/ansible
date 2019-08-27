@@ -8,7 +8,6 @@
       - display interface brief
     wait_for:
       - result[0] contains 'Description: Foo'
-    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 

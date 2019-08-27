@@ -1,0 +1,81 @@
+# Test code for the vmware_host_ipv6 module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Ensure IPv6 is off
+      vmware_host_ipv6:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: no
+        state: disabled
+      register: host_ipv6_info
+
+    - name: Enable IPv6 support for a given host
+      vmware_host_ipv6:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+        state: enabled
+      register: host_ipv6_info
+    - debug: var=host_ipv6_info
+    - assert:
+        that:
+          - host_ipv6_info is defined
+          - host_ipv6_info.changed
+
+    - name: Enable IPv6 support for a given host in check mode
+      vmware_host_ipv6:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+        state: enabled
+      register: host_ipv6_info_check_mode
+      check_mode: yes
+    - debug: var=host_ipv6_info_check_mode
+    - assert:
+        that:
+          - host_ipv6_info_check_mode is defined
+          - not (host_ipv6_info_check_mode is changed)
+
+    - name: Enable IPv6 support for all hosts in given cluster
+      vmware_host_ipv6:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: no
+        state: enabled
+      register: hosts_ipv6_info
+    - debug: var=hosts_ipv6_info
+    - assert:
+        that:
+          - hosts_ipv6_info is defined
+          - hosts_ipv6_info.changed
+
+    - name: Enable IPv6 support for all hosts in given cluster in check mode
+      vmware_host_ipv6:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: no
+        state: enabled
+      register: hosts_ipv6_info_check_mode
+      check_mode: yes
+    - debug: var=hosts_ipv6_info_check_mode
+    - assert:
+        that:
+          - hosts_ipv6_info_check_mode is defined
+          - not (hosts_ipv6_info_check_mode is changed)

@@ -70,6 +70,7 @@ options:
       - Rewrite the shebang line on installed scripts to use /usr/bin/env.
     required: false
     default: "no"
+    type: bool
     version_added: "2.2"
   version:
     description:
@@ -80,21 +81,30 @@ options:
       - Allow installation of pre-release versions of the gem.
     required: false
     default: "no"
+    type: bool
     version_added: "1.6"
   include_doc:
     description:
       - Install with or without docs.
     required: false
     default: "no"
+    type: bool
     version_added: "2.0"
   build_flags:
     description:
       - Allow adding build flags for gem compilation
     required: false
     version_added: "2.0"
+  force:
+    description:
+      - Force gem to install, bypassing dependency checks.
+    required: false
+    default: "no"
+    type: bool
+    version_added: "2.8"
 author:
     - "Ansible Core Team"
-    - "Johan Wiren"
+    - "Johan Wiren (@johanwiren)"
 '''
 
 EXAMPLES = '''
@@ -244,6 +254,8 @@ def install(module):
     cmd.append(module.params['gem_source'])
     if module.params['build_flags']:
         cmd.extend(['--', module.params['build_flags']])
+    if module.params['force']:
+        cmd.append('--force')
     module.run_command(cmd, check_rc=True)
 
 
@@ -264,6 +276,7 @@ def main():
             env_shebang=dict(required=False, default=False, type='bool'),
             version=dict(required=False, type='str'),
             build_flags=dict(required=False, type='str'),
+            force=dict(required=False, default=False, type='bool'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[['gem_source', 'repository'], ['gem_source', 'version']],

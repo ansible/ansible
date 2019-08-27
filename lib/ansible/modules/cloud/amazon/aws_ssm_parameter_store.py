@@ -20,7 +20,7 @@ options:
     required: true
   description:
     description:
-      - parameter key desciption.
+      - parameter key description.
     required: false
   value:
     description:
@@ -42,7 +42,7 @@ options:
   decryption:
     description:
       - Work with SecureString type to get plain text secrets
-      - Boolean
+    type: bool
     required: false
     default: True
   key_id:
@@ -64,7 +64,7 @@ options:
     required: false
 author:
   - Nathan Webster (@nathanwebsterdotme)
-  - Bill Wang (ozbillwang@gmail.com)
+  - Bill Wang (@ozbillwang) <ozbillwang@gmail.com>
   - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]
@@ -111,13 +111,13 @@ EXAMPLES = '''
 
 RETURN = '''
 put_parameter:
-    description: Add one or more paramaters to the system.
+    description: Add one or more parameters to the system.
     returned: success
-    type: dictionary
+    type: dict
 delete_parameter:
     description: Delete a parameter from the system.
     returned: success
-    type: dictionary
+    type: dict
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -166,7 +166,7 @@ def create_update_parameter(client, module):
 
     try:
         existing_parameter = client.get_parameter(Name=args['Name'], WithDecryption=True)
-    except:
+    except Exception:
         pass
 
     if existing_parameter:

@@ -1,0 +1,5 @@
+minor_changes:
+  - magic variables - added a new ``ansible_parent_role_names`` magic variable that, when a role is included by another
+    role, contains a list of all parent roles.
+  - magic variables - added a new ``ansible_parent_role_paths`` magic variable that, when a role is included by another
+    role, contains a list of all parent role paths.

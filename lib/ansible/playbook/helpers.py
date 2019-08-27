@@ -25,12 +25,9 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
@@ -105,7 +102,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     task_list = []
     for task_ds in ds:
         if not isinstance(task_ds, dict):
-            AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
+            raise AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
             t = Block.load(
@@ -120,7 +117,10 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            args_parser = ModuleArgsParser(task_ds)
+            collection_list = task_ds.get('collections')
+            if collection_list is None and block is not None and block.collections:
+                collection_list = block.collections
+            args_parser = ModuleArgsParser(task_ds, collection_list=collection_list)
             try:
                 (action, args, delegate_to) = args_parser.parse()
             except AnsibleParserError as e:
@@ -164,7 +164,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
                         (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                        (not templar._contains_vars(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
+                        (not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
 
                 if is_static:
                     if t.loop is not None:
@@ -351,8 +351,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # template the role name now, if needed
                     all_vars = variable_manager.get_vars(play=play, task=ir)
                     templar = Templar(loader=loader, variables=all_vars)
-                    if templar._contains_vars(ir._role_name):
-                        ir._role_name = templar.template(ir._role_name)
+                    ir._role_name = templar.template(ir._role_name)
 
                     # uses compiled list from object
                     blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
@@ -385,7 +384,8 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
 
     roles = []
     for role_def in ds:
-        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager, loader=loader)
+        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
+                             loader=loader, collection_list=play.collections)
         roles.append(i)
 
     return roles

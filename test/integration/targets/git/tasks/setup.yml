@@ -12,6 +12,9 @@
   package:
     name: git
   when: ansible_distribution != "MacOSX"
+  notify:
+    - remove git
+    - remove git from FreeBSD
 
 - name: SETUP | verify that git is installed so this test can continue
   shell: which git
@@ -34,3 +37,7 @@
   file:
     path: "{{ repo_dir }}"
     state: directory
+
+- name: SETUP | show git version
+  debug:
+    msg: "Running test with git {{ git_version.stdout }}"

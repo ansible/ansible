@@ -3,7 +3,7 @@ Vultr Guide
 
 Ansible offers a set of modules to interact with `Vultr <https://www.vultr.com>`_ cloud platform.
 
-This set of module forms a framework that allows one to easily manage and orchestrate one's infratructure on Vultr cloud platform.
+This set of module forms a framework that allows one to easily manage and orchestrate one's infrastructure on Vultr cloud platform.
 
 
 Requirements
@@ -38,7 +38,7 @@ Ini file are structured this way:
   timeout = 30
 
 
-If ``VULTR_API_ACCOUNT`` enviroment variable or ``api_account`` module parameter is not specified, modules will look for the section named "default".
+If ``VULTR_API_ACCOUNT`` environment variable or ``api_account`` module parameter is not specified, modules will look for the section named "default".
 
 
 Authentication
@@ -55,18 +55,10 @@ To check that everything is working properly run the following command:
 
 .. code-block:: console
 
-  #> VULTR_API_KEY=XXX ansible -m vultr_account_facts localhost
+  #> VULTR_API_KEY=XXX ansible -m vultr_account_info localhost
   localhost | SUCCESS => {
-    "ansible_facts": {
-        "vultr_account_facts": {
-            "balance": -8.9,
-            "last_payment_amount": -10.0,
-            "last_payment_date": "2018-07-21 11:34:46",
-            "pending_charges": 6.0
-        }
-    },
     "changed": false,
-    "vultr_account_facts": {
+    "vultr_account_info": {
         "balance": -8.9,
         "last_payment_amount": -10.0,
         "last_payment_date": "2018-07-21 11:34:46",
@@ -110,7 +102,7 @@ Dynamic Inventory
 Ansible provides a dynamic inventory plugin for `Vultr <https://www.vultr.com>`_.
 The configuration process is exactly the same as the one for the modules.
 
-To be able to use it one needs to enable it first by specifying the following in the ``ansible.cfg`` file:
+To be able to use it you need to enable it first by specifying the following in the ``ansible.cfg`` file:
 
 .. code-block:: ini
 
@@ -128,10 +120,10 @@ To list the available hosts one can simply run:
 
 .. code-block:: console
 
-  #> ansible-inventory - i vultr.yml
+  #> ansible-inventory -i vultr.yml --list
 
 
-This allows one - for example - to take action on nodes grouped by location or OS name:
+For example, this allows you to take action on nodes grouped by location or OS name:
 
 .. code-block:: yaml
 
@@ -142,3 +134,38 @@ This allows one - for example - to take action on nodes grouped by location or O
         shell: reboot
         become: True
 
+
+Integration tests
+-----------------
+
+Ansible includes integration tests for all Vultr modules.
+
+These tests are meant to run against the public Vultr API and that is why they require a valid key to access the API.
+
+Prepare the test setup:
+
+.. code-block:: shell
+
+  $ cd ansible # location the ansible source is
+  $ source ./hacking/env-setup
+
+Set the Vultr API key:
+
+.. code-block:: shell
+
+  $ cd test/integration
+  $ cp cloud-config-vultr.ini.template cloud-config-vultr.ini
+  $ vi cloud-config-vultr.ini
+
+Run all Vultr tests:
+
+.. code-block:: shell
+
+  $ ansible-test integration cloud/vultr/ -v --diff --allow-unsupported
+
+
+To run a specific test, e.g. vultr_account_info:
+
+.. code-block:: shell
+
+  $ ansible-test integration cloud/vultr/vultr_account_info -v --diff --allow-unsupported

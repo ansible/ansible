@@ -57,19 +57,19 @@ ansible_facts:
     contains:
         memory_mb:
             description: Amount of node memory as updated in the node properties
-            type: string
+            type: str
             sample: "1024"
         cpu_arch:
             description: Detected CPU architecture type
-            type: string
+            type: str
             sample: "x86_64"
         local_gb:
             description: Total size of local disk storage as updaed in node properties.
-            type: string
+            type: str
             sample: "10"
         cpus:
             description: Count of cpu cores defined in the updated node properties.
-            type: string
+            type: str
             sample: "1"
 '''
 

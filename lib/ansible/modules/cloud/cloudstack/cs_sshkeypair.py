@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -32,49 +18,55 @@ description:
     - If no key was found and no public key was provided and a new SSH
       private/public key pair will be created and the private key will be returned.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of public key.
+    type: str
     required: true
   domain:
     description:
       - Domain the public key is related to.
+    type: str
   account:
     description:
       - Account the public key is related to.
+    type: str
   project:
     description:
       - Name of the project the public key to be registered in.
+    type: str
   state:
     description:
       - State of the public key.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   public_key:
     description:
       - String of the public key.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a new private / public key pair:
-- cs_sshkeypair:
+- name: create a new private / public key pair
+  cs_sshkeypair:
     name: linus@example.com
   delegate_to: localhost
   register: key
 - debug:
     msg: 'Private key is {{ key.private_key }}'
 
-# remove a public key by its name:
-- cs_sshkeypair:
+- name: remove a public key by its name
+  cs_sshkeypair:
     name: linus@example.com
     state: absent
   delegate_to: localhost
 
-# register your existing local public key:
-- cs_sshkeypair:
+- name: register your existing local public key
+  cs_sshkeypair:
     name: linus@example.com
     public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
   delegate_to: localhost
@@ -85,32 +77,36 @@ RETURN = '''
 id:
   description: UUID of the SSH public key.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the SSH public key.
   returned: success
-  type: string
+  type: str
   sample: linus@example.com
 fingerprint:
   description: Fingerprint of the SSH public key.
   returned: success
-  type: string
+  type: str
   sample: "86:5e:a3:e8:bd:95:7b:07:7c:c2:5c:f7:ad:8b:09:28"
 private_key:
   description: Private key of generated SSH keypair.
   returned: changed
-  type: string
+  type: str
   sample: "-----BEGIN RSA PRIVATE KEY-----\nMII...8tO\n-----END RSA PRIVATE KEY-----\n"
 '''
 
+import traceback
+
+SSHPUBKEYS_IMP_ERR = None
 try:
     import sshpubkeys
     HAS_LIB_SSHPUBKEYS = True
 except ImportError:
+    SSHPUBKEYS_IMP_ERR = traceback.format_exc()
     HAS_LIB_SSHPUBKEYS = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
@@ -246,7 +242,7 @@ def main():
     )
 
     if not HAS_LIB_SSHPUBKEYS:
-        module.fail_json(msg="python library sshpubkeys required: pip install sshpubkeys")
+        module.fail_json(msg=missing_required_lib("sshpubkeys"), exception=SSHPUBKEYS_IMP_ERR)
 
     acs_sshkey = AnsibleCloudStackSshKey(module)
     state = module.params.get('state')

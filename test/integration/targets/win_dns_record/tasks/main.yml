@@ -1,0 +1,12 @@
+# We do an explicit OS version check here *INSTEAD OF* the usual test for
+# cmdlet existence. That's because a cmdlet test here won't work without first
+# installing the DNS feature, but we don't want to install the feature on OS'
+# that can't be supported anyway. Hence this fallback to an explicit OS version
+# test.
+- name: check OS version is supported
+  win_shell: 'if ([Environment]::OSVersion.Version -ge [Version]"6.2") { $true } else { $false }'
+  register: os_supported
+
+- name: run tests on supported hosts
+  include: tests.yml
+  when: os_supported.stdout | trim | bool

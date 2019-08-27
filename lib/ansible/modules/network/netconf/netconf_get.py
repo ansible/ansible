@@ -26,6 +26,7 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to fetch configuration and state data from NETCONF
       enabled network devices.
+extends_documentation_fragment: network_agnostic
 options:
   source:
     description:
@@ -124,7 +125,7 @@ stdout:
   description: The raw XML string containing configuration or state data
                received from the underlying ncclient library.
   returned: always apart from low-level errors (such as action plugin)
-  type: string
+  type: str
   sample: '...'
 stdout_lines:
   description: The value of stdout split into a list
@@ -147,17 +148,18 @@ output:
 import sys
 
 try:
-    from lxml.etree import Element, SubElement, tostring, fromstring, XMLSyntaxError
+    from lxml.etree import tostring, fromstring, XMLSyntaxError
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+    from xml.etree.ElementTree import tostring, fromstring
     if sys.version_info < (2, 7):
         from xml.parsers.expat import ExpatError as XMLSyntaxError
     else:
         from xml.etree.ElementTree import ParseError as XMLSyntaxError
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.netconf.netconf import get_capabilities, locked_config, get_config, get
+from ansible.module_utils.network.netconf.netconf import get_capabilities, get_config, get
 from ansible.module_utils.network.common.netconf import remove_namespaces
+from ansible.module_utils._text import to_text
 
 try:
     import jxmlease
@@ -234,7 +236,7 @@ def main():
     else:
         response = get(module, filter_spec, execute_lock)
 
-    xml_resp = tostring(response)
+    xml_resp = to_text(tostring(response))
     output = None
 
     if display == 'xml':
@@ -242,10 +244,10 @@ def main():
     elif display == 'json':
         try:
             output = jxmlease.parse(xml_resp)
-        except:
+        except Exception:
             raise ValueError(xml_resp)
     elif display == 'pretty':
-        output = tostring(response, pretty_print=True)
+        output = to_text(tostring(response, pretty_print=True))
 
     result = {
         'stdout': xml_resp,

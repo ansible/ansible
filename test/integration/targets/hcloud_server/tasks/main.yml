@@ -1,0 +1,473 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result is success
+- name: test missing required parameters on create server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+  register: result
+  ignore_errors: yes
+- name: verify fail test missing required parameters on create server
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "missing required arguments: server_type, image"'
+
+- name: test create server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: cx11
+    image: ubuntu-18.04
+    state: present
+  register: result
+  check_mode: yes
+- name: test create server server
+  assert:
+    that:
+      - result is changed
+
+- name: test create server
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: ubuntu-18.04
+    state: started
+  register: main_server
+- name: verify create server
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.name == "{{ hcloud_server_name }}"
+      - main_server.hcloud_server.server_type == "cx11"
+      - main_server.hcloud_server.status == "running"
+      - main_server.root_password != ""
+
+- name: test create server idempotence
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: started
+  register: result
+- name: verify create server idempotence
+  assert:
+    that:
+      - result is not changed
+
+- name: test stop server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: stopped
+  register: result
+  check_mode: yes
+- name: verify stop server with check mode
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.status == "running"
+
+- name: test stop server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: stopped
+  register: result
+- name: verify stop server
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.status == "off"
+
+- name: test start server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: started
+  register: result
+  check_mode: true
+- name: verify start server with check mode
+  assert:
+    that:
+      - result is changed
+
+- name: test start server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: started
+  register: result
+- name: verify start server
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.status == "running"
+
+- name: test start server idempotence
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: started
+  register: result
+- name: verify start server idempotence
+  assert:
+    that:
+      - result is not changed
+      - result.hcloud_server.status == "running"
+
+- name: test stop server by its id
+  hcloud_server:
+    id: "{{ main_server.hcloud_server.id }}"
+    state: stopped
+  register: result
+- name: verify stop server by its id
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.status == "off"
+
+- name: test resize server running without force
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    state: present
+  register: result
+  check_mode: true
+- name: verify test resize server running without force
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.server_type == "cx11"
+
+- name: test resize server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    state: stopped
+  register: result
+  check_mode: true
+- name: verify resize server with check mode
+  assert:
+    that:
+      - result is changed
+
+- name: test resize server without disk
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    state: stopped
+  register: result
+- name: verify resize server without disk
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.server_type == "cx21"
+
+- name: test resize server idempotence
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    state: stopped
+  register: result
+- name: verify resize server idempotence
+  assert:
+    that:
+      - result is not changed
+
+- name: test resize server to smaller plan
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx11"
+    state: stopped
+  register: result
+- name: verify resize server to smaller plan
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.server_type == "cx11"
+
+- name: test resize server with disk
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    upgrade_disk: true
+    state: stopped
+  register: result
+- name: verify resize server with disk
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.server_type == "cx21"
+
+- name: test enable backups with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    backups: true
+    state: stopped
+  register: result
+  check_mode: true
+- name: verify enable backups with check mode
+  assert:
+    that:
+      - result is changed
+
+- name: test enable backups
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    backups: true
+    state: stopped
+  register: result
+- name: verify enable backups
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.backup_window != ""
+
+- name: test enable backups idempotence
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    backups: true
+    state: stopped
+  register: result
+- name: verify enable backups idempotence
+  assert:
+    that:
+      - result is not changed
+      - result.hcloud_server.backup_window != ""
+
+- name: test rebuild server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    image: ubuntu-18.04
+    state: rebuild
+  register: result_after_test
+- name: verify rebuild server
+  assert:
+    that:
+      - result_after_test is changed
+      - result.hcloud_server.id == result_after_test.hcloud_server.id
+
+- name: test rebuild server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    image: ubuntu-18.04
+    state: rebuild
+  register: result_after_test
+  check_mode: true
+- name: verify rebuild server with check mode
+  assert:
+    that:
+      - result_after_test is changed
+
+- name: absent server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify absent server
+  assert:
+    that:
+    - result is success
+
+- name: test create server with ssh key
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: started
+  register: main_server
+- name: verify create server with ssh key
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.name == "{{ hcloud_server_name }}"
+      - main_server.hcloud_server.server_type == "cx11"
+      - main_server.hcloud_server.status == "running"
+      - main_server.root_password != ""
+
+- name: absent server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify absent server
+  assert:
+    that:
+    - result is success
+
+- name: test create server with rescue_mode
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    rescue_mode: "linux64"
+    state: started
+  register: main_server
+- name: verify create server with rescue_mode
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.name == "{{ hcloud_server_name }}"
+      - main_server.hcloud_server.server_type == "cx11"
+      - main_server.hcloud_server.status == "running"
+      - main_server.root_password != ""
+      - main_server.hcloud_server.rescue_enabled is sameas true
+
+- name: absent server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify absent server
+  assert:
+    that:
+    - result is success
+
+- name: setup server
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: ubuntu-18.04
+    state: started
+  register: main_server
+- name: verify setup server
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.name == "{{ hcloud_server_name }}"
+      - main_server.hcloud_server.server_type == "cx11"
+      - main_server.hcloud_server.status == "running"
+      - main_server.root_password != ""
+
+- name: test activate rescue mode with check_mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    rescue_mode: "linux64"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: present
+  register: main_server
+  check_mode: true
+- name: verify activate rescue mode
+  assert:
+    that:
+      - main_server is changed
+
+- name: test activate rescue mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    rescue_mode: "linux64"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: present
+  register: main_server
+- name: verify activate rescue mode
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.rescue_enabled is sameas true
+
+- name: test disable rescue mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: present
+  register: main_server
+- name: verify activate rescue mode
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.rescue_enabled is sameas false
+
+- name: test activate rescue mode without ssh keys
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    rescue_mode: "linux64"
+    state: present
+  register: main_server
+- name: verify activate rescue mode without ssh keys
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.rescue_enabled is sameas true
+
+- name: cleanup
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+    - result is success
+
+- name: test create server with labels
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    labels:
+      key: value
+      mylabel: "val123"
+    state: started
+  register: main_server
+- name: verify create server with labels
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.labels.key == "value"
+      - main_server.hcloud_server.labels.mylabel == "val123"
+
+- name: test update server with labels
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    labels:
+      key: other
+      mylabel: "val123"
+    state: started
+  register: main_server
+- name: verify update server with labels
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.labels.key == "other"
+      - main_server.hcloud_server.labels.mylabel == "val123"
+
+- name: test update server with labels in other order
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    labels:
+      mylabel: "val123"
+      key: other
+    state: started
+  register: main_server
+- name: verify update server with labels in other order
+  assert:
+    that:
+      - main_server is not changed
+
+- name: cleanup with labels
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+    - result is success

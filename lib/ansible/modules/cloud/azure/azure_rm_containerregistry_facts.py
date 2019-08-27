@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerregistry_facts
 version_added: "2.7"
-short_description: Get Azure Container Registry facts.
+short_description: Get Azure Container Registry facts
 description:
     - Get facts for Container Registry.
 
@@ -42,24 +42,25 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Get instance of Registry
     azure_rm_containerregistry_facts:
-      resource_group: sampleresourcegroup
-      name: sampleregistry
+      resource_group: myResourceGroup
+      name: myRegistry
 
   - name: List instances of Registry
     azure_rm_containerregistry_facts:
-      resource_group: sampleresourcegroup
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
 registries:
-    description: A list of dictionaries containing facts for registries.
+    description:
+        - A list of dictionaries containing facts for registries.
     returned: always
     type: complex
     contains:
@@ -93,10 +94,10 @@ registries:
                 - The SKU name of the container registry.
             returned: always
             type: str
-            sample: classic
+            sample: Premium
         provisioning_state:
             description:
-                - Provisioning state of the container registry
+                - Provisioning state of the container registry.
             returned: always
             type: str
             sample: Succeeded
@@ -108,7 +109,7 @@ registries:
             sample: acrd08521b.azurecr.io
         credentials:
             description:
-                - Credentials, fields will be empty if admin user is not enabled for ACR
+                - Credentials, fields will be empty if admin user is not enabled for ACR.
             return: when C(retrieve_credentials) is set and C(admin_user_enabled) is set on ACR
             type: complex
             contains:
@@ -120,18 +121,19 @@ registries:
                     sample: zim
                 password:
                     description:
-                        - password value
+                        - password value.
                     returned: when registry exists and C(admin_user_enabled) is set
                     type: str
                     sample: pass1value
                 password2:
                     description:
-                        - password2 value
+                        - password2 value.
                     returned: when registry exists and C(admin_user_enabled) is set
                     type: str
                     sample: pass2value
         tags:
-            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            description:
+                - Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
             sample: { "tag1": "abc" }
 '''
@@ -243,7 +245,14 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
         admin_user_enabled = d['admin_user_enabled']
 
         if self.retrieve_credentials and admin_user_enabled:
-            credentials = self.containerregistry_client.registries.list_credentials(resource_group, name)
+            credentials = self.containerregistry_client.registries.list_credentials(resource_group, name).as_dict()
+            for index in range(len(credentials['passwords'])):
+                password = credentials['passwords'][index]
+                if password['name'] == 'password':
+                    credentials['password'] = password['value']
+                elif password['name'] == 'password2':
+                    credentials['password2'] = password['value']
+            credentials.pop('passwords')
 
         d = {
             'resource_group': resource_group,

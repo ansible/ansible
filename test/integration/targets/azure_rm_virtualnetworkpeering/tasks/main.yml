@@ -1,0 +1,126 @@
+- name: Prepare random number
+  set_fact:
+    vnetname1: "vnet1{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    vnetname2: "vnet2{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    peering_name: "peering1{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 100 | random }}"
+
+- name: Create first virtual network
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname1 }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: vnet1
+
+- name: Create second virtual network
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname2 }}"
+    address_prefixes_cidr:
+      - 10.2.0.0/24
+    resource_group: "{{ resource_group_secondary }}"
+  register: vnet2
+
+- assert:
+    that:
+      - vnet1.changed
+      - vnet2.changed
+
+- name: Create virtual network peering (check mode)
+  azure_rm_virtualnetworkpeering:
+    resource_group: "{{ resource_group }}"
+    name: "{{ peering_name }}"
+    virtual_network: "{{ vnetname1 }}"
+    remote_virtual_network:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "{{ vnetname2 }}"
+    allow_virtual_network_access: false
+    allow_forwarded_traffic: true
+  check_mode: yes
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Create virtual network peering
+  azure_rm_virtualnetworkpeering:
+    resource_group: "{{ resource_group }}"
+    name: "{{ peering_name }}"
+    virtual_network: "{{ vnetname1 }}"
+    remote_virtual_network:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "{{ vnetname2 }}"
+    allow_virtual_network_access: false
+    allow_forwarded_traffic: true
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Update virtual network peering (idempotent)
+  azure_rm_virtualnetworkpeering:
+    resource_group: "{{ resource_group }}"
+    name: "{{ peering_name }}"
+    virtual_network: "{{ vnetname1 }}"
+    remote_virtual_network:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "{{ vnetname2 }}"
+    allow_virtual_network_access: false
+    allow_forwarded_traffic: true
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Update virtual network peering
+  azure_rm_virtualnetworkpeering:
+    resource_group: "{{ resource_group }}"
+    name: "{{ peering_name }}"
+    virtual_network: "{{ vnetname1 }}"
+    remote_virtual_network:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "{{ vnetname2 }}"
+    allow_virtual_network_access: true
+    allow_forwarded_traffic: false
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Get facts
+  azure_rm_virtualnetworkpeering_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ peering_name }}"
+    virtual_network: "{{ vnetname1 }}"
+  register: facts
+
+- name: Assert Facts
+  assert:
+    that:
+      - facts['vnetpeerings'] | length == 1
+      - facts['vnetpeerings'][0]['id']
+      - facts['vnetpeerings'][0]['peering_state']
+      - facts['vnetpeerings'][0]['remote_virtual_network']
+      - facts['vnetpeerings'][0]['provisioning_state']
+
+- name: Delete virtual network peering
+  azure_rm_virtualnetworkpeering:
+    resource_group: "{{ resource_group }}"
+    name: "{{ peering_name }}"
+    virtual_network: "{{ vnetname1 }}"
+    state: absent
+  register: output
+
+- name: Delete first virtual network
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname1 }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+
+- name: Delete virtual network
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname2 }}"
+    resource_group: "{{ resource_group_secondary }}"
+    state: absent

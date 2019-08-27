@@ -26,10 +26,10 @@ options:
     description:
       - Alternate data to return instead of 'pong'.
       - If this parameter is set to C(crash), the module will cause an exception.
+    type: str
     default: pong
-notes:
-  - For non-Windows targets, use the M(ping) module instead.
-  - For Network targets, use the M(net_ping) module instead.
+seealso:
+- module: ping
 author:
 - Chris Church (@cchurch)
 '''
@@ -38,18 +38,18 @@ EXAMPLES = r'''
 # Test connectivity to a windows host
 # ansible winserver -m win_ping
 
-# Example from an Ansible Playbook
-- win_ping:
+- name: Example from an Ansible Playbook
+  win_ping:
 
-# Induce an exception to see what happens
-- win_ping:
+- name: Induce an exception to see what happens
+  win_ping:
     data: crash
 '''
 
-RETURN = '''
+RETURN = r'''
 ping:
-    description: value provided with the data parameter
+    description: Value provided with the data parameter.
     returned: success
-    type: string
+    type: str
     sample: pong
 '''

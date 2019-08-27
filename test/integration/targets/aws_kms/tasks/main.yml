@@ -1,0 +1,352 @@
+- module_defaults:
+    group/aws:
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+  block:
+    # ============================================================
+    #   PREPARATION
+    #
+    # Get some information about who we are before starting our tests
+    # we'll need this as soon as we start working on the policies
+    - name: get ARN of calling user
+      aws_caller_info:
+      register: aws_caller_info
+
+    # IAM Roles completes before the Role is fully instantiated, create it here
+    # to ensure it exists when we need it for updating the policies
+    - name: create an IAM role that can do nothing
+      iam_role:
+        name: "{{ resource_prefix }}-kms-role"
+        state: present
+        assume_role_policy_document: '{"Version": "2012-10-17", "Statement": {"Action": "sts:AssumeRole", "Principal": {"Service": "ec2.amazonaws.com"}, "Effect": "Deny"} }'
+      register: iam_role_result
+    # ============================================================
+    #   TESTS
+    - name: See whether key exists and its current state
+      aws_kms_info:
+        filters:
+          alias: "{{ resource_prefix }}-kms"
+
+    - name: create a key
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        tags:
+          Hello: World
+        state: present
+        enabled: yes
+      register: create_kms
+
+    - name: assert that state is enabled
+      assert:
+        that:
+          - create_kms.key_state == "Enabled"
+          - create_kms.tags['Hello'] == 'World'
+
+    - name: find facts about the key
+      aws_kms_info:
+        filters:
+          alias: "{{ resource_prefix }}-kms"
+      register: new_key
+
+    - name: check that a key was found
+      assert:
+        that:
+          - new_key["keys"]|length == 1
+
+    - name: Update Policy on key to match AWS Console generate policy
+      aws_kms:
+        key_id: '{{ new_key["keys"][0]["key_id"] }}'
+        policy: "{{ lookup('template', 'console-policy.j2') | to_json }}"
+      register: kms_policy_changed
+
+    - name: Policy should have been changed
+      assert:
+        that:
+          - kms_policy_changed is changed
+
+    - name: Attempt to re-assert the same policy
+      aws_kms:
+        alias: "alias/{{ resource_prefix }}-kms"
+        policy: "{{ lookup('template', 'console-policy.j2') | to_json }}"
+      register: kms_policy_changed
+
+    - name: Policy should not have changed since it was last set
+      assert:
+        that:
+          - kms_policy_changed is succeeded
+
+    - name: grant user-style access to production secrets
+      aws_kms:
+        mode: grant
+        alias: "alias/{{ resource_prefix }}-kms"
+        role_name: "{{ resource_prefix }}-kms-role"
+        grant_types: "role,role grant"
+
+    - name: find facts about the key
+      aws_kms_info:
+        filters:
+          alias: "{{ resource_prefix }}-kms"
+      register: new_key
+
+    - name: remove access to production secrets from role
+      aws_kms:
+        mode: deny
+        alias: "alias/{{ resource_prefix }}-kms"
+        role_arn: "{{ iam_role_result.iam_role.arn }}"
+
+    - name: find facts about the key
+      aws_kms_info:
+        filters:
+          alias: "{{ resource_prefix }}-kms"
+      register: new_key
+
+    - name: Allow the IAM role to use a specific Encryption Context
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        purge_grants: yes
+        purge_tags: yes
+        grants:
+          - name: test_grant
+            grantee_principal: "{{ iam_role_result.iam_role.arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
+            constraints:
+              encryption_context_equals:
+                environment: test
+                application: testapp
+            operations:
+              - Decrypt
+              - RetireGrant
+      register: grant_one
+
+    - name: assert grant added
+      assert:
+        that:
+          - grant_one.changed
+          - grant_one.grants|length == 1
+
+    - name: Add a second grant
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        grants:
+          - name: another_grant
+            grantee_principal: "{{ iam_role_result.iam_role.arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
+            constraints:
+              encryption_context_equals:
+                Environment: second
+                Application: anotherapp
+            operations:
+              - Decrypt
+              - RetireGrant
+      register: grant_two
+
+    - name: assert grant added
+      assert:
+        that:
+          - grant_two.changed
+          - grant_two.grants|length == 2
+
+    - name: Add a second grant again
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        grants:
+          - name: another_grant
+            grantee_principal: "{{ iam_role_result.iam_role.arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
+            constraints:
+              encryption_context_equals:
+                Environment: second
+                Application: anotherapp
+            operations:
+              - Decrypt
+              - RetireGrant
+      register: grant_two_again
+
+    - name: assert grant added
+      assert:
+        that:
+          - not grant_two_again.changed
+          - grant_two_again.grants|length == 2
+
+    - name: Update the grants with purge_grants set
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        purge_grants: yes
+        grants:
+          - name: third_grant
+            grantee_principal: "{{ iam_role_result.iam_role.arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
+            constraints:
+              encryption_context_equals:
+                environment: third
+                application: onemoreapp
+            operations:
+              - Decrypt
+              - RetireGrant
+      register: grant_three
+
+    - name: assert grants replaced
+      assert:
+        that:
+          - grant_three.changed
+          - grant_three.grants|length == 1
+
+    - name: update third grant to change encryption context equals to subset
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        grants:
+          - name: third_grant
+            grantee_principal: "{{ iam_role_result.iam_role.arn }}"
+            retiring_principal: "{{ aws_caller_info.arn }}"
+            constraints:
+              encryption_context_subset:
+                environment: third
+                application: onemoreapp
+            operations:
+              - Decrypt
+              - RetireGrant
+      register: grant_three_update
+
+    - name: assert grants replaced
+      assert:
+        that:
+          - "grant_three_update.changed"
+          - "grant_three_update.grants|length == 1"
+          - "'encryption_context_equals' not in grant_three_update.grants[0].constraints"
+          - "'encryption_context_subset' in grant_three_update.grants[0].constraints"
+
+    - name: tag encryption key
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        tags:
+          tag_one: tag_one
+          tag_two: tag_two
+      register: tag_kms
+
+    - name: assert tags added and grants remain in place
+      assert:
+        that:
+          - "tag_kms.changed"
+          - "tag_kms.grants|length == 1"
+          - "'tag_one' in tag_kms.tags"
+          - "'tag_two' in tag_kms.tags"
+
+    - name: add, replace, remove tags
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        purge_tags: yes
+        tags:
+          tag_two: tag_two_updated
+          tag_three: tag_three
+      register: tag_kms_update
+
+    - name: assert tags correctly changed
+      assert:
+        that:
+          - "tag_kms_update.changed"
+          - "'tag_one' not in tag_kms_update.tags"
+          - "'tag_two' in tag_kms_update.tags"
+          - "tag_kms_update.tags.tag_two == 'tag_two_updated'"
+          - "'tag_three' in tag_kms_update.tags"
+
+    - name: make no real tag change
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+      register: tag_kms_no_update
+
+    - name: assert no change to tags
+      assert:
+        that:
+          - "not tag_kms_no_update.changed"
+          - "'tag_one' not in tag_kms_no_update.tags"
+          - "'tag_two' in tag_kms_no_update.tags"
+          - "tag_kms_no_update.tags.tag_two == 'tag_two_updated'"
+          - "'tag_three' in tag_kms_no_update.tags"
+
+    - name: update the key's description and disable it
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        description: test key for testing
+        enabled: no
+      register: update_key
+
+    - name: assert that state is enabled
+      assert:
+        that:
+          - update_key.description == "test key for testing"
+          - update_key.key_state == "Disabled"
+          - update_key.changed
+
+    - name: delete the key
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: absent
+      register: delete_kms
+
+    - name: assert that state is pending deletion
+      assert:
+        that:
+          - delete_kms.key_state == "PendingDeletion"
+          - delete_kms.changed
+
+    - name: re-delete the key
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: absent
+      register: delete_kms
+
+    - name: assert that state is pending deletion
+      assert:
+        that:
+          - delete_kms.key_state == "PendingDeletion"
+          - delete_kms is not changed
+
+    - name: undelete and enable the key
+      aws_kms:
+        alias: "{{ resource_prefix }}-kms"
+        state: present
+        enabled: yes
+      register: undelete_kms
+
+    - name: assert that state is enabled
+      assert:
+        that:
+          - undelete_kms.key_state == "Enabled"
+          - undelete_kms.changed
+
+    - name: delete a non-existant key
+      aws_kms:
+        key_id: '00000000-0000-0000-0000-000000000000'
+        state: absent
+      register: delete_kms
+
+    - name: assert that state is unchanged
+      assert:
+        that:
+          - delete_kms is not changed
+
+  always:
+    # ============================================================
+    #   CLEAN-UP
+    - name: finish off by deleting key
+      aws_kms:
+        state: absent
+        alias: "{{ resource_prefix }}-kms"
+      register: destroy_result
+
+    - name: remove the IAM role
+      iam_role:
+        name: "{{ resource_prefix }}-kms-role"
+        state: absent
+      register: iam_role_result

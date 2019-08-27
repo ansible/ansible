@@ -23,6 +23,7 @@ options:
     description:
       - A rule with I(active) set to C(False) will be tracked in the database,
         but will be never loaded in the in-memory data structures.
+    type: bool
   username:
     description:
       - Filtering criteria matching username.  If I(username) is non-NULL, a
@@ -64,6 +65,7 @@ options:
         the query text will be considered as a match. This acts as a NOT
         operator in front of the regular expression matching against
         match_pattern.
+    type: bool
   flagOUT:
     description:
       - Used in combination with I(flagIN) and apply to create chains of rules.
@@ -115,10 +117,12 @@ options:
   log:
     description:
       - Query will be logged.
+    type: bool
   apply:
     description:
       - Used in combination with I(flagIN) and I(flagOUT) to create chains of
         rules. Setting apply to True signifies the last rule to be applied.
+    type: bool
   comment:
     description:
       - Free form text field, usable for a descriptive comment of the query
@@ -134,6 +138,7 @@ options:
         however if you need this behaviour and you're not concerned about the
         schedules deleted, you can set I(force_delete) to C(True).
     default: False
+    type: bool
 extends_documentation_fragment:
   - proxysql.managing_config
   - proxysql.connectivity

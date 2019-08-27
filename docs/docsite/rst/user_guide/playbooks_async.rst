@@ -9,9 +9,19 @@ be running operations that take longer than the SSH timeout.
 
 To avoid blocking or timeout issues, you can use asynchronous mode to run all of your tasks at once and then poll until they are done.
 
+The behaviour of asynchronous mode depends on the value of `poll`.
+
+
+Avoid connection timeouts: poll > 0
+-----------------------------------
+
+When ``poll`` is a positive value, the playbook will *still* block on the task until it either completes, fails or times out.
+
+In this case, however, `async` explicitly sets the timeout you wish to apply to this task rather than being limited by the connection method timeout.
+
 To launch a task asynchronously, specify its maximum runtime
 and how frequently you would like to poll for status.  The default
-poll value is 10 seconds if you do not specify a value for `poll`::
+poll value is set by the ``DEFAULT_POLL_INTERVAL`` setting if you do not specify a value for `poll`::
 
     ---
 
@@ -30,8 +40,26 @@ poll value is 10 seconds if you do not specify a value for `poll`::
    'async' keyword, the task runs synchronously, which is Ansible's
    default.
 
-Alternatively, if you do not need to wait on the task to complete, you may
-run the task asynchronously by specifying a poll value of 0::
+.. note::
+  As of Ansible 2.3, async does not support check mode and will fail the
+  task when run in check mode. See :ref:`check_mode_dry` on how to
+  skip a task in check mode.
+
+
+Concurrent tasks: poll = 0
+--------------------------
+
+When ``poll`` is 0, Ansible will start the task and immediately move on to the next one without waiting for a result.
+
+From the point of view of sequencing this is asynchronous programming: tasks may now run concurrently.
+
+The playbook run will end without checking back on async tasks.
+
+The async tasks will run until they either complete, fail or timeout according to their `async` value.
+
+If you need a synchronization point with a task, register it to obtain its job ID and use the :ref:`async_status <async_status_module>` module to observe it.
+
+You may run a task asynchronously by specifying a poll value of 0::
 
     ---
 
@@ -46,7 +74,7 @@ run the task asynchronously by specifying a poll value of 0::
         poll: 0
 
 .. note::
-   You shouldn't attempt run a task asynchronously by specifying a poll value of 0:: to with operations that require
+   You shouldn't attempt run a task asynchronously by specifying a poll value of 0 with operations that require
    exclusive locks (such as yum transactions) if you expect to run other
    commands later in the playbook against those same resources.
 
@@ -62,7 +90,7 @@ following::
       - name: 'YUM - async task'
         yum:
           name: docker-io
-          state: installed
+          state: present
         async: 1000
         poll: 0
         register: yum_sleeper
@@ -95,8 +123,7 @@ of tasks running concurrently, you can do it this way::
           - 5
         durations: "{{ item }}"
       include_tasks: execute_batch.yml
-      loop:
-        - "{{ sleep_durations | batch(2) | list }}"
+      loop: "{{ sleep_durations | batch(2) | list }}"
 
     #####################
     # execute_batch.yml
@@ -122,10 +149,9 @@ of tasks running concurrently, you can do it this way::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

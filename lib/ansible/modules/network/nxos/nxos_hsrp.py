@@ -1,27 +1,12 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: nxos_hsrp
 extends_documentation_fragment: nxos
@@ -83,7 +68,7 @@ options:
     default: 'present'
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Ensure HSRP is configured with following params on a SVI
   nxos_hsrp:
     group: 10
@@ -138,7 +123,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 commands:
     description: commands sent to the device
     returned: always
@@ -211,6 +196,8 @@ def get_hsrp_group(group, interface, module):
     try:
         body = run_commands(module, [command])[0]
         hsrp_table = body['TABLE_grp_detail']['ROW_grp_detail']
+        if 'unknown enum:' in str(hsrp_table):
+            hsrp_table = get_hsrp_group_unknown_enum(module, command, hsrp_table)
     except (AttributeError, IndexError, TypeError, KeyError):
         return {}
 
@@ -237,6 +224,19 @@ def get_hsrp_group(group, interface, module):
             return parsed_hsrp
 
     return hsrp
+
+
+def get_hsrp_group_unknown_enum(module, command, hsrp_table):
+    '''Some older NXOS images fail to set the attr values when using structured output and
+    instead set the values to <unknown enum>. This fallback method is a workaround that
+    uses an unstructured (text) request to query the device a second time.
+    'sh_preempt' is currently the only attr affected. Add checks for other attrs as needed.
+    '''
+    if 'unknown enum:' in hsrp_table['sh_preempt']:
+        cmd = {'output': 'text', 'command': command.split('|')[0]}
+        out = run_commands(module, cmd)[0]
+        hsrp_table['sh_preempt'] = 'enabled' if ('may preempt' in out) else 'disabled'
+    return hsrp_table
 
 
 def get_commands_remove_hsrp(group, interface):
@@ -393,9 +393,9 @@ def main():
         elif len(kstr) == 1:
             auth_string = kstr[0]
         else:
-            module.fail_json(msg='Inavlid auth_string')
+            module.fail_json(msg='Invalid auth_string')
         if auth_enc != '0' and auth_enc != '7':
-            module.fail_json(msg='Inavlid auth_string, only 0 or 7 allowed')
+            module.fail_json(msg='Invalid auth_string, only 0 or 7 allowed')
 
     device_info = get_capabilities(module)
     network_api = device_info.get('network_api', 'nxapi')

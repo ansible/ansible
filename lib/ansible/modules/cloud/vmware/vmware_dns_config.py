@@ -30,14 +30,17 @@ options:
         description:
             - The hostname that an ESXi host should be changed to.
         required: True
+        type: str
     domainname:
         description:
             - The domain the ESXi host should be apart of.
         required: True
+        type: str
     dns_servers:
         description:
             - The DNS servers that the host should be configured to use.
         required: True
+        type: list
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -108,7 +111,7 @@ def main():
         host = get_all_objs(content, [vim.HostSystem])
         if not host:
             module.fail_json(msg="Unable to locate Physical Host.")
-        host_system = host.keys()[0]
+        host_system = list(host)[0]
         changed = configure_dns(host_system, change_hostname_to, domainname, dns_servers)
         module.exit_json(changed=changed)
     except vmodl.RuntimeFault as runtime_fault:

@@ -1,0 +1,2 @@
+bugfixes:
+- "Fix PSLint errors regarding global vars (PSAvoidGlobalVars)"

@@ -36,6 +36,7 @@ notes:
   - To remove an existing authentication configuration you should use
     C(message_digest_key_id=default) plus all other options matching their
     existing values.
+  - Loopback interfaces only support ospf network type 'point-to-point'.
   - C(state=absent) removes the whole OSPF interface configuration.
 options:
   interface:
@@ -52,6 +53,14 @@ options:
         Valid values are a string, formatted as an IP address
         (i.e. "0.0.0.0") or as an integer.
     required: true
+  bfd:
+    description:
+      - Enables bfd at interface level. This overrides the bfd variable set at the ospf router level.
+      - Valid values are 'enable', 'disable' or 'default'.
+      - "Dependency: 'feature bfd'"
+    version_added: "2.9"
+    type: str
+    choices: ['enable', 'disable', 'default']
   cost:
     description:
       - The cost associated with this cisco_interface_ospf instance.
@@ -66,9 +75,16 @@ options:
         integer or the keyword 'default'.
   passive_interface:
     description:
-      - Setting to true will prevent this interface from receiving
-        HELLO packets.
+      - Enable or disable passive-interface state on this interface.
+        true - (enable) Prevent OSPF from establishing an adjacency or
+                       sending routing updates on this interface.
+        false - (disable) Override global 'passive-interface default' for this interface.
     type: bool
+  network:
+    description:
+      - Specifies interface ospf network type. Valid values are 'point-to-point' or 'broadcast'.
+    choices: ['point-to-point', 'broadcast']
+    version_added: "2.8"
   message_digest:
     description:
       - Enables or disables the usage of message digest authentication.
@@ -104,7 +120,16 @@ EXAMPLES = '''
     interface: ethernet1/32
     ospf: 1
     area: 1
+    bfd: disable
     cost: default
+
+- nxos_interface_ospf:
+    interface: loopback0
+    ospf: prod
+    area: 0.0.0.0
+    bfd: enable
+    network: point-to-point
+    state: present
 '''
 
 RETURN = '''
@@ -112,7 +137,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["interface Ethernet1/32", "ip router ospf 1 area 0.0.0.1"]
+    sample: ["interface Ethernet1/32", "ip router ospf 1 area 0.0.0.1", "ip ospf bfd disable"]
 '''
 
 
@@ -133,6 +158,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'cost': 'ip ospf cost',
     'ospf': 'ip router ospf',
     'area': 'ip router ospf',
+    'bfd': 'ip ospf bfd',
     'hello_interval': 'ip ospf hello-interval',
     'dead_interval': 'ip ospf dead-interval',
     'passive_interface': 'ip ospf passive-interface',
@@ -141,6 +167,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'message_digest_algorithm_type': 'ip ospf message-digest-key',
     'message_digest_encryption_type': 'ip ospf message-digest-key',
     'message_digest_password': 'ip ospf message-digest-key',
+    'network': 'ip ospf network',
 }
 
 
@@ -176,9 +203,18 @@ def get_value(arg, config, module):
                 value = value_list[3]
     elif arg == 'passive_interface':
         has_no_command = re.search(r'\s+no\s+{0}\s*$'.format(command), config, re.M)
-        value = False
-        if has_command and not has_no_command:
+        if has_no_command:
+            value = False
+        elif has_command:
             value = True
+        else:
+            value = None
+    elif arg == 'bfd':
+        m = re.search(r'\s*ip ospf bfd(?P<disable> disable)?', config)
+        if m:
+            value = 'disable' if m.group('disable') else 'enable'
+        else:
+            value = 'default'
     elif arg in BOOL_PARAMS:
         value = bool(has_command)
     else:
@@ -235,6 +271,10 @@ def get_default_commands(existing, proposed, existing_commands, key, module):
                 encryption_type,
                 existing['message_digest_password'])
             commands.append(command)
+    elif 'ip ospf bfd' in key:
+        commands.append('no {0}'.format(key))
+    elif 'passive-interface' in key:
+        commands.append('default ip ospf passive-interface')
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
     return commands
@@ -246,6 +286,12 @@ def get_custom_command(existing_cmd, proposed, key, module):
     if key == 'ip router ospf':
         command = '{0} {1} area {2}'.format(key, proposed['ospf'],
                                             proposed['area'])
+        if command not in existing_cmd:
+            commands.append(command)
+
+    if key == 'ip ospf network':
+        command = '{0} {1}'.format(key, proposed['network'])
+
         if command not in existing_cmd:
             commands.append(command)
 
@@ -281,6 +327,18 @@ def state_present(module, existing, proposed, candidate):
 
         if key == 'ip ospf passive-interface' and module.params.get('interface').upper().startswith('LO'):
             module.fail_json(msg='loopback interface does not support passive_interface')
+        if key == 'ip ospf network' and value == 'broadcast' and module.params.get('interface').upper().startswith('LO'):
+            module.fail_json(msg='loopback interface does not support ospf network type broadcast')
+
+        if key == 'ip ospf bfd':
+            cmd = key
+            if 'disable' in value:
+                cmd += ' disable'
+            elif 'default' in value and existing.get('bfd') is not None:
+                cmd = 'no ' + cmd
+            commands.append(cmd)
+            continue
+
         if value is True:
             commands.append(key)
         elif value is False:
@@ -310,6 +368,16 @@ def state_absent(module, existing, proposed, candidate):
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in existing_commands.items():
+        if 'ip ospf bfd' in key:
+            if 'default' not in value:
+                # cli is present when enabled or disabled; this removes either case
+                commands.append('no ip ospf bfd')
+            continue
+        if 'ip ospf passive-interface' in key and value is not None:
+            # cli is present for both enabled or disabled; 'no' will not remove
+            commands.append('default ip ospf passive-interface')
+            continue
+
         if value:
             if key.startswith('ip ospf message-digest-key'):
                 if 'options' not in key:
@@ -324,8 +392,7 @@ def state_absent(module, existing, proposed, candidate):
                         encryption_type,
                         existing['message_digest_password'])
                     commands.append(command)
-            elif key in ['ip ospf authentication message-digest',
-                         'ip ospf passive-interface']:
+            elif key in ['ip ospf authentication message-digest', 'ip ospf network']:
                 if value:
                     commands.append('no {0}'.format(key))
             elif key == 'ip router ospf':
@@ -355,10 +422,12 @@ def main():
         interface=dict(required=True, type='str'),
         ospf=dict(required=True, type='str'),
         area=dict(required=True, type='str'),
+        bfd=dict(choices=['enable', 'disable', 'default'], required=False, type='str'),
         cost=dict(required=False, type='str'),
         hello_interval=dict(required=False, type='str'),
         dead_interval=dict(required=False, type='str'),
         passive_interface=dict(required=False, type='bool'),
+        network=dict(required=False, type='str', choices=['broadcast', 'point-to-point']),
         message_digest=dict(required=False, type='bool'),
         message_digest_key_id=dict(required=False, type='str'),
         message_digest_algorithm_type=dict(required=False, type='str', choices=['md5', 'default']),
@@ -413,7 +482,11 @@ def main():
                 value = False
             elif str(value).lower() == 'default':
                 value = 'default'
+            elif key == 'bfd':
+                value = str(value).lower()
             if existing.get(key) or (not existing.get(key) and value):
+                proposed[key] = value
+            elif 'passive_interface' in key and existing.get(key) is None and value is False:
                 proposed[key] = value
 
     proposed['area'] = normalize_area(proposed['area'], module)
@@ -428,7 +501,8 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        if not module.check_mode:
+            load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
 

@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqlfirewallrule_facts
 version_added: "2.8"
-short_description: Get Azure SQL Firewall Rule facts.
+short_description: Get Azure SQL Firewall Rule facts
 description:
     - Get facts of SQL Firewall Rule.
 
@@ -38,35 +38,36 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Get instance of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: testgroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: testrule
 
   - name: List instances of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: testgroup
+      resource_group: myResourceGroup
       server_name: testserver
 '''
 
 RETURN = '''
 rules:
-    description: A list of dict results containing the facts for matching SQL firewall rules.
+    description:
+        - A list of dict results containing the facts for matching SQL firewall rules.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testgroup/providers/Microsoft.Sql/servers/testser
+            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/testser
                     ver/firewallRules/testrule"
         resource_group:
             description:
@@ -94,7 +95,7 @@ rules:
             sample: 10.0.0.1
         end_ip_address:
             description:
-                - The start IP address of the firewall rule.
+                - The end IP address of the firewall rule.
             returned: always
             type: str
             sample: 10.0.0.5
@@ -104,7 +105,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -112,7 +113,7 @@ except ImportError:
     pass
 
 
-class AzureRMFirewallRulesFacts(AzureRMModuleBase):
+class AzureRMSqlFirewallRuleFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -135,7 +136,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMFirewallRulesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMSqlFirewallRuleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -203,7 +204,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMFirewallRulesFacts()
+    AzureRMSqlFirewallRuleFacts()
 
 
 if __name__ == '__main__':

@@ -11,13 +11,9 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -25,20 +21,28 @@ try:
     from library.modules.bigip_device_connectivity import ModuleParameters
     from library.modules.bigip_device_connectivity import ModuleManager
     from library.modules.bigip_device_connectivity import ArgumentSpec
+
     from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_device_connectivity import ApiParameters
-        from ansible.modules.network.f5.bigip_device_connectivity import ModuleParameters
-        from ansible.modules.network.f5.bigip_device_connectivity import ModuleManager
-        from ansible.modules.network.f5.bigip_device_connectivity import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_device_connectivity import ApiParameters
+    from ansible.modules.network.f5.bigip_device_connectivity import ModuleParameters
+    from ansible.modules.network.f5.bigip_device_connectivity import ModuleManager
+    from ansible.modules.network.f5.bigip_device_connectivity import ArgumentSpec
+
+    from ansible.module_utils.network.f5.common import F5ModuleError
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -79,9 +83,6 @@ class TestParameters(unittest.TestCase):
             mirror_secondary_address='5.6.7.8',
             config_sync_ip='4.3.2.1',
             state='present',
-            server='localhost',
-            user='admin',
-            password='password'
         )
         p = ModuleParameters(params=args)
         assert p.multicast_port == 1010
@@ -135,9 +136,11 @@ class TestManager(unittest.TestCase):
                     address="10.1.30.1"
                 )
             ],
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -146,7 +149,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 
@@ -164,9 +168,11 @@ class TestManager(unittest.TestCase):
     def test_set_primary_mirror_address_none(self, *args):
         set_module_args(dict(
             mirror_primary_address="none",
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -175,7 +181,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 
@@ -192,9 +199,11 @@ class TestManager(unittest.TestCase):
     def test_set_secondary_mirror_address_none(self, *args):
         set_module_args(dict(
             mirror_secondary_address="none",
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -203,7 +212,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 
@@ -220,9 +230,13 @@ class TestManager(unittest.TestCase):
     def test_set_multicast_address_none(self, *args):
         set_module_args(dict(
             multicast_address="none",
-            server='localhost',
-            user='admin',
-            password='password'
+            multicast_port=62960,
+            multicast_interface="eth0",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -231,7 +245,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 
@@ -248,9 +263,13 @@ class TestManager(unittest.TestCase):
     def test_set_multicast_port_negative(self, *args):
         set_module_args(dict(
             multicast_port=-1,
-            server='localhost',
-            user='admin',
-            password='password'
+            multicast_address="224.0.0.245",
+            multicast_interface="eth0",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -259,7 +278,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 
@@ -270,14 +290,18 @@ class TestManager(unittest.TestCase):
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
 
-        assert 'must be between' in str(ex)
+        assert 'must be between' in str(ex.value)
 
     def test_set_multicast_address(self, *args):
         set_module_args(dict(
             multicast_address="10.1.1.1",
-            server='localhost',
-            user='admin',
-            password='password'
+            multicast_port=62960,
+            multicast_interface="eth0",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -286,7 +310,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 
@@ -303,9 +328,11 @@ class TestManager(unittest.TestCase):
     def test_unset_unicast_failover(self, *args):
         set_module_args(dict(
             unicast_failover="none",
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -314,7 +341,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 
@@ -331,9 +359,11 @@ class TestManager(unittest.TestCase):
     def test_unset_config_sync_ip(self, *args):
         set_module_args(dict(
             config_sync_ip="none",
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -342,7 +372,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 

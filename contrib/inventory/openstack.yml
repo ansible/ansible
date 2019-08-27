@@ -6,7 +6,7 @@ clouds:
       username: fb886a9b-c37b-442a-9be3-964bed961e04
       password: fantastic-password1
   rax:
-    cloud: rackspace
+    profile: rackspace
     auth:
       username: example
       password: spectacular-password

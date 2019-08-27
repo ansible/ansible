@@ -1,0 +1,20 @@
+- name: Test vars_prompt unsafe
+  hosts: testhost
+  become: no
+  gather_facts: no
+  vars:
+    whole: INVALID
+  vars_prompt:
+    - name: input
+      prompt: prompting for variable
+      unsafe: true
+
+  tasks:
+    - name:
+      assert:
+        that:
+          - input != whole
+          - input != 'INVALID'
+
+    - debug:
+        var: input

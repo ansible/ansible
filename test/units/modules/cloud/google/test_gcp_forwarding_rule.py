@@ -1,6 +1,6 @@
 import unittest
 
-from ansible.modules.cloud.google.gcp_forwarding_rule import _build_global_forwarding_rule_dict
+from ansible.modules.cloud.google._gcp_forwarding_rule import _build_global_forwarding_rule_dict
 
 
 class TestGCPFowardingRule(unittest.TestCase):

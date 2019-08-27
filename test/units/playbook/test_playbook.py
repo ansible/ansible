@@ -19,9 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
+from units.compat import unittest
+from ansible.errors import AnsibleParserError
 from ansible.playbook import Playbook
 from ansible.vars.manager import VariableManager
 

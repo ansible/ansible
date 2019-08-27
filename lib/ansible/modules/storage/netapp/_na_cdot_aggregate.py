@@ -20,7 +20,7 @@ short_description: Manage NetApp cDOT aggregates.
 extends_documentation_fragment:
     - netapp.ontap
 version_added: '2.3'
-author: Sumit Kumar (sumit4@netapp.com)
+author: Sumit Kumar (@timuster) <sumit4@netapp.com>
 
 deprecated:
   removed_in: '2.11'
@@ -197,8 +197,7 @@ class NetAppCDOTAggregate(object):
                 changed = True
 
             elif self.state == 'present':
-                if self.name is not None and not self.name == \
-                        self.name:
+                if self.name is not None and not self.name == self.name:
                     rename_aggregate = True
                     changed = True
 

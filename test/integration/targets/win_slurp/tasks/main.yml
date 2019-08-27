@@ -16,20 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: create test directory
+  win_file:
+    path: '{{ test_win_slurp_dir }}'
+    state: directory
+  notify: remove test directory
+
+# removes reliance on win_copy, set back once win_copy supports glob like chars
+- name: create test file
+  win_shell: |
+    $file = '{{ test_win_slurp_dir }}\slurp.txt'
+    if (Test-Path -LiteralPath $file) {
+        Remove-Item -LiteralPath $file -Force
+    }
+    Set-Content -LiteralPath $file -Value 'Slurp this!'
+
 - name: test slurping an existing file
-  slurp: src="C:/Windows/win.ini"
+  slurp:
+    src: '{{ test_win_slurp_dir }}\slurp.txt'
   register: slurp_existing
 
 - name: check slurp existing result
   assert:
     that:
-      - "slurp_existing.content"
+      - "slurp_existing.content == 'U2x1cnAgdGhpcyENCg=='"
       - "slurp_existing.encoding == 'base64'"
       - "slurp_existing is not changed"
       - "slurp_existing is not failed"
 
 - name: test slurping a large binary file with path param and backslashes
-  slurp: path="C:\Windows\explorer.exe"
+  slurp:
+    path: C:\Windows\explorer.exe
   register: slurp_path_backslashes
   no_log: true
 
@@ -42,7 +59,8 @@
       - "slurp_path_backslashes is not failed"
 
 - name: test slurping a non-existent file
-  slurp: src="C:/this_file_should_not_exist.txt"
+  slurp:
+    src: C:\this_file_should_not_exist.txt
   register: slurp_missing
   ignore_errors: true
 
@@ -54,7 +72,8 @@
       - "slurp_missing is not changed"
 
 - name: test slurping a directory
-  slurp: src="C:/Windows"
+  slurp:
+    src: '{{ test_win_slurp_dir }}\missing'
   register: slurp_dir
   ignore_errors: true
 

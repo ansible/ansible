@@ -32,7 +32,7 @@
 import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.common.config import NetworkConfig, ConfigLine, ignore_line
@@ -146,15 +146,16 @@ def get_sublevel_config(running_config, module):
 
 def os6_parse(lines, indent=None, comment_tokens=None):
     sublevel_cmds = [
-        re.compile(r'^vlan.*$'),
+        re.compile(r'^vlan !(priority).*$'),
         re.compile(r'^stack.*$'),
         re.compile(r'^interface.*$'),
         re.compile(r'datacenter-bridging.*$'),
         re.compile(r'line (console|telnet|ssh).*$'),
         re.compile(r'ip ssh !(server).*$'),
-        re.compile(r'ip (dhcp|vrf).*$'),
+        re.compile(r'ip dhcp pool.*$'),
+        re.compile(r'ip vrf !(forwarding).*$'),
         re.compile(r'(ip|mac|management|arp) access-list.*$'),
-        re.compile(r'ipv6 (dhcp|router).*$'),
+        re.compile(r'ipv6 (dhcp pool|router).*$'),
         re.compile(r'mail-server.*$'),
         re.compile(r'vpc domain.*$'),
         re.compile(r'router.*$'),

@@ -22,7 +22,7 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, f2fs, lvm, ocfs2, reiserfs, xfs, vfat ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, f2fs, lvm, ocfs2, reiserfs, xfs, vfat, swap ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
@@ -31,6 +31,7 @@ options:
     - vfat support was added in 2.5
     - ocfs2 support was added in 2.6
     - f2fs support was added in 2.7
+    - swap support was added in 2.8
     required: yes
     aliases: [type]
   dev:
@@ -45,8 +46,8 @@ options:
     default: 'no'
   resizefs:
     description:
-    - If C(yes), if the block device and filesytem size differ, grow the filesystem into the space.
-    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(f2fs), C(lvm), C(xfs) and C(vfat) filesystems.
+    - If C(yes), if the block device and filesystem size differ, grow the filesystem into the space.
+    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(f2fs), C(lvm), C(xfs), C(vfat), C(swap) filesystems.
     - XFS Will only grow if mounted.
     - vFAT will likely fail if fatresize < 1.04.
     type: bool
@@ -307,9 +308,14 @@ class LVM(Filesystem):
 
     def get_fs_size(self, dev):
         cmd = self.module.get_bin_path('pvs', required=True)
-        _, size, _ = self.module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', str(dev)], check_rc=True)
-        block_count = int(size[:-1])  # block size is 1
+        _, size, _ = self.module.run_command([cmd, '--noheadings', '-o', 'pv_size', '--units', 'b', '--nosuffix', str(dev)], check_rc=True)
+        block_count = int(size)
         return block_count
+
+
+class Swap(Filesystem):
+    MKFS = 'mkswap'
+    MKFS_FORCE_FLAGS = '-f'
 
 
 FILESYSTEMS = {
@@ -324,6 +330,7 @@ FILESYSTEMS = {
     'vfat': VFAT,
     'ocfs2': Ocfs2,
     'LVM2_member': LVM,
+    'swap': Swap,
 }
 
 
@@ -383,9 +390,7 @@ def main():
             module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % fstype)
 
         out = filesystem.grow(dev)
-        # Sadly there is no easy way to determine if this has changed. For now, just say "true" and move on.
-        #  in the future, you would have to parse the output to determine this.
-        #  thankfully, these are safe operations if no change is made.
+
         module.exit_json(changed=True, msg=out)
     elif fs and not force:
         module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite" % (dev, fs), rc=rc, err=err)

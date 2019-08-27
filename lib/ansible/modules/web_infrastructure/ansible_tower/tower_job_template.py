@@ -84,6 +84,12 @@ options:
       description:
         - Start the playbook at the task matching this name.
       version_added: 2.7
+    diff_mode_enabled:
+      description:
+        - Enable diff mode for the job template.
+      version_added: 2.7
+      type: bool
+      default: 'no'
     fact_caching_enabled:
       description:
         - Enable use of fact caching for the job template.
@@ -148,6 +154,12 @@ options:
       version_added: 2.7
       type: bool
       default: 'no'
+    survey_spec:
+      description:
+        - JSON/YAML dict formatted survey definition.
+      version_added: 2.8
+      type: dict
+      required: False
     become_enabled:
       description:
         - Activate privilege escalation.
@@ -165,6 +177,10 @@ options:
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
+notes:
+  - JSON for survey_spec can be found in Tower API Documentation. See
+    U(https://docs.ansible.com/ansible-tower/latest/html/towerapi/api_ref.html#/Job_Templates/Job_Templates_job_templates_survey_spec_create)
+    for POST operation payload example.
 '''
 
 
@@ -179,13 +195,15 @@ EXAMPLES = '''
     credential: "Local"
     state: "present"
     tower_config_file: "~/tower_cli.cfg"
+    survey_enabled: yes
+    survey_spec: "{{ lookup('file', 'my_survey.json') }}"
 '''
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -280,6 +298,7 @@ def main():
         ask_inventory=dict(type='bool', default=False),
         ask_credential=dict(type='bool', default=False),
         survey_enabled=dict(type='bool', default=False),
+        survey_spec=dict(type='dict', required=False),
         become_enabled=dict(type='bool', default=False),
         diff_mode_enabled=dict(type='bool', default=False),
         concurrent_jobs_enabled=dict(type='bool', default=False),
@@ -307,7 +326,7 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = jt.delete(**params)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update job template: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

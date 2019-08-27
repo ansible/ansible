@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 F5 Networks Inc.
+# Copyright: (c) 2016, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -34,16 +34,18 @@ options:
         cannot be resolved. These situations disable your ability to change their
         C(state) to C(disabled) or C(offline). They will remain in an
         *Unavailable - Enabled* state.
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
       - offline
+    default: present
   name:
     description:
       - Specifies the name of the node.
+    type: str
     required: True
   monitor_type:
     description:
@@ -55,21 +57,28 @@ options:
         or it has a list of one. Where they differ is in the extra guards that
         C(single) provides; namely that it only allows a single monitor.
     version_added: "1.3"
-    choices: ['and_list', 'm_of_n', 'single']
+    type: str
+    choices:
+     - and_list
+     - m_of_n
+     - single
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
+    type: int
     version_added: 2.2
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to
         monitor this node.
+    type: list
     version_added: 2.2
   address:
     description:
       - IP address of the node. This can be either IPv4 or IPv6. When creating a
         new node, one of either C(address) or C(fqdn) must be provided. This
         parameter cannot be updated after it is set.
+    type: str
     aliases:
       - ip
       - host
@@ -84,6 +93,7 @@ options:
       - FQDN names must end with a letter or a number.
       - When creating a new node, one of either C(address) or C(fqdn) must be
         provided. This parameter cannot be updated after it is set.
+    type: str
     aliases:
       - hostname
     version_added: 2.5
@@ -93,6 +103,7 @@ options:
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(ipv4).
       - This parameter cannot be changed after it has been set.
+    type: str
     choices:
       - ipv4
       - ipv6
@@ -124,6 +135,7 @@ options:
         the FQDN. The default TTL interval is akin to specifying C(3600).
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(3600).
+    type: str
     version_added: 2.6
   fqdn_down_interval:
     description:
@@ -131,107 +143,135 @@ options:
         The associated monitor continues polling as long as the DNS server is down.
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(5).
+    type: int
     version_added: 2.6
   description:
     description:
       - Specifies descriptive text that identifies the node.
       - You can remove a description by either specifying an empty string, or by
         specifying the special value C(none).
+    type: str
   connection_limit:
     description:
       - Node connection limit. Setting this to 0 disables the limit.
+    type: int
     version_added: 2.7
   rate_limit:
     description:
       - Node rate limit (connections-per-second). Setting this to 0 disables the limit.
+    type: int
     version_added: 2.7
   ratio:
     description:
       - Node ratio weight. Valid values range from 1 through 100.
       - When creating a new node, if this parameter is not specified, the default of
         C(1) will be used.
+    type: int
     version_added: 2.7
   dynamic_ratio:
     description:
       - The dynamic ratio number for the node. Used for dynamic ratio load balancing.
       - When creating a new node, if this parameter is not specified, the default of
         C(1) will be used.
+    type: int
     version_added: 2.7
+  availability_requirements:
+    description:
+      - Specifies, if you activate more than one health monitor, the number of health
+        monitors that must receive successful responses in order for the link to be
+        considered available.
+    suboptions:
+      type:
+        description:
+          - Monitor rule type when C(monitors) is specified.
+          - When creating a new pool, if this value is not specified, the default of
+            'all' will be used.
+        type: str
+        choices:
+          - all
+          - at_least
+      at_least:
+        description:
+          - Specifies the minimum number of active health monitors that must be successful
+            before the link is considered up.
+          - This parameter is only relevant when a C(type) of C(at_least) is used.
+          - This parameter will be ignored if a type of C(all) is used.
+        type: int
+    type: dict
+    version_added: 2.8
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Add node
   bigip_node:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    state: present
-    partition: Common
     host: 10.20.30.40
     name: 10.20.30.40
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add node with a single 'ping' monitor
   bigip_node:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    state: present
-    partition: Common
     host: 10.20.30.40
     name: mytestserver
     monitors:
       - /Common/icmp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Modify node description
   bigip_node:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    state: present
-    partition: Common
     name: 10.20.30.40
     description: Our best server yet
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete node
   bigip_node:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
-    partition: Common
     name: 10.20.30.40
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Force node offline
   bigip_node:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: disabled
-    partition: Common
     name: 10.20.30.40
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add node by their FQDN
   bigip_node:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    state: present
-    partition: Common
     fqdn: foo.bar.com
-    name: 10.20.30.40
+    name: foobar.net
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -240,7 +280,7 @@ monitor_type:
   description:
     - Changed value for the monitor_type of the node.
   returned: changed and success
-  type: string
+  type: str
   sample: m_of_n
 quorum:
   description:
@@ -258,19 +298,19 @@ description:
   description:
     - Changed value for the description of the node.
   returned: changed and success
-  type: string
+  type: str
   sample: E-Commerce webserver in ORD
 session:
   description:
     - Changed value for the internal session of the node.
   returned: changed and success
-  type: string
+  type: str
   sample: user-disabled
 state:
   description:
     - Changed value for the internal state of the node.
   returned: changed and success
-  type: string
+  type: str
   sample: m_of_n
 '''
 
@@ -286,22 +326,18 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.compat.ipaddress import ip_address
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.compat.ipaddress import ip_address
 
 
 class Parameters(AnsibleF5Parameters):
@@ -312,29 +348,13 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        # Leave the ``monitor`` attribute commented out
-        #
-        # This attribute is commented out to prevent it from trying to be
-        # sent to the API during a create or update request. This is because
-        # the field is **broken** and **will not work** if you send some
-        # formats of the monitor to the API.
-        #
-        # Specifically, the m_of_n types will not work because they include
-        # the brace ( ``{`` ) character and the API considers this character
-        # to be invalid.
-        #
-        # Monitors are handled in a special case within the ``update_one_device``
-        # and ``create_one_device`` methods. Refer to them if you need to know
-        # what that special case is.
-        #
-        # 'monitor',
-
         'description',
         'address',
         'fqdn',
         'ratio',
         'connectionLimit',
         'rateLimit',
+        'monitor',
 
         # Used for changing state
         #
@@ -349,11 +369,10 @@ class Parameters(AnsibleF5Parameters):
     ]
 
     returnables = [
-        'monitor_type',
-        'quorum',
         'monitors',
         'description',
         'fqdn',
+        'address',
         'session',
         'state',
         'fqdn_auto_populate',
@@ -363,12 +382,11 @@ class Parameters(AnsibleF5Parameters):
         'fqdn_name',
         'connection_limit',
         'ratio',
-        'rate_limit'
+        'rate_limit',
+        'availability_requirements'
     ]
 
     updatables = [
-        'monitor_type',
-        'quorum',
         'monitors',
         'description',
         'state',
@@ -379,7 +397,7 @@ class Parameters(AnsibleF5Parameters):
         'fqdn_address_type',
         'connection_limit',
         'ratio',
-        'rate_limit'
+        'rate_limit',
     ]
 
     def to_return(self):
@@ -391,28 +409,6 @@ class Parameters(AnsibleF5Parameters):
             return result
         except Exception:
             return result
-
-    @property
-    def monitors_list(self):
-        if self._values['monitors'] is None:
-            return []
-        try:
-            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
-            return result
-        except Exception:
-            return self._values['monitors']
-
-    @property
-    def monitors(self):
-        if self._values['monitors'] is None:
-            return None
-        monitors = [fq_name(self.partition, x) for x in self.monitors_list]
-        if self.monitor_type == 'm_of_n':
-            monitors = ' '.join(monitors)
-            result = 'min %s of { %s }' % (self.quorum, monitors)
-        else:
-            result = ' and '.join(monitors).strip()
-        return result
 
     @property
     def rate_limit(self):
@@ -439,35 +435,130 @@ class UsableChanges(Changes):
             result['autopopulate'] = self._values['fqdn_auto_populate']
         if self._values['fqdn_name'] is not None:
             result['tmName'] = self._values['fqdn_name']
+        if self._values['fqdn_address_type'] is not None:
+            result['addressFamily'] = self._values['fqdn_address_type']
         if not result:
             return None
         return result
 
+    @property
+    def monitors(self):
+        monitor_string = self._values['monitors']
+        if monitor_string is None:
+            return None
+        if '{' in monitor_string and '}':
+            tmp = monitor_string.strip('}').split('{')
+            monitor = ''.join(tmp).rstrip()
+            return monitor
+        return monitor_string
+
 
 class ReportableChanges(Changes):
-    pass
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+            result.sort()
+            return result
+        except Exception:
+            return self._values['monitors']
+
+    @property
+    def availability_requirement_type(self):
+        if self._values['monitors'] is None:
+            return None
+        if 'min ' in self._values['monitors']:
+            return 'at_least'
+        else:
+            return 'all'
+
+    @property
+    def at_least(self):
+        """Returns the 'at least' value from the monitor string.
+        The monitor string for a Require monitor looks like this.
+            min 1 of { /Common/gateway_icmp }
+        This method parses out the first of the numeric values. This values represents
+        the "at_least" value that can be updated in the module.
+        Returns:
+             int: The at_least value if found. None otherwise.
+        """
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'min\s+(?P<least>\d+)\s+of\s+'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches is None:
+            return None
+        return int(matches.group('least'))
+
+    @property
+    def availability_requirements(self):
+        if self._values['monitors'] is None:
+            return None
+        result = dict()
+        result['type'] = self.availability_requirement_type
+        result['at_least'] = self.at_least
+        return result
 
 
 class ModuleParameters(Parameters):
-    @property
-    def quorum(self):
-        if self._values['quorum'] is None:
+    def _get_availability_value(self, type):
+        if self._values['availability_requirements'] is None:
             return None
-        quorum = self._values['quorum']
-        try:
-            if quorum is None:
-                return None
-            return int(quorum)
-        except ValueError:
-            raise F5ModuleError(
-                "The specified 'quorum' must be an integer."
-            )
+        if self._values['availability_requirements'][type] is None:
+            return None
+        return int(self._values['availability_requirements'][type])
 
     @property
-    def monitor_type(self):
-        if self._values['monitor_type'] is None:
+    def monitors_list(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+        except Exception:
+            result = self._values['monitors']
+        result.sort()
+        return result
+
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
             return None
-        return self._values['monitor_type']
+        if len(self._values['monitors']) == 1 and self._values['monitors'][0] == '':
+            return '/Common/none'
+        monitors = [fq_name(self.partition, x) for x in self.monitors_list]
+        if self.availability_requirement_type == 'at_least':
+            if self.at_least > len(self.monitors_list):
+                raise F5ModuleError(
+                    "The 'at_least' value must not exceed the number of 'monitors'."
+                )
+            monitors = ' '.join(monitors)
+            result = 'min {0} of {{ {1} }}'.format(self.at_least, monitors)
+        else:
+            result = ' and '.join(monitors).strip()
+
+        return result
+
+    @property
+    def availability_requirement_type(self):
+        if self._values['monitor_type']:
+            if self._values['monitor_type'] in ['single', 'and_list']:
+                result = 'all'
+            else:
+                result = 'at_least'
+            self._values['availability_requirements'] = dict(type=None)
+            self._values['availability_requirements']['type'] = result
+        if self._values['availability_requirements'] is None:
+            return None
+        return self._values['availability_requirements']['type']
+
+    @property
+    def at_least(self):
+        if self._values['quorum']:
+            self._values['availability_requirements'] = dict(at_least=None)
+            self._values['availability_requirements']['at_least'] = self._values['quorum']
+        return self._get_availability_value('at_least')
 
     @property
     def fqdn_up_interval(self):
@@ -522,36 +613,6 @@ class ModuleParameters(Parameters):
 
 class ApiParameters(Parameters):
     @property
-    def quorum(self):
-        if self._values['monitors'] is None:
-            return None
-        pattern = r'min\s+(?P<quorum>\d+)\s+of'
-        matches = re.search(pattern, self._values['monitors'])
-        if matches:
-            quorum = matches.group('quorum')
-        else:
-            quorum = None
-        try:
-            if quorum is None:
-                return None
-            return int(quorum)
-        except ValueError:
-            raise F5ModuleError(
-                "The specified 'quorum' must be an integer."
-            )
-
-    @property
-    def monitor_type(self):
-        if self._values['monitors'] is None:
-            return None
-        pattern = r'min\s+\d+\s+of'
-        matches = re.search(pattern, self._values['monitors'])
-        if matches:
-            return 'm_of_n'
-        else:
-            return 'and_list'
-
-    @property
     def fqdn_up_interval(self):
         if self._values['fqdn'] is None:
             return None
@@ -585,6 +646,62 @@ class ApiParameters(Parameters):
             return None
         return self._values['description']
 
+    @property
+    def availability_requirement_type(self):
+        if self._values['monitors'] is None:
+            return None
+        if 'min ' in self._values['monitors']:
+            return 'at_least'
+        else:
+            return 'all'
+
+    @property
+    def monitors_list(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+        except Exception:
+            result = self._values['monitors']
+        result.sort()
+        return result
+
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
+            return None
+        if self._values['monitors'] == 'default':
+            return 'default'
+        monitors = [fq_name(self.partition, x) for x in self.monitors_list]
+        if self.availability_requirement_type == 'at_least':
+            monitors = ' '.join(monitors)
+            result = 'min {0} of {{ {1} }}'.format(self.at_least, monitors)
+        else:
+            result = ' and '.join(monitors).strip()
+        return result
+
+    @property
+    def at_least(self):
+        """Returns the 'at least' value from the monitor string.
+
+        The monitor string for a Require monitor looks like this.
+
+            min 1 of { /Common/gateway_icmp }
+
+        This method parses out the first of the numeric values. This values represents
+        the "at_least" value that can be updated in the module.
+
+        Returns:
+             int: The at_least value if found. None otherwise.
+        """
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'min\s+(?P<least>\d+)\s+of\s+'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches is None:
+            return None
+        return matches.group('least')
+
 
 class Difference(object):
     def __init__(self, want, have=None):
@@ -608,20 +725,8 @@ class Difference(object):
             return attr1
 
     @property
-    def monitor_type(self):
-        if self.want.monitor_type is None:
-            self.want.update(dict(monitor_type=self.have.monitor_type))
-
-        if self.want.quorum is None:
-            self.want.update(dict(quorum=self.have.quorum))
-
-        if self.want.monitor_type == 'm_of_n' and self.want.quorum is None:
-            if self.want.quorum is None and self.have.quorum is None:
-                return None
-            raise F5ModuleError(
-                "Quorum value must be specified with monitor_type 'm_of_n'."
-            )
-        elif self.want.monitor_type == 'single':
+    def monitors(self):
+        if self.want.monitor_type == 'single':
             if len(self.want.monitors_list) > 1:
                 raise F5ModuleError(
                     "When using a 'monitor_type' of 'single', only one monitor may be provided."
@@ -633,27 +738,19 @@ class Difference(object):
                 raise F5ModuleError(
                     "A single monitor must be specified if more than one monitor currently exists on your pool."
                 )
-            # Update to 'and_list' here because the above checks are all that need
-            # to be done before we change the value back to what is expected by
-            # BIG-IP.
-            #
-            # Remember that 'single' is nothing more than a fancy way of saying
-            # "and_list plus some extra checks"
-            self.want.update(dict(monitor_type='and_list'))
-        if self.want.monitor_type != self.have.monitor_type:
-            return self.want.monitor_type
-
-    @property
-    def monitors(self):
-        if self.want.monitor_type is None:
-            self.want.update(dict(monitor_type=self.have.monitor_type))
-        if not self.want.monitors_list:
-            self.want.monitors = self.have.monitors_list
-        if not self.want.monitors and self.want.monitor_type is not None:
-            raise F5ModuleError(
-                "The 'monitors' parameter cannot be empty when 'monitor_type' parameter is specified"
-            )
-        if self.want.monitors != self.have.monitors:
+        if self.want.monitors is None:
+            return None
+        if self.want.monitors == 'default' and self.have.monitors == 'default':
+            return None
+        if self.want.monitors == 'default' and self.have.monitors is None:
+            return None
+        if self.want.monitors == '/Common/none' and self.have.monitors == '/Common/none':
+            return None
+        if self.want.monitors == 'default' and len(self.have.monitors) > 0:
+            return 'default'
+        if self.have.monitors is None:
+            return self.want.monitors
+        if self.have.monitors != self.want.monitors:
             return self.want.monitors
 
     @property
@@ -680,28 +777,6 @@ class Difference(object):
         return result
 
     @property
-    def fqdn_auto_populate(self):
-        if self.want.fqdn_auto_populate is None:
-            return None
-        if self.want.fqdn_auto_populate != self.have.fqdn_auto_populate:
-            raise F5ModuleError(
-                "The 'fqdn_auto_populate' parameter cannot be changed."
-            )
-
-    @property
-    def fqdn_address_type(self):
-        if self.want.fqdn_address_type is None:
-            return None
-        if self.want.fqdn_address_type != self.have.fqdn_address_type:
-            raise F5ModuleError(
-                "The 'fqdn_address_type' parameter cannot be changed."
-            )
-
-    @property
-    def fqdn(self):
-        return None
-
-    @property
     def description(self):
         if self.want.description is None:
             return None
@@ -714,7 +789,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -745,7 +820,7 @@ class ModuleManager(object):
             return True
         return False
 
-    def _announce_deprecations(self):
+    def _announce_deprecations(self):  # lgtm [py/similar-function]
         warnings = []
         if self.want:
             warnings += self.want._values.get('__warnings', [])
@@ -847,6 +922,23 @@ class ModuleManager(object):
         if self.module.check_mode:
             return True
 
+        # These are being set here because the ``create_on_device`` method
+        # uses ``self.changes`` (to get formatting of parameters correct)
+        # but these two parameters here cannot be changed and also it is
+        # not easy to get the current versions of them for comparison.
+        if self.want.address:
+            self.changes.update({'address': self.want.address})
+        if self.want.fqdn_up_interval is not None:
+            self.changes.update({'fqdn_up_interval': self.want.fqdn_up_interval})
+        if self.want.fqdn_down_interval is not None:
+            self.changes.update({'fqdn_down_interval': self.want.fqdn_down_interval})
+        if self.want.fqdn_auto_populate is not None:
+            self.changes.update({'fqdn_auto_populate': self.want.fqdn_auto_populate})
+        if self.want.fqdn_name is not None:
+            self.changes.update({'fqdn_name': self.want.fqdn_name})
+        if self.want.fqdn_address_type is not None:
+            self.changes.update({'fqdn_address_type': self.want.fqdn_address_type})
+
         self.create_on_device()
         if not self.exists():
             raise F5ModuleError("Failed to create the node")
@@ -866,6 +958,18 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
+
+        if self.want.fqdn_auto_populate is not None:
+            if self.want.fqdn_auto_populate != self.have.fqdn_auto_populate:
+                raise F5ModuleError(
+                    "The 'fqdn_auto_populate' parameter cannot be changed."
+                )
+        if self.want.fqdn_address_type is not None:
+            if self.want.fqdn_address_type != self.have.fqdn_address_type:
+                raise F5ModuleError(
+                    "The 'fqdn_address_type' parameter cannot be changed."
+                )
+
         if self.module.check_mode:
             return True
 
@@ -906,7 +1010,7 @@ class ModuleManager(object):
                 raise F5ModuleError(resp.content)
         return ApiParameters(params=response)
 
-    def exists(self):
+    def exists(self):  # lgtm [py/similar-function]
         uri = "https://{0}:{1}/mgmt/tm/ltm/node/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
@@ -962,12 +1066,9 @@ class ModuleManager(object):
                     raise F5ModuleError(response['message'])
                 else:
                     raise F5ModuleError(resp.content)
-        if self.want.monitors:
-            self.update_monitors_on_device()
 
     def create_on_device(self):
-        params = self.want.api_params()
-
+        params = self.changes.api_params()
         params['name'] = self.want.name
         params['partition'] = self.want.partition
         uri = "https://{0}:{1}/mgmt/tm/ltm/node/".format(
@@ -985,8 +1086,6 @@ class ModuleManager(object):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        if self.want.monitors:
-            self.update_monitors_on_device()
         self._wait_for_fqdn_checks()
 
     def _wait_for_fqdn_checks(self):
@@ -1007,46 +1106,6 @@ class ModuleManager(object):
         if resp.status == 200:
             return True
 
-    def update_monitors_on_device(self):
-        """Updates the monitors string
-
-        There is a long-standing bug in where the monitor value
-        is a string that includes braces. These braces cause the REST API to panic and
-        fail to update or create any resources that have an "at_least" or "require"
-        set of availability_requirements.
-
-        This method exists to do a tmsh command to cause the update to take place on
-        the device.
-
-        Preferably, this method can be removed and the bug be fixed. The API should
-        be working, obviously, but the more concerning issue is if tmsh commands change
-        over time, breaking this method.
-        """
-        command = 'tmsh modify ltm node /{0}/{1} monitor {2}'.format(
-            self.want.partition, self.want.name, self.want.monitors
-        )
-        params = {
-            "command": "run",
-            "utilCmdArgs": '-c "{0}"'.format(command)
-        }
-        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
-            self.client.provider['server'],
-            self.client.provider['server_port']
-        )
-        resp = self.client.api.post(uri, json=params)
-        try:
-            response = resp.json()
-            if 'commandResult' in response and len(response['commandResult'].strip()) > 0:
-                raise F5ModuleError(response['commandResult'])
-        except ValueError as ex:
-            raise F5ModuleError(str(ex))
-        if 'code' in response and response['code'] in [400, 403]:
-            if 'message' in response:
-                raise F5ModuleError(response['message'])
-            else:
-                raise F5ModuleError(resp.content)
-        return True
-
 
 class ArgumentSpec(object):
     def __init__(self):
@@ -1060,13 +1119,6 @@ class ArgumentSpec(object):
                 aliases=['hostname']
             ),
             description=dict(),
-            monitor_type=dict(
-                choices=[
-                    'and_list', 'm_of_n', 'single'
-                ]
-            ),
-            quorum=dict(type='int'),
-            monitors=dict(type='list'),
             state=dict(
                 choices=['absent', 'present', 'enabled', 'disabled', 'offline'],
                 default='present'
@@ -1084,11 +1136,42 @@ class ArgumentSpec(object):
             connection_limit=dict(type='int'),
             rate_limit=dict(type='int'),
             ratio=dict(type='int'),
-            dynamic_ratio=dict(type='int')
+            dynamic_ratio=dict(type='int'),
+            availability_requirements=dict(
+                type='dict',
+                options=dict(
+                    type=dict(
+                        choices=['all', 'at_least'],
+                        required=True
+                    ),
+                    at_least=dict(type='int'),
+                ),
+                required_if=[
+                    ['type', 'at_least', ['at_least']],
+                ]
+            ),
+            monitors=dict(type='list'),
+
+
+            # Deprecated parameters
+            monitor_type=dict(
+                choices=[
+                    'and_list', 'm_of_n', 'single'
+                ],
+                removed_in_version=2.12,
+            ),
+            quorum=dict(
+                type='int',
+                removed_in_version=2.12,
+            ),
+
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
         self.argument_spec.update(argument_spec)
+        self.mutually_exclusive = [
+            ['monitor_type', 'quorum', 'availability_requirements']
+        ]
 
 
 def main():
@@ -1097,17 +1180,15 @@ def main():
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -15,37 +15,37 @@ $result = @{
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -resultobj $result
 
 If (-Not (Test-Path -Path $path -PathType Leaf)){
-    Fail-Json $result "Specified path $path does exist or is not a file."
+    Fail-Json $result "Specified path $path does not exist or is not a file."
 }
 $ext = [System.IO.Path]::GetExtension($path)
 If ( $ext -notin '.exe', '.dll'){
-    Fail-Json $result "Specified path $path is not a vaild file type; must be DLL or EXE."
+    Fail-Json $result "Specified path $path is not a valid file type; must be DLL or EXE."
 }
 
 Try {
     $_version_fields = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path)
     $file_version = $_version_fields.FileVersion
-    If ($file_version -eq $null){
+    If ($null -eq $file_version){
         $file_version = ''
     }
     $product_version = $_version_fields.ProductVersion
-    If ($product_version -eq $null){
+    If ($null -eq $product_version){
         $product_version= ''
     }
     $file_major_part = $_version_fields.FileMajorPart
-    If ($file_major_part -eq $null){
+    If ($null -eq $file_major_part){
         $file_major_part= ''
     }
     $file_minor_part = $_version_fields.FileMinorPart
-    If ($file_minor_part -eq $null){
+    If ($null -eq $file_minor_part){
         $file_minor_part= ''
     }
     $file_build_part = $_version_fields.FileBuildPart
-    If ($file_build_part -eq $null){
+    If ($null -eq $file_build_part){
         $file_build_part = ''
     }
     $file_private_part = $_version_fields.FilePrivatePart
-    If ($file_private_part -eq $null){
+    If ($null -eq $file_private_part){
         $file_private_part = ''
     }
 }

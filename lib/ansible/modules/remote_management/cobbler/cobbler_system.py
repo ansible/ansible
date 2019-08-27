@@ -107,6 +107,7 @@ EXAMPLES = r'''
     host: cobbler01
     username: cobbler
     password: MySuperSecureP4sswOrd
+    state: query
   register: cobbler_systems
   delegate_to: localhost
 
@@ -116,6 +117,7 @@ EXAMPLES = r'''
     username: cobbler
     password: MySuperSecureP4sswOrd
     name: '{{ inventory_hostname }}'
+    state: query
   register: cobbler_properties
   delegate_to: localhost
 
@@ -125,6 +127,7 @@ EXAMPLES = r'''
     username: cobbler
     password: MySuperSecureP4sswOrd
     name: myhost
+    state: absent
   delegate_to: localhost
 '''
 
@@ -297,11 +300,11 @@ def main():
                     if key not in IFPROPS_MAPPING:
                         module.warn("Property '{0}' is not a valid system property.".format(key))
                     if not system or system['interfaces'][device][IFPROPS_MAPPING[key]] != value:
-                        interface_properties['{0}-{1}'.format(key, device)] = value
+                        result['changed'] = True
+                    interface_properties['{0}-{1}'.format(key, device)] = value
 
-            if interface_properties:
+            if result['changed'] is True:
                 conn.modify_system(system_id, "modify_interface", interface_properties, token)
-                result['changed'] = True
 
         # Only save when the entry was changed
         if not module.check_mode and result['changed']:

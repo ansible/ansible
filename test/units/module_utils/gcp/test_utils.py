@@ -15,10 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import sys
 
-from ansible.compat.tests import mock, unittest
+from units.compat import mock, unittest
 from ansible.module_utils.gcp import check_min_pkg_version, GCPUtils, GCPInvalidURLError
 
 

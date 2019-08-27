@@ -1,0 +1,61 @@
+# This playbook exists to document the behavior of how run_once when
+# applied to a dynamic include works
+#
+# As with other uses of keywords on dynamic includes, it only affects the include.
+# In this case it causes the include to only be processed for ansible_play_hosts[0]
+# which has the side effect of only running the tasks on ansible_play_hosts[0]
+# and would only delegate facts of the include itself, not the tasks contained within
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - add_host:
+        name: "{{ item }}"
+        ansible_connection: local
+        groups:
+          - all
+      loop:
+        - localhost0
+        - localhost1
+
+    - add_host:
+        name: "{{ item }}"
+        groups:
+          - testing
+        ansible_connection: local
+      loop:
+        - localhost2
+        - localhost3
+
+- hosts: all:!testing
+  gather_facts: false
+  vars:
+    lola: untouched
+  tasks:
+    - include_tasks:
+        file: include_me.yml
+        apply:
+            run_once: true
+      run_once: true
+
+    - assert:
+        that:
+          - lola == 'wiseman'
+
+- hosts: testing
+  gather_facts: false
+  vars:
+    lola: untouched
+  tasks:
+    - include_tasks: include_me.yml
+      run_once: true
+
+    - assert:
+        that:
+          - lola == 'wiseman'
+      when: inventory_hostname == ansible_play_hosts[0]
+
+    - assert:
+        that:
+          - lola == 'untouched'
+      when: inventory_hostname != ansible_play_hosts[0]

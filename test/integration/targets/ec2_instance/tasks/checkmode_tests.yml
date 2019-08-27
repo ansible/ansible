@@ -1,0 +1,182 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+    - name: Make basic instance
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+        wait: false
+        <<: *aws_connection_info
+      register: basic_instance
+
+    - name: Make basic instance(check mode)
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison-checkmode"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+        <<: *aws_connection_info
+      check_mode: yes
+
+    - name: fact presented ec2 instance
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
+        <<: *aws_connection_info
+      register: presented_instance_fact
+
+    - name: fact checkmode ec2 instance
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison-checkmode"
+        <<: *aws_connection_info
+      register: checkmode_instance_fact
+
+    - name: Confirm whether the check mode is working normally.
+      assert:
+        that:
+          - "{{ presented_instance_fact.instances | length }} > 0"
+          - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+    - name: Stop instance in check mode.
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison"
+        state: stopped
+        vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+        <<: *aws_connection_info
+      check_mode: yes
+
+    - name: fact ec2 instance
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
+        <<: *aws_connection_info
+      register: confirm_checkmode_stopinstance_fact
+
+    - name: Verify that it was not stopped.
+      assert:
+        that:
+          - '"{{ confirm_checkmode_stopinstance_fact.instances[0].state.name }}" != "stopped"'
+
+    - name: Stop instance.
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison"
+        state: stopped
+        vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+        <<: *aws_connection_info
+      register: instance_stop
+      until: not instance_stop.failed
+      retries: 10
+
+      
+    - name: fact stopped ec2 instance
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
+        <<: *aws_connection_info
+      register: confirm_stopinstance_fact
+
+    - name: Verify that it was stopped.
+      assert:
+        that:
+          - '"{{ confirm_stopinstance_fact.instances[0].state.name }}" in ["stopped", "stopping"]'
+
+    - name: Running instance in check mode.
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison"
+        state: running
+        vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+        <<: *aws_connection_info
+      check_mode: yes
+      
+    - name: fact ec2 instance
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
+        <<: *aws_connection_info
+      register: confirm_checkmode_runninginstance_fact
+      
+    - name: Verify that it was not running.
+      assert:
+        that:
+          - '"{{ confirm_checkmode_runninginstance_fact.instances[0].state.name }}" != "running"'
+
+    - name: Running instance.
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison"
+        state: running
+        vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+        <<: *aws_connection_info
+          
+    - name: fact ec2 instance.
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
+        <<: *aws_connection_info
+      register: confirm_runninginstance_fact
+
+    - name: Verify that it was running.
+      assert:
+        that:
+          - '"{{ confirm_runninginstance_fact.instances[0].state.name }}" == "running"'
+
+    - name: Terminate instance in check mode.
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison"
+        state: absent
+        vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+        <<: *aws_connection_info
+      check_mode: yes
+
+    - name: fact ec2 instance
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
+        <<: *aws_connection_info
+      register: confirm_checkmode_terminatedinstance_fact
+      
+    - name: Verify that it was not terminated,
+      assert:
+        that:
+          - '"{{ confirm_checkmode_terminatedinstance_fact.instances[0].state.name }}" != "terminated"'
+
+    - name: Terminate instance.
+      ec2_instance:
+        name: "{{ resource_prefix }}-checkmode-comparison"
+        state: absent
+        vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+        <<: *aws_connection_info
+
+    - name: fact ec2 instance
+      ec2_instance_info:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
+        <<: *aws_connection_info
+      register: confirm_terminatedinstance_fact
+      
+    - name: Verify that it was terminated,
+      assert:
+        that:
+          - '"{{ confirm_terminatedinstance_fact.instances[0].state.name }}" == "terminated"'
+        
+  always:
+    - name: Terminate instance
+      ec2:
+        instance_ids: "{{ basic_instance.instance_ids }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10

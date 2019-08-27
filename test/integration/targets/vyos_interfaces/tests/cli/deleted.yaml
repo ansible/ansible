@@ -1,0 +1,46 @@
+---
+- debug:
+    msg: "Start vyos_interfaces deleted integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate.yaml
+
+- block:  
+    - name: Delete attributes of given interfaces
+      vyos_interfaces: &deleted
+        config:
+          - name: eth1
+          - name: eth2
+        state: deleted
+      register: result
+
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that the correct set of commands were generated
+      assert:
+        that:
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that the after dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Delete attributes of given interfaces (IDEMPOTENT)
+      vyos_interfaces: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.changed == false"
+
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

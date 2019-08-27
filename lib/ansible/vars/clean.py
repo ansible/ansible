@@ -9,15 +9,15 @@ import os
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
+from ansible.errors import AnsibleError
 from ansible.module_utils import six
+from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.plugins.loader import connection_loader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+
+display = Display()
 
 
 def module_response_deepcopy(v):
@@ -68,21 +68,32 @@ def module_response_deepcopy(v):
 
 
 def strip_internal_keys(dirty, exceptions=None):
-    '''
-    All keys starting with _ansible_ are internal, so create a copy of the 'dirty' dict
-    and remove them from the clean one before returning it
-    '''
+    # All keys starting with _ansible_ are internal, so change the 'dirty' mapping and remove them.
 
     if exceptions is None:
-        exceptions = ()
-    clean = dirty.copy()
-    for k in dirty.keys():
-        if isinstance(k, six.string_types) and k.startswith('_ansible_'):
-            if k not in exceptions:
-                del clean[k]
-        elif isinstance(dirty[k], dict):
-            clean[k] = strip_internal_keys(dirty[k])
-    return clean
+        exceptions = tuple()
+
+    if isinstance(dirty, MutableSequence):
+
+        for element in dirty:
+            if isinstance(element, (MutableMapping, MutableSequence)):
+                strip_internal_keys(element, exceptions=exceptions)
+
+    elif isinstance(dirty, MutableMapping):
+
+        # listify to avoid updating dict while iterating over it
+        for k in list(dirty.keys()):
+            if isinstance(k, six.string_types):
+                if k.startswith('_ansible_') and k not in exceptions:
+                    del dirty[k]
+                    continue
+
+            if isinstance(dirty[k], (MutableMapping, MutableSequence)):
+                strip_internal_keys(dirty[k], exceptions=exceptions)
+    else:
+        raise AnsibleError("Cannot strip invalid keys from %s" % type(dirty))
+
+    return dirty
 
 
 def remove_internal_keys(data):
@@ -98,6 +109,11 @@ def remove_internal_keys(data):
     for key in ['warnings', 'deprecations']:
         if key in data and not data[key]:
             del data[key]
+
+    # cleanse fact values that are allowed from actions but not modules
+    for key in list(data.get('ansible_facts', {}).keys()):
+        if key.startswith('discovered_interpreter_') or key.startswith('ansible_discovered_interpreter_'):
+            del data['ansible_facts'][key]
 
 
 def clean_facts(facts):

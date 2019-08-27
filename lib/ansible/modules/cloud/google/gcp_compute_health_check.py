@@ -18,439 +18,626 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_compute_health_check
 description:
-    - An HealthCheck resource. This resource defines a template for how individual virtual
-      machines should be checked for health, via one of the supported protocols.
+- Health Checks determine whether instances are responsive and able to do work.
+- They are an important part of a comprehensive load balancing configuration, as they
+  enable monitoring instances behind load balancers.
+- Health Checks poll instances at a specified interval. Instances that do not respond
+  successfully to some number of probes in a row are marked as unhealthy. No new connections
+  are sent to unhealthy instances, though existing connections will continue. The
+  health check will continue to poll unhealthy instances. If an instance later responds
+  successfully to some number of consecutive probes, it is marked healthy again and
+  can receive new connections.
 short_description: Creates a GCP HealthCheck
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    check_interval_sec:
-        description:
-            - How often (in seconds) to send a health check. The default value is 5 seconds.
-        required: false
-        default: 5
+  state:
     description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+    type: str
+  check_interval_sec:
+    description:
+    - How often (in seconds) to send a health check. The default value is 5 seconds.
+    required: false
+    default: '5'
+    type: int
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource.
+    required: false
+    type: str
+  healthy_threshold:
+    description:
+    - A so-far unhealthy instance will be marked healthy after this many consecutive
+      successes. The default value is 2.
+    required: false
+    default: '2'
+    type: int
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+    type: str
+  timeout_sec:
+    description:
+    - How long (in seconds) to wait before claiming failure.
+    - The default value is 5 seconds. It is invalid for timeoutSec to have greater
+      value than checkIntervalSec.
+    required: false
+    default: '5'
+    type: int
+    aliases:
+    - timeout_seconds
+  unhealthy_threshold:
+    description:
+    - A so-far healthy instance will be marked unhealthy after this many consecutive
+      failures. The default value is 2.
+    required: false
+    default: '2'
+    type: int
+  type:
+    description:
+    - Specifies the type of the healthCheck, either TCP, SSL, HTTP or HTTPS. If not
+      specified, the default is TCP. Exactly one of the protocol-specific health check
+      field must be specified, which must match type field.
+    - 'Some valid choices include: "TCP", "SSL", "HTTP", "HTTPS"'
+    required: false
+    type: str
+  http_health_check:
+    description:
+    - A nested object resource.
+    required: false
+    type: dict
+    suboptions:
+      host:
         description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
+        - The value of the host header in the HTTP health check request.
+        - If left empty (default value), the public IP on behalf of which this health
+          check is performed will be used.
         required: false
-    healthy_threshold:
+        type: str
+      request_path:
         description:
-            - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
-              The default value is 2.
+        - The request path of the HTTP health check request.
+        - The default value is /.
         required: false
-    name:
+        default: "/"
+        type: str
+      response:
         description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
+        - The bytes to match against the beginning of the response data. If left empty
+          (the default value), any response will indicate health. The response data
+          can only be ASCII.
         required: false
-    timeout_sec:
+        type: str
+      port:
         description:
-            - How long (in seconds) to wait before claiming failure.
-            - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
-              than checkIntervalSec.
+        - The TCP port number for the HTTP health check request.
+        - The default value is 80.
         required: false
-        default: 5
-        aliases: [timeout_seconds]
-    unhealthy_threshold:
+        type: int
+      port_name:
         description:
-            - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
-              The default value is 2.
+        - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+          are defined, port takes precedence.
         required: false
-        default: 2
-    type:
+        type: str
+      proxy_header:
         description:
-            - Specifies the type of the healthCheck, either TCP, SSL, HTTP or HTTPS. If not specified,
-              the default is TCP. Exactly one of the protocol-specific health check field must
-              be specified, which must match type field.
+        - Specifies the type of proxy header to append before sending data to the
+          backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
         required: false
-        choices: ['TCP', 'SSL', 'HTTP']
-    http_health_check:
+        default: NONE
+        type: str
+      port_specification:
         description:
-            - A nested object resource.
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, HTTP health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
         required: false
-        suboptions:
-            host:
-                description:
-                    - The value of the host header in the HTTP health check request.
-                    - If left empty (default value), the public IP on behalf of which this health check
-                      is performed will be used.
-                required: false
-            request_path:
-                description:
-                    - The request path of the HTTP health check request.
-                    - The default value is /.
-                required: false
-            port:
-                description:
-                    - The TCP port number for the HTTP health check request.
-                    - The default value is 80.
-                required: false
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                required: false
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                required: false
-                choices: ['NONE', 'PROXY_V1']
-    https_health_check:
+        type: str
+        version_added: 2.9
+  https_health_check:
+    description:
+    - A nested object resource.
+    required: false
+    type: dict
+    suboptions:
+      host:
         description:
-            - A nested object resource.
+        - The value of the host header in the HTTPS health check request.
+        - If left empty (default value), the public IP on behalf of which this health
+          check is performed will be used.
         required: false
-        suboptions:
-            host:
-                description:
-                    - The value of the host header in the HTTPS health check request.
-                    - If left empty (default value), the public IP on behalf of which this health check
-                      is performed will be used.
-                required: false
-            request_path:
-                description:
-                    - The request path of the HTTPS health check request.
-                    - The default value is /.
-                required: false
-            port:
-                description:
-                    - The TCP port number for the HTTPS health check request.
-                    - The default value is 443.
-                required: false
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                required: false
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                required: false
-                choices: ['NONE', 'PROXY_V1']
-    tcp_health_check:
+        type: str
+      request_path:
         description:
-            - A nested object resource.
+        - The request path of the HTTPS health check request.
+        - The default value is /.
         required: false
-        suboptions:
-            request:
-                description:
-                    - The application data to send once the TCP connection has been established (default
-                      value is empty). If both request and response are empty, the connection establishment
-                      alone will indicate health. The request data can only be ASCII.
-                required: false
-            response:
-                description:
-                    - The bytes to match against the beginning of the response data. If left empty (the
-                      default value), any response will indicate health. The response data can only be
-                      ASCII.
-                required: false
-            port:
-                description:
-                    - The TCP port number for the TCP health check request.
-                    - The default value is 443.
-                required: false
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                required: false
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                required: false
-                choices: ['NONE', 'PROXY_V1']
-    ssl_health_check:
+        default: "/"
+        type: str
+      response:
         description:
-            - A nested object resource.
+        - The bytes to match against the beginning of the response data. If left empty
+          (the default value), any response will indicate health. The response data
+          can only be ASCII.
         required: false
-        suboptions:
-            request:
-                description:
-                    - The application data to send once the SSL connection has been established (default
-                      value is empty). If both request and response are empty, the connection establishment
-                      alone will indicate health. The request data can only be ASCII.
-                required: false
-            response:
-                description:
-                    - The bytes to match against the beginning of the response data. If left empty (the
-                      default value), any response will indicate health. The response data can only be
-                      ASCII.
-                required: false
-            port:
-                description:
-                    - The TCP port number for the SSL health check request.
-                    - The default value is 443.
-                required: false
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                required: false
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                required: false
-                choices: ['NONE', 'PROXY_V1']
+        type: str
+      port:
+        description:
+        - The TCP port number for the HTTPS health check request.
+        - The default value is 443.
+        required: false
+        type: int
+      port_name:
+        description:
+        - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+          are defined, port takes precedence.
+        required: false
+        type: str
+      proxy_header:
+        description:
+        - Specifies the type of proxy header to append before sending data to the
+          backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
+        required: false
+        default: NONE
+        type: str
+      port_specification:
+        description:
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, HTTPS health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
+        required: false
+        type: str
+        version_added: 2.9
+  tcp_health_check:
+    description:
+    - A nested object resource.
+    required: false
+    type: dict
+    suboptions:
+      request:
+        description:
+        - The application data to send once the TCP connection has been established
+          (default value is empty). If both request and response are empty, the connection
+          establishment alone will indicate health. The request data can only be ASCII.
+        required: false
+        type: str
+      response:
+        description:
+        - The bytes to match against the beginning of the response data. If left empty
+          (the default value), any response will indicate health. The response data
+          can only be ASCII.
+        required: false
+        type: str
+      port:
+        description:
+        - The TCP port number for the TCP health check request.
+        - The default value is 443.
+        required: false
+        type: int
+      port_name:
+        description:
+        - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+          are defined, port takes precedence.
+        required: false
+        type: str
+      proxy_header:
+        description:
+        - Specifies the type of proxy header to append before sending data to the
+          backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
+        required: false
+        default: NONE
+        type: str
+      port_specification:
+        description:
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, TCP health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
+        required: false
+        type: str
+        version_added: 2.9
+  ssl_health_check:
+    description:
+    - A nested object resource.
+    required: false
+    type: dict
+    suboptions:
+      request:
+        description:
+        - The application data to send once the SSL connection has been established
+          (default value is empty). If both request and response are empty, the connection
+          establishment alone will indicate health. The request data can only be ASCII.
+        required: false
+        type: str
+      response:
+        description:
+        - The bytes to match against the beginning of the response data. If left empty
+          (the default value), any response will indicate health. The response data
+          can only be ASCII.
+        required: false
+        type: str
+      port:
+        description:
+        - The TCP port number for the SSL health check request.
+        - The default value is 443.
+        required: false
+        type: int
+      port_name:
+        description:
+        - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+          are defined, port takes precedence.
+        required: false
+        type: str
+      proxy_header:
+        description:
+        - Specifies the type of proxy header to append before sending data to the
+          backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
+        required: false
+        default: NONE
+        type: str
+      port_specification:
+        description:
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, SSL health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
+        required: false
+        type: str
+        version_added: 2.9
 extends_documentation_fragment: gcp
+notes:
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/healthChecks)'
+- 'Official Documentation: U(https://cloud.google.com/load-balancing/docs/health-checks)'
 '''
 
 EXAMPLES = '''
 - name: create a health check
   gcp_compute_health_check:
-      name: "test_object"
-      type: TCP
-      tcp_health_check:
-        port_name: service-health
-        request: ping
-        response: pong
-      healthy_threshold: 10
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "test_project"
-      auth_kind: "service_account"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    type: TCP
+    tcp_health_check:
+      port_name: service-health
+      request: ping
+      response: pong
+    healthy_threshold: 10
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
-    check_interval_sec:
-        description:
-            - How often (in seconds) to send a health check. The default value is 5 seconds.
-        returned: success
-        type: int
-    creation_timestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        returned: success
-        type: str
-    healthy_threshold:
-        description:
-            - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
-              The default value is 2.
-        returned: success
-        type: int
-    id:
-        description:
-            - The unique identifier for the resource. This identifier is defined by the server.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    timeout_sec:
-        description:
-            - How long (in seconds) to wait before claiming failure.
-            - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
-              than checkIntervalSec.
-        returned: success
-        type: int
-    unhealthy_threshold:
-        description:
-            - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
-              The default value is 2.
-        returned: success
-        type: int
-    type:
-        description:
-            - Specifies the type of the healthCheck, either TCP, SSL, HTTP or HTTPS. If not specified,
-              the default is TCP. Exactly one of the protocol-specific health check field must
-              be specified, which must match type field.
-        returned: success
-        type: str
-    http_health_check:
-        description:
-            - A nested object resource.
-        returned: success
-        type: complex
-        contains:
-            host:
-                description:
-                    - The value of the host header in the HTTP health check request.
-                    - If left empty (default value), the public IP on behalf of which this health check
-                      is performed will be used.
-                returned: success
-                type: str
-            request_path:
-                description:
-                    - The request path of the HTTP health check request.
-                    - The default value is /.
-                returned: success
-                type: str
-            port:
-                description:
-                    - The TCP port number for the HTTP health check request.
-                    - The default value is 80.
-                returned: success
-                type: int
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                returned: success
-                type: str
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                returned: success
-                type: str
-    https_health_check:
-        description:
-            - A nested object resource.
-        returned: success
-        type: complex
-        contains:
-            host:
-                description:
-                    - The value of the host header in the HTTPS health check request.
-                    - If left empty (default value), the public IP on behalf of which this health check
-                      is performed will be used.
-                returned: success
-                type: str
-            request_path:
-                description:
-                    - The request path of the HTTPS health check request.
-                    - The default value is /.
-                returned: success
-                type: str
-            port:
-                description:
-                    - The TCP port number for the HTTPS health check request.
-                    - The default value is 443.
-                returned: success
-                type: int
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                returned: success
-                type: str
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                returned: success
-                type: str
-    tcp_health_check:
-        description:
-            - A nested object resource.
-        returned: success
-        type: complex
-        contains:
-            request:
-                description:
-                    - The application data to send once the TCP connection has been established (default
-                      value is empty). If both request and response are empty, the connection establishment
-                      alone will indicate health. The request data can only be ASCII.
-                returned: success
-                type: str
-            response:
-                description:
-                    - The bytes to match against the beginning of the response data. If left empty (the
-                      default value), any response will indicate health. The response data can only be
-                      ASCII.
-                returned: success
-                type: str
-            port:
-                description:
-                    - The TCP port number for the TCP health check request.
-                    - The default value is 443.
-                returned: success
-                type: int
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                returned: success
-                type: str
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                returned: success
-                type: str
-    ssl_health_check:
-        description:
-            - A nested object resource.
-        returned: success
-        type: complex
-        contains:
-            request:
-                description:
-                    - The application data to send once the SSL connection has been established (default
-                      value is empty). If both request and response are empty, the connection establishment
-                      alone will indicate health. The request data can only be ASCII.
-                returned: success
-                type: str
-            response:
-                description:
-                    - The bytes to match against the beginning of the response data. If left empty (the
-                      default value), any response will indicate health. The response data can only be
-                      ASCII.
-                returned: success
-                type: str
-            port:
-                description:
-                    - The TCP port number for the SSL health check request.
-                    - The default value is 443.
-                returned: success
-                type: int
-            port_name:
-                description:
-                    - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
-                      are defined, port takes precedence.
-                returned: success
-                type: str
-            proxy_header:
-                description:
-                    - Specifies the type of proxy header to append before sending data to the backend,
-                      either NONE or PROXY_V1. The default is NONE.
-                returned: success
-                type: str
+checkIntervalSec:
+  description:
+  - How often (in seconds) to send a health check. The default value is 5 seconds.
+  returned: success
+  type: int
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource.
+  returned: success
+  type: str
+healthyThreshold:
+  description:
+  - A so-far unhealthy instance will be marked healthy after this many consecutive
+    successes. The default value is 2.
+  returned: success
+  type: int
+id:
+  description:
+  - The unique identifier for the resource. This identifier is defined by the server.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+timeoutSec:
+  description:
+  - How long (in seconds) to wait before claiming failure.
+  - The default value is 5 seconds. It is invalid for timeoutSec to have greater value
+    than checkIntervalSec.
+  returned: success
+  type: int
+unhealthyThreshold:
+  description:
+  - A so-far healthy instance will be marked unhealthy after this many consecutive
+    failures. The default value is 2.
+  returned: success
+  type: int
+type:
+  description:
+  - Specifies the type of the healthCheck, either TCP, SSL, HTTP or HTTPS. If not
+    specified, the default is TCP. Exactly one of the protocol-specific health check
+    field must be specified, which must match type field.
+  returned: success
+  type: str
+httpHealthCheck:
+  description:
+  - A nested object resource.
+  returned: success
+  type: complex
+  contains:
+    host:
+      description:
+      - The value of the host header in the HTTP health check request.
+      - If left empty (default value), the public IP on behalf of which this health
+        check is performed will be used.
+      returned: success
+      type: str
+    requestPath:
+      description:
+      - The request path of the HTTP health check request.
+      - The default value is /.
+      returned: success
+      type: str
+    response:
+      description:
+      - The bytes to match against the beginning of the response data. If left empty
+        (the default value), any response will indicate health. The response data
+        can only be ASCII.
+      returned: success
+      type: str
+    port:
+      description:
+      - The TCP port number for the HTTP health check request.
+      - The default value is 80.
+      returned: success
+      type: int
+    portName:
+      description:
+      - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+        are defined, port takes precedence.
+      returned: success
+      type: str
+    proxyHeader:
+      description:
+      - Specifies the type of proxy header to append before sending data to the backend,
+        either NONE or PROXY_V1. The default is NONE.
+      returned: success
+      type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, HTTP health check follows behavior specified in `port` and
+        `portName` fields.
+      returned: success
+      type: str
+httpsHealthCheck:
+  description:
+  - A nested object resource.
+  returned: success
+  type: complex
+  contains:
+    host:
+      description:
+      - The value of the host header in the HTTPS health check request.
+      - If left empty (default value), the public IP on behalf of which this health
+        check is performed will be used.
+      returned: success
+      type: str
+    requestPath:
+      description:
+      - The request path of the HTTPS health check request.
+      - The default value is /.
+      returned: success
+      type: str
+    response:
+      description:
+      - The bytes to match against the beginning of the response data. If left empty
+        (the default value), any response will indicate health. The response data
+        can only be ASCII.
+      returned: success
+      type: str
+    port:
+      description:
+      - The TCP port number for the HTTPS health check request.
+      - The default value is 443.
+      returned: success
+      type: int
+    portName:
+      description:
+      - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+        are defined, port takes precedence.
+      returned: success
+      type: str
+    proxyHeader:
+      description:
+      - Specifies the type of proxy header to append before sending data to the backend,
+        either NONE or PROXY_V1. The default is NONE.
+      returned: success
+      type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, HTTPS health check follows behavior specified in `port`
+        and `portName` fields.
+      returned: success
+      type: str
+tcpHealthCheck:
+  description:
+  - A nested object resource.
+  returned: success
+  type: complex
+  contains:
+    request:
+      description:
+      - The application data to send once the TCP connection has been established
+        (default value is empty). If both request and response are empty, the connection
+        establishment alone will indicate health. The request data can only be ASCII.
+      returned: success
+      type: str
+    response:
+      description:
+      - The bytes to match against the beginning of the response data. If left empty
+        (the default value), any response will indicate health. The response data
+        can only be ASCII.
+      returned: success
+      type: str
+    port:
+      description:
+      - The TCP port number for the TCP health check request.
+      - The default value is 443.
+      returned: success
+      type: int
+    portName:
+      description:
+      - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+        are defined, port takes precedence.
+      returned: success
+      type: str
+    proxyHeader:
+      description:
+      - Specifies the type of proxy header to append before sending data to the backend,
+        either NONE or PROXY_V1. The default is NONE.
+      returned: success
+      type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, TCP health check follows behavior specified in `port` and
+        `portName` fields.
+      returned: success
+      type: str
+sslHealthCheck:
+  description:
+  - A nested object resource.
+  returned: success
+  type: complex
+  contains:
+    request:
+      description:
+      - The application data to send once the SSL connection has been established
+        (default value is empty). If both request and response are empty, the connection
+        establishment alone will indicate health. The request data can only be ASCII.
+      returned: success
+      type: str
+    response:
+      description:
+      - The bytes to match against the beginning of the response data. If left empty
+        (the default value), any response will indicate health. The response data
+        can only be ASCII.
+      returned: success
+      type: str
+    port:
+      description:
+      - The TCP port number for the SSL health check request.
+      - The default value is 443.
+      returned: success
+      type: int
+    portName:
+      description:
+      - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
+        are defined, port takes precedence.
+      returned: success
+      type: str
+    proxyHeader:
+      description:
+      - Specifies the type of proxy header to append before sending data to the backend,
+        either NONE or PROXY_V1. The default is NONE.
+      returned: success
+      type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, SSL health check follows behavior specified in `port` and
+        `portName` fields.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -474,40 +661,59 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             check_interval_sec=dict(default=5, type='int'),
             description=dict(type='str'),
-            healthy_threshold=dict(type='int'),
-            name=dict(type='str'),
+            healthy_threshold=dict(default=2, type='int'),
+            name=dict(required=True, type='str'),
             timeout_sec=dict(default=5, type='int', aliases=['timeout_seconds']),
             unhealthy_threshold=dict(default=2, type='int'),
-            type=dict(type='str', choices=['TCP', 'SSL', 'HTTP']),
-            http_health_check=dict(type='dict', options=dict(
-                host=dict(type='str'),
-                request_path=dict(type='str'),
-                port=dict(type='int'),
-                port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
-            )),
-            https_health_check=dict(type='dict', options=dict(
-                host=dict(type='str'),
-                request_path=dict(type='str'),
-                port=dict(type='int'),
-                port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
-            )),
-            tcp_health_check=dict(type='dict', options=dict(
-                request=dict(type='str'),
-                response=dict(type='str'),
-                port=dict(type='int'),
-                port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
-            )),
-            ssl_health_check=dict(type='dict', options=dict(
-                request=dict(type='str'),
-                response=dict(type='str'),
-                port=dict(type='int'),
-                port_name=dict(type='str'),
-                proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1'])
-            ))
-        )
+            type=dict(type='str'),
+            http_health_check=dict(
+                type='dict',
+                options=dict(
+                    host=dict(type='str'),
+                    request_path=dict(default='/', type='str'),
+                    response=dict(type='str'),
+                    port=dict(type='int'),
+                    port_name=dict(type='str'),
+                    proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
+                ),
+            ),
+            https_health_check=dict(
+                type='dict',
+                options=dict(
+                    host=dict(type='str'),
+                    request_path=dict(default='/', type='str'),
+                    response=dict(type='str'),
+                    port=dict(type='int'),
+                    port_name=dict(type='str'),
+                    proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
+                ),
+            ),
+            tcp_health_check=dict(
+                type='dict',
+                options=dict(
+                    request=dict(type='str'),
+                    response=dict(type='str'),
+                    port=dict(type='int'),
+                    port_name=dict(type='str'),
+                    proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
+                ),
+            ),
+            ssl_health_check=dict(
+                type='dict',
+                options=dict(
+                    request=dict(type='str'),
+                    response=dict(type='str'),
+                    port=dict(type='int'),
+                    port_name=dict(type='str'),
+                    proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
+                ),
+            ),
+        ),
+        mutually_exclusive=[['http_health_check', 'https_health_check', 'ssl_health_check', 'tcp_health_check']],
     )
 
     if not module.params['scopes']:
@@ -522,7 +728,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -565,22 +772,22 @@ def resource_to_request(module):
         u'timeoutSec': module.params.get('timeout_sec'),
         u'unhealthyThreshold': module.params.get('unhealthy_threshold'),
         u'type': module.params.get('type'),
-        u'httpHealthCheck': HealthCheckHttpHealthCheck(module.params.get('http_health_check', {}), module).to_request(),
-        u'httpsHealthCheck': HealthCheckHttpsHealthCheck(module.params.get('https_health_check', {}), module).to_request(),
-        u'tcpHealthCheck': HealthCheckTcpHealthCheck(module.params.get('tcp_health_check', {}), module).to_request(),
-        u'sslHealthCheck': HealthCheckSslHealthCheck(module.params.get('ssl_health_check', {}), module).to_request()
+        u'httpHealthCheck': HealthCheckHttphealthcheck(module.params.get('http_health_check', {}), module).to_request(),
+        u'httpsHealthCheck': HealthCheckHttpshealthcheck(module.params.get('https_health_check', {}), module).to_request(),
+        u'tcpHealthCheck': HealthCheckTcphealthcheck(module.params.get('tcp_health_check', {}), module).to_request(),
+        u'sslHealthCheck': HealthCheckSslhealthcheck(module.params.get('ssl_health_check', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -591,9 +798,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/healthChecks".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -603,13 +810,11 @@ def return_if_object(module, response, kind):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -641,14 +846,14 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'healthyThreshold': response.get(u'healthyThreshold'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name'),
+        u'name': module.params.get('name'),
         u'timeoutSec': response.get(u'timeoutSec'),
         u'unhealthyThreshold': response.get(u'unhealthyThreshold'),
         u'type': response.get(u'type'),
-        u'httpHealthCheck': HealthCheckHttpHealthCheck(response.get(u'httpHealthCheck', {}), module).from_response(),
-        u'httpsHealthCheck': HealthCheckHttpsHealthCheck(response.get(u'httpsHealthCheck', {}), module).from_response(),
-        u'tcpHealthCheck': HealthCheckTcpHealthCheck(response.get(u'tcpHealthCheck', {}), module).from_response(),
-        u'sslHealthCheck': HealthCheckSslHealthCheck(response.get(u'sslHealthCheck', {}), module).from_response()
+        u'httpHealthCheck': HealthCheckHttphealthcheck(response.get(u'httpHealthCheck', {}), module).from_response(),
+        u'httpsHealthCheck': HealthCheckHttpshealthcheck(response.get(u'httpsHealthCheck', {}), module).from_response(),
+        u'tcpHealthCheck': HealthCheckTcphealthcheck(response.get(u'tcpHealthCheck', {}), module).from_response(),
+        u'sslHealthCheck': HealthCheckSslhealthcheck(response.get(u'sslHealthCheck', {}), module).from_response(),
     }
 
 
@@ -674,11 +879,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -689,7 +892,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class HealthCheckHttpHealthCheck(object):
+class HealthCheckHttphealthcheck(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -698,25 +901,33 @@ class HealthCheckHttpHealthCheck(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'host': self.request.get('host'),
-            u'requestPath': self.request.get('request_path'),
-            u'port': self.request.get('port'),
-            u'portName': self.request.get('port_name'),
-            u'proxyHeader': self.request.get('proxy_header')
-        })
+        return remove_nones_from_dict(
+            {
+                u'host': self.request.get('host'),
+                u'requestPath': self.request.get('request_path'),
+                u'response': self.request.get('response'),
+                u'port': self.request.get('port'),
+                u'portName': self.request.get('port_name'),
+                u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'host': self.request.get(u'host'),
-            u'requestPath': self.request.get(u'requestPath'),
-            u'port': self.request.get(u'port'),
-            u'portName': self.request.get(u'portName'),
-            u'proxyHeader': self.request.get(u'proxyHeader')
-        })
+        return remove_nones_from_dict(
+            {
+                u'host': self.request.get(u'host'),
+                u'requestPath': self.request.get(u'requestPath'),
+                u'response': self.request.get(u'response'),
+                u'port': self.request.get(u'port'),
+                u'portName': self.request.get(u'portName'),
+                u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
+            }
+        )
 
 
-class HealthCheckHttpsHealthCheck(object):
+class HealthCheckHttpshealthcheck(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -725,25 +936,33 @@ class HealthCheckHttpsHealthCheck(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'host': self.request.get('host'),
-            u'requestPath': self.request.get('request_path'),
-            u'port': self.request.get('port'),
-            u'portName': self.request.get('port_name'),
-            u'proxyHeader': self.request.get('proxy_header')
-        })
+        return remove_nones_from_dict(
+            {
+                u'host': self.request.get('host'),
+                u'requestPath': self.request.get('request_path'),
+                u'response': self.request.get('response'),
+                u'port': self.request.get('port'),
+                u'portName': self.request.get('port_name'),
+                u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'host': self.request.get(u'host'),
-            u'requestPath': self.request.get(u'requestPath'),
-            u'port': self.request.get(u'port'),
-            u'portName': self.request.get(u'portName'),
-            u'proxyHeader': self.request.get(u'proxyHeader')
-        })
+        return remove_nones_from_dict(
+            {
+                u'host': self.request.get(u'host'),
+                u'requestPath': self.request.get(u'requestPath'),
+                u'response': self.request.get(u'response'),
+                u'port': self.request.get(u'port'),
+                u'portName': self.request.get(u'portName'),
+                u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
+            }
+        )
 
 
-class HealthCheckTcpHealthCheck(object):
+class HealthCheckTcphealthcheck(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -752,25 +971,31 @@ class HealthCheckTcpHealthCheck(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'request': self.request.get('request'),
-            u'response': self.request.get('response'),
-            u'port': self.request.get('port'),
-            u'portName': self.request.get('port_name'),
-            u'proxyHeader': self.request.get('proxy_header')
-        })
+        return remove_nones_from_dict(
+            {
+                u'request': self.request.get('request'),
+                u'response': self.request.get('response'),
+                u'port': self.request.get('port'),
+                u'portName': self.request.get('port_name'),
+                u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'request': self.request.get(u'request'),
-            u'response': self.request.get(u'response'),
-            u'port': self.request.get(u'port'),
-            u'portName': self.request.get(u'portName'),
-            u'proxyHeader': self.request.get(u'proxyHeader')
-        })
+        return remove_nones_from_dict(
+            {
+                u'request': self.request.get(u'request'),
+                u'response': self.request.get(u'response'),
+                u'port': self.request.get(u'port'),
+                u'portName': self.request.get(u'portName'),
+                u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
+            }
+        )
 
 
-class HealthCheckSslHealthCheck(object):
+class HealthCheckSslhealthcheck(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -779,22 +1004,28 @@ class HealthCheckSslHealthCheck(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'request': self.request.get('request'),
-            u'response': self.request.get('response'),
-            u'port': self.request.get('port'),
-            u'portName': self.request.get('port_name'),
-            u'proxyHeader': self.request.get('proxy_header')
-        })
+        return remove_nones_from_dict(
+            {
+                u'request': self.request.get('request'),
+                u'response': self.request.get('response'),
+                u'port': self.request.get('port'),
+                u'portName': self.request.get('port_name'),
+                u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'request': self.request.get(u'request'),
-            u'response': self.request.get(u'response'),
-            u'port': self.request.get(u'port'),
-            u'portName': self.request.get(u'portName'),
-            u'proxyHeader': self.request.get(u'proxyHeader')
-        })
+        return remove_nones_from_dict(
+            {
+                u'request': self.request.get(u'request'),
+                u'response': self.request.get(u'response'),
+                u'port': self.request.get(u'port'),
+                u'portName': self.request.get(u'portName'),
+                u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
+            }
+        )
 
 
 if __name__ == '__main__':

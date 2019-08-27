@@ -1,0 +1,2 @@
+bugfixes:
+  - Add no_log to credentials field to avoid disclosures, also switch type to jsonarg to avoid having users responsible for transformations.

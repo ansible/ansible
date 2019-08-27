@@ -18,164 +18,173 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_compute_ssl_policy
 description:
-    - Represents a SSL policy. SSL policies give you the ability to control the features
-      of SSL that your SSL proxy or HTTPS load balancer negotiates.
+- Represents a SSL policy. SSL policies give you the ability to control the features
+  of SSL that your SSL proxy or HTTPS load balancer negotiates.
 short_description: Creates a GCP SslPolicy
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - An optional description of this resource.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    profile:
-        description:
-            - Profile specifies the set of SSL features that can be used by the load balancer
-              when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`, `RESTRICTED`,
-              or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable must be specified
-              in the `customFeatures` field.
-        required: false
-        choices: ['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']
-    min_tls_version:
-        description:
-            - The minimum version of SSL protocol that can be used by the clients to establish
-              a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`, `TLS_1_2`.
-        required: false
-        choices: ['TLS_1_0', 'TLS_1_1', 'TLS_1_2']
-    custom_features:
-        description:
-            - A list of features enabled when the selected profile is CUSTOM. The method returns
-              the set of features that can be specified in this list. This field must be empty
-              if the profile is not CUSTOM.
-        required: false
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+    type: str
+  description:
+    description:
+    - An optional description of this resource.
+    required: false
+    type: str
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+    type: str
+  profile:
+    description:
+    - Profile specifies the set of SSL features that can be used by the load balancer
+      when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`,
+      `RESTRICTED`, or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable
+      must be specified in the `customFeatures` field.
+    - 'Some valid choices include: "COMPATIBLE", "MODERN", "RESTRICTED", "CUSTOM"'
+    required: false
+    type: str
+  min_tls_version:
+    description:
+    - The minimum version of SSL protocol that can be used by the clients to establish
+      a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`,
+      `TLS_1_2`.
+    - 'Some valid choices include: "TLS_1_0", "TLS_1_1", "TLS_1_2"'
+    required: false
+    type: str
+  custom_features:
+    description:
+    - A list of features enabled when the selected profile is CUSTOM. The method returns
+      the set of features that can be specified in this list. This field must be empty
+      if the profile is not CUSTOM.
+    required: false
+    type: list
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)"
-    - "Using SSL Policies: U(https://cloud.google.com/compute/docs/load-balancing/ssl-policies)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)'
+- 'Using SSL Policies: U(https://cloud.google.com/compute/docs/load-balancing/ssl-policies)'
 '''
 
 EXAMPLES = '''
-- name: create a ssl policy
+- name: create a SSL policy
   gcp_compute_ssl_policy:
-      name: "test_object"
-      profile: CUSTOM
-      min_tls_version: TLS_1_2
-      custom_features:
-      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-      project: "test_project"
-      auth_kind: "service_account"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    profile: CUSTOM
+    min_tls_version: TLS_1_2
+    custom_features:
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    profile:
-        description:
-            - Profile specifies the set of SSL features that can be used by the load balancer
-              when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`, `RESTRICTED`,
-              or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable must be specified
-              in the `customFeatures` field.
-        returned: success
-        type: str
-    min_tls_version:
-        description:
-            - The minimum version of SSL protocol that can be used by the clients to establish
-              a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`, `TLS_1_2`.
-        returned: success
-        type: str
-    enabled_features:
-        description:
-            - The list of features enabled in the SSL policy.
-        returned: success
-        type: list
-    custom_features:
-        description:
-            - A list of features enabled when the selected profile is CUSTOM. The method returns
-              the set of features that can be specified in this list. This field must be empty
-              if the profile is not CUSTOM.
-        returned: success
-        type: list
-    fingerprint:
-        description:
-            - Fingerprint of this resource. A hash of the contents stored in this object. This
-              field is used in optimistic locking.
-        returned: success
-        type: str
-    warnings:
-        description:
-            - If potential misconfigurations are detected for this SSL policy, this field will
-              be populated with warning messages.
-        returned: success
-        type: complex
-        contains:
-            code:
-                description:
-                    - A warning code, if applicable.
-                returned: success
-                type: str
-            message:
-                description:
-                    - A human-readable description of the warning code.
-                returned: success
-                type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+profile:
+  description:
+  - Profile specifies the set of SSL features that can be used by the load balancer
+    when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`,
+    `RESTRICTED`, or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable
+    must be specified in the `customFeatures` field.
+  returned: success
+  type: str
+minTlsVersion:
+  description:
+  - The minimum version of SSL protocol that can be used by the clients to establish
+    a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`,
+    `TLS_1_2`.
+  returned: success
+  type: str
+enabledFeatures:
+  description:
+  - The list of features enabled in the SSL policy.
+  returned: success
+  type: list
+customFeatures:
+  description:
+  - A list of features enabled when the selected profile is CUSTOM. The method returns
+    the set of features that can be specified in this list. This field must be empty
+    if the profile is not CUSTOM.
+  returned: success
+  type: list
+fingerprint:
+  description:
+  - Fingerprint of this resource. A hash of the contents stored in this object. This
+    field is used in optimistic locking.
+  returned: success
+  type: str
+warnings:
+  description:
+  - If potential misconfigurations are detected for this SSL policy, this field will
+    be populated with warning messages.
+  returned: success
+  type: complex
+  contains:
+    code:
+      description:
+      - A warning code, if applicable.
+      returned: success
+      type: str
+    message:
+      description:
+      - A human-readable description of the warning code.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -199,9 +208,9 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            profile=dict(type='str', choices=['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']),
-            min_tls_version=dict(type='str', choices=['TLS_1_0', 'TLS_1_1', 'TLS_1_2']),
-            custom_features=dict(type='list', elements='str')
+            profile=dict(type='str'),
+            min_tls_version=dict(type='str'),
+            custom_features=dict(type='list', elements='str'),
         )
     )
 
@@ -217,7 +226,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -257,19 +267,19 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'profile': module.params.get('profile'),
         u'minTlsVersion': module.params.get('min_tls_version'),
-        u'customFeatures': module.params.get('custom_features')
+        u'customFeatures': module.params.get('custom_features'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -280,9 +290,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/sslPolicies".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -292,13 +302,11 @@ def return_if_object(module, response, kind):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -334,7 +342,7 @@ def response_to_hash(module, response):
         u'enabledFeatures': response.get(u'enabledFeatures'),
         u'customFeatures': response.get(u'customFeatures'),
         u'fingerprint': response.get(u'fingerprint'),
-        u'warnings': SslPolicyWarningsArray(response.get(u'warnings', []), module).from_response()
+        u'warnings': SslPolicyWarningsArray(response.get(u'warnings', []), module).from_response(),
     }
 
 
@@ -360,11 +368,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -396,16 +402,10 @@ class SslPolicyWarningsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'code': item.get('code'),
-            u'message': item.get('message')
-        })
+        return remove_nones_from_dict({})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'code': item.get(u'code'),
-            u'message': item.get(u'message')
-        })
+        return remove_nones_from_dict({})
 
 
 if __name__ == '__main__':

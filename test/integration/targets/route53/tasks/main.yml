@@ -1,0 +1,206 @@
+---
+# tasks file for Route53 integration tests
+
+- set_fact:
+    zone_one: '{{ resource_prefix | replace("-", "") }}.one.fakeansible.com.'
+    zone_two: '{{ resource_prefix | replace("-", "") }}.two.fakeansible.com.'
+- debug: msg='Set zones {{ zone_one }} and {{ zone_two }}'
+
+- name: Test basics (new zone, A and AAAA records)
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+    route53:
+      region: null
+  block:
+  - route53_zone:
+      zone: '{{ zone_one }}'
+      comment: Created in Ansible test {{ resource_prefix }}
+    register: z1
+
+  - debug: msg='TODO write tests'
+  - debug: var=z1
+
+  - name: Create A record using zone fqdn
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'qdn_test.{{ zone_one }}'
+      type: A
+      value: 1.2.3.4
+    register: qdn
+  - assert:
+      that:
+        - qdn is not failed
+        - qdn is changed
+
+  - name: Create same A record using zone non-qualified domain
+    route53:
+      state: present
+      zone: '{{ zone_one[:-1] }}'
+      record: 'qdn_test.{{ zone_one[:-1] }}'
+      type: A
+      value: 1.2.3.4
+    register: non_qdn
+  - assert:
+      that:
+        - non_qdn is not failed
+        - non_qdn is not changed
+
+  - name: Create A record using zone ID
+    route53:
+      state: present
+      hosted_zone_id: '{{ z1.zone_id }}'
+      record: 'zid_test.{{ zone_one }}'
+      type: A
+      value: 1.2.3.4
+    register: zid
+  - assert:
+      that:
+        - zid is not failed
+        - zid is changed
+
+  - name: Create a multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      type: A
+      value:
+        - 4.5.6.7
+        - 1.2.3.4
+    register: mv_a_record
+  - assert:
+      that:
+        - mv_a_record is not failed
+        - mv_a_record is changed
+
+  - name: Create same multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      type: A
+      value:
+        - 4.5.6.7
+        - 1.2.3.4
+    register: mv_a_record
+  - assert:
+      that:
+        - mv_a_record is not failed
+        - mv_a_record is not changed
+
+  - name: Remove a member from multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      type: A
+      value:
+        - 4.5.6.7
+    register: del_a_record
+    ignore_errors: true
+  - name: This should fail, because `overwrite` is false
+    assert:
+      that:
+        - del_a_record is failed
+
+  - name: Remove a member from multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      overwrite: true
+      type: A
+      value:
+        - 4.5.6.7
+    register: del_a_record
+    ignore_errors: true
+  - name: This should fail, because `overwrite` is false
+    assert:
+      that:
+        - del_a_record is not failed
+        - del_a_record is changed
+
+  - name: Create a LetsEncrypt CAA record
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: '{{ zone_one }}'
+      type: CAA
+      value:
+      - 0 issue "letsencrypt.org;"
+      - 0 issuewild "letsencrypt.org;"
+      overwrite: true
+    register: caa
+  - assert:
+      that:
+        - caa is not failed
+        - caa is changed
+
+  - name: Re-create the same LetsEncrypt CAA record
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: '{{ zone_one }}'
+      type: CAA
+      value:
+      - 0 issue "letsencrypt.org;"
+      - 0 issuewild "letsencrypt.org;"
+      overwrite: true
+    register: caa
+  - assert:
+      that:
+        - caa is not failed
+        - caa is not changed
+
+  - name: Re-create the same LetsEncrypt CAA record in opposite-order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: '{{ zone_one }}'
+      type: CAA
+      value:
+      - 0 issuewild "letsencrypt.org;"
+      - 0 issue "letsencrypt.org;"
+      overwrite: true
+    register: caa
+  - name: This should not be changed, as CAA records are not order sensitive
+    assert:
+      that:
+        - caa is not failed
+        - caa is not changed
+  always:
+  - route53_info:
+      query: record_sets
+      hosted_zone_id: '{{ z1.zone_id }}'
+    register: z1_records
+  - debug: var=z1_records
+  - name: Loop over A/AAAA/CNAME records and delete them
+    route53:
+      state: absent
+      zone: '{{ zone_one }}'
+      record: '{{ item.Name }}'
+      type: '{{ item.Type }}'
+      value: '{{ item.ResourceRecords | map(attribute="Value") | join(",") }}'
+    loop: '{{ z1_records.ResourceRecordSets | selectattr("Type", "in", ["A", "AAAA", "CNAME", "CAA"]) | list }}'
+  - name: Delete test zone one '{{ zone_one }}'
+    route53_zone:
+      state: absent
+      zone: '{{ zone_one }}'
+    register: delete_one
+    ignore_errors: yes
+    retries: 10
+    until: delete_one is not failed
+  - name: Delete test zone two '{{ zone_two }}'
+    route53_zone:
+      state: absent
+      zone: '{{ zone_two }}'
+    register: delete_two
+    ignore_errors: yes
+    retries: 10
+    until: delete_two is not failed
+    when: false

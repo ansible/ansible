@@ -23,7 +23,7 @@ Function Cleanse-Stderr($raw_stderr) {
                $matches["prenoise1"],
                $matches["prenoise2"],
                # filter out just the Error-tagged strings for now, and zap embedded CRLF chars
-               ($clixml.Objs.ChildNodes | ? { $_.Name -eq 'S' } | ? { $_.S -eq 'Error' } | % { $_.'#text'.Replace('_x000D__x000A_','') } | Out-String),
+               ($clixml.Objs.ChildNodes | Where-Object  { $_.Name -eq 'S' } | Where-Object { $_.S -eq 'Error' } | ForEach-Object { $_.'#text'.Replace('_x000D__x000A_','') } | Out-String),
                $matches["postnoise"]) | Out-String
 
             return $merged_stderr.Trim()
@@ -47,6 +47,7 @@ $executable = Get-AnsibleParam -obj $params -name "executable" -type "path"
 $creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
 $removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
 $stdin = Get-AnsibleParam -obj $params -name "stdin" -type "str"
+$no_profile = Get-AnsibleParam -obj $params -name "no_profile" -type "bool" -default $false
 
 $raw_command_line = $raw_command_line.Trim()
 
@@ -78,6 +79,10 @@ If(-not $executable -or $executable -eq "powershell") {
     } else {
         $exec_args = "-noninteractive -encodedcommand $encoded_command"
     }
+
+    if ($no_profile) {
+        $exec_args = "-noprofile $exec_args"
+    }
 }
 Else {
     # FUTURE: support arg translation from executable (or executable_args?) to process arguments for arbitrary interpreter?
@@ -88,7 +93,7 @@ Else {
     $exec_args = "/c $raw_command_line"
 }
 
-$command = "$exec_application $exec_args"
+$command = "`"$exec_application`" $exec_args"
 $run_command_arg = @{
     command = $command
 }
@@ -114,7 +119,7 @@ try {
 
 # TODO: decode CLIXML stderr output (and other streams?)
 $result.stdout = $command_result.stdout
-$result.stderr = Cleanse-Stderr $command_result.stderr 
+$result.stderr = Cleanse-Stderr $command_result.stderr
 $result.rc = $command_result.rc
 
 $end_datetime = [DateTime]::UtcNow

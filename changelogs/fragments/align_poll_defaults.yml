@@ -1,0 +1,2 @@
+bugfixes:
+    - Use async poll default setting for play tasks also, previouslly in only affected adhoc ansible.

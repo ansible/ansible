@@ -13,7 +13,7 @@ RETURN = '''
 success:
     description: flag indicating that execution was successful
     returned: success
-    type: boolean
+    type: bool
     sample: True
 ...
 '''
@@ -601,7 +601,7 @@ class LogicMonitor(object):
         resp = self.rpc("getAgents", {})
         resp_json = json.loads(resp)
 
-        if resp_json["status"] is 200:
+        if resp_json["status"] == 200:
             self.module.debug("RPC call succeeded")
             return resp_json["data"]
         else:
@@ -867,7 +867,7 @@ class Collector(LogicMonitor):
                                           "arch": arch}))
                     with open(installfilepath, "w") as write_file:
                         write_file.write(installer)
-                except:
+                except Exception:
                     self.fail(msg="Unable to open installer file for writing")
             else:
                 self.module.debug("Collector installer already exists")
@@ -1063,7 +1063,7 @@ class Collector(LogicMonitor):
                 self.module.debug("Making RPC call to 'addAgent'")
                 create = (json.loads(self.rpc("addAgent", h)))
 
-                if create["status"] is 200:
+                if create["status"] == 200:
                     self.module.debug("RPC call succeeded")
                     self.info = create["data"]
                     self.id = create["data"]["id"]
@@ -1100,7 +1100,7 @@ class Collector(LogicMonitor):
             delete = json.loads(self.rpc("deleteAgent",
                                          {"id": self.id}))
 
-            if delete["status"] is 200:
+            if delete["status"] == 200:
                 self.module.debug("RPC call succeeded")
                 return delete
             else:
@@ -1275,7 +1275,7 @@ class Host(LogicMonitor):
         self.module.debug("Running Host.update...")
 
         if self.info:
-            self.module.debug("Host already registed")
+            self.module.debug("Host already registered")
             if self.is_changed():
                 self.module.debug("System changed")
                 self.change = True
@@ -1309,7 +1309,7 @@ class Host(LogicMonitor):
                 )
                 return self.info
         else:
-            self.module.debug("Host not registed. Registering")
+            self.module.debug("Host not registered. Registering")
             self.module.debug("System changed")
             self.change = True
 
@@ -2121,7 +2121,7 @@ def main():
             description=dict(required=False, default=""),
             fullpath=dict(required=False, default=None),
             starttime=dict(required=False, default=None),
-            duration=dict(required=False, default=30),
+            duration=dict(required=False, default=30, type='int'),
             properties=dict(required=False, default={}, type="dict"),
             groups=dict(required=False, default=[], type="list"),
             alertenable=dict(required=False, default="true", type="bool")

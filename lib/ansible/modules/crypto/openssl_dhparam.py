@@ -1,83 +1,103 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Thom Wiggers  <ansible@thomwiggers.nl>
+# Copyright: (c) 2017, Thom Wiggers  <ansible@thomwiggers.nl>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: openssl_dhparam
-author: "Thom Wiggers (@thomwiggers)"
 version_added: "2.5"
 short_description: Generate OpenSSL Diffie-Hellman Parameters
 description:
-    - "This module allows one to (re)generate OpenSSL DH-params.
-      This module uses file common arguments to specify generated file permissions."
+    - This module allows one to (re)generate OpenSSL DH-params.
+    - This module uses file common arguments to specify generated file permissions.
+    - "Please note that the module regenerates existing DH params if they don't
+      match the module's options. If you are concerned that this could overwrite
+      your existing DH params, consider using the I(backup) option."
 requirements:
     - OpenSSL
+author:
+- Thom Wiggers (@thomwiggers)
 options:
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
         description:
             - Whether the parameters should exist or not,
               taking action if the state is different from what is stated.
+        type: str
+        default: present
+        choices: [ absent, present ]
     size:
-        required: false
+        description:
+            - Size (in bits) of the generated DH-params.
+        type: int
         default: 4096
-        description:
-            - Size (in bits) of the generated DH-params
     force:
-        required: false
-        default: False
-        type: bool
         description:
-            - Should the parameters be regenerated even it it already exists
+            - Should the parameters be regenerated even it it already exists.
+        type: bool
+        default: no
     path:
-        required: true
         description:
             - Name of the file in which the generated parameters will be saved.
-extends_documentation_fragment: files
+        type: path
+        required: true
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              DH params back if you overwrote them with new ones by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
+extends_documentation_fragment:
+- files
+seealso:
+- module: openssl_certificate
+- module: openssl_csr
+- module: openssl_pkcs12
+- module: openssl_privatekey
+- module: openssl_publickey
 '''
 
-EXAMPLES = '''
-# Generate Diffie-Hellman parameters with the default size (4096 bits)
-- openssl_dhparam:
+EXAMPLES = r'''
+- name: Generate Diffie-Hellman parameters with the default size (4096 bits)
+  openssl_dhparam:
     path: /etc/ssl/dhparams.pem
 
-# Generate DH Parameters with a different size (2048 bits)
-- openssl_dhparam:
+- name: Generate DH Parameters with a different size (2048 bits)
+  openssl_dhparam:
     path: /etc/ssl/dhparams.pem
     size: 2048
 
-# Force regenerate an DH parameters if they already exist
-- openssl_dhparam:
+- name: Force regenerate an DH parameters if they already exist
+  openssl_dhparam:
     path: /etc/ssl/dhparams.pem
-    force: True
-
+    force: yes
 '''
 
-RETURN = '''
+RETURN = r'''
 size:
-    description: Size (in bits) of the Diffie-Hellman parameters
+    description: Size (in bits) of the Diffie-Hellman parameters.
     returned: changed or success
     type: int
     sample: 4096
 filename:
-    description: Path to the generated Diffie-Hellman parameters
+    description: Path to the generated Diffie-Hellman parameters.
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/dhparams.pem
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/dhparams.pem.2019-03-09@11:22~
 '''
 
 import os
@@ -97,10 +117,13 @@ class DHParameter(object):
     def __init__(self, module):
         self.state = module.params['state']
         self.path = module.params['path']
-        self.size = int(module.params['size'])
+        self.size = module.params['size']
         self.force = module.params['force']
         self.changed = False
         self.openssl_bin = module.get_bin_path('openssl', True)
+
+        self.backup = module.params['backup']
+        self.backup_file = None
 
     def generate(self, module):
         """Generate a keypair."""
@@ -117,6 +140,8 @@ class DHParameter(object):
             rc, dummy, err = module.run_command(command, check_rc=False)
             if rc != 0:
                 raise DHParameterError(to_native(err))
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             try:
                 module.atomic_move(tmpsrc, self.path)
             except Exception as e:
@@ -130,6 +155,15 @@ class DHParameter(object):
             changed = True
 
         self.changed = changed
+
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        try:
+            os.remove(self.path)
+            self.changed = True
+        except OSError as exc:
+            module.fail_json(msg=to_native(exc))
 
     def check(self, module):
         """Ensure the resource is in its desired state."""
@@ -150,8 +184,8 @@ class DHParameter(object):
         match = re.search(r"Parameters:\s+\((\d+) bit\).*", result)
         if not match:
             return False  # No "xxxx bit" in output
-        else:
-            bits = int(match.group(1))
+
+        bits = int(match.group(1))
 
         # if output contains "WARNING" we've got a problem
         if "WARNING" in result or "WARNING" in to_native(err):
@@ -174,6 +208,9 @@ class DHParameter(object):
             'filename': self.path,
             'changed': self.changed,
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
+
         return result
 
 
@@ -182,20 +219,21 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            size=dict(default=4096, type='int'),
-            force=dict(default=False, type='bool'),
-            path=dict(required=True, type='path'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            size=dict(type='int', default=4096),
+            force=dict(type='bool', default=False),
+            path=dict(type='path', required=True),
+            backup=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
     )
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,
-            msg='The directory %s does not exist or the file is not a directory' % base_dir
+            msg="The directory '%s' does not exist or the file is not a directory" % base_dir
         )
 
     dhparam = DHParameter(module)
@@ -218,10 +256,11 @@ def main():
             result['changed'] = os.path.exists(module.params['path'])
             module.exit_json(**result)
 
-        try:
-            os.remove(module.params['path'])
-        except OSError as exc:
-            module.fail_json(msg=to_native(exc))
+        if os.path.exists(module.params['path']):
+            try:
+                dhparam.remove(module)
+            except Exception as exc:
+                module.fail_json(msg=to_native(exc))
 
     result = dhparam.dump()
 

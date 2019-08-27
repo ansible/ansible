@@ -4,7 +4,7 @@
     cname: "{{ cname_prefix ~ '-hi' }}"
 - name: Registering container name
   set_fact:
-    cnames: "{{ cnames }} + [cname]"
+    cnames: "{{ cnames + [cname] }}"
 
 ####################################################################
 ## Creation ########################################################
@@ -13,7 +13,7 @@
 - name: Create container (check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   check_mode: yes
@@ -22,7 +22,7 @@
 - name: Create container
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   register: create_2
@@ -30,7 +30,7 @@
 - name: Create container (idempotent)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   register: create_3
@@ -38,7 +38,7 @@
 - name: Create container (idempotent check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   check_mode: yes
@@ -95,7 +95,7 @@
 - name: Present check for running container (check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   check_mode: yes
@@ -104,7 +104,7 @@
 - name: Present check for running container
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
   register: present_check_2
@@ -122,12 +122,13 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
 
 - name: Start container from scratch (check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   check_mode: yes
@@ -136,7 +137,8 @@
 - name: Start container from scratch
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   register: start_scratch_2
@@ -144,7 +146,8 @@
 - name: Start container from scratch (idempotent)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   register: start_scratch_3
@@ -152,7 +155,8 @@
 - name: Start container from scratch (idempotent check)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   check_mode: yes
@@ -164,6 +168,120 @@
     - start_scratch_2 is changed
     - start_scratch_3 is not changed
     - start_scratch_4 is not changed
+
+####################################################################
+## Recreating ######################################################
+####################################################################
+
+- name: Recreating container (created)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: recreate_1
+
+- name: Recreating container (created, recreate)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    recreate: yes
+    state: present
+    force_kill: yes
+  register: recreate_2
+
+- name: Recreating container (started)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    force_kill: yes
+  register: recreate_3
+
+- name: Recreating container (started, recreate)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    recreate: yes
+    state: started
+    force_kill: yes
+  register: recreate_4
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- debug: var=recreate_1
+- debug: var=recreate_2
+- debug: var=recreate_3
+- debug: var=recreate_4
+
+- assert:
+    that:
+    - recreate_2 is changed
+    - recreate_3 is changed
+    - recreate_4 is changed
+    - recreate_1.container.Id != recreate_2.container.Id
+    - recreate_2.container.Id == recreate_3.container.Id
+    - recreate_3.container.Id != recreate_4.container.Id
+
+####################################################################
+## Restarting ######################################################
+####################################################################
+
+- name: Restarting
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    stop_timeout: 1
+    volumes:
+    - /tmp/tmp
+  register: restart_1
+
+- name: Restarting (restart)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    restart: yes
+    state: started
+    stop_timeout: 1
+    force_kill: yes
+  register: restart_2
+
+- name: Restarting (verify volumes)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    stop_timeout: 1
+    volumes:
+    - /tmp/tmp
+  register: restart_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - restart_1 is changed
+    - restart_2 is changed
+    - restart_1.container.Id == restart_2.container.Id
+    - restart_3 is not changed
 
 ####################################################################
 ## Stopping ########################################################
@@ -254,7 +372,7 @@
 - name: Start container (setup for removing from running)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -c "sleep 1h"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
 
@@ -262,7 +380,7 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   check_mode: yes
   register: remove_from_running_1
 
@@ -270,21 +388,21 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   register: remove_from_running_2
 
 - name: Remove container from running (idempotent)
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   register: remove_from_running_3
 
 - name: Remove container from running (idempotent check)
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   check_mode: yes
   register: remove_from_running_4
 

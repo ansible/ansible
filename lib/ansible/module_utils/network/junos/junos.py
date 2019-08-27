@@ -21,7 +21,7 @@ import json
 from contextlib import contextmanager
 from copy import deepcopy
 
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
 from ansible.module_utils._text import to_text
@@ -129,7 +129,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         module.fail_json(msg='invalid action for format json')
     elif format in ('text', 'xml') and action not in ACTIONS:
         module.fail_json(msg='invalid action format %s' % format)
-    if action == 'set' and not format == 'text':
+    if action == 'set' and format != 'text':
         module.fail_json(msg='format must be text when action is set')
 
     conn = get_connection(module)
@@ -271,7 +271,7 @@ def map_params_to_obj(module, param_to_xpath_map, param=None):
         'value': Value of param.
         'tag_only': Value is indicated by tag only in xml hierarchy.
         'leaf_only': If operation is to be added at leaf node only.
-        'value_req': If value(text) is requried for leaf node.
+        'value_req': If value(text) is required for leaf node.
         'is_key': If the field is key or not.
     eg: Output
     {

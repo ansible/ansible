@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: cron
 short_description: Manage cron.d and crontab entries
@@ -27,66 +27,78 @@ description:
     which is used by future ansible/module calls to find/check the state. The "name"
     parameter should be unique, and changing the "name" value will result in a new cron
     task being created (or a different one being removed).'
-  - 'When environment variables are managed: no comment line is added, but, when the module
+  - When environment variables are managed, no comment line is added, but, when the module
     needs to find/check the state, it uses the "name" parameter to find the environment
-    variable definition line.'
-  - 'When using symbols such as %, they must be properly escaped.'
+    variable definition line.
+  - When using symbols such as %, they must be properly escaped.
 version_added: "0.9"
 options:
   name:
     description:
       - Description of a crontab entry or, if env is set, the name of environment variable.
-        Required if state=absent. Note that if name is not set and state=present, then a
+      - Required if C(state=absent).
+      - Note that if name is not set and C(state=present), then a
         new crontab entry will always be created, regardless of existing ones.
+      - This parameter will always be required in future releases.
+    type: str
   user:
     description:
       - The specific user whose crontab should be modified.
-    default: root
+      - When unset, this parameter defaults to using C(root).
+    type: str
   job:
     description:
       - The command to execute or, if env is set, the value of environment variable.
-        The command should not contain line breaks.
-        Required if state=present.
+      - The command should not contain line breaks.
+      - Required if C(state=present).
+    type: str
     aliases: [ value ]
   state:
     description:
       - Whether to ensure the job or environment variable is present or absent.
+    type: str
     choices: [ absent, present ]
     default: present
   cron_file:
     description:
       - If specified, uses this file instead of an individual user's crontab.
-        If this is a relative path, it is interpreted with respect to
-        /etc/cron.d. (If it is absolute, it will typically be /etc/crontab).
-        Many linux distros expect (and some require) the filename portion to consist solely
+      - If this is a relative path, it is interpreted with respect to I(/etc/cron.d).
+      - If it is absolute, it will typically be I(/etc/crontab).
+      - Many linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
-        To use the C(cron_file) parameter you must specify the C(user) as well.
+      - To use the C(cron_file) parameter you must specify the C(user) as well.
+    type: str
   backup:
     description:
       - If set, create a backup of the crontab before it is modified.
         The location of the backup is returned in the C(backup_file) variable by this module.
     type: bool
-    default: 'no'
+    default: no
   minute:
     description:
       - Minute when the job should run ( 0-59, *, */2, etc )
+    type: str
     default: "*"
   hour:
     description:
       - Hour when the job should run ( 0-23, *, */2, etc )
+    type: str
     default: "*"
   day:
     description:
       - Day of the month the job should run ( 1-31, *, */2, etc )
+    type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
       - Month of the year the job should run ( 1-12, *, */2, etc )
+    type: str
     default: "*"
   weekday:
     description:
       - Day of the week that the job should run ( 0-6 for Sunday-Saturday, *, etc )
+    type: str
     default: "*"
     aliases: [ dow ]
   reboot:
@@ -94,47 +106,51 @@ options:
       - If the job should be run at reboot. This option is deprecated. Users should use special_time.
     version_added: "1.0"
     type: bool
-    default: "no"
+    default: no
   special_time:
     description:
       - Special time specification nickname.
-    choices: [ reboot, yearly, annually, monthly, weekly, daily, hourly ]
+    type: str
+    choices: [ annually, daily, hourly, monthly, reboot, weekly, yearly ]
     version_added: "1.3"
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab.
       - Only has effect if C(state=present).
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.0"
   env:
     description:
-      - If set, manages a crontab's environment variable. New variables are added on top of crontab.
-        "name" and "value" parameters are the name and the value of environment variable.
+      - If set, manages a crontab's environment variable.
+      - New variables are added on top of crontab.
+      - C(name) and C(value) parameters are the name and the value of environment variable.
     type: bool
-    default: "no"
+    default: no
     version_added: "2.1"
   insertafter:
     description:
-      - Used with C(state=present) and C(env). If specified, the environment variable will be
-        inserted after the declaration of specified environment variable.
+      - Used with C(state=present) and C(env).
+      - If specified, the environment variable will be inserted after the declaration of specified environment variable.
+    type: str
     version_added: "2.1"
   insertbefore:
     description:
-      - Used with C(state=present) and C(env). If specified, the environment variable will be
-        inserted before the declaration of specified environment variable.
+      - Used with C(state=present) and C(env).
+      - If specified, the environment variable will be inserted before the declaration of specified environment variable.
+    type: str
     version_added: "2.1"
 requirements:
   - cron
 author:
     - Dane Summers (@dsummersl)
-    - Mike Grozak
-    - Patrick Callahan
+    - Mike Grozak (@rhaido)
+    - Patrick Callahan (@dirtyharrycallahan)
     - Evan Kaufman (@EvanK)
     - Luca Berruti (@lberruti)
-"""
+'''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Ensure a job that runs at 2 and 5 exists. Creates an entry like "0 5,2 * * ls -alh > /dev/null"
   cron:
     name: "check dirs"
@@ -157,21 +173,21 @@ EXAMPLES = '''
   cron:
     name: PATH
     env: yes
-    value: /opt/bin
+    job: /opt/bin
 
 - name: Creates an entry like "APP_HOME=/srv/app" and insert it after PATH declaration
   cron:
     name: APP_HOME
     env: yes
-    value: /srv/app
+    job: /srv/app
     insertafter: PATH
 
 - name: Creates a cron file under /etc/cron.d
   cron:
     name: yum autoupdate
-    weekday: 2
-    minute: 0
-    hour: 12
+    weekday: "2"
+    minute: "0"
+    hour: "12"
     user: root
     job: "YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
     cron_file: ansible_yum-autoupdate
@@ -191,13 +207,13 @@ EXAMPLES = '''
 
 import os
 import platform
-import pipes
 import pwd
 import re
 import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.six.moves import shlex_quote
 
 
 CRONCMD = "/usr/bin/crontab"
@@ -246,7 +262,7 @@ class CronTab(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
@@ -371,7 +387,7 @@ class CronTab(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronTabError("Unexpected error:", sys.exc_info()[0])
 
     def find_job(self, name, job=None):
@@ -498,13 +514,13 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(CRONCMD))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
+                return "%s -l %s" % (shlex_quote(CRONCMD), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
+                return "%s %s %s" % (CRONCMD, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
+                user = '-u %s' % shlex_quote(self.user)
         return "%s %s %s" % (CRONCMD, user, '-l')
 
     def _write_execute(self, path):
@@ -514,10 +530,10 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), CRONCMD, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (CRONCMD, user, shlex_quote(path))
 
 
 def main():
@@ -602,6 +618,17 @@ def main():
     crontab = CronTab(module, user, cron_file)
 
     module.debug('cron instantiated - name: "%s"' % name)
+
+    if not name:
+        module.deprecate(
+            msg="The 'name' parameter will be required in future releases.",
+            version='2.12'
+        )
+    if reboot:
+        module.deprecate(
+            msg="The 'reboot' parameter will be removed in future releases. Use 'special_time' option instead.",
+            version='2.12'
+        )
 
     if module._diff:
         diff = dict()
@@ -698,7 +725,7 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and not crontab.existing == '':
+    if not changed and crontab.existing != '':
         if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
             changed = True
 

@@ -32,45 +32,43 @@ options:
     description:
       - Do not run unit tests
     type: bool
-    default: 'no'
+    default: no
   locallib:
     description:
       - Specify the install base to install modules
-    type: bool
-    default: 'no'
+    type: path
   mirror:
     description:
       - Specifies the base URL for the CPAN mirror to use
-    type: bool
-    default: 'no'
+    type: str
   mirror_only:
     description:
       - Use the mirror's index file instead of the CPAN Meta DB
     type: bool
-    default: 'no'
+    default: no
   installdeps:
     description:
       - Only install dependencies
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.0"
   version:
     description:
       - minimum version of perl module to consider acceptable
-    type: bool
-    default: 'no'
+    type: str
     version_added: "2.1"
   system_lib:
     description:
      -  Use this if you want to install modules to the system perl include path. You must be root or have "passwordless" sudo for this to work.
      -  This uses the cpanm commandline option '--sudo', which has nothing to do with ansible privilege escalation.
     type: bool
-    default: 'no'
-    version_added: "2.0"
+    default: no
     aliases: ['use_sudo']
+    version_added: "2.0"
   executable:
     description:
       - Override the path to the cpanm executable
+    type: path
     version_added: "2.1"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.

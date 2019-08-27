@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 
@@ -21,34 +21,11 @@ short_description: NetApp Element Software Create Backups
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create backup
 
 options:
-
-    src_hostname:
-        description:
-        - hostname for the backup source cluster
-        required: true
-        aliases:
-        - hostname
-
-    src_username:
-        description:
-        - username for the backup source cluster
-        required: true
-        aliases:
-        - username
-        - user
-
-    src_password:
-        description:
-        - password for the backup source cluster
-        required: true
-        aliases:
-        - password
-        - pass
 
     src_volume_id:
         description:
@@ -60,19 +37,19 @@ options:
     dest_hostname:
         description:
         - hostname for the backup source cluster
-        - will be set equal to src_hostname if not specified
+        - will be set equal to hostname if not specified
         required: false
 
     dest_username:
         description:
         - username for the backup destination cluster
-        - will be set equal to src_username if not specified
+        - will be set equal to username if not specified
         required: false
 
     dest_password:
         description:
         - password for the backup destination cluster
-        - will be set equal to src_password if not specified
+        - will be set equal to password if not specified
         required: false
 
     dest_volume_id:
@@ -101,9 +78,9 @@ options:
 
 EXAMPLES = """
 na_elementsw_backup:
-  src_hostname: "{{ source_cluster_hostname }}"
-  src_username: "{{ source_cluster_username }}"
-  src_password: "{{ source_cluster_password }}"
+  hostname: "{{ source_cluster_hostname }}"
+  username: "{{ source_cluster_username }}"
+  password: "{{ source_cluster_password }}"
   src_volume_id: 1
   dest_hostname: "{{ destination_cluster_hostname }}"
   dest_username: "{{ destination_cluster_username }}"
@@ -125,7 +102,7 @@ import time
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except:
+except ImportError:
     HAS_SF_SDK = False
 
 
@@ -136,12 +113,10 @@ class ElementSWBackup(object):
         """
             Setup Ansible parameters and SolidFire connection
         """
-        self.argument_spec = {}
+        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+
         self.argument_spec.update(dict(
 
-            src_hostname=dict(aliases=['hostname'], required=True, type='str'),
-            src_username=dict(aliases=['username', 'user'], required=True, type='str'),
-            src_password=dict(aliases=['password', 'pass'], required=True, type='str', no_log=True),
             src_volume_id=dict(aliases=['volume_id'], required=True, type='str'),
             dest_hostname=dict(required=False, type='str'),
             dest_username=dict(required=False, type='str'),
@@ -164,26 +139,22 @@ class ElementSWBackup(object):
 
         # If destination cluster details are not specified , set the destination to be the same as the source
         if self.module.params["dest_hostname"] is None:
-            self.module.params["dest_hostname"] = self.module.params["src_hostname"]
+            self.module.params["dest_hostname"] = self.module.params["hostname"]
         if self.module.params["dest_username"] is None:
-            self.module.params["dest_username"] = self.module.params["src_username"]
+            self.module.params["dest_username"] = self.module.params["username"]
         if self.module.params["dest_password"] is None:
-            self.module.params["dest_password"] = self.module.params["src_password"]
+            self.module.params["dest_password"] = self.module.params["password"]
 
         params = self.module.params
 
-        # establish a connection to both source and destination sf clusters
-
-        self.module.params["username"] = params["src_username"]
-        self.module.params["password"] = params["src_password"]
-        self.module.params["hostname"] = params["src_hostname"]
+        # establish a connection to both source and destination elementsw clusters
         self.src_connection = netapp_utils.create_sf_connection(self.module)
         self.module.params["username"] = params["dest_username"]
         self.module.params["password"] = params["dest_password"]
         self.module.params["hostname"] = params["dest_hostname"]
         self.dest_connection = netapp_utils.create_sf_connection(self.module)
 
-        self.elementsw_helper = NaElementSWModule(self.sfe)
+        self.elementsw_helper = NaElementSWModule(self.src_connection)
 
         # add telemetry attributes
         self.attributes = self.elementsw_helper.set_element_attributes(source='na_elementsw_backup')

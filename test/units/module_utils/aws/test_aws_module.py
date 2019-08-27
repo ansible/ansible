@@ -23,7 +23,7 @@ import unittest
 from ansible.module_utils import basic
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_bytes
-from ansible.compat.tests.mock import Mock, patch
+from units.compat.mock import Mock, patch
 import json
 
 importorskip("boto3")

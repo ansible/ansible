@@ -1,0 +1,10 @@
+{
+    "all_targets": true,
+    "output": "path-message",
+    "extensions": [
+        ".py"
+    ],
+    "prefixes": [
+        "lib/ansible/"
+    ]
+}

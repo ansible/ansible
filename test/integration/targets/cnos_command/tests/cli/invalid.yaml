@@ -4,7 +4,6 @@
 - name: run invalid command
   cnos_command:
     commands: ['display foo']
-    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 
@@ -17,7 +16,6 @@
     commands:
       - display version
       - display foo
-    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 

@@ -88,7 +88,7 @@ requirements:
 
 author:
 - Benno Joy (@bennojoy)
-- Lukas Beumer (@nitaco)
+- Lukas Beumer (@Nitaco)
 
 '''
 

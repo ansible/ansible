@@ -30,24 +30,21 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.block import Block
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 __all__ = ['Task']
 
+display = Display()
 
-class Task(Base, Conditional, Taggable, Become):
+
+class Task(Base, Conditional, Taggable, CollectionSearch):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.
@@ -66,22 +63,26 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
-    _args = FieldAttribute(isa='dict', default=dict())
+    # NOTE: ONLY set defaults on task attributes that are not inheritable,
+    # inheritance is only triggered if the 'current value' is None,
+    # default can be set at play/top level object and inheritance will take it's course.
+
+    _args = FieldAttribute(isa='dict', default=dict)
     _action = FieldAttribute(isa='string')
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
-    _changed_when = FieldAttribute(isa='list', default=[])
+    _changed_when = FieldAttribute(isa='list', default=list)
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
-    _failed_when = FieldAttribute(isa='list', default=[])
+    _delegate_facts = FieldAttribute(isa='bool')
+    _failed_when = FieldAttribute(isa='list', default=list)
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')
-    _poll = FieldAttribute(isa='int', default=10)
-    _register = FieldAttribute(isa='string')
+    _poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
+    _register = FieldAttribute(isa='string', static=True)
     _retries = FieldAttribute(isa='int', default=3)
-    _until = FieldAttribute(isa='list', default=[])
+    _until = FieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
@@ -158,7 +159,6 @@ class Task(Base, Conditional, Taggable, Become):
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
-        # FIXME: reenable afte 2.5
         # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.10")
 
     def preprocess_data(self, ds):
@@ -180,7 +180,7 @@ class Task(Base, Conditional, Taggable, Become):
         # use the args parsing class to determine the action, args,
         # and the delegate_to value from the various possible forms
         # supported as legacy
-        args_parser = ModuleArgsParser(task_ds=ds)
+        args_parser = ModuleArgsParser(task_ds=ds, collection_list=self.collections)
         try:
             (action, args, delegate_to) = args_parser.parse()
         except AnsibleParserError as e:
@@ -439,13 +439,13 @@ class Task(Base, Conditional, Taggable, Become):
             else:
                 _parent = self._parent._parent
 
-            if _parent and (value is None or extend):
+            if _parent and (value is Sentinel or extend):
                 if getattr(_parent, 'statically_loaded', True):
-                    # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
+                    # vars are always inheritable, other attributes might not be for the parent but still should be for other ancestors
                     if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = _parent._attributes.get(attr, None)
+                        parent_value = _parent._attributes.get(attr, Sentinel)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
@@ -454,14 +454,6 @@ class Task(Base, Conditional, Taggable, Become):
         except KeyError:
             pass
 
-        return value
-
-    def _get_attr_any_errors_fatal(self):
-        value = self._attributes['any_errors_fatal']
-        if value is None:
-            value = self._get_parent_attribute('any_errors_fatal')
-        if value is None:
-            value = C.ANY_ERRORS_FATAL
         return value
 
     def get_dep_chain(self):

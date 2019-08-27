@@ -6,8 +6,6 @@
     vault_uri: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/lookup_hashi_vault/vault_{{ vault_version }}_{{ ansible_system | lower }}_{{ vault_arch }}.zip'
     vault_cmd: '{{ local_temp_dir }}/vault'
 
-  connection: local  # already defined in inventory for testhost, usefull when used with another inventory
-
   block:
     - name: Create a local temporary directory
       tempfile:

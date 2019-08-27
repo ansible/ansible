@@ -88,7 +88,9 @@ DOCUMENTATION = '''
                 ansible inventory adds /etc/ansible/openstack.yaml and
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
-            type: string
+            type: list
+            env:
+                - name: OS_CLIENT_CONFIG_FILE
         compose:
             description: Create vars from jinja2 expressions.
             type: dictionary
@@ -108,6 +110,7 @@ fail_on_errors: yes
 '''
 
 import collections
+import sys
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -155,14 +158,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if 'clouds' in self._config_data:
             self._config_data = {}
 
+        # update cache if the user has caching enabled and the cache is being refreshed
+        # will update variable below in the case of an expired cache
+        cache_needs_update = not cache and self.get_option('cache')
+
         if cache:
             cache = self.get_option('cache')
         source_data = None
         if cache:
             try:
-                source_data = self.cache.get(cache_key)
+                source_data = self._cache[cache_key]
             except KeyError:
-                pass
+                # cache expired or doesn't exist yet
+                cache_needs_update = True
 
         if not source_data:
             clouds_yaml_path = self._config_data.get('clouds_yaml_path')
@@ -172,8 +180,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
-            # TODO(mordred) Integrate shade's logging with ansible's logging
-            sdk.enable_logging()
+            # Redict logging to stderr so it does not mix with output
+            # particular ansible-inventory JSON output
+            # TODO(mordred) Integrate openstack's logging with ansible's logging
+            sdk.enable_logging(stream=sys.stderr)
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,
@@ -196,7 +206,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            self.cache.set(cache_key, source_data)
+            if cache_needs_update:
+                self._cache[cache_key] = source_data
 
         self._populate_from_source(source_data)
 
@@ -239,7 +250,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # create composite vars
             self._set_composite_vars(
-                self._config_data.get('compose'), hostvars, host)
+                self._config_data.get('compose'), hostvars[host], host)
 
             # actually update inventory
             for key in hostvars[host]:
@@ -247,12 +258,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # constructed groups based on conditionals
             self._add_host_to_composed_groups(
-                self._config_data.get('groups'), hostvars, host)
+                self._config_data.get('groups'), hostvars[host], host)
+
+            # constructed groups based on jinja expressions
+            self._add_host_to_keyed_groups(
+                self._config_data.get('keyed_groups'), hostvars[host], host)
 
         for group_name, group_hosts in groups.items():
-            self.inventory.add_group(group_name)
+            gname = self.inventory.add_group(group_name)
             for host in group_hosts:
-                self.inventory.add_child(group_name, host)
+                self.inventory.add_child(gname, host)
 
     def _get_groups_from_server(self, server_vars, namegroup=True):
         groups = []

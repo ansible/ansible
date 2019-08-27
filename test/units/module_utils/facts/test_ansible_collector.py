@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 # for testing
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock, patch
+from units.compat import unittest
+from units.compat.mock import Mock, patch
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts import ansible_collector
@@ -207,7 +207,9 @@ class TestCollectedFacts(unittest.TestCase):
     def _mock_module(self, gather_subset=None):
         return mock_module(gather_subset=self.gather_subset)
 
-    def setUp(self):
+    @patch('platform.system', return_value='Linux')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    def setUp(self, mock_gfc, mock_ps):
         mock_module = self._mock_module()
         collectors = self._collectors(mock_module)
 

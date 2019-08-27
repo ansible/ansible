@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed role's hash_params behavior to not union (https://github.com/ansible/ansible/issues/20596).

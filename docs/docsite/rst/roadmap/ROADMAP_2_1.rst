@@ -1,7 +1,7 @@
 ===========
 Ansible 2.1
 ===========
-**Target: April**
+**Target: April 2016**
 
 .. contents:: Topics
 

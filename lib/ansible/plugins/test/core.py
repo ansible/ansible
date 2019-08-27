@@ -21,16 +21,14 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
-from collections import MutableMapping, MutableSequence
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
+from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def failed(result):
@@ -117,14 +115,16 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
         This is likely only useful for `search` and `match` which already
         have their own filters.
     '''
+    # In addition to ensuring the correct type, to_text here will ensure
+    # _fail_with_undefined_error happens if the value is Undefined
+    value = to_text(value, errors='surrogate_or_strict')
     flags = 0
     if ignorecase:
         flags |= re.I
     if multiline:
         flags |= re.M
     _re = re.compile(pattern, flags=flags)
-    _bool = __builtins__.get('bool')
-    return _bool(getattr(_re, match_type, 'search')(value))
+    return bool(getattr(_re, match_type, 'search')(value))
 
 
 def match(value, pattern='', ignorecase=False, multiline=False):

@@ -1,0 +1,6 @@
+mysql_service: 'mariadb'
+
+mysql_packages:
+    - mariadb-server
+    - python3-PyMySQL
+    - bzip2

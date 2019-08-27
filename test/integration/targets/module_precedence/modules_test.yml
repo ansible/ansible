@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: testhost
   gather_facts: no
   tasks:
   - name: Use standard ping module

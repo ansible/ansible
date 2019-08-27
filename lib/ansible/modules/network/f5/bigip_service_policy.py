@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -25,31 +25,38 @@ options:
     description:
       - Name of the service policy.
     required: True
+    type: str
   description:
     description:
       - Description of the service policy.
+    type: str
   timer_policy:
     description:
       - The timer policy to attach to the service policy.
+    type: str
   port_misuse_policy:
     description:
       - The port misuse policy to attach to the service policy.
       - Requires that C(afm) be provisioned to use. If C(afm) is not provisioned, this parameter
         will be ignored.
+    type: str
   state:
     description:
       - Whether the resource should exist or not.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -60,10 +67,11 @@ EXAMPLES = r'''
     port_misuse_policy: misuse1
     timer_policy_enabled: yes
     port_misuse_policy_enabled: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -71,17 +79,17 @@ RETURN = r'''
 timer_policy:
   description: The new timer policy attached to the resource.
   returned: changed
-  type: string
+  type: str
   sample: /Common/timer1
 port_misuse_policy:
   description: The new port misuse policy attached to the resource.
   returned: changed
-  type: string
+  type: str
   sample: /Common/misuse1
 description:
   description: New description of the resource.
   returned: changed
-  type: string
+  type: str
   sample: My service policy description
 '''
 
@@ -89,47 +97,45 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'portMisusePolicy': 'port_misuse_policy',
-        'timerPolicy': 'timer_policy'
+        'timerPolicy': 'timer_policy',
     }
 
     api_attributes = [
-        'description', 'timerPolicy', 'portMisusePolicy'
+        'description',
+        'timerPolicy',
+        'portMisusePolicy',
     ]
 
     returnables = [
-        'description', 'timer_policy', 'port_misuse_policy'
+        'description',
+        'timer_policy',
+        'port_misuse_policy',
     ]
 
     updatables = [
-        'description', 'timer_policy', 'port_misuse_policy'
+        'description',
+        'timer_policy',
+        'port_misuse_policy',
     ]
 
 
@@ -200,7 +206,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -231,14 +237,6 @@ class ModuleManager(object):
             return True
         return False
 
-    def module_provisioned(self, module):
-        resource = self.client.api.tm.sys.dbs.db.load(
-            name='provisioned.cpu.{0}'.format(module)
-        )
-        if int(resource.value) == 0:
-            return False
-        return True
-
     def should_update(self):
         result = self._update_changed_options()
         if result:
@@ -250,13 +248,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -279,19 +274,17 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def exists(self):
-        result = self.client.api.tm.net.service_policys.service_policy.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
         if self.want.port_misuse_policy:
-            if not self.module_provisioned('afm'):
+            if not module_provisioned(self.client, 'afm'):
                 raise F5ModuleError(
                     "To configure a 'port_misuse_policy', you must have AFM provisioned."
                 )
@@ -311,7 +304,7 @@ class ModuleManager(object):
     def create(self):
         self._set_changed_options()
         if self.want.port_misuse_policy:
-            if not self.module_provisioned('afm'):
+            if not module_provisioned(self.client, 'afm'):
                 raise F5ModuleError(
                     "To configure a 'port_misuse_policy', you must have AFM provisioned."
                 )
@@ -320,42 +313,89 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/net/service-policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.net.service_policys.service_policy.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/service-policy/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.net.service_policys.service_policy.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/service-policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.net.service_policys.service_policy.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/service-policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.net.service_policys.service_policy.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/service-policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -387,17 +427,12 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

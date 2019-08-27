@@ -28,7 +28,7 @@ short_description: Manages MLAG interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages MLAG interface attributes on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     eth_trunk_id:
         description:
@@ -107,7 +107,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module

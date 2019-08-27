@@ -1,0 +1,5 @@
+cloud/azure
+destructive
+shippable/azure/group1
+unstable # test is slow (~30 minute run time), not unstable, but this is better than unsupported
+azure_rm_hdinsightcluster_facts

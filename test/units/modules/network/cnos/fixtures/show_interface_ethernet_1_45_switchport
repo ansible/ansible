@@ -1,0 +1,14 @@
+Interface Ethernet1/45
+  Switchport              : enabled
+  Switchport mode         : access
+  Ingress filter          : enable
+  Tag Ingress PVID        : disabled
+  Acceptable frame types  : all
+  Default/Native Vlan     : 1
+  Configured Vlans        : 1
+  Enabled Vlans           : 1
+  Egress-Tagged Vlans     : None
+  Private-VLAN            : Disabled
+  Private-VLAN Port Type  : None
+  Primary/Secondary VLAN  : None/None
+

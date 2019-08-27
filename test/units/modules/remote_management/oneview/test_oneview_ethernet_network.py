@@ -17,8 +17,8 @@
 
 import yaml
 
-from ansible.compat.tests import unittest, mock
-from oneview_module_loader import EthernetNetworkModule, OneViewModuleResourceNotFound
+from units.compat import unittest, mock
+from oneview_module_loader import EthernetNetworkModule
 from hpe_test_utils import OneViewBaseTestCase
 
 FAKE_MSG_ERROR = 'Fake message error'
@@ -93,7 +93,7 @@ DEFAULT_BULK_ENET_TEMPLATE = [
     {'name': 'TestNetwork_10', 'vlanId': 10},
 ]
 
-DICT_PARAMS_WITH_CHANGES = yaml.load(YAML_PARAMS_WITH_CHANGES)["data"]
+DICT_PARAMS_WITH_CHANGES = yaml.safe_load(YAML_PARAMS_WITH_CHANGES)["data"]
 
 
 class EthernetNetworkModuleSpec(unittest.TestCase,

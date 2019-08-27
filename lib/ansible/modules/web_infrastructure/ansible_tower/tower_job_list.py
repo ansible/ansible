@@ -47,8 +47,8 @@ EXAMPLES = '''
   tower_job_list:
     status: running
     query: {"playbook": "testing.yml"}
-    register: testing_jobs
     tower_config_file: "~/tower_cli.cfg"
+  register: testing_jobs
 '''
 
 RETURN = '''
@@ -82,7 +82,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -118,7 +118,7 @@ def main():
             if query:
                 params['query'] = query.items()
             json_output = job.list(**params)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to list jobs: {0}'.format(excinfo), changed=False)
 
     module.exit_json(**json_output)

@@ -1,0 +1,53 @@
+- name: Test podman_image_info
+  when:
+    - ansible_facts.virtualization_type != 'docker'
+    - ansible_facts.distribution == 'RedHat'
+  block:
+    - name: Pull image
+      command: podman pull quay.io/coreos/etcd
+
+    - name: Get info on all images
+      podman_image_info:
+      register: all_image_result
+
+    - name: Pull another image
+      command: podman pull quay.io/coreos/dnsmasq
+
+    - name: Get info on specific image
+      podman_image_info:
+        name: dnsmasq
+      register: named_image_result
+
+    - name:
+      assert:
+        that:
+          - all_image_result.images | length > 0
+          - named_image_result.images | length == 1
+          - "'dnsmasq' in named_image_result.images[0]['RepoTags'][0]"
+
+    - name: Get info on single image that does not exist
+      podman_image_info:
+        name: nope
+      register: single_nonexistant
+
+    - name: Get info on multiple images that do not exist
+      podman_image_info:
+        name:
+          - nope
+          - reallynope
+      register: multiple_nonexistant
+
+    - name: Get info with one image that does not exist
+      podman_image_info:
+        name:
+          - dnsmasq
+          - nope
+          - etcd
+      register: mixed_nonexistant
+
+    - name: Ensure image info was returned when non-existant image info was requisted
+      assert:
+        that:
+          - single_nonexistant.images | length == 0
+          - multiple_nonexistant.images | length == 0
+          - mixed_nonexistant.images | length == 2

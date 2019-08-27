@@ -39,10 +39,15 @@
   register: git_fetch_force
   ignore_errors: yes
 
+- name: LOCALMODS | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
 - name: LOCALMODS | check update arrived
   assert:
     that:
-      - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
+      - "{{ a_file.content | b64decode | trim }} == 2"
       - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir
@@ -92,10 +97,15 @@
   register: git_fetch_force
   ignore_errors: yes
 
+- name: LOCALMODS | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
 - name: LOCALMODS | check update arrived
   assert:
     that:
-      - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
+      - "{{ a_file.content | b64decode | trim }} == 2"
       - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir

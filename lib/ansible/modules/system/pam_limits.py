@@ -220,7 +220,7 @@ def main():
         newline = newline.split('#', 1)[0]
         try:
             old_comment = line.split('#', 1)[1]
-        except:
+        except Exception:
             old_comment = ''
 
         newline = newline.rstrip()
@@ -299,7 +299,7 @@ def main():
 
     try:
         nf.close()
-    except:
+    except Exception:
         pass
 
     res_args = dict(

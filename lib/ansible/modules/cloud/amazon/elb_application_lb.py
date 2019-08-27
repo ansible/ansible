@@ -35,12 +35,16 @@ options:
     type: bool
   access_logs_s3_bucket:
     description:
-      - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same
+      - The name of the S3 bucket for the access logs.
+      - Required if access logs in Amazon S3 are enabled.
+      - The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
     required: false
   access_logs_s3_prefix:
     description:
-      - The prefix for the location in the S3 bucket. If you don't specify a prefix, the access logs are stored in the root of the bucket.
+      - The prefix for the log location in the S3 bucket.
+      - If you don't specify a prefix, the access logs are stored in the root of the bucket.
+      - Cannot begin or end with a slash.
     required: false
   deletion_protection:
     description:
@@ -153,7 +157,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -161,7 +165,7 @@ EXAMPLES = '''
 - elb_application_lb:
     access_logs_enabled: yes
     access_logs_s3_bucket: mybucket
-    access_logs_s3_prefix: "/logs"
+    access_logs_s3_prefix: "logs"
     name: myelb
     security_groups:
       - sg-12345678
@@ -177,7 +181,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -208,6 +212,31 @@ EXAMPLES = '''
             Actions:
               - TargetGroupName: test-target-group
                 Type: forward
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/redirect-path/*"
+            Priority: '2'
+            Actions:
+              - Type: redirect
+                RedirectConfig:
+                  Host: "#{host}"
+                  Path: "/example/redir" # or /#{path}
+                  Port: "#{port}"
+                  Protocol: "#{protocol}"
+                  Query: "#{query}"
+                  StatusCode: "HTTP_302" # or HTTP_301
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/fixed-response-path/"
+            Priority: '3'
+            Actions:
+              - Type: fixed-response
+                FixedResponseConfig:
+                  ContentType: "text/plain"
+                  MessageBody: "This is the page you're looking for"
+                  StatusCode: "200"
     state: present
 
 # Remove an ELB
@@ -221,18 +250,18 @@ RETURN = '''
 access_logs_s3_bucket:
     description: The name of the S3 bucket for the access logs.
     returned: when state is present
-    type: string
+    type: str
     sample: mys3bucket
 access_logs_s3_enabled:
     description: Indicates whether access logs stored in Amazon S3 are enabled.
     returned: when state is present
-    type: string
+    type: str
     sample: true
 access_logs_s3_prefix:
     description: The prefix for the location in the S3 bucket.
     returned: when state is present
-    type: string
-    sample: /my/logs
+    type: str
+    sample: my/logs
 availability_zones:
     description: The Availability Zones for the load balancer.
     returned: when state is present
@@ -241,32 +270,32 @@ availability_zones:
 canonical_hosted_zone_id:
     description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: ABCDEF12345678
 created_time:
     description: The date and time the load balancer was created.
     returned: when state is present
-    type: string
+    type: str
     sample: "2015-02-12T02:14:02+00:00"
 deletion_protection_enabled:
     description: Indicates whether deletion protection is enabled.
     returned: when state is present
-    type: string
+    type: str
     sample: true
 dns_name:
     description: The public DNS name of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: internal-my-elb-123456789.ap-southeast-2.elb.amazonaws.com
 idle_timeout_timeout_seconds:
     description: The idle timeout value, in seconds.
     returned: when state is present
-    type: string
+    type: str
     sample: 60
 ip_address_type:
     description:  The type of IP addresses used by the subnets for the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: ipv4
 listeners:
     description: Information about the listeners.
@@ -276,12 +305,12 @@ listeners:
         listener_arn:
             description: The Amazon Resource Name (ARN) of the listener.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         load_balancer_arn:
             description: The Amazon Resource Name (ARN) of the load balancer.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         port:
             description: The port on which the load balancer is listening.
@@ -291,7 +320,7 @@ listeners:
         protocol:
             description: The protocol for connections from clients to the load balancer.
             returned: when state is present
-            type: string
+            type: str
             sample: HTTPS
         certificates:
             description: The SSL server certificate.
@@ -301,47 +330,47 @@ listeners:
                 certificate_arn:
                     description: The Amazon Resource Name (ARN) of the certificate.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
         ssl_policy:
             description: The security policy that defines which ciphers and protocols are supported.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         default_actions:
             description: The default actions for the listener.
             returned: when state is present
-            type: string
+            type: str
             contains:
                 type:
                     description: The type of action.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
                 target_group_arn:
                     description: The Amazon Resource Name (ARN) of the target group.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
 load_balancer_arn:
     description: The Amazon Resource Name (ARN) of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: arn:aws:elasticloadbalancing:ap-southeast-2:0123456789:loadbalancer/app/my-elb/001122334455
 load_balancer_name:
     description: The name of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: my-elb
 routing_http2_enabled:
     description: Indicates whether HTTP/2 is enabled.
     returned: when state is present
-    type: string
+    type: str
     sample: true
 scheme:
     description: Internet-facing or internal load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: internal
 security_groups:
     description: The IDs of the security groups for the load balancer.
@@ -363,12 +392,12 @@ tags:
 type:
     description: The type of load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: application
 vpc_id:
     description: The ID of the VPC for the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: vpc-0011223344
 '''
 

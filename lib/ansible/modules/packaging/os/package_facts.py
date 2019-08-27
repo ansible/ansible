@@ -19,24 +19,39 @@ description:
 options:
   manager:
     description:
-      - The package manager used by the system so we can query the package information
-    default: auto
-    choices: ["auto", "rpm", "apt"]
+      - The package manager used by the system so we can query the package information.
+      - Since 2.8 this is a list and can support multiple package managers per system.
+      - The 'portage' and 'pkg' options were added in version 2.8.
+    default: ['auto']
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg']
     required: False
+    type: list
+  strategy:
+    description:
+      - This option controls how the module queres the package managers on the system.
+        C(first) means it will return only information for the first supported package manager available.
+        C(all) will return information for all supported and available package managers on the system.
+    choices: ['first', 'all']
+    default: 'first'
+    version_added: "2.8"
 version_added: "2.5"
+requirements:
+    - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
+    - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
 author:
-  - Matthew Jones
-  - Brian Coca
-  - Adam Miller
+  - Matthew Jones (@matburt)
+  - Brian Coca (@bcoca)
+  - Adam Miller (@maxamillion)
 '''
 
 EXAMPLES = '''
-- name: get the rpm package facts
+- name: Gather the rpm package facts
   package_facts:
-    manager: "auto"
+    manager: auto
 
-- name: show them
-  debug: var=ansible_facts.packages
+- name: Print the rpm package facts
+  debug:
+    var: ansible_facts.packages
 
 '''
 
@@ -140,94 +155,196 @@ ansible_facts:
         }
 '''
 
-import sys
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
-
-
-def rpm_package_list():
-
-    try:
-        import rpm
-    except ImportError:
-        module.fail_json(msg='Unable to use the rpm python bindings, please ensure they are installed under the python the module runs under')
-
-    trans_set = rpm.TransactionSet()
-    installed_packages = {}
-    for package in trans_set.dbMatch():
-        package_details = dict(name=package[rpm.RPMTAG_NAME],
-                               version=package[rpm.RPMTAG_VERSION],
-                               release=package[rpm.RPMTAG_RELEASE],
-                               epoch=package[rpm.RPMTAG_EPOCH],
-                               arch=package[rpm.RPMTAG_ARCH],
-                               source='rpm')
-        if package_details['name'] not in installed_packages:
-            installed_packages[package_details['name']] = [package_details]
-        else:
-            installed_packages[package_details['name']].append(package_details)
-    return installed_packages
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
 
 
-def apt_package_list():
+class RPM(LibMgr):
 
-    try:
-        import apt
-    except ImportError:
-        module.fail_json(msg='Unable to use the apt python bindings, please ensure they are installed under the python the module runs under')
+    LIB = 'rpm'
 
-    apt_cache = apt.Cache()
-    installed_packages = {}
-    apt_installed_packages = [pk for pk in apt_cache.keys() if apt_cache[pk].is_installed]
-    for package in apt_installed_packages:
-        ac_pkg = apt_cache[package].installed
-        package_details = dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture, source='apt')
-        if package_details['name'] not in installed_packages:
-            installed_packages[package_details['name']] = [package_details]
-        else:
-            installed_packages[package_details['name']].append(package_details)
-    return installed_packages
+    def list_installed(self):
+        return self._lib.TransactionSet().dbMatch()
+
+    def get_package_details(self, package):
+        return dict(name=package[self._lib.RPMTAG_NAME],
+                    version=package[self._lib.RPMTAG_VERSION],
+                    release=package[self._lib.RPMTAG_RELEASE],
+                    epoch=package[self._lib.RPMTAG_EPOCH],
+                    arch=package[self._lib.RPMTAG_ARCH],)
+
+    def is_available(self):
+        ''' we expect the python bindings installed, but this gives warning if they are missing and we have rpm cli'''
+        we_have_lib = super(RPM, self).is_available()
+        if not we_have_lib and get_bin_path('rpm'):
+            self.warnings.append('Found "rpm" but %s' % (missing_required_lib('rpm')))
+        return we_have_lib
 
 
-# FIXME: add more listing methods
-def main():
-    global module
-    module = AnsibleModule(argument_spec=dict(manager=dict()), supports_check_mode=True)
-    manager = module.params['manager']
-    packages = {}
-    results = {}
+class APT(LibMgr):
 
-    if manager is None or manager == 'auto':
+    LIB = 'apt'
 
-        # detect!
-        for manager_lib in ('rpm', 'apt'):
+    def __init__(self):
+        self._cache = None
+        super(APT, self).__init__()
+
+    @property
+    def pkg_cache(self):
+        if self._cache is not None:
+            return self._cache
+
+        self._cache = self._lib.Cache()
+        return self._cache
+
+    def is_available(self):
+        ''' we expect the python bindings installed, but if there is apt/apt-get give warning about missing bindings'''
+        we_have_lib = super(APT, self).is_available()
+        if not we_have_lib:
+            for exe in ('apt', 'apt-get', 'aptitude'):
+                if get_bin_path(exe):
+                    self.warnings.append('Found "%s" but %s' % (exe, missing_required_lib('apt')))
+                    break
+        return we_have_lib
+
+    def list_installed(self):
+        # Store the cache to avoid running pkg_cache() for each item in the comprehension, which is very slow
+        cache = self.pkg_cache
+        return [pk for pk in cache.keys() if cache[pk].is_installed]
+
+    def get_package_details(self, package):
+        ac_pkg = self.pkg_cache[package].installed
+        return dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture, category=ac_pkg.section, origin=ac_pkg.origins[0].origin)
+
+
+class PKG(CLIMgr):
+
+    CLI = 'pkg'
+    atoms = ['name', 'version', 'origin', 'installed', 'automatic', 'arch', 'category', 'prefix', 'vital']
+
+    def list_installed(self):
+        rc, out, err = module.run_command([self._cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return out.splitlines()
+
+    def get_package_details(self, package):
+
+        pkg = dict(zip(self.atoms, package.split('\t')))
+
+        if 'arch' in pkg:
             try:
-                dummy = __import__(manager_lib)
-                manager = manager_lib
-                break
-            except ImportError:
+                pkg['arch'] = pkg['arch'].split(':')[2]
+            except IndexError:
                 pass
 
-        # FIXME: add more detection methods
-    try:
-        if manager == "rpm":
-            packages = rpm_package_list()
-        elif manager == "apt":
-            packages = apt_package_list()
-        else:
-            if manager:
-                results['msg'] = 'Unsupported package manager: %s' % manager
-                results['skipped'] = True
-            else:
-                module.fail_json(msg='Could not detect supported package manager')
-    except Exception as e:
-        from traceback import format_tb
-        module.fail_json(msg='Failed to retrieve packages: %s' % to_text(e), exception=format_tb(sys.exc_info()[2]))
+        if 'automatic' in pkg:
+            pkg['automatic'] = bool(pkg['automatic'])
 
-    results['ansible_facts'] = {}
-    # Set the facts, this will override the facts in ansible_facts that might
-    # exist from previous runs when using operating system level or distribution
-    # package managers
+        if 'category' in pkg:
+            pkg['category'] = pkg['category'].split('/', 1)[0]
+
+        if 'version' in pkg:
+            if ',' in pkg['version']:
+                pkg['version'], pkg['port_epoch'] = pkg['version'].split(',', 1)
+            else:
+                pkg['port_epoch'] = 0
+
+            if '_' in pkg['version']:
+                pkg['version'], pkg['revision'] = pkg['version'].split('_', 1)
+            else:
+                pkg['revision'] = '0'
+
+        if 'vital' in pkg:
+            pkg['vital'] = bool(pkg['vital'])
+
+        return pkg
+
+
+class PORTAGE(CLIMgr):
+
+    CLI = 'qlist'
+    atoms = ['category', 'name', 'version', 'ebuild_revision', 'slots', 'prefixes', 'sufixes']
+
+    def list_installed(self):
+        rc, out, err = module.run_command(' '.join([self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
+        if rc != 0:
+            raise RuntimeError("Unable to list packages rc=%s : %s" % (rc, to_native(err)))
+        return out.splitlines()
+
+    def get_package_details(self, package):
+        return dict(zip(self.atoms, package.split()))
+
+
+def main():
+
+    # get supported pkg managers
+    PKG_MANAGERS = get_all_pkg_managers()
+    PKG_MANAGER_NAMES = [x.lower() for x in PKG_MANAGERS.keys()]
+
+    # start work
+    global module
+    module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'default': ['auto']},
+                                              strategy={'choices': ['first', 'all'], 'default': 'first'}),
+                           supports_check_mode=True)
+    packages = {}
+    results = {'ansible_facts': {}}
+    managers = [x.lower() for x in module.params['manager']]
+    strategy = module.params['strategy']
+
+    if 'auto' in managers:
+        # keep order from user, we do dedupe below
+        managers.extend(PKG_MANAGER_NAMES)
+        managers.remove('auto')
+
+    unsupported = set(managers).difference(PKG_MANAGER_NAMES)
+    if unsupported:
+        if 'auto' in module.params['manager']:
+            msg = 'Could not auto detect a usable package manager, check warnings for details.'
+        else:
+            msg = 'Unsupported package managers requested: %s' % (', '.join(unsupported))
+        module.fail_json(msg=msg)
+
+    found = 0
+    seen = set()
+    for pkgmgr in managers:
+
+        if found and strategy == 'first':
+            break
+
+        # dedupe as per above
+        if pkgmgr in seen:
+            continue
+        seen.add(pkgmgr)
+        try:
+            try:
+                # manager throws exception on init (calls self.test) if not usable.
+                manager = PKG_MANAGERS[pkgmgr]()
+                if manager.is_available():
+                    found += 1
+                    packages.update(manager.get_packages())
+
+            except Exception as e:
+                if pkgmgr in module.params['manager']:
+                    module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
+                continue
+
+            for warning in getattr(manager, 'warnings', []):
+                module.warn(warning)
+
+        except Exception as e:
+            if pkgmgr in module.params['manager']:
+                module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
+
+    if found == 0:
+        msg = ('Could not detect a supported package manager from the following list: %s, '
+               'or the required Python library is not installed. Check warnings for details.' % managers)
+        module.fail_json(msg=msg)
+
+    # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
+    # when using operating system level or distribution package managers
     results['ansible_facts']['packages'] = packages
 
     module.exit_json(**results)

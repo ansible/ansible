@@ -1,0 +1,78 @@
+- name: Get unified job template ID for Demo Job Template"
+  uri:
+    url: "https://{{ tower_host }}/api/v2/unified_job_templates/?name=Demo+Job+Template"
+    method: GET
+    password: "{{ tower_password }}"
+    user: "{{ tower_username }}"
+    validate_certs: False
+  register: unified_job
+
+- name: Build workflow
+  uri:
+    url: "https://{{ tower_host }}/api/v2/workflow_job_templates/"
+    body: 
+      name: "Success Template"
+      variables: "---"
+      extra_vars: ""
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ tower_password }}"
+    status_code: 201
+    user: "{{ tower_username }}"
+    validate_certs: False
+  register: workflow
+
+- name: Add a node
+  uri:
+    url: "https://{{ tower_host }}/api/v2/workflow_job_templates/{{ workflow.json.id }}/workflow_nodes/"
+    body:
+      credential: null
+      diff_mode: null
+      extra_data: {}
+      inventory: null
+      job_tags: null
+      job_type: null
+      limit: null
+      skip_tags: null
+      unified_job_template: "{{ unified_job.json.results[0].id }}"
+      verbosity: null
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ tower_password }}"
+    status_code: 201
+    user: "{{ tower_username }}"
+    validate_certs: False
+  register: node1
+
+- name: Add a node
+  uri:
+    url: "https://{{ tower_host }}/api/v2/workflow_job_templates/{{ workflow.json.id }}/workflow_nodes/"
+    body:
+      credential: null
+      diff_mode: null
+      extra_data: {}
+      inventory: null
+      job_tags: null
+      job_type: null
+      limit: null
+      skip_tags: null
+      unified_job_template: "{{ unified_job.json.results[0].id }}"
+      verbosity: null
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ tower_password }}"
+    status_code: 201
+    user: "{{ tower_username }}"
+    validate_certs: False
+  register: node2
+
+- name: "Link nodes {{ node2.json.id }} to {{ node1.json.id }}"
+  uri:
+    url: "https://{{ tower_host }}/api/v2/workflow_job_template_nodes/{{ node1.json.id }}/success_nodes/"
+    body: '{ "id": {{ node2.json.id }} }'
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ tower_password }}"
+    status_code: 204
+    user: "{{ tower_username }}"
+    validate_certs: False

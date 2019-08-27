@@ -5,7 +5,7 @@
     path: '{{win_cert_dir}}\subj-cert.pem'
     store_location: FakeLocation
   register: fail_fake_location
-  failed_when: "fail_fake_location.msg != 'Get-AnsibleParam: Argument store_location needs to be one of CurrentUser,LocalMachine but was FakeLocation.'"
+  failed_when: "fail_fake_location.msg != 'value of store_location must be one of: CurrentUser, LocalMachine. Got no match for: FakeLocation'"
 
 - name: fail with invalid store name
   win_certificate_store:
@@ -13,27 +13,27 @@
     path: '{{win_cert_dir}}\subj-cert.pem'
     store_name: FakeName
   register: fail_fake_name
-  failed_when: "fail_fake_name.msg != 'Get-AnsibleParam: Argument store_name needs to be one of AddressBook,AuthRoot,CertificateAuthority,Disallowed,My,Root,TrustedPeople,TrustedPublisher but was FakeName.'"
+  failed_when: "fail_fake_name.msg != 'value of store_name must be one of: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher. Got no match for: FakeName'"
 
 - name: fail when state=present and no path is set
   win_certificate_store:
     state: present
   register: fail_present_no_path
-  failed_when: "fail_present_no_path.msg != 'Get-AnsibleParam: Missing required argument: path'"
+  failed_when: "fail_present_no_path.msg != 'state is present but all of the following are missing: path'"
 
 - name: fail when state=exported and no path is set
   win_certificate_store:
     state: exported
     thumbprint: ABC
   register: fail_export_no_path
-  failed_when: "fail_export_no_path.msg != 'Get-AnsibleParam: Missing required argument: path'"
+  failed_when: "fail_export_no_path.msg != 'state is exported but all of the following are missing: path'"
 
 - name: fail when state=exported and no thumbprint is set
   win_certificate_store:
     state: exported
     path: '{{win_cert_dir}}'
   register: fail_export_no_thumbprint
-  failed_when: "fail_export_no_thumbprint.msg != 'Get-AnsibleParam: Missing required argument: thumbprint'"
+  failed_when: "fail_export_no_thumbprint.msg != 'state is exported but all of the following are missing: thumbprint'"
 
 - name: fail to export thumbprint when path is a dir
   win_certificate_store:
@@ -47,7 +47,7 @@
   win_certificate_store:
     state: absent
   register: fail_absent_no_path_or_thumbprint
-  failed_when: fail_absent_no_path_or_thumbprint.msg != 'Either path or thumbprint must be set when state=absent'
+  failed_when: "fail_absent_no_path_or_thumbprint.msg != 'state is absent but any of the following are missing: path, thumbprint'"
 
 - name: import pem certificate (check)
   win_certificate_store:

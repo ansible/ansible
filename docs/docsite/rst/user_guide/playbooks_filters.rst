@@ -10,7 +10,7 @@ Filters in Ansible are from Jinja2, and are used for transforming data inside a 
 
 Take into account that templating happens on the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
-In addition the ones provided by Jinja2, Ansible ships with it's own and allows users to add their own custom filters.
+In addition the ones provided by Jinja2, Ansible ships with its own and allows users to add their own custom filters.
 
 .. _filters_for_formatting_data:
 
@@ -32,6 +32,17 @@ It's also possible to change the indentation of both (new in version 2.2)::
 
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}
+
+
+``to_yaml`` and ``to_nice_yaml`` filters use `PyYAML library`_ which has a default 80 symbol string length limit. That causes unexpected line break after 80th symbol (if there is a space after 80th symbol)
+To avoid such behaviour and generate long lines it is possible to use ``width`` option::
+
+    {{ some_variable | to_yaml(indent=8, width=1337) }}
+    {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
+
+While it would be nicer to use a construction like ``float("inf")`` instead of a hardcoded number, unfortunately the filter doesn't support proxying Python functions.
+Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
+
 
 Alternatively, you may be reading in some already formatted data::
 
@@ -58,9 +69,9 @@ for example::
   tasks:
     - shell: cat /some/path/to/multidoc-file.yaml
       register: result
-   - debug:
-       msg: '{{ item }}'
-    loop: '{{ result.stdout | from_yaml_all | list }}'
+    - debug:
+        msg: '{{ item }}'
+      loop: '{{ result.stdout | from_yaml_all | list }}'
 
 
 .. _forcing_variables_to_be_defined:
@@ -103,7 +114,10 @@ Omitting Parameters
 As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
-      file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
+      file:
+        dest: "{{ item.path }}"
+        state: touch
+        mode: "{{ item.mode | default(omit) }}"
       loop:
         - path: /tmp/foo
         - path: /tmp/bar
@@ -113,9 +127,9 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
-.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
-      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
-      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+.. note:: If you are "chaining" additional filters after the ``default(omit)`` filter, you should instead do something like this:
+      ``"{{ foo | default(None) | some_filter or omit }}"``. In this example, the default ``None`` (Python null) value will cause the
+      later filters to fail, which will trigger the ``or omit`` portion of the logic. Using ``omit`` in this manner is very specific to
       the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
@@ -139,11 +153,11 @@ To get the maximum value from a list of numbers::
 
 Flatten a list (same thing the `flatten` lookup does)::
 
-    {{ [3, [4, 2] ]|flatten }}
+    {{ [3, [4, 2] ] | flatten }}
 
 Flatten only the first level of a list (akin to the `items` lookup)::
 
-    {{ [3, [4, [2]] ]|flatten(levels=1) }}
+    {{ [3, [4, [2]] ] | flatten(levels=1) }}
 
 
 .. _set_theory_filters:
@@ -259,17 +273,17 @@ To get a list combining the elements of other lists use ``zip``::
 
     - name: give me list combo of two lists
       debug:
-       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
+       msg: "{{ [1,2,3,4,5] | zip(['a','b','c','d','e','f']) | list }}"
 
     - name: give me shortest combo of two lists
       debug:
-        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
+        msg: "{{ [1,2,3] | zip(['a','b','c','d','e','f']) | list }}"
 
 To always exhaust all list use ``zip_longest``::
 
     - name: give me longest combo of three lists , fill with X
       debug:
-        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
+        msg: "{{ [1,2,3] | zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X') | list }}"
 
 
 Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to contruct a ``dict``::
@@ -278,10 +292,10 @@ Similarly to the output of the ``items2dict`` filter mentioned above, these filt
 
 Which turns::
 
-    list_one:
+    keys_list:
       - one
       - two
-    list_two:
+    values_list:
       - apple
       - orange
 
@@ -297,48 +311,50 @@ subelements Filter
 
 Produces a product of an object, and subelement values of that object, similar to the ``subelements`` lookup::
 
-    {{ users|subelements('groups', skip_missing=True) }}
+    {{ users | subelements('groups', skip_missing=True) }}
 
 Which turns::
 
     users:
-      - name: alice
-        authorized:
-          - /tmp/alice/onekey.pub
-          - /tmp/alice/twokey.pub
-        groups:
-          - wheel
-          - docker
-      - name: bob
-        authorized:
-          - /tmp/bob/id_rsa.pub
-        groups:
-          - docker
+    - name: alice
+      authorized:
+      - /tmp/alice/onekey.pub
+      - /tmp/alice/twokey.pub
+      groups:
+      - wheel
+      - docker
+    - name: bob
+      authorized:
+      - /tmp/bob/id_rsa.pub
+      groups:
+      - docker
 
 Into::
 
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/onekey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - wheel
     -
       - name: alice
         groups:
-          - wheel
-          - docker
+        - wheel
+        - docker
         authorized:
-          - /tmp/alice/onekey.pub
+        - /tmp/alice/onekey.pub
+        - /tmp/alice/twokey.pub
       - docker
     -
       - name: bob
         authorized:
-          - /tmp/bob/id_rsa.pub
+        - /tmp/bob/id_rsa.pub
         groups:
-          - docker
+        - docker
       - docker
 
 An example of using this filter with ``loop``::
@@ -347,7 +363,7 @@ An example of using this filter with ``loop``::
       authorized_key:
         user: "{{ item.0.name }}"
         key: "{{ lookup('file', item.1) }}"
-      loop: "{{ users|subelements('authorized') }}"
+      loop: "{{ users | subelements('authorized') }}"
 
 .. _random_mac_filter:
 
@@ -360,10 +376,14 @@ This filter can be used to generate a random MAC address from a string prefix.
 
 To get a random MAC address from a string prefix starting with '52:54:00'::
 
-    "{{ '52:54:00'|random_mac }}"
+    "{{ '52:54:00' | random_mac }}"
     # => '52:54:00:ef:1c:03'
 
 Note that if anything is wrong with the prefix string, the filter will issue an error.
+
+As of Ansible version 2.9, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
+
+    "{{ '52:54:00' | random_mac(seed=inventory_hostname) }}"
 
 .. _random_filter:
 
@@ -377,29 +397,29 @@ items), but can also generate a random number based on a range.
 
 To get a random item from a list::
 
-    "{{ ['a','b','c']|random }}"
+    "{{ ['a','b','c'] | random }}"
     # => 'c'
 
 To get a random number between 0 and a specified number::
 
-    "{{ 60 |random}} * * * * root /script/from/cron"
+    "{{ 60 | random }} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
 
 Get a random number from 0 to 100 but in steps of 10::
 
-    {{ 101 |random(step=10) }}
+    {{ 101 | random(step=10) }}
     # => 70
 
 Get a random number from 1 to 100 but in steps of 10::
 
-    {{ 101 |random(1, 10) }}
+    {{ 101 | random(1, 10) }}
     # => 31
-    {{ 101 |random(start=1, step=10) }}
+    {{ 101 | random(start=1, step=10) }}
     # => 51
 
 As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
-    "{{ 60 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
+    "{{ 60 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 
 Shuffle Filter
@@ -411,14 +431,14 @@ This filter will randomize an existing list, giving a different order every invo
 
 To get a random list from an existing  list::
 
-    {{ ['a','b','c']|shuffle }}
+    {{ ['a','b','c'] | shuffle }}
     # => ['c','a','b']
-    {{ ['a','b','c']|shuffle }}
+    {{ ['a','b','c'] | shuffle }}
     # => ['b','c','a']
 
 As of Ansible version 2.3, it's also possible to shuffle a list idempotent. All you need is a seed.::
 
-    {{ ['a','b','c']|shuffle(seed=inventory_hostname) }}
+    {{ ['a','b','c'] | shuffle(seed=inventory_hostname) }}
     # => ['b','a','c']
 
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
@@ -465,29 +485,52 @@ Sometimes you end up with a complex data structure in JSON format and you need t
 
 Now, let's take the following data structure::
 
-    domain_definition:
-        domain:
-            cluster:
-                - name: "cluster1"
-                - name: "cluster2"
-            server:
-                - name: "server11"
-                  cluster: "cluster1"
-                  port: "8080"
-                - name: "server12"
-                  cluster: "cluster1"
-                  port: "8090"
-                - name: "server21"
-                  cluster: "cluster2"
-                  port: "9080"
-                - name: "server22"
-                  cluster: "cluster2"
-                  port: "9090"
-            library:
-                - name: "lib1"
-                  target: "cluster1"
-                - name: "lib2"
-                  target: "cluster2"
+    {
+        "domain_definition": {
+            "domain": {
+                "cluster": [
+                    {
+                        "name": "cluster1"
+                    },
+                    {
+                        "name": "cluster2"
+                    }
+                ],
+                "server": [
+                    {
+                        "name": "server11",
+                        "cluster": "cluster1",
+                        "port": "8080"
+                    },
+                    {
+                        "name": "server12",
+                        "cluster": "cluster1",
+                        "port": "8090"
+                    },
+                    {
+                        "name": "server21",
+                        "cluster": "cluster2",
+                        "port": "9080"
+                    },
+                    {
+                        "name": "server22",
+                        "cluster": "cluster2",
+                        "port": "9090"
+                    }
+                ],
+                "library": [
+                    {
+                        "name": "lib1",
+                        "target": "cluster1"
+                    },
+                    {
+                        "name": "lib2",
+                        "target": "cluster2"
+                    }
+                ]
+            }
+        }
+    }
 
 To extract all clusters from this structure, you can use the following query::
 
@@ -562,7 +605,7 @@ address. For example, to get the IP address itself from a CIDR, you can use::
   {{ '192.0.2.1/24' | ipaddr('address') }}
 
 More information about ``ipaddr`` filter and complete usage guide can be found
-in :doc:`playbooks_filters_ipaddr`.
+in :ref:`playbooks_filters_ipaddr`.
 
 .. _network_filters:
 
@@ -764,6 +807,38 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
 
 .. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
 
+Network VLAN filters
+````````````````````
+
+.. versionadded:: 2.8
+
+Use the ``vlan_parser`` filter to manipulate an unsorted list of VLAN integers into a
+sorted string list of integers according to IOS-like VLAN list rules. This list has the following properties:
+
+* Vlans are listed in ascending order.
+* Three or more consecutive VLANs are listed with a dash.
+* The first line of the list can be first_line_len characters long.
+* Subsequent list lines can be other_line_len characters.
+
+To sort a VLAN list::
+
+    {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
+
+This example renders the folllowing sorted list::
+
+    ['100,1688,3002-3005,3999']
+
+
+Another example Jinja template::
+
+    {% set parsed_vlans = vlans | vlan_parser %}
+    switchport trunk allowed vlan {{ parsed_vlans[0] }}
+    {% for i in range (1, parsed_vlans | count) %}
+    switchport trunk allowed vlan add {{ parsed_vlans[i] }}
+
+This allows for dynamic generation of VLAN lists on a Cisco IOS tagged interface. You can store an exhaustive raw list of the exact VLANs required for an interface and then compare that to the parsed IOS output that would actually be generated for the configuration.
+
+
 .. _hash_filters:
 
 Hashing filters
@@ -773,31 +848,31 @@ Hashing filters
 
 To get the sha1 hash of a string::
 
-    {{ 'test1'|hash('sha1') }}
+    {{ 'test1' | hash('sha1') }}
 
 To get the md5 hash of a string::
 
-    {{ 'test1'|hash('md5') }}
+    {{ 'test1' | hash('md5') }}
 
 Get a string checksum::
 
-    {{ 'test2'|checksum }}
+    {{ 'test2' | checksum }}
 
 Other hashes (platform dependent)::
 
-    {{ 'test2'|hash('blowfish') }}
+    {{ 'test2' | hash('blowfish') }}
 
 To get a sha512 password hash (random salt)::
 
-    {{ 'passwordsaresecret'|password_hash('sha512') }}
+    {{ 'passwordsaresecret' | password_hash('sha512') }}
 
 To get a sha256 password hash with a specific salt::
 
-    {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
+    {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt') }}
 
 An idempotent method to generate unique hashes per system is to use a salt that is consistent between runs::
 
-    {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
+    {{ 'secretpassword' | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}
 
 Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
@@ -806,13 +881,7 @@ Hash types available depend on the master system running ansible,
 
 Some hash types allow providing a rounds parameter::
 
-    {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt', rounds=10000) }}
-
-When`Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed
-`password_hash` supports any crypt scheme and parameter supported by 'Passlib'::
-
-    {{ 'secretpassword'|password_hash('sha256_crypt', 'mysecretsalt', rounds=5000) }}
-    {{ 'secretpassword'|password_hash('bcrypt', ident='2b', rounds=14) }}
+    {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt', rounds=10000) }}
 
 .. _combine_filter:
 
@@ -824,7 +893,7 @@ Combining hashes/dictionaries
 The `combine` filter allows hashes to be merged. For example, the
 following would override keys in one hash::
 
-    {{ {'a':1, 'b':2}|combine({'b':3}) }}
+    {{ {'a':1, 'b':2} | combine({'b':3}) }}
 
 The resulting hash would be::
 
@@ -836,7 +905,7 @@ hashes and merge their keys too
 
 .. code-block:: jinja
 
-    {{ {'a':{'foo':1, 'bar':2}, 'b':2}|combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
+    {{ {'a':{'foo':1, 'bar':2}, 'b':2} | combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
 
 This would result in::
 
@@ -844,7 +913,7 @@ This would result in::
 
 The filter can also take multiple arguments to merge::
 
-    {{ a|combine(b, c, d) }}
+    {{ a | combine(b, c, d) }}
 
 In this case, keys in `d` would override those in `c`, which would
 override those in `b`, and so on.
@@ -862,8 +931,8 @@ Extracting values from containers
 The `extract` filter is used to map from a list of indices to a list of
 values from a container (hash or array)::
 
-    {{ [0,2]|map('extract', ['x','y','z'])|list }}
-    {{ ['x','y']|map('extract', {'x': 42, 'y': 31})|list }}
+    {{ [0,2] | map('extract', ['x','y','z']) | list }}
+    {{ ['x','y'] | map('extract', {'x': 42, 'y': 31}) | list }}
 
 The results of the above expressions would be::
 
@@ -872,7 +941,7 @@ The results of the above expressions would be::
 
 The filter can take another argument::
 
-    {{ groups['x']|map('extract', hostvars, 'ec2_ip_address')|list }}
+    {{ groups['x'] | map('extract', hostvars, 'ec2_ip_address') | list }}
 
 This takes the list of hosts in group 'x', looks them up in `hostvars`,
 and then looks up the `ec2_ip_address` of the result. The final result
@@ -881,7 +950,7 @@ is a list of IP addresses for the hosts in group 'x'.
 The third argument to the filter can also be a list, for a recursive
 lookup inside the container::
 
-    {{ ['a']|map('extract', b, ['x','y'])|list }}
+    {{ ['a'] | map('extract', b, ['x','y']) | list }}
 
 This would return a list containing the value of `b['a']['x']['y']`.
 
@@ -897,7 +966,9 @@ style. For example the following::
 
     {{ "Plain style (default)" | comment }}
 
-will produce this output::
+will produce this output:
+
+.. code-block:: text
 
     #
     # Plain style (default)
@@ -916,7 +987,9 @@ above, you can customize it with::
 
   {{ "My Special Case" | comment(decoration="! ") }}
 
-producing::
+producing:
+
+.. code-block:: text
 
   !
   ! My Special Case
@@ -928,7 +1001,7 @@ It is also possible to fully customize the comment style::
 
 That will create the following output:
 
-.. code-block:: sh
+.. code-block:: text
 
     #######
     #
@@ -1031,9 +1104,9 @@ To search a string with a regex, use the "regex_search" filter::
 
     # will return empty if it cannot find a match
     {{ 'ansible' | regex_search('(foobar)') }}
-    
+
     # case insensitive search in multiline mode
-    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
+    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
 
 To search for all occurrences of regex matches, use the "regex_findall" filter::
@@ -1055,20 +1128,72 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
-    
+
+.. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
+   For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
+   end, which means it will make two replacements.
+
     # add "https://" prefix to each item in a list
+    GOOD:
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '(.+)', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '^', 'https://') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', 'https://\\1') | list }}
+
+    # append ':80' to each item in a list
+    GOOD:
+    {{ hosts | map('regex_replace', '^(.*)$', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '(.+)', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '$', ':80') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', '\\1:80') | list }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
 .. versionadded:: 2.0
 
-To escape special characters within a regex, use the "regex_escape" filter::
+To escape special characters within a standard Python regex, use the "regex_escape" filter (using the default re_type='python' option)::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
 
+.. versionadded:: 2.8
+
+To escape special characters within a POSIX basic regex, use the "regex_escape" filter with the re_type='posix_basic' option::
+
+    # convert '^f.*o(.*)$' to '\^f\.\*o(\.\*)\$'
+    {{ '^f.*o(.*)$' | regex_escape('posix_basic') }}
+
+
+Kubernetes Filters
+``````````````````
+
+Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
+including its hash::
+
+    {{ configmap_resource_definition | k8s_config_resource_name }}
+
+This can then be used to reference hashes in Pod specifications::
+
+    my_secret:
+      kind: Secret
+      name: my_secret_name
+
+    deployment_resource:
+      kind: Deployment
+      spec:
+        template:
+          spec:
+            containers:
+            - envFrom:
+                - secretRef:
+                    name: {{ my_secret | k8s_config_resource_name }}
+
+.. versionadded:: 2.8
 
 Other Useful Filters
 ````````````````````
@@ -1080,6 +1205,10 @@ To add quotes for shell usage::
 To use one value on true and another on false (new in version 1.9)::
 
     {{ (name == "John") | ternary('Mr','Ms') }}
+
+To use one value on true, one value on false and a third value on null (new in version 2.8)::
+
+   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
 
 To concatenate a list into a string::
 
@@ -1166,44 +1295,19 @@ doesn't know it is a boolean value::
 To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
-    {{ ansible_mounts|map(attribute='mount')|join(',') }}
+    {{ ansible_mounts | map(attribute='mount') | join(',') }}
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
     # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
-    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).total_seconds()  }}
+    {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).total_seconds()  }}
 
     # Get remaining seconds after delta has been calculated. NOTE: This does NOT convert years, days, hours, etc to seconds. For that, use total_seconds()
-    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2016-08-14 18:00:00"|to_datetime)).seconds  }}
+    {{ (("2016-08-14 20:00:12" | to_datetime) - ("2016-08-14 18:00:00" | to_datetime)).seconds  }}
     # This expression evaluates to "12" and not "132". Delta is 2 hours, 12 seconds
 
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
-    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).days  }}
-
-Combination Filters
-````````````````````
-
-.. versionadded:: 2.3
-
-This set of filters returns a list of combined lists.
-To get permutations of a list::
-
-    - name: give me largest permutations (order matters)
-      debug:
-        msg: "{{ [1,2,3,4,5]|permutations|list }}"
-
-    - name: give me permutations of sets of three
-      debug:
-        msg: "{{ [1,2,3,4,5]|permutations(3)|list }}"
-
-Combinations always require a set size::
-
-    - name: give me combinations for sets of two
-      debug:
-        msg: "{{ [1,2,3,4,5]|combinations(2)|list }}"
-
-
-Also see the :ref:`zip_filter`
+    {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).days  }}
 
 .. versionadded:: 2.4
 
@@ -1224,6 +1328,49 @@ To format a date using a string (like with the shell date command), use the "str
 
 .. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
 
+Combination Filters
+````````````````````
+
+.. versionadded:: 2.3
+
+This set of filters returns a list of combined lists.
+To get permutations of a list::
+
+    - name: give me largest permutations (order matters)
+      debug:
+        msg: "{{ [1,2,3,4,5] | permutations | list }}"
+
+    - name: give me permutations of sets of three
+      debug:
+        msg: "{{ [1,2,3,4,5] | permutations(3) | list }}"
+
+Combinations always require a set size::
+
+    - name: give me combinations for sets of two
+      debug:
+        msg: "{{ [1,2,3,4,5] | combinations(2) | list }}"
+
+
+Also see the :ref:`zip_filter`
+
+Product Filters
+```````````````
+
+The product filter returns the `cartesian product <https://docs.python.org/3/library/itertools.html#itertools.product>`_ of the input iterables.
+
+This is roughly equivalent to nested for-loops in a generator expression.
+
+For example::
+
+  - name: generate multiple hostnames
+    debug:
+      msg: "{{ ['foo', 'bar'] | product(['com']) | map('join', '.') | join(',') }}"
+
+This would result in::
+
+    { "msg": "foo.com,bar.com" }
+
+
 Debugging Filters
 `````````````````
 
@@ -1236,6 +1383,58 @@ type of a variable::
     {{ myvar | type_debug }}
 
 
+Computer Theory Assertions
+```````````````````````````
+
+The ``human_readable`` and ``human_to_bytes`` functions let you test your
+playbooks to make sure you are using the right size format in your tasks - that
+you're providing Byte format to computers and human-readable format to people.
+
+Human Readable
+``````````````
+
+Asserts whether the given string is human readable or not.
+
+For example::
+
+  - name: "Human Readable"
+    assert:
+      that:
+        - '"1.00 Bytes" == 1|human_readable'
+        - '"1.00 bits" == 1|human_readable(isbits=True)'
+        - '"10.00 KB" == 10240|human_readable'
+        - '"97.66 MB" == 102400000|human_readable'
+        - '"0.10 GB" == 102400000|human_readable(unit="G")'
+        - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+Human to Bytes
+``````````````
+
+Returns the given string in the Bytes format.
+
+For example::
+
+  - name: "Human to Bytes"
+    assert:
+      that:
+        - "{{'0'|human_to_bytes}}        == 0"
+        - "{{'0.1'|human_to_bytes}}      == 0"
+        - "{{'0.9'|human_to_bytes}}      == 1"
+        - "{{'1'|human_to_bytes}}        == 1"
+        - "{{'10.00 KB'|human_to_bytes}} == 10240"
+        - "{{   '11 MB'|human_to_bytes}} == 11534336"
+        - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
+        - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
@@ -1244,19 +1443,24 @@ to be added to core so everyone can make use of them.
 
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
+.. _PyYAML library: https://pyyaml.org/
+
+.. _PyYAML documentation: https://pyyaml.org/wiki/PyYAMLDocumentation
+
+
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

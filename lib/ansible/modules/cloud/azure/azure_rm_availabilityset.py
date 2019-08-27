@@ -18,11 +18,12 @@ module: azure_rm_availabilityset
 
 version_added: "2.4"
 
-short_description: Manage Azure availability set.
+short_description: Manage Azure Availability Set
 
 description:
-    - Create, update and delete Azure availability set. An availability set cannot be updated, you will have to
-      recreate one instead. The only update operation will be for the tags.
+    - Create, update and delete Azure Availability Set.
+    - An availability set cannot be updated, you will have to recreate one instead.
+    - The only update operation will be for the tags.
 
 options:
     resource_group:
@@ -35,27 +36,26 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the availability set. Use 'present' to create or update a availability set and
-              'absent' to delete a availability set.
+            - Assert the state of the availability set.
+            - Use C(present) to create or update a availability set and C(absent) to delete a availability set.
         default: present
         choices:
             - absent
             - present
-        required: false
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
-        required: false
+            - Valid Azure location. Defaults to location of the resource group.
     platform_update_domain_count:
         description:
-            - Update domains indicate groups of virtual machines and underlying physical hardware that can be rebooted at the same time. Default is 5.
+            - Update domains indicate groups of virtual machines and underlying physical hardware that can be rebooted at the same time.
+        type: int
         default: 5
-        required: false
     platform_fault_domain_count:
         description:
-            - Fault domains define the group of virtual machines that share a common power source and network switch. Should be between 1 and 3. Default is 3
+            - Fault domains define the group of virtual machines that share a common power source and network switch.
+            - Should be between C(1) and C(3).
+        type: int
         default: 3
-        required: false
     sku:
         description:
             - Define if the availability set supports managed disks.
@@ -63,48 +63,85 @@ options:
         choices:
             - Classic
             - Aligned
-        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Julien Stroheker (@julienstroheker)"
+    - Julien Stroheker (@julienstroheker)
 '''
 
 EXAMPLES = '''
     - name: Create an availability set with default options
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Create an availability set with advanced options
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         platform_update_domain_count: 5
         platform_fault_domain_count: 3
         sku: Aligned
 
     - name: Delete an availability set
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
 '''
 
 RETURN = '''
 state:
-    description: Current state of the avaibility set
+    description: Current state of the availability set.
     returned: always
-    type: dict
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            type: str
+            sample: "/subscriptions/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/resourceGroups/v-xisuRG/providers/Microsoft.Compute/availabilitySets/myavailabilityset2"
+        location:
+            description:
+                - Location where the resource lives.
+            type: str
+            sample: eastus
+        name:
+            description:
+                - Resource name.
+            type: str
+            sample: myavailabilityset2
+        platform_fault_domain_count:
+            description:
+                - Fault domains values.
+            type: int
+            sample: 2
+        platform_update_domain_count:
+            description:
+                - Update domains values.
+            type: int
+            sample: 5
+        sku:
+            description:
+                - The availability set supports managed disks.
+            type: str
+            sample: Aligned
+        tags:
+            description:
+                - Resource tags.
+            type: dict
+            sample: {env: sandbox}
+
 changed:
     description: Whether or not the resource has changed
     returned: always
     type: bool
+    sample: true
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -118,7 +155,7 @@ except ImportError:
 
 def availability_set_to_dict(avaset):
     '''
-    Serialazing the availability set from the API to Dict
+    Serializing the availability set from the API to Dict
     :return: dict
     '''
     return dict(
@@ -147,28 +184,23 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             platform_update_domain_count=dict(
                 type='int',
-                default=5,
-                required=False
+                default=5
             ),
             platform_fault_domain_count=dict(
                 type='int',
-                default=3,
-                required=False
+                default=3
             ),
             sku=dict(
                 type='str',
                 default='Classic',
-                required=False,
                 choices=['Classic', 'Aligned']
             )
         )
@@ -242,7 +274,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
     def faildeploy(self, param):
         '''
         Helper method to push fail message in the console.
-        Usefull to notify that the users cannot change some values in a Availibility Set
+        Useful to notify that the users cannot change some values in a Availability Set
 
         :param: variable's name impacted
         :return: void

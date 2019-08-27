@@ -1,0 +1,2 @@
+bugfixes:
+- "docker connection plugin - accept version ``dev`` as 'newest version' and print warning."

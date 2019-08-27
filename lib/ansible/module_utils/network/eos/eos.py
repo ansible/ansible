@@ -27,11 +27,12 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import json
 import os
 import time
 
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list, ComplexList
@@ -99,10 +100,15 @@ def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
         load_params(module)
-        if is_eapi(module):
-            conn = Eapi(module)
+        if is_local_eapi(module):
+            conn = LocalEapi(module)
         else:
-            conn = Cli(module)
+            connection_proxy = Connection(module._socket_path)
+            cap = json.loads(connection_proxy.get_capabilities())
+            if cap['network_api'] == 'cliconf':
+                conn = Cli(module)
+            elif cap['network_api'] == 'eapi':
+                conn = HttpApi(module)
         _DEVICE_CONNECTION = conn
     return _DEVICE_CONNECTION
 
@@ -114,6 +120,12 @@ class Cli:
         self._device_configs = {}
         self._session_support = None
         self._connection = None
+
+    @property
+    def supports_sessions(self):
+        if self._session_support is None:
+            self._session_support = self._get_connection().supports_sessions()
+        return self._session_support
 
     def _get_connection(self):
         if self._connection:
@@ -179,8 +191,22 @@ class Cli:
             self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         return diff
 
+    def get_capabilities(self):
+        """Returns platform info of the remove device
+        """
+        if hasattr(self._module, '_capabilities'):
+            return self._module._capabilities
 
-class Eapi:
+        connection = self._get_connection()
+        try:
+            capabilities = connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        self._module._capabilities = json.loads(capabilities)
+        return self._module._capabilities
+
+
+class LocalEapi:
 
     def __init__(self, module):
         self._module = module
@@ -210,10 +236,9 @@ class Eapi:
 
     @property
     def supports_sessions(self):
-        if self._session_support:
-            return self._session_support
-        response = self.send_request(['show configuration sessions'])
-        self._session_support = 'error' not in response
+        if self._session_support is None:
+            response = self.send_request(['show configuration sessions'])
+            self._session_support = 'error' not in response
         return self._session_support
 
     def _request_builder(self, commands, output, reqid=None):
@@ -394,18 +419,196 @@ class Eapi:
         return diff
 
 
+class HttpApi:
+    def __init__(self, module):
+        self._module = module
+        self._device_configs = {}
+        self._session_support = None
+        self._connection_obj = None
+
+    @property
+    def _connection(self):
+        if not self._connection_obj:
+            self._connection_obj = Connection(self._module._socket_path)
+
+        return self._connection_obj
+
+    @property
+    def supports_sessions(self):
+        if self._session_support is None:
+            self._session_support = self._connection.supports_sessions()
+        return self._session_support
+
+    def run_commands(self, commands, check_rc=True):
+        """Runs list of commands on remote device and returns results
+        """
+        output = None
+        queue = list()
+        responses = list()
+
+        def run_queue(queue, output):
+            try:
+                response = to_list(self._connection.send_request(queue, output=output))
+            except ConnectionError as exc:
+                if check_rc:
+                    raise
+                return to_list(to_text(exc))
+
+            if output == 'json':
+                response = [json.loads(item) for item in response]
+            return response
+
+        for item in to_list(commands):
+            cmd_output = 'text'
+            if isinstance(item, dict):
+                command = item['command']
+                if 'output' in item:
+                    cmd_output = item['output']
+            else:
+                command = item
+
+            # Emulate '| json' from CLI
+            if is_json(command):
+                command = command.rsplit('|', 1)[0]
+                cmd_output = 'json'
+
+            if output and output != cmd_output:
+                responses.extend(run_queue(queue, output))
+                queue = list()
+
+            output = cmd_output
+            queue.append(command)
+
+        if queue:
+            responses.extend(run_queue(queue, output))
+
+        return responses
+
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        try:
+            return self._device_configs[cmd]
+        except KeyError:
+            try:
+                out = self._connection.send_request(cmd)
+            except ConnectionError as exc:
+                self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+            cfg = to_text(out).strip()
+            self._device_configs[cmd] = cfg
+            return cfg
+
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        diff = {}
+
+        # prepare candidate configuration
+        candidate_obj = NetworkConfig(indent=3)
+        candidate_obj.load(candidate)
+
+        if running and diff_match != 'none' and diff_replace != 'config':
+            # running configuration
+            running_obj = NetworkConfig(indent=3, contents=running, ignore_lines=diff_ignore_lines)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
+
+        else:
+            configdiffobjs = candidate_obj.items
+
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else {}
+        return diff
+
+    def load_config(self, config, commit=False, replace=False):
+        """Loads the configuration onto the remote devices
+
+        If the device doesn't support configuration sessions, this will
+        fallback to using configure() to load the commands.  If that happens,
+        there will be no returned diff or session values
+        """
+        return self.edit_config(config, commit, replace)
+
+    def edit_config(self, config, commit=False, replace=False):
+        """Loads the configuration onto the remote devices
+
+        If the device doesn't support configuration sessions, this will
+        fallback to using configure() to load the commands.  If that happens,
+        there will be no returned diff or session values
+        """
+        session = 'ansible_%s' % int(time.time())
+        result = {'session': session}
+        banner_cmd = None
+        banner_input = []
+
+        commands = ['configure session %s' % session]
+        if replace:
+            commands.append('rollback clean-config')
+
+        for command in config:
+            if command.startswith('banner'):
+                banner_cmd = command
+                banner_input = []
+            elif banner_cmd:
+                if command == 'EOF':
+                    command = {'cmd': banner_cmd, 'input': '\n'.join(banner_input)}
+                    banner_cmd = None
+                    commands.append(command)
+                else:
+                    banner_input.append(command)
+                    continue
+            else:
+                commands.append(command)
+
+        try:
+            response = self._connection.send_request(commands)
+        except Exception:
+            commands = ['configure session %s' % session, 'abort']
+            response = self._connection.send_request(commands, output='text')
+            raise
+
+        commands = ['configure session %s' % session, 'show session-config diffs']
+        if commit:
+            commands.append('commit')
+        else:
+            commands.append('abort')
+
+        response = self._connection.send_request(commands, output='text')
+        diff = response[1].strip()
+        if diff:
+            result['diff'] = diff
+
+        return result
+
+    def get_capabilities(self):
+        """Returns platform info of the remove device
+        """
+        try:
+            capabilities = self._connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+        return json.loads(capabilities)
+
+
 def is_json(cmd):
-    return to_native(cmd, errors='surrogate_then_replace').endswith('| json')
+    return to_text(cmd, errors='surrogate_then_replace').endswith('| json')
 
 
-def is_eapi(module):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    return 'eapi' in (transport, provider_transport)
+def is_local_eapi(module):
+    transports = []
+    transports.append(module.params.get('transport', ""))
+    provider = module.params.get('provider')
+    if provider:
+        transports.append(provider.get('transport', ""))
+    return 'eapi' in transports
 
 
 def to_command(module, commands):
-    if is_eapi(module):
+    if is_local_eapi(module):
         default_output = 'json'
     else:
         default_output = 'text'
@@ -415,6 +618,7 @@ def to_command(module, commands):
         output=dict(default=default_output),
         prompt=dict(type='list'),
         answer=dict(type='list'),
+        newline=dict(type='bool', default=True),
         sendonly=dict(type='bool', default=False),
         check_all=dict(type='bool', default=False),
     ), module)
@@ -442,3 +646,8 @@ def load_config(module, config, commit=False, replace=False):
 def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
     conn = self.get_connection()
     return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
+
+
+def get_capabilities(module):
+    conn = get_connection(module)
+    return conn.get_capabilities()

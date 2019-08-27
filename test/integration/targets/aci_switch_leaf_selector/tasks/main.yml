@@ -68,7 +68,7 @@
     - sw_leaf_selec_check_mode_present is changed
     - sw_leaf_selec_present is changed
     - sw_leaf_selec_present.previous == []
-    - 'sw_leaf_selec_present.sent ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}},{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-None"}}}]}}'
+    - 'sw_leaf_selec_present.sent ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}}]}}'
     - sw_leaf_selec_idempotent is not changed
     - sw_leaf_selec_idempotent.sent == {}
     - sw_leaf_selec_update is changed

@@ -1,0 +1,23 @@
+- name: Add ESXi Hosts to vCenter
+  vmware_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: '{{ ccr1 }}'
+    esxi_hostname: '{{ item }}'
+    esxi_username: '{{ esxi_user }}'
+    esxi_password: '{{ esxi_password }}'
+    state: present
+    validate_certs: no
+  with_items: "{{ esxi_hosts }}"
+
+- name: Disable the Maintenance Mode
+  vmware_maintenancemode:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: '{{ item }}'
+    state: absent
+  with_items: "{{ esxi_hosts }}"

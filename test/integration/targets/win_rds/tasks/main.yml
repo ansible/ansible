@@ -1,0 +1,73 @@
+---
+# Cannot use win_feature to install RDS on Server 2008
+- name: check if feature is availble
+  win_shell: if (Get-Command -Name Add-WindowsFeature -ErrorAction SilentlyContinue) { $true } else { $false }
+  changed_when: False
+  register: module_available
+
+- name: install Remote Desktop Gateway features
+  when: module_available.stdout | trim | bool
+  block:
+  - name: ensure Remote Desktop Gateway services are installed
+    win_feature:
+      name:
+      - RDS-Gateway
+      - RDS-Licensing
+      - RDS-RD-Server
+      state: present
+    register: rds_install
+
+  - name: reboot server if needed
+    win_reboot:
+    when: rds_install.reboot_required
+
+  # After a reboot Windows is still configuring the feature, this is a hack to wait until that is finished
+  - name: wait for component servicing to be finished
+    win_shell: |
+      $start = Get-Date
+      $path = "HKLM:\SYSTEM\CurrentControlSet\Control\Winlogon\Notifications\Components\TrustedInstaller"
+      $tries = 0
+      while ((Get-ItemProperty -Path $path -Name Events).Events.Contains("CreateSession")) {
+          $tries += 1
+          Start-Sleep -Seconds 5
+          if (((Get-Date) - $start).TotalSeconds -gt 180) {
+              break
+          }
+      }
+      $tries
+    changed_when: False
+
+  - name: run win_rds_cap integration tests
+    include_tasks: win_rds_cap.yml
+
+  - name: run win_rds_rap integration tests
+    include_tasks: win_rds_rap.yml
+
+  - name: run win_rds_settings integration tests
+    include_tasks: win_rds_settings.yml
+
+  always:
+  # Server 2008 R2 requires us to remove this first before the other features
+  - name: remove the RDS-Gateway feature
+    win_feature:
+      name: RDS-Gateway
+      state: absent
+    register: rds_uninstall
+
+  - name: reboot after removing RDS-Gateway feature
+    win_reboot:
+    when: rds_uninstall.reboot_required
+
+  # Now remove the remaining features
+  - name: remove installed RDS feature
+    win_feature:
+      name:
+      - RDS-Licensing
+      - RDS-RD-Server
+      - Web-Server  # not part of the initial feature install but RDS-Gateway requires this and it breaks httptester
+      state: absent
+    register: rds_uninstall2
+
+  - name: reboot after feature removal
+    win_reboot:
+    when: rds_uninstall2.reboot_required

@@ -1,0 +1,52 @@
+{
+    "kind": "tm:ltm:profile:analytics:analyticsstate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 339,
+    "selfLink": "https://localhost/mgmt/tm/ltm/profile/analytics/~Common~foo?ver=13.1.1",
+    "appService": "none",
+    "capturedTrafficExternalLogging": "disabled",
+    "capturedTrafficInternalLogging": "disabled",
+    "collectGeo": "disabled",
+    "collectHttpTimingMetrics": "disabled",
+    "collectIp": "disabled",
+    "collectMaxTpsAndThroughput": "disabled",
+    "collectMethods": "enabled",
+    "collectOsAndBrowser": "enabled",
+    "collectPageLoadTime": "disabled",
+    "collectResponseCodes": "enabled",
+    "collectSubnets": "disabled",
+    "collectUrl": "disabled",
+    "collectUserAgent": "disabled",
+    "collectUserSessions": "disabled",
+    "collectedStatsExternalLogging": "disabled",
+    "collectedStatsInternalLogging": "enabled",
+    "countriesForStatCollection": [],
+    "defaultsFrom": "/Common/analytics",
+    "defaultsFromReference": {
+        "link": "https://localhost/mgmt/tm/ltm/profile/analytics/~Common~analytics?ver=13.1.1"
+    },
+    "description": "none",
+    "externalLoggingPublisher": "none",
+    "ipsForStatCollection": [],
+    "notificationByEmail": "disabled",
+    "notificationBySnmp": "disabled",
+    "notificationBySyslog": "disabled",
+    "notificationEmailAddresses": [],
+    "publishIruleStatistics": "disabled",
+    "sampling": "enabled",
+    "sessionCookieSecurity": "ssl-only",
+    "sessionTimeoutMinutes": "5",
+    "smtpConfig": "none",
+    "subnetsForStatCollection": [],
+    "urlsForStatCollection": [],
+    "alertsReference": {
+        "link": "https://localhost/mgmt/tm/ltm/profile/analytics/~Common~foo/alerts?ver=13.1.1",
+        "isSubcollection": true
+    },
+    "trafficCaptureReference": {
+        "link": "https://localhost/mgmt/tm/ltm/profile/analytics/~Common~foo/traffic-capture?ver=13.1.1",
+        "isSubcollection": true
+    }
+}

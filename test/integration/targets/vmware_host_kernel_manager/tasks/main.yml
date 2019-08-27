@@ -1,0 +1,52 @@
+# test code for the vmware_host_kernel_manager module
+# Copyright: (c) 2019, Aaron Longchamps <a.j.longchamps@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+        setup_datastore: true
+
+    - name: First, set ipv6=0, for consistency
+      vmware_host_kernel_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: False
+        esxi_hostname: '{{ esxi1 }}'
+        kernel_module_name: "tcpip4"
+        kernel_module_option: "ipv6=0"
+
+    - name: host connected, module exists, options exist, arguments different
+      vmware_host_kernel_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: False
+        esxi_hostname: '{{ esxi1 }}'
+        kernel_module_name: "tcpip4"
+        kernel_module_option: "ipv6=0"
+      register: my_results_01
+    - debug: var=my_results_01
+    - name: Check that the provided kernel_module_name has kernel_module_option set
+      assert:
+        that:
+          - "'original_options' in my_results_01['ansible_module_results']['{{ esxi1 }}']"
+          - "my_results_01['ansible_module_results']['{{ esxi1 }}'].original_options == 'ipv6=0'"
+
+    - name: host connected, module exists, same options for idempotence test
+      vmware_host_kernel_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: False
+        esxi_hostname: '{{ esxi1 }}'
+        kernel_module_name: "tcpip4"
+        kernel_module_option: "ipv6=0"
+      register: my_results_02
+    - name: Check that changed is false
+      assert:
+        that:
+          - not (my_results_02 is changed)

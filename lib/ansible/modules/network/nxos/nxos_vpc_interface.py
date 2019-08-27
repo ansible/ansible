@@ -50,6 +50,7 @@ options:
   peer_link:
     description:
       - Set to true/false for peer link config on associated portchannel.
+    type: bool
   state:
     description:
       - Manages desired state of the resource.

@@ -41,6 +41,12 @@ DEFAULT_IGNORE_LINES_RE = set([
 ])
 
 
+try:
+    Pattern = re._pattern_type
+except AttributeError:
+    Pattern = re.Pattern
+
+
 class ConfigLine(object):
 
     def __init__(self, raw):
@@ -162,7 +168,7 @@ class NetworkConfig(object):
 
         if ignore_lines:
             for item in ignore_lines:
-                if not isinstance(item, re._pattern_type):
+                if not isinstance(item, Pattern):
                     item = re.compile(item)
                 DEFAULT_IGNORE_LINES_RE.add(item)
 
@@ -203,7 +209,8 @@ class NetworkConfig(object):
         self._items = self.parse(s)
 
     def loadfp(self, fp):
-        return self.load(open(fp).read())
+        with open(fp) as f:
+            return self.load(f.read())
 
     def parse(self, lines, comment_tokens=None):
         toplevel = re.compile(r'\S')
@@ -213,8 +220,7 @@ class NetworkConfig(object):
         ancestors = list()
         config = list()
 
-        curlevel = 0
-        prevlevel = 0
+        indents = [0]
 
         for linenum, line in enumerate(to_native(lines, errors='surrogate_or_strict').split('\n')):
             text = entry_reg.sub('', line).strip()
@@ -227,20 +233,21 @@ class NetworkConfig(object):
             # handle top level commands
             if toplevel.match(line):
                 ancestors = [cfg]
-                prevlevel = curlevel
-                curlevel = 0
+                indents = [0]
 
             # handle sub level commands
             else:
                 match = childline.match(line)
                 line_indent = match.start(1)
 
-                prevlevel = curlevel
-                curlevel = int(line_indent / self._indent)
+                if line_indent < indents[-1]:
+                    while indents[-1] > line_indent:
+                        indents.pop()
 
-                if (curlevel - 1) > prevlevel:
-                    curlevel = prevlevel + 1
+                if line_indent > indents[-1]:
+                    indents.append(line_indent)
 
+                curlevel = len(indents) - 1
                 parent_level = curlevel - 1
 
                 cfg._parents = ancestors[:curlevel]

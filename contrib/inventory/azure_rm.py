@@ -20,6 +20,12 @@
 #
 
 '''
+Important note (2018/10)
+========================
+This inventory script is in maintenance mode: only critical bug fixes but no new features.
+There's new Azure external inventory script at https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/inventory/azure_rm.py,
+with better performance and latest new features. Please go to the link to get latest Azure inventory.
+
 Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
@@ -195,14 +201,8 @@ import re
 import sys
 import inspect
 
-try:
-    # python2
-    import ConfigParser as cp
-except ImportError:
-    # python3
-    import configparser as cp
-
 from os.path import expanduser
+from ansible.module_utils.six.moves import configparser as cp
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 HAS_AZURE = True
@@ -348,13 +348,13 @@ class AzureRM(object):
                 self.credentials.get('client_id') is not None and \
                 self.credentials.get('tenant') is not None:
 
-                self.azure_credentials = self.acquire_token_with_username_password(
-                    self._adfs_authority_url,
-                    self._resource,
-                    self.credentials['ad_user'],
-                    self.credentials['password'],
-                    self.credentials['client_id'],
-                    self.credentials['tenant'])
+            self.azure_credentials = self.acquire_token_with_username_password(
+                self._adfs_authority_url,
+                self._resource,
+                self.credentials['ad_user'],
+                self.credentials['password'],
+                self.credentials['client_id'],
+                self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
@@ -391,7 +391,7 @@ class AzureRM(object):
         for key in AZURE_CREDENTIAL_ENV_MAPPING:
             try:
                 credentials[key] = config.get(profile, key, raw=True)
-            except:
+            except Exception:
                 pass
 
         if credentials.get('client_id') is not None or credentials.get('ad_user') is not None:
@@ -807,7 +807,7 @@ class AzureInventory(object):
             sys.exit("Error: fetching instanceview for host {0} - {1}".format(name, str(exc)))
 
         return next((s.code.replace('PowerState/', '')
-                    for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
+                     for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
 
     def _add_host(self, vars):
 
@@ -915,7 +915,7 @@ class AzureInventory(object):
         try:
             config = cp.ConfigParser()
             config.read(path)
-        except:
+        except Exception:
             pass
 
         if config is not None:
@@ -923,7 +923,7 @@ class AzureInventory(object):
             for key in AZURE_CONFIG_SETTINGS:
                 try:
                     settings[key] = config.get('azure', key, raw=True)
-                except:
+                except Exception:
                     pass
 
         return settings

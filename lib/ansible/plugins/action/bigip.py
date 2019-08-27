@@ -27,23 +27,23 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
+from ansible.utils.display import Display
 
 try:
     from library.module_utils.network.f5.common import f5_provider_spec
-except:
+except Exception:
     from ansible.module_utils.network.f5.common import f5_provider_spec
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
+        self._config_module = True if self._task.action == 'bigip_imish_config' else False
         socket_path = None
         transport = 'rest'
 
@@ -95,5 +95,5 @@ class ActionModule(_ActionModule):
                 conn.send_command('exit')
                 out = conn.get_prompt()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result

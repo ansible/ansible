@@ -1,0 +1,77 @@
+# Test code for the vmware_host_feature_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support host feature capabilities
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+
+- name: Gather feature capability facts for all ESXi host from given cluster
+  vmware_host_feature_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+  register: capability_0001_results
+
+- debug: var=capability_0001_results
+
+- assert:
+    that:
+      - "not capability_0001_results.changed"
+      - "capability_0001_results.hosts_feature_facts is defined"
+
+- name: Gather feature capability facts for all ESXi host from given cluster in check mode
+  vmware_host_feature_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+  register: capability_0001_results
+  check_mode: yes
+
+- debug: var=capability_0001_results
+
+- assert:
+    that:
+      - "not capability_0001_results.changed"
+      - "capability_0001_results.hosts_feature_facts is defined"
+
+- name: Gather feature capability facts for ESXi host
+  vmware_host_feature_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: '{{ esxi1 }}'
+  register: capability_0002_results
+
+- debug: var=capability_0002_results
+
+- assert:
+    that:
+      - "not capability_0002_results.changed"
+      - "capability_0002_results.hosts_feature_facts is defined"
+
+
+- name: Gather feature capability facts for ESXi host in check mode
+  vmware_host_feature_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    esxi_hostname: '{{ esxi1 }}'
+  register: capability_0002_results
+  check_mode: yes
+
+- debug: var=capability_0002_results
+
+- assert:
+    that:
+      - "not capability_0002_results.changed"
+      - "capability_0002_results.hosts_feature_facts is defined"

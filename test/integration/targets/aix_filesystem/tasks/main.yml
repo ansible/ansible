@@ -1,0 +1,120 @@
+- name: Umounting /testfs
+  aix_filesystem:
+    filesystem: /testfs
+    state: unmounted
+
+- name: Removing /testfs
+  aix_filesystem:
+    filesystem: /testfs
+    state: absent
+
+- name: Creating a new file system
+  aix_filesystem:
+    filesystem: /newfs
+    size: 1G
+    state: present
+    vg: datavg
+
+# It requires a host (nfshost) exporting the NFS
+- name: Creating NFS filesystem from nfshost (Linux NFS server)
+  aix_filesystem:
+   device: /home/ftp
+   nfs_server: nfshost
+   filesystem: /nfs/ftp
+   state: present
+
+# It requires a volume group named datavg (next three actions)
+- name: Creating a logical volume testlv (aix_lvol module)
+  aix_lvol:
+    vg: datavg
+    lv: testlv
+    size: 2G
+    state: present
+
+- name: Create filesystem in a previously defined logical volume
+  aix_filesystem:
+    device: testlv
+    filesystem: /testfs
+    state: present
+
+- name: Create an already existing filesystem using existing logical volume.
+  aix_filesystem:
+    vg: datavg
+    device: mksysblv
+    filesystem: /mksysb
+    state: present
+
+- name: Create a filesystem in a non-existing VG
+  aix_filesystem:
+    vg: nonexistvg
+    filesystem: /newlv
+    state: present
+
+- name: Resizing /mksysb to 1G
+  aix_filesystem:
+    filesystem: /mksysb
+    size: 1G
+    state: present
+
+- name: Resizing /mksysb to +512M
+  aix_filesystem:
+    filesystem: /mksysb
+    size: +512M
+    state: present
+
+- name: Resizing /mksysb to 11G
+  aix_filesystem:
+    filesystem: /mksysb
+    size: 11G
+    state: present
+
+- name: Resizing /mksysb to 11G (already done)
+  aix_filesystem:
+    filesystem: /mksysb
+    size: 11G
+    state: present
+
+- name: Resizing /mksysb to -2G
+  aix_filesystem:
+    filesystem: /mksysb
+    size: -2G
+    state: present
+
+- name: Resizing /mksysb to 100G (no enought space)
+  aix_filesystem:
+    filesystem: /mksysb
+    size: +100G
+    state: present
+
+- name: Unmount filesystem /home/ftp
+  aix_filesystem:
+    filesystem: /home/ftp
+    state: unmounted
+
+- name: Remove NFS filesystem /home/ftp
+  aix_filesystem:
+    filesystem: /home/ftp
+    rm_mount_point: yes
+    state: absent
+
+- name: Mount filesystem /newfs
+  aix_filesystem:
+    filesystem: /newfs
+    state: mounted
+
+- name: Remove mounted /newfs
+  aix_filesystem:
+    filesystem: /newfs
+    rm_mount_point: yes
+    state: absent
+
+- name: Umount /newfs
+  aix_filesystem:
+    filesystem: /newfs
+    state: unmounted
+
+- name: Remove /newfs
+  aix_filesystem:
+    filesystem: /newfs
+    rm_mount_point: yes
+    state: absent

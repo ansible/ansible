@@ -1,0 +1,18 @@
+- hosts: testhost
+  gather_facts: false
+  vars:
+    boolean_var: false
+    nested:
+      bool_var: false
+  tasks:
+  - name: Run tasks with previous warnings requesting the bool filter on type boolean vars
+    block:
+    - debug:
+      when: boolean_var
+    - debug:
+      when: nested.bool_var
+    - debug:
+      when: double_interpolated
+      vars:
+        double_interpolated: "{{ other }}"
+        other: false

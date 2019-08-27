@@ -1,20 +1,7 @@
 #!/usr/bin/env python
-# Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2013, Google Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 '''
 GCE external inventory script
@@ -93,10 +80,7 @@ import argparse
 
 from time import time
 
-if sys.version_info >= (3, 0):
-    import configparser
-else:
-    import ConfigParser as configparser
+from ansible.module_utils.six.moves import configparser
 
 import logging
 logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
@@ -107,7 +91,7 @@ try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     _ = Provider.GCE
-except:
+except Exception:
     sys.exit("GCE inventory script requires libcloud >= 0.13")
 
 
@@ -200,7 +184,7 @@ class GceInventory(object):
         """
         Reads the settings from the gce.ini file.
 
-        Populates a SafeConfigParser object with defaults and
+        Populates a ConfigParser object with defaults and
         attempts to read an .ini-style configuration from the filename
         specified in GCE_INI_PATH. If the environment variable is
         not present, the filename defaults to gce.ini in the current
@@ -214,7 +198,7 @@ class GceInventory(object):
         # This provides empty defaults to each key, so that environment
         # variable configuration (as opposed to INI configuration) is able
         # to work.
-        config = configparser.SafeConfigParser(defaults={
+        config = configparser.ConfigParser(defaults={
             'gce_service_account_email_address': '',
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
@@ -289,7 +273,7 @@ class GceInventory(object):
             args = list(secrets.GCE_PARAMS)
             kwargs = secrets.GCE_KEYWORD_PARAMS
             secrets_found = True
-        except:
+        except Exception:
             pass
 
         if not secrets_found and secrets_path:
@@ -303,7 +287,7 @@ class GceInventory(object):
                 args = list(getattr(secrets, 'GCE_PARAMS', []))
                 kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
                 secrets_found = True
-            except:
+            except Exception:
                 pass
 
         if not secrets_found:
@@ -498,7 +482,7 @@ class GceInventory(object):
             else:
                 groups[machine_type] = [name]
 
-            image = node.image and node.image or 'persistent_disk'
+            image = node.image or 'persistent_disk'
             if image in groups:
                 groups[image].append(name)
             else:

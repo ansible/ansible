@@ -23,14 +23,12 @@ __metaclass__ = type
 import re
 import json
 
-from io import StringIO
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-
+from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.connection import network_cli
 from ansible.plugins.loader import connection_loader
 
 
@@ -39,39 +37,30 @@ class TestConnectionClass(unittest.TestCase):
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect_error(self, mocked_super):
         pc = PlayContext()
-        new_stdin = StringIO()
-
+        pc.network_os = 'ios'
         conn = connection_loader.get('network_cli', pc, '/dev/null')
+
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
-        conn._terminal = MagicMock()
-        pc.network_os = None
+        conn._network_os = 'does not exist'
+
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
 
-    @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
-    def test_network_cli__invalid_os(self, mocked_super):
+    def test_network_cli__invalid_os(self):
         pc = PlayContext()
-        new_stdin = StringIO()
-
-        conn = connection_loader.get('network_cli', pc, '/dev/null')
-        conn.ssh = MagicMock()
-        conn.receive = MagicMock()
-        conn._terminal = MagicMock()
         pc.network_os = None
-        self.assertRaises(AnsibleConnectionFailure, conn._connect)
+
+        self.assertRaises(AnsibleConnectionFailure, connection_loader.get, 'network_cli', pc, '/dev/null')
 
     @patch("ansible.plugins.connection.network_cli.terminal_loader")
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
         pc = PlayContext()
         pc.network_os = 'ios'
-        new_stdin = StringIO()
-
         conn = connection_loader.get('network_cli', pc, '/dev/null')
 
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
-        conn._terminal = MagicMock()
 
         conn._connect()
         self.assertTrue(conn._terminal.on_open_shell.called)
@@ -88,8 +77,8 @@ class TestConnectionClass(unittest.TestCase):
     @patch("ansible.plugins.connection.paramiko_ssh.Connection.close")
     def test_network_cli_close(self, mocked_super):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = network_cli.Connection(pc, new_stdin)
+        pc.network_os = 'ios'
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
 
         terminal = MagicMock(supports_multiplexing=False)
         conn._terminal = terminal
@@ -105,8 +94,8 @@ class TestConnectionClass(unittest.TestCase):
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli_exec_command(self, mocked_super):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = network_cli.Connection(pc, new_stdin)
+        pc.network_os = 'ios'
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
 
         mock_send = MagicMock(return_value=b'command response')
         conn.send = mock_send
@@ -122,13 +111,16 @@ class TestConnectionClass(unittest.TestCase):
         self.assertEqual(out, b'command response')
         mock_send.assert_called_with(command=b'command')
 
-    def test_network_cli_send(self):
+    @patch("ansible.plugins.connection.network_cli.Connection._get_terminal_std_re")
+    @patch("ansible.plugins.connection.network_cli.Connection._connect")
+    def test_network_cli_send(self, mocked_connect, mocked_terminal_re):
+
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = network_cli.Connection(pc, new_stdin)
+        pc.network_os = 'ios'
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
+
         mock__terminal = MagicMock()
-        mock__terminal.terminal_stdout_re = [re.compile(b'device#')]
-        mock__terminal.terminal_stderr_re = [re.compile(b'^ERROR')]
+        mocked_terminal_re.side_effect = [[re.compile(b'^ERROR')], [re.compile(b'device#')]]
         conn._terminal = mock__terminal
 
         mock__shell = MagicMock()
@@ -140,16 +132,15 @@ class TestConnectionClass(unittest.TestCase):
         device#
         """
 
-        mock__shell.recv.return_value = response
-
-        output = conn.send(b'command', None, None, None)
+        mock__shell.recv.side_effect = [response, None]
+        output = conn.send(b'command')
 
         mock__shell.sendall.assert_called_with(b'command\r')
-        self.assertEqual(output, 'command response')
+        self.assertEqual(to_text(conn._command_response), 'command response')
 
         mock__shell.reset_mock()
-        mock__shell.recv.return_value = b"ERROR: error message device#"
-
+        mock__shell.recv.side_effect = [b"ERROR: error message device#"]
+        mocked_terminal_re.side_effect = [[re.compile(b'^ERROR')], [re.compile(b'device#')]]
         with self.assertRaises(AnsibleConnectionFailure) as exc:
-            conn.send(b'command', None, None, None)
+            conn.send(b'command')
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')

@@ -8,7 +8,7 @@ import json
 import os
 import sys
 from ipalib import api, errors, __version__ as IPA_VERSION
-from six import u
+from ansible.module_utils.six import u
 
 
 def initialize():

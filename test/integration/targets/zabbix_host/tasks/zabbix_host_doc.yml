@@ -2,8 +2,7 @@
 # These two tests are close to documentation example
 
 - name: Create a new host or update an existing host's info
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -47,8 +46,7 @@
   register: zabbix_host1
 
 - name: Update an existing host's tls settings
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"

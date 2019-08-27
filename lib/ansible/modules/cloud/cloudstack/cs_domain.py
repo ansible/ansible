@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -30,52 +16,56 @@ short_description: Manages domains on Apache CloudStack based clouds.
 description:
     - Create, update and remove domains.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   path:
     description:
       - Path of the domain.
       - Prefix C(ROOT/) or C(/ROOT/) in path is optional.
+    type: str
     required: true
   network_domain:
     description:
       - Network domain for networks in the domain.
+    type: str
   clean_up:
     description:
       - Clean up all domain resources like child domains and accounts.
-      - Considered on C(state=absent).
-    default: false
+      - Considered on I(state=absent).
+    type: bool
+    default: no
   state:
     description:
       - State of the domain.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    choices: [ present, absent ]
+    default: present
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    type: bool
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Create a domain
-  local_action:
-    module: cs_domain
+  cs_domain:
     path: ROOT/customers
     network_domain: customers.example.com
+  delegate_to: localhost
 
 - name: Create another subdomain
-  local_action:
-    module: cs_domain
+  cs_domain:
     path: ROOT/customers/xy
     network_domain: xy.customers.example.com
+  delegate_to: localhost
 
 - name: Remove a domain
-  local_action:
-    module: cs_domain
+  cs_domain:
     path: ROOT/customers/xy
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -83,27 +73,27 @@ RETURN = '''
 id:
   description: UUID of the domain.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of the domain.
   returned: success
-  type: string
+  type: str
   sample: customers
 path:
   description: Domain path.
   returned: success
-  type: string
+  type: str
   sample: /ROOT/customers
 parent_domain:
   description: Parent domain of the domain.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 network_domain:
   description: Network domain of the domain.
   returned: success
-  type: string
+  type: str
   sample: example.local
 '''
 

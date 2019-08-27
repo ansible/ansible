@@ -18,12 +18,12 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: vmware_guest_custom_attribute_defs
-short_description: Manage custom attributes definitions for virtual machine from VMWare
+short_description: Manage custom attributes definitions for virtual machine from VMware
 description:
-    - This module can be used to add and remove custom attributes definitions for the given virtual machine from VMWare.
+    - This module can be used to add and remove custom attributes definitions for the given virtual machine from VMware.
 version_added: 2.7
 author:
-    - Jimmy Conner
+    - Jimmy Conner (@cigamit)
     - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.5
@@ -36,6 +36,7 @@ options:
      - Name of the custom attribute definition.
      - This is required parameter, if C(state) is set to C(present) or C(absent).
      required: False
+     type: str
    state:
      description:
      - Manage definition of custom attributes.
@@ -46,11 +47,12 @@ options:
      default: 'present'
      choices: ['present', 'absent']
      required: True
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: Add VMWare Attribute Definition
+- name: Add VMware Attribute Definition
   vmware_guest_custom_attribute_defs:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -60,7 +62,7 @@ EXAMPLES = '''
   delegate_to: localhost
   register: defs
 
-- name: Remove VMWare Attribute Definition
+- name: Remove VMware Attribute Definition
   vmware_guest_custom_attribute_defs:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -91,13 +93,12 @@ except ImportError:
 class VmAttributeDefManager(PyVmomi):
     def __init__(self, module):
         super(VmAttributeDefManager, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
     def remove_custom_def(self, field):
         changed = False
         f = dict()
         for x in self.custom_field_mgr:
-            if x.name == field:
+            if x.name == field and x.managedObjectType == vim.VirtualMachine:
                 changed = True
                 if not self.module.check_mode:
                     self.content.customFieldsManager.RemoveCustomFieldDef(key=x.key)

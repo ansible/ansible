@@ -1,0 +1,32 @@
+- name: ensure DNS services are installed
+  win_feature:
+    name: DNS
+    state: present
+  register: dns_install
+
+- name: reboot server if needed
+  win_reboot:
+  when: dns_install.reboot_required
+
+- name: Clean slate
+  import_tasks: clean.yml
+  vars:
+    fail_on_missing: false
+
+- block:
+   - name: Create the forward zone
+     win_shell: Add-DnsServerPrimaryZone -Name '{{ win_dns_record_zone }}' -ZoneFile '{{ win_dns_record_zone}}.dns'
+   - name: Create the reverse zone
+     win_shell: Add-DnsServerPrimaryZone -NetworkID '{{ win_dns_record_revzone_network }}' -ZoneFile '{{ win_dns_record_revzone}}.dns'
+
+   - import_tasks: tests-A.yml
+   - import_tasks: tests-AAAA.yml
+   - import_tasks: tests-CNAME.yml
+   - import_tasks: tests-PTR.yml
+   - import_tasks: tests-diff.yml
+
+  always:
+   - name: Clean slate
+     import_tasks: clean.yml
+     vars:
+       fail_on_missing: true

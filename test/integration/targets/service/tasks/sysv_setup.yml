@@ -8,4 +8,4 @@
     - "install_sysv_result.dest == '/etc/init.d/ansible_test'"
     - "install_sysv_result.state == 'file'"
     - "install_sysv_result.mode == '0755'"
-    - "install_sysv_result.checksum == '174fa255735064b420600e4c8637ea0eff28d0c1'"
+    - "install_sysv_result.checksum == '362899814c47d9aad6e93b2f64e39edd24e38797'"

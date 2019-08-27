@@ -4,7 +4,7 @@
     name: "{{ cs_resource_prefix }}-zone"
     dns1: 8.8.8.8
     dns2: 8.8.4.4
-    network_type: basic
+    network_type: Basic
   register: zone
 - name: verify setup zone is present
   assert:

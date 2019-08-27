@@ -326,17 +326,17 @@ RETURN = '''
 uuid:
   description: UUID of the managed VM.
   returned: always
-  type: string
+  type: str
   sample: 'b217ab0b-cf57-efd8-cd85-958d0b80be33'
 alias:
   description: Alias of the managed VM.
   returned: When addressing a VM by alias.
-  type: string
+  type: str
   sample: 'dns-zone'
 state:
   description: State of the target, after execution.
   returned: success
-  type: string
+  type: str
   sample: 'running'
 '''
 

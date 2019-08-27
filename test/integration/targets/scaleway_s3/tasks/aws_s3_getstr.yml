@@ -1,0 +1,23 @@
+- name: Get str from bucket
+  aws_s3:
+    mode: getstr
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    encrypt: false
+    object: test.txt
+  register: getstr_task
+
+- name: Show getstr_task
+  debug:
+    var: getstr_task
+
+- name: getstr_task is success
+  assert:
+    that:
+      - getstr_task is success
+
+- name: getstr_task is changed
+  assert:
+    that:
+      - getstr_task is changed

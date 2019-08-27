@@ -40,7 +40,7 @@ def get_hosts(host=None):
         else:
             returned = {'all': set(), '_metadata': {}}
             p = Popen([VBOX, 'list', '-l', 'vms'], stdout=PIPE)
-    except:
+    except Exception:
         sys.exit(1)
 
     hostvars = {}
@@ -50,7 +50,7 @@ def get_hosts(host=None):
 
         try:
             k, v = line.split(':', 1)
-        except:
+        except Exception:
             continue
 
         if k == '':
@@ -67,7 +67,7 @@ def get_hosts(host=None):
                     if 'Value' in ipinfo:
                         a, ip = ipinfo.split(':', 1)
                         hostvars[curname]['ansible_ssh_host'] = ip.strip()
-                except:
+                except Exception:
                     pass
 
             continue

@@ -1,12 +1,16 @@
 Intro to Playbooks
 ==================
 
+.. contents::
+   :local:
+
 .. _about_playbooks:
+.. _playbooks_intro:
 
 About Playbooks
 ```````````````
 
-Playbooks are a completely different way to use ansible than in adhoc task execution mode, and are
+Playbooks are a completely different way to use ansible than in ad-hoc task execution mode, and are
 particularly powerful.
 
 Simply put, playbooks are the basis for a really simple configuration management and multi-machine deployment system,
@@ -37,11 +41,15 @@ Playbook Language Example
 Playbooks are expressed in YAML format (see :ref:`yaml_syntax`) and have a minimum of syntax, which intentionally
 tries to not be a programming language or script, but rather a model of a configuration or a process.
 
+.. note::
+   Some editors have add-ons that can help you write clean YAML syntax in your playbooks. See :ref:`other_tools_and_programs` for details.
+
+
 Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
 things ansible calls tasks.  At a basic level, a task is nothing more than a call
-to an ansible module (see :doc:`modules`).
+to an ansible module.
 
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
@@ -52,7 +60,9 @@ server group, then more commands back on the webservers group, etc.
 to do different things.  It's not as if you were just defining one particular state or model, and you
 can run different plays at different times.
 
-For starters, here's a playbook that contains just one play::
+.. _apache-playbook:
+
+For starters, here's a playbook, ``verify-apache.yml`` that contains just one play::
 
     ---
     - hosts: webservers
@@ -132,7 +142,7 @@ For each play in a playbook, you get to choose which machines in your infrastruc
 to target and what remote user to complete the steps (called tasks) as.
 
 The ``hosts`` line is a list of one or more groups or host patterns,
-separated by colons, as described in the :doc:`intro_patterns`
+separated by colons, as described in the :ref:`intro_patterns`
 documentation.  The ``remote_user`` is just the name of the user account::
 
     ---
@@ -153,7 +163,7 @@ Remote users can also be defined per task::
           ping:
           remote_user: yourname
 
-Support for running things as another user is also available (see :doc:`become`)::
+Support for running things as another user is also available (see :ref:`become`)::
 
     ---
     - hosts: webservers
@@ -166,7 +176,7 @@ You can also use keyword ``become`` on a particular task instead of the whole pl
     - hosts: webservers
       remote_user: yourname
       tasks:
-        - service: 
+        - service:
             name: nginx
             state: started
           become: yes
@@ -189,10 +199,10 @@ You can also use other privilege escalation methods, like su::
       become: yes
       become_method: su
 
-If you need to specify a password to sudo, run ``ansible-playbook`` with ``--ask-become-pass`` or
-when using the old sudo syntax ``--ask-sudo-pass`` (``-K``).  If you run a become playbook and the
-playbook seems to hang, it's probably stuck at the privilege escalation prompt.
-Just `Control-C` to kill it and run it again adding the appropriate password.
+If you need to specify a password for sudo, run ``ansible-playbook`` with ``--ask-become-pass`` or ``-K``.
+If you run a playbook utilizing ``become`` and the playbook seems to hang, it's probably stuck at the privilege
+escalation prompt and can be stopped using `Control-C`, allowing you to re-execute the playbook adding the
+appropriate password.
 
 .. important::
 
@@ -250,7 +260,7 @@ When running the playbook, which runs top to bottom, hosts with failed tasks are
 taken out of the rotation for the entire playbook.  If things fail, simply correct the playbook file and rerun.
 
 The goal of each task is to execute a module, with very specific arguments.
-Variables, as mentioned above, can be used in arguments to modules.
+Variables can be used in arguments to modules.
 
 Modules should be idempotent, that is, running a module multiple times
 in a sequence should have the same effect as running it just once. One
@@ -266,7 +276,7 @@ which is totally ok if the command is something like
 be used to make these modules also idempotent.
 
 Every task should have a ``name``, which is included in the output from
-running the playbook.   This is human readable output, and so it is 
+running the playbook.   This is human readable output, and so it is
 useful to provide good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
@@ -328,7 +338,7 @@ a variable called ``vhost`` in the ``vars`` section, you could do this::
 Those same variables are usable in templates, which we'll get to later.
 
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
-make more sense to break up tasks as described in :doc:`playbooks_reuse`.
+make more sense to break up tasks as described in :ref:`playbooks_reuse`.
 
 .. _action_shorthand:
 
@@ -379,7 +389,7 @@ The things listed in the ``notify`` section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by a globally unique name, and are notified 
+tasks, that are referenced by a globally unique name, and are notified
 by notifiers.  If nothing notifies a handler, it will not
 run.  Regardless of how many tasks notify a handler, it will run only
 once, after all of the tasks complete in a particular play.
@@ -396,6 +406,29 @@ Here's an example handlers section::
             name: apache
             state: restarted
 
+You may want your Ansible handlers to use variables. For example, if the name of a service varies slightly by distribution, you want your output to show the exact name of the restarted service for each target machine. Avoid placing variables in the name of the handler. Since handler names are templated early on, Ansible may not have a value available for a handler name like this::
+
+    handlers:
+    # this handler name may cause your play to fail!
+    - name: restart "{{ web_service_name }}"
+
+If the variable used in the handler name is not available, the entire play fails. Changing that variable mid-play **will not** result in newly created handler.
+
+Instead, place variables in the task parameters of your handler. You can load the values using ``include_vars`` like this:
+
+  .. code-block:: yaml+jinja
+
+    tasks:
+      - name: Set host variables based on distribution
+        include_vars: "{{ ansible_facts.distribution }}.yml"
+
+    handlers:
+      - name: restart web service
+        service:
+          name: "{{ web_service_name | default('httpd') }}"
+          state: restarted
+
+
 As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
@@ -407,7 +440,7 @@ As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can n
         - name: restart apache
           service:
             name: apache
-            state:restarted
+            state: restarted
           listen: "restart web services"
 
     tasks:
@@ -422,14 +455,15 @@ a shared source like Galaxy).
 .. note::
    * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement. This is also the case for handlers using `listen`.
    * Handler names and `listen` topics live in a global namespace.
-   * If two handler tasks have the same name, only one will run.
-     `* <https://github.com/ansible/ansible/issues/4943>`_
+   * Handler names are templatable and `listen` topics are not.
+   * Use unique handler names. If you trigger more than one handler with the same name, the first one(s) get overwritten. Only the last one defined will run.
    * You cannot notify a handler that is defined inside of an include. As of Ansible 2.1, this does work, however the include must be `static`.
 
 Roles are described later on, but it's worthwhile to point out that:
 
-* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified;
-* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
+* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified,
+* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers,
+* handlers are play scoped and as such can be used outside of the role they are defined in.
 
 If you ever want to flush all the handler commands immediately you can do this::
 
@@ -469,29 +503,47 @@ Run ``ansible-pull --help`` for details.
 
 There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ``ansible-pull`` via a crontab from push mode.
 
-.. _tips_and_tricks:
+.. _linting_playbooks:
 
-Tips and Tricks
-```````````````
+Linting playbooks
+`````````````````
 
-To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
-playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
+You can use `ansible-lint <https://docs.ansible.com/ansible-lint/index.html>`_ to run a detail check of your playbooks before you execute them.
 
-Look at the bottom of the playbook execution for a summary of the nodes that were targeted
-and how they performed.   General failures and fatal "unreachable" communication attempts are
-kept separate in the counts.
+For example, if you run ``ansible-lint`` on the :ref:`verify-apache.yml playbook <apache-playbook>` introduced earlier in this section, you'll get the following results:
 
-If you ever want to see detailed output from successful modules as well as unsuccessful ones,
-use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
+.. code-block:: bash
+
+    $ ansible-lint verify-apache.yml
+    [403] Package installs should not use latest
+    verify-apache.yml:8
+    Task/Handler: ensure apache is at the latest version
+
+The `ansible-lint default rules <https://docs.ansible.com/ansible-lint/rules/default_rules.html>`_ page describes each error. For ``[403]``, the recommended fix is to change ``state: latest`` to ``state: present`` in the playbook.
 
 
-To see what hosts would be affected by a playbook before you run it, you
-can do this::
+Other playbook verification options
+```````````````````````````````````
+See :ref:`validate-playbook-tools` for a detailed list of tools you can use to verify your playbooks. Here are some others that you should consider:
 
-    ansible-playbook playbook.yml --list-hosts
+* To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
+  playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
+
+* Look at the bottom of the playbook execution for a summary of the nodes that were targeted
+  and how they performed. General failures and fatal "unreachable" communication attempts are kept separate in the counts.
+
+* If you ever want to see detailed output from successful modules as well as unsuccessful ones,
+  use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
+
+* To see what hosts would be affected by a playbook before you run it, you
+  can do this::
+
+      ansible-playbook playbook.yml --list-hosts
 
 .. seealso::
 
+   `ansible-lint <https://docs.ansible.com/ansible-lint/index.html>`_
+       Learn how to test Ansible Playbooks syntax
    :ref:`yaml_syntax`
        Learn about YAML syntax
    :ref:`playbooks_best_practices`
@@ -502,10 +554,7 @@ can do this::
        Learn how to extend Ansible by writing your own modules
    :ref:`intro_patterns`
        Learn about how to select hosts
-   `Github examples directory <https://github.com/ansible/ansible-examples>`_
+   `GitHub examples directory <https://github.com/ansible/ansible-examples>`_
        Complete end-to-end playbook examples
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-
-
-

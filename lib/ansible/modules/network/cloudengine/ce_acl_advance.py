@@ -28,7 +28,7 @@ short_description: Manages advanced ACL configuration on HUAWEI CloudEngine swit
 description:
     - Manages advanced ACL configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
@@ -261,7 +261,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -602,7 +602,7 @@ class AdvanceAcl(object):
 
             if self.acl_type:
                 conf_str += "<aclType></aclType>"
-            if self.acl_num:
+            if self.acl_num or self.acl_name.isdigit():
                 conf_str += "<aclNumber></aclNumber>"
             if self.acl_step:
                 conf_str += "<aclStep></aclStep>"
@@ -624,7 +624,7 @@ class AdvanceAcl(object):
 
                 # parse acl
                 acl_info = root.findall(
-                    "data/acl/aclGroups/aclGroup")
+                    "acl/aclGroups/aclGroup")
                 if acl_info:
                     for tmp in acl_info:
                         tmp_dict = dict()
@@ -635,22 +635,42 @@ class AdvanceAcl(object):
                         self.cur_acl_cfg["acl_info"].append(tmp_dict)
 
                 if self.cur_acl_cfg["acl_info"]:
+                    find_list = list()
                     for tmp in self.cur_acl_cfg["acl_info"]:
-                        find_flag = True
+                        cur_cfg_dict = dict()
+                        exist_cfg_dict = dict()
 
-                        if self.acl_name and tmp.get("aclNumOrName") != self.acl_name:
-                            find_flag = False
-                        if self.acl_type and tmp.get("aclType") != self.acl_type:
-                            find_flag = False
-                        if self.acl_num and tmp.get("aclNumber") != self.acl_num:
-                            find_flag = False
-                        if self.acl_step and tmp.get("aclStep") != self.acl_step:
-                            find_flag = False
-                        if self.acl_description and tmp.get("aclDescription") != self.acl_description:
-                            find_flag = False
+                        if self.acl_name:
+                            if self.acl_name.isdigit() and tmp.get("aclNumber"):
+                                cur_cfg_dict["aclNumber"] = self.acl_name
+                                exist_cfg_dict["aclNumber"] = tmp.get("aclNumber")
+                            else:
+                                cur_cfg_dict["aclNumOrName"] = self.acl_name
+                                exist_cfg_dict["aclNumOrName"] = tmp.get("aclNumOrName")
+                        if self.acl_type:
+                            cur_cfg_dict["aclType"] = self.acl_type
+                            exist_cfg_dict["aclType"] = tmp.get("aclType")
+                        if self.acl_num:
+                            cur_cfg_dict["aclNumber"] = self.acl_num
+                            exist_cfg_dict["aclNumber"] = tmp.get("aclNumber")
+                        if self.acl_step:
+                            cur_cfg_dict["aclStep"] = self.acl_step
+                            exist_cfg_dict["aclStep"] = tmp.get("aclStep")
+                        if self.acl_description:
+                            cur_cfg_dict["aclDescription"] = self.acl_description
+                            exist_cfg_dict["aclDescription"] = tmp.get("aclDescription")
 
-                        if find_flag:
+                        if cur_cfg_dict == exist_cfg_dict:
+                            find_bool = True
+                        else:
+                            find_bool = False
+                        find_list.append(find_bool)
+                    for mem in find_list:
+                        if mem:
+                            find_flag = True
                             break
+                        else:
+                            find_flag = False
                 else:
                     find_flag = False
 
@@ -1001,7 +1021,7 @@ class AdvanceAcl(object):
 
                     # parse advance rule
                     adv_rule_info = root.findall(
-                        "data/acl/aclGroups/aclGroup/aclRuleAdv4s/aclRuleAdv4")
+                        "acl/aclGroups/aclGroup/aclRuleAdv4s/aclRuleAdv4")
                     if adv_rule_info:
                         for tmp in adv_rule_info:
                             tmp_dict = dict()
@@ -1079,7 +1099,8 @@ class AdvanceAcl(object):
                                 find_flag = False
                             if self.dest_port_pool_name and tmp.get("aclDPortPoolName") != self.dest_port_pool_name:
                                 find_flag = False
-                            if self.frag_type and tmp.get("aclFragType") != self.frag_type:
+                            frag_type = "clear_fragment" if tmp.get("aclFragType") is None else tmp.get("aclFragType")
+                            if self.frag_type and frag_type != self.frag_type:
                                 find_flag = False
                             if self.precedence and tmp.get("aclPrecedence") != self.precedence:
                                 find_flag = False
@@ -1223,6 +1244,9 @@ class AdvanceAcl(object):
         self.check_advance_rule_args()
         self.end_state["adv_rule_info"] = self.cur_advance_rule_cfg[
             "adv_rule_info"]
+        if self.end_state == self.existing:
+            self.changed = False
+            self.updates_cmd = list()
 
     def merge_acl(self):
         """ Merge acl operation """
@@ -1391,8 +1415,6 @@ class AdvanceAcl(object):
                 cmd += " dscp %s" % self.dscp
             if self.tos:
                 cmd += " tos %s" % self.tos
-            if self.tos:
-                cmd += " tos %s" % self.tos
             if self.source_ip and self.src_wild:
                 cmd += " source %s %s" % (self.source_ip, self.src_wild)
             if self.src_pool_name:
@@ -1439,7 +1461,16 @@ class AdvanceAcl(object):
                     cmd += " icmp-type %s %s" % (self.icmp_type, self.icmp_code)
                 elif self.icmp_type:
                     cmd += " icmp-type %s" % self.icmp_type
-
+            if self.protocol == "tcp":
+                if self.syn_flag:
+                    cmd += " tcp-flag %s" % self.syn_flag
+                if self.tcp_flag_mask:
+                    cmd += " mask %s" % self.tcp_flag_mask
+                if self.established:
+                    cmd += " established"
+            if self.protocol == "igmp":
+                if self.igmp_type:
+                    cmd += " igmp-type %s" % self.igmp_type
             if self.time_range:
                 cmd += " time-range %s" % self.time_range
             if self.vrf_name:
@@ -1566,8 +1597,6 @@ class AdvanceAcl(object):
             cmd += " %s" % self.protocol
             if self.dscp:
                 cmd += " dscp %s" % self.dscp
-            if self.tos:
-                cmd += " tos %s" % self.tos
             if self.tos:
                 cmd += " tos %s" % self.tos
             if self.source_ip and self.src_mask:

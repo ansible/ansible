@@ -21,6 +21,7 @@ options:
       - A schedule with I(active) set to C(False) will be tracked in the
         database, but will be never loaded in the in-memory data structures.
     default: True
+    type: bool
   interval_ms:
     description:
       - How often (in millisecond) the job will be started. The minimum value
@@ -60,6 +61,7 @@ options:
         however if you need this behaviour and you're not concerned about the
         schedules deleted, you can set I(force_delete) to C(True).
     default: False
+    type: bool
 extends_documentation_fragment:
   - proxysql.managing_config
   - proxysql.connectivity
@@ -370,7 +372,7 @@ def main():
 
     if proxysql_schedule.state == "present":
         try:
-            if not proxysql_schedule.check_schedule_config(cursor) > 0:
+            if proxysql_schedule.check_schedule_config(cursor) <= 0:
                 proxysql_schedule.create_schedule(module.check_mode,
                                                   result,
                                                   cursor)

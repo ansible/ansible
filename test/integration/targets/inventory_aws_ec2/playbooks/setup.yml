@@ -5,10 +5,10 @@
       aws_secret_key: '{{ aws_secret_key }}'
       security_token: '{{ security_token }}'
       region: '{{ aws_region }}'
-    no_log: yes
+  no_log: yes
 
 - name: get image ID to create an instance
-  ec2_ami_facts:
+  ec2_ami_info:
     filters:
       architecture: x86_64
       owner-id: '125523088429'

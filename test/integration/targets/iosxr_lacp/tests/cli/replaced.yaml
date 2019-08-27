@@ -1,0 +1,48 @@
+---
+- debug:
+      msg: "START iosxr_lacp replaced integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+    - name: Replace LACP configuration with provided configurations
+      iosxr_lacp: &replaced
+        config:
+          system:
+            priority: 11
+        state: replaced
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ populate == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] == result['after'] }}"
+
+    - name: Replace device configurations of listed interfaces with provided configurarions (IDEMPOTENT)
+      iosxr_lacp: *replaced
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] == result['before'] }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

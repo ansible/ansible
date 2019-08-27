@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """ this is cifs_server module
 
- (c) 2018, NetApp, Inc
+ (c) 2018-2019, NetApp, Inc
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
@@ -11,7 +11,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
@@ -21,10 +21,10 @@ short_description: NetApp ONTAP CIFS server configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
-    - Creating / deleting and modifying the CIFS server.
+    - Creating / deleting and modifying the CIFS server .
 
 options:
 
@@ -39,10 +39,11 @@ options:
     - CIFS Server Administrative Status.
     choices: ['stopped', 'started']
 
-  cifs_server_name:
+  name:
     description:
     - Specifies the cifs_server name.
     required: true
+    aliases: ['cifs_server_name']
 
   admin_user_name:
     description:
@@ -70,7 +71,7 @@ options:
     type: bool
     description:
     - If this is set and a machine account with the same name as
-      specified in 'cifs_server_name' exists in the Active Directory, it
+      specified in 'name' exists in the Active Directory, it
       will be overwritten and reused.
     version_added: '2.7'
 
@@ -93,7 +94,7 @@ EXAMPLES = '''
     - name: Delete cifs_server
       na_ontap_cifs_server:
         state: absent
-        cifs_server_name: data2
+        name: data2
         vserver: svm1
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -123,11 +124,11 @@ class NetAppOntapcifsServer(object):
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             service_state=dict(required=False, choices=['stopped', 'started']),
-            cifs_server_name=dict(required=False, type='str'),
+            name=dict(required=True, type='str', aliases=['cifs_server_name']),
             workgroup=dict(required=False, type='str', default=None),
             domain=dict(required=False, type='str'),
             admin_user_name=dict(required=False, type='str'),
-            admin_password=dict(required=False, type='str'),
+            admin_password=dict(required=False, type='str', no_log=True),
             ou=dict(required=False, type='str'),
             force=dict(required=False, type='bool'),
             vserver=dict(required=True, type='str'),
@@ -169,6 +170,7 @@ class NetAppOntapcifsServer(object):
         cifs_server_info = netapp_utils.zapi.NaElement('cifs-server-get-iter')
         cifs_server_attributes = netapp_utils.zapi.NaElement('cifs-server-config')
         cifs_server_attributes.add_new_child('cifs-server', self.cifs_server_name)
+        cifs_server_attributes.add_new_child('vserver', self.vserver)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(cifs_server_attributes)
         cifs_server_info.add_child_elem(query)

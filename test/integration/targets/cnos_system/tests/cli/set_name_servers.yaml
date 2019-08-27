@@ -1,0 +1,73 @@
+---
+- debug: msg="START cli/set_name_servers.yaml"
+
+- name: setup
+  cnos_config: &reset
+    lines:
+      - no ip name-server 10.241.107.1 vrf default
+      - no ip name-server 10.241.107.2 vrf default
+      - no ip name-server 10.241.107.3 vrf default
+    match: none
+
+- name: configure name_servers
+  cnos_system:
+    name_servers:
+      - 10.241.107.1
+      - 10.241.107.2
+      - 10.241.107.3
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip name-server 10.241.107.1 vrf default' in result.commands"
+      - "'ip name-server 10.241.107.2 vrf default' in result.commands"
+      - "'ip name-server 10.241.107.3 vrf default' in result.commands"
+
+- name: verify name_servers
+  cnos_system:
+    name_servers:
+      - 10.241.107.1
+      - 10.241.107.2
+      - 10.241.107.3
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: remove one
+  cnos_system:
+    name_servers:
+      - 10.241.107.1
+      - 10.241.107.2
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+#      - result.commands|length == 1
+      - "'no ip name-server 10.241.107.3 vrf default' in result.commands"
+
+- name: default name server
+  cnos_system: &defns
+    name_servers: default
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: Idempotent check
+  cnos_system: *defns
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: teardown
+  cnos_config: *reset
+  ignore_errors: yes
+
+- debug: msg="END cli/set_name_servers.yaml"

@@ -134,6 +134,7 @@
     that:
     - copy_file_check is changed
     - copy_file_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_check.dest == test_win_copy_path + '\\foo-target.txt'
     - copy_file_check.operation == 'file_copy'
     - copy_file_check.size == 8
     - copy_file_actual_check.stat.exists == False
@@ -154,6 +155,7 @@
     that:
     - copy_file is changed
     - copy_file.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file.dest == test_win_copy_path + '\\foo-target.txt'
     - copy_file.operation == 'file_copy'
     - copy_file.size == 8
     - copy_file_actual.stat.exists == True
@@ -169,6 +171,24 @@
   assert:
     that:
     - copy_file_again is not changed
+
+- name: copy single file (backup)
+  win_copy:
+    content: "{{ lookup('file', 'foo.txt') }}\nfoo bar"
+    dest: '{{test_win_copy_path}}\foo-target.txt'
+    backup: yes
+  register: copy_file_backup
+
+- name: check backup_file
+  win_stat:
+    path: '{{ copy_file_backup.backup_file }}'
+  register: backup_file
+
+- name: assert copy single file (backup)
+  assert:
+    that:
+    - copy_file_backup is changed
+    - backup_file.stat.exists == true
 
 - name: copy single file to folder (check mode)
   win_copy:
@@ -187,6 +207,7 @@
     that:
     - copy_file_to_folder_check is changed
     - copy_file_to_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_folder_check.dest == test_win_copy_path + '\\foo.txt'
     - copy_file_to_folder_check.operation == 'file_copy'
     - copy_file_to_folder_check.size == 8
     - copy_file_to_folder_actual_check.stat.exists == False
@@ -207,6 +228,7 @@
     that:
     - copy_file_to_folder is changed
     - copy_file_to_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_folder.dest == test_win_copy_path + '\\foo.txt'
     - copy_file_to_folder.operation == 'file_copy'
     - copy_file_to_folder.size == 8
     - copy_file_to_folder_actual.stat.exists == True
@@ -350,8 +372,8 @@
     that:
     - copy_folder_after_change is changed
     - copy_folder_after_changes_actual.matched == 2
-    - copy_folder_after_changes_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
-    - copy_folder_after_changes_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_folder_after_changes_actual.files[0].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_folder_after_changes_actual.files[1].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
 
 - name: copy folder's contents (check mode)
   win_copy:

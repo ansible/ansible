@@ -1,0 +1,19 @@
+# The certificate in files/cert.pfx was generated with the following commands
+#
+# cat > client.cnf <<EOL
+# [ssl_client]
+# basicConstraints = CA:FALSE
+# nsCertType = client
+# keyUsage = digitalSignature, keyEncipherment
+# extendedKeyUsage = clientAuth
+# EOL
+#
+# openssl genrsa -aes256 -passout pass:password1 -out cert.key 2048
+# openssl req -new -subj '/CN=ansible.domain.com' -key cert.key -out cert.req -passin pass:password1
+# openssl x509 -sha256 -req -in cert.req -days 24855 -signkey cert.key -out cert.crt -extensions ssl_client -extfile client.cnf -passin pass:password1
+# openssl pkcs12 -export -in cert.crt -inkey cert.key -out cert.pfx -passin pass:password1 -passout pass:password1
+---
+test_credential_dir: '{{ win_output_dir }}\win_credential_manager'
+test_hostname: ansible.domain.com
+key_password: password1
+cert_thumbprint: 56841AAFDD19D7DF474BDA24D01D88BD8025A00A

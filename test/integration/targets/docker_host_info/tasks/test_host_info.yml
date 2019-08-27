@@ -1,0 +1,296 @@
+---
+- name: Create random container/volume name
+  set_fact:
+    cname: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+    vname: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+
+- debug:
+    msg: "Using container name '{{ cname }}' and volume name '{{ vname }}'"
+
+- block:
+  - name: Get info on Docker host
+    docker_host_info:
+    register: output
+
+  - name: assert reading docker host facts when docker is running
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+
+# Container and volume are created so that all lists are non-empty:
+# * container and volume lists are non-emtpy because of the created objects;
+# * image list is non-empty because the image of the container is there;
+# * network list is always non-empty (default networks).
+  - name: Create container
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+    register: container_output
+
+  - assert:
+      that:
+      - container_output is changed
+
+  - name: Create a volume
+    docker_volume:
+      name: "{{ vname }}"
+    register: volume_output
+
+  - assert:
+      that:
+        - volume_output is changed
+
+  - name: Get info on Docker host and list containers
+    docker_host_info:
+      containers: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list containers
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is not defined'
+
+  - name: Get info on Docker host and list containers with verbose output
+    docker_host_info:
+      containers: yes
+      verbose_output: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list containers with verbose output
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is string'
+
+  - name: Get info on Docker host and list images
+    docker_host_info:
+      images: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list images
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is not defined'
+         - 'output.disk_usage is not defined'
+
+  - name: Get info on Docker host and list images with verbose output
+    docker_host_info:
+      images: yes
+      verbose_output: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list images with verbose output
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is string'
+         - 'output.disk_usage is not defined'
+
+  - name: Get info on Docker host and list networks
+    docker_host_info:
+      networks: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list networks
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+
+  - name: Get info on Docker host and list networks with verbose output
+    docker_host_info:
+      networks: yes
+      verbose_output: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list networks with verbose output
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is string'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+
+  - name: Get info on Docker host and list volumes
+    docker_host_info:
+      volumes: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list volumes
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+
+  - name: Get info on Docker host and list volumes with verbose output
+    docker_host_info:
+      volumes: yes
+      verbose_output: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and list volumes with verbose output
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is string'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+
+  - name: Get info on Docker host and get disk usage
+    docker_host_info:
+      disk_usage: yes
+    register: output
+    ignore_errors: yes
+
+  - name: assert reading docker host facts when docker is running and get disk usage
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is not defined'
+    when: docker_py_version is version('2.2.0', '>=')
+  - assert:
+      that:
+        - output is failed
+        - "('version is ' ~ docker_py_version ~ ' ') in output.msg"
+        - "'Minimum version required is 2.2.0 ' in output.msg"
+    when: docker_py_version is version('2.2.0', '<')
+
+  - name: Get info on Docker host and get disk usage with verbose output
+    docker_host_info:
+      disk_usage: yes
+      verbose_output: yes
+    register: output
+    ignore_errors: yes
+
+  - name: assert reading docker host facts when docker is running and get disk usage with verbose output
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is number'
+    when: docker_py_version is version('2.2.0', '>=')
+  - assert:
+      that:
+        - output is failed
+        - "('version is ' ~ docker_py_version ~ ' ') in output.msg"
+        - "'Minimum version required is 2.2.0 ' in output.msg"
+    when: docker_py_version is version('2.2.0', '<')
+
+  - name: Get info on Docker host, disk usage and get all lists together
+    docker_host_info:
+      volumes: yes
+      containers: yes
+      networks: yes
+      images: yes
+      disk_usage: "{{ docker_py_version is version('2.2.0', '>=') }}"
+    register: output
+
+  - name: assert reading docker host facts when docker is running, disk usage and get lists together
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is not defined'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is not defined'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is not defined'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is not defined'
+  - assert:
+      that:
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is not defined'
+    when: docker_py_version is version('2.2.0', '>=')
+
+  - name: Get info on Docker host, disk usage and get all lists together with verbose output
+    docker_host_info:
+      volumes: yes
+      containers: yes
+      networks: yes
+      images: yes
+      disk_usage: "{{ docker_py_version is version('2.2.0', '>=') }}"
+      verbose_output: yes
+    register: output
+
+  - name: assert reading docker host facts when docker is running and get disk usage with verbose output
+    assert:
+      that:
+         - 'output.host_info.Name is string'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is string'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is string'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is string'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is string'
+  - assert:
+      that:
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is number'
+    when: docker_py_version is version('2.2.0', '>=')
+
+  always:
+  - name: Delete container
+    docker_container:
+      name: "{{ cname }}"
+      state: absent
+      force_kill: yes
+
+  - name: Delete volume
+    docker_volume:
+      name: "{{ vname }}"
+      state: absent

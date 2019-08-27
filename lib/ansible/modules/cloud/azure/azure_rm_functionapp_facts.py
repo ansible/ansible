@@ -19,14 +19,14 @@ module: azure_rm_functionapp_facts
 version_added: "2.4"
 short_description: Get Azure Function App facts
 description:
-    - Get facts for one Azure Function App or all Function Apps within a resource group
+    - Get facts for one Azure Function App or all Function Apps within a resource group.
 options:
     name:
         description:
-            - Only show results for a specific Function App
+            - Only show results for a specific Function App.
     resource_group:
         description:
-            - Limit results to a resource group. Required when filtering by name
+            - Limit results to a resource group. Required when filtering by name.
         aliases:
             - resource_group_name
     tags:
@@ -37,18 +37,18 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Thomas Stringer (@tstringer)"
+    - Thomas Stringer (@trstringer)
 '''
 
 EXAMPLES = '''
     - name: Get facts for one Function App
       azure_rm_functionapp_facts:
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
         name: myfunctionapp
 
     - name: Get facts for all Function Apps in a resource group
       azure_rm_functionapp_facts:
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
 
     - name: Get facts for all Function Apps by tags
       azure_rm_functionapp_facts:
@@ -58,7 +58,8 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_functionapps:
-    description: List of Azure Function Apps dicts
+    description:
+        - List of Azure Function Apps dicts.
     returned: always
     type: list
     example:
@@ -94,13 +95,13 @@ azure_functionapps:
         outbound_ip_addresses: ............
         container_size: 1536
         daily_memory_time_quota: 0
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
         default_host_name: myfunctionapp.azurewebsites.net
 '''
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 

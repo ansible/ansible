@@ -19,7 +19,7 @@ module: azure_rm_sqlserver
 version_added: "2.5"
 short_description: Manage SQL Server instance
 description:
-    - Create, update and delete instance of SQL Server
+    - Create, update and delete instance of SQL Server.
 
 options:
     resource_group:
@@ -41,15 +41,14 @@ options:
             - The administrator login password (required for server creation).
     version:
         description:
-            - "The version of the server. For example '12.0'."
+            - The version of the server. For example C(12.0).
     identity:
         description:
-            - "The identity type. Set this to 'SystemAssigned' in order to automatically create and assign an Azure Active Directory principal for the resour
-               ce. Possible values include: 'SystemAssigned'"
+            - The identity type. Set this to C(SystemAssigned) in order to automatically create and assign an Azure Active Directory principal for the resource.
+            - Possible values include C(SystemAssigned).
     state:
         description:
-            - Assert the state of the SQL server. Use 'present' to create or update a server and
-              'absent' to delete a server.
+            - State of the SQL server. Use C(present) to create or update a server and use C(absent) to delete a server.
         default: present
         choices:
             - absent
@@ -60,14 +59,14 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Create (or update) SQL Server
     azure_rm_sqlserver:
-      resource_group: resource_group
+      resource_group: myResourceGroup
       name: server_name
       location: westus
       admin_username: mylogin
@@ -80,7 +79,7 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/sqlcrudtest-4645
 version:
     description:
         - The version of the server.
@@ -106,7 +105,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -118,7 +117,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMServers(AzureRMModuleBase):
+class AzureRMSqlServer(AzureRMModuleBase):
     """Configuration class for an Azure RM SQL Server resource"""
 
     def __init__(self):
@@ -132,29 +131,23 @@ class AzureRMServers(AzureRMModuleBase):
                 required=True
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             admin_username=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             admin_password=dict(
                 type='str',
-                no_log=True,
-                required=False
+                no_log=True
             ),
             version=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             identity=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             )
@@ -169,9 +162,9 @@ class AzureRMServers(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+        super(AzureRMSqlServer, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                               supports_check_mode=True,
+                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -272,7 +265,7 @@ class AzureRMServers(AzureRMModuleBase):
             response = self.sql_client.servers.create_or_update(self.resource_group,
                                                                 self.name,
                                                                 self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -320,7 +313,7 @@ class AzureRMServers(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMServers()
+    AzureRMSqlServer()
 
 
 if __name__ == '__main__':

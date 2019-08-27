@@ -1,0 +1,32 @@
+---
+- debug: msg="START cli/set_domain_name.yaml"
+
+- name: setup
+  cnos_config:
+    lines: no ip domain-name eng.ansible.com vrf default
+    match: none
+
+- name: configure domain_name
+  cnos_system:
+    domain_name: eng.ansible.com
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify domain_name
+  cnos_system:
+    domain_name: eng.ansible.com
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  cnos_config:
+    lines: no ip domain-name eng.ansible.com vrf default
+    match: none
+
+- debug: msg="END cli/set_domain_name.yaml"

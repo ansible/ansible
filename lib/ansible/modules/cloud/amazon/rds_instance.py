@@ -39,9 +39,11 @@ options:
             is not idempotent.
         choices: ['present', 'absent', 'terminated', 'running', 'started', 'stopped', 'rebooted', 'restarted']
         default: 'present'
+        type: str
     creation_source:
         description: Which source to use if restoring from a template (an existing instance, S3 bucket, or snapshot).
         choices: ['snapshot', 's3', 'instance']
+        type: str
     force_update_password:
         description:
           - Set to True to update your cluster password with I(master_user_password). Since comparing passwords to determine
@@ -75,6 +77,7 @@ options:
     allocated_storage:
         description:
           - The amount of storage (in gibibytes) to allocate for the DB instance.
+        type: int
     allow_major_version_upgrade:
         description:
           - Whether to allow major version upgrades.
@@ -97,16 +100,20 @@ options:
         aliases:
           - az
           - zone
+        type: str
     backup_retention_period:
         description:
           - The number of days for which automated backups are retained (must be greater or equal to 1).
             May be used when creating a new cluster, when restoring from S3, or when modifying a cluster.
+        type: int
     ca_certificate_identifier:
         description:
           - The identifier of the CA certificate for the DB instance.
+        type: str
     character_set_name:
         description:
           - The character set to associate with the DB cluster.
+        type: str
     copy_tags_to_snapshot:
         description:
           - Whether or not to copy all tags from the DB instance to snapshots of the instance. When initially creating
@@ -119,12 +126,14 @@ options:
             contain consecutive hyphens.
         aliases:
           - cluster_id
+        type: str
     db_instance_class:
         description:
           - The compute and memory capacity of the DB instance, for example db.t2.micro.
         aliases:
           - class
           - instance_type
+        type: str
     db_instance_identifier:
         description:
           - The DB instance (lowercase) identifier. The identifier must contain from 1 to 63 letters, numbers, or
@@ -133,13 +142,16 @@ options:
           - instance_id
           - id
         required: True
+        type: str
     db_name:
         description:
           - The name for your database. If a name is not provided Amazon RDS will not create a database.
+        type: str
     db_parameter_group_name:
         description:
           - The name of the DB parameter group to associate with this DB instance. When creating the DB instance if this
             argument is omitted the default DBParameterGroup for the specified engine is used.
+        type: str
     db_security_groups:
         description:
           - (EC2-Classic platform) A list of DB security groups to associate with this DB instance.
@@ -147,17 +159,21 @@ options:
     db_snapshot_identifier:
         description:
           - The identifier for the DB snapshot to restore from if using I(creation_source=snapshot).
+        type: str
     db_subnet_group_name:
         description:
           - The DB subnet group name to use for the DB instance.
         aliases:
           - subnet_group
+        type: str
     domain:
         description:
           - The Active Directory Domain to restore the instance in.
+        type: str
     domain_iam_role_name:
         description:
           - The name of the IAM role to be used when making API calls to the Directory Service.
+        type: str
     enable_cloudwatch_logs_exports:
         description:
           - A list of log types that need to be enabled for exporting to CloudWatch Logs.
@@ -178,35 +194,39 @@ options:
           - The name of the database engine to be used for this DB instance. This is required to create an instance.
             Valid choices are aurora | aurora-mysql | aurora-postgresql | mariadb | mysql | oracle-ee | oracle-se |
             oracle-se1 | oracle-se2 | postgres | sqlserver-ee | sqlserver-ex | sqlserver-se | sqlserver-web
+        type: str
     engine_version:
         description:
           - The version number of the database engine to use. For Aurora MySQL that could be 5.6.10a , 5.7.12.
             Aurora PostgreSQL example, 9.6.3
+        type: str
     final_db_snapshot_identifier:
         description:
           - The DB instance snapshot identifier of the new DB instance snapshot created when I(skip_final_snapshot) is false.
         aliases:
           - final_snapshot_identifier
+        type: str
     force_failover:
         description:
           - Set to true to conduct the reboot through a MultiAZ failover.
         type: bool
     iops:
         description:
-          - The Provisioned IOPS (I/O operations per second) value.
+          - The Provisioned IOPS (I/O operations per second) value. Is only set when using I(storage_type) is set to io1.
+        type: int
     kms_key_id:
         description:
           - The ARN of the AWS KMS key identifier for an encrypted DB instance. If you are creating a DB instance with the
             same AWS account that owns the KMS encryption key used to encrypt the new DB instance, then you can use the KMS key
             alias instead of the ARN for the KM encryption key.
           - If I(storage_encrypted) is true and and this option is not provided, the default encryption key is used.
+        type: str
     license_model:
         description:
           - The license model for the DB instance.
-        choices:
-          - license-included
-          - bring-your-own-license
-          - general-public-license
+          - Several options are license-included, bring-your-own-license, and general-public-license.
+          - This option can also be omitted to default to an accepted value.
+        type: str
     master_user_password:
         description:
           - An 8-41 character password for the master database user. The password can contain any printable ASCII character
@@ -214,18 +234,27 @@ options:
             the password immediately, otherwise it is updated during the next maintenance window.
         aliases:
           - password
+        type: str
     master_username:
         description:
           - The name of the master user for the DB cluster. Must be 1-16 letters or numbers and begin with a letter.
         aliases:
           - username
+        type: str
+    max_allocated_storage:
+        description:
+          - The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.
+        type: int
+        version_added: "2.9"
     monitoring_interval:
         description:
           - The interval, in seconds, when Enhanced Monitoring metrics are collected for the DB instance. To disable collecting
             metrics, specify 0. Amazon RDS defaults this to 0 if omitted when initially creating a DB instance.
+        type: int
     monitoring_role_arn:
         description:
           - The ARN for the IAM role that permits RDS to send enhanced monitoring metrics to Amazon CloudWatch Logs.
+        type: str
     multi_az:
         description:
           - Specifies if the DB instance is a Multi-AZ deployment. Mutually exclusive with I(availability_zone).
@@ -239,18 +268,23 @@ options:
         aliases:
           - new_instance_id
           - new_id
+        type: str
     option_group_name:
         description:
           - The option group to associate with the DB instance.
+        type: str
     performance_insights_kms_key_id:
         description:
           - The AWS KMS key identifier (ARN, name, or alias) for encryption of Performance Insights data.
+        type: str
     performance_insights_retention_period:
         description:
           - The amount of time, in days, to retain Performance Insights data. Valid values are 7 or 731.
+        type: int
     port:
         description:
           - The port number on which the instances accept connections.
+        type: int
     preferred_backup_window:
         description:
           - The daily time range (in UTC) of at least 30 minutes, during which automated backups are created if automated backups are
@@ -258,12 +292,14 @@ options:
             I(preferred_maintenance_window).
         aliases:
           - backup_window
+        type: str
     preferred_maintenance_window:
         description:
           - The weekly time range (in UTC) of at least 30 minutes, during which system maintenance can occur. The option must
             be in the format "ddd:hh24:mi-ddd:hh24:mi" where ddd is one of Mon, Tue, Wed, Thu, Fri, Sat, Sun.
         aliases:
           - maintenance_window
+        type: str
     processor_features:
         description:
           - A dictionary of Name, Value pairs to indicate the number of CPU cores and the number of threads per core for the
@@ -274,10 +310,12 @@ options:
             description: The number of threads per core
           coreCount:
             description: The number of CPU cores
+        type: dict
     promotion_tier:
         description:
           - An integer that specifies the order in which an Aurora Replica is promoted to the primary instance after a failure of
             the existing primary instance.
+        type: str
     publicly_accessible:
         description:
           - Specifies the accessibility options for the DB instance. A value of true specifies an Internet-facing instance with
@@ -288,17 +326,21 @@ options:
         description:
           - If using I(creation_source=instance) this indicates the UTC date and time to restore from the source instance.
             For example, "2009-09-07T23:45:00Z". May alternatively set c(use_latest_restore_time) to True.
+        type: str
     s3_bucket_name:
         description:
           - The name of the Amazon S3 bucket that contains the data used to create the Amazon DB instance.
+        type: str
     s3_ingestion_role_arn:
         description:
           - The Amazon Resource Name (ARN) of the AWS Identity and Access Management (IAM) role that authorizes Amazon RDS to access
             the Amazon S3 bucket on your behalf.
+        type: str
     s3_prefix:
         description:
           - The prefix for all of the file names that contain the data used to create the Amazon DB instance. If you do not
             specify a SourceS3Prefix value, then the Amazon DB instance is created by using all of the files in the Amazon S3 bucket.
+        type: str
     skip_final_snapshot:
         description:
           - Whether a final DB cluster snapshot is created before the DB cluster is deleted. If this is false I(final_db_snapshot_identifier)
@@ -308,21 +350,26 @@ options:
     snapshot_identifier:
         description:
           - The ARN of the DB snapshot to restore from when using I(creation_source=snapshot).
+        type: str
     source_db_instance_identifier:
         description:
           - The identifier or ARN of the source DB instance from which to restore when creating a read replica or spinning up a point-in-time
             DB instance using I(creation_source=instance). If the source DB is not in the same region this should be an ARN.
+        type: str
     source_engine:
         description:
           - The identifier for the database engine that was backed up to create the files stored in the Amazon S3 bucket.
         choices:
           - mysql
+        type: str
     source_engine_version:
         description:
           - The version of the database that the backup files were created from.
+        type: str
     source_region:
         description:
           - The region of the DB instance from which the replica is created.
+        type: str
     storage_encrypted:
         description:
           - Whether the DB instance is encrypted.
@@ -334,9 +381,11 @@ options:
           - standard
           - gp2
           - io1
+        type: str
     tags:
         description:
           - A dictionary of key value pairs to assign the DB cluster.
+        type: dict
     tde_credential_arn:
         description:
           - The ARN from the key store with which to associate the instance for Transparent Data Encryption. This is
@@ -344,14 +393,17 @@ options:
             though it might slightly affect the performance of your database.
         aliases:
           - transparent_data_encryption_arn
+        type: str
     tde_credential_password:
         description:
           - The password for the given ARN from the key store in order to access the device.
         aliases:
           - transparent_data_encryption_password
+        type: str
     timezone:
         description:
           - The time zone of the DB instance.
+        type: str
     use_latest_restorable_time:
         description:
           - Whether to restore the DB instance to the latest restorable backup time. Only one of I(use_latest_restorable_time)
@@ -414,7 +466,7 @@ auto_minor_version_upgrade:
 availability_zone:
   description: The availability zone for the DB instance.
   returned: always
-  type: string
+  type: str
   sample: us-east-1f
 backup_retention_period:
   description: The number of days for which automated backups are retained.
@@ -424,7 +476,7 @@ backup_retention_period:
 ca_certificate_identifier:
   description: The identifier of the CA certificate for the DB instance.
   returned: always
-  type: string
+  type: str
   sample: rds-ca-2015
 copy_tags_to_snapshot:
   description: Whether tags are copied from the DB instance to snapshots of the DB instance.
@@ -434,17 +486,17 @@ copy_tags_to_snapshot:
 db_instance_arn:
   description: The Amazon Resource Name (ARN) for the DB instance.
   returned: always
-  type: string
+  type: str
   sample: arn:aws:rds:us-east-1:123456789012:db:ansible-test
 db_instance_class:
   description: The name of the compute and memory capacity class of the DB instance.
   returned: always
-  type: string
+  type: str
   sample: db.m4.large
 db_instance_identifier:
   description: The identifier of the DB instance
   returned: always
-  type: string
+  type: str
   sample: ansible-test
 db_instance_port:
   description: The port that the DB instance listens on.
@@ -454,7 +506,7 @@ db_instance_port:
 db_instance_status:
   description: The current state of this database.
   returned: always
-  type: string
+  type: str
   sample: stopped
 db_parameter_groups:
   description: The list of DB parameter groups applied to this DB instance.
@@ -464,12 +516,12 @@ db_parameter_groups:
     db_parameter_group_name:
       description: The name of the DP parameter group.
       returned: always
-      type: string
+      type: str
       sample: default.mariadb10.0
     parameter_apply_status:
       description: The status of parameter updates.
       returned: always
-      type: string
+      type: str
       sample: in-sync
 db_security_groups:
   description: A list of DB security groups associated with this DB instance.
@@ -484,17 +536,17 @@ db_subnet_group:
     db_subnet_group_description:
       description: The description of the DB subnet group.
       returned: always
-      type: string
+      type: str
       sample: default
     db_subnet_group_name:
       description: The name of the DB subnet group.
       returned: always
-      type: string
+      type: str
       sample: default
     subnet_group_status:
       description: The status of the DB subnet group.
       returned: always
-      type: string
+      type: str
       sample: Complete
     subnets:
       description: A list of Subnet elements.
@@ -509,27 +561,27 @@ db_subnet_group:
             name:
               description: The name of the Availability Zone.
               returned: always
-              type: string
+              type: str
               sample: us-east-1c
         subnet_identifier:
           description: The ID of the subnet.
           returned: always
-          type: string
+          type: str
           sample: subnet-12345678
         subnet_status:
           description: The status of the subnet.
           returned: always
-          type: string
+          type: str
           sample: Active
     vpc_id:
       description: The VpcId of the DB subnet group.
       returned: always
-      type: string
+      type: str
       sample: vpc-12345678
 dbi_resource_id:
   description: The AWS Region-unique, immutable identifier for the DB instance.
   returned: always
-  type: string
+  type: str
   sample: db-UHV3QRNWX4KB6GALCIGRML6QFA
 domain_memberships:
   description: The Active Directory Domain membership records associated with the DB instance.
@@ -544,12 +596,12 @@ endpoint:
     address:
       description: The DNS address of the DB instance.
       returned: always
-      type: string
+      type: str
       sample: ansible-test.cvlrtwiennww.us-east-1.rds.amazonaws.com
     hosted_zone_id:
       description: The ID that Amazon Route 53 assigns when you create a hosted zone.
       returned: always
-      type: string
+      type: str
       sample: ZTR2ITUGPA61AM
     port:
       description: The port that the database engine is listening on.
@@ -559,12 +611,12 @@ endpoint:
 engine:
   description: The database engine version.
   returned: always
-  type: string
+  type: str
   sample: mariadb
 engine_version:
   description: The database engine version.
   returned: always
-  type: string
+  type: str
   sample: 10.0.35
 iam_database_authentication_enabled:
   description: Whether mapping of AWS Identity and Access Management (IAM) accounts to database accounts is enabled.
@@ -574,28 +626,33 @@ iam_database_authentication_enabled:
 instance_create_time:
   description: The date and time the DB instance was created.
   returned: always
-  type: string
+  type: str
   sample: '2018-07-04T16:48:35.332000+00:00'
 kms_key_id:
   description: The AWS KMS key identifier for the encrypted DB instance when storage_encrypted is true.
   returned: When storage_encrypted is true
-  type: string
+  type: str
   sample: arn:aws:kms:us-east-1:123456789012:key/70c45553-ad2e-4a85-9f14-cfeb47555c33
 latest_restorable_time:
   description: The latest time to which a database can be restored with point-in-time restore.
   returned: always
-  type: string
+  type: str
   sample: '2018-07-04T16:50:50.642000+00:00'
 license_model:
   description: The License model information for this DB instance.
   returned: always
-  type: string
+  type: str
   sample: general-public-license
 master_username:
   description: The master username for the DB instance.
   returned: always
-  type: string
+  type: str
   sample: test
+max_allocated_storage:
+  description: The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.
+  returned: When max allocated storage is present.
+  type: int
+  sample: 100
 monitoring_interval:
   description:
     - The interval, in seconds, between points when Enhanced Monitoring metrics are collected for the DB instance.
@@ -616,12 +673,12 @@ option_group_memberships:
     option_group_name:
       description: The name of the option group that the instance belongs to.
       returned: always
-      type: string
+      type: str
       sample: default:mariadb-10-0
     status:
       description: The status of the DB instance's option group membership.
       returned: always
-      type: string
+      type: str
       sample: in-sync
 pending_modified_values:
   description: The changes to the DB instance that are pending.
@@ -636,12 +693,12 @@ performance_insights_enabled:
 preferred_backup_window:
   description: The daily time range during which automated backups are created if automated backups are enabled.
   returned: always
-  type: string
+  type: str
   sample: 07:01-07:31
 preferred_maintenance_window:
   description: The weekly time range (in UTC) during which system maintenance can occur.
   returned: always
-  type: string
+  type: str
   sample: sun:09:31-sun:10:01
 publicly_accessible:
   description:
@@ -663,7 +720,7 @@ storage_encrypted:
 storage_type:
   description: The storage type to be associated with the DB instance.
   returned: always
-  type: string
+  type: str
   sample: standard
 tags:
   description: A dictionary of tags associated with the DB instance.
@@ -678,12 +735,12 @@ vpc_security_groups:
     status:
       description: The status of the VPC security group.
       returned: always
-      type: string
+      type: str
       sample: active
     vpc_security_group_id:
       description: The name of the VPC security group.
       returned: always
-      type: string
+      type: str
       sample: sg-12345678
 '''
 
@@ -760,6 +817,9 @@ def get_final_snapshot(client, module, snapshot_identifier):
 
 
 def get_parameters(client, module, parameters, method_name):
+    if method_name == 'restore_db_instance_to_point_in_time':
+        parameters['TargetDBInstanceIdentifier'] = module.params['db_instance_identifier']
+
     required_options = get_boto3_client_method_parameters(client, method_name, required=True)
     if any([parameters.get(k) is None for k in required_options]):
         module.fail_json(msg='To {0} requires the parameters: {1}'.format(
@@ -778,8 +838,6 @@ def get_parameters(client, module, parameters, method_name):
         parameters['Tags'] = ansible_dict_to_boto3_tag_list(parameters['Tags'])
     if method_name == 'modify_db_instance':
         parameters = get_options_with_changing_values(client, module, parameters)
-    if method_name == 'restore_db_instance_to_point_in_time':
-        parameters['TargetDBInstanceIdentifier'] = module.params['db_instance_identifier']
 
     return parameters
 
@@ -798,6 +856,8 @@ def get_options_with_changing_values(client, module, parameters):
         parameters.pop('MasterUserPassword', None)
     if cloudwatch_logs_enabled:
         parameters['CloudwatchLogsExportConfiguration'] = cloudwatch_logs_enabled
+    if not module.params['storage_type']:
+        parameters.pop('Iops', None)
 
     instance = get_instance(client, module, instance_id)
     updated_parameters = get_changing_options_with_inconsistent_keys(parameters, instance, purge_cloudwatch_logs)
@@ -842,7 +902,8 @@ def get_current_attributes_with_inconsistent_keys(instance):
     options['DBParameterGroupName'] = [parameter_group['DBParameterGroupName'] for parameter_group in instance['DBParameterGroups']]
     options['AllowMajorVersionUpgrade'] = None
     options['EnableIAMDatabaseAuthentication'] = instance['IAMDatabaseAuthenticationEnabled']
-    options['EnablePerformanceInsights'] = instance['PerformanceInsightsEnabled']
+    # PerformanceInsightsEnabled is not returned on older RDS instances it seems
+    options['EnablePerformanceInsights'] = instance.get('PerformanceInsightsEnabled', False)
     options['MasterUserPassword'] = None
     options['NewDBInstanceIdentifier'] = instance['DBInstanceIdentifier']
 
@@ -852,6 +913,9 @@ def get_current_attributes_with_inconsistent_keys(instance):
 def get_changing_options_with_inconsistent_keys(modify_params, instance, purge_cloudwatch_logs):
     changing_params = {}
     current_options = get_current_attributes_with_inconsistent_keys(instance)
+
+    if current_options.get("MaxAllocatedStorage") is None:
+        current_options["MaxAllocatedStorage"] = None
 
     for option in current_options:
         current_option = current_options[option]
@@ -874,6 +938,8 @@ def get_changing_options_with_inconsistent_keys(modify_params, instance, purge_c
         if option == 'ProcessorFeatures' and desired_option == []:
             changing_params['UseDefaultProcessorFeatures'] = True
         elif option == 'CloudwatchLogsExportConfiguration':
+            current_option = set(current_option.get('LogTypesToEnable', []))
+            desired_option = set(desired_option)
             format_option = {'EnableLogTypes': [], 'DisableLogTypes': []}
             format_option['EnableLogTypes'] = list(desired_option.difference(current_option))
             if purge_cloudwatch_logs:
@@ -1038,16 +1104,17 @@ def main():
         force_failover=dict(type='bool'),
         iops=dict(type='int'),
         kms_key_id=dict(),
-        license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license']),
+        license_model=dict(),
         master_user_password=dict(aliases=['password'], no_log=True),
         master_username=dict(aliases=['username']),
+        max_allocated_storage=dict(type='int'),
         monitoring_interval=dict(type='int'),
         monitoring_role_arn=dict(),
         multi_az=dict(type='bool'),
         new_db_instance_identifier=dict(aliases=['new_instance_id', 'new_id']),
         option_group_name=dict(),
         performance_insights_kms_key_id=dict(),
-        performance_insights_retention_period=dict(),
+        performance_insights_retention_period=dict(type='int'),
         port=dict(type='int'),
         preferred_backup_window=dict(aliases=['backup_window']),
         preferred_maintenance_window=dict(aliases=['maintenance_window']),
@@ -1076,9 +1143,9 @@ def main():
     arg_spec.update(parameter_options)
 
     required_if = [
-        ('engine', 'aurora', ('cluster_id',)),
-        ('engine', 'aurora-mysql', ('cluster_id',)),
-        ('engine', 'aurora-postresql', ('cluster_id',)),
+        ('engine', 'aurora', ('db_cluster_identifier',)),
+        ('engine', 'aurora-mysql', ('db_cluster_identifier',)),
+        ('engine', 'aurora-postresql', ('db_cluster_identifier',)),
         ('creation_source', 'snapshot', ('snapshot_identifier', 'engine')),
         ('creation_source', 's3', (
             's3_bucket_name', 'engine', 'master_username', 'master_user_password',

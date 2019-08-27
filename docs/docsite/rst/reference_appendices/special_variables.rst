@@ -5,10 +5,13 @@ Special Variables
 
 Magic
 -----
-These variables are directly not settable by the user, Ansible will always override them to reflect internal state.
+These variables cannot be set directly by the user; Ansible will always override them to reflect internal state.
 
 ansible_check_mode
     Boolean that indicates if we are in check mode or not
+
+ansible_dependent_role_names
+    The names of the roles currently imported into the current play as dependencies of other plays
 
 ansible_diff_mode
     Boolean that indicates if we are in diff mode or not
@@ -19,6 +22,28 @@ ansible_forks
 ansible_inventory_sources
     List of sources used as inventory
 
+ansible_limit
+    Contents of the ``--limit`` CLI option for the current execution of Ansible
+
+ansible_loop
+    A dictionary/map containing extended loop information when enabled via ``loop_control.extended``
+
+ansible_loop_var
+    The name of the value provided to ``loop_control.loop_var``. Added in ``2.8``
+
+ansible_index_var
+    The name of the value provided to ``loop_control.index_var``. Added in ``2.9``
+
+ansible_parent_role_names
+    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (i.e. the role that included/imported this role) being the first item in the list.
+    When multiple inclusions occur, this list lists the *last* role (i.e. the role that included this role) as the *first* item in the list. It is also possible that a specific role exists more than once in this list.
+
+    For example: When role **A** includes role **B**, inside role B, ``ansible_parent_role_names`` will equal to ``['A']``. If role **B** then includes role **C**, the list becomes ``['B', 'A']``.
+
+ansible_parent_role_paths
+    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (i.e. the role that included/imported this role) being the first item in the list.
+    Please refer to ``ansible_parent_role_names`` for the order of items in this list.
+
 ansible_play_batch
     List of active hosts in the current play run limited by the serial, aka 'batch'. Failed/Unreachable hosts are not considered 'active'.
 
@@ -28,11 +53,25 @@ ansible_play_hosts
 ansible_play_hosts_all
     List of all the hosts that were targeted by the play
 
+ansible_play_role_names
+    The names of the roles currently imported into the current play. This list does **not** contain the role names that are
+    implicitly included via dependencies.
+
 ansible_playbook_python
     The path to the python interpreter being used by Ansible on the controller
 
-ansible_serach_path
+ansible_role_names
+    The names of the roles currently imported into the current play, or roles referenced as dependencies of the roles
+    imported into the current play.
+
+ansible_run_tags
+    Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run.
+
+ansible_search_path
     Current search path for action plugins and lookups, i.e where we search for relative paths when you do ``template: src=myfile``
+
+ansible_skip_tags
+    Contents of the ``--skip_tags`` CLI option, which specifies which tags will be skipped for the current run.
 
 ansible_verbosity
     Current verbosity setting for Ansible
@@ -62,43 +101,51 @@ inventory_file
     The file name of the inventory source in which the `inventory_hostname` was first defined
 
 omit
-    Special variable that allows you to 'omit' an option in a task, i.e ``- user: name=bob home={{ bobs_home|default(omit)}}``
+    Special variable that allows you to 'omit' an option in a task, i.e ``- user: name=bob home={{ bobs_home|default(omit) }}``
 
 play_hosts
-    Deprecated, the same as ansbile_play_batch
+    Deprecated, the same as ansible_play_batch
+
+ansible_play_name
+    The name of the currently executed play. Added in ``2.8``.
 
 playbook_dir
     The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
 
+role_name
+    The name of the role currently being executed.
+
 role_names
-    The names of the rules currently imported into the current play.
+    Deprecated, the same as ansible_play_role_names
 
 role_path
     The path to the dir of the currently running role
 
 Facts
 -----
-These are variables that contain information pertinent to the current host (`inventory_hostname`), they are only available if gathered first.
+These are variables that contain information pertinent to the current host (`inventory_hostname`). They are only available if gathered first.
 
 ansible_facts
     Contains any facts gathered or cached for the `inventory_hostname`
-    Facts are normally gathered by the M(setup) module automatically in a play, but any module can return facts.
+    Facts are normally gathered by the :ref:`setup <setup_module>` module automatically in a play, but any module can return facts.
 
 ansible_local
-    Contains any 'local facts' gathred or cached for the `inventory_hostname`.
+    Contains any 'local facts' gathered or cached for the `inventory_hostname`.
     The keys available depend on the custom facts created.
-    See the M(setup) module for more details.
+    See the :ref:`setup <setup_module>` module for more details.
+
+.. _connection_variables:
 
 Connection variables
 ---------------------
-These are variables are normally used to set the specifics on how to execute actions on a target,
-most of them correspond to connection plugins but not all are specific to them, other plugins like shell, terminal and become are normally involved.
-Only the common ones are described as each connection/become/shell/etc plugin can define it's own overrides and specific variables.
+Connection variables are normally used to set the specifics on how to execute actions on a target. Most of them correspond to connection plugins, but not all are specific to them; other plugins like shell, terminal and become are normally involved.
+Only the common ones are described as each connection/become/shell/etc plugin can define its own overrides and specific variables.
+See :ref:`general_precedence_rules` for how connection variables interact with :ref:`configuration settings<ansible_configuration_settings>`, :ref:`command-line options<command_line_tools>`, and :ref:`playbook keywords<playbook_keywords>`.
 
 ansible_become_user
-    The user Ansible 'becomes' after using privilege escalation, this must be available to the 'login user'.
+    The user Ansible 'becomes' after using privilege escalation. This must be available to the 'login user'.
 
-ansible_connecion
+ansible_connection
     The connection plugin actually used for the task on the target host.
 
 ansible_host
@@ -109,4 +156,3 @@ ansible_python_interpreter
 
 ansible_user
     The user Ansible 'logs in' as.
-

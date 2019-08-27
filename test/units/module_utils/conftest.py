@@ -3,7 +3,6 @@
 
 import json
 import sys
-from collections import MutableMapping
 from io import BytesIO
 
 import pytest
@@ -11,6 +10,7 @@ import pytest
 import ansible.module_utils.basic
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 
 @pytest.fixture

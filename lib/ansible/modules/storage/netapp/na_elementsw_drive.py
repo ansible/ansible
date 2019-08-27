@@ -12,7 +12,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -23,7 +23,7 @@ short_description: NetApp Element Software Manage Node Drives
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
     - Add, Erase or Remove drive for nodes on Element Software Cluster.
 
@@ -115,7 +115,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
 
 """
 import traceback

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -22,16 +22,19 @@ options:
   name:
     description:
       - Monitor name.
+    type: str
     required: True
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(tcp_half_open)
         parent on the C(Common) partition.
+    type: str
     default: /Common/tcp_half_open
   description:
     description:
       - The description of the monitor.
+    type: str
     version_added: 2.7
   ip:
     description:
@@ -40,12 +43,14 @@ options:
         '*'.
       - If this value is an IP address, and the C(type) is C(tcp) (the default),
         then a C(port) number must be specified.
+    type: str
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified
+    type: str
     version_added: 2.5
   interval:
     description:
@@ -53,6 +58,7 @@ options:
         template will run. If this parameter is not provided when creating
         a new monitor, then the default value will be 5. This value B(must)
         be less than the C(timeout) value.
+    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -62,6 +68,7 @@ options:
         number to any number you want, however, it should be 3 times the
         interval number of seconds plus 1 second. If this parameter is not
         provided when creating a new monitor, then the default value will be 16.
+    type: int
   time_until_up:
     description:
       - Specifies the amount of time in seconds after the first successful
@@ -69,19 +76,22 @@ options:
         node to be marked up immediately after a valid response is received
         from the node. If this parameter is not provided when creating
         a new monitor, then the default value will be 0.
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
     version_added: 2.5
 notes:
   - Requires BIG-IP software version >= 12
@@ -96,28 +106,31 @@ EXAMPLES = r'''
   bigip_monitor_tcp_half_open:
     state: present
     ip: 10.10.10.10
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove TCP half-open Monitor
   bigip_monitor_tcp_half_open:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add half-open monitor for all addresses, port 514
   bigip_monitor_tcp_half_open:
-    server: lb.mydomain.com
-    user: admin
     port: 514
-    password: secret
     name: my_tcp_monitor
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -125,7 +138,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp
 description:
   description: The description of the monitor.
@@ -135,7 +148,7 @@ description:
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -164,22 +177,18 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -190,17 +199,30 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination',
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'destination',
         'description',
     ]
 
     returnables = [
-        'parent', 'ip', 'port', 'interval', 'timeout', 'time_until_up',
+        'parent',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'time_until_up',
         'description',
     ]
 
     updatables = [
-        'destination', 'interval', 'timeout', 'time_until_up', 'description',
+        'destination',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
     ]
 
     @property
@@ -278,11 +300,21 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -371,11 +403,15 @@ class Difference(object):
         except AttributeError:
             return attr1
 
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -577,7 +613,7 @@ class ArgumentSpec(object):
             parent=dict(default='/Common/tcp_half_open'),
             description=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),
@@ -603,16 +639,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

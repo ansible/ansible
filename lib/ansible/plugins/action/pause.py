@@ -30,12 +30,9 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import PY3
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 try:
     import curses

@@ -1,0 +1,6 @@
+shippable/posix/group4
+skip/osx
+skip/freebsd
+skip/docker
+needs/root
+destructive

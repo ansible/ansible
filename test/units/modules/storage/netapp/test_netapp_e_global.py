@@ -3,10 +3,10 @@
 
 
 from ansible.modules.storage.netapp.netapp_e_global import GlobalSettings
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
+from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
-from ansible.compat.tests import mock
+from units.compat import mock
 
 
 class GlobalSettingsTest(ModuleTestCase):

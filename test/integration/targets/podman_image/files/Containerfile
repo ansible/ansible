@@ -1,0 +1,3 @@
+FROM quay.io/coreos/alpine-sh
+ENV VAR testing
+WORKDIR ${VAR}

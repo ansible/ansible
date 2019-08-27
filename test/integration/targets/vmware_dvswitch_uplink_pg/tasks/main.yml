@@ -1,0 +1,75 @@
+# Test code for the vmware_dvswitch_uplink_pg module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+# Testcase 0001: Add Distributed vSwitch
+- name: add distributed vSwitch
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    state: present
+    switch_name: dvswitch_0001
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0001
+
+- debug:
+    var: dvs_result_0001
+
+- name: ensure distributed vswitch is present
+  assert:
+    that:
+      - dvs_result_0001 is changed
+
+- when: vcsim is not defined
+  block:
+    - &uplink_data
+      name: Configure Uplink portgroup in check mode
+      vmware_dvswitch_uplink_pg:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        switch: dvswitch_0001
+        name: dvswitch_0001-DVUplinks
+        advanced:
+          port_config_reset_at_disconnect: False
+          block_override: False
+          vendor_config_override: False
+          vlan_override: False
+          netflow_override: False
+          traffic_filter_override: False
+        vlan_trunk_range: [ 2-3967, 4049-4092 ]
+        netflow_enabled: True
+        block_all_ports: False
+        validate_certs: no
+      register: uplink_pg_result_check_mode
+      check_mode: yes
+
+    - debug:
+        var: uplink_pg_result_check_mode
+
+    - name: ensure uplink portgroup was changed
+      assert:
+        that:
+          - uplink_pg_result_check_mode is changed
+
+    - <<: *uplink_data
+      name: Configure Uplink portgroup
+      register: uplink_pg_result
+      check_mode: no
+
+    - debug:
+        var: uplink_pg_result
+
+    - name: ensure uplink portgroup was changed
+      assert:
+        that:
+          - uplink_pg_result is changed

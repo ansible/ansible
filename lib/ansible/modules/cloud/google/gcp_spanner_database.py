@@ -18,98 +18,111 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_spanner_database
 description:
-    - A Cloud Spanner Database which is hosted on a Spanner instance.
+- A Cloud Spanner Database which is hosted on a Spanner instance.
 short_description: Creates a GCP Database
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    name:
-        description:
-            - A unique identifier for the database, which cannot be changed after the instance
-              is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-              The final segment of the name must be between 6 and 30 characters in length.
-        required: false
-    extra_statements:
-        description:
-            - 'An optional list of DDL statements to run inside the newly created database. Statements
-              can create tables, indexes, etc. These statements execute atomically with the creation
-              of the database: if there is an error in any statement, the database is not created.'
-        required: false
-    instance:
-        description:
-            - The instance to create the database on.
-        required: true
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+    type: str
+  name:
+    description:
+    - A unique identifier for the database, which cannot be changed after the instance
+      is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
+    required: true
+    type: str
+  extra_statements:
+    description:
+    - 'An optional list of DDL statements to run inside the newly created database.
+      Statements can create tables, indexes, etc. These statements execute atomically
+      with the creation of the database: if there is an error in any statement, the
+      database is not created.'
+    required: false
+    type: list
+  instance:
+    description:
+    - The instance to create the database on.
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_spanner_instance task and then set this instance field to "{{ name-of-resource
+      }}"'
+    required: true
+    type: dict
 extends_documentation_fragment: gcp
+notes:
+- 'API Reference: U(https://cloud.google.com/spanner/docs/reference/rest/v1/projects.instances.databases)'
+- 'Official Documentation: U(https://cloud.google.com/spanner/)'
 '''
 
 EXAMPLES = '''
 - name: create a instance
   gcp_spanner_instance:
-      name: "instance-database"
-      display_name: My Spanner Instance
-      node_count: 2
-      labels:
-        cost_center: ti-1700004
-      config: regional-us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instance-database
+    display_name: My Spanner Instance
+    node_count: 2
+    labels:
+      cost_center: ti-1700004
+    config: regional-us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instance
 
 - name: create a database
   gcp_spanner_database:
-      name: webstore
-      instance: "{{ instance }}"
-      project: "test_project"
-      auth_kind: "service_account"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: webstore
+    instance: "{{ instance }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
-    name:
-        description:
-            - A unique identifier for the database, which cannot be changed after the instance
-              is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-              The final segment of the name must be between 6 and 30 characters in length.
-        returned: success
-        type: str
-    extra_statements:
-        description:
-            - 'An optional list of DDL statements to run inside the newly created database. Statements
-              can create tables, indexes, etc. These statements execute atomically with the creation
-              of the database: if there is an error in any statement, the database is not created.'
-        returned: success
-        type: list
-    instance:
-        description:
-            - The instance to create the database on.
-        returned: success
-        type: dict
+name:
+  description:
+  - A unique identifier for the database, which cannot be changed after the instance
+    is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
+  returned: success
+  type: str
+extraStatements:
+  description:
+  - 'An optional list of DDL statements to run inside the newly created database.
+    Statements can create tables, indexes, etc. These statements execute atomically
+    with the creation of the database: if there is an error in any statement, the
+    database is not created.'
+  returned: success
+  type: list
+instance:
+  description:
+  - The instance to create the database on.
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -118,6 +131,7 @@ RETURN = '''
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
 import json
+import time
 
 ################################################################################
 # Main
@@ -130,9 +144,9 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
             extra_statements=dict(type='list', elements='str'),
-            instance=dict(required=True, type='dict')
+            instance=dict(required=True, type='dict'),
         )
     )
 
@@ -147,7 +161,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -167,12 +182,11 @@ def main():
 
 def create(module, link):
     auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.post(link, resource_to_request(module)))
+    return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
 def update(module, link):
-    auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="Spanner objects can't be updated to ensure data safety")
 
 
 def delete(module, link):
@@ -181,44 +195,34 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {
-        u'name': module.params.get('name'),
-        u'extraStatements': module.params.get('extra_statements')
-    }
+    request = {u'name': module.params.get('name'), u'extraStatements': module.params.get('extra_statements')}
     request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name'),
-        'name': module.params['name']
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name'), 'name': module.params['name']}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases/{name}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases".format(**res)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -228,8 +232,8 @@ def return_if_object(module, response):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     result = decode_response(result, module)
 
@@ -261,10 +265,43 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {
-        u'name': response.get(u'name'),
-        u'extraStatements': module.params.get('extra_statements')
-    }
+    return {u'name': module.params.get('name'), u'extraStatements': module.params.get('extra_statements')}
+
+
+def async_op_url(module, extra_data=None):
+    if extra_data is None:
+        extra_data = {}
+    url = "https://spanner.googleapis.com/v1/{op_id}"
+    combined = extra_data.copy()
+    combined.update(module.params)
+    return url.format(**combined)
+
+
+def wait_for_operation(module, response):
+    op_result = return_if_object(module, response)
+    if op_result is None:
+        return {}
+    status = navigate_hash(op_result, ['done'])
+    wait_done = wait_for_completion(status, op_result, module)
+    raise_if_errors(wait_done, ['error'], module)
+    return navigate_hash(wait_done, ['response'])
+
+
+def wait_for_completion(status, op_result, module):
+    op_id = navigate_hash(op_result, ['name'])
+    op_uri = async_op_url(module, {'op_id': op_id})
+    while not status:
+        raise_if_errors(op_result, ['error'], module)
+        time.sleep(1.0)
+        op_result = fetch_resource(module, op_uri, False)
+        status = navigate_hash(op_result, ['done'])
+    return op_result
+
+
+def raise_if_errors(response, err_path, module):
+    errors = navigate_hash(response, err_path)
+    if errors is not None:
+        module.fail_json(msg=errors)
 
 
 def decode_response(response, module):

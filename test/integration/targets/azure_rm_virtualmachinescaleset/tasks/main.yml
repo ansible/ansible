@@ -1,0 +1,616 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    address_prefixes: "10.0.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: testSubnet
+    address_prefix: "10.0.1.0/24"
+    virtual_network: testVnet
+
+- name: Create public IP address
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Static
+    name: testPublicIP
+
+- name: Create load balancer
+  azure_rm_loadbalancer:
+    resource_group: "{{ resource_group }}"
+    name: testLB
+    public_ip_address_name: testPublicIP
+
+- name: Create public IP address 1
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Static
+    name: testPublicIP1
+
+- name: Create load balancer 1
+  azure_rm_loadbalancer:
+    resource_group: "{{ resource_group }}"
+    name: testLB1
+    public_ip_address_name: testPublicIP1
+
+- name: Create network security group within same resource group of VMSS.
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: testNetworkSecurityGroup
+
+- name: Create network security group in different resource group of VMSS.
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group_secondary }}"
+    name: testNetworkSecurityGroup2
+
+- name: Create virtual network inteface cards for VM A and B
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}nic"
+    virtual_network: testVnet
+    subnet: testSubnet
+
+- name: Create VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    admin_username: testuser
+    admin_password: "Password1234!"
+    vm_size: Standard_B1ms
+    network_interfaces: "vmforimage{{ rpfx }}nic"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+- name: Generalize VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    generalized: yes
+- name: Create image A
+  azure_rm_image:
+    resource_group: "{{ resource_group }}"
+    name: testimagea
+    source: "vmforimage{{ rpfx }}"
+- name: Create image B
+  azure_rm_image:
+    resource_group: "{{ resource_group }}"
+    name: testimageb
+    source: "vmforimage{{ rpfx }}"
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    state: absent
+
+- name: Create VMSS (check mode)
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    vm_size: Standard_B1s
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 1
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    load_balancer: testLB
+    upgrade_policy: Manual
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+  check_mode: yes
+
+- name: Assert that VMSS can be created
+  assert:
+    that: results.changed
+
+- name: Get VMSS to assert no VMSS is created in check mode
+  azure_rm_virtualmachinescaleset_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    format: curated
+  register: output_scaleset
+
+- name: Assert no VMSS created in check mode
+  assert:
+    that:
+      - output_scaleset.ansible_facts.azure_vmss | length == 0
+
+- name: Create VMSS
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    vm_size: Standard_B1s
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 1
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Manual
+    load_balancer: testLB
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    custom_data: "#cloud-config"
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+
+- name: Assert that VMSS was created
+  assert:
+    that: results.changed
+
+- name: Create VMSS -- test upgrade_policy idempotence and load balancer
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    vm_size: Standard_B1s
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 1
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Automatic
+    load_balancer: testLB1
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    custom_data: "#cloud-config"
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+
+- name: Assert that VMSS was created
+  assert:
+    that: results.changed
+
+- name: Retrieve scaleset facts
+  azure_rm_virtualmachinescaleset_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    format: curated
+  register: output_scaleset
+
+- assert:
+    that:
+        - output_scaleset.vmss[0].load_balancer == "testLB1"
+
+- name: Retrieve scaleset VMs facts
+  azure_rm_virtualmachinescalesetinstance_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+  register: instances
+
+- name: Assert that facts returned correctly
+  assert:
+    that:
+      - instances.instances | length == 1
+      - instances.instances[0].id != None
+      - instances.instances[0].name != None
+      - instances.instances[0].instance_id != None
+      - instances.instances[0].provisioning_state != None
+      - instances.instances[0].vm_id != None
+      - instances.instances[0].latest_model != None
+      - instances.instances[0].power_state != None
+
+- name: Get scaleset body
+  set_fact:
+    body: "{{ output_scaleset.vmss[0] }}"
+
+- name: Try to update VMSS using output as input
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ body.resource_group }}"
+    name: "{{ body.name }}"
+    vm_size: "{{ body.vm_size }}"
+    admin_username: "{{ body.admin_username }}"
+    ssh_password_enabled: "{{ body.ssh_password_enabled }}"
+    admin_password: "Password1234!"
+    capacity: "{{ body.capacity }}"
+    virtual_network_name: "{{ body.virtual_network_name }}"
+    subnet_name: "{{ body.subnet_name }}"
+    upgrade_policy: "{{ body.upgrade_policy }}"
+    load_balancer: "{{ body.load_balancer }}"
+    tier: "{{ body.tier }}"
+    managed_disk_type: "{{ body.managed_disk_type }}"
+    os_disk_caching: "{{ body.os_disk_caching }}"
+    image: "{{ body.image }}"
+    data_disks: "{{ body.data_disks }}"
+    overprovision: "{{ body.overprovision }}"
+  register: results
+
+- name: Assert that nothing was changed
+  assert:
+    that: not results.changed
+
+- name: Install VMSS Extension
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    publisher: Microsoft.Azure.Extensions
+    type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "sudo apt-get -y install apache2"}
+  register: results
+
+- name: Assert that something was changed
+  assert:
+    that: results.changed
+
+- name: Install Again VMSS Extension - again
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    publisher: Microsoft.Azure.Extensions
+    type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "sudo apt-get -y install apache2"}
+  register: results
+
+- name: Assert that nothing was changed
+  assert:
+    that: not results.changed
+
+- name: Query extension
+  azure_rm_virtualmachinescalesetextension_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['vmss_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+- name: List extensions
+  azure_rm_virtualmachinescalesetextension_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['vmss_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+
+- name: Delete VMSS Extension
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    state: absent
+  register: results
+
+- name: Assert that change was reported
+  assert:
+    that: results.changed
+
+- name: Upgrade instance to the latest image
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    instance_id: "{{ instances.instances[0].instance_id }}"
+    latest_model: yes
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that: results.changed
+
+- name: Stop virtual machine
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    instance_id: "{{ instances.instances[0].instance_id }}"
+    power_state: stopped
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that: results.changed
+
+- name: Delete instance
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    instance_id: "{{ instances.instances[0].instance_id }}"
+    state: absent
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that: results.changed
+
+
+- name: Delete VMSS
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    state: absent
+
+- name: Create VMSS with security group in same resource group, with accelerated networking(check mode).
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}2
+    vm_size: Standard_D3_v2
+    capacity: 0
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      name: testimagea
+      resource_group: "{{ resource_group }}"
+    upgrade_policy: Manual
+    security_group: testNetworkSecurityGroup
+    enable_accelerated_networking: yes
+  register: results
+  check_mode: yes
+
+- name: Assert that VMSS can be created
+  assert:
+    that: results.changed
+
+- name: Create VMSS with security group in same resource group, with accelerated networking.
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}2
+    vm_size: Standard_D3_v2
+    capacity: 0
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      name: testimagea
+      resource_group: "{{ resource_group }}"
+    upgrade_policy: Manual
+    security_group: testNetworkSecurityGroup
+    enable_accelerated_networking: yes
+  register: results
+
+- name: Assert that VMSS ran
+  assert:
+    that:
+      - 'results.changed'
+      - 'results.ansible_facts.azure_vmss.properties.virtualMachineProfile.networkProfile.networkInterfaceConfigurations.0.properties.enableAcceleratedNetworking == true'
+      - 'results.ansible_facts.azure_vmss.properties.virtualMachineProfile.networkProfile.networkInterfaceConfigurations.0.properties.networkSecurityGroup != {}'
+
+- name: Create VMSS with security group in same resource group, with accelerated networking.
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}2
+    vm_size: Standard_D3_v2
+    capacity: 0
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      name: testimagea
+      resource_group: "{{ resource_group }}"
+    upgrade_policy: Manual
+    security_group: testNetworkSecurityGroup
+    enable_accelerated_networking: yes
+  register: results
+
+- name: Assert that nothing has changed
+  assert:
+    that:
+      - not results.changed
+
+- name: Create VMSS with security group in same resource group, with accelerated networking.
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}2
+    vm_size: Standard_D3_v2
+    capacity: 0
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      name: testimageb
+      resource_group: "{{ resource_group }}"
+    upgrade_policy: Manual
+    security_group: testNetworkSecurityGroup
+    enable_accelerated_networking: yes
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that:
+      - results.changed
+
+- name: update VMSS with security group in different resource group.
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}2
+    vm_size: Standard_B1s
+    capacity: 0
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      name: testimageb
+      resource_group: "{{ resource_group }}"
+    upgrade_policy: Manual
+    security_group:
+      name: testNetworkSecurityGroup2
+      resource_group: "{{ resource_group_secondary }}"
+  register: results
+
+# disable for now
+#- name: Assert that security group is correct
+#  assert:
+#    that:
+#      - 'results.changed'
+#      - '"testNetworkSecurityGroup2" in results.ansible_facts.azure_vmss.properties.virtualMachineProfile.networkProfile.networkInterfaceConfigurations.0.properties.networkSecurityGroup.id'
+
+- name: Delete VMSS
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}2
+    state: absent
+
+- name: Fail when instance type is not supported to enable accelerated networking
+  azure_rm_virtualmachinescaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}4
+    vm_size: Standard_B1s
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    upgrade_policy: Manual
+    enable_accelerated_networking: yes
+  register: results
+  ignore_errors: yes
+
+- name: Assert failure to show that accelerated networking is enabled only with supported instance types.
+  assert:
+    that:
+      - '"VMSizeIsNotPermittedToEnableAcceleratedNetworkingForVmss" in results.msg'
+
+- name: Delete network security group
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: testNetworkSecurityGroup
+    state: absent
+
+- name: Delete network security group
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group_secondary }}"
+    name: testNetworkSecurityGroup2
+    state: absent
+
+- name: Delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: "{{ resource_group }}"
+    name: testLB
+    state: absent
+
+- name: Delete public IP address
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    state: absent
+    name: testPublicIP
+
+- name: Delete virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    state: absent
+    address_prefixes: "10.0.0.0/16"
+
+# TODO: Until we have a module to create/delete images this is the best tests
+# I can do
+- name: assert error thrown with invalid image dict
+  azure_rm_virtualmachinescaleset:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      vm_size: Standard_B1s
+      image:
+        offer: UbuntuServer
+  register: fail_invalid_image_dict
+  failed_when: 'fail_invalid_image_dict.msg != "parameter error: expecting image to contain [publisher, offer, sku, version], [name, resource_group] or [id]"'
+
+- name: assert error thrown with invalid image type
+  azure_rm_virtualmachinescaleset:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      vm_size: Standard_B1s
+      image:
+      - testing
+  register: fail_invalid_image_type
+  failed_when: 'fail_invalid_image_type.msg != "parameter error: expecting image to be a string or dict not list"'
+
+- name: assert error finding missing custom image
+  azure_rm_virtualmachinescaleset:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      vm_size: Standard_B1s
+      image: invalid-image
+  register: fail_missing_custom_image
+  failed_when: fail_missing_custom_image.msg != "Error could not find image with name invalid-image"
+
+- name: assert error finding missing custom image (dict style)
+  azure_rm_virtualmachinescaleset:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      vm_size: Standard_B1s
+      image:
+        name: invalid-image
+  register: fail_missing_custom_image_dict
+  failed_when: fail_missing_custom_image_dict.msg != "Error could not find image with name invalid-image"

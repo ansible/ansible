@@ -1,0 +1,317 @@
+- name: Fix resource prefix
+  set_fact:
+    redis_name: "redis-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
+    vnet_name: "vnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
+    subnet_name: "subnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
+    rule_name: "rule1"
+  run_once: yes
+
+- name: Create a redis cache (Check Mode)
+  azure_rm_rediscache:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}"
+    sku:
+      name: basic
+      size: C1
+    wait_for_provisioning: False
+  check_mode: yes
+  register: output
+
+- name: Assert creating redis cache check mode
+  assert:
+    that:
+      - output.changed
+
+- name: Create a redis cache
+  azure_rm_rediscache:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}"
+    sku:
+      name: basic
+      size: C1
+    wait_for_provisioning: False
+  register: output
+
+- name: Assert creating redis cache
+  assert:
+    that:
+      - output.changed
+      - output.id
+
+- name: Get facts
+  azure_rm_rediscache_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}"
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts.rediscaches | length == 1
+      - facts.rediscaches[0].id != None
+      - facts.rediscaches[0].host_name != None
+      - facts.rediscaches[0].provisioning_state != None
+      - facts.rediscaches[0].sku.name == 'basic'
+      - facts.rediscaches[0].sku.size == 'C1'
+
+- name: Update the redis cache (idempotent)
+  azure_rm_rediscache:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}"
+    sku:
+      name: basic
+      size: C1
+    wait_for_provisioning: False
+  register: output
+
+- name: assert output not changed
+  assert:
+    that:
+      - not output.changed
+
+- name: long-running rediscache tests [run with `--tags long_run,untagged` to enable]
+ # creating redis Cache costs about 20 mins async operation,
+ # need to poll status from Creating to Running, then able to perform updating/deleting operation,
+ # otherwise, will met error:
+ # "The resource '<resource_id>' is busy processing a previous update request or is undergoing system maintenance.
+ # As such, it is currently unable to accept the update request.  Please try again later."
+  block:
+  - name: Wait for Redis provisioning to complete
+    azure_rm_rediscache_facts:
+        resource_group: "{{ resource_group }}"
+        name: "{{ redis_name }}"
+    register: facts
+    until: facts.rediscaches[0]['provisioning_state'] == 'Succeeded'
+    retries: 30
+    delay: 60
+
+  - name: (actually) update redis cache
+    azure_rm_rediscache:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}"
+      sku:
+        name: basic
+        size: C1
+      enable_non_ssl_port: true
+      tags:
+        testing: foo
+      wait_for_provisioning: True
+    register: output
+
+  - name: assert output changed
+    assert:
+      that:
+        - output.changed
+
+  - name: Update redis cache configuration
+    azure_rm_rediscache:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}"
+      sku:
+        name: basic
+        size: C1
+      enable_non_ssl_port: True
+      maxmemory_policy: allkeys_lru
+      tags:
+        testing: foo
+    register: output
+
+  - name: assert output changed
+    assert:
+      that:
+        - output.changed
+
+  - name: Scale up the redis cache
+    azure_rm_rediscache:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}"
+      sku:
+        name: standard
+        size: C1
+      tags:
+        testing: foo
+      wait_for_provisioning: True
+    register: output
+
+  - assert:
+      that:
+        - output.changed
+
+  - name: Force reboot redis cache
+    azure_rm_rediscache:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}"
+      reboot:
+        reboot_type: all
+    register: output
+
+  - assert:
+      that:
+        - output.changed
+
+  - name: Delete the redis cache (Check Mode)
+    azure_rm_rediscache:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}"
+      state: absent
+    check_mode: yes
+    register: output
+
+  - name: assert deleting redis cache check mode
+    assert:
+      that: output.changed
+
+  - name: Delete the redis cache
+    azure_rm_rediscache:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}"
+      state: absent
+    register: output
+
+  - assert:
+      that:
+        - output.changed
+  tags: [long_run, never]
+
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vnet_name }}"
+      address_prefixes: "10.10.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      name: "{{ subnet_name }}"
+      address_prefix: "10.10.0.0/24"
+      virtual_network: "{{ vnet_name }}"
+
+- name: Create redis with subnet
+  azure_rm_rediscache:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}2"
+    sku:
+      name: premium
+      size: P1
+    subnet:
+      name: "{{ subnet_name }}"
+      virtual_network_name: "{{ vnet_name }}"
+    wait_for_provisioning: False
+  register: output
+
+- name: Assert creating redis cache
+  assert:
+    that:
+      - output.changed
+      - output.id
+
+- name: Get facts
+  azure_rm_rediscache_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}2"
+    return_access_keys: True
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts.rediscaches | length == 1
+      - facts.rediscaches[0].subnet != None
+      - facts.rediscaches[0].access_keys.primary != None
+
+- name: Create firewall rule (Check mode)
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    start_ip_address: 192.168.1.1
+    end_ip_address: 192.168.1.4
+  check_mode: yes
+  register: output
+
+- name: Assert check mode creation
+  assert:
+    that:
+      - output.changed
+
+
+- name: long-running rediscachefirewallrule tests [run with `--tags long_run,untagged` to enable]
+# Creating firewall rule need Redis status is running, while creating redis Cache costs about 20 mins async operation,
+# need to poll status from Creating to Running, then able to perform firewall rule creating,
+# otherwise, will met error:
+# "Error creating/updating Firewall rule of Azure Cache for Redis: Azure Error: Conflict\nMessage: The resource
+# '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis' is busy processing
+# a previous update request or is undergoing system maintenance.  As such, it is currently unable to accept the update request.  Please try again later."
+  block:
+  - name: Wait for Redis provisioning to complete
+    azure_rm_rediscache_facts:
+        resource_group: "{{ resource_group }}"
+        name: "{{ redis_name }}2"
+    register: facts
+    until: facts.rediscaches[0]['provisioning_state'] == 'Succeeded'
+    retries: 30
+    delay: 60
+
+  - name: Create firewall rule
+    azure_rm_rediscachefirewallrule:
+      resource_group: "{{ resource_group }}"
+      cache_name: "{{ redis_name }}2"
+      name: "{{ rule_name }}"
+      start_ip_address: 192.168.1.1
+      end_ip_address: 192.168.1.4
+    register: output
+
+  - name: Assert creation
+    assert:
+      that:
+        - output.changed
+        - output.id
+
+  - name: Update firewall rule idempotence
+    azure_rm_rediscachefirewallrule:
+      resource_group: "{{ resource_group }}"
+      cache_name: "{{ redis_name }}2"
+      name: "{{ rule_name }}"
+      start_ip_address: 192.168.1.1
+      end_ip_address: 192.168.1.4
+    register: output
+
+  - name: Assert idempotence
+    assert:
+      that:
+        - output.changed == False
+
+  - name: Update firewall rule
+    azure_rm_rediscachefirewallrule:
+      resource_group: "{{ resource_group }}"
+      cache_name: "{{ redis_name }}2"
+      name: "{{ rule_name }}"
+      end_ip_address: 192.168.1.5
+    register: output
+
+  - name: Assert updating
+    assert:
+      that:
+        - output.changed
+
+  - name: Delete firewall rule
+    azure_rm_rediscachefirewallrule:
+      resource_group: "{{ resource_group }}"
+      cache_name: "{{ redis_name }}2"
+      name: "{{ rule_name }}"
+      state: absent
+    register: output
+
+  - name: Assert deletion
+    assert:
+      that:
+        - output.changed
+
+  - name: Delete the redis cache
+    azure_rm_rediscache:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}2"
+      state: absent
+    register: output
+  tags: [long_run, never]

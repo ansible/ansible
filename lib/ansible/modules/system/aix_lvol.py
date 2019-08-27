@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Alain Dejoux <adejoux@djouxtech.net>
+# Copyright: (c) 2016, Alain Dejoux <adejoux@djouxtech.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -25,40 +25,51 @@ options:
   vg:
     description:
     - The volume group this logical volume is part of.
+    type: str
     required: true
   lv:
     description:
     - The name of the logical volume.
+    type: str
     required: true
   lv_type:
     description:
     - The type of the logical volume.
+    type: str
     default: jfs2
   size:
     description:
     - The size of the logical volume with one of the [MGT] units.
+    type: str
   copies:
     description:
-    - The number of copies of the logical volume. Maximum copies are 3.
-    default: '1'
+    - The number of copies of the logical volume.
+    - Maximum copies are 3.
+    type: int
+    default: 1
   policy:
+    description:
+    - Sets the interphysical volume allocation policy.
+    - C(maximum) allocates logical partitions across the maximum number of physical volumes.
+    - C(minimum) allocates logical partitions across the minimum number of physical volumes.
+    type: str
     choices: [ maximum, minimum ]
     default: maximum
-    description:
-    - Sets the interphysical volume allocation policy. C(maximum) allocates logical partitions across the maximum number of physical volumes.
-      C(minimum) allocates logical partitions across the minimum number of physical volumes.
   state:
-    choices: [ absent, present ]
-    default: present
     description:
     - Control if the logical volume exists. If C(present) and the
       volume does not already exist then the C(size) option is required.
+    type: str
+    choices: [ absent, present ]
+    default: present
   opts:
     description:
     - Free-form options to be passed to the mklv command.
+    type: str
   pvs:
     description:
-    - Comma separated list of physical volumes e.g. C(hdisk1,hdisk2).
+    - A list of physical volumes e.g. C(hdisk1,hdisk2).
+    type: list
 '''
 
 EXAMPLES = r'''
@@ -73,7 +84,7 @@ EXAMPLES = r'''
     vg: testvg
     lv: test2lv
     size: 512M
-    pvs: hdisk1,hdisk2
+    pvs: [ hdisk1, hdisk2 ]
 
 - name: Create a logical volume of 512M mirrored
   aix_lvol:
@@ -111,7 +122,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 msg:
-  type: string
+  type: str
   description: A friendly message describing the task result.
   returned: always
   sample: Logical volume testlv created.
@@ -205,7 +216,7 @@ def main():
             lv_type=dict(type='str', default='jfs2'),
             size=dict(type='str'),
             opts=dict(type='str', default=''),
-            copies=dict(type='str', default='1'),
+            copies=dict(type='int', default=1),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             policy=dict(type='str', default='maximum', choices=['maximum', 'minimum']),
             pvs=dict(type='list', default=list())

@@ -133,6 +133,7 @@ EXAMPLES = '''
 # Add a new host in the dhcp pool
 - virt_net:
     name: br_nat
+    command: modify
     xml: "<host mac='FC:C2:33:00:6c:3c' name='my_vm' ip='192.168.122.30'/>"
 '''
 
@@ -200,28 +201,16 @@ class LibvirtConnection(object):
         self.conn = conn
 
     def find_entry(self, entryid):
-        # entryid = -1 returns a list of everything
+        if entryid == -1:  # Get active entries
+            names = self.conn.listNetworks() + self.conn.listDefinedNetworks()
+            return [self.conn.networkLookupByName(n) for n in names]
 
-        results = []
-
-        # Get active entries
-        for name in self.conn.listNetworks():
-            entry = self.conn.networkLookupByName(name)
-            results.append(entry)
-
-        # Get inactive entries
-        for name in self.conn.listDefinedNetworks():
-            entry = self.conn.networkLookupByName(name)
-            results.append(entry)
-
-        if entryid == -1:
-            return results
-
-        for entry in results:
-            if entry.name() == entryid:
-                return entry
-
-        raise EntryNotFound("network %s not found" % entryid)
+        try:
+            return self.conn.networkLookupByName(entryid)
+        except libvirt.libvirtError as e:
+            if e.get_error_code() == libvirt.VIR_ERR_NO_NETWORK:
+                raise EntryNotFound("network %s not found" % entryid)
+            raise
 
     def create(self, entryid):
         if not self.module.check_mode:
@@ -229,7 +218,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid).isActive()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if not state:
                 return self.module.exit_json(changed=True)
@@ -273,8 +262,8 @@ class LibvirtConnection(object):
                         res = 0
                     if res == 0:
                         return True
-            #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
+        #  command, section, parentIndex, xml, flags=0
+        self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
@@ -284,11 +273,18 @@ class LibvirtConnection(object):
                 return self.module.exit_json(changed=True)
 
     def undefine(self, entryid):
-        if not self.module.check_mode:
+        entry = None
+        try:
+            entry = self.find_entry(entryid)
+            found = True
+        except EntryNotFound:
+            found = False
+
+        if found:
             return self.find_entry(entryid).undefine()
-        else:
-            if not self.find_entry(entryid):
-                return self.module.exit_json(changed=True)
+
+        if self.module.check_mode:
+            return self.module.exit_json(changed=found)
 
     def get_status2(self, entry):
         state = entry.isActive()
@@ -302,7 +298,7 @@ class LibvirtConnection(object):
             try:
                 state = self.find_entry(entryid).isActive()
                 return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
-            except:
+            except Exception:
                 return ENTRY_STATE_ACTIVE_MAP.get("inactive", "unknown")
 
     def get_uuid(self, entryid):
@@ -315,7 +311,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/network/forward')[0].get('mode')
-        except:
+        except Exception:
             raise ValueError('Forward mode not specified')
         return result
 
@@ -323,7 +319,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/network/domain')[0].get('name')
-        except:
+        except Exception:
             raise ValueError('Domain not specified')
         return result
 
@@ -331,7 +327,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/network/mac')[0].get('address')
-        except:
+        except Exception:
             raise ValueError('MAC address not specified')
         return result
 
@@ -345,7 +341,7 @@ class LibvirtConnection(object):
         else:
             try:
                 return self.find_entry(entryid).autostart()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
 
     def set_autostart(self, entryid, val):
@@ -354,7 +350,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid).autostart()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if bool(state) != val:
                 return self.module.exit_json(changed=True)
@@ -376,7 +372,7 @@ class LibvirtConnection(object):
         else:
             try:
                 self.find_entry(entryid)
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
 
 
@@ -417,19 +413,27 @@ class VirtNetwork(object):
         return self.conn.set_autostart(entryid, state)
 
     def create(self, entryid):
-        return self.conn.create(entryid)
+        if self.conn.get_status(entryid) == "active":
+            return
+        try:
+            return self.conn.create(entryid)
+        except libvirt.libvirtError as e:
+            if e.get_error_code() == libvirt.VIR_ERR_NETWORK_EXIST:
+                return None
+            raise
 
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
 
     def start(self, entryid):
-        return self.conn.create(entryid)
+        return self.create(entryid)
 
     def stop(self, entryid):
-        return self.conn.destroy(entryid)
+        if self.conn.get_status(entryid) == "active":
+            return self.conn.destroy(entryid)
 
     def destroy(self, entryid):
-        return self.conn.destroy(entryid)
+        return self.stop(entryid)
 
     def undefine(self, entryid):
         return self.conn.undefine(entryid)
@@ -446,9 +450,13 @@ class VirtNetwork(object):
     def info(self):
         return self.facts(facts_mode='info')
 
-    def facts(self, facts_mode='facts'):
+    def facts(self, name=None, facts_mode='facts'):
         results = dict()
-        for entry in self.list_nets():
+        if name:
+            entries = [name]
+        else:
+            entries = self.list_nets()
+        for entry in entries:
             results[entry] = dict()
             results[entry]["autostart"] = self.conn.get_autostart(entry)
             results[entry]["persistent"] = self.conn.get_persistent(entry)
@@ -509,7 +517,7 @@ def core(module):
 
         res['changed'] = False
         if state in ['active']:
-            if v.status(name) is not 'active':
+            if v.status(name) != 'active':
                 res['changed'] = True
                 res['msg'] = v.start(name)
         elif state in ['present']:
@@ -523,13 +531,13 @@ def core(module):
         elif state in ['inactive']:
             entries = v.list_nets()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     res['changed'] = True
                     res['msg'] = v.destroy(name)
         elif state in ['undefined', 'absent']:
             entries = v.list_nets()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     v.destroy(name)
                 res['changed'] = True
                 res['msg'] = v.undefine(name)
@@ -561,7 +569,10 @@ def core(module):
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
-            res = getattr(v, command)()
+            if command == 'facts' and name:
+                res = v.facts(name)
+            else:
+                res = getattr(v, command)()
             if not isinstance(res, dict):
                 res = {command: res}
             return VIRT_SUCCESS, res

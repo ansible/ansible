@@ -160,15 +160,17 @@ import argparse
 import re
 from time import time
 from copy import deepcopy
+from datetime import date, datetime
 import boto
 from boto import ec2
 from boto import rds
 from boto import elasticache
 from boto import route53
 from boto import sts
-import six
 
+from ansible.module_utils import six
 from ansible.module_utils import ec2 as ec2_utils
+from ansible.module_utils.six.moves import configparser
 
 HAS_BOTO3 = False
 try:
@@ -177,7 +179,6 @@ try:
 except ImportError:
     pass
 
-from six.moves import configparser
 from collections import defaultdict
 
 import json
@@ -241,6 +242,13 @@ class Ec2Inventory(object):
 
     def _empty_inventory(self):
         return {"_meta": {"hostvars": {}}}
+
+    def _json_serial(self, obj):
+        """JSON serializer for objects not serializable by default json code"""
+
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        raise TypeError("Type %s not serializable" % type(obj))
 
     def __init__(self):
         ''' Main execution path '''
@@ -576,6 +584,8 @@ class Ec2Inventory(object):
         if self.boto_profile:
             connect_args['profile_name'] = self.boto_profile
             self.boto_fix_security_token_in_profile(connect_args)
+        elif os.environ.get('AWS_SESSION_TOKEN'):
+            connect_args['security_token'] = os.environ.get('AWS_SESSION_TOKEN')
 
         if self.iam_role:
             sts_conn = sts.connect_to_region(region, **connect_args)
@@ -726,13 +736,6 @@ class Ec2Inventory(object):
         account_id = boto.connect_iam().get_user().arn.split(':')[4]
         c_dict = {}
         for c in clusters:
-            # remove these datetime objects as there is no serialisation to json
-            # currently in place and we don't need the data yet
-            if 'EarliestRestorableTime' in c:
-                del c['EarliestRestorableTime']
-            if 'LatestRestorableTime' in c:
-                del c['LatestRestorableTime']
-
             if not self.ec2_instance_filters:
                 matches_filter = True
             else:
@@ -1699,9 +1702,9 @@ class Ec2Inventory(object):
         string '''
 
         if pretty:
-            return json.dumps(data, sort_keys=True, indent=2)
+            return json.dumps(data, sort_keys=True, indent=2, default=self._json_serial)
         else:
-            return json.dumps(data)
+            return json.dumps(data, default=self._json_serial)
 
 
 if __name__ == '__main__':

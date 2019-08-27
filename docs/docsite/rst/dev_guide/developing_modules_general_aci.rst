@@ -131,7 +131,7 @@ The ACIModule has six main methods that are used by the modules:
 * construct_url
 * get_existing
 * payload
-* git_diff
+* get_diff
 * post_config
 * delete_config
 
@@ -285,9 +285,9 @@ Example code
                 ),
             ],
         )
-        
+
         aci.get_diff(aci_class='<object APIC class>')
-        
+
         aci.post_config()
 
 
@@ -324,7 +324,7 @@ You can test your ``construct_url()`` and ``payload()`` arguments without access
     #!/usr/bin/python
     import json
     from ansible.module_utils.network.aci.aci import ACIModule
-    
+
     # Just another class mimicking a bare AnsibleModule class for construct_url() and payload() methods
     class AltModule():
         params = dict(
@@ -334,21 +334,21 @@ You can test your ``construct_url()`` and ``payload()`` arguments without access
             state='present',
             output_level='debug',
         )
-    
+
     # A sub-class of ACIModule to overload __init__ (we don't need to log into APIC)
     class AltACIModule(ACIModule):
         def __init__(self):
             self.result = dict(changed=False)
             self.module = AltModule()
             self.params = self.module.params
-    
+
     # Instantiate our version of the ACI module
     aci = AltACIModule()
-    
+
     # Define the variables you need below
     aep = 'AEP'
     aep_domain = 'uni/phys-DOMAIN'
-    
+
     # Below test the construct_url() arguments to see if it produced correct results
     aci.construct_url(
         root_class=dict(
@@ -364,13 +364,13 @@ You can test your ``construct_url()`` and ``payload()`` arguments without access
             module_object=aep_domain,
         ),
     )
-    
+
     # Below test the payload arguments to see if it produced correct results
     aci.payload(
         aci_class='infraRsDomP',
         class_config=dict(tDn=aep_domain),
     )
-    
+
     # Print the URL and proposed payload
     print 'URL:', json.dumps(aci.url, indent=4)
     print 'PAYLOAD:', json.dumps(aci.proposed, indent=4)
@@ -395,11 +395,11 @@ You can run from your fork something like:
 
 .. code-block:: bash
 
-    $ ./test/runner/ansible-test sanity --python 2.7 lib/ansible/modules/network/aci/aci_tenant.py
+    $ ansible-test sanity --python 2.7 lib/ansible/modules/network/aci/aci_tenant.py
 
 .. seealso::
 
-   :doc:`testing_sanity`
+   :ref:`testing_sanity`
         Information on how to build sanity tests.
 
 
@@ -409,11 +409,11 @@ You can run this:
 
 .. code-block:: bash
 
-    $ ./test/runner/ansible-test network-integration --continue-on-error --allow-unsupported --diff -v aci_tenant
+    $ ansible-test network-integration --continue-on-error --allow-unsupported --diff -v aci_tenant
 
 .. note:: You may need to add ``--python 2.7`` or ``--python 3.6`` in order to use the correct python version for performing tests.
 
-You may want to edit the used inventory at *./test/integration/inventory.networking* and add something like:
+You may want to edit the used inventory at *test/integration/inventory.networking* and add something like:
 
 .. code-block:: ini
 
@@ -423,13 +423,13 @@ You may want to edit the used inventory at *./test/integration/inventory.network
     aci_password=my-password
     aci_use_ssl=yes
     aci_use_proxy=no
-    
+
     [aci]
     localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
 
 .. seealso::
 
-   :doc:`testing_integration`
+   :ref:`testing_integration`
        Information on how to build integration tests.
 
 
@@ -439,5 +439,5 @@ You can run this:
 
 .. code-block:: bash
 
-    $ ./test/runner/ansible-test integration --python 2.7 --coverage aci_tenant
-    $ ./test/runner/ansible-test coverage report
+    $ ansible-test network-integration --python 2.7 --allow-unsupported --coverage aci_tenant
+    $ ansible-test coverage report

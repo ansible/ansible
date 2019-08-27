@@ -13,37 +13,36 @@
 #
 # ----------------------------------------------------------------------------
 # Pre-test setup
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
-      name: "{{ resource_name }}"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
-      name: "{{ resource_name }}"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#httpHealthCheck'"
 - name: verify that http_health_check was created
-  gcp_compute_http_health_check_facts:
+  gcp_compute_http_health_check_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -55,45 +54,43 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
-- name: create a http health check that already exists
+- name: create a HTTP health check that already exists
   gcp_compute_http_health_check:
-      name: "{{ resource_name }}"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#httpHealthCheck'"
 #----------------------------------------------------------
-- name: delete a http health check
+- name: delete a HTTP health check
   gcp_compute_http_health_check:
-      name: "{{ resource_name }}"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that http_health_check was deleted
-  gcp_compute_http_health_check_facts:
+  gcp_compute_http_health_check_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -105,22 +102,21 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
-- name: delete a http health check that does not exist
+- name: delete a HTTP health check that does not exist
   gcp_compute_http_health_check:
-      name: "{{ resource_name }}"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

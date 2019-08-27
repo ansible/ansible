@@ -1,0 +1,39 @@
+- name: just plain order
+  hosts: all
+  gather_facts: false
+  order: '{{ myorder | default("inventory") }}'
+  tasks:
+    - shell: "echo '{{ inventory_hostname }}' >> hostlist.txt"
+
+- name: with serial
+  hosts: all
+  gather_facts: false
+  serial: 1
+  order: '{{ myorder | default("inventory")}}'
+  tasks:
+    - shell: "echo '{{ inventory_hostname }}' >> shostlist.txt"
+
+- name: ensure everything works
+  hosts: localhost
+  gather_facts:  false
+  tasks:
+    - assert:
+        that:
+          - item.1 == hostlist[item.0]
+          - item.1 == shostlist[item.0]
+      loop: '{{ lookup("indexed_items", inputlist) }}'
+      vars:
+        hostlist: '{{ lookup("file", "hostlist.txt").splitlines() }}'
+        shostlist: '{{ lookup("file", "shostlist.txt").splitlines() }}'
+      when: myorder | default('inventory') != 'shuffle'
+
+    - name: Assert that shuffle worked
+      assert:
+        that:
+          - item.1 != hostlist[item.0] or item.1 in hostlist
+          - item.1 != hostlist[item.0] or item.1 in hostlist
+      loop: '{{ lookup("indexed_items", inputlist) }}'
+      vars:
+        hostlist: '{{ lookup("file", "hostlist.txt").splitlines() }}'
+        shostlist: '{{ lookup("file", "shostlist.txt").splitlines() }}'
+      when: myorder | default('inventory') == 'shuffle'

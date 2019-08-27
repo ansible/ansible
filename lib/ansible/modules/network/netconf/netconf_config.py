@@ -23,7 +23,9 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
-extends_documentation_fragment: netconf
+extends_documentation_fragment:
+    - netconf
+    - network_agnostic
 options:
   content:
     description:
@@ -71,7 +73,6 @@ options:
       option completely replaces the configuration in the C(target) datastore. If the value is none the C(target)
       datastore is unaffected by the configuration in the config option, unless and until the incoming configuration
       data uses the C(operation) operation to request a different operation.
-    default: merge
     choices: ['merge', 'replace', 'none']
     version_added: "2.7"
   confirm:
@@ -104,14 +105,15 @@ options:
         startup-config if changed and if :startup capability is supported by Netconf server.
     default: false
     version_added: "2.4"
+    type: bool
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.7"
@@ -124,7 +126,7 @@ options:
   commit:
     description:
       - This boolean flag controls if the configuration changes should be committed or not after editing the
-        candidate datastore. This oprion is supported only if remote Netconf server supports :candidate
+        candidate datastore. This option is supported only if remote Netconf server supports :candidate
         capability. If the value is set to I(False) commit won't be issued after edit-config operation
         and user needs to handle commit or discard-changes explicitly.
     type: bool
@@ -143,6 +145,28 @@ options:
       to load. The path to the source file can either be the full path on the Ansible control host or
       a relative path from the playbook or role root directory. This argument is mutually exclusive with I(xml).
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 requirements:
   - "ncclient"
 notes:
@@ -193,6 +217,13 @@ EXAMPLES = '''
   register: backup_junos_location
   vars:
     ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
+
+- name: configurable backup path
+  netconf_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 '''
 
 RETURN = '''
@@ -204,7 +235,7 @@ server_capabilities:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 diff:
   description: If --diff option in enabled while running, the before and after configuration change are
@@ -221,21 +252,31 @@ from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.netconf.netconf import get_capabilities, get_config, sanitize_xml
 
+try:
+    from lxml.etree import tostring
+except ImportError:
+    from xml.etree.ElementTree import tostring
+
 
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         content=dict(aliases=['xml']),
         target=dict(choices=['auto', 'candidate', 'running'], default='auto', aliases=['datastore']),
         source_datastore=dict(aliases=['source']),
         format=dict(choices=['xml', 'text'], default='xml'),
         lock=dict(choices=['never', 'always', 'if-supported'], default='always'),
-        default_operation=dict(choices=['merge', 'replace', 'none'], default='merge'),
+        default_operation=dict(choices=['merge', 'replace', 'none']),
         confirm=dict(type='int', default=0),
         confirm_commit=dict(type='bool', default=False),
         error_option=dict(choices=['stop-on-error', 'continue-on-error', 'rollback-on-error'], default='stop-on-error'),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
         delete=dict(type='bool', default=False),
         commit=dict(type='bool', default=True),
@@ -306,8 +347,8 @@ def main():
     if confirm_commit and not operations.get('supports_confirm_commit', False):
         module.fail_json(msg='confirm commit is not supported by Netconf server')
 
-    if confirm_commit or (confirm > 0) and not operations.get('supports_confirm_commit', False):
-        module.fail_json(msg='confirm commit is not supported by this netconf server')
+    if (confirm > 0) and not operations.get('supports_confirm_commit', False):
+        module.fail_json(msg='confirm commit is not supported by this netconf server, given confirm timeout: %d' % confirm)
 
     if validate and not operations.get('supports_validate', False):
         module.fail_json(msg='validate is not supported by this netconf server')
@@ -324,11 +365,12 @@ def main():
 
     result = {'changed': False, 'server_capabilities': capabilities.get('server_capabilities', [])}
     before = None
+    after = None
     locked = False
     try:
         if module.params['backup']:
             response = get_config(module, target, lock=execute_lock)
-            before = to_text(response, errors='surrogate_then_replace').strip()
+            before = to_text(tostring(response), errors='surrogate_then_replace').strip()
             result['__backup__'] = before.strip()
         if validate:
             conn.validate(target)
@@ -344,13 +386,13 @@ def main():
             if not module.check_mode:
                 conn.commit()
             result['changed'] = True
-        else:
+        elif config:
             if module.check_mode and not supports_commit:
                 module.warn("check mode not supported as Netconf server doesn't support candidate capability")
                 result['changed'] = True
                 module.exit_json(**result)
 
-            if lock:
+            if execute_lock:
                 conn.lock(target=target)
                 locked = True
             if before is None:
@@ -363,15 +405,20 @@ def main():
                 'error_option': module.params['error_option'],
                 'format': module.params['format'],
             }
+
             conn.edit_config(**kwargs)
+
             if supports_commit and module.params['commit']:
+                after = to_text(conn.get_config(source='candidate'), errors='surrogate_then_replace').strip()
                 if not module.check_mode:
-                    timeout = confirm if confirm > 0 else None
-                    conn.commit(confirmed=confirm_commit, timeout=timeout)
+                    confirm_timeout = confirm if confirm > 0 else None
+                    confirmed_commit = True if confirm_timeout else False
+                    conn.commit(confirmed=confirmed_commit, timeout=confirm_timeout)
                 else:
                     conn.discard_changes()
 
-            after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
+            if after is None:
+                after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
 
             sanitized_before = sanitize_xml(before)
             sanitized_after = sanitize_xml(after)

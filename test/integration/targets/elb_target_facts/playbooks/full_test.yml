@@ -1,5 +1,0 @@
-- hosts: localhost
-  connection: local
-
-  roles:
-    - elb_target_facts

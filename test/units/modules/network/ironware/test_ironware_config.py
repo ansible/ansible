@@ -20,12 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
+from units.modules.utils import set_module_args
 from ansible.modules.network.ironware import ironware_config
 from .ironware_module import TestIronwareModule, load_fixture
-from units.modules.utils import set_module_args
 
 
 class TestIronwareConfigModule(TestIronwareModule):
@@ -143,7 +141,7 @@ class TestIronwareConfigModule(TestIronwareModule):
         set_module_args(dict(lines=lines, match='none'))
         self.execute_module(changed=True, updates=lines)
 
-    def test_ironware_config_match_none(self):
+    def test_ironware_config_match_none_parents(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'port-name test string']
         parents = ['interface ethernet 1/1']
         set_module_args(dict(lines=lines, parents=parents, match='none'))

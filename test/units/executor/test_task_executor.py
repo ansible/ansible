@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
+from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
-from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 
@@ -502,6 +501,14 @@ class TestTaskExecutor(unittest.TestCase):
                 'a_list': ['POPCORN'],
             },
             'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [
+                {
+                    'remove': 'POPCORN',
+                }
+            ],
         }
 
         expected = {
@@ -516,6 +523,10 @@ class TestTaskExecutor(unittest.TestCase):
                 'a_list': ['POPCORN'],
             },
             'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [{}],
         }
 
         self.assertEqual(remove_omit(data, omit_token), expected)

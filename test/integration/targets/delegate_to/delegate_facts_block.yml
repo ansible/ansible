@@ -1,0 +1,25 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: set var to delegated host directly
+      set_fact: qq1=333
+      delegate_facts: true
+      delegate_to: localhost
+
+    - name: ensure qq1 exists in localhost but not in testhost
+      assert:
+        that:
+            - qq1 is undefined
+            - "'qq1' in hostvars['localhost']"
+
+    - name: set var to delegated host via inheritance
+      block:
+        - set_fact: qq2=333
+      delegate_facts: true
+      delegate_to: localhost
+
+    - name: ensure qq2 exists in localhost but not in testhost
+      assert:
+        that:
+            - qq2 is undefined
+            - "'qq2' in hostvars['localhost']"

@@ -1,0 +1,2 @@
++ ansible-playbook -i localhost, -c local quiet.yml
+++ set +x

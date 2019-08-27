@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,12 +23,14 @@ options:
   name:
     description:
       - Specifies the name of the profile.
+    type: str
     required: True
   parent:
     description:
       - Specifies the profile from which this profile inherits settings.
       - When creating a new profile, if this parameter is not specified, the default
         is the system-supplied C(source_addr) profile.
+    type: str
   match_across_services:
     description:
       - When C(yes), specifies that all persistent connections from a client IP address that go
@@ -60,6 +62,7 @@ options:
         to obtain the hash result for the input to the algorithm.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
     choices:
       - default
       - carp
@@ -70,6 +73,7 @@ options:
         default is provided by the parent profile.
       - To specify an indefinite timeout, use the value C(indefinite).
       - If specifying a numeric timeout, the value must be between C(1) and C(4294967295).
+    type: str
   override_connection_limit:
     description:
       - When C(yes), specifies that the system allows you to specify that pool member connection
@@ -79,15 +83,17 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the profile exists.
       - When C(absent), ensures the profile is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -97,13 +103,14 @@ EXAMPLES = r'''
 - name: Create a profile
   bigip_profile_persistence_src_addr:
     name: foo
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
     hash_algorithm: carp
     match_across_services: yes
     match_across_virtuals: yes
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -116,7 +123,7 @@ param1:
 param2:
   description: The new param2 value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: Foo is bar
 '''
 
@@ -127,24 +134,18 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -201,48 +202,28 @@ class Parameters(AnsibleF5Parameters):
             )
         return timeout
 
+    @property
+    def match_across_pools(self):
+        return flatten_boolean(self._values['match_across_pools'])
+
+    @property
+    def match_across_services(self):
+        return flatten_boolean(self._values['match_across_services'])
+
+    @property
+    def match_across_virtuals(self):
+        return flatten_boolean(self._values['match_across_virtuals'])
+
+    @property
+    def override_connection_limit(self):
+        return flatten_boolean(self._values['override_connection_limit'])
+
 
 class ApiParameters(Parameters):
     pass
 
 
 class ModuleParameters(Parameters):
-    @property
-    def match_across_pools(self):
-        result = flatten_boolean(self._values['match_across_pools'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
-    @property
-    def match_across_services(self):
-        result = flatten_boolean(self._values['match_across_services'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
-    @property
-    def match_across_virtuals(self):
-        result = flatten_boolean(self._values['match_across_virtuals'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
-    @property
-    def override_connection_limit(self):
-        result = flatten_boolean(self._values['override_connection_limit'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
     @property
     def parent(self):
         if self._values['parent'] is None:
@@ -264,41 +245,55 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    pass
+    @property
+    def match_across_pools(self):
+        if self._values['match_across_pools'] is None:
+            return None
+        elif self._values['match_across_pools'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-
-class ReportableChanges(Changes):
     @property
     def match_across_services(self):
         if self._values['match_across_services'] is None:
             return None
-        elif self._values['match_across_services'] == 'enabled':
-            return 'yes'
-        return 'no'
+        elif self._values['match_across_services'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
     @property
     def match_across_virtuals(self):
         if self._values['match_across_virtuals'] is None:
             return None
-        elif self._values['match_across_virtuals'] == 'enabled':
-            return 'yes'
-        return 'no'
-
-    @property
-    def match_across_pools(self):
-        if self._values['match_across_pools'] is None:
-            return None
-        elif self._values['match_across_pools'] == 'enabled':
-            return 'yes'
-        return 'no'
+        elif self._values['match_across_virtuals'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
     @property
     def override_connection_limit(self):
         if self._values['override_connection_limit'] is None:
             return None
-        elif self._values['override_connection_limit'] == 'enabled':
-            return 'yes'
-        return 'no'
+        elif self._values['override_connection_limit'] == 'yes':
+            return 'enabled'
+        return 'disabled'
+
+
+class ReportableChanges(Changes):
+    @property
+    def match_across_pools(self):
+        return flatten_boolean(self._values['match_across_pools'])
+
+    @property
+    def match_across_services(self):
+        return flatten_boolean(self._values['match_across_services'])
+
+    @property
+    def match_across_virtuals(self):
+        return flatten_boolean(self._values['match_across_virtuals'])
+
+    @property
+    def override_connection_limit(self):
+        return flatten_boolean(self._values['override_connection_limit'])
 
 
 class Difference(object):
@@ -326,14 +321,14 @@ class Difference(object):
     def parent(self):
         if self.want.parent != self.have.parent:
             raise F5ModuleError(
-                "The parent monitor cannot be changed"
+                "The parent profile cannot be changed"
             )
 
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -454,12 +449,11 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 403]:
+        if 'code' in response and response['code'] in [400, 403, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
@@ -474,12 +468,11 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
 
     def absent(self):
         if self.exists():
@@ -497,7 +490,7 @@ class ModuleManager(object):
             return True
         raise F5ModuleError(resp.content)
 
-    def read_current_from_device(self):
+    def read_current_from_device(self):  # lgtm [py/similar-function]
         uri = "https://{0}:{1}/mgmt/tm/ltm/persistence/source-addr/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
@@ -552,14 +545,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

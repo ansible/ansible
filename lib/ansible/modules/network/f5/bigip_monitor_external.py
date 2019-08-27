@@ -7,9 +7,10 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -22,43 +23,51 @@ options:
   name:
     description:
       - Specifies the name of the monitor.
+    type: str
     required: True
   description:
     description:
       - The description of the monitor.
+    type: str
     version_added: 2.7
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(http)
         parent on the C(Common) partition.
+    type: str
     default: /Common/external
   arguments:
     description:
       - Specifies any command-line arguments that the script requires.
+    type: str
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'.
+    type: str
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified.
+    type: str
   external_program:
     description:
       - Specifies the name of the file for the monitor to use. In order to reference
         a file, you must first import it using options on the System > File Management > External
         Monitor Program File List > Import screen. The BIG-IP system automatically
         places the file in the proper location on the file system.
+    type: str
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this
         template will run. If this parameter is not provided when creating
         a new monitor, then the default value will be 5. This value B(must)
         be less than the C(timeout) value.
+    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -70,22 +79,26 @@ options:
         3 times the interval number of seconds plus 1 second.
       - If this parameter is not provided when creating a new monitor, then the
         default value will be C(16).
+    type: int
   variables:
     description:
       - Specifies any variables that the script requires.
       - Note that double quotes in values will be suppressed.
+    type: dict
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -96,10 +109,11 @@ EXAMPLES = r'''
 - name: Create an external monitor
   bigip_monitor_external:
     name: foo
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Create an external monitor with variables
@@ -109,10 +123,11 @@ EXAMPLES = r'''
     variables:
       var1: foo
       var2: bar
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add a variable to an existing set
@@ -123,10 +138,11 @@ EXAMPLES = r'''
       var1: foo
       var2: bar
       cat: dog
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -134,7 +150,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: external
 description:
   description: The description of the monitor.
@@ -144,7 +160,7 @@ description:
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -168,26 +184,22 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import compare_dictionary
+    from library.module_utils.network.f5.compare import compare_dictionary
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import compare_dictionary
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import compare_dictionary
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -199,18 +211,35 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'defaultsFrom', 'interval', 'timeout', 'destination', 'run', 'args',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'destination',
+        'run',
+        'args',
         'description',
     ]
 
     returnables = [
-        'parent', 'ip', 'port', 'interval', 'timeout', 'variables', 'external_program',
-        'arguments', 'description',
+        'parent',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'variables',
+        'external_program',
+        'arguments',
+        'description',
     ]
 
     updatables = [
-        'destination', 'interval', 'timeout', 'variables', 'external_program',
-        'arguments', 'description',
+        'destination',
+        'interval',
+        'timeout',
+        'variables',
+        'external_program',
+        'arguments',
+        'description',
     ]
 
     @property
@@ -280,6 +309,12 @@ class Parameters(AnsibleF5Parameters):
 
 class ApiParameters(Parameters):
     @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
+    @property
     def variables(self):
         if self._values['variables'] is None:
             return None
@@ -297,6 +332,14 @@ class ApiParameters(Parameters):
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def variables(self):
         if self._values['variables'] is None:
@@ -425,11 +468,15 @@ class Difference(object):
             )
             return result
 
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -658,7 +705,7 @@ class ArgumentSpec(object):
             description=dict(),
             arguments=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             external_program=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
@@ -685,16 +732,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

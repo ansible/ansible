@@ -12,7 +12,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -23,7 +23,7 @@ short_description: NetApp Element Software Create Cluster
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Initialize Element Software node ownership to form a cluster.
 
@@ -63,6 +63,7 @@ options:
         description:
         - Storage IP (SIP) addresses of the initial set of nodes making up the cluster.
         - nodes IP must be in the list.
+        required: true
 
     attributes:
         description:
@@ -81,8 +82,6 @@ EXAMPLES = """
       management_virtual_ip: 10.226.108.32
       storage_virtual_ip: 10.226.109.68
       replica_count: 2
-      cluster_admin_username: admin
-      cluster_admin_password: netapp123
       accept_eula: true
       nodes:
       - 10.226.109.72
@@ -94,7 +93,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
 
 """
 import traceback
@@ -120,9 +119,9 @@ class ElementSWCluster(object):
             replica_count=dict(required=False, type='str', default='2'),
             cluster_admin_username=dict(required=False, type='str'),
             cluster_admin_password=dict(required=False, type='str', no_log=True),
-            accept_eula=dict(required=True, type='bool'),
-            nodes=dict(required=False, type=list, default=None),
-            attributes=dict(required=False, type=list, default=None)
+            accept_eula=dict(required=False, type='bool'),
+            nodes=dict(required=True, type=list),
+            attributes=dict(required=False, type='dict', default=None)
         ))
 
         self.module = AnsibleModule(
@@ -135,24 +134,16 @@ class ElementSWCluster(object):
         self.management_virtual_ip = input_params['management_virtual_ip']
         self.storage_virtual_ip = input_params['storage_virtual_ip']
         self.replica_count = input_params['replica_count']
-        self.accept_eula = input_params['accept_eula']
-        self.attributes = input_params['attributes']
+        self.accept_eula = input_params.get('accept_eula')
+        self.attributes = input_params.get('attributes')
         self.nodes = input_params['nodes']
-
-        if input_params['cluster_admin_username'] is None:
-            self.cluster_admin_username = self.username
-        else:
-            self.cluster_admin_username = input_params['cluster_admin_username']
-
-        if input_params['cluster_admin_password']:
-            self.cluster_admin_password = self.password
-        else:
-            self.cluster_admin_password = input_params['cluster_admin_password']
+        self.cluster_admin_username = input_params.get('cluster_admin_username')
+        self.cluster_admin_password = input_params.get('cluster_admin_password')
 
         if HAS_SF_SDK is False:
             self.module.fail_json(msg="Unable to import the SolidFire Python SDK")
         else:
-            self.sfe = netapp_utils.create_sf_connection(module=self.module, port=442)
+            self.sfe = netapp_utils.create_sf_connection(module=self.module)
 
         self.elementsw_helper = NaElementSWModule(self.sfe)
 
@@ -166,15 +157,20 @@ class ElementSWCluster(object):
         """
         Create Cluster
         """
+        options = {
+            'mvip': self.management_virtual_ip,
+            'svip': self.storage_virtual_ip,
+            'rep_count': self.replica_count,
+            'accept_eula': self.accept_eula,
+            'nodes': self.nodes,
+            'attributes': self.attributes
+        }
+        if self.cluster_admin_username is not None:
+            options['username'] = self.cluster_admin_username
+        if self.cluster_admin_password is not None:
+            options['password'] = self.cluster_admin_password
         try:
-            self.sfe.create_cluster(mvip=self.management_virtual_ip,
-                                    svip=self.storage_virtual_ip,
-                                    rep_count=self.replica_count,
-                                    username=self.cluster_admin_username,
-                                    password=self.cluster_admin_password,
-                                    accept_eula=self.accept_eula,
-                                    nodes=self.nodes,
-                                    attributes=self.attributes)
+            self.sfe.create_cluster(**options)
         except Exception as exception_object:
             self.module.fail_json(msg='Error create cluster %s' % (to_native(exception_object)),
                                   exception=traceback.format_exc())

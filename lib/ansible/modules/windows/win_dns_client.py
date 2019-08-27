@@ -19,12 +19,14 @@ options:
   adapter_names:
     description:
       - Adapter name or list of adapter names for which to manage DNS settings ('*' is supported as a wildcard value).
-        The adapter name used is the connection caption in the Network Control Panel or via C(Get-NetAdapter), eg C(Local Area Connection).
+      - The adapter name used is the connection caption in the Network Control Panel or via C(Get-NetAdapter), eg C(Local Area Connection).
+    type: str
     required: yes
   ipv4_addresses:
     description:
       - Single or ordered list of DNS server IPv4 addresses to configure for lookup. An empty list will configure the adapter to use the
         DHCP-assigned values on connections where DHCP is enabled, or disable DNS lookup on statically-configured connections.
+    type: str
     required: yes
 notes:
   - When setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change will always be registered, since it is not possible to
@@ -53,6 +55,6 @@ EXAMPLES = r'''
     ipv4_addresses: []
 '''
 
-RETURN = '''
+RETURN = r'''
 
 '''

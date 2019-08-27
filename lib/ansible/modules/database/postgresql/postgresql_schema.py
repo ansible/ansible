@@ -1,100 +1,135 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: Ansible Project
+
+# Copyright: (c) 2016, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: postgresql_schema
-short_description: Add or remove PostgreSQL schema from a remote host
+short_description: Add or remove PostgreSQL schema
 description:
-   - Add or remove PostgreSQL schema from a remote host.
-version_added: "2.3"
+- Add or remove PostgreSQL schema.
+version_added: '2.3'
 options:
   name:
     description:
-      - Name of the schema to add or remove.
+    - Name of the schema to add or remove.
     required: true
+    type: str
+    aliases:
+    - schema
   database:
     description:
-      - Name of the database to connect to.
+    - Name of the database to connect to and add or remove the schema.
+    type: str
     default: postgres
-  login_user:
-    description:
-      - The username used to authenticate with.
-  login_password:
-    description:
-      - The password used to authenticate with.
-  login_host:
-    description:
-      - Host running the database.
-    default: localhost
-  login_unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections.
+    aliases:
+    - db
+    - login_db
   owner:
     description:
-      - Name of the role to set as owner of the schema.
-  port:
+    - Name of the role to set as owner of the schema.
+    type: str
+  session_role:
+    version_added: '2.8'
     description:
-      - Database port to connect to.
-    default: 5432
+    - Switch to session_role after connecting.
+    - The specified session_role must be a role that the current login_user is a member of.
+    - Permissions checking for SQL commands is carried out as though the session_role
+      were the one that had logged in originally.
+    type: str
   state:
     description:
-      - The schema state.
+    - The schema state.
+    type: str
     default: present
-    choices: [ "present", "absent" ]
-notes:
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed
-     on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before
-     using this module.
-requirements: [ psycopg2 ]
-author: "Flavien Chantelot <contact@flavien.io>"
+    choices: [ absent, present ]
+  cascade_drop:
+    description:
+    - Drop schema with CASCADE to remove child objects.
+    type: bool
+    default: false
+    version_added: '2.8'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    type: str
+    default: prefer
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
+    version_added: '2.8'
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
+    aliases: [ ssl_rootcert ]
+    version_added: '2.8'
+author:
+- Flavien Chantelot (@Dorn-) <contact@flavien.io>
+- Thomas O'Donnell (@andytom)
+extends_documentation_fragment: postgres
 '''
 
-EXAMPLES = '''
-# Create a new schema with name "acme"
-- postgresql_schema:
+EXAMPLES = r'''
+- name: Create a new schema with name acme in test database
+  postgresql_schema:
+    db: test
     name: acme
 
-# Create a new schema "acme" with a user "bob" who will own it
-- postgresql_schema:
+- name: Create a new schema acme with a user bob who will own it
+  postgresql_schema:
     name: acme
     owner: bob
 
+- name: Drop schema "acme" with cascade
+  postgresql_schema:
+    name: acme
+    state: absent
+    cascade_drop: yes
 '''
 
-RETURN = '''
+RETURN = r'''
 schema:
-    description: Name of the schema
-    returned: success, changed
-    type: string
-    sample: "acme"
+  description: Name of the schema.
+  returned: success, changed
+  type: str
+  sample: "acme"
+queries:
+  description: List of executed queries.
+  returned: always
+  type: list
+  sample: ["CREATE SCHEMA \"acme\""]
 '''
 
 import traceback
 
 try:
-    import psycopg2
-    import psycopg2.extras
+    from psycopg2.extras import DictCursor
 except ImportError:
-    postgresqldb_found = False
-else:
-    postgresqldb_found = True
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils._text import to_native
+
+executed_queries = []
 
 
 class NotSupportedError(Exception):
@@ -110,29 +145,32 @@ def set_owner(cursor, schema, owner):
             pg_quote_identifier(schema, 'schema'),
             pg_quote_identifier(owner, 'role'))
     cursor.execute(query)
+    executed_queries.append(query)
     return True
 
 
 def get_schema_info(cursor, schema):
-    query = """
-    SELECT schema_owner AS owner
-    FROM information_schema.schemata
-    WHERE schema_name = %(schema)s
-    """
-    cursor.execute(query, {'schema': schema})
+    query = ("SELECT schema_owner AS owner "
+             "FROM information_schema.schemata "
+             "WHERE schema_name = '%s'" % schema)
+    cursor.execute(query)
     return cursor.fetchone()
 
 
 def schema_exists(cursor, schema):
-    query = "SELECT schema_name FROM information_schema.schemata WHERE schema_name = %(schema)s"
-    cursor.execute(query, {'schema': schema})
+    query = ("SELECT schema_name FROM information_schema.schemata "
+             "WHERE schema_name = '%s'" % schema)
+    cursor.execute(query)
     return cursor.rowcount == 1
 
 
-def schema_delete(cursor, schema):
+def schema_delete(cursor, schema, cascade):
     if schema_exists(cursor, schema):
         query = "DROP SCHEMA %s" % pg_quote_identifier(schema, 'schema')
+        if cascade:
+            query += " CASCADE"
         cursor.execute(query)
+        executed_queries.append(query)
         return True
     else:
         return False
@@ -145,6 +183,7 @@ def schema_create(cursor, schema, owner):
             query_fragments.append('AUTHORIZATION %s' % pg_quote_identifier(owner, 'role'))
         query = ' '.join(query_fragments)
         cursor.execute(query)
+        executed_queries.append(query)
         return True
     else:
         schema_info = get_schema_info(cursor, schema)
@@ -170,60 +209,30 @@ def schema_matches(cursor, schema, owner):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            schema=dict(required=True, aliases=['name']),
-            owner=dict(default=""),
-            database=dict(default="postgres"),
-            state=dict(default="present", choices=["absent", "present"]),
-        ),
-        supports_check_mode=True
+    argument_spec = postgres_common_argument_spec()
+    argument_spec.update(
+        schema=dict(type="str", required=True, aliases=['name']),
+        owner=dict(type="str", default=""),
+        database=dict(type="str", default="postgres", aliases=["db", "login_db"]),
+        cascade_drop=dict(type="bool", default=False),
+        state=dict(type="str", default="present", choices=["absent", "present"]),
+        session_role=dict(type="str"),
     )
 
-    if not postgresqldb_found:
-        module.fail_json(msg="the python psycopg2 module is required")
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     schema = module.params["schema"]
     owner = module.params["owner"]
     state = module.params["state"]
-    database = module.params["database"]
+    cascade_drop = module.params["cascade_drop"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port"
-    }
-    kw = dict((params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '')
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    try:
-        db_connection = psycopg2.connect(database=database, **kw)
-        # Enable autocommit so we can create databases
-        if psycopg2.__version__ >= '2.4.2':
-            db_connection.autocommit = True
-        else:
-            db_connection.set_isolation_level(psycopg2
-                                              .extensions
-                                              .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
         if module.check_mode:
@@ -235,7 +244,7 @@ def main():
 
         if state == "absent":
             try:
-                changed = schema_delete(cursor, schema)
+                changed = schema_delete(cursor, schema, cascade_drop)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -252,7 +261,8 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed, schema=schema)
+    db_connection.close()
+    module.exit_json(changed=changed, schema=schema, queries=executed_queries)
 
 
 if __name__ == '__main__':

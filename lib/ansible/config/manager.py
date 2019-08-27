@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import atexit
 import io
 import os
 import os.path
@@ -22,14 +23,14 @@ except ImportError:
 
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.utils import py3compat
-from ansible.utils.path import unfrackpath
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
 
 Plugin = namedtuple('Plugin', 'name type')
@@ -38,37 +39,57 @@ Setting = namedtuple('Setting', 'name value origin type')
 INTERNAL_DEFS = {'lookup': ('_terms',)}
 
 
+def _get_entry(plugin_type, plugin_name, config):
+    ''' construct entry for requested config '''
+    entry = ''
+    if plugin_type:
+        entry += 'plugin_type: %s ' % plugin_type
+        if plugin_name:
+            entry += 'plugin: %s ' % plugin_name
+    entry += 'setting: %s ' % config
+    return entry
+
+
 # FIXME: see if we can unify in module_utils with similar function used by argspec
 def ensure_type(value, value_type, origin=None):
     ''' return a configuration variable with casting
     :arg value: The value to ensure correct typing of
     :kwarg value_type: The type of the value.  This can be any of the following strings:
         :boolean: sets the value to a True or False value
+        :bool: Same as 'boolean'
         :integer: Sets the value to an integer or raises a ValueType error
+        :int: Same as 'integer'
         :float: Sets the value to a float or raises a ValueType error
         :list: Treats the value as a comma separated list.  Split the value
             and return it as a python list.
         :none: Sets the value to None
         :path: Expands any environment variables and tilde's in the value.
-        :tmp_path: Create a unique temporary directory inside of the directory
+        :tmppath: Create a unique temporary directory inside of the directory
             specified by value and return its path.
+        :temppath: Same as 'tmppath'
+        :tmp: Same as 'tmppath'
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
             means colon separated strings.)  Split the value and then expand
             each part for environment variables and tildes.
+        :pathspec: Treat the value as a PATH string. Expands any environment variables
+            tildes's in the value.
+        :str: Sets the value to string types.
+        :string: Same as 'str'
     '''
 
+    errmsg = ''
     basedir = None
-    if origin and os.path.isabs(origin) and os.path.exists(origin):
+    if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
         basedir = origin
 
     if value_type:
         value_type = value_type.lower()
 
-    if value_type in ('boolean', 'bool'):
-        value = boolean(value, strict=False)
+    if value is not None:
+        if value_type in ('boolean', 'bool'):
+            value = boolean(value, strict=False)
 
-    elif value is not None:
-        if value_type in ('integer', 'int'):
+        elif value_type in ('integer', 'int'):
             value = int(value)
 
         elif value_type == 'float':
@@ -77,44 +98,70 @@ def ensure_type(value, value_type, origin=None):
         elif value_type == 'list':
             if isinstance(value, string_types):
                 value = [x.strip() for x in value.split(',')]
+            elif not isinstance(value, Sequence):
+                errmsg = 'list'
 
         elif value_type == 'none':
             if value == "None":
                 value = None
 
+            if value is not None:
+                errmsg = 'None'
+
         elif value_type == 'path':
-            value = resolve_path(value, basedir=basedir)
+            if isinstance(value, string_types):
+                value = resolve_path(value, basedir=basedir)
+            else:
+                errmsg = 'path'
 
         elif value_type in ('tmp', 'temppath', 'tmppath'):
-            value = resolve_path(value, basedir=basedir)
-            if not os.path.exists(value):
-                makedirs_safe(value, 0o700)
-            prefix = 'ansible-local-%s' % os.getpid()
-            value = tempfile.mkdtemp(prefix=prefix, dir=value)
+            if isinstance(value, string_types):
+                value = resolve_path(value, basedir=basedir)
+                if not os.path.exists(value):
+                    makedirs_safe(value, 0o700)
+                prefix = 'ansible-local-%s' % os.getpid()
+                value = tempfile.mkdtemp(prefix=prefix, dir=value)
+                atexit.register(cleanup_tmp_file, value, warn=True)
+            else:
+                errmsg = 'temppath'
 
         elif value_type == 'pathspec':
             if isinstance(value, string_types):
                 value = value.split(os.pathsep)
-            value = [resolve_path(x, basedir=basedir) for x in value]
+
+            if isinstance(value, Sequence):
+                value = [resolve_path(x, basedir=basedir) for x in value]
+            else:
+                errmsg = 'pathspec'
 
         elif value_type == 'pathlist':
             if isinstance(value, string_types):
                 value = value.split(',')
-            value = [resolve_path(x, basedir=basedir) for x in value]
+
+            if isinstance(value, Sequence):
+                value = [resolve_path(x, basedir=basedir) for x in value]
+            else:
+                errmsg = 'pathlist'
 
         elif value_type in ('str', 'string'):
-            value = unquote(to_text(value, errors='surrogate_or_strict'))
+            if isinstance(value, string_types):
+                value = unquote(to_text(value, errors='surrogate_or_strict'))
+            else:
+                errmsg = 'string'
 
         # defaults to string type
         elif isinstance(value, string_types):
             value = unquote(value)
+
+        if errmsg:
+            raise ValueError('Invalid type provided for "%s": %s' % (errmsg, to_native(value)))
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
 
 # FIXME: see if this can live in utils/path
 def resolve_path(path, basedir=None):
-    ''' resolve relative or 'varaible' paths '''
+    ''' resolve relative or 'variable' paths '''
     if '{{CWD}}' in path:  # allow users to force CWD using 'magic' {{CWD}}
         path = path.replace('{{CWD}}', os.getcwd())
 
@@ -167,7 +214,7 @@ def find_ini_config_file(warnings=None):
     path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
     if path_from_env is not SENTINEL:
         path_from_env = unfrackpath(path_from_env, follow=False)
-        if os.path.isdir(path_from_env):
+        if os.path.isdir(to_bytes(path_from_env)):
             path_from_env = os.path.join(path_from_env, "ansible.cfg")
         potential_paths.append(path_from_env)
 
@@ -195,7 +242,8 @@ def find_ini_config_file(warnings=None):
     potential_paths.append("/etc/ansible/ansible.cfg")
 
     for path in potential_paths:
-        if os.path.exists(path):
+        b_path = to_bytes(path)
+        if os.path.exists(b_path) and os.access(b_path, os.R_OK):
             break
     else:
         path = None
@@ -235,9 +283,8 @@ class ConfigManager(object):
 
         # consume configuration
         if self._config_file:
-            if os.path.exists(self._config_file):
-                # initialize parser and read config
-                self._parse_config_file()
+            # initialize parser and read config
+            self._parse_config_file()
 
         # update constants
         self.update_config_data()
@@ -269,7 +316,7 @@ class ConfigManager(object):
         if cfile is not None:
             if ftype == 'ini':
                 self._parsers[cfile] = configparser.ConfigParser()
-                with open(cfile, 'rb') as f:
+                with open(to_bytes(cfile), 'rb') as f:
                     try:
                         cfg_text = to_text(f.read(), errors='surrogate_or_strict')
                     except UnicodeError as e:
@@ -311,6 +358,18 @@ class ConfigManager(object):
                     pvars.append(var_entry['name'])
         return pvars
 
+    def get_configuration_definition(self, name, plugin_type=None, plugin_name=None):
+
+        ret = {}
+        if plugin_type is None:
+            ret = self._base_defs.get(name, None)
+        elif plugin_name is None:
+            ret = self._plugins.get(plugin_type, {}).get(name, None)
+        else:
+            ret = self._plugins.get(plugin_type, {}).get(plugin_name, {}).get(name, None)
+
+        return ret
+
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
@@ -351,7 +410,7 @@ class ConfigManager(object):
         except AnsibleError:
             raise
         except Exception as e:
-            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, traceback.format_exc()))
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
@@ -363,19 +422,19 @@ class ConfigManager(object):
         # Note: sources that are lists listed in low to high precedence (last one wins)
         value = None
         origin = None
-        defs = {}
-        if plugin_type is None:
-            defs = self._base_defs
-        elif plugin_name is None:
-            defs = self._plugins[plugin_type]
-        else:
-            defs = self._plugins[plugin_type][plugin_name]
 
+        defs = self.get_configuration_definitions(plugin_type, plugin_name)
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
+            direct_aliases = []
+            if direct:
+                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
             if direct and config in direct:
                 value = direct[config]
+                origin = 'Direct'
+            elif direct and direct_aliases:
+                value = direct_aliases[0]
                 origin = 'Direct'
 
             else:
@@ -385,8 +444,8 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
-                if value is None and keys and defs[config].get('keywords'):
-                    value, origin = self._loop_entries(keys, defs[config]['keywords'])
+                if value is None and keys and config in keys:
+                    value, origin = keys[config], 'keyword'
                     origin = 'keyword: %s' % origin
 
                 # env vars are next precedence
@@ -420,29 +479,33 @@ class ConfigManager(object):
                 # set default if we got here w/o a value
                 if value is None:
                     if defs[config].get('required', False):
-                        entry = ''
-                        if plugin_type:
-                            entry += 'plugin_type: %s ' % plugin_type
-                            if plugin_name:
-                                entry += 'plugin: %s ' % plugin_name
-                        entry += 'setting: %s ' % config
                         if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
-                            raise AnsibleError("No setting was provided for required configuration %s" % (entry))
+                            raise AnsibleError("No setting was provided for required configuration %s" %
+                                               to_native(_get_entry(plugin_type, plugin_name, config)))
                     else:
                         value = defs[config].get('default')
                         origin = 'default'
-                        # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+                        # skip typing as this is a templated default that will be resolved later in constants, which has needed vars
                         if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
                             return value, origin
 
-            # ensure correct type, can raise exceptoins on mismatched types
-            value = ensure_type(value, defs[config].get('type'), origin=origin)
+            # ensure correct type, can raise exceptions on mismatched types
+            try:
+                value = ensure_type(value, defs[config].get('type'), origin=origin)
+            except ValueError as e:
+                if origin.startswith('env:') and value == '':
+                    # this is empty env var for non string so we can set to default
+                    origin = 'default'
+                    value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
+                else:
+                    raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
+                                              (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
                 self.DEPRECATED.append((config, defs[config].get('deprecated')))
         else:
-            raise AnsibleError('Requested option %s was not defined in configuration' % to_native(config))
+            raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 
         return value, origin
 
@@ -496,7 +559,7 @@ class ConfigManager(object):
                 # above problem #1 has been fixed.  Revamp this to be more like the try: except
                 # in get_config_value() at that time.
                 sys.stderr.write("Unhandled error:\n %s\n\n" % traceback.format_exc())
-                raise AnsibleError("Invalid settings supplied for %s: %s\n%s" % (config, to_native(e), traceback.format_exc()))
+                raise AnsibleError("Invalid settings supplied for %s: %s\n" % (config, to_native(e)), orig_exc=e)
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))

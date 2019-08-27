@@ -74,7 +74,7 @@ class TestParseAddress(unittest.TestCase):
 
             try:
                 (host, port) = parse_address(t)
-            except:
+            except Exception:
                 host = None
                 port = None
 
@@ -87,7 +87,7 @@ class TestParseAddress(unittest.TestCase):
 
             try:
                 (host, port) = parse_address(t, allow_ranges=True)
-            except:
+            except Exception:
                 host = None
                 port = None
 

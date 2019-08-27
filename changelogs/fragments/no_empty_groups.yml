@@ -1,2 +1,0 @@
-bugfixes:
-    - avoid empty groups in ansbile-inventory JSON output as they will be interpreted as hosts

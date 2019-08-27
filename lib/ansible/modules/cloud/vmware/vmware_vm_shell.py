@@ -35,10 +35,12 @@ options:
       description:
       - The datacenter hosting the virtual machine.
       - If set, it will help to speed up virtual machine search.
+      type: str
     cluster:
       description:
       - The cluster hosting the virtual machine.
       - If set, it will help to speed up virtual machine search.
+      type: str
     folder:
       description:
       - Destination folder, absolute or relative path to find an existing guest or create the new guest.
@@ -54,39 +56,48 @@ options:
       - '   folder: folder1/datacenter1/vm'
       - '   folder: /folder1/datacenter1/vm/folder2'
       version_added: "2.4"
+      type: str
     vm_id:
       description:
       - Name of the virtual machine to work with.
       required: True
+      type: str
     vm_id_type:
       description:
       - The VMware identification method by which the virtual machine will be identified.
       default: vm_name
-      choices: ['uuid', 'dns_name', 'inventory_path', 'vm_name']
+      choices: ['uuid', 'instance_uuid', 'dns_name', 'inventory_path', 'vm_name']
+      type: str
     vm_username:
       description:
       - The user to login-in to the virtual machine.
       required: True
+      type: str
     vm_password:
       description:
       - The password used to login-in to the virtual machine.
       required: True
+      type: str
     vm_shell:
       description:
       - The absolute path to the program to start.
       - On Linux, shell is executed via bash.
       required: True
+      type: str
     vm_shell_args:
       description:
       - The argument to the program.
       - The characters which must be escaped to the shell also be escaped on the command line provided.
       default: " "
+      type: str
     vm_shell_env:
       description:
       - Comma separated list of environment variable, specified in the guest OS notation.
+      type: list
     vm_shell_cwd:
       description:
       - The current working directory of the application from which it will be run.
+      type: str
     wait_for_process:
       description:
       - If set to C(True), module will wait for process to complete in the given virtual machine.
@@ -99,6 +110,7 @@ options:
       - If set to positive integers, then C(wait_for_process) will honor this parameter and will exit after this timeout.
       default: 3600
       version_added: 2.7
+      type: int
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -109,7 +121,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: "{{ vm_name }}"
     vm_username: root
     vm_password: superSecret
@@ -128,7 +140,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: NameOfVM
     vm_username: root
     vm_password: superSecret
@@ -145,7 +157,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: "{{ vm_name }}"
     vm_username: sample
     vm_password: old_password
@@ -160,7 +172,7 @@ EXAMPLES = r'''
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: "{{ vm_name }}"
     vm_username: testUser
     vm_password: SuperSecretPassword
@@ -230,14 +242,15 @@ class VMwareShellManager(PyVmomi):
             vm = find_vm_by_id(self.content,
                                vm_id=module.params['vm_id'],
                                vm_id_type=module.params['vm_id_type'],
-                               datacenter=datacenter, cluster=cluster)
+                               datacenter=datacenter,
+                               cluster=cluster)
 
         if not vm:
             module.fail_json(msg='Unable to find virtual machine.')
 
         tools_status = vm.guest.toolsStatus
         if tools_status in ['toolsNotInstalled', 'toolsNotRunning']:
-            self.module.fail_json(msg="VMWareTools is not installed or is not running in the guest."
+            self.module.fail_json(msg="VMwareTools is not installed or is not running in the guest."
                                       " VMware Tools are necessary to run this module.")
 
         try:
@@ -291,14 +304,13 @@ class VMwareShellManager(PyVmomi):
     def process_exists_in_guest(self, vm, pid, creds):
         res = self.pm.ListProcessesInGuest(vm, creds, pids=[pid])
         if not res:
-            return False, ''
+            self.module.fail_json(
+                changed=False, msg='ListProcessesInGuest: None (unexpected)')
         res = res[0]
         if res.exitCode is None:
-            return True, ''
-        elif res.exitCode >= 0:
-            return False, res
+            return True, None
         else:
-            return True, res
+            return False, res
 
     def wait_for_process(self, vm, pid, creds):
         start_time = time.time()
@@ -308,7 +320,13 @@ class VMwareShellManager(PyVmomi):
             if not process_status:
                 return res_data
             elif current_time - start_time >= self.timeout:
-                break
+                self.module.fail_json(
+                    msg="Timeout waiting for process to complete.",
+                    vm=vm._moId,
+                    pid=pid,
+                    start_time=start_time,
+                    current_time=current_time,
+                    timeout=self.timeout)
             else:
                 time.sleep(5)
 
@@ -322,7 +340,11 @@ def main():
             folder=dict(type='str'),
             vm_id=dict(type='str', required=True),
             vm_id_type=dict(default='vm_name', type='str',
-                            choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
+                            choices=['inventory_path',
+                                     'uuid',
+                                     'instance_uuid',
+                                     'dns_name',
+                                     'vm_name']),
             vm_username=dict(type='str', required=True),
             vm_password=dict(type='str', no_log=True, required=True),
             vm_shell=dict(type='str', required=True),

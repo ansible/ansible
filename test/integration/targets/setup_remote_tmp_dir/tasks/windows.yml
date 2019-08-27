@@ -1,0 +1,11 @@
+- name: create temporary directory
+  win_tempfile:
+    state: directory
+    suffix: .test
+  register: remote_tmp_dir
+  notify:
+    - delete temporary directory (windows)
+
+- name: record temporary directory
+  set_fact:
+    remote_tmp_dir: "{{ remote_tmp_dir.path }}"

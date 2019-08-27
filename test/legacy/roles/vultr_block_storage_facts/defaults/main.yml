@@ -1,3 +1,0 @@
-vultr_block_storage_name: ansibletest-volume
-vultr_block_storage_size: 10
-vultr_block_storage_region: New Jersey

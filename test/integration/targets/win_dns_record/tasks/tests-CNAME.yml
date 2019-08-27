@@ -1,0 +1,186 @@
+- name: 'TYPE=CNAME - creation (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: www.ansible.com, type: CNAME}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=CNAME - creation get results (check mode)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - creation check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'absent\r\n'
+
+- name: 'TYPE=CNAME - creation'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: www.ansible.com, type: CNAME}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - creation get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty HostNameAlias"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - creation check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'www.ansible.com.\r\n'
+
+- name: 'TYPE=CNAME - creation (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: www.ansible.com, type: CNAME}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - creation get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty HostNameAlias"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - creation check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == 'www.ansible.com.\r\n'
+
+
+- name: 'TYPE=CNAME - update address (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: docs.ansible.com, type: CNAME}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=CNAME - update address get results (check mode)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty HostNameAlias"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - update address check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'www.ansible.com.\r\n'
+
+- name: 'TYPE=CNAME - update address'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: docs.ansible.com, type: CNAME}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - update address get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty HostNameAlias"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - update address check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'docs.ansible.com.\r\n'
+
+- name: 'TYPE=CNAME - update address (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: docs.ansible.com, type: CNAME}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - update address get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty HostNameAlias"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - update address check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == 'docs.ansible.com.\r\n'
+
+
+- name: 'TYPE=CNAME - update TTL (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: docs.ansible.com, ttl: 7200, type: CNAME}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=CNAME - update TTL get results (check mode)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - update TTL check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '3600\r\n'
+
+- name: 'TYPE=CNAME - update TTL'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: docs.ansible.com, ttl: 7200, type: CNAME}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - update TTL get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - update TTL check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '7200\r\n'
+
+- name: 'TYPE=CNAME - update TTL (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: docs.ansible.com, ttl: 7200, type: CNAME}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - update TTL get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - update TTL check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == '7200\r\n'
+
+
+- name: 'TYPE=CNAME - remove record (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, type: CNAME, state: absent}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=CNAME - remove record get results (check mode)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - remove record check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'exists\r\n'
+
+- name: 'TYPE=CNAME - remove record'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, type: CNAME, state: absent}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - remove record get results'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - remove record check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'absent\r\n'
+
+- name: 'TYPE=CNAME - remove record (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, type: CNAME, state: absent}
+  register: cmd_result
+
+- name: 'TYPE=CNAME - remove record get results (idempotent)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType CNAME -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=CNAME - remove record check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == 'absent\r\n'

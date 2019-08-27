@@ -1,0 +1,71 @@
+---
+- name: Generate privatekey 1
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_1.pem'
+
+- name: Generate privatekey 2 (less bits)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_2.pem'
+    type: RSA
+    size: 2048
+
+- name: Generate privatekey 3 (with password)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_3.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: Generate privatekey 4 (ECC)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_4.pem'
+    type: ECC
+    curve: "{{ (ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6') | ternary('secp521r1', 'secp256k1') }}"
+    # ^ cryptography on CentOS6 doesn't support secp256k1, so we use secp521r1 instead
+    select_crypto_backend: cryptography
+
+- name: Generate privatekey 5 (DSA)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_5.pem'
+    type: DSA
+    size: 1024
+
+- name: Prepare result list
+  set_fact:
+    info_results: {}
+
+- name: Running tests with pyOpenSSL backend
+  include_tasks: impl.yml
+  vars:
+    select_crypto_backend: pyopenssl
+  when: pyopenssl_version.stdout is version('0.15', '>=')
+
+- name: Prepare result list
+  set_fact:
+    pyopenssl_info_results: "{{ info_results }}"
+    info_results: {}
+
+- name: Running tests with cryptography backend
+  include_tasks: impl.yml
+  vars:
+    select_crypto_backend: cryptography
+  when: cryptography_version.stdout is version('1.2.3', '>=')
+
+- name: Prepare result list
+  set_fact:
+    cryptography_info_results: "{{ info_results }}"
+
+- block:
+  - name: Dump pyOpenSSL results
+    debug:
+      var: pyopenssl_info_results
+  - name: Dump cryptography results
+    debug:
+      var: cryptography_info_results
+  - name: Compare results
+    assert:
+      that:
+      - '  (pyopenssl_info_results[item] | dict2items | rejectattr("key", "equalto", "deprecations") | list | items2dict)
+        == (cryptography_info_results[item] | dict2items | rejectattr("key", "equalto", "deprecations") | list | items2dict)'
+    loop: "{{ pyopenssl_info_results.keys() | intersect(cryptography_info_results.keys()) | list }}"
+  when: pyopenssl_version.stdout is version('0.15', '>=') and cryptography_version.stdout is version('1.2.3', '>=')

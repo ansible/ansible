@@ -54,6 +54,7 @@ options:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
         default: 'yes'
+        type: bool
 
     nitro_auth_token:
         description:
@@ -248,13 +249,13 @@ nitro_errorcode:
 nitro_message:
     description: A string containing a human readable explanation for the NITRO operation result.
     returned: always
-    type: string
+    type: str
     sample: Success
 
 nitro_severity:
     description: A string describing the severity of the NITRO operation error or NONE.
     returned: always
-    type: string
+    type: str
     sample: NONE
 
 http_response_data:
@@ -266,7 +267,7 @@ http_response_data:
 http_response_body:
     description: A string with the actual HTTP response body content if existent. If there is no HTTP response body it is an empty string.
     returned: always
-    type: string
+    type: str
     sample: "{ errorcode: 0, message: Done, severity: NONE }"
 
 nitro_object:
@@ -286,7 +287,7 @@ nitro_object:
 nitro_auth_token:
     description: The token returned by the C(mas_login) operation when succesful.
     returned: when applicable
-    type: string
+    type: str
     sample: "##E8D7D74DDBD907EE579E8BB8FF4529655F22227C1C82A34BFC93C9539D66"
 '''
 

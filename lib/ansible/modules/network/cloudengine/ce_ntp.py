@@ -28,7 +28,7 @@ short_description: Manages core NTP configuration on HUAWEI CloudEngine switches
 description:
     - Manages core NTP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 options:
     server:
         description:
@@ -125,7 +125,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -442,7 +442,7 @@ class Ntp(object):
 
         # get all ntp config info
         root = ElementTree.fromstring(xml_str)
-        ntpsite = root.findall("data/ntp/ntpUCastCfgs/ntpUCastCfg")
+        ntpsite = root.findall("ntp/ntpUCastCfgs/ntpUCastCfg")
         for nexthop in ntpsite:
             ntp_dict = dict()
             for ele in nexthop:

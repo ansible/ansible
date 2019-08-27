@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,9 +10,10 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_static_route
 short_description: Manipulate static routes on a BIG-IP
 description:
@@ -22,21 +23,25 @@ options:
   name:
     description:
       - Name of the static route.
+    type: str
     required: True
   description:
     description:
       - Descriptive text that identifies the route.
+    type: str
   destination:
     description:
       - Specifies an IP address for the static entry in the routing table.
         When creating a new static route, this value is required.
       - This value cannot be changed once it is set.
+    type: str
   netmask:
     description:
       - The netmask for the static route. When creating a new static route, this value
         is required.
       - This value can be in either IP or CIDR format.
       - This value cannot be changed once it is set.
+    type: str
   gateway_address:
     description:
       - Specifies the router for the system to use when forwarding packets
@@ -45,15 +50,18 @@ options:
         IPv6 address that starts with C(FE80:), the address will be treated
         as a link-local address. This requires that the C(vlan) parameter
         also be supplied.
+    type: str
   vlan:
     description:
       - Specifies the VLAN or Tunnel through which the system forwards packets
         to the destination. When C(gateway_address) is a link-local IPv6
-        address, this value is required
+        address, this value is required.
+    type: str
   pool:
     description:
       - Specifies the pool through which the system forwards packets to the
         destination.
+    type: str
   reject:
     description:
       - Specifies that the system drops packets sent to the destination.
@@ -61,24 +69,28 @@ options:
   mtu:
     description:
       - Specifies a specific maximum transmission unit (MTU).
+    type: str
   route_domain:
     description:
       - The route domain id of the system. When creating a new static route, if
         this value is not specified, a default value of C(0) will be used.
       - This value cannot be changed once it is set.
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.6
   state:
     description:
       - When C(present), ensures that the static route exists.
       - When C(absent), ensures that the static does not exist.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -91,10 +103,11 @@ EXAMPLES = r'''
     netmask: 255.255.255.255
     gateway_address: 10.2.2.3
     name: test-route
-    password: secret
-    server: lb.mydomain.come
-    user: admin
-    validate_certs: no
+    provider:
+      password: secret
+      server: lb.mydomain.come
+      user: admin
+      validate_certs: no
   delegate_to: localhost
 '''
 
@@ -102,17 +115,17 @@ RETURN = r'''
 vlan:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 gateway_address:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 destination:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 route_domain:
   description: Route domain of the static route.
@@ -122,27 +135,27 @@ route_domain:
 netmask:
   description: Netmask of the destination.
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.255
 pool:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 partition:
   description: The partition that the static route was created on.
   returned: changed
-  type: string
+  type: str
   sample: Common
 description:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 reject:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 '''
 
@@ -156,30 +169,26 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
     from library.module_utils.compat.ipaddress import ip_address
     from library.module_utils.compat.ipaddress import ip_network
+    from library.module_utils.compat.ipaddress import ip_interface
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
     from ansible.module_utils.compat.ipaddress import ip_address
     from ansible.module_utils.compat.ipaddress import ip_network
+    from ansible.module_utils.compat.ipaddress import ip_interface
 
 
 class Parameters(AnsibleF5Parameters):
@@ -249,8 +258,12 @@ class ModuleParameters(Parameters):
         if self._values['gateway_address'] is None:
             return None
         try:
-            ip = ip_network(u'%s' % str(self._values['gateway_address']))
-            return str(ip.network_address)
+            if '%' in self._values['gateway_address']:
+                addr = self._values['gateway_address'].split('%')[0]
+            else:
+                addr = self._values['gateway_address']
+            ip_interface(u'%s' % str(addr))
+            return str(self._values['gateway_address'])
         except ValueError:
             raise F5ModuleError(
                 "The provided gateway_address is not an IP address"
@@ -274,7 +287,7 @@ class ModuleParameters(Parameters):
         try:
             ip = ip_network(u'%s' % str(self.destination_ip))
             if self.route_domain:
-                return '{0}%{2}/{1}'.format(str(ip.network_address), ip.prefixlen, self.route_domain)
+                return '{0}%{1}/{2}'.format(str(ip.network_address), self.route_domain, ip.prefixlen)
             else:
                 return '{0}/{1}'.format(str(ip.network_address), ip.prefixlen)
         except ValueError:
@@ -438,7 +451,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -679,14 +692,11 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

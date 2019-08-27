@@ -159,7 +159,7 @@ def run_module():
         syslog.closelog()
         result['changed'] = True
 
-    except:
+    except Exception:
         module.fail_json(error='Failed to write to syslog', **result)
 
     module.exit_json(**result)

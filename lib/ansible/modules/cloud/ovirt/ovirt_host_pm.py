@@ -54,6 +54,7 @@ options:
         description:
             - "If I(true) options will be encrypted when send to agent."
         aliases: ['encrypt']
+        type: bool
     order:
         description:
             - "Integer value specifying, by default it's added at the end."
@@ -144,7 +145,13 @@ class HostModule(BaseModule):
 
 class HostPmModule(BaseModule):
 
+    def pre_create(self, entity):
+        # Save the entity, so we know if Agent already existed
+        self.entity = entity
+
     def build_entity(self):
+        last = next((s for s in sorted([a.order for a in self._service.list()])), 0)
+        order = self.param('order') if self.param('order') is not None else self.entity.order if self.entity else last + 1
         return otypes.Agent(
             address=self._module.params['address'],
             encrypt_options=self._module.params['encrypt_options'],
@@ -158,14 +165,23 @@ class HostPmModule(BaseModule):
             port=self._module.params['port'],
             type=self._module.params['type'],
             username=self._module.params['username'],
-            order=self._module.params.get('order', 100),
+            order=order,
         )
 
     def update_check(self, entity):
+        def check_options():
+            if self.param('options'):
+                current = []
+                if entity.options:
+                    current = [(opt.name, str(opt.value)) for opt in entity.options]
+                passed = [(k, str(v)) for k, v in self.param('options').items()]
+                return sorted(current) == sorted(passed)
+            return True
+
         return (
+            check_options() and
             equal(self._module.params.get('address'), entity.address) and
             equal(self._module.params.get('encrypt_options'), entity.encrypt_options) and
-            equal(self._module.params.get('password'), entity.password) and
             equal(self._module.params.get('username'), entity.username) and
             equal(self._module.params.get('port'), entity.port) and
             equal(self._module.params.get('type'), entity.type) and

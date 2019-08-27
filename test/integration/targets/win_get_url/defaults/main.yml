@@ -1,4 +1,0 @@
----
-test_win_get_url_path: '{{win_output_dir}}\win_get_url'
-test_win_get_url_host: www.redhat.com
-test_win_get_url_env_var: WIN_GET_URL

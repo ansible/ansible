@@ -17,99 +17,204 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_resource
 version_added: "2.6"
-short_description: Create any Azure resource.
+short_description: Create any Azure resource
 description:
-  - Create, update or delete any Azure resource using Azure REST API.
-  - This module gives access to resources that are not supported via Ansible modules.
-  - Refer to https://docs.microsoft.com/en-us/rest/api/ regarding details related to specific resource REST API.
+    - Create, update or delete any Azure resource using Azure REST API.
+    - This module gives access to resources that are not supported via Ansible modules.
+    - Refer to U(https://docs.microsoft.com/en-us/rest/api/) regarding details related to specific resource REST API.
 
 options:
-  url:
-    description:
-      - Azure RM Resource URL.
-  api_version:
-    description:
-      - Specific API version to be used.
-    required: yes
-  provider:
-    description:
-      - Provider type.
-      - Required if URL is not specified.
-  resource_group:
-    description:
-      - Resource group to be used.
-      - Required if URL is not specified.
-  resource_type:
-    description:
-      - Resource type.
-      - Required if URL is not specified.
-  resource_name:
-    description:
-      - Resource name.
-      - Required if URL Is not specified.
-  subresource:
-    description:
-      - List of subresources
-    suboptions:
-      namespace:
+    url:
         description:
-          - Subresource namespace
-      type:
+            - Azure RM Resource URL.
+    api_version:
         description:
-          - Subresource type
-      name:
+            - Specific API version to be used.
+    provider:
         description:
-          - Subresource name
-  body:
-    description:
-      - The body of the http request/response to the web service.
-  method:
-    description:
-      - The HTTP method of the request or response. It MUST be uppercase.
-    choices: [ "GET", "PUT", "POST", "HEAD", "PATCH", "DELETE", "MERGE" ]
-    default: "PUT"
-  status_code:
-    description:
-      - A valid, numeric, HTTP status code that signifies success of the
-        request. Can also be comma separated list of status codes.
-    default: [ 200, 201, 202 ]
-  idempotency:
-    description:
-      - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
-    default: no
-    type: bool
-  state:
-    description:
-      - Assert the state of the resource. Use C(present) to create or update resource or C(absent) to delete resource.
-    default: present
-    choices:
-        - absent
-        - present
+            - Provider type.
+            - Required if URL is not specified.
+    resource_group:
+        description:
+            - Resource group to be used.
+            - Required if URL is not specified.
+    resource_type:
+        description:
+            - Resource type.
+            - Required if URL is not specified.
+    resource_name:
+        description:
+            - Resource name.
+            - Required if URL Is not specified.
+    subresource:
+        description:
+            - List of subresources.
+        suboptions:
+            namespace:
+                description:
+                    - Subresource namespace.
+            type:
+                description:
+                    - Subresource type.
+            name:
+                description:
+                    - Subresource name.
+    body:
+        description:
+            - The body of the HTTP request/response to the web service.
+    method:
+        description:
+            - The HTTP method of the request or response. It must be uppercase.
+        choices:
+            - GET
+            - PUT
+            - POST
+            - HEAD
+            - PATCH
+            - DELETE
+            - MERGE
+        default: "PUT"
+    status_code:
+        description:
+            - A valid, numeric, HTTP status code that signifies success of the request. Can also be comma separated list of status codes.
+        type: list
+        default: [ 200, 201, 202 ]
+    idempotency:
+        description:
+            - If enabled, idempotency check will be done by using I(method=GET) first and then comparing with I(body).
+        default: no
+        type: bool
+    polling_timeout:
+        description:
+            - If enabled, idempotency check will be done by using I(method=GET) first and then comparing with I(body).
+        default: 0
+        type: int
+        version_added: "2.8"
+    polling_interval:
+        description:
+            - If enabled, idempotency check will be done by using I(method=GET) first and then comparing with I(body).
+        default: 60
+        type: int
+        version_added: "2.8"
+    state:
+        description:
+            - Assert the state of the resource. Use C(present) to create or update resource or C(absent) to delete resource.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
-  - azure
+    - azure
 
 author:
-  - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: Update scaleset info using azure_rm_resource
     azure_rm_resource:
-      resource_group: "{{ resource_group }}"
+      resource_group: myResourceGroup
       provider: compute
       resource_type: virtualmachinescalesets
-      resource_name: "{{ scaleset_name }}"
+      resource_name: myVmss
       api_version: "2017-12-01"
-      body: "{{ body }}"
+      body: { body }
 '''
 
 RETURN = '''
 response:
-    description: Response specific to resource type.
+    description:
+        - Response specific to resource type.
     returned: always
-    type: dict
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            type: str
+            returned: always
+            sample: "/subscriptions/xxxx...xxxx/resourceGroups/v-xisuRG/providers/Microsoft.Storage/storageAccounts/staccb57dc95183"
+        kind:
+            description:
+                - The kind of storage.
+            type: str
+            returned: always
+            sample: Storage
+        location:
+            description:
+                - The resource location, defaults to location of the resource group.
+            type: str
+            returned: always
+            sample: eastus
+        name:
+            description:
+                The storage account name.
+            type: str
+            returned: always
+            sample: staccb57dc95183
+        properties:
+            description:
+                - The storage account's related properties.
+            type: dict
+            returned: always
+            sample: {
+                    "creationTime": "2019-06-13T06:34:33.0996676Z",
+                    "encryption": {
+                                  "keySource": "Microsoft.Storage",
+                                  "services": {
+                                              "blob": {
+                                              "enabled": true,
+                                              "lastEnabledTime": "2019-06-13T06:34:33.1934074Z"
+                                                      },
+                                              "file": {
+                                                      "enabled": true,
+                                                      "lastEnabledTime": "2019-06-13T06:34:33.1934074Z"
+                                                      }
+                                               }
+                                  },
+                    "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow",
+                    "ipRules": [],
+                    "virtualNetworkRules": []
+                                   },
+                    "primaryEndpoints": {
+                    "blob": "https://staccb57dc95183.blob.core.windows.net/",
+                    "file": "https://staccb57dc95183.file.core.windows.net/",
+                    "queue": "https://staccb57dc95183.queue.core.windows.net/",
+                    "table": "https://staccb57dc95183.table.core.windows.net/"
+                                       },
+                    "primaryLocation": "eastus",
+                    "provisioningState": "Succeeded",
+                    "secondaryLocation": "westus",
+                    "statusOfPrimary": "available",
+                    "statusOfSecondary": "available",
+                    "supportsHttpsTrafficOnly": false
+                    }
+        sku:
+            description:
+                - The storage account SKU.
+            type: dict
+            returned: always
+            sample: {
+                    "name": "Standard_GRS",
+                    "tier": "Standard"
+                    }
+        tags:
+            decription:
+                - Resource tags.
+            type: dict
+            returned: always
+            sample: { 'key1': 'value1' }
+        type:
+            description:
+                - The resource type.
+            type: str
+            returned: always
+            sample: "Microsoft.Storage/storageAccounts"
+
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -132,8 +237,7 @@ class AzureRMResource(AzureRMModuleBase):
         # define user inputs into argument
         self.module_arg_spec = dict(
             url=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             provider=dict(
                 type='str',
@@ -152,8 +256,7 @@ class AzureRMResource(AzureRMModuleBase):
                 default=[]
             ),
             api_version=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             method=dict(
                 type='str',
@@ -170,6 +273,14 @@ class AzureRMResource(AzureRMModuleBase):
             idempotency=dict(
                 type='bool',
                 default=False
+            ),
+            polling_timeout=dict(
+                type='int',
+                default=0
+            ),
+            polling_interval=dict(
+                type='int',
+                default=60
             ),
             state=dict(
                 type='str',
@@ -195,6 +306,8 @@ class AzureRMResource(AzureRMModuleBase):
         self.method = None
         self.status_code = []
         self.idempotency = False
+        self.polling_timeout = None
+        self.polling_interval = None
         self.state = None
         self.body = None
         super(AzureRMResource, self).__init__(self.module_arg_spec, supports_tags=False)
@@ -239,6 +352,28 @@ class AzureRMResource(AzureRMModuleBase):
 
             if orphan is not None:
                 self.url += '/' + orphan
+
+        # if api_version was not specified, get latest one
+        if not self.api_version:
+            try:
+                # extract provider and resource type
+                if "/providers/" in self.url:
+                    provider = self.url.split("/providers/")[1].split("/")[0]
+                    resourceType = self.url.split(provider + "/")[1].split("/")[0]
+                    url = "/subscriptions/" + self.subscription_id + "/providers/" + provider
+                    api_versions = json.loads(self.mgmt_client.query(url, "GET", {'api-version': '2015-01-01'}, None, None, [200], 0, 0).text)
+                    for rt in api_versions['resourceTypes']:
+                        if rt['resourceType'].lower() == resourceType.lower():
+                            self.api_version = rt['apiVersions'][0]
+                            break
+                else:
+                    # if there's no provider in API version, assume Microsoft.Resources
+                    self.api_version = '2018-05-01'
+                if not self.api_version:
+                    self.fail("Couldn't find api version for {0}/{1}".format(provider, resourceType))
+            except Exception as exc:
+                self.fail("Failed to obtain API version: {0}".format(str(exc)))
+
         query_parameters = {}
         query_parameters['api-version'] = self.api_version
 
@@ -249,7 +384,7 @@ class AzureRMResource(AzureRMModuleBase):
         response = None
 
         if self.idempotency:
-            original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [200, 404])
+            original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [200, 404], 0, 0)
 
             if original.status_code == 404:
                 if self.state == 'absent':
@@ -258,15 +393,22 @@ class AzureRMResource(AzureRMModuleBase):
                 try:
                     response = json.loads(original.text)
                     needs_update = (dict_merge(response, self.body) != response)
-                except:
+                except Exception:
                     pass
 
         if needs_update:
-            response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
+            response = self.mgmt_client.query(self.url,
+                                              self.method,
+                                              query_parameters,
+                                              header_parameters,
+                                              self.body,
+                                              self.status_code,
+                                              self.polling_timeout,
+                                              self.polling_interval)
             if self.state == 'present':
                 try:
                     response = json.loads(response.text)
-                except:
+                except Exception:
                     response = response.text
             else:
                 response = None

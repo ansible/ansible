@@ -461,15 +461,15 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        name=dict(aliases=['vrf']),
-        description=dict(),
-        vni=dict(type=str),
-        rd=dict(type=str),
-        admin_state=dict(default='up', choices=['up', 'down']),
+        name=dict(type='str', aliases=['vrf']),
+        description=dict(type='str'),
+        vni=dict(type='str'),
+        rd=dict(type='str'),
+        admin_state=dict(type='str', default='up', choices=['up', 'down']),
         interfaces=dict(type='list'),
         associated_interfaces=dict(type='list'),
-        delay=dict(default=10, type='int'),
-        state=dict(default='present', choices=['present', 'absent'])
+        delay=dict(type='int', default=10),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -479,7 +479,7 @@ def main():
 
     argument_spec = dict(
         aggregate=dict(type='list', elements='dict', options=aggregate_spec),
-        purge=dict(default=False, type='bool')
+        purge=dict(type='bool', default=False),
     )
 
     argument_spec.update(element_spec)

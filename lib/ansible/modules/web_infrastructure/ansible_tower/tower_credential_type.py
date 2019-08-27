@@ -58,11 +58,12 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
-    tower_verify_ssl:
+    validate_certs:
       description:
         - Tower option to avoid certificates check.
       required: False
       type: bool
+      aliases: [ tower_verify_ssl ]
 extends_documentation_fragment: tower
 '''
 
@@ -75,7 +76,7 @@ EXAMPLES = '''
     inputs: "{{ lookup('file', 'tower_credential_inputs_nexus.json') }}"
     injectors: {'extra_vars': {'nexus_credential': 'test' }}
     state: present
-    tower_verify_ssl: false
+    validate_certs: false
 
 - tower_credential_type:
     name: Nexus
@@ -159,7 +160,7 @@ def main():
                 params['fail_on_missing'] = False
                 result = credential_type_res.delete(**params)
 
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(
                 msg='Failed to update credential type: {0}'.format(excinfo),
                 changed=False

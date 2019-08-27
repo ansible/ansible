@@ -1,0 +1,66 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Christophe FERREIRA <christophe.ferreira@cnaf.fr>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: clone vm from template and convert to thin
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    template: "{{ virtual_machines[0].name }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ virtual_machines[0].folder }}"
+    convert: thin
+  register: clone_thin
+
+- debug: var=clone_thin
+
+- name: assert that changes were made
+  assert:
+    that:
+        - clone_thin is changed
+
+- name: clone vm from template and convert to thick
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm2
+    template: "{{ virtual_machines[0].name }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ virtual_machines[0].folder }}"
+    convert: thick
+  register: clone_thick
+
+- debug: var=clone_thick
+
+- name: assert that changes were made
+  assert:
+    that:
+        - clone_thick is changed
+
+- name: clone vm from template and convert to eagerzeroedthick
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm3
+    template: "{{ virtual_machines[0].name }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ virtual_machines[0].folder }}"
+    convert: eagerzeroedthick
+  register: clone_eagerzeroedthick
+
+- debug: var=clone_eagerzeroedthick
+
+- name: assert that changes were made
+  assert:
+    that:
+        - clone_eagerzeroedthick is changed

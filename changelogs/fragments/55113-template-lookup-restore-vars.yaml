@@ -1,0 +1,2 @@
+bugfixes:
+  - template lookup - restore variables between calls (https://github.com/ansible/ansible/issues/55113)

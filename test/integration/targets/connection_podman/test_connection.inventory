@@ -1,0 +1,15 @@
+[podman]
+podman-container
+[podman:vars]
+# 1. install podman
+# 2. create container:
+#      podman pull python:3-alpine
+#      podman run -d --name podman-container python:3-alpine sleep 999999
+# 3. run test:
+#      ./bin/ansible-test integration connection_podman
+# 6. remove container
+#      podman stop podman-container
+#      podman rm podman-container
+ansible_host=podman-container
+ansible_connection=podman
+ansible_python_interpreter=/usr/local/bin/python

@@ -1,19 +1,6 @@
 # Collect facts related to the system package manager
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -40,7 +27,7 @@ PKG_MGRS = [{'path': '/usr/bin/yum', 'name': 'yum'},
             {'path': '/usr/local/bin/brew', 'name': 'homebrew'},
             {'path': '/sbin/apk', 'name': 'apk'},
             {'path': '/usr/sbin/pkg', 'name': 'pkgng'},
-            {'path': '/usr/sbin/swlist', 'name': 'HP-UX'},
+            {'path': '/usr/sbin/swlist', 'name': 'swdepot'},
             {'path': '/usr/bin/emerge', 'name': 'portage'},
             {'path': '/usr/sbin/pkgadd', 'name': 'svr4pkg'},
             {'path': '/usr/bin/pkg', 'name': 'pkg5'},
@@ -49,6 +36,7 @@ PKG_MGRS = [{'path': '/usr/bin/yum', 'name': 'yum'},
             {'path': '/usr/bin/swupd', 'name': 'swupd'},
             {'path': '/usr/sbin/sorcery', 'name': 'sorcery'},
             {'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
+            {'path': '/usr/bin/installp', 'name': 'installp'},
             ]
 
 
@@ -73,6 +61,8 @@ class PkgMgrFactCollector(BaseFactCollector):
 
     def _check_rh_versions(self, pkg_mgr_name, collected_facts):
         if collected_facts['ansible_distribution'] == 'Fedora':
+            if os.path.exists('/run/ostree-booted'):
+                return "atomic_container"
             try:
                 if int(collected_facts['ansible_distribution_major_version']) < 23:
                     for yum in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum']:
@@ -87,6 +77,19 @@ class PkgMgrFactCollector(BaseFactCollector):
             except ValueError:
                 # If there's some new magical Fedora version in the future,
                 # just default to dnf
+                pkg_mgr_name = 'dnf'
+        elif collected_facts['ansible_distribution'] == 'Amazon':
+            pkg_mgr_name = 'yum'
+        else:
+            # If it's not one of the above and it's Red Hat family of distros, assume
+            # RHEL or a clone. For versions of RHEL < 8 that Ansible supports, the
+            # vendor supported official package manager is 'yum' and in RHEL 8+
+            # (as far as we know at the time of this writing) it is 'dnf'.
+            # If anyone wants to force a non-official package manager then they
+            # can define a provider to either the package or yum action plugins.
+            if int(collected_facts['ansible_distribution_major_version']) < 8:
+                pkg_mgr_name = 'yum'
+            else:
                 pkg_mgr_name = 'dnf'
         return pkg_mgr_name
 
@@ -117,11 +120,10 @@ class PkgMgrFactCollector(BaseFactCollector):
                 pkg_mgr_name = pkg['name']
 
         # Handle distro family defaults when more than one package manager is
-        # installed, the ansible_fact entry should be the default package
-        # manager provided by the distro.
+        # installed or available to the distro, the ansible_fact entry should be
+        # the default package manager officially supported by the distro.
         if collected_facts['ansible_os_family'] == "RedHat":
-            if pkg_mgr_name not in ('yum', 'dnf'):
-                pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
+            pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
         elif collected_facts['ansible_os_family'] == 'Debian' and pkg_mgr_name != 'apt':
             # It's possible to install yum, dnf, zypper, rpm, etc inside of
             # Debian. Doing so does not mean the system wants to use them.
@@ -133,12 +135,6 @@ class PkgMgrFactCollector(BaseFactCollector):
         # Check if /usr/bin/apt-get is ordinary (dpkg-based) APT or APT-RPM
         if pkg_mgr_name == 'apt':
             pkg_mgr_name = self._check_apt_flavor(pkg_mgr_name)
-
-        # pacman has become available by distros other than those that are Arch
-        # based by virtue of a dependency to the systemd mkosi project, this
-        # handles some of those scenarios as they are reported/requested
-        if pkg_mgr_name == 'pacman' and collected_facts['ansible_os_family'] in ["RedHat"]:
-            pkg_mgr_name = self._check_rh_versions(collected_facts)
 
         facts_dict['pkg_mgr'] = pkg_mgr_name
         return facts_dict

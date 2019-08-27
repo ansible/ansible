@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -33,6 +33,10 @@ options:
         Playbooks from becoming too large.
       - If you C(content) includes encrypted values (such as ciphertexts, passphrases, etc),
         the returned C(changed) value will always be true.
+      - If you are using the C(to_nice_json) filter, it will cause this module to fail because
+        the purpose of that filter is to format the JSON to be human-readable and this process
+        includes inserting "extra characters that break JSON validators.
+    type: raw
     required: True
   tenants:
     description:
@@ -41,6 +45,7 @@ options:
         C(state) is C(present).
       - A value of C(all) will remove all tenants.
       - Tenants can be specified as a list as well to remove only specific tenants.
+    type: raw
   force:
     description:
       - Force updates a declaration.
@@ -52,6 +57,7 @@ options:
     description:
       - When C(state) is C(present), ensures the configuration exists.
       - When C(state) is C(absent), ensures that the configuration is removed.
+    type: str
     choices:
       - present
       - absent
@@ -100,28 +106,33 @@ action:
   description:
     - The action performed.
   returned: changed
-  type: string
+  type: str
   sample: deploy
 '''
 
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import string_types
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -216,6 +227,15 @@ class ApiParameters(Parameters):
 
 class ModuleParameters(Parameters):
     @property
+    def content(self):
+        if self._values['content'] is None:
+            return None
+        if isinstance(self._values['content'], string_types):
+            return json.loads(self._values['content'] or 'null')
+        else:
+            return self._values['content']
+
+    @property
     def class_name(self):
         return self._values['content'].get('class', None)
 
@@ -309,7 +329,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -321,12 +341,6 @@ class ModuleManager(object):
                 changed[key] = getattr(self.want, key)
         if changed:
             self.changes = UsableChanges(params=changed)
-
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
 
     def exec_module(self):
         changed = False
@@ -373,6 +387,8 @@ class ModuleManager(object):
         if 'results' not in messages:
             if 'message' in messages:
                 results.append(messages['message'])
+            if 'errors' in messages:
+                results += messages['errors']
         else:
             for message in messages['results']:
                 if 'message' in message and message['message'] == 'declaration failed':
@@ -382,11 +398,12 @@ class ModuleManager(object):
         return results
 
     def upsert_on_device(self):
-        params = self.changes.api_params()
         uri = 'https://{0}:{1}/mgmt/shared/appsvcs/declare/'.format(
-            self.want.server, self.want.server_port,
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
-        resp = self.client.api.post(uri, json=params)
+        resp = self.client.api.post(uri, json=self.want.content)
+
         if resp.status != 200:
             result = resp.json()
             errors = self._get_errors_from_response(result)
@@ -413,7 +430,17 @@ class ModuleManager(object):
 
     def exists(self):
         declaration = {}
-        declaration.update(self.want.content)
+        if self.want.content is None:
+            raise F5ModuleError(
+                "Empty content cannot be specified when 'state' is 'present'."
+            )
+        try:
+            declaration.update(self.want.content)
+        except ValueError:
+            raise F5ModuleError(
+                "The provided 'content' could not be converted into valid json. If you "
+                "are using the 'to_nice_json' filter, please remove it."
+            )
         declaration['action'] = 'dry-run'
 
         # This deals with cases where you're comparing a passphrase.
@@ -464,15 +491,18 @@ class ModuleManager(object):
 
     def remove_from_device(self):
         uri = 'https://{0}:{1}/mgmt/shared/appsvcs/declare/{2}'.format(
-            self.want.server, self.want.server_port,
+            self.client.provider['server'],
+            self.client.provider['server_port'],
             self.want.tenants
         )
-        resp = self.client.api.delete(uri)
-        if resp.status != 200:
-            result = resp.json()
-            raise F5ModuleError(
-                "{0}: {1}. {2}".format(resp.status, result['message'], '. '.join(result['errors']))
-            )
+        response = self.client.api.delete(uri)
+        if response.status != 200:
+            result = response.json()
+            errors = self._get_errors_from_response(result)
+            if errors:
+                message = "{0}".format('. '.join(errors))
+                raise F5ModuleError(message)
+            raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
@@ -508,13 +538,10 @@ def main():
     )
 
     try:
-        client = F5RestClient(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

@@ -1,0 +1,61 @@
+{
+    "_meta": {
+        "hostvars": {
+            "default-myvm-7ba1b196-57ad-11e9-9e2e-0800279ffc6b": {
+                "annotations": {
+                    "ansible": "{\"data1\": \"yes\", \"data2\": \"no\"}"
+                },
+                "ansible_host": "172.17.0.19",
+                "data1": "yes",
+                "data2": "no",
+                "labels": {
+                    "kubevirt.io/nodeName": "localhost",
+                    "label": "x",
+                    "vm.cnv.io/name": "myvm"
+                },
+                "object_type": "vm",
+                "resource_version": "1614085",
+                "uid": "7ba1b196-57ad-11e9-9e2e-0800279ffc6b"
+            }
+        }
+    },
+    "all": {
+        "children": [
+            "label_kubevirt_io_nodeName_localhost",
+            "label_label_x",
+            "label_vm_cnv_io_name_myvm",
+            "localhost_12345",
+            "ungrouped"
+        ]
+    },
+    "label_kubevirt_io_nodeName_localhost": {
+        "hosts": [
+            "default-myvm-7ba1b196-57ad-11e9-9e2e-0800279ffc6b"
+        ]
+    },
+    "label_label_x": {
+        "hosts": [
+            "default-myvm-7ba1b196-57ad-11e9-9e2e-0800279ffc6b"
+        ]
+    },
+    "label_vm_cnv_io_name_myvm": {
+        "hosts": [
+            "default-myvm-7ba1b196-57ad-11e9-9e2e-0800279ffc6b"
+        ]
+    },
+    "localhost_12345": {
+        "children": [
+            "namespace_default"
+        ]
+    },
+    "namespace_default": {
+        "children": [
+            "namespace_default_vms"
+        ]
+    },
+    "namespace_default_vms": {
+        "hosts": [
+            "default-myvm-7ba1b196-57ad-11e9-9e2e-0800279ffc6b"
+        ]
+    }
+}

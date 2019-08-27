@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: os_nova_host_aggregate
 short_description: Manage OpenStack host aggregates
 extends_documentation_fragment: openstack
-author: "Jakub Jursa"
+author: "Jakub Jursa (@kuboj)"
 version_added: "2.3"
 description:
     - Create, update, or delete OpenStack host aggregates. If a aggregate
@@ -167,6 +167,9 @@ def main():
             if aggregate is None:
                 changed = False
             else:
+                if hosts:
+                    for h in hosts:
+                        cloud.remove_host_from_aggregate(aggregate.id, h)
                 cloud.delete_aggregate(aggregate.id)
                 changed = True
             module.exit_json(changed=changed)

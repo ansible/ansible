@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Michael J. Schultz <mjschultz@gmail.com>
+# Copyright: (c) 2014, Michael J. Schultz <mjschultz@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,51 +15,53 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: sns
-short_description: Send Amazon Simple Notification Service (SNS) messages
+short_description: Send Amazon Simple Notification Service messages
 description:
-    - The C(sns) module sends notifications to a topic on your Amazon SNS account
+  - Sends a notification to a topic on your Amazon SNS account.
 version_added: 1.6
-author: "Michael J. Schultz (@mjschultz)"
+author:
+  - Michael J. Schultz (@mjschultz)
+  - Paul Arthur (@flowerysong)
 options:
   msg:
     description:
-      - Default message to send.
+      - Default message for subscriptions without a more specific message.
     required: true
     aliases: [ "default" ]
   subject:
     description:
-      - Subject line for email delivery.
+      - Message subject
   topic:
     description:
-      - The topic you want to publish to.
+      - The name or ARN of the topic to publish to.
     required: true
   email:
     description:
-      - Message to send to email-only subscription
+      - Message to send to email subscriptions.
+  email_json:
+    description:
+      - Message to send to email-json subscriptions
+    version_added: '2.8'
   sqs:
     description:
-      - Message to send to SQS-only subscription
+      - Message to send to SQS subscriptions
   sms:
     description:
-      - Message to send to SMS-only subscription
+      - Message to send to SMS subscriptions
   http:
     description:
-      - Message to send to HTTP-only subscription
+      - Message to send to HTTP subscriptions
   https:
     description:
-      - Message to send to HTTPS-only subscription
-  aws_secret_key:
+      - Message to send to HTTPS subscriptions
+  application:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    aliases: ['ec2_secret_key', 'secret_key']
-  aws_access_key:
+      - Message to send to application subscriptions
+    version_added: '2.8'
+  lambda:
     description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    aliases: ['ec2_access_key', 'access_key']
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    aliases: ['aws_region', 'ec2_region']
+      - Message to send to Lambda subscriptions
+    version_added: '2.8'
   message_attributes:
     description:
       - Dictionary of message attributes. These are optional structured data entries to be sent along to the endpoint.
@@ -67,15 +69,15 @@ options:
   message_structure:
     description:
       - The payload format to use for the message.
-      - This must be 'json' to support non-default messages (`http`, `https`, `email`, `sms`, `sqs`). It must be 'string' to support message_attributes.
-    required: true
+      - This must be 'json' to support protocol-specific messages (`http`, `https`, `email`, `sms`, `sqs`). It must be 'string' to support message_attributes.
     default: json
     choices: ['json', 'string']
 extends_documentation_fragment:
- - ec2
- - aws
+  - ec2
+  - aws
 requirements:
-    - "boto"
+  - boto3
+  - botocore
 """
 
 EXAMPLES = """
@@ -108,115 +110,113 @@ EXAMPLES = """
   delegate_to: localhost
 """
 
+RETURN = """
+msg:
+  description: Human-readable diagnostic information
+  returned: always
+  type: str
+  sample: OK
+message_id:
+  description: The message ID of the submitted message
+  returned: when success
+  type: str
+  sample: 2f681ef0-6d76-5c94-99b2-4ae3996ce57b
+"""
+
 import json
 import traceback
 
 try:
-    import boto
-    import boto.ec2
-    import boto.sns
-    HAS_BOTO = True
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    HAS_BOTO = False
+    pass    # Handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
-from ansible.module_utils._text import to_native
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
-def arn_topic_lookup(connection, short_topic):
-    response = connection.get_all_topics()
-    result = response[u'ListTopicsResponse'][u'ListTopicsResult']
-    # topic names cannot have colons, so this captures the full topic name
-    lookup_topic = ':{}'.format(short_topic)
-    for topic in result[u'Topics']:
-        if topic[u'TopicArn'].endswith(lookup_topic):
-            return topic[u'TopicArn']
+def arn_topic_lookup(module, client, short_topic):
+    lookup_topic = ':{0}'.format(short_topic)
+
+    try:
+        paginator = client.get_paginator('list_topics')
+        topic_iterator = paginator.paginate()
+        for response in topic_iterator:
+            for topic in response['Topics']:
+                if topic['TopicArn'].endswith(lookup_topic):
+                    return topic['TopicArn']
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to look up topic ARN')
+
     return None
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            msg=dict(type='str', required=True, aliases=['default']),
-            subject=dict(type='str', default=None),
-            topic=dict(type='str', required=True),
-            email=dict(type='str', default=None),
-            sqs=dict(type='str', default=None),
-            sms=dict(type='str', default=None),
-            http=dict(type='str', default=None),
-            https=dict(type='str', default=None),
-            message_attributes=dict(type='dict', default=None),
-            message_structure=dict(type='str', choices=['json', 'string'], default='json'),
-        )
+    protocols = [
+        'http',
+        'https',
+        'email',
+        'email_json',
+        'sms',
+        'sqs',
+        'application',
+        'lambda',
+    ]
+
+    argument_spec = dict(
+        msg=dict(required=True, aliases=['default']),
+        subject=dict(),
+        topic=dict(required=True),
+        message_attributes=dict(type='dict'),
+        message_structure=dict(choices=['json', 'string'], default='json'),
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    for p in protocols:
+        argument_spec[p] = dict()
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    msg = module.params['msg']
-    subject = module.params['subject']
+    sns_kwargs = dict(
+        Message=module.params['msg'],
+        Subject=module.params['subject'],
+        MessageStructure=module.params['message_structure'],
+    )
+
+    if module.params['message_attributes']:
+        if module.params['message_structure'] != 'string':
+            module.fail_json(msg='message_attributes is only supported when the message_structure is "string".')
+        sns_kwargs['MessageAttributes'] = module.params['message_attributes']
+
+    dict_msg = {
+        'default': sns_kwargs['Message']
+    }
+
+    for p in protocols:
+        if module.params[p]:
+            if sns_kwargs['MessageStructure'] != 'json':
+                module.fail_json(msg='Protocol-specific messages are only supported when message_structure is "json".')
+            dict_msg[p.replace('_', '-')] = module.params[p]
+
+    client = module.client('sns')
+
     topic = module.params['topic']
-    email = module.params['email']
-    sqs = module.params['sqs']
-    sms = module.params['sms']
-    http = module.params['http']
-    https = module.params['https']
-    message_attributes = module.params['message_attributes']
-    message_structure = module.params['message_structure']
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    if not region:
-        module.fail_json(msg="region must be specified")
-    try:
-        connection = connect_to_aws(boto.sns, region, **aws_connect_params)
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
-
-    if not message_structure == 'string' and message_attributes:
-        module.fail_json(msg="when specifying message_attributes, the message_structure must be set to 'string'; otherwise the attributes will not be sent.")
-    elif message_structure == 'string' and (email or sqs or sms or http or https):
-        module.fail_json(msg="do not specify non-default message formats when using the 'string' message_structure. they can only be used with "
-                             "the 'json' message_structure.")
-
-    # .publish() takes full ARN topic id, but I'm lazy and type shortnames
-    # so do a lookup (topics cannot contain ':', so that's the decider)
     if ':' in topic:
-        arn_topic = topic
+        # Short names can't contain ':' so we'll assume this is the full ARN
+        sns_kwargs['TopicArn'] = topic
     else:
-        arn_topic = arn_topic_lookup(connection, topic)
+        sns_kwargs['TopicArn'] = arn_topic_lookup(module, client, topic)
 
-    if not arn_topic:
-        module.fail_json(msg='Could not find topic: {}'.format(topic))
+    if not sns_kwargs['TopicArn']:
+        module.fail_json(msg='Could not find topic: {0}'.format(topic))
 
-    dict_msg = {'default': msg}
-    if email:
-        dict_msg.update(email=email)
-    if sqs:
-        dict_msg.update(sqs=sqs)
-    if sms:
-        dict_msg.update(sms=sms)
-    if http:
-        dict_msg.update(http=http)
-    if https:
-        dict_msg.update(https=https)
-
-    if not message_structure == 'json':
-        json_msg = msg
-    else:
-        json_msg = json.dumps(dict_msg)
+    if sns_kwargs['MessageStructure'] == 'json':
+        sns_kwargs['Message'] = json.dumps(dict_msg)
 
     try:
-        connection.publish(topic=arn_topic, subject=subject,
-                           message_structure=message_structure, message=json_msg,
-                           message_attributes=message_attributes)
-    except boto.exception.BotoServerError as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+        result = client.publish(**sns_kwargs)
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to publish message')
 
-    module.exit_json(msg="OK")
+    module.exit_json(msg='OK', message_id=result['MessageId'])
 
 
 if __name__ == '__main__':

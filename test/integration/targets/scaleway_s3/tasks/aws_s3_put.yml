@@ -1,0 +1,50 @@
+- name: Put an object (Check)
+  check_mode: yes
+  aws_s3:
+    mode: put
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    src: '{{ tempfile.path }}'
+    object: test.txt
+    encrypt: false
+  register: put_check_task
+
+- name: Show put_check_task
+  debug:
+    var: put_check_task
+
+- name: put_check_task is success
+  assert:
+    that:
+      - put_check_task is success
+
+- name: put_check_task is changed
+  assert:
+    that:
+      - put_check_task is changed
+
+- name: Put an object
+  aws_s3:
+    mode: put
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    src: '{{ tempfile.path }}'
+    object: test.txt
+    encrypt: false
+  register: put_task
+
+- name: Show put_task
+  debug:
+    var: put_task
+
+- name: put_task is success
+  assert:
+    that:
+      - put_task is success
+
+- name: put_task is changed
+  assert:
+    that:
+      - put_task is changed

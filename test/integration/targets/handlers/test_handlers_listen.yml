@@ -2,7 +2,6 @@
 - name: test listen with named handlers
   hosts: localhost
   gather_facts: false
-  connection: local
   tasks:
     - name: test notify handlers listen
       command: uptime
@@ -14,6 +13,7 @@
         that:
           - "notify_listen_ran_1_1 is defined"
           - "notify_listen_ran_1_2 is defined"
+          - "notify_listen_ran_1_3 is undefined"
   handlers:
     - name: notify_handler_ran_1_1
       set_fact:
@@ -23,11 +23,14 @@
       set_fact:
         notify_listen_ran_1_2: True
       listen: notify_listen
+    - name: notify_handler_ran_1_3
+      set_fact:
+        notify_handler_ran_1_3: True
+      listen: notify_listen2
 
 - name: test listen unnamed handlers
   hosts: localhost
   gather_facts: false
-  connection: local
   pre_tasks:
     - name: notify some handlers
       command: echo foo
@@ -40,6 +43,7 @@
         that:
           - "notify_listen_ran_1 is defined"
           - "notify_listen_ran_2 is defined"
+          - "notify_listen_ran_3 is undefined"
   handlers:
     - set_fact:
         notify_listen_ran_1: True
@@ -47,11 +51,13 @@
     - set_fact:
         notify_listen_ran_2: True
       listen: notify_listen
+    - set_fact:
+        notify_handler_ran_3: True
+      listen: notify_listen2
 
 - name: test with mixed notify by name and listen
   hosts: localhost
   gather_facts: false
-  connection: local
   tasks:
     - name: test notify handlers names and identical listen
       command: uptime
@@ -91,7 +97,6 @@
 - name: test listen in roles
   hosts: localhost
   gather_facts: false
-  connection: local
   roles:
     - role: test_handlers_listen
   tasks:

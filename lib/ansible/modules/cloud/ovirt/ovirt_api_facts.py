@@ -45,7 +45,7 @@ ovirt_api:
                   all API attributes can be found at following
                   url: https://ovirt.example.com/ovirt-engine/api/model#types/api."
     returned: On success.
-    type: dictionary
+    type: dict
 '''
 
 import traceback

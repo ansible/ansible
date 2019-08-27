@@ -38,8 +38,8 @@ options:
     default: present
   wait:
     description: >-
-      Specifies whether the module waits until the cluster becomes active after
-      creation. It takes "usually less than 10 minutes" per AWS documentation.
+      Specifies whether the module waits until the cluster is active or deleted
+      before moving on. It takes "usually less than 10 minutes" per AWS documentation.
     type: bool
     default: 'no'
   wait_timeout:
@@ -73,6 +73,7 @@ EXAMPLES = '''
 - name: Remove an EKS cluster
   aws_eks_cluster:
     name: my_cluster
+    wait: yes
     state: absent
 '''
 
@@ -80,7 +81,7 @@ RETURN = '''
 arn:
   description: ARN of the EKS cluster
   returned: when state is present
-  type: string
+  type: str
   sample: arn:aws:eks:us-west-2:111111111111:cluster/my-eks-cluster
 certificate_authority:
   description: Dictionary containing Certificate Authority Data for cluster
@@ -90,21 +91,21 @@ certificate_authority:
     data:
       description: Base-64 encoded Certificate Authority Data for cluster
       returned: when the cluster has been created and is active
-      type: string
+      type: str
 endpoint:
   description: Kubernetes API server endpoint
   returned: when the cluster has been created and is active
-  type: string
+  type: str
   sample: https://API_SERVER_ENDPOINT.yl4.us-west-2.eks.amazonaws.com
 created_at:
   description: Cluster creation date and time
   returned: when state is present
-  type: string
+  type: str
   sample: '2018-06-06T11:56:56.242000+00:00'
 name:
   description: EKS cluster name
   returned: when state is present
-  type: string
+  type: str
   sample: my-eks-cluster
 resources_vpc_config:
   description: VPC configuration of the cluster
@@ -129,24 +130,24 @@ resources_vpc_config:
     vpc_id:
       description: VPC id
       returned: always
-      type: string
+      type: str
       sample: vpc-a1b2c3d4
 role_arn:
   description: ARN of the IAM role used by the cluster
   returned: when state is present
-  type: string
+  type: str
   sample: arn:aws:iam::111111111111:role/aws_eks_cluster_role
 status:
   description: status of the EKS cluster
   returned: when state is present
-  type: string
+  type: str
   sample:
   - CREATING
   - ACTIVE
 version:
   description: Kubernetes version of the cluster
   returned: when state is present
-  type: string
+  type: str
   sample: '1.10'
 '''
 
@@ -183,7 +184,7 @@ def ensure_present(client, module):
             module.fail_json(msg="Cannot modify version of existing cluster")
 
         if wait:
-            wait_until_cluster_active(client, module)
+            wait_until(client, module, 'cluster_active')
             # Ensure that fields that are only available for active clusters are
             # included in the returned value
             cluster = get_cluster(client, module)
@@ -208,7 +209,7 @@ def ensure_present(client, module):
         module.fail_json_aws(e, msg="Couldn't create cluster %s" % name)
 
     if wait:
-        wait_until_cluster_active(client, module)
+        wait_until(client, module, 'cluster_active')
         # Ensure that fields that are only available for active clusters are
         # included in the returned value
         cluster = get_cluster(client, module)
@@ -219,6 +220,7 @@ def ensure_present(client, module):
 def ensure_absent(client, module):
     name = module.params.get('name')
     existing = get_cluster(client, module)
+    wait = module.params.get('wait')
     if not existing:
         module.exit_json(changed=False)
     if not module.check_mode:
@@ -228,6 +230,10 @@ def ensure_absent(client, module):
             module.fail_json(msg="Region %s is not supported by EKS" % client.meta.region_name)
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't delete cluster %s" % name)
+
+    if wait:
+        wait_until(client, module, 'cluster_deleted')
+
     module.exit_json(changed=True)
 
 
@@ -240,14 +246,14 @@ def get_cluster(client, module):
     except botocore.exceptions.EndpointConnectionError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg="Region %s is not supported by EKS" % client.meta.region_name)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
-        module.fail_json(e, msg="Couldn't get cluster %s" % name)
+        module.fail_json_aws(e, msg="Couldn't get cluster %s" % name)
 
 
-def wait_until_cluster_active(client, module):
+def wait_until(client, module, waiter_name='cluster_active'):
     name = module.params.get('name')
     wait_timeout = module.params.get('wait_timeout')
 
-    waiter = get_waiter(client, 'cluster_active')
+    waiter = get_waiter(client, waiter_name)
     attempts = 1 + int(wait_timeout / waiter.config.delay)
     waiter.wait(name=name, WaiterConfig={'MaxAttempts': attempts})
 
@@ -271,7 +277,12 @@ def main():
     )
 
     if not module.botocore_at_least("1.10.32"):
-        module.fail_json(msg="aws_eks_cluster module requires botocore >= 1.10.32")
+        module.fail_json(msg='aws_eks_cluster module requires botocore >= 1.10.32')
+
+    if (not module.botocore_at_least("1.12.38") and
+            module.params.get('state') == 'absent' and
+            module.params.get('wait')):
+        module.fail_json(msg='aws_eks_cluster: wait=yes when state=absent requires botocore >= 1.12.38')
 
     client = module.client('eks')
 

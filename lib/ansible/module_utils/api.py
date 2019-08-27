@@ -116,7 +116,7 @@ def retry(retries=None, retry_pause=1):
                         raise Exception("Retry limit exceeded: %d" % retries)
                     try:
                         ret = f(*args, **kwargs)
-                    except:
+                    except Exception:
                         pass
                     if ret:
                         break

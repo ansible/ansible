@@ -19,12 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
+        self._config_module = True
         if self._play_context.connection != 'network_cli':
             return {'failed': True, 'msg': 'Connection type %s is not valid for cli_config module' % self._play_context.connection}
 

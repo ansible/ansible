@@ -1,0 +1,74 @@
+# Test code for the vmware_dvswitch_pvlans module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+# Testcase 0001: Add Distributed vSwitch
+- name: add distributed vSwitch
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    state: present
+    switch_name: dvswitch_0001
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0001
+
+- debug:
+    var: dvs_result_0001
+
+- name: ensure distributed vswitch is present
+  assert:
+    that:
+        - dvs_result_0001 is changed
+
+- &pv_data
+  name: Configure PVLANs
+  vmware_dvswitch_pvlans:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch: dvswitch_0001
+    primary_pvlans:
+      - primary_pvlan_id: 1
+      - primary_pvlan_id: 4
+    secondary_pvlans:
+      - primary_pvlan_id: 1
+        secondary_pvlan_id: 2
+        pvlan_type: isolated
+      - primary_pvlan_id: 1
+        secondary_pvlan_id: 3
+        pvlan_type: community
+      - primary_pvlan_id: 4
+        secondary_pvlan_id: 5
+        pvlan_type: community
+    validate_certs: no
+  register: pvlans_result
+
+- debug:
+    var: pvlans_result
+
+- name: ensure pvlans were configured
+  assert:
+    that:
+      - pvlans_result is changed
+
+- when: vcsim is not defined
+  block:
+    - <<: *pv_data
+      name: Configure PVLANs in check mode
+      register: pvlans_result_check_mode
+      check_mode: yes
+    - debug:
+        var: pvlans_result_check_mode
+    - name: ensure pvlans were not changed
+      assert:
+        that:
+          - not (pvlans_result_check_mode is changed)

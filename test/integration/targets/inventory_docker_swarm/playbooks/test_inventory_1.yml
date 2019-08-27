@@ -1,0 +1,58 @@
+---
+- hosts: 127.0.0.1
+  connection: local  # otherwise Ansible will complain that it cannot connect via ssh to 127.0.0.1:22
+  gather_facts: no
+  tasks:
+    - name: Show all groups
+      debug:
+        var: groups
+    - name: Make sure docker_swarm groups are there
+      assert:
+        that:
+          - groups.all | length > 0
+          - groups.leader | length == 1
+          - groups.manager | length > 0
+          - groups.worker | length >= 0
+          - groups.nonleaders | length >= 0
+
+- hosts: all
+  connection: local  # otherwise Ansible will complain that it cannot connect via ssh to 127.0.0.1:22
+  vars:
+    # for some reason, Ansible can't find the Python interpreter when connecting to the nodes,
+    # which is in fact just localhost in disguise. That's why we use ansible_playbook_python.
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Check for groups
+      assert:
+        that:
+          - "groups.manager | length > 0"
+          - "groups.worker | length >= 0"
+          - "groups.leader | length == 1"
+      run_once: yes
+
+    - name: List manager group
+      debug:
+        var: groups.manager
+      run_once: yes
+
+    - name: List worker group
+      debug:
+        var: groups.worker
+      run_once: yes
+
+    - name: List leader group
+      debug:
+        var: groups.leader
+      run_once: yes
+
+    - name: Print ansible_host per host
+      debug:
+        var: ansible_host
+
+    - name: Make sure docker_swarm_node_attributes is available
+      assert:
+        that:
+          - docker_swarm_node_attributes is not undefined
+    - name: Print docker_swarm_node_attributes per host
+      debug:
+        var: docker_swarm_node_attributes

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -24,9 +24,13 @@ description:
   - This module will configure both exec and motd banners on remote device
     running Cisco IOS XR. It allows playbooks to add or remove
     banner text from the running configuration.
+requirements:
+    - ncclient >= 0.5.3 when using netconf
+    - lxml >= 4.1.1 when using netconf
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
+  - Tested against IOS XRv 6.1.3.
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 options:
   banner:
     description:
@@ -111,7 +115,7 @@ class ConfigBase(object):
     def map_params_to_obj(self):
         text = self._module.params['text']
         if text:
-            text = "{!r}".format(str(text).strip())
+            text = "{0!r}".format(str(text).strip())
         self._want.update({
             'banner': self._module.params['banner'],
             'text': text,
@@ -128,11 +132,11 @@ class CliConfiguration(ConfigBase):
         state = self._module.params['state']
         if state == 'absent':
             if self._have.get('state') != 'absent' and ('text' in self._have.keys() and self._have['text']):
-                commands.append('no banner {!s}'.format(self._module.params['banner']))
+                commands.append('no banner {0!s}'.format(self._module.params['banner']))
         elif state == 'present':
             if (self._want['text'] and
                     self._want['text'].encode().decode('unicode_escape').strip("'") != self._have.get('text')):
-                banner_cmd = 'banner {!s} '.format(self._module.params['banner'])
+                banner_cmd = 'banner {0!s} '.format(self._module.params['banner'])
                 banner_cmd += self._want['text'].strip()
                 commands.append(banner_cmd)
         self._result['commands'] = commands
@@ -144,7 +148,7 @@ class CliConfiguration(ConfigBase):
             self._result['changed'] = True
 
     def map_config_to_obj(self):
-        cli_filter = 'banner {!s}'.format(self._module.params['banner'])
+        cli_filter = 'banner {0!s}'.format(self._module.params['banner'])
         output = get_config(self._module, config_filter=cli_filter)
         match = re.search(r'banner (\S+) (.*)', output, re.DOTALL)
         if match:
@@ -234,8 +238,9 @@ def main():
 
     config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_banner' is deprecated. Use transport netconf instead",
-                         version="2.9")
+        # Commenting the below cliconf deprecation support call for Ansible 2.9 as it'll be continued to be supported
+        # module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
+        #                  version='2.9')
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)

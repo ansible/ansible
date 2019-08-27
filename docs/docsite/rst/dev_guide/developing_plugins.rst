@@ -5,7 +5,8 @@
 Developing plugins
 ******************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. All plugins must:
 
@@ -19,12 +20,12 @@ Once you've reviewed these general guidelines, you can skip to the particular ty
 Writing plugins in Python
 =========================
 
-You must write your plugin in Python so it can be loaded by the ``PluginLoader`` and returned as a Python object that any module can use. Since your plugin will execute on the controller, you must write it in a :ref:`compatible version of Python <control_machine_requirements>`.
+You must write your plugin in Python so it can be loaded by the ``PluginLoader`` and returned as a Python object that any module can use. Since your plugin will execute on the controller, you must write it in a :ref:`compatible version of Python <control_node_requirements>`.
 
 Raising errors
 ==============
 
-You should return errors encountered during plugin execution by raising ``AnsibleError()`` or a similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_text`` Ansible function to ensure proper string compatibility across Python versions:
+You should return errors encountered during plugin execution by raising ``AnsibleError()`` or a similar class with a message describing the error. When wrapping other exceptions into error messages, you should always use the ``to_native`` Ansible function to ensure proper string compatibility across Python versions:
 
 .. code-block:: python
 
@@ -69,10 +70,120 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
 
 To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
+
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
 Developing particular plugin types
 ==================================
+
+.. _developing_actions:
+
+Action plugins
+--------------
+
+Action plugins let you integrate local processing and local data with module functionality.
+
+To create an action plugin, create a new class with the Base(ActionBase) class as the parent:
+
+.. code-block:: python
+
+    from ansible.plugins.action import ActionBase
+
+    class ActionModule(ActionBase):
+        pass
+
+From there, execute the module using the ``_execute_module`` method to call the original module.
+After successful execution of the module, you can modify the module return data.
+
+.. code-block:: python
+
+    module_return = self._execute_module(module_name='<NAME_OF_MODULE>',
+                                         module_args=module_args,
+                                         task_vars=task_vars, tmp=tmp)
+
+
+For example, if you wanted to check the time difference between your Ansible controller and your target machine(s), you could write an action plugin to check the local time and compare it to the return data from Ansible's ``setup`` module:
+
+.. code-block:: python
+
+    #!/usr/bin/python
+    # Make coding more python3-ish, this is required for contributions to Ansible
+    from __future__ import (absolute_import, division, print_function)
+    __metaclass__ = type
+
+    from ansible.plugins.action import ActionBase
+    from datetime import datetime
+
+
+    class ActionModule(ActionBase):
+        def run(self, tmp=None, task_vars=None):
+            super(ActionModule, self).run(tmp, task_vars)
+            module_args = self._task.args.copy()
+            module_return = self._execute_module(module_name='setup',
+                                                 module_args=module_args,
+                                                 task_vars=task_vars, tmp=tmp)
+            ret = dict()
+            remote_date = None
+            if not module_return.get('failed'):
+                for key, value in module_return['ansible_facts'].items():
+                    if key == 'ansible_date_time':
+                        remote_date = value['iso8601']
+
+            if remote_date:
+                remote_date_obj = datetime.strptime(remote_date, '%Y-%m-%dT%H:%M:%SZ')
+                time_delta = datetime.now() - remote_date_obj
+                ret['delta_seconds'] = time_delta.seconds
+                ret['delta_days'] = time_delta.days
+                ret['delta_microseconds'] = time_delta.microseconds
+
+            return dict(ansible_facts=dict(ret))
+
+
+This code checks the time on the controller, captures the date and time for the remote machine using the ``setup`` module, and calculates the difference between the captured time and
+the local time, returning the time delta in days, seconds and microseconds.
+
+For practical examples of action plugins,
+see the source code for the `action plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/action>`_
+
+.. _developing_cache_plugins:
+
+Cache plugins
+-------------
+
+Cache plugins store gathered facts and data retrieved by inventory plugins.
+
+Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
+
+.. code-block:: python
+
+    from ansible.plugins.loader import cache_loader
+    [...]
+    plugin = cache_loader.get('custom_cache', **cache_kwargs)
+
+There are two base classes for cache plugins, ``BaseCacheModule`` for database-backed caches, and ``BaseCacheFileModule`` for file-backed caches.
+
+To create a cache plugin, start by creating a new ``CacheModule`` class with the appropriate base class. If you're creating a plugin using an ``__init__`` method you should initialize the base class with any provided args and kwargs to be compatible with inventory plugin cache options. The base class calls ``self.set_options(direct=kwargs)``. After the base class ``__init__`` method is called ``self.get_option(<option_name>)`` should be used to access cache options.
+
+New cache plugins should take the options ``_uri``, ``_prefix``, and ``_timeout`` to be consistent with existing cache plugins.
+
+.. code-block:: python
+
+    from ansible.plugins.cache import BaseCacheModule
+
+    class CacheModule(BaseCacheModule):
+        def __init__(self, *args, **kwargs):
+            super(CacheModule, self).__init__(*args, **kwargs)
+            self._connection = self.get_option('_uri')
+            self._prefix = self.get_option('_prefix')
+            self._timeout = self.get_option('_timeout')
+
+If you use the ``BaseCacheModule``, you must implement the methods ``get``, ``contains``, ``keys``, ``set``, ``delete``, ``flush``, and ``copy``. The ``contains`` method should return a boolean that indicates if the key exists and has not expired. Unlike file-based caches, the ``get`` method does not raise a KeyError if the cache has expired.
+
+If you use the ``BaseFileCacheModule``, you must implement ``_load`` and ``_dump`` methods that will be called from the base class methods ``get`` and ``set``.
+
+If your cache plugin stores JSON, use ``AnsibleJSONEncoder`` in the ``_dump`` or ``set`` method  and ``AnsibleJSONDecoder`` in the ``_load`` or ``get`` method.
+
+For example cache plugins, see the source code for the `cache plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/cache>`_.
 
 .. _developing_callbacks:
 
@@ -176,7 +287,7 @@ Connection plugins allow Ansible to connect to the target hosts so it can execut
 
 Ansible version 2.1 introduced the ``smart`` connection plugin. The ``smart`` connection type allows Ansible to automatically select either the ``paramiko`` or ``openssh`` connection plugin based on system capabilities, or the ``ssh`` connection plugin if OpenSSH supports ControlPersist.
 
-To create a new connection plugin (for example, to support SNMP, Message bus, or other transports), copy the format of one of the existing connection plugins and drop it into the ``connection_plugins`` directory.
+To create a new connection plugin (for example, to support SNMP, Message bus, or other transports), copy the format of one of the existing connection plugins and drop it into ``connection`` directory on your :ref:`local plugin path <local_plugins>`.
 
 For example connection plugins, see the source code for the `connection plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_.
 
@@ -220,7 +331,7 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
   __metaclass__ = type
 
   DOCUMENTATION = """
-        lookup: file
+          lookup: file
           author: Daniel Hokka Zakrisson <daniel@hozac.com>
           version_added: "0.9"
           short_description: read file contents
@@ -236,12 +347,9 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
   """
   from ansible.errors import AnsibleError, AnsibleParserError
   from ansible.plugins.lookup import LookupBase
+  from ansible.utils.display import Display
 
-  try:
-      from __main__ import display
-  except ImportError:
-      from ansible.utils.display import Display
-      display = Display()
+  display = Display()
 
 
   class LookupModule(LookupBase):
@@ -345,11 +453,11 @@ For example vars plugins, see the source code for the `vars plugins included wit
 
    :ref:`all_modules`
        List of all modules
-   :doc:`developing_api`
+   :ref:`developing_api`
        Learn about the Python API for task execution
-   :doc:`developing_inventory`
+   :ref:`developing_inventory`
        Learn about how to develop dynamic inventory sources
-   :doc:`developing_modules`
+   :ref:`developing_modules_general`
        Learn about how to write Ansible modules
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list

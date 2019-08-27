@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,16 +23,19 @@ options:
   name:
     description:
       - Specifies the name of the monitor.
+    type: str
     required: True
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(dns)
         parent on the C(Common) partition.
+    type: str
     default: /Common/dns
   description:
     description:
       - The description of the monitor.
+    type: str
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this
@@ -40,6 +43,7 @@ options:
       - This value B(must) be less than the C(timeout) value.
       - When creating a new monitor, if this parameter is not provided, the
         default C(5) will be used.
+    type: int
   up_interval:
     description:
       - Specifies the interval for the system to use to perform the health check
@@ -50,6 +54,7 @@ options:
         use when checking the health of a resource that is up.
       - When creating a new monitor, if this parameter is not provided, the
         default C(0) will be used.
+    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -60,6 +65,7 @@ options:
         interval number of seconds plus 1 second.
       - If this parameter is not provided when creating a new monitor, then the default
         value will be C(16).
+    type: int
   transparent:
     description:
       - Specifies whether the monitor operates in transparent mode.
@@ -82,6 +88,7 @@ options:
       - Specifies the IP address that the monitor uses from the resource record sections
         of the DNS response.
       - The IP address should be specified in the dotted-decimal notation or IPv6 notation.
+    type: str
   time_until_up:
     description:
       - Specifies the amount of time in seconds after the first successful
@@ -90,6 +97,7 @@ options:
         response is received from the node.
       - If this parameter is not provided when creating a new monitor, then the default
         value will be C(0).
+    type: int
   manual_resume:
     description:
       - Specifies whether the system automatically changes the status of a resource
@@ -108,15 +116,18 @@ options:
       - IP address part of the IP/port definition.
       - If this parameter is not provided when creating a new monitor, then the
         default value will be C(*).
+    type: str
   port:
     description:
       - Port address part of the IP/port definition.
       - If this parameter is not provided when creating a new monitor, then the default
         value will be C(*).
       - Note that if specifying an IP address, a value between 1 and 65535 must be specified.
+    type: str
   query_name:
     description:
       - Specifies a query name for the monitor to use in a DNS query.
+    type: str
   query_type:
     description:
       - Specifies the type of DNS query that the monitor sends.
@@ -124,6 +135,7 @@ options:
         value is C(a).
       - When C(a), specifies that the monitor will send a DNS query of type A.
       - When C(aaaa), specifies that the monitor will send a DNS query of type AAAA.
+    type: str
     choices:
       - a
       - aaaa
@@ -137,6 +149,7 @@ options:
       - When C(any-type), specifies that the DNS message should contain at least one answer.
       - When C(anything), specifies that an empty answer is enough to mark the status of
         the node up.
+    type: str
     choices:
       - any-type
       - anything
@@ -152,6 +165,7 @@ options:
         irrespective of the RCODE in the DNS message received.
       - If this parameter is set to C(anything), it will disregard the C(receive)
         string, and nullify it if the monitor is being updated.
+    type: str
     choices:
       - no-error
       - anything
@@ -175,6 +189,7 @@ options:
         latency value you set, the pool member or node is marked down.
       - When C(relative), the percentage of deviation the latency of a monitor probe
         can exceed the mean latency of a monitor probe for the service being probed.
+    type: str
     choices:
       - relative
       - absolute
@@ -182,6 +197,7 @@ options:
     description:
       - When specifying a new monitor, if C(adaptive) is C(yes), and C(type) is
         C(relative), the default is C(25) percent.
+    type: int
   adaptive_limit:
     description:
       - Specifies the absolute number of milliseconds that may not be exceeded by a monitor
@@ -190,24 +206,28 @@ options:
       - This value applies regardless of the value of the C(allowed_divergence) setting.
       - While this value can be configured when C(adaptive) is C(no), it will not take
         effect on the system until C(adaptive) is C(yes).
+    type: int
   sampling_timespan:
     description:
       - Specifies the length, in seconds, of the probe history window that the system
         uses to calculate the mean latency and standard deviation of a monitor probe.
       - While this value can be configured when C(adaptive) is C(no), it will not take
         effect on the system until C(adaptive) is C(yes).
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -223,10 +243,11 @@ EXAMPLES = r'''
     query_type: aaaa
     up_interval: 5
     adaptive: no
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -234,12 +255,12 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: http
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -264,12 +285,12 @@ adaptive:
 accept_rcode:
   description: RCODE required in the response for an up status.
   returned: changed
-  type: string
+  type: str
   sample: no-error
 allowed_divergence_type:
   description: Type of divergence used for adaptive response time monitoring.
   returned: changed
-  type: string
+  type: str
   sample: absolute
 allowed_divergence_value:
   description:
@@ -279,10 +300,10 @@ allowed_divergence_value:
   type: int
   sample: 25
 description:
-    description: The description of the monitor.
-    returned: changed
-    type: str
-    sample: Important Monitor
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important Monitor
 adaptive_limit:
   description: Absolute number of milliseconds that may not be exceeded by a monitor probe.
   returned: changed
@@ -296,14 +317,14 @@ sampling_timespan:
 answer_section_contains:
   description: Type of DNS query that the monitor sends.
   returned: changed
-  type: string
+  type: str
   sample: query-type
 manual_resume:
   description:
     - Whether the system automatically changes the status of a resource to enabled at the
       next successful monitor check.
   returned: changed
-  type: string
+  type: str
   sample: query-type
 up_interval:
   description: Interval for the system to use to perform the health check when a resource is up.
@@ -313,17 +334,17 @@ up_interval:
 query_name:
   description: Query name for the monitor to use in a DNS query.
   returned: changed
-  type: string
+  type: str
   sample: foo
 query_type:
   description: Type of DNS query that the monitor sends. Either C(a) or C(aaaa).
   returned: changed
-  type: string
+  type: str
   sample: aaaa
 receive:
   description: IP address that the monitor uses from the resource record sections of the DNS response.
   returned: changed
-  type: string
+  type: str
   sample: 2.3.2.4
 reverse:
   description: Whether the monitor operates in reverse mode.
@@ -335,7 +356,7 @@ port:
     - Alias port or service for the monitor to check, on behalf of the pools or pool
       members with which the monitor is associated.
   returned: changed
-  type: string
+  type: str
   sample: 80
 transparent:
   description: Whether the monitor operates in transparent mode.
@@ -351,30 +372,26 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from library.module_utils.network.f5.ipaddress import validate_ip_address
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from ansible.module_utils.network.f5.ipaddress import validate_ip_address
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -549,10 +566,22 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def manual_resume(self):
         if self._values['manual_resume'] is None:
@@ -605,35 +634,19 @@ class UsableChanges(Changes):
 class ReportableChanges(Changes):
     @property
     def manual_resume(self):
-        if self._values['manual_resume'] is None:
-            return None
-        elif self._values['manual_resume'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['manual_resume'])
 
     @property
     def reverse(self):
-        if self._values['reverse'] is None:
-            return None
-        elif self._values['reverse'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['reverse'])
 
     @property
     def transparent(self):
-        if self._values['transparent'] is None:
-            return None
-        elif self._values['transparent'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['transparent'])
 
     @property
     def adaptive(self):
-        if self._values['adaptive'] is None:
-            return None
-        elif self._values['adaptive'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['adaptive'])
 
 
 class Difference(object):
@@ -701,11 +714,15 @@ class Difference(object):
         except AttributeError:
             return attr1
 
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -958,7 +975,7 @@ class ArgumentSpec(object):
             receive=dict(),
             ip=dict(),
             description=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             manual_resume=dict(type='bool'),
@@ -998,16 +1015,13 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
     )
-    client = F5RestClient(**module.params)
 
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

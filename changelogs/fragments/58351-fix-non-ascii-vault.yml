@@ -1,0 +1,2 @@
+bugfixes:
+  - vault - Fix traceback using Python2 if a vault contains non-ascii characters (https://github.com/ansible/ansible/issues/58351).
