@@ -138,6 +138,10 @@ class AzureRMAvailabilitySetInfo(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
+        is_old_facts = self.module._name == 'azure_rm_availabilityset_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_availabilityset_facts' module has been renamed to 'azure_rm_availabilityset_info'", version='2.13')
+
         super(AzureRMAvailabilitySetInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,

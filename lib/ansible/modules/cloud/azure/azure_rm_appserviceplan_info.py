@@ -148,6 +148,10 @@ class AzureRMAppServicePlanInfo(AzureRMModuleBase):
         self.tags = None
         self.info_level = None
 
+        is_old_facts = self.module._name == 'azure_rm_appserviceplan_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_appserviceplan_facts' module has been renamed to 'azure_rm_appserviceplan_info'", version='2.13')
+
         super(AzureRMAppServicePlanInfo, self).__init__(self.module_arg_spec,
                                                         supports_tags=False,
                                                         facts_module=True)
