@@ -35,8 +35,9 @@ description:
     - This module was called C(ovirt_group_facts) before Ansible 2.9, returning C(ansible_facts).
       Note that the M(ovirt_group_info) module no longer returns C(ansible_facts)!
 notes:
-    - "This module creates a new top-level C(ovirt_groups) fact, which
-       contains a list of groups."
+    - "This module returns a variable C(ovirt_groups), which
+       contains a list of groups. You need to register the result with
+       the I(register) keyword to use it."
 options:
     pattern:
       description:

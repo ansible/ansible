@@ -35,8 +35,9 @@ description:
     - This module was called C(ovirt_permission_facts) before Ansible 2.9, returning C(ansible_facts).
       Note that the M(ovirt_permission_info) module no longer returns C(ansible_facts)!
 notes:
-    - "This module creates a new top-level C(ovirt_permissions) fact, which
-       contains a list of permissions."
+    - "This module returns a variable C(ovirt_permissions), which
+       contains a list of permissions. You need to register the result with
+       the I(register) keyword to use it."
 options:
     user_name:
         description:

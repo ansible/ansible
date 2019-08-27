@@ -21,8 +21,9 @@ description:
     - This module was called C(ovirt_snapshot_facts) before Ansible 2.9, returning C(ansible_facts).
       Note that the M(ovirt_snapshot_info) module no longer returns C(ansible_facts)!
 notes:
-    - "This module creates a new top-level C(ovirt_snapshots) fact, which
-       contains a list of snapshots."
+    - "This module returns a variable C(ovirt_snapshots), which
+       contains a list of snapshots. You need to register the result with
+       the I(register) keyword to use it."
 options:
     vm:
         description:

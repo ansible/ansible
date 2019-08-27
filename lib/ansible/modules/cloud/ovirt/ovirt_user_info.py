@@ -35,8 +35,9 @@ description:
     - This module was called C(ovirt_user_facts) before Ansible 2.9, returning C(ansible_facts).
       Note that the M(ovirt_user_info) module no longer returns C(ansible_facts)!
 notes:
-    - "This module creates a new top-level C(ovirt_users) fact, which
-       contains a list of users."
+    - "This module returns a variable C(ovirt_users), which
+       contains a list of users. You need to register the result with
+       the I(register) keyword to use it."
 options:
     pattern:
       description:

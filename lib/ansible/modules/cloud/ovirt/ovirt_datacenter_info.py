@@ -20,8 +20,9 @@ description:
     - This module was called C(ovirt_datacenter_facts) before Ansible 2.9, returning C(ansible_facts).
       Note that the M(ovirt_datacenter_info) module no longer returns C(ansible_facts)!
 notes:
-    - "This module creates a new top-level C(ovirt_datacenters) fact, which
-       contains a list of datacenters."
+    - "This module returns a variable C(ovirt_datacenters), which
+       contains a list of datacenters. You need to register the result with
+       the I(register) keyword to use it."
 options:
     pattern:
       description:
