@@ -159,9 +159,11 @@ class ImportTest(SanityMultipleVersion):
 
             results = parse_to_list_of_dict(pattern, ex.stdout)
 
+            relative_temp_root = os.path.relpath(temp_root, data_context().content.root) + os.path.sep
+
             results = [SanityMessage(
                 message=r['message'],
-                path=r['path'],
+                path=os.path.relpath(r['path'], relative_temp_root) if r['path'].startswith(relative_temp_root) else r['path'],
                 line=int(r['line']),
                 column=int(r['column']),
             ) for r in results]
