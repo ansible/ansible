@@ -7,6 +7,8 @@ import os
 import re
 import time
 
+from . import types as t
+
 from xml.etree.ElementTree import (
     Comment,
     Element,
@@ -34,7 +36,7 @@ from .util import (
 )
 
 from .util_common import (
-    run_command,
+    intercept_command,
     ResultType,
 )
 
@@ -76,7 +78,7 @@ def _command_coverage_combine_python(args):
     """
     coverage = initialize_coverage(args)
 
-    modules = dict((t.module, t.path) for t in list(walk_module_targets()) if t.path.endswith('.py'))
+    modules = dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
     coverage_dir = ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
@@ -324,9 +326,7 @@ def command_coverage_report(args):
             if args.omit:
                 options.extend(['--omit', args.omit])
 
-            env = common_environment()
-            env.update(dict(COVERAGE_FILE=output_file))
-            run_command(args, env=env, cmd=['coverage', 'report', '--rcfile', COVERAGE_CONFIG_PATH] + options)
+            run_coverage(args, output_file, 'report', options)
 
 
 def command_coverage_html(args):
@@ -342,9 +342,7 @@ def command_coverage_html(args):
             continue
 
         dir_name = os.path.join(ResultType.REPORTS.path, os.path.basename(output_file))
-        env = common_environment()
-        env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'html', '--rcfile', COVERAGE_CONFIG_PATH, '-i', '-d', dir_name])
+        run_coverage(args, output_file, 'html', ['-i', '-d', dir_name])
 
 
 def command_coverage_xml(args):
@@ -365,9 +363,7 @@ def command_coverage_xml(args):
             with open(xml_name, 'w') as xml_fd:
                 xml_fd.write(pretty)
         else:
-            env = common_environment()
-            env.update(dict(COVERAGE_FILE=output_file))
-            run_command(args, env=env, cmd=['coverage', 'xml', '--rcfile', COVERAGE_CONFIG_PATH, '-i', '-o', xml_name])
+            run_coverage(args, output_file, 'xml', ['-i', '-o', xml_name])
 
 
 def command_coverage_erase(args):
@@ -758,3 +754,13 @@ def _generate_powershell_output_report(args, coverage_file):
 
     report = '{0}\n{1}\n{2}\n{1}\n{3}'.format(header, line_break, "\n".join(lines), totals)
     return report
+
+
+def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str, str, t.List[str]) -> None
+    """Run the coverage cli tool with the specified options."""
+    env = common_environment()
+    env.update(dict(COVERAGE_FILE=output_file))
+
+    cmd = ['python', '-m', 'coverage', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
+
+    intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
