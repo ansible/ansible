@@ -95,6 +95,8 @@ class IncludedFile:
                         task_vars[index_var] = special_vars[index_var] = include_result[index_var]
                     if '_ansible_item_label' in include_result:
                         task_vars['_ansible_item_label'] = special_vars['_ansible_item_label'] = include_result['_ansible_item_label']
+                    if 'ansible_loop' in include_result:
+                        task_vars['ansible_loop'] = special_vars['ansible_loop'] = include_result['ansible_loop']
                     if original_task.no_log and '_ansible_no_log' not in include_args:
                         task_vars['_ansible_no_log'] = special_vars['_ansible_no_log'] = original_task.no_log
 
