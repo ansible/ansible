@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_autoscale_facts
-version_added: "2.7"
+module: azure_rm_autoscale_info
+version_added: "2.9"
 short_description: Get Azure Auto Scale Setting facts
 description:
     - Get facts of Auto Scale Setting.
@@ -43,12 +43,12 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of Auto Scale Setting
-    azure_rm_autoscale_facts:
+    azure_rm_autoscale_info:
       resource_group: myResourceGroup
       name: auto_scale_name
 
   - name: List instances of Auto Scale Setting
-    azure_rm_autoscale_facts:
+    azure_rm_autoscale_info:
       resource_group: myResourceGroup
 '''
 
@@ -114,6 +114,7 @@ autoscales:
 
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils._text import to_native
 
@@ -206,7 +207,7 @@ def notification_to_dict(notification):
                 webhooks=[to_native(w.service_url) for w in notification.webhooks or []])
 
 
-class AzureRMAutoScaleFacts(AzureRMModuleBase):
+class AzureRMAutoScaleInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -226,7 +227,13 @@ class AzureRMAutoScaleFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMAutoScaleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+
+        module = AnsibleModule(self.module_arg_spec)
+        is_old_facts = module._name == 'azure_rm_autoscale_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_autoscale_facts' module has been renamed to 'azure_rm_autoscale_info'", version='2.13')
+
+        super(AzureRMAutoScaleInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in list(self.module_arg_spec):
@@ -258,7 +265,7 @@ class AzureRMAutoScaleFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMAutoScaleFacts()
+    AzureRMAutoScaleInfo()
 
 
 if __name__ == '__main__':
