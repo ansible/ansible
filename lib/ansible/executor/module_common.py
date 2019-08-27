@@ -421,11 +421,23 @@ CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.py$' % site
 COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.py$')
 
 # Detect new-style Python modules by looking for required imports:
-# from ansible.module_utils.
-# from ..module_utils.
-# from ansible_collections.
-# import ansible_collections.
-NEW_STYLE_PYTHON_MODULE_RE = re.compile(br'from (?:ansible|\.+)\.module_utils\.|(?:from|import) ansible_collections\.')
+# import ansible_collections.[my_ns.my_col.plugins.module_utils.my_module_util]
+# from ansible_collections.[my_ns.my_col.plugins.module_utils import my_module_util]
+# import ansible.module_utils[.basic]
+# from ansible.module_utils[ import basic]
+# from ansible.module_utils[.basic import AnsibleModule]
+# from ..module_utils[ import basic]
+# from ..module_utils[.basic import AnsibleModule]
+NEW_STYLE_PYTHON_MODULE_RE = re.compile(
+    # Relative imports
+    br'(?:from +\.{2,} *module_utils.* +import |'
+    # Collection absolute imports:
+    br'from +ansible_collections\.[^.]+\.[^.]+\.plugins\.module_utils.* +import |'
+    br'import +ansible_collections\.[^.]+\.[^.]+\.plugins\.module_utils.*|'
+    # Core absolute imports
+    br'from +ansible\.module_utils.* +import |'
+    br'import +ansible\.module_utils\.)'
+)
 
 
 class ModuleDepFinder(ast.NodeVisitor):
