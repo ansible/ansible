@@ -453,6 +453,9 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
   To access return values, :ref:`register a variable <registered_variables>`.
 * The ``redshift_facts`` module was renamed to :ref:`redshift_info <redshift_info_module>`.
 * The ``route53_facts`` module was renamed to :ref:`route53_info <route53_info_module>`.
+* The ``smartos_image_facts`` module was renamed to :ref:`smartos_image_info <ali_instance_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``vertica_facts`` module was renamed to :ref:`vertica_info <vertica_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
