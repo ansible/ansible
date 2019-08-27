@@ -84,14 +84,12 @@ EXAMPLES = """
 - name: show-group
   cp_mgmt_group_facts:
     name: Demo_Group
-    show_as_ranges: 'true'
 
 - name: show-groups
   cp_mgmt_group_facts:
-    details_level: full
+    details_level: standard
     limit: 50
     offset: 0
-    show_as_ranges: 'true'
 """
 
 RETURN = """

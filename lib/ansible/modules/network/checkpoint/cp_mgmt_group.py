@@ -83,15 +83,18 @@ extends_documentation_fragment: checkpoint_objects
 EXAMPLES = """
 - name: add-group
   cp_mgmt_group:
-    members: New Host 1
-    name: New Group 1
+    members:
+    - New Host 1
+    - My Test Host 3
+    name: New Group 5
+    state: present
 
 - name: set-group
   cp_mgmt_group:
-    groups: New Group 2
     members:
       add: New Host 2
     name: New Group 1
+    state: present
 
 - name: delete-group
   cp_mgmt_group:
