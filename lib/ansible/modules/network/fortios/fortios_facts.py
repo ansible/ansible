@@ -86,23 +86,19 @@ options:
               system_fortimanager_status, system_ha-checksums_select,
               system_interface_select, system_status_select and system_time_select
         type: list
+        elements: dict
         required: true
-    system_interface_select:
-        description:
-            - When supplied, this argument will filter the system interface facts
-              gathering, you can specify 
-        type: dict
-        required: false
-        options:
-            interface_name:
+        suboptions:
+            fact:
                 description:
-                    - interface name
+                    - Name of the facts to gather
                 type: str
-                required: false
-            include_vlan:
+                required: true
+            filters:
                 description:
-                    - include vlan
-                type: bool
+                    - Filters apply when gathering facts
+                type: list
+                elements: dict
                 required: false
 '''
 
@@ -116,17 +112,46 @@ EXAMPLES = '''
     ssl_verify: "False"
 
   tasks:
-  - name: gather system status and system interface facts (including vlan interfaces)
+  - name: gather basic system status facts
     fortios_facts:
       host:  "{{ host }}"
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       gather_subset:
-        - 'system_interface_select'
-        - 'system_status_select'
-      system_interface_select:
-        include_vlan: true
+        - fact: 'system_status_select'
+
+  - name: gather all pysical interfaces status facts
+    fortios_facts:
+      host:  "{{ host }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      vdom:  "{{ vdom }}"
+      gather_subset:
+        - fact: 'system_interface_select'
+
+  - name: gather gather all pysical and vlan interfaces status facts
+    fortios_facts:
+      host:  "{{ host }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      vdom:  "{{ vdom }}"
+      gather_subset:
+        - fact: 'system_interface_select'
+          filters:
+            - include_vlan: true
+
+  - name: gather basic system info and physical interface port3 status facts
+    fortios_facts:
+      host:  "{{ host }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      vdom:  "{{ vdom }}"
+      gather_subset:
+        - fact: 'system_status_select'
+        - fact: 'system_interface_select'
+          filters:
+            - interface_name: 'port3'
 '''
 
 RETURN = '''
@@ -187,7 +212,6 @@ from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.fortios.fortios import FortiOSHandler
 from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 from ansible.module_utils.network.fortios.argspec.facts.facts import FactsArgs
-from ansible.module_utils.network.fortios.argspec.system.system import SystemArgs
 from ansible.module_utils.network.fortios.facts.facts import Facts
 
 
@@ -210,7 +234,6 @@ def main():
     """ Main entry point for AnsibleModule
     """
     argument_spec = FactsArgs.argument_spec
-    argument_spec.update(SystemArgs.system_interface_select_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)

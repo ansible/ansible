@@ -1,4 +1,3 @@
-#!/usr/bin/python
 from __future__ import (absolute_import, division, print_function)
 # Copyright 2019 Fortinet, Inc.
 #
@@ -21,16 +20,6 @@ __metaclass__ = type
 The arg spec for the fortios monitor module.
 """
 
-CHOICES = [
-    'system_current-admins_select',
-    'system_firmware_select',
-    'system_fortimanager_status',
-    'system_ha-checksums_select',
-    'system_interface_select',
-    'system_status_select',
-    'system_time_select',
-]
-
 
 class FactsArgs(object):
     """ The arg spec for the fortios monitor module
@@ -40,11 +29,17 @@ class FactsArgs(object):
         pass
 
     argument_spec = {
-        "host": dict(required=False, type='str'),
-        "username": dict(required=False, type='str'),
-        "password": dict(required=False, type='str', no_log=True),
-        "vdom": dict(required=False, type='str', default="root"),
-        "https": dict(required=False, type='bool', default=True),
-        "ssl_verify": dict(required=False, type='bool', default=False),
-        'gather_subset': dict(requires=True, type='list', choices=CHOICES),
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "no_log": True},
+        "vdom": {"required": False, "type": "str", "default": "root"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": False},
+        "gather_subset": {
+            "required": True, "type": "list", "elements": "dict",
+            "options": {
+                "fact": {"required": True, "type": "str"},
+                "filters": {"required": False, "type": "list", "elements": "dict"}
+            }
+        }
     }
