@@ -324,18 +324,12 @@ def delegate_docker(args, exclude, require, integration_targets):
             # also disconnect from the network once requirements have been installed
             if isinstance(args, UnitsConfig):
                 writable_dirs = [
+                    os.path.join(content_root, ResultType.JUNIT.relative_path),
+                    os.path.join(content_root, ResultType.COVERAGE.relative_path),
                 ]
-
-                if content_root != install_root:
-                    writable_dirs.append(os.path.join(content_root, ResultType.JUNIT.relative_path))
-                    writable_dirs.append(os.path.join(content_root, ResultType.COVERAGE.relative_path))
 
                 docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
                 docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)
-
-                if content_root == install_root:
-                    docker_exec(args, test_id, ['find', remote_results_root, '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
-
                 docker_exec(args, test_id, ['chmod', '755', '/root'])
                 docker_exec(args, test_id, ['chmod', '644', os.path.join(content_root, args.metadata_path)])
 
