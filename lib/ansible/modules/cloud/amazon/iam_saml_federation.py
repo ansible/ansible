@@ -228,12 +228,10 @@ class SAMLProviderManager:
 
 
 def main():
-    argument_spec = aws_common_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         saml_metadata_document=dict(default=None, required=False),
         state=dict(default='present', required=False, choices=['present', 'absent']),
-    )
     )
 
     module = AnsibleAWSModule(
