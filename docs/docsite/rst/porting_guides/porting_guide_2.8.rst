@@ -88,8 +88,8 @@ based on a variable you define **as a string** (with quotation marks around it):
 
 Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option. In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
 
-Bare variables: updating your playbooks
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Updating your playbooks
+^^^^^^^^^^^^^^^^^^^^^^^
 
 To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``::
 
@@ -125,10 +125,10 @@ For dictionaries and lists, use the ``length`` filter to evaluate the presence o
 
 Do not use the ``bool`` filter with lists or dictionaries. If you use ``bool`` with a list or dict, Ansible will always evaluate it as ``False``.
 
-Bare variables and double-interpolation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Double-interpolation
+^^^^^^^^^^^^^^^^^^^^
 
-The bare variables setting also affects variables set based on other variables. The old behavior unexpectedly double-interpolated those variables. For example::
+The ``conditional_bare_variables`` setting also affects variables set based on other variables. The old behavior unexpectedly double-interpolated those variables. For example::
 
     vars:
       double_interpolated: 'bare_variable'
@@ -147,10 +147,10 @@ To double-interpolate variable values, use curly braces::
             double_interpolated: "{{ other_variable }}"
             other_variable: false
 
-Bare variables and nested variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Nested variables
+^^^^^^^^^^^^^^^^
 
-The bare variables setting does not affect nested variables. Subkey strings are already respected and not treated as booleans: ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey to be evaluated as a boolean you must use the ``bool`` filter.
+The ``conditional_bare_variables`` setting does not affect nested variables. Subkey strings are already respected and not treated as booleans: ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey to be evaluated as a boolean you must use the ``bool`` filter.
 
 Python Interpreter Discovery
 ============================
