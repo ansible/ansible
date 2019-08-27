@@ -612,6 +612,7 @@ def main():
         module.fail_json(msg='Invalid region. Regions must be one of {0}'.format(ntt_mcp_regions))
 
     # Check port input value
+<<<<<<< HEAD
     if state == 'present':
         if module.params.get('port') not in range(1, 65535):
             module.fail_json(msg='port must be between 1 and 65535')
@@ -620,6 +621,15 @@ def main():
             module.fail_json(msg='connection_limit must be between 1 and 100000')
         if module.params.get('connection_rate_limit') not in range(1, 4001):
             module.fail_json(msg='connection_rate_limit must be between 1 and 4000')
+=======
+    if module.params.get('port') not in range(1, 65535):
+        module.fail_json(msg='port must be between 1 and 65535')
+    # Check connection input values
+    if module.params.get('connection_limit') not in range(1, 100001):
+        module.fail_json(msg='connection_limit must be between 1 and 100000')
+    if module.params.get('connection_rate_limit') not in range(1, 4001):
+        module.fail_json(msg='connection_rate_limit must be between 1 and 4000')
+>>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
 
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')

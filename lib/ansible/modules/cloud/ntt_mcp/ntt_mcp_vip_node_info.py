@@ -224,8 +224,14 @@ def get_vip_node(module, client, node_id):
         module.fail_json(msg='A value for id is required')
     try:
         result = client.get_vip_node(node_id)
+<<<<<<< HEAD
         if result:
             return_data['node'].append(result)
+=======
+        if result is None:
+            module.fail_json(msg='Could not find the Node for {0}'.format(node_id))
+        return_data['node'].append(result)
+>>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
     except NTTMCPAPIException as exc:
         module.fail_json(msg='Could not get the Node - {0}'.format(exc))
 

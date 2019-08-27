@@ -9,8 +9,13 @@
       network_domain: myCND
       name: myNode2
       description: "My Node 2"
+<<<<<<< HEAD
       ip_address: 2607:f480:211:1198:6094:3a51:43b3:4a2f
       health_monitor: CCDEFAULT.Icmp
+=======
+      ip_address: "2607:f480:211:1277:7987:dc35:2824:d6ea"
+      health_monitor: "CCDEFAULT.Icmp"
+>>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       status: DISABLED
       connection_limit: 50000
       connection_rate_limit: 2000
@@ -31,8 +36,13 @@
       network_domain: myCND
       name: myNode1
       description: "My Node 1"
+<<<<<<< HEAD
       ip_address: 10.1.77.6
       health_monitor: CCDEFAULT.Icmp
+=======
+      ip_address: "10.1.77.6"
+      health_monitor: "CCDEFAULT.Icmp"
+>>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       connection_limit: 40000
       connection_rate_limit: 3000
       state: present
@@ -52,8 +62,13 @@
       network_domain: myCND
       name: myNode1
       description: "My Node 1"
+<<<<<<< HEAD
       ip_address: 10.1.77.6
       health_monitor: CCDEFAULT.Icmp
+=======
+      ip_address: "10.1.77.6"
+      health_monitor: "CCDEFAULT.Icmp"
+>>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       connection_limit: 40000
       connection_rate_limit: 3000
       state: present
@@ -73,8 +88,13 @@
       network_domain: myCND
       name: myNode_invalid
       description: "My invalid Node"
+<<<<<<< HEAD
       ip_address: 10.1.77.6
       health_monitor: CCDEFAULT.Icmp
+=======
+      ip_address: "10.1.77.6"
+      health_monitor: "CCDEFAULT.Icmp"
+>>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       connection_limit: 400000
       connection_rate_limit: 30000
       state: present
