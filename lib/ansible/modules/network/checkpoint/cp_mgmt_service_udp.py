@@ -157,11 +157,11 @@ EXAMPLES = """
       timeout: 360
       use_default_timeout: false
     keep_connections_open_after_policy_installation: false
-    match_by_protocol_signature: true
     match_for_any: true
     name: New_UDP_Service_1
-    protocol: tftp
+    port: 5669
     session_timeout: 0
+    state: present
     sync_connections_on_cluster: true
 
 - name: set-service-udp
@@ -173,6 +173,7 @@ EXAMPLES = """
     name: New_UDP_Service_1
     new_name: New_UDP_Service_4
     port: 5656
+    state: present
 
 - name: delete-service-udp
   cp_mgmt_service_udp:
