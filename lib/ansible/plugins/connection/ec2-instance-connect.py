@@ -21,7 +21,7 @@ DOCUMENTATION = '''
       remote_user:
           description: Instance username to authenticate as.
           type: string
-          default: ubuntu
+          default: ec2-user
       availability_zone:
           description: AWS Availability Zone the instance is deployed in.
           type: string
