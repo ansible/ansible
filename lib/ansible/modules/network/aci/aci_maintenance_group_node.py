@@ -198,13 +198,13 @@ def main():
         root_class=dict(
             aci_class='maintMaintGrp',
             aci_rn='fabric/maintgrp-{0}'.format(group),
-            filter_target='eq(maintMaintGrp.name, "{0}")'.format(group),
+            target_filter={'name': group},
             module_object=group,
         ),
         subclass_1=dict(
             aci_class='fabricNodeBlk',
             aci_rn='nodeblk-blk{0}-{0}'.format(node),
-            filter_target='eq(fabricNodeBlk.name, "blk{0}-{0}")'.format(node),
+            target_filter={'name': 'blk{0}-{0}'.format(node)},
             module_object=node,
         ),
     )
