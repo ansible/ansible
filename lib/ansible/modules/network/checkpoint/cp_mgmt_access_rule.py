@@ -68,7 +68,7 @@ options:
   content:
     description:
       - List of processed file types that this rule applies on.
-    type: dict
+    type: list
   content_direction:
     description:
       - On which direction the file types processing is applied.
@@ -273,7 +273,7 @@ def main():
             enable_identity_captive_portal=dict(type='bool'),
             limit=dict(type='str')
         )),
-        content=dict(type='dict'),
+        content=dict(type='list'),
         content_direction=dict(type='str', choices=['any', 'up', 'down']),
         content_negate=dict(type='bool'),
         custom_fields=dict(type='list', options=dict(
