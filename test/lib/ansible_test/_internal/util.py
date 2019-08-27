@@ -282,9 +282,28 @@ def find_python(version, path=None, required=True):
     return python_bin
 
 
-def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Tuple[str, ...]
-    """Return a tuple indicating which of the requested Python versions are available."""
-    return tuple(python_version for python_version in versions if find_python(python_version, required=False))
+def get_ansible_version():  # type: () -> str
+    """Return the Ansible version."""
+    try:
+        return get_ansible_version.version
+    except AttributeError:
+        pass
+
+    # ansible may not be in our sys.path
+    # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
+    load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
+
+    # noinspection PyUnresolvedReferences
+    from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
+
+    get_ansible_version.version = ansible_version
+
+    return ansible_version
+
+
+def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Dict[str, str]
+    """Return a dictionary indicating which of the requested Python versions are available."""
+    return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in versions) if path)
 
 
 def generate_pip_command(python):

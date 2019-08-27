@@ -1,0 +1,183 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create an IPv4 address list
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      version: IPV4
+      name: myIpAddressList
+      ip_addresses:
+        - begin: "10.0.7.10"
+        - begin: "10.1.7.0"
+          end: "10.1.7.128"
+      state: present
+    register: ip
+    tags:
+      - create_ipv4
+
+  - debug:
+      var: ip
+    tags:
+      - create_ipv4
+
+  - name: Create a duplicate IPv4 address list
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      version: IPV4
+      name: myIpAddressList
+      ip_addresses:
+        - begin: "10.0.7.10"
+        - begin: "10.1.7.0"
+          end: "10.1.7.128"
+      state: present
+    register: ip
+    tags:
+      - create_duplicate
+
+  - debug:
+      var: ip
+    tags:
+      - create_duplicate
+
+  - name: Create an invalid address list
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      version: IPV4
+      name: myIpAddressList_invalid
+      ip_addresses:
+        - begin: "10.0.7.zz"
+        - begin: "10.1.7.0"
+          end: "10.1.7.128"
+      state: present
+    register: ip
+    tags:
+      - create_invalid
+
+  - debug:
+      var: ip
+    tags:
+      - create_invalid
+
+  - name: Create an IP address list with a child IP address list
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      version: IPV4
+      name: myIpAddressList2
+      ip_addresses:
+        - begin: "10.0.8.10"
+        - begin: "10.1.8.0"
+          prefix: 24
+      child_ip_lists:
+        - myIpAddressList
+      state: present
+    register: ip
+    tags:
+      - create_with_child
+
+  - debug:
+      var: ip
+    tags:
+      - create_with_child
+
+  - name: Create an IPv6 address list
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      version: IPV6
+      name: myIpAddressList3
+      ip_addresses:
+        - begin: "fc00::01"
+        - begin: "fc01::00"
+          prefix: "64"
+        - begin: "fc02::01"
+          end: "fc02::10"
+      state: present
+    register: ip
+    tags:
+      - create_ipv6
+
+  - debug:
+      var: ip
+    tags:
+      - create_ipv6
+
+  - name: Update IP address list (myIpAddressList2)
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      version: IPV4
+      name: myIpAddressList2
+      ip_addresses:
+        - begin: "10.0.0.177"
+          end: "10.0.0.179"
+        - begin: "10.1.8.0"
+          prefix: 24
+      child_ip_lists_nil: True
+      state: present
+    register: ip
+    tags:
+      - update
+
+  - debug:
+      var: ip
+    tags:
+      - update
+
+  - name: Delete an IPv4 address list (myIpAddressList2)
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myIpAddressList2
+      state: absent
+    register: ip
+    tags:
+      - delete_myIpAddressList2
+
+  - debug:
+      var: ip
+    tags:
+      - delete_myIpAddressList2
+
+  - name: Delete an IPv6 address list (myIpAddressList3)
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myIpAddressList3
+      state: absent
+    register: ip
+    tags:
+      - delete_myIpAddressList3
+
+  - debug:
+      var: ip
+    tags:
+      - delete_myIpAddressList3
+
+  - name: Delete a non-existent IP address list
+    ntt_mcp_ip_list:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+      state: absent
+    register: ip
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: ip
+    tags:
+      - delete_noexist

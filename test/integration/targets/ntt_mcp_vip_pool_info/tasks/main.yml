@@ -1,0 +1,62 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all VIP pools
+    ntt_mcp_vip_pool_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: pool
+    tags:
+      - list
+
+  - debug:
+      var: pool
+    tags:
+      - list
+
+  - name: Get a specific VIP pool by name
+    ntt_mcp_vip_pool_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool1
+    register: pool
+    tags:
+      - get_by_name
+
+  - debug:
+      var: pool
+    tags:
+      - get_by_name
+
+  - name: Get a specific VIP pool by id
+    ntt_mcp_vip_pool_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: 1a28e0c1-a687-411a-b7ff-0073446a8daf
+    register: pool
+    tags:
+      - get_by_id
+
+  - debug:
+      var: pool
+    tags:
+      - get_by_id
+
+  - name: Get a non-existent VIP Pool
+    ntt_mcp_vip_pool_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+    register: pool
+    tags:
+      - get_noexist
+
+  - debug:
+      var: pool
+    tags:
+      - get_noexist

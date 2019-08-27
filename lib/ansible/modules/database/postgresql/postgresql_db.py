@@ -107,6 +107,22 @@ options:
         explicitly set this to pg_default.
     type: path
     version_added: '2.9'
+seealso:
+- name: CREATE DATABASE reference
+  description: Complete reference of the CREATE DATABASE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createdatabase.html
+- name: DROP DATABASE reference
+  description: Complete reference of the DROP DATABASE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-dropdatabase.html
+- name: pg_dump reference
+  description: Complete reference of pg_dump documentation.
+  link: https://www.postgresql.org/docs/current/app-pgdump.html
+- name: pg_restore reference
+  description: Complete reference of pg_restore documentation.
+  link: https://www.postgresql.org/docs/current/app-pgrestore.html
+- module: postgresql_tablespace
+- module: postgresql_info
+- module: postgresql_ping
 notes:
 - State C(dump) and C(restore) don't require I(psycopg2) since version 2.8.
 author: "Ansible Core Team"

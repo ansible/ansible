@@ -18,15 +18,12 @@ DOCUMENTATION = r'''
 module: postgresql_membership
 short_description: Add or remove PostgreSQL roles from groups
 description:
-- Adds or removes PostgreSQL roles from groups (other roles)
-  U(https://www.postgresql.org/docs/current/role-membership.html).
-- Users are roles with login privilege (see U(https://www.postgresql.org/docs/current/role-attributes.html) for more information).
+- Adds or removes PostgreSQL roles from groups (other roles).
+- Users are roles with login privilege.
 - Groups are PostgreSQL roles usually without LOGIN privelege.
 - "Common use case:"
-- 1) add a new group (groups) by M(postgresql_user) module
-  U(https://docs.ansible.com/ansible/latest/modules/postgresql_user_module.html) with I(role_attr_flags=NOLOGIN)
+- 1) add a new group (groups) by M(postgresql_user) module with I(role_attr_flags=NOLOGIN)
 - 2) grant them desired privileges by M(postgresql_privs) module
-  U(https://docs.ansible.com/ansible/latest/modules/postgresql_privs_module.html)
 - 3) add desired PostgreSQL users to the new group (groups) by this module
 version_added: '2.8'
 options:
@@ -74,6 +71,16 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
+seealso:
+- module: postgresql_user
+- module: postgresql_privs
+- module: postgresql_owner
+- name: PostgreSQL role membership reference
+  description: Complete reference of the PostgreSQL role membership documentation.
+  link: https://www.postgresql.org/docs/current/role-membership.html
+- name: PostgreSQL role attributes reference
+  description: Complete reference of the PostgreSQL role attributes documentation.
+  link: https://www.postgresql.org/docs/current/role-attributes.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres

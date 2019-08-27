@@ -772,6 +772,8 @@ groupings:
   - os
   os_flavor_facts:
   - os
+  os_flavor_info:
+  - os
   os_floating_ip:
   - os
   os_group:
@@ -779,6 +781,8 @@ groupings:
   os_image:
   - os
   os_image_facts:
+  - os
+  os_image_info:
   - os
   os_ironic:
   - os
@@ -791,6 +795,8 @@ groupings:
   os_keystone_domain:
   - os
   os_keystone_domain_facts:
+  - os
+  os_keystone_domain_info:
   - os
   os_keystone_endpoint:
   - os
@@ -808,6 +814,8 @@ groupings:
   - os
   os_networks_facts:
   - os
+  os_networks_info:
+  - os
   os_nova_flavor:
   - os
   os_nova_host_aggregate:
@@ -820,11 +828,15 @@ groupings:
   - os
   os_port_facts:
   - os
+  os_port_info:
+  - os
   os_project:
   - os
   os_project_access:
   - os
   os_project_facts:
+  - os
+  os_project_info:
   - os
   os_quota:
   - os
@@ -842,6 +854,8 @@ groupings:
   - os
   os_server_facts:
   - os
+  os_server_info:
+  - os
   os_server_group:
   - os
   os_server_metadata:
@@ -854,9 +868,13 @@ groupings:
   - os
   os_subnets_facts:
   - os
+  os_subnets_info:
+  - os
   os_user:
   - os
   os_user_facts:
+  - os
+  os_user_info:
   - os
   os_user_group:
   - os

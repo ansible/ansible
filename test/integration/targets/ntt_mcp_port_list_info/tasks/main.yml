@@ -1,0 +1,47 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all port lists
+    ntt_mcp_port_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: port
+    tags:
+      - list
+
+  - debug:
+      var: port
+    tags:
+      - list
+
+  - name: Get a specific port list
+    ntt_mcp_port_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPortList
+    register: port
+    tags:
+      - get
+
+  - debug:
+      var: port
+    tags:
+      - get
+
+  - name: Get a non-existent port list
+    ntt_mcp_port_list_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+    register: port
+    tags:
+      - get_noexist
+
+  - debug:
+      var: port
+    tags:
+      - get_noexist

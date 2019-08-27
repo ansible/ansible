@@ -382,7 +382,7 @@ def params_to_launch_data(module, template_params):
                     in template_params['tags'].items()
                 ]
             }
-            for r_type in ('instance', 'network-interface', 'volume')
+            for r_type in ('instance', 'volume')
         ]
         del template_params['tags']
     if module.params.get('iam_instance_profile'):

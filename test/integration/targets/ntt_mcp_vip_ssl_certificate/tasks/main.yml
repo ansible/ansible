@@ -1,0 +1,192 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Import a certificate
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_cert_1
+      description: "my ssl cert"
+      type: certificate
+      path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab.local.cert.pem"
+      key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab.local.key.pem"
+      state: present
+    register: ssl
+    tags:
+      - import_cert
+
+  - debug:
+      var: ssl
+    tags:
+      - import_cert
+
+  - name: Import a certificate for SSL Offload Profile testing
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_existing_cert
+      description: "my existing ssl cert"
+      type: certificate
+      path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab.local.cert.pem"
+      key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab.local.key.pem"
+      state: present
+    register: ssl
+    tags:
+      - import_cert_existing
+
+  - debug:
+      var: ssl
+    tags:
+      - import_cert_existing
+
+  - name: Import a duplicate certificate
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_cert_1
+      description: "my ssl cert"
+      type: certificate
+      path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab.local.cert.pem"
+      key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab.local.key.pem"
+      state: present
+    register: ssl
+    tags:
+      - import_duplicate_cert
+
+  - debug:
+      var: ssl
+    tags:
+      - import_duplicate_cert
+
+  - name: Import an invalid certificate
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_cert_invalid
+      description: "my invalid_ssl cert"
+      type: certificate
+      path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab.local.cert.invalid.pem"
+      key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab.local.key.pem"
+      state: present
+    register: ssl
+    tags:
+      - import_invalid
+
+  - debug:
+      var: ssl
+    tags:
+      - import_invalid
+
+  - name: Import a certificate chain
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_chain_1
+      description: "my ssl chain"
+      type: chain
+      path: "/Users/kenneth/dev/ca/intermediate/certs/ca-chain.cert.pem"
+      state: present
+    register: ssl
+    tags:
+      - import_chain
+
+  - debug:
+      var: ssl
+    tags:
+      - import_chain
+
+  - name: Import a certificate chain for SSL Offload Profile testing
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_existing_chain
+      description: "my existingssl chain"
+      type: chain
+      path: "/Users/kenneth/dev/ca/intermediate/certs/ca-chain.cert.pem"
+      state: present
+    register: ssl
+    tags:
+      - import_chain_existing
+
+  - debug:
+      var: ssl
+    tags:
+      - import_chain_existing
+
+  - name: Update a certificate - new description and certificate
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_cert_1
+      description: "my new ssl cert"
+      type: certificate
+      path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab2.local.cert.pem"
+      key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab2.local.key.pem"
+      state: present
+    register: ssl
+    tags:
+      - update_cert
+
+  - debug:
+      var: ssl
+    tags:
+      - update_cert
+
+  - name: Delete a certificate
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_cert_1
+      type: certificate
+      state: absent
+    register: ssl
+    tags:
+      - delete_cert
+
+  - debug:
+      var: ssl
+    tags:
+      - delete_cert
+
+  - name: Delete a certificate chain
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_chain_1
+      type: chain
+      state: absent
+    register: ssl
+    tags:
+      - delete_chain
+
+  - debug:
+      var: ssl
+    tags:
+      - delete_chain
+
+  - name: Delete a non-existent certificate chain
+    ntt_mcp_vip_ssl_certificate:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+      type: chain
+      state: absent
+    register: ssl
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: ssl
+    tags:
+      - delete_noexist
