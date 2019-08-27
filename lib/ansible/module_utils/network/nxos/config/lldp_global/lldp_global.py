@@ -45,7 +45,7 @@ class Lldp_global(ConfigBase):
         lldp_global_facts = facts['ansible_network_resources'].get(
             'lldp_global')
         if not lldp_global_facts:
-            return []
+            return {}
         return lldp_global_facts
 
     def execute_module(self):
@@ -84,10 +84,6 @@ class Lldp_global(ConfigBase):
         """
         want = self._module.params['config']
         have = existing_lldp_global_facts
-        if not have:
-            have = {}
-        if not want:
-            want = {}
         resp = self.set_state(remove_empties(want), have)
         return resp
 
