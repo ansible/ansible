@@ -32,6 +32,8 @@ class FactsArgs(object):  # pylint: disable=R0903
         '!interfaces',
         'l2_interfaces',
         '!l2_interfaces',
+        'lag_interfaces',
+        '!lag_interfaces'
     ]
 
     argument_spec = {

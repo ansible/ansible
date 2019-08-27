@@ -1,0 +1,149 @@
+---
+merged:
+  before: []
+
+  commands:
+    - "interface Bundle-Ether10"
+    - "bundle load-balancing hash src-ip"
+    - "bundle minimum-active links 2"
+    - "bundle maximum-active links 10"
+    - "lacp mode active"
+    - "interface GigabitEthernet0/0/0/1"
+    - "bundle id 10 mode passive"
+    - "interface GigabitEthernet0/0/0/0"
+    - "bundle id 10 mode inherit"
+    - "interface Bundle-Ether11"
+    - "bundle load-balancing hash dst-ip"
+    - "interface GigabitEthernet0/0/0/8"
+    - "bundle id 11 mode passive"
+    - "interface GigabitEthernet0/0/0/9"
+    - "bundle id 11 mode passive"
+    
+  after:
+    - name: Bundle-Ether10
+      links:
+        max_active: 10
+        min_active: 2
+      load_balancing_hash: src-ip
+      members:
+        - member: GigabitEthernet0/0/0/0
+          mode: inherit
+        - member: GigabitEthernet0/0/0/1
+          mode: passive
+      mode: active
+  
+    - name: Bundle-Ether11
+      load_balancing_hash: dst-ip
+      members:
+        - member: GigabitEthernet0/0/0/8
+          mode: passive
+        - member: GigabitEthernet0/0/0/9
+          mode: passive
+
+replaced:
+  commands:
+    - interface Bundle-Ether10
+    - no bundle maximum-active links 10
+    - no bundle minimum-active links 2
+    - bundle load-balancing hash dst-ip
+    - lacp mode passive
+    - interface GigabitEthernet0/0/0/1
+    - no bundle id
+    - interface GigabitEthernet0/0/0/0
+    - bundle id 10 mode passive
+    - interface Bundle-Ether12
+    - lacp mode active
+  
+  after:
+    - load_balancing_hash: dst-ip
+      members:
+        - member: GigabitEthernet0/0/0/0
+          mode: passive
+      mode: passive
+      name: Bundle-Ether10
+    
+    - load_balancing_hash: dst-ip
+      members:
+        - member: GigabitEthernet0/0/0/8
+          mode: passive
+        - member: GigabitEthernet0/0/0/9
+          mode: passive
+      name: Bundle-Ether11
+    
+    - mode: active
+      name: Bundle-Ether12
+
+overridden:
+  commands:
+    - interface Bundle-Ether10
+    - no bundle maximum-active links 10
+    - no bundle minimum-active links 2
+    - no bundle load-balancing hash src-ip
+    - no lacp mode active
+    - interface GigabitEthernet0/0/0/0
+    - no bundle id
+    - interface GigabitEthernet0/0/0/1
+    - no bundle id
+    - interface Bundle-Ether11
+    - bundle load-balancing hash src-ip
+    - bundle minimum-active links 5
+    - bundle maximum-active links 10
+    - lacp mode active
+    - interface GigabitEthernet0/0/0/8
+    - no bundle id
+    - interface GigabitEthernet0/0/0/9
+    - no bundle id
+    - interface GigabitEthernet0/0/0/0
+    - bundle id 11 mode active
+    - interface GigabitEthernet0/0/0/1
+    - bundle id 11 mode active
+
+  after:
+    - name: Bundle-Ether10
+    
+    - links:
+        max_active: 10
+        min_active: 5
+      load_balancing_hash: src-ip
+      members:
+        - member: GigabitEthernet0/0/0/0
+          mode: active
+        - member: GigabitEthernet0/0/0/1
+          mode: active
+      mode: active
+      name: Bundle-Ether11
+
+deleted:
+  commands:
+    - interface Bundle-Ether10
+    - no bundle maximum-active links 10
+    - no bundle minimum-active links 2
+    - no bundle load-balancing hash src-ip
+    - no lacp mode active
+    - interface GigabitEthernet0/0/0/0
+    - no bundle id
+    - interface GigabitEthernet0/0/0/1
+    - no bundle id
+    - interface Bundle-Ether11
+    - no bundle load-balancing hash dst-ip
+    - interface GigabitEthernet0/0/0/8
+    - no bundle id
+    - interface GigabitEthernet0/0/0/9
+    - no bundle id
+
+  after:
+    - name: Bundle-Ether10
+    - name: Bundle-Ether11
+
+round_trip:
+  after:
+    - members:
+        - member: GigabitEthernet0/0/0/8
+          mode: passive
+        - member: GigabitEthernet0/0/0/9
+          mode: active
+      name: Bundle-Ether10
+    
+    - mode: active
+      name: Bundle-Ether11
+    
