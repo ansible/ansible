@@ -7,6 +7,7 @@
 The arg spec for the junos facts module.
 """
 
+
 class FactsArgs(object):
     """ The arg spec for the junos facts module
     """

@@ -64,7 +64,7 @@ class Facts(FactsBase):
         :return: the facts gathered
         """
         if self.VALID_RESOURCE_SUBSETS:
-            self.get_network_resources_facts( FACT_RESOURCE_SUBSETS, resource_facts_type, data)
+            self.get_network_resources_facts(FACT_RESOURCE_SUBSETS, resource_facts_type, data)
 
         if self.VALID_LEGACY_GATHER_SUBSETS:
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
