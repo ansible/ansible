@@ -482,7 +482,7 @@ cert_status:
     description:
         - The certificate status in ECS.
         - 'Current possible values (which may be expanded in the future) are: C(ACTIVE), C(APPROVED), C(DEACTIVATED), C(DECLINED), C(EXPIRED), C(NA),
-          C(PENDING), C(PENDING_QUORUM), C(READY), C(reissueD), C(REISSUING), C(renewED), C(renewING), C(REVOKED), C(SUSPENDED)'
+          C(PENDING), C(PENDING_QUORUM), C(READY), C(REISSUED), C(REISSUING), C(RENEWED), C(RENEWING), C(REVOKED), C(SUSPENDED)'
     returned: success
     type: str
     sample: ACTIVE
