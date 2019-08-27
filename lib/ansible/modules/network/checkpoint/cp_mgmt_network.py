@@ -149,21 +149,14 @@ extends_documentation_fragment: checkpoint_objects
 EXAMPLES = """
 - name: add-network
   cp_mgmt_network:
-    name: New Network 3
-    nat_settings:
-      auto_rule: true
-      hide_behind: ip-address
-      install_on: All
-      ip_address: 192.0.2.1
-      method: static
+    name: New Network 1
     state: present
-    subnet: 192.0.2.1
+    subnet: 192.0.2.0
     subnet_mask: 255.255.255.0
 
 - name: set-network
   cp_mgmt_network:
     color: green
-    groups: New Group 1
     mask_length: 16
     name: New Network 1
     new_name: New Network 2
