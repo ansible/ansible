@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import (absolute_import, division, print_function)
-# Copyright 2018 Fortinet, Inc.
+# Copyright 2019 Fortinet, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -27,12 +24,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_system_central_management
-short_description: Configure central management.
+short_description: Configure central management in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure system feature and central_management category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify system feature and central_management category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,61 +41,76 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     system_central_management:
         description:
             - Configure central management.
         default: null
+        type: dict
         suboptions:
-            allow-monitor:
+            allow_monitor:
                 description:
                     - Enable/disable allowing the central management server to remotely monitor this FortiGate
+                type: str
                 choices:
                     - enable
                     - disable
-            allow-push-configuration:
+            allow_push_configuration:
                 description:
                     - Enable/disable allowing the central management server to push configuration changes to this FortiGate.
+                type: str
                 choices:
                     - enable
                     - disable
-            allow-push-firmware:
+            allow_push_firmware:
                 description:
                     - Enable/disable allowing the central management server to push firmware updates to this FortiGate.
+                type: str
                 choices:
                     - enable
                     - disable
-            allow-remote-firmware-upgrade:
+            allow_remote_firmware_upgrade:
                 description:
                     - Enable/disable remotely upgrading the firmware on this FortiGate from the central management server.
+                type: str
                 choices:
                     - enable
                     - disable
-            enc-algorithm:
+            enc_algorithm:
                 description:
                     - Encryption strength for communications between the FortiGate and central management.
+                type: str
                 choices:
                     - default
                     - high
@@ -106,47 +118,57 @@ options:
             fmg:
                 description:
                     - IP address or FQDN of the FortiManager.
-            fmg-source-ip:
+                type: str
+            fmg_source_ip:
                 description:
                     - IPv4 source address that this FortiGate uses when communicating with FortiManager.
-            fmg-source-ip6:
+                type: str
+            fmg_source_ip6:
                 description:
                     - IPv6 source address that this FortiGate uses when communicating with FortiManager.
-            include-default-servers:
+                type: str
+            include_default_servers:
                 description:
                     - Enable/disable inclusion of public FortiGuard servers in the override server list.
+                type: str
                 choices:
                     - enable
                     - disable
             mode:
                 description:
                     - Central management mode.
+                type: str
                 choices:
                     - normal
                     - backup
-            schedule-config-restore:
+            schedule_config_restore:
                 description:
                     - Enable/disable allowing the central management server to restore the configuration of this FortiGate.
+                type: str
                 choices:
                     - enable
                     - disable
-            schedule-script-restore:
+            schedule_script_restore:
                 description:
                     - Enable/disable allowing the central management server to restore the scripts stored on this FortiGate.
+                type: str
                 choices:
                     - enable
                     - disable
-            serial-number:
+            serial_number:
                 description:
                     - Serial number.
-            server-list:
+                type: str
+            server_list:
                 description:
                     - Additional severs that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
                        servers.
+                type: list
                 suboptions:
-                    addr-type:
+                    addr_type:
                         description:
                             - Indicate whether the FortiGate communicates with the override server using an IPv4 address, an IPv6 address or a FQDN.
+                        type: str
                         choices:
                             - ipv4
                             - ipv6
@@ -154,25 +176,31 @@ options:
                     fqdn:
                         description:
                             - FQDN address of override server.
+                        type: str
                     id:
                         description:
                             - ID.
                         required: true
-                    server-address:
+                        type: int
+                    server_address:
                         description:
                             - IPv4 address of override server.
-                    server-address6:
+                        type: str
+                    server_address6:
                         description:
                             - IPv6 address of override server.
-                    server-type:
+                        type: str
+                    server_type:
                         description:
                             - FortiGuard service type.
+                        type: str
                         choices:
                             - update
                             - rating
             type:
                 description:
                     - Central management type.
+                type: str
                 choices:
                     - fortimanager
                     - fortiguard
@@ -180,6 +208,7 @@ options:
             vdom:
                 description:
                     - Virtual domain (VDOM) name to use when communicating with FortiManager. Source system.vdom.name.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -189,35 +218,37 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure central management.
     fortios_system_central_management:
-      host:  "{{  host }}"
+      host:  "{{ host }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      vdom:  "{{  vdom }}"
+      vdom:  "{{ vdom }}"
+      https: "False"
       system_central_management:
-        allow-monitor: "enable"
-        allow-push-configuration: "enable"
-        allow-push-firmware: "enable"
-        allow-remote-firmware-upgrade: "enable"
-        enc-algorithm: "default"
+        allow_monitor: "enable"
+        allow_push_configuration: "enable"
+        allow_push_firmware: "enable"
+        allow_remote_firmware_upgrade: "enable"
+        enc_algorithm: "default"
         fmg: "<your_own_value>"
-        fmg-source-ip: "<your_own_value>"
-        fmg-source-ip6: "<your_own_value>"
-        include-default-servers: "enable"
+        fmg_source_ip: "<your_own_value>"
+        fmg_source_ip6: "<your_own_value>"
+        include_default_servers: "enable"
         mode: "normal"
-        schedule-config-restore: "enable"
-        schedule-script-restore: "enable"
-        serial-number: "<your_own_value>"
-        server-list:
+        schedule_config_restore: "enable"
+        schedule_script_restore: "enable"
+        serial_number: "<your_own_value>"
+        server_list:
          -
-            addr-type: "ipv4"
+            addr_type: "ipv4"
             fqdn: "<your_own_value>"
             id:  "19"
-            server-address: "<your_own_value>"
-            server-address6: "<your_own_value>"
-            server-type: "update"
+            server_address: "<your_own_value>"
+            server_address6: "<your_own_value>"
+            server_type: "update"
         type: "fortimanager"
         vdom: "<your_own_value> (source system.vdom.name)"
 '''
@@ -242,7 +273,7 @@ mkey:
   description: Master key (id) used in the last call to FortiGate
   returned: success
   type: str
-  sample: "key1"
+  sample: "id"
 name:
   description: Name of the table used to fulfill the request
   returned: always
@@ -282,14 +313,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -297,90 +330,106 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_system_central_management_data(json):
-    option_list = ['allow-monitor', 'allow-push-configuration', 'allow-push-firmware',
-                   'allow-remote-firmware-upgrade', 'enc-algorithm', 'fmg',
-                   'fmg-source-ip', 'fmg-source-ip6', 'include-default-servers',
-                   'mode', 'schedule-config-restore', 'schedule-script-restore',
-                   'serial-number', 'server-list', 'type',
+    option_list = ['allow_monitor', 'allow_push_configuration', 'allow_push_firmware',
+                   'allow_remote_firmware_upgrade', 'enc_algorithm', 'fmg',
+                   'fmg_source_ip', 'fmg_source_ip6', 'include_default_servers',
+                   'mode', 'schedule_config_restore', 'schedule_script_restore',
+                   'serial_number', 'server_list', 'type',
                    'vdom']
     dictionary = {}
 
     for attribute in option_list:
-        if attribute in json:
+        if attribute in json and json[attribute] is not None:
             dictionary[attribute] = json[attribute]
 
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def system_central_management(data, fos):
     vdom = data['vdom']
     system_central_management_data = data['system_central_management']
-    filtered_data = filter_system_central_management_data(
-        system_central_management_data)
+    filtered_data = underscore_to_hyphen(filter_system_central_management_data(system_central_management_data))
+
     return fos.set('system',
                    'central-management',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_system(data, fos):
-    login(data)
 
-    methodlist = ['system_central_management']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['system_central_management']:
+        resp = system_central_management(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "system_central_management": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "allow-monitor": {"required": False, "type": "str",
+                "allow_monitor": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
-                "allow-push-configuration": {"required": False, "type": "str",
+                "allow_push_configuration": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                "allow-push-firmware": {"required": False, "type": "str",
+                "allow_push_firmware": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "allow-remote-firmware-upgrade": {"required": False, "type": "str",
+                "allow_remote_firmware_upgrade": {"required": False, "type": "str",
                                                   "choices": ["enable", "disable"]},
-                "enc-algorithm": {"required": False, "type": "str",
+                "enc_algorithm": {"required": False, "type": "str",
                                   "choices": ["default", "high", "low"]},
                 "fmg": {"required": False, "type": "str"},
-                "fmg-source-ip": {"required": False, "type": "str"},
-                "fmg-source-ip6": {"required": False, "type": "str"},
-                "include-default-servers": {"required": False, "type": "str",
+                "fmg_source_ip": {"required": False, "type": "str"},
+                "fmg_source_ip6": {"required": False, "type": "str"},
+                "include_default_servers": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                 "mode": {"required": False, "type": "str",
                          "choices": ["normal", "backup"]},
-                "schedule-config-restore": {"required": False, "type": "str",
+                "schedule_config_restore": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "schedule-script-restore": {"required": False, "type": "str",
+                "schedule_script_restore": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "serial-number": {"required": False, "type": "str"},
-                "server-list": {"required": False, "type": "list",
+                "serial_number": {"required": False, "type": "str"},
+                "server_list": {"required": False, "type": "list",
                                 "options": {
-                                    "addr-type": {"required": False, "type": "str",
+                                    "addr_type": {"required": False, "type": "str",
                                                   "choices": ["ipv4", "ipv6", "fqdn"]},
                                     "fqdn": {"required": False, "type": "str"},
                                     "id": {"required": True, "type": "int"},
-                                    "server-address": {"required": False, "type": "str"},
-                                    "server-address6": {"required": False, "type": "str"},
-                                    "server-type": {"required": False, "type": "str",
+                                    "server_address": {"required": False, "type": "str"},
+                                    "server_address6": {"required": False, "type": "str"},
+                                    "server_type": {"required": False, "type": "str",
                                                     "choices": ["update", "rating"]}
                                 }},
                 "type": {"required": False, "type": "str",
@@ -393,15 +442,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_system(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_system(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_system(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
