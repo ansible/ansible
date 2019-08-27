@@ -15,11 +15,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: vertica_facts
+module: vertica_info
 version_added: '2.0'
 short_description: Gathers Vertica database facts.
 description:
-  - Gathers Vertica database facts.
+  - Gathers Vertica database information.
+  - This module was called C(vertica_facts) before Ansible 2.9, returning C(ansible_facts).
+    Note that the M(vertica_info) module no longer returns C(ansible_facts)!
 options:
   cluster:
     description:
@@ -54,7 +56,12 @@ author: "Dariusz Owczarek (@dareko)"
 
 EXAMPLES = """
 - name: gathering vertica facts
-  vertica_facts: db=db_name
+  vertica_info: db=db_name
+  register: result
+
+- name: Print schemas
+  debug:
+    msg: "{{ result.vertica_schemas }}"
 """
 import traceback
 
@@ -227,6 +234,10 @@ def main():
             login_user=dict(default='dbadmin'),
             login_password=dict(default=None, no_log=True),
         ), supports_check_mode=True)
+    is_old_facts = module._name == 'vertica_facts'
+    if is_old_facts:
+        module.deprecate("The 'vertica_facts' module has been renamed to 'vertica_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     if not pyodbc_found:
         module.fail_json(msg=missing_required_lib('pyodbc'), exception=PYODBC_IMP_ERR)
@@ -257,12 +268,21 @@ def main():
         role_facts = get_role_facts(cursor)
         configuration_facts = get_configuration_facts(cursor)
         node_facts = get_node_facts(cursor)
-        module.exit_json(changed=False,
-                         ansible_facts={'vertica_schemas': schema_facts,
-                                        'vertica_users': user_facts,
-                                        'vertica_roles': role_facts,
-                                        'vertica_configuration': configuration_facts,
-                                        'vertica_nodes': node_facts})
+
+        if is_old_facts:
+            module.exit_json(changed=False,
+                             ansible_facts={'vertica_schemas': schema_facts,
+                                            'vertica_users': user_facts,
+                                            'vertica_roles': role_facts,
+                                            'vertica_configuration': configuration_facts,
+                                            'vertica_nodes': node_facts})
+        else:
+            module.exit_json(changed=False,
+                             vertica_schemas=schema_facts,
+                             vertica_users=user_facts,
+                             vertica_roles=role_facts,
+                             vertica_configuration=configuration_facts,
+                             vertica_nodes=node_facts)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:

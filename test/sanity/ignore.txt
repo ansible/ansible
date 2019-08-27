@@ -2247,7 +2247,7 @@ lib/ansible/modules/database/proxysql/proxysql_scheduler.py validate-modules:E32
 lib/ansible/modules/database/proxysql/proxysql_scheduler.py validate-modules:E337
 lib/ansible/modules/database/proxysql/proxysql_scheduler.py validate-modules:E338
 lib/ansible/modules/database/vertica/vertica_configuration.py validate-modules:E338
-lib/ansible/modules/database/vertica/vertica_facts.py validate-modules:E338
+lib/ansible/modules/database/vertica/vertica_info.py validate-modules:E338
 lib/ansible/modules/database/vertica/vertica_role.py validate-modules:E322
 lib/ansible/modules/database/vertica/vertica_role.py validate-modules:E338
 lib/ansible/modules/database/vertica/vertica_schema.py validate-modules:E322
