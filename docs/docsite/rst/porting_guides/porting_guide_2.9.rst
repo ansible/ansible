@@ -418,6 +418,31 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``one_image_facts`` module was renamed to :ref:`one_image_info <one_image_info_module>`.
 * The ``onepassword_facts`` module was renamed to :ref:`onepassword_info <onepassword_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_datacenter_facts`` module was renamed to :ref:`oneview_datacenter_info <oneview_datacenter_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_enclosure_facts`` module was renamed to :ref:`oneview_enclosure_info <oneview_enclosure_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_ethernet_network_facts`` module was renamed to :ref:`oneview_ethernet_network_info <oneview_ethernet_network_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_fc_network_facts`` module was renamed to :ref:`oneview_fc_network_info <oneview_fc_network_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_fcoe_network_facts`` module was renamed to :ref:`oneview_fcoe_network_info <oneview_fcoe_network_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_logical_interconnect_group_facts`` module was renamed to :ref:`oneview_logical_interconnect_group_info <oneview_logical_interconnect_group_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_network_set_facts`` module was renamed to :ref:`oneview_network_set_info <oneview_network_set_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
+* The ``oneview_san_manager_facts`` module was renamed to :ref:`oneview_san_manager_info <oneview_san_manager_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``os_flavor_facts`` module was renamed to :ref:`os_flavor_info <os_flavor_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.

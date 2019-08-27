@@ -2,11 +2,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from units.compat import unittest
-from oneview_module_loader import SanManagerFactsModule
+from oneview_module_loader import SanManagerInfoModule
 from hpe_test_utils import FactsParamsTestCase
 
 
-class SanManagerFactsSpec(unittest.TestCase, FactsParamsTestCase):
+class SanManagerInfoSpec(unittest.TestCase, FactsParamsTestCase):
     ERROR_MSG = 'Fake message error'
 
     PARAMS_GET_ALL = dict(
@@ -25,7 +25,7 @@ class SanManagerFactsSpec(unittest.TestCase, FactsParamsTestCase):
     }]
 
     def setUp(self):
-        self.configure_mocks(self, SanManagerFactsModule)
+        self.configure_mocks(self, SanManagerInfoModule)
         self.san_managers = self.mock_ov_client.san_managers
 
         FactsParamsTestCase.configure_client_mock(self, self.san_managers)
@@ -34,33 +34,33 @@ class SanManagerFactsSpec(unittest.TestCase, FactsParamsTestCase):
         self.san_managers.get_all.return_value = self.PRESENT_SAN_MANAGERS
         self.mock_ansible_module.params = self.PARAMS_GET_ALL
 
-        SanManagerFactsModule().run()
+        SanManagerInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(san_managers=self.PRESENT_SAN_MANAGERS)
+            san_managers=self.PRESENT_SAN_MANAGERS
         )
 
     def test_should_get_by_display_name(self):
         self.san_managers.get_by_provider_display_name.return_value = self.PRESENT_SAN_MANAGERS[0]
         self.mock_ansible_module.params = self.PARAMS_GET_BY_PROVIDER_DISPLAY_NAME
 
-        SanManagerFactsModule().run()
+        SanManagerInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(san_managers=self.PRESENT_SAN_MANAGERS)
+            san_managers=self.PRESENT_SAN_MANAGERS
         )
 
     def test_should_return_empty_list_when_get_by_display_name_is_null(self):
         self.san_managers.get_by_provider_display_name.return_value = None
         self.mock_ansible_module.params = self.PARAMS_GET_BY_PROVIDER_DISPLAY_NAME
 
-        SanManagerFactsModule().run()
+        SanManagerInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(san_managers=[])
+            san_managers=[]
         )
 
 

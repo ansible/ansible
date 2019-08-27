@@ -11,10 +11,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: oneview_fc_network_facts
-short_description: Retrieve the facts about one or more of the OneView Fibre Channel Networks
+module: oneview_fc_network_info
+short_description: Retrieve the information about one or more of the OneView Fibre Channel Networks
 description:
-    - Retrieve the facts about one or more of the Fibre Channel Networks from OneView.
+    - Retrieve the information about one or more of the Fibre Channel Networks from OneView.
+    - This module was called C(oneview_fc_network_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(oneview_fc_network_info) module no longer returns C(ansible_facts)!
 version_added: "2.4"
 requirements:
     - hpOneView >= 2.0.1
@@ -33,15 +35,17 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Gather facts about all Fibre Channel Networks
-  oneview_fc_network_facts:
+- name: Gather information about all Fibre Channel Networks
+  oneview_fc_network_info:
     config: /etc/oneview/oneview_config.json
   delegate_to: localhost
+  register: result
 
-- debug: var=fc_networks
+- debug:
+    msg: "{{ result.fc_networks }}"
 
-- name: Gather paginated, filtered and sorted facts about Fibre Channel Networks
-  oneview_fc_network_facts:
+- name: Gather paginated, filtered and sorted information about Fibre Channel Networks
+  oneview_fc_network_info:
     config: /etc/oneview/oneview_config.json
     params:
       start: 1
@@ -49,20 +53,24 @@ EXAMPLES = '''
       sort: 'name:descending'
       filter: 'fabricType=FabricAttach'
   delegate_to: localhost
-- debug: var=fc_networks
+  register: result
+- debug:
+    msg: "{{ result.fc_networks }}"
 
-- name: Gather facts about a Fibre Channel Network by name
-  oneview_fc_network_facts:
+- name: Gather information about a Fibre Channel Network by name
+  oneview_fc_network_info:
     config: /etc/oneview/oneview_config.json
     name: network name
   delegate_to: localhost
+  register: result
 
-- debug: var=fc_networks
+- debug:
+    msg: "{{ result.fc_networks }}"
 '''
 
 RETURN = '''
 fc_networks:
-    description: Has all the OneView facts about the Fibre Channel Networks.
+    description: Has all the OneView information about the Fibre Channel Networks.
     returned: Always, but can be null.
     type: dict
 '''
@@ -70,7 +78,7 @@ fc_networks:
 from ansible.module_utils.oneview import OneViewModuleBase
 
 
-class FcNetworkFactsModule(OneViewModuleBase):
+class FcNetworkInfoModule(OneViewModuleBase):
     def __init__(self):
 
         argument_spec = dict(
@@ -78,7 +86,11 @@ class FcNetworkFactsModule(OneViewModuleBase):
             params=dict(required=False, type='dict')
         )
 
-        super(FcNetworkFactsModule, self).__init__(additional_arg_spec=argument_spec)
+        super(FcNetworkInfoModule, self).__init__(additional_arg_spec=argument_spec)
+        self.is_old_facts = self.module._name == 'oneview_fc_network_facts'
+        if self.is_old_facts:
+            self.module.deprecate("The 'oneview_fc_network_facts' module has been renamed to 'oneview_fc_network_info', "
+                                  "and the renamed one no longer returns ansible_facts", version='2.13')
 
     def execute_module(self):
 
@@ -87,11 +99,14 @@ class FcNetworkFactsModule(OneViewModuleBase):
         else:
             fc_networks = self.oneview_client.fc_networks.get_all(**self.facts_params)
 
-        return dict(changed=False, ansible_facts=dict(fc_networks=fc_networks))
+        if self.is_old_facts:
+            return dict(changed=False, ansible_facts=dict(fc_networks=fc_networks))
+        else:
+            return dict(changed=False, fc_networks=fc_networks)
 
 
 def main():
-    FcNetworkFactsModule().run()
+    FcNetworkInfoModule().run()
 
 
 if __name__ == '__main__':

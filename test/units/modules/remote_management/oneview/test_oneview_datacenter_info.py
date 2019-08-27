@@ -3,7 +3,7 @@
 
 import pytest
 
-from ansible.modules.remote_management.oneview.oneview_datacenter_facts import DatacenterFactsModule
+from ansible.modules.remote_management.oneview.oneview_datacenter_info import DatacenterInfoModule
 from hpe_test_utils import FactsParamsTest
 
 PARAMS_GET_CONNECTED = dict(
@@ -13,7 +13,7 @@ PARAMS_GET_CONNECTED = dict(
 )
 
 
-class TestDatacenterFactsModule(FactsParamsTest):
+class TestDatacenterInfoModule(FactsParamsTest):
     @pytest.fixture(autouse=True)
     def setUp(self, mock_ansible_module, mock_ov_client):
         self.resource = mock_ov_client.datacenters
@@ -25,11 +25,11 @@ class TestDatacenterFactsModule(FactsParamsTest):
 
         self.mock_ansible_module.params = dict(config='config.json',)
 
-        DatacenterFactsModule().run()
+        DatacenterInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(datacenters=({"name": "Data Center Name"}))
+            datacenters=({"name": "Data Center Name"})
         )
 
     def test_should_get_datacenter_by_name(self):
@@ -37,11 +37,11 @@ class TestDatacenterFactsModule(FactsParamsTest):
 
         self.mock_ansible_module.params = dict(config='config.json', name="MyDatacenter")
 
-        DatacenterFactsModule().run()
+        DatacenterInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(datacenters=([{"name": "Data Center Name"}]))
+            datacenters=([{"name": "Data Center Name"}])
         )
 
     def test_should_get_datacenter_visual_content(self):
@@ -52,12 +52,12 @@ class TestDatacenterFactsModule(FactsParamsTest):
 
         self.mock_ansible_module.params = PARAMS_GET_CONNECTED
 
-        DatacenterFactsModule().run()
+        DatacenterInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts={'datacenter_visual_content': {'name': 'Visual Content'},
-                           'datacenters': [{'name': 'Data Center Name', 'uri': '/rest/datacenter/id'}]}
+            datacenter_visual_content={'name': 'Visual Content'},
+            datacenters=[{'name': 'Data Center Name', 'uri': '/rest/datacenter/id'}]
         )
 
     def test_should_get_none_datacenter_visual_content(self):
@@ -65,10 +65,10 @@ class TestDatacenterFactsModule(FactsParamsTest):
 
         self.mock_ansible_module.params = PARAMS_GET_CONNECTED
 
-        DatacenterFactsModule().run()
+        DatacenterInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts={'datacenter_visual_content': None,
-                           'datacenters': []}
+            datacenter_visual_content=None,
+            datacenters=[]
         )
