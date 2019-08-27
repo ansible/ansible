@@ -65,4 +65,14 @@ options:
         description:
         - ID of organization.
         type: str
+    rate_limit_retry_time:
+        description:
+        - Number of seconds to retry if rate limiter is triggered.
+        type: int
+        default: 165
+    internal_error_retry_time:
+        description:
+        - Number of seconds to retry if server returns an internal server error.
+        type: int
+        default: 60
 '''
