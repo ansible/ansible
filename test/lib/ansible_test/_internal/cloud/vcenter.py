@@ -61,9 +61,6 @@ class VcenterProvider(CloudProvider):
         self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', '')
         self.aci = None
         self.insecure = False
-        self.endpoint = ''
-        self.hostname = ''
-        self.port = 443
         self.proxy = None
 
     def filter(self, targets, exclude):
@@ -105,11 +102,11 @@ class VcenterProvider(CloudProvider):
         self._set_cloud_config('vmware_test_platform', self.vmware_test_platform)
         if self.vmware_test_platform == 'govcsim':
             self._setup_dynamic_simulator()
+        elif self.vmware_test_platform == 'worldstream':
+            self._setup_dynamic_baremetal()
         elif self._use_static_config():
             self._set_cloud_config('vmware_test_platform', 'static')
             self._setup_static()
-        elif self.vmware_test_platform == 'worldstream':
-            self._setup_dynamic_baremetal()
         else:
             self._setup_dynamic_simulator()
 
@@ -200,10 +197,12 @@ class VcenterProvider(CloudProvider):
         aci = self._create_ansible_core_ci()
 
         if not self.args.explain:
-            response = aci.start()
             self.aci = aci
+            aci.start()
+            aci.wait(iterations=160)
 
-            config = self._populate_config_template(config, response)
+            data = aci.get().response_json.get('data')
+            config = self._populate_config_template(config, data)
             self._write_config(config)
 
     def _create_ansible_core_ci(self):
@@ -221,38 +220,12 @@ class VcenterProvider(CloudProvider):
             'vmware_proxy_port': '8080'})
         parser.read(self.config_static_path)
 
-        self.endpoint = parser.get('DEFAULT', 'vcenter_hostname')
-        self.port = parser.get('DEFAULT', 'vcenter_port')
-
         if parser.get('DEFAULT', 'vmware_validate_certs').lower() in ('no', 'false'):
             self.insecure = True
         proxy_host = parser.get('DEFAULT', 'vmware_proxy_host')
         proxy_port = int(parser.get('DEFAULT', 'vmware_proxy_port'))
         if proxy_host and proxy_port:
             self.proxy = 'http://%s:%d' % (proxy_host, proxy_port)
-
-        self._wait_for_service()
-
-    def _wait_for_service(self):
-        """Wait for the vCenter service endpoint to accept connections."""
-        if self.args.explain:
-            return
-
-        client = HttpClient(self.args, always=True, insecure=self.insecure, proxy=self.proxy)
-        endpoint = 'https://%s:%s' % (self.endpoint, self.port)
-
-        for i in range(1, 30):
-            display.info('Waiting for vCenter service: %s' % endpoint, verbosity=1)
-
-            try:
-                client.get(endpoint)
-                return
-            except SubprocessError:
-                pass
-
-            time.sleep(10)
-
-        raise ApplicationError('Timeout waiting for vCenter service.')
 
 
 class VcenterEnvironment(CloudEnvironment):
