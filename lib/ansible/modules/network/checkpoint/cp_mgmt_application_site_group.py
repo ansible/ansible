@@ -83,20 +83,20 @@ extends_documentation_fragment: checkpoint_objects
 EXAMPLES = """
 - name: add-application-site-group
   cp_mgmt_application_site_group:
-    groups:
-    - New Application Site Group 1
-    - New Application Site Group 2
     members:
     - facebook
     - Social Networking
-    name: New Application Site Group 3
+    - New Application Site 1
+    - New Application Site Category 1
+    name: New Application Site Group 1
+    state: present
 
 - name: set-application-site-group
   cp_mgmt_application_site_group:
-    groups: New Application Site Group 2
     members:
       add: AliveProxy
     name: New Application Site Group 1
+    state: present
 
 - name: delete-application-site-group
   cp_mgmt_application_site_group:
