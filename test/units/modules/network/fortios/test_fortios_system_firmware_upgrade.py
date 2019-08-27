@@ -22,7 +22,6 @@ import json
 import pytest
 from mock import ANY
 from ansible.module_utils.network.fortios.fortios import FortiOSHandler
-from fortiosapi import FortiOSAPI
 
 try:
     from ansible.modules.network.fortios import fortios_system_firmware_upgrade
@@ -36,22 +35,20 @@ def connection_mock(mocker):
     return connection_class_mock
 
 
-fos_instance = FortiOSAPI()
+fos_instance = FortiOSHandler(connection_mock)
 
 
 def test_system_firmware_upgrade_execute(mocker):
     execute_method_result = {'status': 'success', 'http_method': 'POST', 'http_status': 200}
-    execute_method_mock = mocker.patch('fortiosapi.FortiOSAPI.execute', return_value=execute_method_result)
+    execute_method_mock = mocker.patch('ansible.module_utils.network.fortios.fortios.FortiOSHandler.execute', return_value=execute_method_result)
 
     input_data = {
-        'host': 'host',
         'username': 'admin',
-        'password': 'pass',
         'system_firmware': {
-                'file_content': 'test_value_3',
-                'filename': 'test_value_4',
-                'format_partition': 'test_value_5',
-                'source': 'upload'
+            'file_content': 'test_value_3',
+            'filename': 'test_value_4',
+            'format_partition': 'test_value_5',
+            'source': 'upload'
         },
         'vdom': 'root'}
 
