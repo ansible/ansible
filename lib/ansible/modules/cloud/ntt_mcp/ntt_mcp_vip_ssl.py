@@ -565,13 +565,8 @@ def main():
 
     if state == 'present':
         # Implement Check Mode
-<<<<<<< HEAD
         if module.check_mode and not profile:
             module.exit_json(msg='A new SSL Offload Profile will be created')
-=======
-        if module.check_mode:
-            compare_ssl_profile(module, profile)
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
         # Handle new certificates and certificate chains first
         if not new_cert:
             new_cert_id = import_ssl_cert(module, client, network_domain_id)

@@ -550,7 +550,6 @@ from ansible.module_utils.ntt_mcp.ntt_mcp_utils import get_credentials, get_ntt_
 from ansible.module_utils.ntt_mcp.ntt_mcp_config import NIC_ADAPTER_TYPES
 from ansible.module_utils.ntt_mcp.ntt_mcp_provider import NTTMCPClient, NTTMCPAPIException
 
-<<<<<<< HEAD
 CORE = {
     'module': None,
     'client': None,
@@ -560,8 +559,6 @@ CORE = {
     'name': None,
     'wait_for_vmtools': False}
 
-=======
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
 
 def add_nic(module, client, network_domain_id, server, vlan):
     """
@@ -747,7 +744,6 @@ def server_command(module, client, server, command):
             check_for_start = False
             check_for_stop = True
         if wait:
-<<<<<<< HEAD
             if command == 'start' or command == 'reboot':
                 # Temporarily enable waiting for VMWare Tools
                 CORE['wait_for_vmtools'] = True
@@ -755,9 +751,6 @@ def server_command(module, client, server, command):
             if command == 'start' or command == 'reboot':
                 # Disable any waiting for VMWare Tools
                 CORE['wait_for_vmtools'] = False
-=======
-            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', check_for_start, check_for_stop, wait_poll_interval)
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
 
     except NTTMCPAPIException as e:
         module.fail_json(msg='Could not {0} the server - {1}'.format(command, e))
@@ -782,11 +775,8 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
     actual_state = ''
     start_state = ''
     time = 0
-<<<<<<< HEAD
     vmtools_status = False
     wait_for_vmtools = CORE.get('wait_for_vmtools')
-=======
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
     wait_time = module.params.get('wait_time')
     if wait_poll_interval is None:
         wait_poll_interval = module.params.get('wait_poll_interval')
@@ -797,7 +787,6 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
         except NTTMCPAPIException as e:
             module.fail_json(msg='Failed to get a list of servers - {0}'.format(e), exception=traceback.format_exc())
         server = [x for x in servers if x['name'] == name]
-<<<<<<< HEAD
         # Check if VMTools has started - if the user as specified to wait for VMWare Tools to be running
         try:
             if wait_for_vmtools:
@@ -807,14 +796,11 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
             pass
         except IndexError:
             module.fail_json(msg='Failed to find the server - {0}'.format(name))
-=======
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
         try:
             actual_state = server[0]['state']
             start_state = server[0]['started']
         except (KeyError, IndexError) as e:
             module.fail_json(msg='Failed to find the server - {0}'.format(name))
-<<<<<<< HEAD
         if actual_state != state:
             wait_required = True
         elif check_for_start and not start_state:
@@ -827,9 +813,6 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
             wait_required = False
 
         if wait_required:
-=======
-        if actual_state != state or (check_for_start and not start_state) or (check_for_stop and start_state):
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
             sleep(wait_poll_interval)
             time = time + wait_poll_interval
         else:
@@ -941,15 +924,12 @@ def main():
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
-<<<<<<< HEAD
     # Setup the rest of the CORE dictionary to save passing data around
     CORE['network_domain_id'] = network_domain_id
     CORE['module'] = module
     CORE['client'] = client
     CORE['name'] = server.get('name')
 
-=======
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
     if state == 'present':
         try:
             nic = get_nic(module, server, vlan, ipv4_address)

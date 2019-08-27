@@ -63,11 +63,7 @@
       network_domain: myCND
       name: route02
       cidr: "2402:9900:111:1258:0:0:0:0/64"
-<<<<<<< HEAD
       next_hop: 2607:f480:211:1198:76d1:81f9:421a:4b17
-=======
-      next_hop: "2607:f480:211:1277:4685:5272:2b2e:ac17"
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       state: present
     register: route
     tags:

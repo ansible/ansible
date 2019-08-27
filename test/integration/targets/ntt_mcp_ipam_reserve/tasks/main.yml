@@ -25,11 +25,7 @@
       datacenter: NA12
       network_domain: myCND
       vlan: myVLAN
-<<<<<<< HEAD
       ip_address: 2607:f480:211:1198:0:0:0:100
-=======
-      ip_address: 2607:f480:211:1277:0:0:0:100
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       state: present
     register: ipam
     tags:
@@ -40,21 +36,13 @@
     tags:
       - reserve_ipv6
 
-<<<<<<< HEAD
   - name: Reserve an IPv4 address - invalid IPv4 address
-=======
-  - name: Reserve and IPv4 address - invalid IPv4 address
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
     ntt_mcp_ipam_reserve:
       region: na
       datacenter: NA12
       network_domain: myCND
       vlan: myVLAN
-<<<<<<< HEAD
       ip_address: 10.7.78.100
-=======
-      ip_address: 10.1.78.100
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       state: present
     register: ipam
     tags:
@@ -65,11 +53,7 @@
     tags:
       - reserve_ipv4_invalid
 
-<<<<<<< HEAD
   - name: Unreserve an IPv4 address
-=======
-  - name: Unreserve and IPv4 address
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
     ntt_mcp_ipam_reserve:
       region: na
       datacenter: NA12
@@ -92,11 +76,7 @@
       datacenter: NA12
       network_domain: myCND
       vlan: myVLAN
-<<<<<<< HEAD
       ip_address: 2607:f480:211:1198:0:0:0:100
-=======
-      ip_address: 2607:f480:211:1277:0:0:0:100
->>>>>>> a7e5b0f5d0df929597e380ab6dd9e7d22d714b53
       state: absent
     register: ipam
     tags:
