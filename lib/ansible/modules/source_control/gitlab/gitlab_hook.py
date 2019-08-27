@@ -307,7 +307,7 @@ def main():
         project=dict(type='str', required=True),
         hook_url=dict(type='str', required=True),
         push_events=dict(type='bool', default=True),
-        push_events_branch_filter=dict(type='str'),
+        push_events_branch_filter=dict(type='str', default=''),
         issues_events=dict(type='bool', default=False),
         merge_requests_events=dict(type='bool', default=False),
         tag_push_events=dict(type='bool', default=False),
