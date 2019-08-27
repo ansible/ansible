@@ -306,13 +306,13 @@ table {
    display: none;
 }
 
-.DocSiteNav-logo {
+/*.DocSiteNav-logo {
    display: none;
 }
 
 .DocSiteNav-text {
    display: none;
-}
+} */
 
 .ansibleNav {
    background: #000;
@@ -396,6 +396,7 @@ table {
         margin-right: 8px;
         margin-top: -6px;
         position: fixed;
+        z-index: 1;
     }
 
 
@@ -405,6 +406,7 @@ table {
         position: fixed;
         margin-left: 40px;
         margin-top: -4px;
+        z-index: 1;
 
     }
 
