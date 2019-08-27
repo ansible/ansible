@@ -302,6 +302,9 @@ class Connection(NetworkConnectionBase):
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
         if self._network_os:
+            self._terminal = terminal_loader.get(self._network_os, self)
+            if not self._terminal:
+                raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
@@ -390,10 +393,6 @@ class Connection(NetworkConnectionBase):
 
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
-
-            self._terminal = terminal_loader.get(self._network_os, self)
-            if not self._terminal:
-                raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
             self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
 
