@@ -927,12 +927,17 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
     if module_path_parts[0] == 'ansible':
         # The ansible namespace is setup as part of the module_utils setup...
         start = 2
+        existing_paths = frozenset()
     else:
         # ... but ansible_collections and other toplevels are not
         start = 1
+        existing_paths = frozenset(zf.namelist())
 
     for idx in range(start, len(module_path_parts)):
         package_path = '/'.join(module_path_parts[:idx]) + '/__init__.py'
+        # If a collections module uses module_utils from a collection then most packages will have already been added by recursive_finder.
+        if package_path in existing_paths:
+            continue
         # Note: We don't want to include more than one ansible module in a payload at this time
         # so no need to fill the __init__.py with namespace code
         zf.writestr(package_path, b'')
