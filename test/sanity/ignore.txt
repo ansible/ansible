@@ -5821,7 +5821,6 @@ lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
-lib/ansible/plugins/action/__init__.py action-plugin-docs # action plugin base class, not an actual action plugin
 lib/ansible/plugins/action/aireos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/aruba.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/asa.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
