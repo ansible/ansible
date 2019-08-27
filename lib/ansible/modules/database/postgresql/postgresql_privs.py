@@ -40,7 +40,7 @@ options:
   type:
     description:
       - Type of database object to set privileges on.
-      - The `default_prives` choice is available starting at version 2.7.
+      - The `default_privs` choice is available starting at version 2.7.
     default: table
     choices: [table, sequence, function, database,
               schema, language, tablespace, group,
