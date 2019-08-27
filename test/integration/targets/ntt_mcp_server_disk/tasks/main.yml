@@ -1,0 +1,168 @@
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Add a disk to a server
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      size: 10
+      speed: STANDARD
+      state: present
+    register: server
+    tags:
+      - create_standard
+
+  - debug:
+      var: server
+    tags:
+      - create_standard
+
+  - name: Add a High Performance disk to a server
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      size: 10
+      speed: HIGHPERFORMANCE
+      state: present
+      start: False
+    register: server
+    tags:
+      - create_hp
+
+  - debug:
+      var: server
+    tags:
+      - create_hp
+
+  - name: Add a Provisioned IOPs disk to a server
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      size: 10
+      speed: PROVISIONEDIOPS
+      iops: 30
+      state: present
+      start: False
+    register: server
+    tags:
+      - create_piops
+
+  - debug:
+      var: server
+    tags:
+      - create_piops
+
+  - name: Update a disk on a server (PIOPS)
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      controller_number: 0
+      disk_number: 1
+      speed: PROVISIONEDIOPS
+      size: 100
+      iops: 1000
+      state: present
+    register: server
+    tags:
+      - update_piops
+
+  - debug:
+      var: server
+    tags:
+      - update_piops
+
+  - name: Update a disk on a server (STANDARD)
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      controller_number: 0
+      disk_number: 2
+      speed: STANDARD
+      size: 50
+      state: present
+      start: False
+    register: server
+    tags:
+      - update_standard
+
+  - debug:
+      var: server
+    tags:
+      - update_standard
+
+  - name: Delete a disk to a server (PIOPS)
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      controller_number: 0
+      disk_number: 1
+      state: absent
+      start: False
+    register: server
+    tags:
+      - delete_piops
+
+  - debug:
+      var: server
+    tags:
+      - delete_piops
+
+  - name: Delete a disk to a server (STANDARD)
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      controller_number: 0
+      disk_number: 2
+      state: absent
+      start: False
+    register: server
+    tags:
+      - delete_standard
+
+  - debug:
+      var: server
+    tags:
+      - delete_standard
+
+  - name: Add a invalid Provisioned IOPs disk to a server
+    ntt_mcp_server_disk:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      size: 100
+      speed: PROVISIONEDIOPS
+      iops: 20
+      state: present
+      start: False
+    register: server
+    tags:
+      - create_invalid_piops
+
+  - debug:
+      var: server
+    tags:
+      - create_invalid_piops

@@ -1,0 +1,44 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all Network Domains in a datacenter
+    ntt_mcp_network_info:
+      region: na
+      datacenter: NA12
+    register: cnd
+    tags:
+      - list
+
+  - debug:
+      var: cnd
+    tags:
+      - list
+
+  - name: Get a specific Cloud Network Domain
+    ntt_mcp_network_info:
+      region: na
+      datacenter: NA12
+      name: "myCND"
+    register: cnd
+    tags:
+      - get
+
+  - debug:
+      var: cnd
+    tags:
+      - get
+
+  - name: Get a non-existent Cloud Network Domain
+    ntt_mcp_network_info:
+      region: na
+      datacenter: NA12
+      name: xyz
+    register: cnd
+    tags:
+      - get_noexist
+
+  - debug:
+      var: cnd
+    tags:
+      - get_noexist

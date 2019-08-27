@@ -1,0 +1,177 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create a new SNAT Exclusion
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      description: "My SNAT Exclusion"
+      cidr: 10.7.0.0/24
+      state: present
+    register: snat
+    tags:
+      - create
+
+  - debug:
+      var: snat
+    tags:
+      - create
+
+  - name: Create a duplicate SNAT Exclusion
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      description: "My SNAT Exclusion"
+      cidr: 10.7.0.0/24
+      state: present
+    register: snat
+    tags:
+      - create_dup
+
+  - debug:
+      var: snat
+    tags:
+      - create_dup
+
+  - name: Update a SNAT Exclusion
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      description: "My SNAT Exclusion - Updated"
+      cidr: 10.7.0.0/24
+      new_cidr: 10.7.7.0/24
+      state: present
+    register: snat
+    tags:
+      - update
+
+  - debug:
+      var: snat
+    tags:
+      - update
+
+  - name: Create an invalid SNAT Exclusion
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      description: "My SNAT Exclusion"
+      cidr: 10.7.z.0/24
+      state: present
+    register: snat
+    tags:
+      - create_invalid
+
+  - debug:
+      var: snat
+    tags:
+      - create_invalid
+
+  - name: Delete a SNAT Exclusion by CIDR
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      cidr: 10.7.7.0/24
+      state: absent
+    register: snat
+    tags:
+      - delete
+      - delete_all
+
+  - debug:
+      var: snat
+    tags:
+      - delete
+      - delete_all
+
+  - name: Create a new SNAT Exclusion - for deletion
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      description: "My SNAT Exclusion for deletion"
+      cidr: 10.7.8.0/24
+      state: present
+    register: snat
+    tags:
+      - delete_by_id
+      - delete_all
+
+  - debug:
+      var: snat
+    tags:
+      - delete_by_id
+      - delete_all
+
+  - name: Delete a SNAT Exclusion
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: "{{snat.data.id}}"
+      state: absent
+    register: snat
+    tags:
+      - delete_by_id
+      - delete_all
+
+  - debug:
+      var: snat
+    tags:
+      - delete_by_id
+      - delete_all
+
+  - name: Delete a SNAT Exclusion that doesn't exit
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: xyz
+      state: absent
+    register: snat
+    tags:
+      - delete_noexist
+      - delete_all
+
+  - debug:
+      var: snat
+    tags:
+      - delete_noexist
+      - delete_all
+
+  - name: Create a new SNAT Exclusion - Restore testing
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      description: "My SNAT Exclusion"
+      cidr: 10.7.0.0/24
+      state: present
+    register: snat
+    tags:
+      - create_restore
+
+  - debug:
+      var: snat
+    tags:
+      - create_restore
+
+  - name: Restore SNAT exlusions to defaults
+    ntt_mcp_snat:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      state: restore
+    register: snat
+    tags:
+      - restore
+
+  - debug:
+      var: snat
+    tags:
+      - restore

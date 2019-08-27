@@ -1,0 +1,39 @@
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Add a controller to a server
+    ntt_mcp_server_controller:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      adapter_type: VMWARE_PARAVIRTUAL
+      state: present
+    register: server
+    tags:
+      - create
+
+  - debug:
+      var: server
+    tags:
+      - create
+
+  - name: Delete a controller from a server
+    ntt_mcp_server_controller:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      server: myServer01
+      type: SCSI
+      controller_number: 1
+      state: absent
+    register: server
+    tags:
+      - delete
+
+  - debug:
+      var: server
+    tags:
+      - delete

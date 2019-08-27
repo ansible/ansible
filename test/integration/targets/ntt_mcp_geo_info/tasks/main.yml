@@ -1,0 +1,44 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Get a list of datacenters
+    ntt_mcp_geo_info:
+      region: eu
+    check_mode: yes
+    register: geo
+    tags:
+      - list
+
+  - debug:
+      var: geo
+    tags:
+      - list
+
+  - name: Get a specific datacenter
+    ntt_mcp_geo_info:
+      region: eu
+      name: Israel
+    check_mode: yes
+    register: geo
+    tags:
+      - get
+
+  - debug:
+      var: geo
+    tags:
+      - get
+
+  - name: Get a specific datacenter that doesn't exist
+    ntt_mcp_geo_info:
+      region: na
+      name: xyz
+    check_mode: yes
+    register: geo
+    tags:
+      - get_noexist
+
+  - debug:
+      var: geo
+    tags:
+      - get_noexist

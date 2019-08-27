@@ -1,0 +1,62 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all VIP Nodes
+    ntt_mcp_vip_node_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: node
+    tags:
+      - list
+
+  - debug:
+      var: node
+    tags:
+      - list
+
+  - name: Get VIP Node by ID
+    ntt_mcp_vip_node_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: e542a819-2942-4d01-9a6c-d26c9b61b88c
+    register: node
+    tags:
+      - get_by_id
+
+  - debug:
+      var: node
+    tags:
+      - get_by_id
+
+  - name: Get VIP Node by IP
+    ntt_mcp_vip_node_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      ip_address: "10.1.77.6"
+    register: node
+    tags:
+      - get_by_ip
+
+  - debug:
+      var: node
+    tags:
+      - get_by_ip
+
+  - name: Get a non-existent VIP Node
+    ntt_mcp_vip_node_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      ip_address: "10.1.77.8"
+    register: node
+    tags:
+      - get_noexist
+
+  - debug:
+      var: node
+    tags:
+      - get_noexist
