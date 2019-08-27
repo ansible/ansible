@@ -306,20 +306,26 @@ class AnsibleCoreCI:
             )
         else:
             response_json = response.json()
-
             status = response_json['status']
-            con = response_json['connection']
+            con = response_json.get('connection')
 
-            self.connection = InstanceConnection(
-                running=status == 'running',
-                hostname=con['hostname'],
-                port=int(con.get('port', self.port)),
-                username=con['username'],
-                password=con.get('password'),
-            )
+            if con:
+                self.connection = InstanceConnection(
+                    running=status == 'running',
+                    hostname=con['hostname'],
+                    port=int(con.get('port', self.port)),
+                    username=con['username'],
+                    password=con.get('password'),
+                    response_json=response_json,
+                )
+            else:  # 'vcenter' resp does not have a 'connection' key
+                self.connection = InstanceConnection(
+                    running=status == 'running',
+                    response_json=response_json,
+                )
 
-            if self.connection.password:
-                display.sensitive.add(str(self.connection.password))
+        if self.connection.password:
+            display.sensitive.add(str(self.connection.password))
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -329,9 +335,9 @@ class AnsibleCoreCI:
 
         return self.connection
 
-    def wait(self):
+    def wait(self, iterations=90):  # type: (t.Optional[int]) -> None
         """Wait for the instance to become ready."""
-        for _iteration in range(1, 90):
+        for _iteration in range(1, iterations):
             if self.get().running:
                 return
             time.sleep(10)
@@ -597,19 +603,20 @@ class SshKey:
 
 class InstanceConnection:
     """Container for remote instance status and connection details."""
-    def __init__(self, running, hostname, port, username, password):
-        """
-        :type running: bool
-        :type hostname: str
-        :type port: int
-        :type username: str
-        :type password: str | None
-        """
+    def __init__(self,
+                 running,  # type: bool
+                 hostname=None,  # type: t.Optional[str]
+                 port=None,  # type: t.Optional[int]
+                 username=None,  # type: t.Optional[str]
+                 password=None,  # type: t.Optional[str]
+                 response_json=None,  # type: t.Optional[t.Dict[str, t.Any]]
+                 ):  # type: (...) -> None
         self.running = running
         self.hostname = hostname
         self.port = port
         self.username = username
         self.password = password
+        self.response_json = response_json or {}
 
     def __str__(self):
         if self.password:
