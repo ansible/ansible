@@ -70,7 +70,7 @@
           unit_number: 4
   register: test_create_disk2
 
-- debug:
+- debug: 
     msg: "{{ test_create_disk2 }}"
 
 - name: assert that changes were made
