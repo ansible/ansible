@@ -40,8 +40,9 @@ options:
   speed:
     description:
       - Interface link speed/duplex
-    choices: ['10-full', '10-half', '100-full', '100-half', '1000-full',
-    '1000-full-master', '1000-full-slave', '10g-full', '10g-full-master', '10g-full-slave', '2500-full', '2500-full-master', '2500-full-slave', '5g-full', '5g-full-master', '5g-full-slave', 'auto']
+    choices: ['10-full', '10-half', '100-full', '100-half', '1000-full', '1000-full-master',
+    '1000-full-slave', '10g-full', '10g-full-master', '10g-full-slave', '2500-full', '2500-full-master',
+    '2500-full-slave', '5g-full', '5g-full-master', '5g-full-slave', 'auto']
     type: str
   stp:
     description:
@@ -87,21 +88,16 @@ options:
     default: present
     type: str
     choices: ['present', 'absent', 'up', 'down']
-  check_running_config:
-    description:
-      - Check running configuration. This can be set as environment variable.
-      Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
-    type: bool
-    default: yes
   power:
     description:
       - Inline power on Power over Ethernet (PoE) ports.
-    type: list
+    type: dict
     suboptions:
         by_class:
           description:
             - "The range is 0-4"
             - "The power limit based on class value for given interface C(name)"
+          choices: ['0', '1', '2', '3', '4']
           type: str
         limit:
           description:
@@ -112,6 +108,7 @@ options:
           description:
             - "The range is 1 (highest) to 3 (lowest)"
             - "The priority for power management or given interface C(name)"
+          choices: ['1', '2', '3']
           type: str
         enabled:
           description:
@@ -166,12 +163,18 @@ options:
         suboptions:
           host:
             description:
-              - CDP/LLDP neighbor host for given interface C(name).
+              - "CDP/LLDP neighbor host for given interface C(name)."
             type: str
           port:
             description:
-              - CDP/LLDP neighbor port to which given interface C(name) is connected.
+              - "CDP/LLDP neighbor port to which given interface C(name) is connected."
             type: str
+      delay:
+        description:
+          - Time in seconds to wait before checking for the operational state on remote
+            device. This wait is applicable for operational state argument which are
+            I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate).
+        type: int
       state:
         description:
           - State of the Interface configuration, C(up) means present and
@@ -186,7 +189,7 @@ options:
       power:
         description:
           - Inline power on Power over Ethernet (PoE) ports.
-        type: list
+        type: dict
         suboptions:
             by_class:
               description:
@@ -642,7 +645,7 @@ def main():
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'up', 'down']),
-        power=dict(type='list', elements='dict', options=power_spec),
+        power=dict(type='dict', options=power_spec),
         check_running_config=dict(default=True, type='bool', fallback=(env_fallback, ['ANSIBLE_CHECK_ICX_RUNNING_CONFIG']))
     )
     aggregate_spec = deepcopy(element_spec)
