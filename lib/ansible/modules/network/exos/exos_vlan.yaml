@@ -1,0 +1,27 @@
+- name: Basic vlan configuration
+  hosts: R_SW1
+  tasks:
+    - name: Merge provided configuration with device configuration
+      exos_vlans:
+        config:
+          - name: vlan_10
+            vlan_id: 10
+            state: active
+        state: merged
+        #    - name: Replaces device configuration of listed VLANs with provided configuration
+        #exos_vlans:
+        #config:
+        #  - name: Test_VLAN20
+        #    vlan_id: 20
+        #state: replaced
+
+    - name: Override device configuration of all VLANs with provided configuration
+      exos_vlans:
+        config:
+          - name: TEST_VLAN10
+            vlan_id: 10
+        state: overridden
+    - name: Delete attributes of given VLANs
+      exos_vlans:
+        config:
+        state: deleted

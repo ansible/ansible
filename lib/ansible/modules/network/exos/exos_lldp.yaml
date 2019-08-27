@@ -1,0 +1,7 @@
+- name: Enable LLDP 
+  hosts: R_SW1
+  tasks:
+     - name: Enable LLDP service on interface 1
+       exos_lldp:
+           interfaces: '1:1'
+           state: 'present'

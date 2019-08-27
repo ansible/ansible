@@ -1,0 +1,10 @@
+- name: Basic interface configuration
+  hosts: R_SW1
+  tasks:
+          - name: check neighbors intent argument
+            exos_interface:
+                    name: "1"
+                    neighbors: 
+                        - port: 10
+                          host: 5
+
