@@ -408,6 +408,17 @@ def ovirt_info_full_argument_spec(**kwargs):
     return spec
 
 
+# Left for third-party module compatibility
+def ovirt_facts_full_argument_spec(**kwargs):
+    """
+    This is deprecated. Please use ovirt_info_full_argument_spec instead!
+
+    :param kwargs: kwargs to be extended
+    :return: extended dictionary with common parameters
+    """
+    return ovirt_info_full_argument_spec(**kwargs)
+
+
 def ovirt_full_argument_spec(**kwargs):
     """
     Extend parameters of module with parameters which are common to all oVirt modules.
