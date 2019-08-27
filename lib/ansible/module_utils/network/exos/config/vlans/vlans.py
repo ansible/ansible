@@ -14,7 +14,7 @@ created
 import json
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import to_list, dict_diff
 from ansible.module_utils.network.exos.facts.facts import Facts
 from ansible.module_utils.network.exos.exos import send_requests
 
@@ -32,6 +32,29 @@ class Vlans(ConfigBase):
         'vlans',
     ]
 
+    VLAN_POST = {
+        "data": {"openconfig-vlan:vlan": []},
+        "method": "POST",
+        "path": "/rest/restconf/data/openconfig-vlan:vlans/"
+    }
+
+    VLAN_PATCH = {
+        "data": {"openconfig-vlan:vlans":{"vlan": []}},
+        "method": "PATCH",
+        "path": "/rest/restconf/data/openconfig-vlan:vlans/" 
+    } 
+
+    VLAN_DELETE = {
+        "method": "DELETE"
+        "path": None
+    }
+
+    DEL_PATH = "/rest/restconf/data/openconfig-vlan:vlans/vlan="
+
+    REQUEST_BODY = {
+        "config": {"name": None , "status": None , "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None }
+        }
+
     def __init__(self, module):
         super(Vlans, self).__init__(module)
 
@@ -41,7 +64,8 @@ class Vlans(ConfigBase):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(
+            self.gather_subset, self.gather_network_resources)
         vlans_facts = facts['ansible_network_resources'].get('vlans')
         if not vlans_facts:
             return []
@@ -108,7 +132,7 @@ class Vlans(ConfigBase):
         return requests
         
     @staticmethod
-    def _state_replaced(want, have):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -117,28 +141,33 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request = {
-                "data": {"openconfig-vlan:vlans":{"vlan": [{"config": {"name": None , "status": None , "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None }}]}},
-            "method": "PATCH",
-            "path": None
-        }
+        request_post = deepcopy(self.VLAN_POST)
+        request_patch = deepcopy(self.VLAN_PATCH)
+        request_body = deepcopy(self.REQUEST_BODY)
 
         for w in want:
             if w.get('vlan_id'):
-                for h in have:
-                    if w['vlan_id'] == h['vlan_id']:
-                        if w['name'] != h['name'] or w['state'] != h['state']:
-                            request["data"]["openconfig-vlan:vlans"]["vlan"][0]["config"]["name"] = w["name"]
-                            request["data"]["openconfig-vlan:vlans"]["vlan"][0]["config"]["status"] = w["state"].upper()
-                            request["data"]["openconfig-vlan:vlans"]["vlan"][0]["config"]["vlan-id"] = w["vlan_id"]
-                            request["data"] = json.dumps(request["data"])
-                            request["path"] = "/rest/restconf/data/openconfig-vlan:vlans/"
-                            requests.append(request)
+                h = self._search_vlan_in_list(w['vlan_id'], have)
+                if h:
+                    if dict_diff(w, h):
+                        request_body = self._update_vlan_config_body(w, request_body)
+                        request_patch["data"]["openconfig-vlan:vlans"]["vlan"].append(request_body)
+                else:
+                    request_body = self._update_vlan_config_body(w, request_body)
+                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)            
 
+        if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
+            request_patch["data"] = json.dumps(request_patch["data"])
+            requests.append(request_patch)
+        
+        if len(request_post["data"]["openconfig-vlan:vlans"]):
+            request_post["data"] = json.dumps(request_post["data"])
+            requests.append(request_post)              
+                            
         return requests
 
     @staticmethod
-    def _state_overridden(want, have):
+    def _state_overridden(self, want, have):
         """ The command generator when state is overridden
 
         :rtype: A list
@@ -147,41 +176,41 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request_1 = {
-                "data": {"openconfig-vlan:vlans": {"vlan": [{"config": {"name": None , "status": None , "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None }}]}},
-            "method": "PATCH",
-            "path": "/rest/restconf/data/openconfig-vlan:vlans/"
-        }
-
-        request_2 = {
-            "method": "DELETE",
-            "path": None
-        }
-
-        have_copy = deepcopy(have)
-
+        request_post = deepcopy(self.VLAN_POST)
+        request_patch = deepcopy(self.VLAN_PATCH)
+        request_body = deepcopy(self.REQUEST_BODY)
+        request_delete = deepcopy(self.VLAN_DELETE)
+        have_copy = []
         for w in want:
             if w.get('vlan_id'):
-                for h in have_copy:
-                    if w['vlan_id'] == h['vlan_id']:
-                        if w != h:
-                            request_1["data"]["openconfig-vlan:vlans"]["vlan"][0]["config"]["name"] = w["name"]
-                            request_1["data"]["openconfig-vlan:vlans"]["vlan"][0]["config"]["status"] = w["state"].upper()
-                            request_1["data"]["openconfig-vlan:vlans"]["vlan"][0]["config"]["vlan-id"] = w["vlan_id"]
-                            request_1["data"] = json.dumps(request_1["data"])
-                            requests.append(request_1)
-                        have_copy.remove(h)
-        for h in have_copy:
-#            if h["vlan_id"] == 1:
- #               continue
-  #          else:
-            request_2["path"] = "/rest/restconf/data/openconfig-vlan:vlans/vlan=" + str(h["vlan_id"])
-            requests.append(request_2)
+                h = self._search_vlan_in_list(w['vlan_id'], have)
+                if h:
+                    if dict_diff(w, h):
+                        request_body = self._update_vlan_config_body(w, request_body)
+                        request_patch["data"]["openconfig-vlan:vlans"]["vlan"].append(request_body)
+                    have_copy.append(h)
+                else:
+                    request_body = self._update_vlan_config_body(w, request_body)
+                    request_post["data"]["openconfig-vlan:vlans"].append(request_body)            
+        
+        have_del = list(set(have)-set(have_copy))
+        if have_del:
+            for h in have_del:
+                request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
+                requests.append(request_delete)
 
+        if len(request_patch["data"]["openconfig-vlan:vlans"]["vlan"]):
+            request_patch["data"] = json.dumps(request_patch["data"])
+            requests.append(request_patch)
+        
+        if len(request_post["data"]["openconfig-vlan:vlans"]):
+            request_post["data"] = json.dumps(request_post["data"])
+            requests.append(request_post)
+        
         return requests
 
     @staticmethod
-    def _state_merged(want, have):
+    def _state_merged(self, want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -190,30 +219,22 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request = {
-                "data": {"openconfig-vlan:vlans": [{"config": {"name": None , "status": None , "tpid": "oc-vlan-types:TPID_0x8100", "vlan-id": None }}]},
-            "method": "POST",
-            "path": "/rest/restconf/data/openconfig-vlan:vlans/"
-        }
+        request_post = deepcopy(self.VLAN_POST)
+        request_body = deepcopy(self.REQUEST_BODY)
 
-        for w in want:
-            check = False
+        for w in want: 
             if w.get('vlan_id'):
-                for h in have:
-                    if w['vlan_id'] == h['vlan_id']:
-                        check = True
-                        break
-                if not check:
-                    request["data"]["openconfig-vlan:vlans"][0]["config"]["name"] = w["name"]
-                    request["data"]["openconfig-vlan:vlans"][0]["config"]["status"] = w["state"].upper()
-                    request["data"]["openconfig-vlan:vlans"][0]["config"]["vlan-id"] = w["vlan_id"]
-                    request["data"] = json.dumps(request["data"])
-                    requests.append(request)
+                request_body = self._update_vlan_config_body(w, request_body)
+                request_post["data"]["openconfig-vlan:vlans"].append(request_body)
+
+        if len(request_post["data"]["openconfig-vlan:vlans"]):
+            request_post["data"] = json.dumps(request_post["data"])
+            requests.append(request_post)  
 
         return requests
 
     @staticmethod
-    def _state_deleted( want, have):
+    def _state_deleted(self, want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -222,29 +243,32 @@ class Vlans(ConfigBase):
         """
         requests = []
 
-        request = {
-            "method": "DELETE",
-            "path": None 
-        }
+        request_delete = deepcopy(self.VLAN_DELETE)
         if want:
             for w in want:
-                check = False
-                for h in have:
-                    if w["vlan_id"] == h["vlan_id"]:
-                        check = True
-                        break
-                if check:
-                    request["path"] = "/rest/restconf/data/openconfig-vlan:vlans/vlan=" + str(w["vlan_id"])
-                    requests.append(request)
+                if w.get('vlan_id'):
+                    h = self._search_vlan_in_list(w['vlan_id'], have)
+                    if h:
+                        request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
+                        requests.append(request_delete)
 
         else:
             if not have:
                 return requests
             for h in have:
-                if h["vlan_id"] == 1:
-                    continue
-                request["path"] = "/rest/restconf/data/openconfig-vlan:vlans/vlan=" + str(h["vlan_id"])
-                requests.append(request)
+                request_delete["path"] = self.DEL_PATH + str(h['vlan_id'])
+                requests.append(request_delete)
 
         return requests
-        
+
+    def _update_vlan_config_body(self, want, request):
+        request["config"]["name"] = want["name"]
+        request["config"]["status"] = want["state"]
+        request["config"]["vlan-id"] = want["vlan_id"]
+        return request
+
+    def _search_vlan_in_list(vlan_id, lst):
+        for o in lst:
+            if o['vlan_id'] == vlan_id:
+                return o
+        return None
