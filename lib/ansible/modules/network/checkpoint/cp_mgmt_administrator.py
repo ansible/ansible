@@ -123,26 +123,19 @@ EXAMPLES = """
   cp_mgmt_administrator:
     authentication_method: INTERNAL_PASSWORD
     email: admin@gmail.com
-    multi_domain_profile: global manager
     must_change_password: false
     name: admin
-    password: aaaa
-    permissions_profile:
-    - domain: domain1
-      profile: read only all
-    - domain: All Global Domains
-      profile: read write all
+    password: secret
+    permissions_profile: read write all
     phone_number: 1800-800-800
+    state: present
 
 - name: set-administrator
   cp_mgmt_administrator:
     name: admin
-    permissions_profile:
-      add:
-      - domain: locals
-        profile: read only profile
-      - domain: globals
-        profile: read only profile
+    password: bew secret
+    permissions_profile: read only profile
+    state: present
 
 - name: delete-administrator
   cp_mgmt_administrator:
