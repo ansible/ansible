@@ -1,0 +1,2 @@
+bugfixes:
+- Pipelining now works with the buildah plugin.
