@@ -3,7 +3,7 @@
 Controlling how Ansible behaves: precedence rules
 =================================================
 
-To give you maximum flexibility in managing your environments, Ansible supports many ways to control how Ansible behaves: how it connects to managed nodes, how it works once it has connected.
+To give you maximum flexibility in managing your environments, Ansible offers many ways to control how Ansible behaves: how it connects to managed nodes, how it works once it has connected.
 If you use Ansible to manage a large number of servers, network devices, and cloud resources, you may define Ansible behavior in several different places and pass that information to Ansible in several different ways.
 This flexibility is convenient, but it can backfire if you do not understand the precedence rules.
 
@@ -15,7 +15,7 @@ These precedence rules apply to any setting that can be defined in multiple ways
 Precedence categories
 ---------------------
 
-Ansible supports four sources for controlling its behavior. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
+Ansible offers four sources for controlling its behavior. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
 
  * Configuration settings
  * Command-line options
