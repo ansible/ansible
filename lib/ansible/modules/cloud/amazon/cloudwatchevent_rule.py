@@ -65,7 +65,8 @@ options:
     description:
       - "A dictionary array of targets to add to or update for the rule, in the
         form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
-        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]}}).
+        input_path: [valid JSONPath string], input_transformer: [valid dict],
+        ecs_parameters: {task_definition_arn: [string], task_count: [int]}}).
         I(id) [required] is the unique target assignment ID. I(arn) (required)
         is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
         of the IAM role to be used for this target when the rule is triggered. I(input)
@@ -74,6 +75,7 @@ options:
         (e.g. C($.detail)) that specifies the part of the event data to be
         passed to the target. If neither I(input) nor I(input_path) is
         specified, then the entire event is passed to the target in JSON form.
+        I(input_transformer) (optional) defines input transformer rule.
         I(task_definition_arn) [optional] is ecs task definition arn.
         I(task_count) [optional] is ecs task count."
     required: false
@@ -97,6 +99,23 @@ EXAMPLES = '''
       - id: MyOtherTargetId
         arn: arn:aws:lambda:us-east-1:123456789012:function:MyFunction
         input: '{"foo": "bar"}'
+
+- cloudwatchevent_rule:
+    name: MyConfigComplianceRule
+    event_pattern: '{"source":["aws.config"],"detail-type":["Config Rules Compliance Change"]}'
+    description: Send notification when Config compliance changes
+    targets:
+      - id: notifications
+        arn: arn:aws:sns:us-east-1:123456789012:notifications
+        input_transformer:
+          input_paths_map:
+            region: $.region
+            account: $.account
+            title: $.detail-type
+            rule-name: $.detail.configRuleName
+            resource: $.detail.resourceId
+            result: $.detail.newEvaluationResult.complianceType
+          input_template: '"<title>. Account: <account>. Region: <region>. Config rule: <rule-name>. Resource <resource> changed to <result>"'
 
 - cloudwatchevent_rule:
     name: MyCronTask
@@ -267,7 +286,13 @@ class CloudWatchEventRule(object):
             if 'input_path' in target:
                 target_request['InputPath'] = target['input_path']
             if 'role_arn' in target:
-                target_request['RoleArn'] = target['role_arn']
+                target_request[''] = target['role_arn']
+            if 'input_transformer' in target:
+              if 'input_paths_map' in target['input_transformer'] and 'input_template' in target['input_transformer']:
+                  target_request['InputTransformer'] = {
+                    'InputPathsMap': target['input_transformer']['input_paths_map'],
+                    'InputTemplate': target['input_transformer']['input_template']
+                  }
             if 'ecs_parameters' in target:
                 target_request['EcsParameters'] = {}
                 ecs_parameters = target['ecs_parameters']
