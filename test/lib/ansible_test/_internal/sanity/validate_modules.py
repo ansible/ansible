@@ -117,7 +117,7 @@ class ValidateModulesTest(SanitySingleVersion):
                     line=int(item['line']) if 'line' in item else 0,
                     column=int(item['column']) if 'column' in item else 0,
                     level='error',
-                    code='%s (E%s)' % (item['name'], item['code']),
+                    code='%s' % item['code'],
                     message=item['msg'],
                 ))
 
