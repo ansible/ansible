@@ -31,18 +31,21 @@ class FactsBase(object):
         if not self._gather_network_resources:
             self._gather_network_resources = ['!all']
 
-    def gen_runable(self, subsets, valid_subsets):
+    def gen_runable(self, subsets, valid_subsets, resource_facts=False):
         """ Generate the runable subset
 
         :param module: The module instance
         :param subsets: The provided subsets
         :param valid_subsets: The valid subsets
+        :param resource_facts: A boolean flag
         :rtype: list
         :returns: The runable subsets
         """
         runable_subsets = set()
         exclude_subsets = set()
-        minimal_gather_subset = frozenset(['default'])
+        minimal_gather_subset = set()
+        if not resource_facts:
+            minimal_gather_subset = frozenset(['default'])
 
         for subset in subsets:
             if subset == 'all':
@@ -78,22 +81,16 @@ class FactsBase(object):
         runable_subsets.difference_update(exclude_subsets)
         return runable_subsets
 
-    def get_network_resources_facts(self, net_res_choices, facts_resource_obj_map, resource_facts_type=None, data=None):
+    def get_network_resources_facts(self, facts_resource_obj_map, resource_facts_type=None, data=None):
         """
-        :param net_res_choices:
         :param fact_resource_subsets:
         :param data: previously collected configuration
         :return:
         """
-        if net_res_choices:
-            if 'all' in net_res_choices:
-                net_res_choices.remove('all')
+        if not resource_facts_type:
+            resource_facts_type = self._gather_network_resources
 
-        if net_res_choices:
-            if not resource_facts_type:
-                resource_facts_type = self._gather_network_resources
-
-            restorun_subsets = self.gen_runable(resource_facts_type, frozenset(net_res_choices))
+            restorun_subsets = self.gen_runable(resource_facts_type, frozenset(facts_resource_obj_map.keys()), resource_facts=True)
             if restorun_subsets:
                 self.ansible_facts['ansible_net_gather_network_resources'] = list(restorun_subsets)
                 instances = list()
