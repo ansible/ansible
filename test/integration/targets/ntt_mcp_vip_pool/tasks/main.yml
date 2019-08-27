@@ -1,0 +1,196 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Create an IPv4 VIP Pool
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool1
+      description: "Test VIP Pool"
+      health_monitor_1: "CCDEFAULT.Tcp"
+      health_monitor_2: "CCDEFAULT.Https"
+      members:
+        - name: myNode1
+          port: 443
+        - name: myNode2
+          port: 443
+      state: present
+    register: pool
+    tags:
+      - create_ipv4
+
+  - debug:
+      var: pool
+    tags:
+      - create_ipv4
+
+  - name: Create a duplicate IPv4 VIP Pool
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool1
+      description: "Test VIP Pool"
+      health_monitor_1: "CCDEFAULT.Tcp"
+      health_monitor_2: "CCDEFAULT.Https"
+      members:
+        - name: myNode1
+          port: 443
+        - name: myNode2
+          port: 443
+      state: present
+    register: pool
+    tags:
+      - create_duplicate
+
+  - debug:
+      var: pool
+    tags:
+      - create_duplicate
+
+  - name: Create an IPv6 VIP Pool
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool2
+      description: "IPv6 Test VIP Pool"
+      health_monitor_1: "CCDEFAULT.Tcp"
+      members:
+        - name: myNode1_ipv6
+          port: 22
+        - name: myNode2_ipv6
+          port: 22
+      state: present
+    register: pool
+    tags:
+      - create_ipv6
+
+  - debug:
+      var: pool
+    tags:
+      - create_ipv6
+
+  - name: Create an invalid VIP Pool
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool_invalid
+      description: "Invalid VIP Pool"
+      health_monitor_1: xyz
+      members:
+        - name: myNode_noexist
+          port: ZZZZ
+      state: present
+    register: pool
+    tags:
+      - create_invalid
+
+  - debug:
+      var: pool
+    tags:
+      - create_invalid
+
+  - name: Update an IPv4 VIP Pool
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool1
+      description: "Updated Test VIP Pool"
+      health_monitor_1: "CCDEFAULT.Tcp"
+      health_monitor_2: "CCDEFAULT.Http"
+      members:
+        - name: myNode1
+          port: 80
+        - name: myNode2
+          port: 80
+          status: DISABLED
+      state: present
+    register: pool
+    tags:
+      - update
+
+  - debug:
+      var: pool
+    tags:
+      - update
+
+  - name: Remove a VIP Pool member
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool2
+      description: "IPv6 Test VIP Pool"
+      health_monitor_1: "CCDEFAULT.Tcp"
+      members:
+        - name: myNode1_ipv6
+          port: 22
+      state: present
+    register: pool
+    tags:
+      - delete_member
+
+  - debug:
+      var: pool
+    tags:
+      - delete_member
+
+  - name: Add a VIP Pool member
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool2
+      description: "IPv6 Test VIP Pool"
+      health_monitor_1: "CCDEFAULT.Tcp"
+      members:
+        - name: myNode1_ipv6
+          port: 22
+        - name: myNode2_ipv6
+          port: 22
+      state: present
+    register: pool
+    tags:
+      - add_member
+
+  - debug:
+      var: pool
+    tags:
+      - add_member
+
+  - name: Delete a VIP Pool
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: myPool2
+      state: absent
+    register: pool
+    tags:
+      - delete
+
+  - debug:
+      var: pool
+    tags:
+      - delete
+
+  - name: Delete a non-existent VIP Pool
+    ntt_mcp_vip_pool:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+      state: absent
+    register: pool
+    tags:
+      - delete_noexist
+
+  - debug:
+      var: pool
+    tags:
+      - delete_noexist

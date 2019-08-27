@@ -1,0 +1,52 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: Import an image into NA9
+    ntt_mcp_image:
+      region: na
+      datacenter: NA9
+      name: asav-esxi-ken
+      ovf_package: "asav-esxi.mf"
+      guest_customization: False
+      state: present
+    register: image
+    tags:
+      - import
+
+  - debug:
+      var: image
+    tags:
+      - import
+
+  - name: Import a duplicate image into NA9
+    ntt_mcp_image:
+      region: na
+      datacenter: NA9
+      name: asav-esxi-ken
+      ovf_package: "asav-esxi.mf"
+      guest_customization: False
+      state: present
+    register: image
+    tags:
+      - import_duplicate
+
+  - debug:
+      var: image
+    tags:
+      - import_duplicate
+
+  - name: Remove an image into NA9
+    ntt_mcp_image:
+      region: na
+      datacenter: NA9
+      name: asav-esxi-ken
+      state: absent
+    register: image
+    tags:
+      - delete
+
+  - debug:
+      var: image
+    tags:
+      - delete

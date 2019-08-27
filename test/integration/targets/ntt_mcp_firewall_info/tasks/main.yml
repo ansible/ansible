@@ -1,0 +1,47 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all firewall rules within a Cloud Network Domain
+    ntt_mcp_firewall_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: fw
+    tags:
+      - list
+
+  - debug:
+      var: fw
+    tags:
+      - list
+
+  - name: Get a specific firewall rule
+    ntt_mcp_firewall_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: CCDEFAULT.BlockOutboundMailIPv6
+    register: fw
+    tags:
+      - get
+
+  - debug:
+      var: fw
+    tags:
+      - get
+
+  - name: Get a non-existent firewall rule
+    ntt_mcp_firewall_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: xyz
+    register: fw
+    tags:
+      - get_noexist
+
+  - debug:
+      var: fw
+    tags:
+      - get_noexist

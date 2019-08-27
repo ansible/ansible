@@ -1,0 +1,62 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  connection: local
+  tasks:
+  - name: List all VIP Listeners
+    ntt_mcp_vip_listener_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+    register: vip
+    tags:
+      - list
+
+  - debug:
+      var: vip
+    tags:
+      - list
+
+  - name: Get a VIP Listener by name
+    ntt_mcp_vip_listener_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: my_vip_listener_1
+    register: vip
+    tags:
+      - get_by_name
+
+  - debug:
+      var: vip
+    tags:
+      - get_by_name
+
+  - name: Get a VIP Listener by id
+    ntt_mcp_vip_listener_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: 35f5dd13-ea13-4a6c-bb2d-d243e6fc1303
+    register: vip
+    tags:
+      - get_by_id
+
+  - debug:
+      var: vip
+    tags:
+      - get_by_id
+
+  - name: Get a non-existent VIP Listener
+    ntt_mcp_vip_listener_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      id: xyz
+    register: vip
+    tags:
+      - get_noexist
+
+  - debug:
+      var: vip
+    tags:
+      - get_noexist
