@@ -12,29 +12,33 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: online_user_facts
-short_description: Gather facts about Online user.
+module: online_user_info
+short_description: Gather information about Online user.
 description:
-  - Gather facts about the user.
-version_added: "2.7"
+  - Gather information about the user.
+version_added: "2.9"
 author:
   - "Remy Leone (@sieben)"
 extends_documentation_fragment: online
 '''
 
 EXAMPLES = r'''
-- name: Gather Online user facts
-  online_user_facts:
+- name: Gather Online user info
+  online_user_info:
+  register: result
+
+- debug:
+    msg: "{{ result.online_user_info }}"
 '''
 
 RETURN = r'''
 ---
-online_user_facts:
+online_user_info:
   description: Response from Online API
   returned: success
   type: complex
   contains:
-    "online_user_facts": {
+    "online_user_info": {
         "company": "foobar LLC",
         "email": "foobar@example.com",
         "first_name": "foo",
@@ -50,10 +54,10 @@ from ansible.module_utils.online import (
 )
 
 
-class OnlineUserFacts(Online):
+class OnlineUserInfo(Online):
 
     def __init__(self, module):
-        super(OnlineUserFacts, self).__init__(module)
+        super(OnlineUserInfo, self).__init__(module)
         self.name = 'api/v1/user'
 
 
@@ -65,7 +69,7 @@ def main():
 
     try:
         module.exit_json(
-            ansible_facts={'online_user_facts': OnlineUserFacts(module).get_resources()}
+            online_user_info=OnlineUserInfo(module).get_resources()
         )
     except OnlineException as exc:
         module.fail_json(msg=exc.message)
