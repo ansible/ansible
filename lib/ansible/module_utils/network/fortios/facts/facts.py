@@ -36,10 +36,10 @@ class Facts(FactsBase):
         "system": SystemFacts
     }
 
-    def __init__(self, module, fos=None, uri=None):
+    def __init__(self, module, fos=None, subset=None):
         super(Facts, self).__init__(module)
         self._fos = fos
-        self._uri = uri
+        self._subset = subset
 
     def gen_runable(self, subsets, valid_subsets):
         """ Generate the runable subset
