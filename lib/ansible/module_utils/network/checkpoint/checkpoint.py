@@ -442,3 +442,16 @@ def install_policy(connection, policy_package, targets):
                'targets': targets}
 
     connection.send_request('/web_api/install-policy', payload)
+	
+# handle api call for gaia_api
+def api_call_gaia(module, api_call_object):
+    payload = get_payload_from_parameters(module)
+    connection = Connection(module._socket_path)
+    # if user insert a specific version, we add it to the url
+    version = ('v' + module.params['version'] + '/') if module.params.get('version') else ''
+
+    code, response = send_request(connection, version, api_call_object, payload)
+    if code != 200:
+        module.fail_json(msg=response)
+
+    return response

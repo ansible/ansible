@@ -17,7 +17,7 @@ version_added: "2.8"
 """
 
 import json
-
+import os
 from ansible.module_utils.basic import to_text
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves.urllib.error import HTTPError
@@ -33,20 +33,23 @@ class HttpApi(HttpApiBase):
     def login(self, username, password):
         if username and password:
             payload = {'user': username, 'password': password}
-            url = '/web_api/login'
+            CONTEXT = os.environ.get('CONTEXT', 'web_api')
+            url = '/{}/login'.format(CONTEXT)
             response, response_data = self.send_request(url, payload)
         else:
             raise AnsibleConnectionFailure('Username and password are required for login')
 
         try:
             self.connection._auth = {'X-chkp-sid': response_data['sid']}
-            self.connection._session_uid = response_data['uid']
+            if CONTEXT == "web_api"
+                self.connection._session_uid = response_data['uid']
         except KeyError:
             raise ConnectionError(
                 'Server returned response without token info during connection authentication: %s' % response)
 
     def logout(self):
-        url = '/web_api/logout'
+        CONTEXT = os.environ.get('CONTEXT', 'web_api')
+        url = '/{}/logout'.format(CONTEXT)
 
         response, dummy = self.send_request(url, None)
 
