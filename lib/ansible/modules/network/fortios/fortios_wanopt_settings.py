@@ -26,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_wanopt_settings
 short_description: Configure WAN optimization settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify wanopt feature and settings category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -41,46 +41,59 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     wanopt_settings:
         description:
             - Configure WAN optimization settings.
         default: null
+        type: dict
         suboptions:
-            auto-detect-algorithm:
+            auto_detect_algorithm:
                 description:
                     - Auto detection algorithms used in tunnel negotiations.
+                type: str
                 choices:
                     - simple
                     - diff-req-resp
-            host-id:
+            host_id:
                 description:
                     - Local host ID (must also be entered in the remote FortiGate's peer list).
-            tunnel-ssl-algorithm:
+                type: str
+            tunnel_ssl_algorithm:
                 description:
                     - Relative strength of encryption algorithms accepted during tunnel negotiation.
+                type: str
                 choices:
                     - low
 '''
@@ -92,6 +105,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure WAN optimization settings.
     fortios_wanopt_settings:
@@ -101,9 +115,9 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       wanopt_settings:
-        auto-detect-algorithm: "simple"
-        host-id: "myhostname"
-        tunnel-ssl-algorithm: "low"
+        auto_detect_algorithm: "simple"
+        host_id: "myhostname"
+        tunnel_ssl_algorithm: "low"
 '''
 
 RETURN = '''
@@ -166,12 +180,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
 def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -179,11 +197,11 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_wanopt_settings_data(json):
-    option_list = ['auto-detect-algorithm', 'host-id', 'tunnel-ssl-algorithm']
+    option_list = ['auto_detect_algorithm', 'host_id', 'tunnel_ssl_algorithm']
     dictionary = {}
 
     for attribute in option_list:
@@ -193,10 +211,23 @@ def filter_wanopt_settings_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def wanopt_settings(data, fos):
     vdom = data['vdom']
     wanopt_settings_data = data['wanopt_settings']
-    filtered_data = filter_wanopt_settings_data(wanopt_settings_data)
+    filtered_data = underscore_to_hyphen(filter_wanopt_settings_data(wanopt_settings_data))
 
     return fos.set('wanopt',
                    'settings',
@@ -204,30 +235,36 @@ def wanopt_settings(data, fos):
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_wanopt(data, fos):
-    login(data, fos)
 
     if data['wanopt_settings']:
         resp = wanopt_settings(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "wanopt_settings": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "auto-detect-algorithm": {"required": False, "type": "str",
+                "auto_detect_algorithm": {"required": False, "type": "str",
                                           "choices": ["simple", "diff-req-resp"]},
-                "host-id": {"required": False, "type": "str"},
-                "tunnel-ssl-algorithm": {"required": False, "type": "str",
+                "host_id": {"required": False, "type": "str"},
+                "tunnel_ssl_algorithm": {"required": False, "type": "str",
                                          "choices": ["low"]}
 
             }
@@ -236,14 +273,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_wanopt(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_wanopt(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_wanopt(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
