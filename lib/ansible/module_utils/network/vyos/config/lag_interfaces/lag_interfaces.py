@@ -286,12 +286,14 @@ class Lag_interfaces(ConfigBase):
 
         if 'interval' in arp_monitor:
             commands.append(
-                self._compute_command(key, 'interval', str(arp_monitor['interval']))
+                self._compute_command(
+                    key=want['name'] + ' arp-monitor', attrib='interval', value=str(arp_monitor['interval'])
+                )
             )
         if diff_targets:
             for target in diff_targets:
                 commands.append(
-                    self._compute_commands(key, 'target', target)
+                    self._compute_command(key=want['name'] + ' arp-monitor', attrib='target', value=target)
                 )
         return commands
 
@@ -311,7 +313,6 @@ class Lag_interfaces(ConfigBase):
         have_arp_target = []
         want_arp_monitor = want.get(key) or {}
         have_arp_monitor = have.get(key) or {}
-        del_cmd = 'delete interface bonding ' + have['name']
 
         if want_arp_monitor and 'target' in want_arp_monitor:
             want_arp_target = want_arp_monitor['target']
@@ -320,12 +321,20 @@ class Lag_interfaces(ConfigBase):
             have_arp_target = have_arp_monitor['target']
 
         if 'interval' in have_arp_monitor and not want_arp_monitor:
-            commands.append(del_cmd + ' ' + key + ' interval')
+            commands.append(
+                self._compute_command(
+                    key=have['name'] + ' arp-monitor', attrib='interval', remove=True
+                )
+            )
         if 'target' in have_arp_monitor:
             target_diff = list_diff_have_only(want_arp_target, have_arp_target)
             if target_diff:
                 for target in target_diff:
-                    commands.append(del_cmd + ' ' + key + ' target ' + target)
+                    commands.append(
+                        self._compute_command(
+                            key=have['name'] + ' arp-monitor', attrib='target', value=target, remove=True
+                        )
+                    )
 
         return commands
 
@@ -339,7 +348,7 @@ class Lag_interfaces(ConfigBase):
             for member in members_diff:
                 commands.append(
                     self._compute_command(
-                        member[key], 'bond-group', have['name'], False, 'ethernet'
+                        member['member'], 'bond-group', have['name'], True, 'ethernet'
                     )
                 )
         return commands
