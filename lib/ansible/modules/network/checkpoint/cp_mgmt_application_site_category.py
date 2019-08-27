@@ -83,17 +83,16 @@ extends_documentation_fragment: checkpoint_objects
 EXAMPLES = """
 - name: add-application-site-category
   cp_mgmt_application_site_category:
-    description: My Application Site category 2
-    groups:
-    - New Application Site Group 1
-    name: New Application Site Category 2
+    description: My Application Site category
+    name: New Application Site Category 1
+    state: present
 
 - name: set-application-site-category
   cp_mgmt_application_site_category:
     description: My new Application Site category
-    groups: New Application Site Group 1
     name: New Application Site Category 1
     new_name: New Application Site Category 2
+    state: present
 
 - name: delete-application-site-category
   cp_mgmt_application_site_category:
