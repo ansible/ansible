@@ -423,9 +423,11 @@ COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plug
 
 class ModuleDepFinder(ast.NodeVisitor):
 
-    def __init__(self, module_path, *args, **kwargs):
+    def __init__(self, module_fqn, *args, **kwargs):
         """
         Walk the ast tree for the python module.
+        :arg module_fqn: The fully qualified name to reach this module in dotted notation.
+            example: ansible.module_utils.basic
 
         Save submodule[.submoduleN][.identifier] into self.submodules
         when they are from ansible.module_utils or ansible_collections packages
@@ -440,10 +442,11 @@ class ModuleDepFinder(ast.NodeVisitor):
 
         It's up to calling code to determine whether the final element of the
         tuple are module names or something else (function, class, or variable names)
+        .. seealso:: :python3:class:`ast.NodeVisitor`
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
         self.submodules = set()
-        self.module_path = module_path
+        self.module_fqn = module_fqn
 
     def visit_Import(self, node):
         """
@@ -474,19 +477,8 @@ class ModuleDepFinder(ast.NodeVisitor):
         # from ...executor import module_common
         # from ... import executor (Currently it gives a non-helpful error)
         if node.level > 0:
-            parts = None
-
-            if isinstance(self.module_path, tuple):
-                # the module_path we're given is already a tuple with the correct namespace
-                parts = tuple(self.module_path)
-            else:
-                # the module_path is a file path from which we need to extract the collection namespace, name and relative path
-                match = COLLECTION_PATH_RE.search(self.module_path)
-
-                if match:
-                    parts = tuple(match.group('path').split('/'))
-
-            if parts:
+            if self.module_fqn:
+                parts = tuple(self.module_fqn.split('.'))
                 if node.module:
                     # relative import: from .module import x
                     node_module = '.'.join(parts[:-node.level] + (node.module,))
@@ -643,26 +635,25 @@ class CollectionModuleInfo(ModuleInfo):
                 self.path = os.path.join(path, self._mod_name) + '.py'
                 break
         else:
-            # FIXME: implement package fallback code
+            # FIXME (nitz): implement package fallback code
             raise ImportError('unable to load collection-hosted module_util'
                               ' {0}.{1}'.format(to_native(self._package_name),
                                                 to_native(name)))
 
     def get_source(self):
-        # FIXME: need this in py2 for some reason TBD, but we shouldn't (get_data delegates to wrong
-        # loader without it)
+        # FIXME (nitz): need this in py2 for some reason TBD, but we shouldn't (get_data delegates
+        # to wrong loader without it)
         pkg = import_module(self._package_name)
         data = pkgutil.get_data(to_native(self._package_name), to_native(self._mod_name + '.py'))
         return data
 
 
-def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
+def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, zf):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module and its module_utils files needs.
     :arg name: Name of the python module we're examining
-    :arg path: Path to the python module we're scanning.
-        **Should be changed to a module_fqn in the future.**
+    :arg module_fqn: Fully qualified name of the python module we're scanning
     :arg py_module_names: set of the fully qualified module names represented as a tuple of their
         FQN with __init__ appended if the module is also a python package).  Presence of a FQN in
         this set means that we've already examined it for module_util deps.
@@ -678,7 +669,7 @@ def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
 
-    finder = ModuleDepFinder(path)
+    finder = ModuleDepFinder(module_fqn)
     finder.visit(tree)
 
     #
@@ -711,7 +702,7 @@ def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
             py_module_name = ('ansible', 'module_utils', 'six', '_six')
             idx = 0
         elif py_module_name[0] == 'ansible_collections':
-            # FIXME: replicate module name resolution like below for granular imports
+            # FIXME (nitz): replicate module name resolution like below for granular imports
             for idx in (1, 2):
                 if len(py_module_name) < idx:
                     break
@@ -871,8 +862,8 @@ def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
     py_module_names.update(unprocessed_py_module_names)
 
     for py_module_file in unprocessed_py_module_names:
-        next_name = '.'.join(py_module_file)
-        recursive_finder(next_name, py_module_file, py_module_cache[py_module_file][0],
+        next_fqn = '.'.join(py_module_file)
+        recursive_finder(py_module_file[-1], next_fqn, py_module_cache[py_module_file][0],
                          py_module_names, py_module_cache, zf)
         # Save memory; the file won't have to be read again for this ansible module.
         del py_module_cache[py_module_file]
@@ -884,12 +875,14 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
-def _get_module_fqn(module_path):
+def _get_ansible_module_fqn(module_path):
     """
-    Get the fully qualified name for a module based on its pathname
+    Get the fully qualified name for an ansible module based on its pathname
 
     remote_module_fqn is the fully qualified name.  Like ansible.modules.system.ping
     Or ansible_collections.Namespace.Collection_name.plugins.modules.ping
+    .. warning:: This function is for ansible modules only.  It won't work for other things
+        (non-module plugins, etc)
     """
     remote_module_fqn = None
 
@@ -1007,7 +1000,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             compression_method = zipfile.ZIP_STORED
 
         try:
-            remote_module_fqn = _get_module_fqn(module_path)
+            remote_module_fqn = _get_ansible_module_fqn(module_path)
         except ValueError:
             # Modules in roles currently are not found by the fqn heuristic so we
             # fallback to this.  This means that relative imports inside a module from
@@ -1078,7 +1071,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     # main().  Because parsing the ast is expensive, return it from recursive_finder
                     # instead of reparsing.  Once the deprecation is over and we remove that code,
                     # also remove returning of the ast tree.
-                    recursive_finder(module_name, module_path, b_module_data, py_module_names,
+                    recursive_finder(module_name, remote_module_fqn, b_module_data, py_module_names,
                                      py_module_cache, zf)
 
                     display.debug('ANSIBALLZ: Writing module into payload')
