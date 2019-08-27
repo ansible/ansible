@@ -310,12 +310,15 @@ class CollectionRequirement:
 
         for api in apis:
             collection_url_paths = [api.api_server, 'api', 'v2', 'collections', namespace, name, 'versions']
-            headers = api._auth_header(required=False)
 
             available_api_versions = get_available_api_versions(api)
             if 'v3' in available_api_versions:
                 # /api/v3/ exists, use it
                 collection_url_paths[2] = 'v3'
+                # update this v3 GalaxyAPI to use Bearer token from now on
+                api.token_type = 'Bearer'
+
+            headers = api._auth_header(required=False)
 
             is_single = False
             if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
@@ -464,14 +467,15 @@ def publish_collection(collection_path, api, wait, timeout):
 
     display.display("Publishing collection artifact '%s' to %s %s" % (collection_path, api.name, api.api_server))
 
-    headers = {}
-    headers.update(api._auth_header())
-
     n_url = _urljoin(api.api_server, 'api', 'v2', 'collections')
     available_api_versions = get_available_api_versions(api)
 
     if 'v3' in available_api_versions:
         n_url = _urljoin(api.api_server, 'api', 'v3', 'artifacts', 'collections')
+        api.token_type = 'Bearer'
+
+    headers = {}
+    headers.update(api._auth_header())
 
     data, content_type = _get_mime_data(b_collection_path)
     headers.update({

@@ -66,12 +66,13 @@ class GalaxyAPI(object):
 
     SUPPORTED_VERSIONS = ['v1']
 
-    def __init__(self, galaxy, name, url, username=None, password=None, token=None):
+    def __init__(self, galaxy, name, url, username=None, password=None, token=None, token_type=None):
         self.galaxy = galaxy
         self.name = name
         self.username = username
         self.password = password
         self.token = token
+        self.token_type = token_type or 'Token'
         self.api_server = url
         self.validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
@@ -81,12 +82,14 @@ class GalaxyAPI(object):
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
-    def _auth_header(self, required=True, token_type='Token'):
+    def _auth_header(self, required=True, token_type=None):
         '''Generate the Authorization header.
 
         Valid token_type values are 'Token' (galaxy v2) and 'Bearer' (galaxy v3)'''
         token = self.token.get() if self.token else None
 
+        # 'Token' for v2 api, 'Bearer' for v3
+        token_type = token_type or self.token_type
         if token:
             return {'Authorization': "%s %s" % (token_type, token)}
         elif self.username:

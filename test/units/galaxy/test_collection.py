@@ -507,11 +507,11 @@ def test_publish_failure_with_json_info(galaxy_server, collection_artifact, monk
         collection.publish_collection(artifact_path, galaxy_server, True, 0)
 
 
-@pytest.mark.parametrize("api_version", [
-    ('v2',),
-    ('v3',)
+@pytest.mark.parametrize("api_version,token_type", [
+    ('v2', 'Token'),
+    ('v3', 'Bearer')
 ])
-def test_publish_with_wait(api_version, galaxy_server, collection_artifact, monkeypatch):
+def test_publish_with_wait(api_version, token_type, galaxy_server, collection_artifact, monkeypatch):
     mock_avail_ver = MagicMock()
     mock_avail_ver.return_value = {api_version: '/api/%s' % api_version}
     monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
@@ -532,7 +532,7 @@ def test_publish_with_wait(api_version, galaxy_server, collection_artifact, monk
 
     assert mock_open.call_count == 2
     assert mock_open.mock_calls[1][1][0] == fake_import_uri
-    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == '%s key' % token_type
     assert mock_open.mock_calls[1][2]['validate_certs'] is True
     assert mock_open.mock_calls[1][2]['method'] == 'GET'
 
@@ -546,11 +546,11 @@ def test_publish_with_wait(api_version, galaxy_server, collection_artifact, monk
                                                'Galaxy server %s %s' % (galaxy_server.name, galaxy_server.api_server)
 
 
-@pytest.mark.parametrize("api_version,exp_api_url", [
-    ('v2', '/api/v2/collections/'),
-    ('v3', '/api/v3/artifacts/collections/')
+@pytest.mark.parametrize("api_version,exp_api_url,token_type", [
+    ('v2', '/api/v2/collections/', 'Token'),
+    ('v3', '/api/v3/artifacts/collections/', 'Bearer')
 ])
-def test_publish_with_wait_timeout(api_version, exp_api_url, galaxy_server, collection_artifact, monkeypatch):
+def test_publish_with_wait_timeout(api_version, exp_api_url, token_type, galaxy_server, collection_artifact, monkeypatch):
     mock_avail_ver = MagicMock()
     mock_avail_ver.return_value = {api_version: '/api/%s' % api_version}
     monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
@@ -574,11 +574,11 @@ def test_publish_with_wait_timeout(api_version, exp_api_url, galaxy_server, coll
 
     assert mock_open.call_count == 3
     assert mock_open.mock_calls[1][1][0] == fake_import_uri
-    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == '%s key' % token_type
     assert mock_open.mock_calls[1][2]['validate_certs'] is True
     assert mock_open.mock_calls[1][2]['method'] == 'GET'
     assert mock_open.mock_calls[2][1][0] == fake_import_uri
-    assert mock_open.mock_calls[2][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[2][2]['headers']['Authorization'] == '%s key' % token_type
     assert mock_open.mock_calls[2][2]['validate_certs'] is True
     assert mock_open.mock_calls[2][2]['method'] == 'GET'
 
