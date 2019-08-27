@@ -1,5 +1,8 @@
+from __future__ import (absolute_import, division, print_function)
 import ansible.module_utils.semodule as semodule
 import pytest
+
+__metaclass__ = type
 
 SEMODULE_OUTPUT = '''unconfined\t3.5.0
 unconfineduser\t1.0.0

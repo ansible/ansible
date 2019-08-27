@@ -1,9 +1,12 @@
+from __future__ import (absolute_import, division, print_function)
 from ansible.plugins.action.semodule import ActionModule
 from ansible.playbook.task import Task
 from units.compat.mock import MagicMock, Mock
 from ansible.plugins.loader import connection_loader
 import os
 import pytest
+
+__metaclass__ = type
 
 SEMODULE_OUTPUT = '''unconfined      3.5.0
 unconfineduser  1.0.0
