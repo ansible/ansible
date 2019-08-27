@@ -846,7 +846,7 @@ class ModuleValidator(Validator):
 
         return docs
 
-    def _validate_docs_schema(self, doc, schema, name, error_code, error_name):
+    def _validate_docs_schema(self, doc, schema, name, error_code):
         # TODO: Add line/col
         errors = []
         try:
@@ -871,7 +871,6 @@ class ModuleValidator(Validator):
 
             self.reporter.error(
                 path=self.object_path,
-                name=error_name,
                 code=error_code,
                 msg='%s: %s' % (combined_path, error_message)
             )
@@ -915,7 +914,7 @@ class ModuleValidator(Validator):
 
             if metadata:
                 self._validate_docs_schema(metadata, metadata_1_1_schema(),
-                                           'ANSIBLE_METADATA', 316, 'valid-ansible-metadata')
+                                           'ANSIBLE_METADATA', 'valid-ansible-metadata')
                 # We could validate these via the schema if we knew what the values are ahead of
                 # time.  We can figure that out for deprecated but we can't for removed.  Only the
                 # metadata has that information.
@@ -1004,7 +1003,6 @@ class ModuleValidator(Validator):
                                 version_added=not bool(self.collection)
                             ),
                             'DOCUMENTATION',
-                            305,
                             'valid-module-documentation',
                         )
                     else:
@@ -1016,7 +1014,6 @@ class ModuleValidator(Validator):
                                 version_added=not bool(self.collection)
                             ),
                             'DOCUMENTATION',
-                            305,
                             'valid-module-documentation',
                         )
 
@@ -1063,7 +1060,7 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                self._validate_docs_schema(data, return_schema, 'RETURN', 319, 'valid-return-documentation')
+                self._validate_docs_schema(data, return_schema, 'RETURN', 'valid-return-documentation')
 
                 for error in errors:
                     self.reporter.error(
@@ -1149,7 +1146,7 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 332, 'valide-ansiblemodule-schema')
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema, 'AnsibleModule', 'valide-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
 
