@@ -107,7 +107,7 @@ class AzureRMManagedClusterInfo(AzureRMModuleBase):
         self.tags = None
         self.show_kubeconfig = None
 
-        module = AnsibleModule(self.module_args)
+        module = AnsibleModule()
         is_old_facts = module._name == 'azure_rm_aks_facts'
         if is_old_facts:
             module.deprecate("The 'azure_rm_aks_facts' module has been renamed to 'azure_rm_aks_info'", version='2.13')
