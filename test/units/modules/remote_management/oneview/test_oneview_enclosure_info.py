@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from units.compat import unittest
-from ansible.modules.remote_management.oneview.oneview_enclosure_facts import EnclosureFactsModule
+from ansible.modules.remote_management.oneview.oneview_enclosure_info import EnclosureInfoModule
 from hpe_test_utils import FactsParamsTestCase
 
 
@@ -51,10 +51,10 @@ ENCLOSURE_ENVIRONMENTAL_CONFIG = {
 }
 
 
-class EnclosureFactsSpec(unittest.TestCase,
-                         FactsParamsTestCase):
+class EnclosureInfoSpec(unittest.TestCase,
+                        FactsParamsTestCase):
     def setUp(self):
-        self.configure_mocks(self, EnclosureFactsModule)
+        self.configure_mocks(self, EnclosureInfoModule)
         self.enclosures = self.mock_ov_client.enclosures
         FactsParamsTestCase.configure_client_mock(self, self.enclosures)
 
@@ -62,22 +62,22 @@ class EnclosureFactsSpec(unittest.TestCase,
         self.enclosures.get_all.return_value = PRESENT_ENCLOSURES
         self.mock_ansible_module.params = PARAMS_GET_ALL
 
-        EnclosureFactsModule().run()
+        EnclosureInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(enclosures=(PRESENT_ENCLOSURES))
+            enclosures=(PRESENT_ENCLOSURES)
         )
 
     def test_should_get_enclosure_by_name(self):
         self.enclosures.get_by.return_value = PRESENT_ENCLOSURES
         self.mock_ansible_module.params = PARAMS_GET_BY_NAME
 
-        EnclosureFactsModule().run()
+        EnclosureInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(enclosures=(PRESENT_ENCLOSURES))
+            enclosures=(PRESENT_ENCLOSURES)
 
         )
 
@@ -89,15 +89,14 @@ class EnclosureFactsSpec(unittest.TestCase,
 
         self.mock_ansible_module.params = PARAMS_GET_BY_NAME_WITH_OPTIONS
 
-        EnclosureFactsModule().run()
+        EnclosureInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(enclosures=PRESENT_ENCLOSURES,
-                               enclosure_script=ENCLOSURE_SCRIPT,
-                               enclosure_environmental_configuration=ENCLOSURE_ENVIRONMENTAL_CONFIG,
-                               enclosure_utilization=ENCLOSURE_UTILIZATION)
-
+            enclosures=PRESENT_ENCLOSURES,
+            enclosure_script=ENCLOSURE_SCRIPT,
+            enclosure_environmental_configuration=ENCLOSURE_ENVIRONMENTAL_CONFIG,
+            enclosure_utilization=ENCLOSURE_UTILIZATION
         )
 
     def test_should_get_all_utilization_data(self):
@@ -108,7 +107,7 @@ class EnclosureFactsSpec(unittest.TestCase,
 
         self.mock_ansible_module.params = PARAMS_GET_BY_NAME_WITH_OPTIONS
 
-        EnclosureFactsModule().run()
+        EnclosureInfoModule().run()
 
         self.enclosures.get_utilization.assert_called_once_with(PRESENT_ENCLOSURES[0]['uri'], fields='', filter='',
                                                                 view='', refresh='')
@@ -121,7 +120,7 @@ class EnclosureFactsSpec(unittest.TestCase,
 
         self.mock_ansible_module.params = PARAMS_GET_UTILIZATION_WITH_PARAMS
 
-        EnclosureFactsModule().run()
+        EnclosureInfoModule().run()
 
         date_filter = ["startDate=2016-06-30T03:29:42.000Z", "endDate=2016-07-01T03:29:42.000Z"]
 
