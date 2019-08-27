@@ -732,11 +732,11 @@ def add_extra_coverage_options(parser):
 
     parser.add_argument('--all',
                         action='store_true',
-                        help='include all python source files')
+                        help='include all python/powershell source files')
 
     parser.add_argument('--stub',
                         action='store_true',
-                        help='generate empty report of all python source files')
+                        help='generate empty report of all python/powershell source files')
 
 
 def add_httptester_options(parser, argparse):
