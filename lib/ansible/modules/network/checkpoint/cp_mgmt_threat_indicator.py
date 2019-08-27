@@ -61,7 +61,6 @@ options:
     description:
       - Collection of tag identifiers.
     type: list
-    suboptions:
   color:
     description:
       - Color of the object. Should be one of existing colors.
@@ -105,6 +104,7 @@ EXAMPLES = """
     profile_overrides:
     - action: detect
       profile: My_Profile
+    state: present
 
 - name: set-threat-indicator
   cp_mgmt_threat_indicator:
@@ -113,6 +113,7 @@ EXAMPLES = """
     name: My_Indicator
     profile_overrides:
       remove: My_Profile
+    state: present
 
 - name: delete-threat-indicator
   cp_mgmt_threat_indicator:
@@ -138,8 +139,7 @@ def main():
         observables_raw_data=dict(type='str'),
         action=dict(type='str', choices=['Inactive', 'Ask', 'Prevent', 'Detect']),
         profile_overrides=dict(type='list'),
-        tags=dict(type='list', options=dict(
-        )),
+        tags=dict(type='list'),
         color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
                                         'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
                                         'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
