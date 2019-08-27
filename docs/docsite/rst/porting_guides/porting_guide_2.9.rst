@@ -435,6 +435,9 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
   To access return values, :ref:`register a variable <registered_variables>`.
 * The ``redshift_facts`` module was renamed to :ref:`redshift_info <redshift_info_module>`.
 * The ``route53_facts`` module was renamed to :ref:`route53_info <route53_info_module>`.
+* The ``vertica_facts`` module was renamed to :ref:`vertica_info <vertica_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``vmware_cluster_facts`` module was renamed to :ref:`vmware_cluster_info <vmware_cluster_info_module>`.
 * The ``vmware_datastore_facts`` module was renamed to :ref:`vmware_datastore_info <vmware_datastore_info_module>`.
 * The ``vmware_guest_facts`` module was renamed to :ref:`vmware_guest_info <vmware_guest_info_module>`.
