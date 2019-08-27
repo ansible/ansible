@@ -134,14 +134,14 @@ EXAMPLES = """
 - name: show-threat-rule
   cp_mgmt_threat_rule_facts:
     layer: New Layer 1
-    rule_number: 1
+    name: Rule Name
 
 - name: show-threat-rulebase
   cp_mgmt_threat_rule_facts:
     details_level: standard
-    filter: WirelessZone
+    filter: ''
     limit: 20
-    name: Standard Threat Prevention
+    name: Threat Prevention
     offset: 0
     use_object_dictionary: false
 """

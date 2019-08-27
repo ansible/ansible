@@ -99,7 +99,7 @@ options:
   track_settings:
     description:
       - Threat rule track settings.
-    type: list
+    type: dict
     suboptions:
       packet_capture:
         description:
@@ -133,7 +133,7 @@ EXAMPLES = """
     install_on: Policy Targets
     layer: New Layer 1
     name: First threat rule
-    position: top
+    position: 1
     protected_scope: All_Internet
     state: present
     track: None
@@ -144,14 +144,15 @@ EXAMPLES = """
     comments: commnet for the first rule
     install_on: Policy Targets
     layer: New Layer 1
+    name: Rule Name
+    position: 1
     protected_scope: All_Internet
-    rule_number: 2
     state: present
 
 - name: delete-threat-rule
   cp_mgmt_threat_rule:
     layer: New Layer 1
-    rule_number: 1
+    name: Rule Name
     state: absent
 """
 
@@ -183,7 +184,7 @@ def main():
         source=dict(type='list'),
         source_negate=dict(type='bool'),
         track=dict(type='str'),
-        track_settings=dict(type='list', options=dict(
+        track_settings=dict(type='dict', options=dict(
             packet_capture=dict(type='bool')
         )),
         comments=dict(type='str'),
