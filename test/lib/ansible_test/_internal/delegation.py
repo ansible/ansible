@@ -241,6 +241,8 @@ def delegate_docker(args, exclude, require, integration_targets):
     else:
         content_root = install_root
 
+    remote_results_root = os.path.join(content_root, data_context().results_relative)
+
     cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
 
     if isinstance(args, TestConfig):
@@ -325,14 +327,14 @@ def delegate_docker(args, exclude, require, integration_targets):
                 ]
 
                 if content_root != install_root:
-                    writable_dirs.append(os.path.join(content_root, 'test/results/junit'))
-                    writable_dirs.append(os.path.join(content_root, 'test/results/coverage'))
+                    writable_dirs.append(os.path.join(remote_results_root, 'junit'))
+                    writable_dirs.append(os.path.join(remote_results_root, 'coverage'))
 
                 docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
                 docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)
 
                 if content_root == install_root:
-                    docker_exec(args, test_id, ['find', os.path.join(content_root, 'test/results/'), '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
+                    docker_exec(args, test_id, ['find', remote_results_root, '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
 
                 docker_exec(args, test_id, ['chmod', '755', '/root'])
                 docker_exec(args, test_id, ['chmod', '644', os.path.join(content_root, args.metadata_path)])
@@ -353,10 +355,16 @@ def delegate_docker(args, exclude, require, integration_targets):
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:
+                local_test_root = os.path.dirname(data_context().results)
+
+                remote_test_root = os.path.dirname(remote_results_root)
+                remote_results_name = os.path.basename(remote_results_root)
+                remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
+
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', os.path.join(content_root, 'test'), 'results'])
-                    docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
-                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
+                    docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '-C', remote_test_root, remote_results_name])
+                    docker_get(args, test_id, remote_temp_file, local_result_fd.name)
+                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', local_test_root])
         finally:
             if httptester_id:
                 docker_rm(args, httptester_id)
@@ -470,8 +478,14 @@ def delegate_remote(args, exclude, require, integration_targets):
                     download = False
 
             if download and content_root:
-                manage.ssh('rm -rf /tmp/results && cp -a %s/test/results /tmp/results && chmod -R a+r /tmp/results' % content_root)
-                manage.download('/tmp/results', 'test')
+                local_test_root = os.path.dirname(data_context().results)
+
+                remote_results_root = os.path.join(content_root, data_context().results_relative)
+                remote_results_name = os.path.basename(remote_results_root)
+                remote_temp_path = os.path.join('/tmp', remote_results_name)
+
+                manage.ssh('rm -rf {0} && cp -a {1} {0} && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
+                manage.download(remote_temp_path, local_test_root)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             core_ci.stop()
