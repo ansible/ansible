@@ -77,7 +77,7 @@ extends_documentation_fragment: checkpoint_facts
 EXAMPLES = """
 - name: show-application-site
   cp_mgmt_application_site_facts:
-    application_id: 10080872
+    name: facebook
 
 - name: show-application-sites
   cp_mgmt_application_site_facts:

@@ -109,14 +109,13 @@ EXAMPLES = """
     - Supports Streaming
     - New Application Site Category 1
     description: My Application Site
-    groups:
-    - New Application Site Group 1
-    name: New Application Site 2
+    name: New Application Site 1
     primary_category: Social Networking
+    state: present
     url_list:
     - www.cnet.com
     - www.stackoverflow.com
-    urls_defined_as_regular_expression: true
+    urls_defined_as_regular_expression: false
 
 - name: set-application-site
   cp_mgmt_application_site:
@@ -125,10 +124,10 @@ EXAMPLES = """
       - Instant Chat
       - Supports Streaming
     description: My New Application Site
-    groups: New Application Site Group 1
     name: New Application Site 1
     new_name: New Application Site 2
     primary_category: Instant Chat
+    state: present
     url_list:
       add: www.download.com
     urls_defined_as_regular_expression: true
