@@ -45,7 +45,7 @@ def get_powershell_module_utils_name(path):  # type: (str) -> str
     base_path = data_context().content.module_utils_powershell_path
 
     if data_context().content.collection:
-        prefix = 'AnsibleCollections.' + data_context().content.collection.prefix
+        prefix = 'ansible_collections.' + data_context().content.collection.prefix + '.plugins.module_utils.'
     else:
         prefix = ''
 
@@ -82,7 +82,7 @@ def extract_powershell_module_utils_imports(path, module_utils):
 
         for line in lines:
             line_number += 1
-            match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|AnsibleCollections)\..+)', line)
+            match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|ansible_collections)\..+)', line)
 
             if not match:
                 continue

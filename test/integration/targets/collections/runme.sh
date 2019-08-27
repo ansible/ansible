@@ -29,7 +29,7 @@ else
 fi
 
 # run test playbook
-ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBOOK}"
+ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBOOK}" "$@"
 
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATHS=''
