@@ -34,7 +34,6 @@ class CollectionLayout(LayoutProvider):
         collection_dir = os.path.relpath(root, collection_root)
         collection_namespace, collection_name = collection_dir.split(os.sep)
 
-        collection_prefix = '%s.%s.' % (collection_namespace, collection_name)
         collection_root = os.path.dirname(collection_root)
 
         return ContentLayout(root,
@@ -44,7 +43,6 @@ class CollectionLayout(LayoutProvider):
                                  name=collection_name,
                                  namespace=collection_namespace,
                                  root=collection_root,
-                                 prefix=collection_prefix,
                              ),
                              unit_path='test/unit',
                              unit_module_path='test/unit/plugins/modules',

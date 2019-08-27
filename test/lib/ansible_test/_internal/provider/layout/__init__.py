@@ -135,12 +135,12 @@ class CollectionDetail:
                  name,  # type: str
                  namespace,  # type: str
                  root,  # type: str
-                 prefix,  # type: str
                  ):  # type: (...) -> None
         self.name = name
         self.namespace = namespace
         self.root = root
-        self.prefix = prefix
+        self.full_name = '%s.%s' % (namespace, name)
+        self.prefix = '%s.' % self.full_name
         self.directory = os.path.join('ansible_collections', namespace, name)
 
 
