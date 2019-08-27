@@ -609,14 +609,14 @@ class InstanceConnection:
                  port=None,  # type: t.Optional[int]
                  username=None,  # type: t.Optional[str]
                  password=None,  # type: t.Optional[str]
-                 response_json={},  # type: t.Dict[str, t.Any]
+                 response_json=None,  # type: t.Optional[t.Dict[str, t.Any]]
                  ):  # type: (...) -> None
         self.running = running
         self.hostname = hostname
         self.port = port
         self.username = username
         self.password = password
-        self.response_json = response_json
+        self.response_json = response_json or {}
 
     def __str__(self):
         if self.password:
