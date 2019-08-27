@@ -11,10 +11,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: oneview_san_manager_facts
-short_description: Retrieve facts about one or more of the OneView SAN Managers
+module: oneview_san_manager_info
+short_description: Retrieve information about one or more of the OneView SAN Managers
 description:
-    - Retrieve facts about one or more of the SAN Managers from OneView
+    - Retrieve information about one or more of the SAN Managers from OneView
+    - This module was called C(oneview_san_manager_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(oneview_san_manager_info) module no longer returns C(ansible_facts)!
 version_added: "2.5"
 requirements:
     - hpOneView >= 2.0.1
@@ -39,15 +41,17 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Gather facts about all SAN Managers
-  oneview_san_manager_facts:
+- name: Gather information about all SAN Managers
+  oneview_san_manager_info:
     config: /etc/oneview/oneview_config.json
   delegate_to: localhost
+  register: result
 
-- debug: var=san_managers
+- debug:
+    msg: "{{ result.san_managers }}"
 
-- name: Gather paginated, filtered and sorted facts about SAN Managers
-  oneview_san_manager_facts:
+- name: Gather paginated, filtered and sorted information about SAN Managers
+  oneview_san_manager_info:
     config: /etc/oneview/oneview_config.json
     params:
       start: 0
@@ -55,21 +59,25 @@ EXAMPLES = '''
       sort: name:ascending
       query: isInternal eq false
   delegate_to: localhost
+  register: result
 
-- debug: var=san_managers
+- debug:
+    msg: "{{ result.san_managers }}"
 
-- name: Gather facts about a SAN Manager by provider display name
-  oneview_san_manager_facts:
+- name: Gather information about a SAN Manager by provider display name
+  oneview_san_manager_info:
     config: /etc/oneview/oneview_config.json
     provider_display_name: Brocade Network Advisor
   delegate_to: localhost
+  register: result
 
-- debug: var=san_managers
+- debug:
+    msg: "{{ result.san_managers }}"
 '''
 
 RETURN = '''
 san_managers:
-    description: Has all the OneView facts about the SAN Managers.
+    description: Has all the OneView information about the SAN Managers.
     returned: Always, but can be null.
     type: dict
 '''
@@ -77,15 +85,19 @@ san_managers:
 from ansible.module_utils.oneview import OneViewModuleBase
 
 
-class SanManagerFactsModule(OneViewModuleBase):
+class SanManagerInfoModule(OneViewModuleBase):
     argument_spec = dict(
         provider_display_name=dict(type='str'),
         params=dict(type='dict')
     )
 
     def __init__(self):
-        super(SanManagerFactsModule, self).__init__(additional_arg_spec=self.argument_spec)
+        super(SanManagerInfoModule, self).__init__(additional_arg_spec=self.argument_spec)
         self.resource_client = self.oneview_client.san_managers
+        self.is_old_facts = self.module._name == 'oneview_san_manager_facts'
+        if self.is_old_facts:
+            self.module.deprecate("The 'oneview_san_manager_facts' module has been renamed to 'oneview_san_manager_info', "
+                                  "and the renamed one no longer returns ansible_facts", version='2.13')
 
     def execute_module(self):
         if self.module.params.get('provider_display_name'):
@@ -98,11 +110,14 @@ class SanManagerFactsModule(OneViewModuleBase):
         else:
             resources = self.oneview_client.san_managers.get_all(**self.facts_params)
 
-        return dict(changed=False, ansible_facts=dict(san_managers=resources))
+        if self.is_old_facts:
+            return dict(changed=False, ansible_facts=dict(san_managers=resources))
+        else:
+            return dict(changed=False, san_managers=resources)
 
 
 def main():
-    SanManagerFactsModule().run()
+    SanManagerInfoModule().run()
 
 
 if __name__ == '__main__':

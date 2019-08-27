@@ -3,7 +3,7 @@
 
 from units.compat import unittest
 
-from oneview_module_loader import EthernetNetworkFactsModule
+from oneview_module_loader import EthernetNetworkInfoModule
 from hpe_test_utils import FactsParamsTestCase
 
 ERROR_MSG = 'Fake message error'
@@ -47,11 +47,11 @@ ENET_ASSOCIATED_PROFILES = [dict(uri=ENET_ASSOCIATED_PROFILE_URIS[0], name='Serv
                             dict(uri=ENET_ASSOCIATED_PROFILE_URIS[1], name='Server Profile 2')]
 
 
-class EthernetNetworkFactsSpec(unittest.TestCase,
-                               FactsParamsTestCase
-                               ):
+class EthernetNetworkInfoSpec(unittest.TestCase,
+                              FactsParamsTestCase
+                              ):
     def setUp(self):
-        self.configure_mocks(self, EthernetNetworkFactsModule)
+        self.configure_mocks(self, EthernetNetworkInfoModule)
         self.ethernet_networks = self.mock_ov_client.ethernet_networks
         FactsParamsTestCase.configure_client_mock(self, self.ethernet_networks)
 
@@ -59,22 +59,22 @@ class EthernetNetworkFactsSpec(unittest.TestCase,
         self.ethernet_networks.get_all.return_value = PRESENT_ENETS
         self.mock_ansible_module.params = PARAMS_GET_ALL
 
-        EthernetNetworkFactsModule().run()
+        EthernetNetworkInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(ethernet_networks=(PRESENT_ENETS))
+            ethernet_networks=(PRESENT_ENETS)
         )
 
     def test_should_get_enet_by_name(self):
         self.ethernet_networks.get_by.return_value = PRESENT_ENETS
         self.mock_ansible_module.params = PARAMS_GET_BY_NAME
 
-        EthernetNetworkFactsModule().run()
+        EthernetNetworkInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(ethernet_networks=(PRESENT_ENETS))
+            ethernet_networks=(PRESENT_ENETS)
         )
 
     def test_should_get_enet_by_name_with_options(self):
@@ -86,13 +86,13 @@ class EthernetNetworkFactsSpec(unittest.TestCase,
 
         self.mock_ansible_module.params = PARAMS_GET_BY_NAME_WITH_OPTIONS
 
-        EthernetNetworkFactsModule().run()
+        EthernetNetworkInfoModule().run()
 
         self.mock_ansible_module.exit_json.assert_called_once_with(
             changed=False,
-            ansible_facts=dict(ethernet_networks=PRESENT_ENETS,
-                               enet_associated_profiles=ENET_ASSOCIATED_PROFILES,
-                               enet_associated_uplink_groups=ENET_ASSOCIATED_UPLINK_GROUPS)
+            ethernet_networks=PRESENT_ENETS,
+            enet_associated_profiles=ENET_ASSOCIATED_PROFILES,
+            enet_associated_uplink_groups=ENET_ASSOCIATED_UPLINK_GROUPS
         )
 
 

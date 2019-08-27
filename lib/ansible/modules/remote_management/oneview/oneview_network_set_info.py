@@ -11,10 +11,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: oneview_network_set_facts
-short_description: Retrieve facts about the OneView Network Sets
+module: oneview_network_set_info
+short_description: Retrieve information about the OneView Network Sets
 description:
-    - Retrieve facts about the Network Sets from OneView.
+    - Retrieve information about the Network Sets from OneView.
+    - This module was called C(oneview_network_set_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(oneview_network_set_info) module no longer returns C(ansible_facts)!
 version_added: "2.4"
 requirements:
     - hpOneView >= 2.0.1
@@ -29,7 +31,7 @@ options:
 
     options:
       description:
-        - "List with options to gather facts about Network Set.
+        - "List with options to gather information about Network Set.
           Option allowed: C(withoutEthernet).
           The option C(withoutEthernet) retrieves the list of network_sets excluding Ethernet networks."
 
@@ -39,19 +41,21 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Gather facts about all Network Sets
-  oneview_network_set_facts:
+- name: Gather information about all Network Sets
+  oneview_network_set_info:
     hostname: 172.16.101.48
     username: administrator
     password: my_password
     api_version: 500
   no_log: true
   delegate_to: localhost
+  register: result
 
-- debug: var=network_sets
+- debug:
+    msg: "{{ result.network_sets }}"
 
-- name: Gather paginated, filtered, and sorted facts about Network Sets
-  oneview_network_set_facts:
+- name: Gather paginated, filtered, and sorted information about Network Sets
+  oneview_network_set_info:
     hostname: 172.16.101.48
     username: administrator
     password: my_password
@@ -63,11 +67,13 @@ EXAMPLES = '''
       filter: name='netset001'
   no_log: true
   delegate_to: localhost
+  register: result
 
-- debug: var=network_sets
+- debug:
+    msg: "{{ result.network_sets }}"
 
-- name: Gather facts about all Network Sets, excluding Ethernet networks
-  oneview_network_set_facts:
+- name: Gather information about all Network Sets, excluding Ethernet networks
+  oneview_network_set_info:
     hostname: 172.16.101.48
     username: administrator
     password: my_password
@@ -76,12 +82,13 @@ EXAMPLES = '''
         - withoutEthernet
   no_log: true
   delegate_to: localhost
+  register: result
 
-- debug: var=network_sets
+- debug:
+    msg: "{{ result.network_sets }}"
 
-
-- name: Gather facts about a Network Set by name
-  oneview_network_set_facts:
+- name: Gather information about a Network Set by name
+  oneview_network_set_info:
     hostname: 172.16.101.48
     username: administrator
     password: my_password
@@ -89,12 +96,13 @@ EXAMPLES = '''
     name: Name of the Network Set
   no_log: true
   delegate_to: localhost
+  register: result
 
-- debug: var=network_sets
+- debug:
+    msg: "{{ result.network_sets }}"
 
-
-- name: Gather facts about a Network Set by name, excluding Ethernet networks
-  oneview_network_set_facts:
+- name: Gather information about a Network Set by name, excluding Ethernet networks
+  oneview_network_set_info:
     hostname: 172.16.101.48
     username: administrator
     password: my_password
@@ -104,13 +112,15 @@ EXAMPLES = '''
         - withoutEthernet
   no_log: true
   delegate_to: localhost
+  register: result
 
-- debug: var=network_sets
+- debug:
+    msg: "{{ result.network_sets }}"
 '''
 
 RETURN = '''
 network_sets:
-    description: Has all the OneView facts about the Network Sets.
+    description: Has all the OneView information about the Network Sets.
     returned: Always, but can be empty.
     type: dict
 '''
@@ -118,7 +128,7 @@ network_sets:
 from ansible.module_utils.oneview import OneViewModuleBase
 
 
-class NetworkSetFactsModule(OneViewModuleBase):
+class NetworkSetInfoModule(OneViewModuleBase):
     argument_spec = dict(
         name=dict(type='str'),
         options=dict(type='list'),
@@ -126,7 +136,11 @@ class NetworkSetFactsModule(OneViewModuleBase):
     )
 
     def __init__(self):
-        super(NetworkSetFactsModule, self).__init__(additional_arg_spec=self.argument_spec)
+        super(NetworkSetInfoModule, self).__init__(additional_arg_spec=self.argument_spec)
+        self.is_old_facts = self.module._name == 'oneview_network_set_facts'
+        if self.is_old_facts:
+            self.module.deprecate("The 'oneview_network_set_facts' module has been renamed to 'oneview_network_set_info', "
+                                  "and the renamed one no longer returns ansible_facts", version='2.13')
 
     def execute_module(self):
 
@@ -140,12 +154,15 @@ class NetworkSetFactsModule(OneViewModuleBase):
         else:
             network_sets = self.oneview_client.network_sets.get_all(**self.facts_params)
 
-        return dict(changed=False,
-                    ansible_facts=dict(network_sets=network_sets))
+        if self.is_old_facts:
+            return dict(changed=False,
+                        ansible_facts=dict(network_sets=network_sets))
+        else:
+            return dict(changed=False, network_sets=network_sets)
 
 
 def main():
-    NetworkSetFactsModule().run()
+    NetworkSetInfoModule().run()
 
 
 if __name__ == '__main__':
