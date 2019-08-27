@@ -174,21 +174,16 @@ extends_documentation_fragment: checkpoint_objects
 EXAMPLES = """
 - name: add-host
   cp_mgmt_host:
-    ip_address: 192.0.2.162
-    name: New Host 3
-    nat_settings:
-      auto_rule: true
-      hide_behind: ip-address
-      install_on: All
-      ipv4_address: 192.0.2.1
-      ipv6_address: FE80::0202:B3FF:FE1E:8329
-      method: hide
+    ip_address: 192.0.2.1
+    name: New Host 1
+    state: present
 
 - name: set-host
   cp_mgmt_host:
     color: green
     ipv4_address: 192.0.2.2
     name: New Host 1
+    state: present
 
 - name: delete-host
   cp_mgmt_host:
