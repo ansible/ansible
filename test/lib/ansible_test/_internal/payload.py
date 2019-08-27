@@ -81,10 +81,11 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
             # exclude built-in ansible modules when they are not needed
             files = [f for f in files if not is_subdir(f[1], 'lib/ansible/modules/') or f[1] == 'lib/ansible/modules/__init__.py']
 
-        if data_context().content.collection:
-            # include collections content for testing
-            files.extend((os.path.join(data_context().content.root, path), os.path.join(data_context().content.collection.directory, path))
-                         for path in data_context().content.all_files())
+        collection_layouts = data_context().create_collection_layouts()
+
+        for layout in collection_layouts:
+            # include files from each collection in the same collection root as the content being tested
+            files.extend((os.path.join(layout.root, path), os.path.join(layout.collection.directory, path)) for path in layout.all_files())
 
     for callback in data_context().payload_callbacks:
         callback(files)
