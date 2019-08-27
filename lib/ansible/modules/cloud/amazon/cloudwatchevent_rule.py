@@ -288,11 +288,11 @@ class CloudWatchEventRule(object):
             if 'role_arn' in target:
                 target_request[''] = target['role_arn']
             if 'input_transformer' in target:
-              if 'input_paths_map' in target['input_transformer'] and 'input_template' in target['input_transformer']:
-                  target_request['InputTransformer'] = {
-                    'InputPathsMap': target['input_transformer']['input_paths_map'],
-                    'InputTemplate': target['input_transformer']['input_template']
-                  }
+                if 'input_paths_map' in target['input_transformer'] and 'input_template' in target['input_transformer']:
+                    target_request['InputTransformer'] = {
+                        'InputPathsMap': target['input_transformer']['input_paths_map'],
+                        'InputTemplate': target['input_transformer']['input_template']
+                    }
             if 'ecs_parameters' in target:
                 target_request['EcsParameters'] = {}
                 ecs_parameters = target['ecs_parameters']
