@@ -64,13 +64,21 @@ options:
         type: dict
         suboptions:
           failed:
+            description:
+              - This is failed.
             type: str
           in_progress:
+            description:
+              - This is in_progress.
             type: str
           unknown:
+            description:
+              - This is unknown.
             type: str
           upgraded:
-            type: str 
+            description:
+              - This is upgraded.
+            type: str
       message:
         description:
           - >-
@@ -83,8 +91,12 @@ options:
         type: dict
         suboptions:
           forced_upgrade:
+            description:
+              - This is forced_upgrade.
             type: str
           user_triggered:
+            description:
+              - This is user_triggered.
             type: str
       upgraded_resource_id:
         description:
