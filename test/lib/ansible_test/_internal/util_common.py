@@ -40,6 +40,7 @@ class ResultType:
     JUNIT = None  # type: ResultType
     LOGS = None  # type: ResultType
     REPORTS = None  # type: ResultType
+    TMP = None   # type: ResultType
 
     @staticmethod
     def _populate():
@@ -49,6 +50,7 @@ class ResultType:
         ResultType.JUNIT = ResultType('junit')
         ResultType.LOGS = ResultType('logs')
         ResultType.REPORTS = ResultType('reports')
+        ResultType.TMP = ResultType('.tmp')
 
     def __init__(self, name):  # type: (str) -> None
         self.name = name

@@ -29,6 +29,7 @@ from .util import (
 from .util_common import (
     run_command,
     write_json_file,
+    ResultType,
 )
 
 from .config import (
@@ -557,7 +558,7 @@ class SshKey:
         """
         :type args: EnvironmentConfig
         """
-        cache_dir = os.path.join(data_context().content.root, 'test/cache')
+        cache_dir = ResultType.TMP.path
 
         self.key = os.path.join(cache_dir, self.KEY_NAME)
         self.pub = os.path.join(cache_dir, self.PUB_NAME)
