@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_extsubnet
+module: aci_l3out_extsubnet
 short_description: Manage External Subnet objects (l3extSubnet:extsubnet)
 description:
 - Manage External Subnet objects (l3extSubnet:extsubnet)
@@ -87,7 +87,7 @@ author:
 
 EXAMPLES = r'''
 - name: Add a new External Subnet
-  aci_extsubnet:
+  aci_l3out_extsubnet:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -101,7 +101,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Delete External Subnet
-  aci_extsubnet:
+  aci_l3out_extsubnet:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -113,7 +113,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query ExtEpg information
-  aci_extsubnet:
+  aci_l3out_extsubnet:
     host: apic
     username: admin
     password: SomeSecretPassword
