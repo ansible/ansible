@@ -36,7 +36,6 @@ class Facts(FactsBase):
         "system": SystemFacts
     }
 
-
     def __init__(self, module, fos=None, uri=None):
         super(Facts, self).__init__(module)
         self._fos = fos

@@ -24,6 +24,5 @@ class SystemArgs(object):
         'system_time_select',
     ])
 
-
     def __init__(self, **kwargs):
         pass
