@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_applicationsecuritygroup_facts
-version_added: "2.8"
+module: azure_rm_applicationsecuritygroup_info
+version_added: "2.9"
 short_description: Get Azure Application Security Group facts
 description:
     - Get facts of Azure Application Security Group.
@@ -42,14 +42,14 @@ author:
 
 EXAMPLES = '''
   - name: List application security groups in specific resource group
-    azure_rm_applicationsecuritygroup_facts:
+    azure_rm_applicationsecuritygroup_info:
       resource_group: myResourceGroup
 
   - name: List application security groups in specific subscription
-    azure_rm_applicationsecuritygroup_facts:
+    azure_rm_applicationsecuritygroup_info:
 
   - name: Get application security group by name
-    azure_rm_applicationsecuritygroup_facts:
+    azure_rm_applicationsecuritygroup_info:
         resource_group: myResourceGroup
         name: myApplicationSecurityGroup
         tags:
@@ -89,6 +89,7 @@ applicationsecuritygroups:
             sample: Succeeded
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -110,7 +111,7 @@ def applicationsecuritygroup_to_dict(asg):
     )
 
 
-class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
+class AzureRMApplicationSecurityGroupInfo(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -129,9 +130,15 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
 
         self.results = dict(changed=False)
 
-        super(AzureRMApplicationSecurityGroupFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                                   supports_check_mode=False,
-                                                                   supports_tags=False)
+        module = AnsibleModule(self.module_arg_spec)
+        is_old_facts = module._name == 'azure_rm_applicationsecuritygroup_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_applicationsecuritygroup_facts' module has been renamed to 'azure_rm_applicationsecuritygroup_info'",
+                             version='2.13')
+
+        super(AzureRMApplicationSecurityGroupInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                                  supports_check_mode=False,
+                                                                  supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -217,7 +224,7 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMApplicationSecurityGroupFacts()
+    AzureRMApplicationSecurityGroupInfo()
 
 
 if __name__ == '__main__':
