@@ -557,13 +557,13 @@ def _generage_powershell_xml(coverage_file):
         filename = os.path.splitext(os.path.basename(path))[0]
 
         if filename.startswith('Ansible.ModuleUtils'):
-            package = 'Ansible.ModuleUtils'
+            package = 'ansible.module_utils'
         elif is_ansible:
-            package = 'Ansible.Modules'
+            package = 'ansible.modules'
         else:
             rel_path = path[len(content_root) + 1:]
-            plugin_type = "Modules" if rel_path.startswith("plugins/modules") else "ModuleUtils"
-            package = 'AnsibleCollections.%s%s' % (data_context().content.collection.prefix, plugin_type)
+            plugin_type = "modules" if rel_path.startswith("plugins/modules") else "module_utils"
+            package = 'ansible_collections.%splugins.%s' % (data_context().content.collection.prefix, plugin_type)
 
         if package not in packages:
             packages[package] = {}
