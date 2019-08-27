@@ -152,11 +152,11 @@ EXAMPLES = """
       timeout: 360
       use_default_timeout: false
     keep_connections_open_after_policy_installation: false
-    match_by_protocol_signature: true
     match_for_any: true
     name: New_TCP_Service_1
-    protocol: DNS_TCP
+    port: 5669
     session_timeout: 0
+    state: present
     sync_connections_on_cluster: true
 
 - name: set-service-tcp
@@ -167,6 +167,7 @@ EXAMPLES = """
     name: New_TCP_Service_1
     new_name: New_TCP_Service_2
     port: 5656
+    state: present
 
 - name: delete-service-tcp
   cp_mgmt_service_tcp:
