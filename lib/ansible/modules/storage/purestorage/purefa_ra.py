@@ -38,9 +38,10 @@ EXAMPLES = r'''
   purefa_ra:
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+  register: result
 
-  debug:
-    var: ansible_facts.fa_ra
+- debug:
+    msg: "Remote Assist: {{ result['ra_info'] }}"
 
 - name: Disable Remote Assist port
   purefa_ra:
@@ -75,7 +76,7 @@ def enable_ra(module, array):
                                  'port': ra_data['port']}
         except Exception:
             module.fail_json(msg='Getting Remote Assist failed')
-    module.exit_json(changed=changed, ansible_facts=ra_facts)
+    module.exit_json(changed=changed, ra_info=ra_facts)
 
 
 def disable_ra(module, array):
