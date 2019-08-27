@@ -2045,7 +2045,7 @@ lib/ansible/modules/cloud/scaleway/_scaleway_volume_facts.py validate-modules:E3
 lib/ansible/modules/cloud/scaleway/scaleway_volume_info.py validate-modules:E338
 lib/ansible/modules/cloud/smartos/imgadm.py validate-modules:E317
 lib/ansible/modules/cloud/smartos/imgadm.py validate-modules:E338
-lib/ansible/modules/cloud/smartos/smartos_image_facts.py validate-modules:E338
+lib/ansible/modules/cloud/smartos/smartos_image_info.py validate-modules:E338
 lib/ansible/modules/cloud/smartos/vmadm.py validate-modules:E322
 lib/ansible/modules/cloud/smartos/vmadm.py validate-modules:E324
 lib/ansible/modules/cloud/smartos/vmadm.py validate-modules:E326
