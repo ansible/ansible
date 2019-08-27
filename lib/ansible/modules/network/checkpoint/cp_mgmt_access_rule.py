@@ -68,8 +68,7 @@ options:
   content:
     description:
       - List of processed file types that this rule applies on.
-    type: list
-    suboptions:
+    type: dict
   content_direction:
     description:
       - On which direction the file types processing is applied.
@@ -227,11 +226,12 @@ extends_documentation_fragment: checkpoint_objects
 EXAMPLES = """
 - name: add-access-rule
   cp_mgmt_access_rule:
-    action: Apply Layer
-    inline_layer: Inline
     layer: Network
     name: Rule 1
     position: 1
+    service:
+    - SMTP
+    - AOL
     state: present
 
 - name: set-access-rule
@@ -273,8 +273,7 @@ def main():
             enable_identity_captive_portal=dict(type='bool'),
             limit=dict(type='str')
         )),
-        content=dict(type='list', options=dict(
-        )),
+        content=dict(type='dict'),
         content_direction=dict(type='str', choices=['any', 'up', 'down']),
         content_negate=dict(type='bool'),
         custom_fields=dict(type='list', options=dict(

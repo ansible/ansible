@@ -162,25 +162,15 @@ extends_documentation_fragment: checkpoint_facts
 EXAMPLES = """
 - name: show-access-rule
   cp_mgmt_access_rule_facts:
-    hits_settings:
-      from_date: '2014-01-01'
-      target: corporate-gw
-      to_date: '2014-12-31T23:59'
     layer: Network
     name: Rule 1
-    show_hits: true
 
 - name: show-access-rulebase
   cp_mgmt_access_rule_facts:
     details_level: standard
-    hits_settings:
-      from_date: '2014-01-01'
-      target: corporate-gw
-      to_date: '2014-12-31T23:59'
     limit: 20
     name: Network
     offset: 0
-    show_hits: true
     use_object_dictionary: true
 """
 
