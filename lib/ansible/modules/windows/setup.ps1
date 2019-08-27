@@ -372,7 +372,7 @@ if($gather_subset.Contains('processor')) {
         ansible_processor_cores = $win32_cpu.NumberOfCores
         ansible_processor_count = $win32_cs.NumberOfProcessors
         ansible_processor_threads_per_core = ($win32_cpu.NumberOfLogicalProcessors / $win32_cpu.NumberofCores)
-        ansible_processor_vcpus = ($win32_cpu.NumberOfLogicalProcessors * $win32_cs.NumberOfProcessors)
+        ansible_processor_vcpus = $win32_cs.NumberOfLogicalProcessors
     }
 }
 
