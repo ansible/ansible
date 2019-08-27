@@ -37,7 +37,7 @@ No notable changes
 Collection loader changes
 =========================
 
-The way to import a PowerShell of C# module util from a collection has changed in the Ansible 2.9 release. In Ansible
+The way to import a PowerShell or C# module util from a collection has changed in the Ansible 2.9 release. In Ansible
 2.8 a util was imported with the following syntax:
 
 .. code-block:: powershell

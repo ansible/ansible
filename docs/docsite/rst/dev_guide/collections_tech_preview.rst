@@ -86,7 +86,7 @@ module_utils
 
 When coding with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting Python import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
 
-The following example snippets shows a Python and PowerShell module using both default Ansible ``module_utils`` and
+The following example snippets show a Python and PowerShell module using both default Ansible ``module_utils`` and
 those provided by a collection. In this example the namespace is ``ansible_example``, the collection is ``community``.
 In the Python example the ``module_util`` in question is called ``qradar`` such that the FQCN is
 ``ansible_example.community.plugins.module_utils.qradar``:

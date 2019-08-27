@@ -39,8 +39,9 @@ class PSModuleDepFinder(object):
 
         self._re_cs_module = [
             # Reference C# module_util in another C# util
+            # 'using ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             re.compile(to_bytes(r'(?i)^using\s((Ansible\..+)|'
-                                r'(ansible_collections\.[\w.]+\.[\w.]+\.plugins\.module_utils\.[\w.]+));\s*$')),
+                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+));\s*$')),
         ]
 
         self._re_cs_in_ps_module = [
@@ -48,7 +49,7 @@ class PSModuleDepFinder(object):
             # '#AnsibleRequires -CSharpUtil Ansible.{name}'
             # '#AnsibleRequires -CSharpUtil ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\..+)|'
-                                r'(ansible_collections\.[\w.]+\.[\w.]+\.plugins\.module_utils\.[\w.]+))')),
+                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+))')),
         ]
 
         self._re_ps_module = [
@@ -59,7 +60,7 @@ class PSModuleDepFinder(object):
             # '#AnsibleRequires -PowerShell ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             # '#AnsibleRequires -PowerShell Ansible.ModuleUtils.{name}'
             re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+(((Ansible\.ModuleUtils\..+))|'
-                                r'(ansible_collections\.[\w.]+\.[\w.]+\.plugins\.module_utils\.[\w.]+))')),
+                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+))')),
         ]
 
         self._re_wrapper = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)'))
