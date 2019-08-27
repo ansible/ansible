@@ -79,6 +79,7 @@ options:
             - The patterns retrict the list of files or folders to be returned based on the filenames.
             - For a file to be matched it only has to match with one pattern in a list provided.
         type: list
+        aliases: [ "regex", "regexp" ]
     recurse:
         description:
             - Will recursively descend into the directory looking for files or folders.
