@@ -44,7 +44,6 @@ from ansible.utils.display import Display
 display = Display()
 
 
-
 class Connection(SSHConnection):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         # Since we're overriding the SSH Connection module, it's not explicitly loaded
