@@ -33,6 +33,7 @@ options:
     service:
         description:
             - Override all databases with the specified service
+            - The underlying system must support the service flag which is not always available.
         version_added: "2.9"
     split:
         description:
