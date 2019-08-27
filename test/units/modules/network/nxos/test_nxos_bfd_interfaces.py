@@ -73,14 +73,13 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
     # - 'overridden': The play is the source of truth. Similar to replaced but the
     #                 scope includes all interfaces; ie. it will also reset state
     #                 on interfaces not found in the play.
-    # - 'replaced'  : Scope is limit
-
+    # - 'replaced'  : Scope is limited to the interfaces in the play.
 
     SHOW_CMD = "show running-config | section '^interface|^feature bfd'"
 
     def test_1(self):
         # Setup: No BFD configs shown on device interfaces
-        # NOTE: The bfd 'enable' default state is to not nvgen.
+        # NOTE: The bfd 'enable' state is the default and does not nvgen.
         existing = dedent('''\
           feature bfd
           interface Ethernet1/1
@@ -140,8 +139,8 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
                 bfd_echo='disable'),
             dict(
                 name='Ethernet1/2'),
-            # Eth1/3 not present! Thus overridden should set it to defaults and
-            # replaced should ignore it.
+            # Eth1/3 not present! Thus overridden should set Eth1/3 to defaults;
+            # replaced should ignore Eth1/3.
         ])
         # Expected result commands for each 'state'
         merged = [ 'interface Ethernet1/1', 'bfd', 'no bfd echo' ]
@@ -171,7 +170,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         self.execute_module(changed=True, commands=replaced)
 
     def test_3(self):
-        # start with config, playbook has no values
+        # Device has bfd configs, playbook has no values
         existing = dedent('''\
           feature bfd
           interface Ethernet1/1
