@@ -95,12 +95,14 @@ EXAMPLES = """
     name: New Access Role 1
     networks: any
     remote_access_clients: any
+    state: present
     users: any
 
 - name: set-access-role
   cp_mgmt_access_role:
     machines: any
     name: New Access Role 1
+    state: present
     users: all identified
 
 - name: delete-access-role
