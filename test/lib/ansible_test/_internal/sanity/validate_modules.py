@@ -47,7 +47,7 @@ class ValidateModulesTest(SanitySingleVersion):
     @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
-        return 'ansible-test'
+        return 'A100'
 
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
@@ -64,7 +64,7 @@ class ValidateModulesTest(SanitySingleVersion):
             ignore_codes = ()
         else:
             ignore_codes = ((
-                'subdirectories-init',  # only ansible content requires __init__.py for module subdirectories
+                'E502',  # only ansible content requires __init__.py for module subdirectories
             ))
 
         env = ansible_environment(args, color=False)
