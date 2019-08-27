@@ -17,6 +17,7 @@ from copy import deepcopy
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.junos.argspec.vlans.vlans import VlansArgs
+from ansible.module_utils.network.junos.utils.utils import get_resource_config
 from ansible.module_utils.six import string_types
 try:
     from lxml import etree
@@ -61,7 +62,7 @@ class VlansFacts(object):
                   </vlans>
                 </configuration>
                 """
-            data = connection.get_configuration(filter=config_filter)
+            data = get_resource_config(connection, config_filter=config_filter)
 
         if isinstance(data, string_types):
             data = etree.fromstring(to_bytes(data,
