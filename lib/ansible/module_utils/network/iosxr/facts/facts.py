@@ -23,8 +23,6 @@ from ansible.module_utils.network.iosxr.facts.interfaces.interfaces import Inter
 from ansible.module_utils.network.iosxr.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.iosxr.facts.legacy.base import Default, Hardware, Interfaces, Config
 from ansible.module_utils.network.iosxr.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
-from ansible.module_utils.network.iosxr.facts.legacy.\
-    base import Default, Hardware, Interfaces, Config
 
 
 FACT_LEGACY_SUBSETS = dict(
