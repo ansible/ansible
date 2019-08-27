@@ -42,7 +42,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Gather information about all Enclosures
-  oneview_enclosure_facts:
+  oneview_enclosure_info:
     hostname: 172.16.101.48
     username: administrator
     password: my_password
@@ -68,7 +68,7 @@ EXAMPLES = '''
   delegate_to: localhost
   register: result
 - debug:
-    msg: "{{ enclosures }}"
+    msg: "{{ result.enclosures }}"
 
 - name: Gather information about an Enclosure by name
   oneview_enclosure_info:
@@ -106,9 +106,9 @@ EXAMPLES = '''
 - debug:
     msg: "{{ result.enclosure_utilization }}"
 
-- name: "Gather facts about an Enclosure with temperature data at a resolution of one sample per day, between two
+- name: "Gather information about an Enclosure with temperature data at a resolution of one sample per day, between two
          specified dates"
-  oneview_enclosure_facts:
+  oneview_enclosure_info:
     name: Test-Enclosure
     options:
       - utilization:                   # optional

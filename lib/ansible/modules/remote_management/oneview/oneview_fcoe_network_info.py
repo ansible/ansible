@@ -60,7 +60,7 @@ EXAMPLES = '''
 - name: Gather information about a FCoE Network by name
   oneview_fcoe_network_info:
     config: /etc/oneview/oneview_config.json
-    name: Test FCoE Network Facts
+    name: Test FCoE Network Information
   delegate_to: localhost
   register: result
 
