@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_switch_controller_global
 short_description: Configure FortiSwitch global settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify switch_controller feature and global category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,72 +41,91 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     switch_controller_global:
         description:
             - Configure FortiSwitch global settings.
         default: null
+        type: dict
         suboptions:
-            allow-multiple-interfaces:
+            allow_multiple_interfaces:
                 description:
                     - Enable/disable multiple FortiLink interfaces for redundant connections between a managed FortiSwitch and FortiGate.
+                type: str
                 choices:
                     - enable
                     - disable
-            default-virtual-switch-vlan:
+            default_virtual_switch_vlan:
                 description:
                     - Default VLAN for ports when added to the virtual-switch. Source system.interface.name.
-            disable-discovery:
+                type: str
+            disable_discovery:
                 description:
                     - Prevent this FortiSwitch from discovering.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Managed device ID.
                         required: true
-            https-image-push:
+                        type: str
+            https_image_push:
                 description:
                     - Enable/disable image push to FortiSwitch using HTTPS.
+                type: str
                 choices:
                     - enable
                     - disable
-            log-mac-limit-violations:
+            log_mac_limit_violations:
                 description:
                     - Enable/disable logs for Learning Limit Violations.
+                type: str
                 choices:
                     - enable
                     - disable
-            mac-aging-interval:
+            mac_aging_interval:
                 description:
-                    - Time after which an inactive MAC is aged out (10 - 1000000 sec, default = 300, 0 = disable).
-            mac-retention-period:
+                    - Time after which an inactive MAC is aged out (10 - 1000000 sec).
+                type: int
+            mac_retention_period:
                 description:
                     - Time in hours after which an inactive MAC is removed from client DB.
-            mac-violation-timer:
+                type: int
+            mac_violation_timer:
                 description:
                     - Set timeout for Learning Limit Violations (0 = disabled).
+                type: int
 '''
 
 EXAMPLES = '''
@@ -119,6 +135,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure FortiSwitch global settings.
     fortios_switch_controller_global:
@@ -128,16 +145,16 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       switch_controller_global:
-        allow-multiple-interfaces: "enable"
-        default-virtual-switch-vlan: "<your_own_value> (source system.interface.name)"
-        disable-discovery:
+        allow_multiple_interfaces: "enable"
+        default_virtual_switch_vlan: "<your_own_value> (source system.interface.name)"
+        disable_discovery:
          -
             name: "default_name_6"
-        https-image-push: "enable"
-        log-mac-limit-violations: "enable"
-        mac-aging-interval: "9"
-        mac-retention-period: "10"
-        mac-violation-timer: "11"
+        https_image_push: "enable"
+        log_mac_limit_violations: "enable"
+        mac_aging_interval: "9"
+        mac_retention_period: "10"
+        mac_violation_timer: "11"
 '''
 
 RETURN = '''
@@ -200,14 +217,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -215,13 +234,13 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_switch_controller_global_data(json):
-    option_list = ['allow-multiple-interfaces', 'default-virtual-switch-vlan', 'disable-discovery',
-                   'https-image-push', 'log-mac-limit-violations', 'mac-aging-interval',
-                   'mac-retention-period', 'mac-violation-timer']
+    option_list = ['allow_multiple_interfaces', 'default_virtual_switch_vlan', 'disable_discovery',
+                   'https_image_push', 'log_mac_limit_violations', 'mac_aging_interval',
+                   'mac_retention_period', 'mac_violation_timer']
     dictionary = {}
 
     for attribute in option_list:
@@ -231,17 +250,15 @@ def filter_switch_controller_global_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -249,48 +266,54 @@ def flatten_multilists_attributes(data):
 def switch_controller_global(data, fos):
     vdom = data['vdom']
     switch_controller_global_data = data['switch_controller_global']
-    flattened_data = flatten_multilists_attributes(switch_controller_global_data)
-    filtered_data = filter_switch_controller_global_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_switch_controller_global_data(switch_controller_global_data))
+
     return fos.set('switch-controller',
                    'global',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_switch_controller(data, fos):
-    login(data)
 
     if data['switch_controller_global']:
         resp = switch_controller_global(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "switch_controller_global": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "allow-multiple-interfaces": {"required": False, "type": "str",
+                "allow_multiple_interfaces": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
-                "default-virtual-switch-vlan": {"required": False, "type": "str"},
-                "disable-discovery": {"required": False, "type": "list",
+                "default_virtual_switch_vlan": {"required": False, "type": "str"},
+                "disable_discovery": {"required": False, "type": "list",
                                       "options": {
                                           "name": {"required": True, "type": "str"}
                                       }},
-                "https-image-push": {"required": False, "type": "str",
+                "https_image_push": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "log-mac-limit-violations": {"required": False, "type": "str",
+                "log_mac_limit_violations": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                "mac-aging-interval": {"required": False, "type": "int"},
-                "mac-retention-period": {"required": False, "type": "int"},
-                "mac-violation-timer": {"required": False, "type": "int"}
+                "mac_aging_interval": {"required": False, "type": "int"},
+                "mac_retention_period": {"required": False, "type": "int"},
+                "mac_violation_timer": {"required": False, "type": "int"}
 
             }
         }
@@ -298,15 +321,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

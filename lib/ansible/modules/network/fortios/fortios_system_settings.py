@@ -130,11 +130,11 @@ options:
                     - disable
             bfd_desired_min_tx:
                 description:
-                    - BFD desired minimal transmit interval (1 - 100000 ms, default = 50).
+                    - BFD desired minimal transmit interval (1 - 100000 ms).
                 type: int
             bfd_detect_mult:
                 description:
-                    - BFD detection multiplier (1 - 50, default = 3).
+                    - BFD detection multiplier (1 - 50).
                 type: int
             bfd_dont_enforce_src_port:
                 description:
@@ -145,7 +145,7 @@ options:
                     - disable
             bfd_required_min_rx:
                 description:
-                    - BFD required minimal receive interval (1 - 100000 ms, default = 50).
+                    - BFD required minimal receive interval (1 - 100000 ms).
                 type: int
             block_land_attack:
                 description:
@@ -207,11 +207,11 @@ options:
                 type: str
             discovered_device_timeout:
                 description:
-                    - Timeout for discovered devices (1 - 365 days, default = 28).
+                    - Timeout for discovered devices (1 - 365 days).
                 type: int
             ecmp_max_paths:
                 description:
-                    - Maximum number of Equal Cost Multi-Path (ECMP) next-hops. Set to 1 to disable ECMP routing (1 - 100, default = 10).
+                    - Maximum number of Equal Cost Multi-Path (ECMP) next-hops. Set to 1 to disable ECMP routing (1 - 100).
                 type: int
             email_portal_check_dns:
                 description:
@@ -649,7 +649,7 @@ options:
                     - global
             mac_ttl:
                 description:
-                    - Duration of MAC addresses in Transparent mode (300 - 8640000 sec, default = 300).
+                    - Duration of MAC addresses in Transparent mode (300 - 8640000 sec).
                 type: int
             manageip:
                 description:
@@ -703,7 +703,7 @@ options:
                     - disable
             sccp_port:
                 description:
-                    - TCP port the SCCP proxy monitors for SCCP traffic (0 - 65535, default = 2000).
+                    - TCP port the SCCP proxy monitors for SCCP traffic (0 - 65535).
                 type: int
             ses_denied_traffic:
                 description:
@@ -729,15 +729,15 @@ options:
                     - disable
             sip_ssl_port:
                 description:
-                    - TCP port the SIP proxy monitors for SIP SSL/TLS traffic (0 - 65535, default = 5061).
+                    - TCP port the SIP proxy monitors for SIP SSL/TLS traffic (0 - 65535).
                 type: int
             sip_tcp_port:
                 description:
-                    - TCP port the SIP proxy monitors for SIP traffic (0 - 65535, default = 5060).
+                    - TCP port the SIP proxy monitors for SIP traffic (0 - 65535).
                 type: int
             sip_udp_port:
                 description:
-                    - UDP port the SIP proxy monitors for SIP traffic (0 - 65535, default = 5060).
+                    - UDP port the SIP proxy monitors for SIP traffic (0 - 65535).
                 type: int
             snat_hairpin_traffic:
                 description:
