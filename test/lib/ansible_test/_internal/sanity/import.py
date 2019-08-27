@@ -127,6 +127,11 @@ class ImportTest(SanityMultipleVersion):
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
         env['PYTHONPATH'] = python_path
 
+        env.update(
+            SANITY_IMPORT_DIR=os.path.relpath(temp_root, data_context().content.root) + os.path.sep,
+            SANITY_MINIMAL_DIR=os.path.relpath(virtual_environment_path, data_context().content.root) + os.path.sep,
+        )
+
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
             run_command(args, generate_pip_install(['pip'], 'sanity.import', packages=['setuptools']), env=env)
