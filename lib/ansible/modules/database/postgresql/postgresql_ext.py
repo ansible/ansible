@@ -88,6 +88,19 @@ options:
       - Set I(version=latest) to update the extension to the latest available version.
     type: str
     version_added: '2.9'
+seealso:
+- name: PostgreSQL extensions
+  description: General information about PostgreSQL extensions.
+  link: https://www.postgresql.org/docs/current/external-extensions.html
+- name: CREATE EXTENSION reference
+  description: Complete reference of the CREATE EXTENSION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createextension.html
+- name: ALTER EXTENSION reference
+  description: Complete reference of the ALTER EXTENSION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterextension.html
+- name: DROP EXTENSION reference
+  description: Complete reference of the DROP EXTENSION command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droppublication.html
 notes:
 - The default authentication assumes that you are either logging in as
   or sudo'ing to the C(postgres) account on the host.

@@ -30,10 +30,6 @@ description:
 - Be carefull when marking a language as trusted since this could be a potential
   security breach. Untrusted languages allow only users with the PostgreSQL superuser
   privilege to use this language to create new functions.
-- For more information about PostgreSQL languages see the official documentation
-  U(https://www.postgresql.org/docs/current/sql-createlanguage.html),
-  U(https://www.postgresql.org/docs/current/sql-alterlanguage.html),
-  U(https://www.postgresql.org/docs/current/sql-droplanguage.html).
 version_added: '1.7'
 options:
   lang:
@@ -107,6 +103,19 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.8'
+seealso:
+- name: PostgreSQL languages
+  description: General information about PostgreSQL languages.
+  link: https://www.postgresql.org/docs/current/xplang.html
+- name: CREATE LANGUAGE reference
+  description: Complete reference of the CREATE LANGUAGE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createlanguage.html
+- name: ALTER LANGUAGE reference
+  description: Complete reference of the ALTER LANGUAGE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterlanguage.html
+- name: DROP LANGUAGE reference
+  description: Complete reference of the DROP LANGUAGE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droplanguage.html
 author:
 - Jens Depuydt (@jensdepuydt)
 - Thomas O'Donnell (@andytom)

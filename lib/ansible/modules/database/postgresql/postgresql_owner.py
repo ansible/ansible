@@ -20,8 +20,6 @@ short_description: Change an owner of PostgreSQL database object
 description:
 - Change an owner of PostgreSQL database object.
 - Also allows to reassign the ownership of database objects owned by a database role to another role.
-- For more information about REASSIGN OWNED BY command
-  see U(https://www.postgresql.org/docs/current/sql-reassign-owned.html).
 version_added: '2.8'
 
 options:
@@ -51,7 +49,6 @@ options:
     - Pay attention - it reassignes all objects owned by this role(s) in the I(db)!
     - If role(s) exists, always returns changed True.
     - Cannot reassign ownership of objects that are required by the database system.
-    - For more information see U(https://www.postgresql.org/docs/current/sql-reassign-owned.html).
     - Mutually exclusive with C(obj_type).
     type: list
   fail_on_role:
@@ -74,6 +71,13 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
+seealso:
+- module: postgresql_user
+- module: postgresql_privs
+- module: postgresql_membership
+- name: PostgreSQL REASSIGN OWNED command reference
+  description: Complete reference of the PostgreSQL REASSIGN OWNED command documentation.
+  link: https://www.postgresql.org/docs/current/sql-reassign-owned.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres

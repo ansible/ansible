@@ -46,6 +46,8 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
+seealso:
+- module: postgresql_ping
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres

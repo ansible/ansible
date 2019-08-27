@@ -27,6 +27,8 @@ options:
     type: str
     aliases:
     - login_db
+seealso:
+- module: postgresql_info
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
