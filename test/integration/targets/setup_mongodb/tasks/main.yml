@@ -25,7 +25,7 @@
     or (ansible_os_family == "RedHat" and ansible_distribution_major_version == '6')
     or ansible_os_family == "Suse"
     or ansible_distribution == 'Fedora'
-    or (ansible_distribution == 'CentOS' and ansible_distribution_version == '7')
+    or (ansible_facts['distribution'] == "CentOS" and ansible_distribution_version == '7')
 
 # Ubuntu
 - name: Import MongoDB public GPG Key xenial
