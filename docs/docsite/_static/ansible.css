@@ -78,7 +78,6 @@ table.documentation-table .value-required {
 
 /* Ansible-specific CSS pulled out of rtd theme for 2.9 */
 
-
 .DocSiteProduct-header {
     flex: 1;
     -webkit-flex: 1;
@@ -321,6 +320,7 @@ table {
    width: auto;
    border-bottom: 1px solid #444;
    font-size: 14px;
+   z-index: 1
 }
 
 
@@ -487,7 +487,7 @@ table {
         margin-top: -4px;
 
     }
-    
+
     .ansibleNav{
         height: 45px;
         width: 1100px;
