@@ -14,15 +14,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_server_facts
-short_description: Retrieve facts about one or more compute instances
+module: os_server_info
+short_description: Retrieve information about one or more compute instances
 author: Monty (@emonty)
 version_added: "2.0"
 description:
-    - Retrieve facts about server instances from OpenStack.
+    - Retrieve information about server instances from OpenStack.
+    - This module was called C(os_server_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_server_info) module no longer returns C(ansible_facts)!
 notes:
-    - This module creates a new top-level C(openstack_servers) fact, which
-      contains a list of servers.
+    - The result contains a list of servers.
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -56,14 +57,15 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all servers named <web*> that are in an active state:
-- os_server_facts:
+# Gather information about all servers named <web*> that are in an active state:
+- os_server_info:
     cloud: rax-dfw
     server: web*
     filters:
       vm_state: active
+  register: result
 - debug:
-    var: openstack_servers
+    msg: "{{ result.openstack_servers }}"
 '''
 
 import fnmatch
@@ -82,6 +84,10 @@ def main():
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
+    is_old_facts = module._name == 'os_server_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_server_facts' module has been renamed to 'os_server_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -95,8 +101,11 @@ def main():
             # TODO(mordred) This is handled by sdk now
             openstack_servers = [server for server in openstack_servers
                                  if fnmatch.fnmatch(server['name'], pattern) or fnmatch.fnmatch(server['id'], pattern)]
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_servers=openstack_servers))
+        if is_old_facts:
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_servers=openstack_servers))
+        else:
+            module.exit_json(changed=False, openstack_servers=openstack_servers)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

@@ -13,13 +13,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_keystone_domain_facts
-short_description: Retrieve facts about one or more OpenStack domains
+module: os_keystone_domain_info
+short_description: Retrieve information about one or more OpenStack domains
 extends_documentation_fragment: openstack
 version_added: "2.1"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
-    - Retrieve facts about a one or more OpenStack domains
+    - Retrieve information about a one or more OpenStack domains
+    - This module was called C(os_keystone_domain_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_keystone_domain_info) module no longer returns C(ansible_facts)!
 requirements:
     - "python >= 2.7"
     - "sdk"
@@ -37,33 +39,36 @@ options:
 '''
 
 EXAMPLES = '''
-# Gather facts about previously created domain
-- os_keystone_domain_facts:
+# Gather information about previously created domain
+- os_keystone_domain_info:
     cloud: awesomecloud
+  register: result
 - debug:
-    var: openstack_domains
+    msg: "{{ result.openstack_domains }}"
 
-# Gather facts about a previously created domain by name
-- os_keystone_domain_facts:
+# Gather information about a previously created domain by name
+- os_keystone_domain_info:
     cloud: awesomecloud
     name: demodomain
+  register: result
 - debug:
-    var: openstack_domains
+    msg: "{{ result.openstack_domains }}"
 
-# Gather facts about a previously created domain with filter
-- os_keystone_domain_facts:
+# Gather information about a previously created domain with filter
+- os_keystone_domain_info:
     cloud: awesomecloud
     name: demodomain
     filters:
-      enabled: False
+      enabled: false
+  register: result
 - debug:
-    var: openstack_domains
+    msg: "{{ result.openstack_domains }}"
 '''
 
 
 RETURN = '''
 openstack_domains:
-    description: has all the OpenStack facts about domains
+    description: has all the OpenStack information about domains
     returned: always, but can be null
     type: complex
     contains:
@@ -101,6 +106,10 @@ def main():
         ]
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
+    is_old_facts = module._name == 'os_keystone_domain_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_keystone_domain_facts' module has been renamed to 'os_keystone_domain_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, opcloud = openstack_cloud_from_module(module)
     try:
@@ -117,8 +126,11 @@ def main():
         else:
             domains = opcloud.search_domains(filters)
 
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_domains=domains))
+        if is_old_facts:
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_domains=domains))
+        else:
+            module.exit_json(changed=False, openstack_domains=domains)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
