@@ -190,7 +190,7 @@ class Cliconf(CliconfBase):
             elif label:
                 cmd_obj['command'] = 'commit label {0}'.format(label)
             else:
-                cmd_obj['command'] = 'commit'
+                cmd_obj['command'] = 'commit show-error'
 
         self.send_command(**cmd_obj)
 
