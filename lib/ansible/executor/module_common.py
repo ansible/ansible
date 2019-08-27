@@ -420,6 +420,13 @@ site_packages = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.py$' % site_packages)
 COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.py$')
 
+# Detect new-style Python modules by looking for required imports:
+# from ansible.module_utils.
+# from ..module_utils.
+# from ansible_collections.
+# import ansible_collections.
+NEW_STYLE_PYTHON_MODULE_RE = re.compile(br'from (?:ansible|\.+)\.module_utils\.|(?:from|import) ansible_collections\.')
+
 
 class ModuleDepFinder(ast.NodeVisitor):
 
@@ -953,11 +960,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         module_style = 'new'
         module_substyle = 'python'
         b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
-    # FUTURE: combined regex for this stuff, or a "looks like Python, let's inspect further" mechanism
-    # FIXME: The relative import here needs more work.  For instance,
-    # the ansible.modules.cloud.amazon.ec2 module would have ....module_utils.
-    elif b'from ansible.module_utils.' in b_module_data or b'from ansible_collections.' in b_module_data\
-            or b'import ansible_collections.' in b_module_data or b'from ...module_utils.' in b_module_data:
+    elif NEW_STYLE_PYTHON_MODULE_RE.search(b_module_data):
         module_style = 'new'
         module_substyle = 'python'
     elif REPLACER_WINDOWS in b_module_data:
