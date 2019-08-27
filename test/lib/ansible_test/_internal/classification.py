@@ -623,9 +623,6 @@ class PathMapper:
         if path.startswith('test/cache/'):
             return minimal
 
-        if path.startswith('test/results/'):
-            return minimal
-
         if path.startswith('test/legacy/'):
             return minimal
 
