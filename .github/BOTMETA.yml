@@ -518,6 +518,7 @@ files:
   $modules/web_infrastructure/ansible_tower/: &tower
     labels: [ tower ]
     maintainers: $team_tower
+    ignored: wwitzel3
   $modules/web_infrastructure/sophos_utm/:
     maintainers: $team_e_spirit
     keywords:
