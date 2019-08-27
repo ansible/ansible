@@ -130,7 +130,7 @@ class AzureRMApplicationSecurityGroupInfo(AzureRMModuleBase):
 
         self.results = dict(changed=False)
 
-        module = AnsibleModule()
+        module = AnsibleModule(self.module_arg_spec)
         is_old_facts = module._name == 'azure_rm_applicationsecuritygroup_facts'
         if is_old_facts:
             module.deprecate("The 'azure_rm_applicationsecuritygroup_facts' module has been renamed to 'azure_rm_applicationsecuritygroup_info'",

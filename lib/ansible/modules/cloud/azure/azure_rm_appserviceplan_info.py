@@ -149,7 +149,7 @@ class AzureRMAppServicePlanInfo(AzureRMModuleBase):
         self.tags = None
         self.info_level = None
 
-        module = AnsibleModule()
+        module = AnsibleModule(self.module_arg_spec)
         is_old_facts = module._name == 'azure_rm_appserviceplan_facts'
         if is_old_facts:
             module.deprecate("The 'azure_rm_appserviceplan_facts' module has been renamed to 'azure_rm_appserviceplan_info'", version='2.13')

@@ -139,7 +139,7 @@ class AzureRMAvailabilitySetInfo(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        module = AnsibleModule()
+        module = AnsibleModule(self.module_args)
         is_old_facts = module._name == 'azure_rm_availabilityset_facts'
         if is_old_facts:
             module.deprecate("The 'azure_rm_availabilityset_facts' module has been renamed to 'azure_rm_availabilityset_info'", version='2.13')
