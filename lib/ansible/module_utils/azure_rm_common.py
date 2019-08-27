@@ -70,7 +70,8 @@ AZURE_API_PROFILES = {
         'WebSiteManagementClient': '2018-02-01',
         'PostgreSQLManagementClient': '2017-12-01',
         'MySQLManagementClient': '2017-12-01',
-        'MariaDBManagementClient': '2019-03-01'
+        'MariaDBManagementClient': '2019-03-01',
+        'ManagementLockClient': '2016-09-01'
     },
 
     '2017-03-09-profile': {
@@ -177,6 +178,7 @@ try:
     from msrest.service_client import ServiceClient
     from msrestazure import AzureConfiguration
     from msrest.authentication import Authentication
+    from azure.mgmt.resource.locks import ManagementLockClient
 except ImportError as exc:
     Authentication = object
     HAS_AZURE_EXC = traceback.format_exc()
@@ -328,6 +330,7 @@ class AzureRMModuleBase(object):
         self._servicebus_client = None
         self._automation_client = None
         self._IoThub_client = None
+        self._lock_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -1078,6 +1081,32 @@ class AzureRMModuleBase(object):
     def IoThub_models(self):
         return IoTHubModels
 
+    @property
+    def automation_client(self):
+        self.log('Getting automation client')
+        if not self._automation_client:
+            self._automation_client = self.get_mgmt_svc_client(AutomationClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._automation_client
+
+    @property
+    def automation_models(self):
+        return AutomationModel
+
+    @property
+    def lock_client(self):
+        self.log('Getting lock client')
+        if not self._lock_client:
+            self._lock_client = self.get_mgmt_svc_client(ManagementLockClient,
+                                                         base_url=self._cloud_environment.endpoints.resource_manager,
+                                                         api_version='2016-09-01')
+        return self._lock_client
+
+    @property
+    def lock_models(self):
+        self.log("Getting lock models")
+        return ManagementLockClient.models('2016-09-01')
+
 
 class AzureSASAuthentication(Authentication):
     """Simple SAS Authentication.
@@ -1093,17 +1122,6 @@ class AzureSASAuthentication(Authentication):
         session = super(AzureSASAuthentication, self).signed_session()
         session.headers['Authorization'] = self.token
         return session
-
-    def automation_client(self):
-        self.log('Getting automation client')
-        if not self._automation_client:
-            self._automation_client = self.get_mgmt_svc_client(AutomationClient,
-                                                               base_url=self._cloud_environment.endpoints.resource_manager)
-        return self._automation_client
-
-    @property
-    def automation_models(self):
-        return AutomationModel
 
 
 class AzureRMAuthException(Exception):
