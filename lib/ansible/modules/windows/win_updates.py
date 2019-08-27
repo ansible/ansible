@@ -78,10 +78,10 @@ options:
         version_added: '2.8'
     state:
         description:
-        - Controls whether found updates are returned as a list or actually installed.
+        - Controls whether found updates are downloaded or installed or listed
         - This module also supports Ansible check mode, which has the same effect as setting state=searched
         type: str
-        choices: [ installed, searched ]
+        choices: [ installed, searched, downloaded ]
         default: installed
     log_path:
         description:
@@ -188,6 +188,11 @@ EXAMPLES = r'''
   win_updates:
     reboot: yes
     reboot_timeout: 3600
+
+# Search and download Windows updates
+- name: Search and download Windows updates without installing them
+  win_updates:
+    state: downloaded
 '''
 
 RETURN = r'''
@@ -254,7 +259,7 @@ found_update_count:
     type: int
     sample: 3
 installed_update_count:
-    description: The number of updates successfully installed.
+    description: The number of updates successfully installed or downloaded.
     returned: success
     type: int
     sample: 2

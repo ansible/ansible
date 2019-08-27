@@ -3,7 +3,7 @@
   win_updates:
     state: invalid
   register: invalid_state
-  failed_when: invalid_state.msg != 'state must be either installed or searched'
+  failed_when: invalid_state.msg != 'state must be either installed, searched or downloaded'
 
 - name: ensure log file not present before tests
   win_file:
