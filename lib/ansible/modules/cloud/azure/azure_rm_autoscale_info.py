@@ -228,7 +228,7 @@ class AzureRMAutoScaleInfo(AzureRMModuleBase):
         self.name = None
         self.tags = None
 
-        self.module = AnsibleModule(self.module_args)
+        self.module = AnsibleModule(self.module_arg_spec)
         is_old_facts = self.module._name == 'azure_rm_autoscale_facts'
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_autoscale_facts' module has been renamed to 'azure_rm_autoscale_info'", version='2.13')
