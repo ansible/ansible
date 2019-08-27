@@ -26,7 +26,7 @@ extends_documentation_fragment: online
 
 EXAMPLES = r'''
 - name: Gather Online server information
-  online_server_facts:
+  online_server_info:
     api_token: '0d1627e8-bbf0-44c5-a46f-5c4d3aef033f'
   register: result
 
