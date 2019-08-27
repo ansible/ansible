@@ -41,7 +41,7 @@ EXAMPLES = r'''
   register: result
 
 - debug:
-    msg: "{{ scaleway_security_group_info }}"
+    msg: "{{ result.scaleway_security_group_info }}"
 '''
 
 RETURN = r'''
