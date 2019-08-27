@@ -70,8 +70,6 @@ RETURN = """
   _raw:
     description: base64-encoded hmac signature
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -82,7 +80,6 @@ from inspect import getmembers
 
 
 class LookupModule(LookupBase):
-
 
     def run(self, terms, inject=None, variables=None, **kwargs):
         try:
