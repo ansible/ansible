@@ -16,7 +16,7 @@ __metaclass__ = type
 from copy import deepcopy
 import re
 from ansible.module_utils.network.common import utils
-from ansible.module_utils.network.iosxr.utils.utils import get_interface_type, normalize_interface
+from ansible.module_utils.network.iosxr.utils.utils import get_interface_type
 from ansible.module_utils.network.iosxr.argspec.l2_interfaces.l2_interfaces import L2_InterfacesArgs
 
 
