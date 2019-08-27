@@ -28,6 +28,7 @@ from .util import (
 
 from .util_common import (
     run_command,
+    write_json_file,
 )
 
 from .config import (
@@ -492,10 +493,7 @@ class AnsibleCoreCI:
 
         config = self.save()
 
-        make_dirs(os.path.dirname(self.path))
-
-        with open(self.path, 'w') as instance_fd:
-            instance_fd.write(json.dumps(config, indent=4, sort_keys=True))
+        write_json_file(self.path, config, create_directories=True)
 
     def save(self):
         """

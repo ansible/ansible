@@ -50,6 +50,7 @@ from .util import (
 
 from .util_common import (
     run_command,
+    ResultType,
 )
 
 from .docker_util import (
@@ -327,8 +328,8 @@ def delegate_docker(args, exclude, require, integration_targets):
                 ]
 
                 if content_root != install_root:
-                    writable_dirs.append(os.path.join(remote_results_root, 'junit'))
-                    writable_dirs.append(os.path.join(remote_results_root, 'coverage'))
+                    writable_dirs.append(os.path.join(content_root, ResultType.JUNIT.relative_path))
+                    writable_dirs.append(os.path.join(content_root, ResultType.COVERAGE.relative_path))
 
                 docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
                 docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)

@@ -27,7 +27,6 @@ from ..util import (
     display,
     make_dirs,
     COVERAGE_CONFIG_NAME,
-    COVERAGE_OUTPUT_NAME,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
@@ -38,6 +37,8 @@ from ..util import (
 
 from ..util_common import (
     named_temporary_file,
+    write_text_file,
+    ResultType,
 )
 
 from ..coverage_util import (
@@ -73,12 +74,11 @@ def setup_common_temp_dir(args, path):
 
         coverage_config = generate_coverage_config(args)
 
-        with open(coverage_config_path, 'w') as coverage_config_fd:
-            coverage_config_fd.write(coverage_config)
+        write_text_file(coverage_config_path, coverage_config)
 
         os.chmod(coverage_config_path, MODE_FILE)
 
-        coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_NAME)
+        coverage_output_path = os.path.join(path, ResultType.COVERAGE.name)
 
         os.mkdir(coverage_output_path)
         os.chmod(coverage_output_path, MODE_DIRECTORY_WRITE)

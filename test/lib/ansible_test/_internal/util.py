@@ -62,7 +62,6 @@ except AttributeError:
     MAXFD = -1
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
-COVERAGE_OUTPUT_NAME = 'coverage'
 
 ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

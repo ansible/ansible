@@ -5,7 +5,6 @@ __metaclass__ = type
 import abc
 import atexit
 import datetime
-import json
 import time
 import os
 import platform
@@ -23,8 +22,12 @@ from ..util import (
     load_plugins,
     ABC,
     to_bytes,
-    make_dirs,
     ANSIBLE_TEST_CONFIG_ROOT,
+)
+
+from ..util_common import (
+    write_json_test_results,
+    ResultType,
 )
 
 from ..target import (
@@ -158,17 +161,14 @@ def cloud_init(args, targets):
         )
 
     if not args.explain and results:
-        results_path = os.path.join(data_context().results, 'data', '%s-%s.json' % (
-            args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0)))))
+        result_name = '%s-%s.json' % (
+            args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
 
         data = dict(
             clouds=results,
         )
 
-        make_dirs(os.path.dirname(results_path))
-
-        with open(results_path, 'w') as results_fd:
-            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
+        write_json_test_results(ResultType.DATA, result_name, data)
 
 
 class CloudBase(ABC):

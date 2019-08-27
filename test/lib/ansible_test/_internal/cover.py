@@ -35,6 +35,7 @@ from .util import (
 
 from .util_common import (
     run_command,
+    ResultType,
 )
 
 from .config import (
@@ -57,6 +58,7 @@ from .data import (
 
 COVERAGE_GROUPS = ('command', 'target', 'environment', 'version')
 COVERAGE_CONFIG_PATH = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coveragerc')
+COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 
 def command_coverage_combine(args):
@@ -76,7 +78,7 @@ def _command_coverage_combine_python(args):
 
     modules = dict((t.module, t.path) for t in list(walk_module_targets()) if t.path.endswith('.py'))
 
-    coverage_dir = os.path.join(data_context().results, 'coverage')
+    coverage_dir = ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=python' in f]
 
@@ -140,7 +142,7 @@ def _command_coverage_combine_python(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
-    coverage_file = os.path.join(data_context().results, 'coverage', 'coverage')
+    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
 
     for group in sorted(groups):
         arc_data = groups[group]
@@ -339,7 +341,7 @@ def command_coverage_html(args):
             display.info("Skipping output file %s in html generation" % output_file, verbosity=3)
             continue
 
-        dir_name = os.path.join(data_context().results, 'reports', os.path.basename(output_file))
+        dir_name = os.path.join(ResultType.REPORTS.path, os.path.basename(output_file))
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
         run_command(args, env=env, cmd=['coverage', 'html', '--rcfile', COVERAGE_CONFIG_PATH, '-i', '-d', dir_name])
@@ -352,7 +354,7 @@ def command_coverage_xml(args):
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
-        xml_name = os.path.join(data_context().results, 'reports', '%s.xml' % os.path.basename(output_file))
+        xml_name = os.path.join(ResultType.REPORTS.path, '%s.xml' % os.path.basename(output_file))
         if output_file.endswith('-powershell'):
             report = _generage_powershell_xml(output_file)
 
@@ -374,7 +376,7 @@ def command_coverage_erase(args):
     """
     initialize_coverage(args)
 
-    coverage_dir = os.path.join(data_context().results, 'coverage')
+    coverage_dir = ResultType.COVERAGE.path
 
     for name in os.listdir(coverage_dir):
         if not name.startswith('coverage') and '=coverage.' not in name:
@@ -440,7 +442,7 @@ def _command_coverage_combine_powershell(args):
     :type args: CoverageConfig
     :rtype: list[str]
     """
-    coverage_dir = os.path.join(data_context().results, 'coverage')
+    coverage_dir = ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=powershell' in f]
 
@@ -504,7 +506,7 @@ def _command_coverage_combine_powershell(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
-    coverage_file = os.path.join(data_context().results, 'coverage', 'coverage')
+    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
 
     for group in sorted(groups):
         coverage_data = groups[group]

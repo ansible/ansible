@@ -17,6 +17,7 @@ try:
         Tuple,
         Type,
         TypeVar,
+        Union,
     )
 except ImportError:
     pass

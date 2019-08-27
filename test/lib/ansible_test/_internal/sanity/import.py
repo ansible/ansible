@@ -24,7 +24,6 @@ from ..util import (
     display,
     find_python,
     parse_to_list_of_dict,
-    make_dirs,
     is_subdir,
     ANSIBLE_LIB_ROOT,
 )
@@ -32,6 +31,7 @@ from ..util import (
 from ..util_common import (
     intercept_command,
     run_command,
+    write_text_file,
 )
 
 from ..ansible_util import (
@@ -104,10 +104,7 @@ class ImportTest(SanityMultipleVersion):
         if not args.explain:
             remove_tree(ansible_path)
 
-            make_dirs(ansible_path)
-
-            with open(ansible_init, 'w'):
-                pass
+            write_text_file(ansible_init, '', create_directories=True)
 
             os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'module_utils'), ansible_link)
 
@@ -116,16 +113,12 @@ class ImportTest(SanityMultipleVersion):
                 # the __init__.py files are needed only for Python 2.x
                 # the empty modules directory is required for the collection loader to generate the synthetic packages list
 
-                make_dirs(os.path.join(ansible_path, 'utils'))
-                with open(os.path.join(ansible_path, 'utils/__init__.py'), 'w'):
-                    pass
+                write_text_file(os.path.join(ansible_path, 'utils/__init__.py'), '', create_directories=True)
 
                 os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'collection_loader.py'), os.path.join(ansible_path, 'utils', 'collection_loader.py'))
                 os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'singleton.py'), os.path.join(ansible_path, 'utils', 'singleton.py'))
 
-                make_dirs(os.path.join(ansible_path, 'modules'))
-                with open(os.path.join(ansible_path, 'modules/__init__.py'), 'w'):
-                    pass
+                write_text_file(os.path.join(ansible_path, 'modules/__init__.py'), '', create_directories=True)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
