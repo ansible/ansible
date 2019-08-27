@@ -49,7 +49,7 @@ author:
 '''
 
 EXAMPLES = '''
-# Note: None of these examples set aws_access_key or aws_secret_key.
+# Note: These examples do not set authentication details, see the AWS Guide for details.
 # It is assumed that their matching environment variables are set.
 # Creates a new iam saml identity provider if not present
 - name: saml provider
@@ -73,20 +73,31 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: If any changes have been made to the SAML Provider.
-    type: bool
-    returned: always
-    sample:
-        changed: false
-saml_provider_arn:
-    description: The ARN of the SAML Identity Provider that was created/modified.
-    type: str
-    returned: I(state=present)
-    sample: "arn:aws:iam::123456789012:saml-provider/my_saml_provider"
+saml_provider:
+    description: Details of the SAML Identity Provider that was created/modified.
+    type: complex
+    returned: present
+    contains:
+        arn:
+            description: The ARN of the identity provider.
+            type: str
+            returned: present
+            sample: "arn:aws:iam::123456789012:saml-provider/my_saml_provider"
+        metadata_document:
+            description: The XML metadata document that includes information about an identity provider.
+            type: str
+            returned: present
+        create_date:
+            description: The date and time when the SAML provider was created in ISO 8601 date-time format.
+            type: str
+            returned: present
+            sample: "2017-02-08T04:36:28+00:00"
+        expire_date:
+            description: The expiration date and time for the SAML provider in ISO 8601 date-time format.
+            type: str
+            returned: present
+            sample: "2017-02-08T04:36:28+00:00"
 '''
-
-import sys
 
 try:
     import boto3
@@ -96,7 +107,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry, aws_common_argument_spec, get_aws_connection_info, boto3_conn
 
 
@@ -167,7 +178,7 @@ class SAMLProviderManager:
                 if not self.module.check_mode:
                     try:
                         resp = self._update_saml_provider(arn, metadata)
-                        res['saml_provider_arn'] = resp['SAMLProviderArn']
+                        res['saml_provider'] = self._build_res(resp['SAMLProviderArn'])
                     except botocore.exceptions.ClientError as e:
                         res['msg'] = str(e)
                         res['debug'] = [arn, metadata]
@@ -178,7 +189,7 @@ class SAMLProviderManager:
             if not self.module.check_mode:
                 try:
                     resp = self._create_saml_provider(metadata, name)
-                    res['saml_provider_arn'] = resp['SAMLProviderArn']
+                    res['saml_provider'] = self._build_res(resp['SAMLProviderArn'])
                 except botocore.exceptions.ClientError as e:
                     res['msg'] = str(e)
                     res['debug'] = [name, metadata]
@@ -206,6 +217,15 @@ class SAMLProviderManager:
 
         self.module.exit_json(**res)
 
+    def _build_res(self, arn):
+        saml_provider = self._get_saml_provider(arn)
+        return {
+            "arn": arn,
+            "metadata_document": saml_provider["SAMLMetadataDocument"],
+            "create_date": saml_provider["CreateDate"].isoformat(),
+            "expire_date": saml_provider["ValidUntil"].isoformat()
+        }
+
 
 def main():
     argument_spec = aws_common_argument_spec()
@@ -216,7 +236,7 @@ def main():
     )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
