@@ -13,7 +13,12 @@ import random
 import re
 
 from distutils.version import LooseVersion
-from importlib import import_module
+
+# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
+try:
+    from importlib import import_module
+except ImportError:
+    import_module = __import__
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
