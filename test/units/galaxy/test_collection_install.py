@@ -476,6 +476,34 @@ def test_build_requirement_from_name_400_bad_request(api_version, errors_to_retu
                                                    [galaxy_server, galaxy_server], '*', False)
 
 
+@pytest.mark.parametrize("api_version,errors_to_return,expected", [
+    ('v2',
+     [],
+     'Error fetching info for .*\\..* \\(HTTP Code: 401, Message: Unknown error returned by Galaxy server. Code: Unknown\\)'),
+    ('v3',
+     [],
+     'Error fetching info for .*\\..* \\(HTTP Code: 401, Message: Unknown error returned by Galaxy server. Code: Unknown\\)'),
+    ('v3',
+     [{'code': 'unauthorized', 'detail': 'The request was not authorized'}],
+     'Error fetching info for .*\\..* \\(HTTP Code: 401, Message: The request was not authorized Code: unauthorized\\)'),
+])
+def test_build_requirement_from_name_401_unauthorized(api_version, errors_to_return, expected, galaxy_server, monkeypatch):
+    mock_avail_ver = MagicMock()
+    available_api_versions = {api_version: '/api/%s' % api_version}
+    mock_avail_ver.return_value = available_api_versions
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
+    json_str = error_json(galaxy_server, errors_to_return=errors_to_return, available_api_versions=available_api_versions)
+
+    mock_open = MagicMock()
+    monkeypatch.setattr(collection, 'open_url', mock_open)
+    mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 401, 'msg', {}, StringIO(json_str))
+
+    with pytest.raises(AnsibleError, match=expected):
+        collection.CollectionRequirement.from_name('namespace.collection',
+                                                   [galaxy_server, galaxy_server], '*', False)
+
+
 def test_build_requirement_from_name_single_version(galaxy_server, monkeypatch):
     json_str = artifact_json('namespace', 'collection', '2.0.0', {}, galaxy_server.api_server)
     mock_open = MagicMock()

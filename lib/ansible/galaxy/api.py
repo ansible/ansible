@@ -81,11 +81,14 @@ class GalaxyAPI(object):
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
-    def _auth_header(self, required=True):
+    def _auth_header(self, required=True, token_type='Token'):
+        '''Generate the Authorization header.
+
+        Valid token_type values are 'Token' (galaxy v2) and 'Bearer' (galaxy v3)'''
         token = self.token.get() if self.token else None
 
         if token:
-            return {'Authorization': "Token %s" % token}
+            return {'Authorization': "%s %s" % (token_type, token)}
         elif self.username:
             token = "%s:%s" % (to_text(self.username, errors='surrogate_or_strict'),
                                to_text(self.password, errors='surrogate_or_strict', nonstring='passthru') or '')

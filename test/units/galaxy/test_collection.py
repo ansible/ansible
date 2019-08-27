@@ -54,6 +54,12 @@ def collection_input(tmp_path_factory):
 
     return collection_dir, output_dir
 
+@pytest.fixture()
+def galaxy_api_version(monkeypatch):
+    mock_avail_ver = MagicMock()
+    mock_avail_ver.return_value = {'v2': '/api/v2'}
+    monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+
 
 @pytest.fixture()
 def collection_artifact(monkeypatch, tmp_path_factory):
@@ -955,3 +961,91 @@ def test_extract_tar_file_missing_parent_dir(tmp_tarfile):
 
     collection._extract_tar_file(tfile, filename, output_dir, temp_dir, checksum)
     os.path.isfile(output_file)
+
+
+def test_get_available_api_versions_v2_auth_not_required_without_auth(galaxy_server, collection_artifact, monkeypatch):
+    # mock_avail_ver = MagicMock()
+    # mock_avail_ver.side_effect = {api_version: '/api/%s' % api_version}
+    # monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+    response_obj = {
+        "description": "GALAXY REST API",
+        "current_version": "v1",
+        "available_versions": {
+            "v1": "/api/v1/",
+            "v2": "/api/v2/"
+        },
+        "server_version": "3.2.4",
+        "version_name": "Doin' it Right",
+        "team_members": [
+            "chouseknecht",
+            "cutwater",
+            "alikins",
+            "newswangerd",
+            "awcrosby",
+            "tima",
+            "gregdek"
+        ]
+    }
+
+    artifact_path, mock_open = collection_artifact
+
+    return_content = StringIO(to_text(json.dumps(response_obj)))
+    mock_open.return_value = return_content
+    res = collection.get_available_api_versions(galaxy_server)
+
+    assert res == {'v1': '/api/v1/', 'v2': '/api/v2/'}
+
+
+def test_get_available_api_versions_v3_auth_required_without_auth(galaxy_server, collection_artifact, monkeypatch):
+    # mock_avail_ver = MagicMock()
+    # mock_avail_ver.side_effect = {api_version: '/api/%s' % api_version}
+    # monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+    error_response = {'code': 'unauthorized', 'detail': 'The request was not authorized'}
+    artifact_path, mock_open = collection_artifact
+
+    return_content = StringIO(json.dumps(error_response))
+    mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 401, 'msg', {'WWW-Authenticate': 'Bearer'}, return_content)
+    with pytest.raises(AnsibleError):
+        collection.get_available_api_versions(galaxy_server)
+
+
+def test_get_available_api_versions_v3_auth_required_with_auth_on_retry(galaxy_server, collection_artifact, monkeypatch):
+    # mock_avail_ver = MagicMock()
+    # mock_avail_ver.side_effect = {api_version: '/api/%s' % api_version}
+    # monkeypatch.setattr(collection, 'get_available_api_versions', mock_avail_ver)
+    error_obj = {'code': 'unauthorized', 'detail': 'The request was not authorized'}
+    success_obj = {
+        "description": "GALAXY REST API",
+        "current_version": "v1",
+        "available_versions": {
+            "v3": "/api/v3/"
+        },
+        "server_version": "3.2.4",
+        "version_name": "Doin' it Right",
+        "team_members": [
+            "chouseknecht",
+            "cutwater",
+            "alikins",
+            "newswangerd",
+            "awcrosby",
+            "tima",
+            "gregdek"
+        ]
+    }
+
+    artifact_path, mock_open = collection_artifact
+
+    error_response = StringIO(to_text(json.dumps(error_obj)))
+    success_response = StringIO(to_text(json.dumps(success_obj)))
+    mock_open.side_effect = [
+        urllib_error.HTTPError('https://galaxy.server.com', 401, 'msg', {'WWW-Authenticate': 'Bearer'}, error_response),
+        success_response,
+    ]
+
+    try:
+        res = collection.get_available_api_versions(galaxy_server)
+    except AnsibleError as err:
+        print(err)
+        raise
+
+    assert res == {'v3': '/api/v3/'}

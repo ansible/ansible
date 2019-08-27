@@ -380,9 +380,22 @@ def get_available_api_versions(galaxy_api):
     try:
         return_data = open_url(url, validate_certs=galaxy_api.validate_certs)
     except urllib_error.HTTPError as err:
-        _handle_http_error(err, galaxy_api, {},
-                           "Error when finding available api versions from %s (%s)" %
-                           (galaxy_api.name, galaxy_api.api_server))
+        if err.code != 401:
+            _handle_http_error(err, galaxy_api, {},
+                               "Error when finding available api versions from %s (%s)" %
+                               (galaxy_api.name, galaxy_api.api_server))
+
+        # assume this is v3 and auth is required.
+        headers = {}
+        headers.update(galaxy_api._auth_header(token_type='Bearer', required=True))
+        # try again with auth
+        try:
+            return_data = open_url(url, headers=headers, validate_certs=galaxy_api.validate_certs)
+        except urllib_error.HTTPError as authed_err:
+            _handle_http_error(authed_err, galaxy_api, {},
+                               "Error when finding available api versions from %s using auth (%s)" %
+                               (galaxy_api.name, galaxy_api.api_server))
+
     except Exception as e:
         raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
 
