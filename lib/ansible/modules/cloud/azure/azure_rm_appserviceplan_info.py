@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_appserviceplan_facts
+module: azure_rm_appserviceplan_info
 
-version_added: "2.7"
+version_added: "2.9"
 
 short_description: Get azure app service plan facts
 
@@ -44,16 +44,16 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for app service plan by name
-      azure_rm_appserviceplan_facts:
+      azure_rm_appserviceplan_info:
         resource_group: myResourceGroup
         name: myAppServicePlan
 
     - name: Get azure_rm_appserviceplan_facts for app service plan in resource group
-      azure_rm_appserviceplan_facts:
+      azure_rm_appserviceplan_info:
         resource_group: myResourceGroup
 
     - name: Get facts for app service plan with tags
-      azure_rm_appserviceplan_facts:
+      azure_rm_appserviceplan_info:
         tags:
           - testtag
           - foo:bar
@@ -126,12 +126,13 @@ except Exception:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 AZURE_OBJECT_CLASS = 'AppServicePlan'
 
 
-class AzureRMAppServicePlanFacts(AzureRMModuleBase):
+class AzureRMAppServicePlanInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -148,9 +149,14 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
         self.tags = None
         self.info_level = None
 
-        super(AzureRMAppServicePlanFacts, self).__init__(self.module_arg_spec,
-                                                         supports_tags=False,
-                                                         facts_module=True)
+        module = AnsibleModule(self.module_arg_spec)
+        is_old_facts = module._name == 'azure_rm_appserviceplan_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_appserviceplan_facts' module has been renamed to 'azure_rm_appserviceplan_info'", version='2.13')
+
+        super(AzureRMAppServicePlanInfo, self).__init__(self.module_arg_spec,
+                                                        supports_tags=False,
+                                                        facts_module=True)
 
     def exec_module(self, **kwargs):
 
@@ -230,7 +236,7 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMAppServicePlanFacts()
+    AzureRMAppServicePlanInfo()
 
 
 if __name__ == '__main__':
