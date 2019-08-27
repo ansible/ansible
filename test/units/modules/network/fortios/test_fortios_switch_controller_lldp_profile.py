@@ -48,8 +48,6 @@ def test_switch_controller_lldp_profile_creation(mocker):
         'username': 'admin',
         'state': 'present',
         'switch_controller_lldp_profile': {
-            '802.1_tlvs': 'port-vlan-id',
-            '802.3_tlvs': 'max-frame-size',
             'auto_isl': 'disable',
             'auto_isl_hello_timer': '6',
             'auto_isl_port_group': '7',
@@ -62,8 +60,6 @@ def test_switch_controller_lldp_profile_creation(mocker):
     is_error, changed, response = fortios_switch_controller_lldp_profile.fortios_switch_controller(input_data, fos_instance)
 
     expected_data = {
-        '802.1-tlvs': 'port-vlan-id',
-        '802.3-tlvs': 'max-frame-size',
         'auto-isl': 'disable',
         'auto-isl-hello-timer': '6',
         'auto-isl-port-group': '7',
@@ -90,8 +86,6 @@ def test_switch_controller_lldp_profile_creation_fails(mocker):
         'username': 'admin',
         'state': 'present',
         'switch_controller_lldp_profile': {
-            '802.1_tlvs': 'port-vlan-id',
-            '802.3_tlvs': 'max-frame-size',
             'auto_isl': 'disable',
             'auto_isl_hello_timer': '6',
             'auto_isl_port_group': '7',
@@ -104,8 +98,6 @@ def test_switch_controller_lldp_profile_creation_fails(mocker):
     is_error, changed, response = fortios_switch_controller_lldp_profile.fortios_switch_controller(input_data, fos_instance)
 
     expected_data = {
-        '802.1-tlvs': 'port-vlan-id',
-        '802.3-tlvs': 'max-frame-size',
         'auto-isl': 'disable',
         'auto-isl-hello-timer': '6',
         'auto-isl-port-group': '7',
@@ -132,8 +124,6 @@ def test_switch_controller_lldp_profile_removal(mocker):
         'username': 'admin',
         'state': 'absent',
         'switch_controller_lldp_profile': {
-            '802.1_tlvs': 'port-vlan-id',
-            '802.3_tlvs': 'max-frame-size',
             'auto_isl': 'disable',
             'auto_isl_hello_timer': '6',
             'auto_isl_port_group': '7',
@@ -163,8 +153,6 @@ def test_switch_controller_lldp_profile_deletion_fails(mocker):
         'username': 'admin',
         'state': 'absent',
         'switch_controller_lldp_profile': {
-            '802.1_tlvs': 'port-vlan-id',
-            '802.3_tlvs': 'max-frame-size',
             'auto_isl': 'disable',
             'auto_isl_hello_timer': '6',
             'auto_isl_port_group': '7',
@@ -194,8 +182,6 @@ def test_switch_controller_lldp_profile_idempotent(mocker):
         'username': 'admin',
         'state': 'present',
         'switch_controller_lldp_profile': {
-            '802.1_tlvs': 'port-vlan-id',
-            '802.3_tlvs': 'max-frame-size',
             'auto_isl': 'disable',
             'auto_isl_hello_timer': '6',
             'auto_isl_port_group': '7',
@@ -208,8 +194,6 @@ def test_switch_controller_lldp_profile_idempotent(mocker):
     is_error, changed, response = fortios_switch_controller_lldp_profile.fortios_switch_controller(input_data, fos_instance)
 
     expected_data = {
-        '802.1-tlvs': 'port-vlan-id',
-        '802.3-tlvs': 'max-frame-size',
         'auto-isl': 'disable',
         'auto-isl-hello-timer': '6',
         'auto-isl-port-group': '7',
@@ -237,8 +221,6 @@ def test_switch_controller_lldp_profile_filter_foreign_attributes(mocker):
         'state': 'present',
         'switch_controller_lldp_profile': {
             'random_attribute_not_valid': 'tag',
-            '802.1_tlvs': 'port-vlan-id',
-            '802.3_tlvs': 'max-frame-size',
             'auto_isl': 'disable',
             'auto_isl_hello_timer': '6',
             'auto_isl_port_group': '7',
@@ -251,8 +233,6 @@ def test_switch_controller_lldp_profile_filter_foreign_attributes(mocker):
     is_error, changed, response = fortios_switch_controller_lldp_profile.fortios_switch_controller(input_data, fos_instance)
 
     expected_data = {
-        '802.1-tlvs': 'port-vlan-id',
-        '802.3-tlvs': 'max-frame-size',
         'auto-isl': 'disable',
         'auto-isl-hello-timer': '6',
         'auto-isl-port-group': '7',

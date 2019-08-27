@@ -88,18 +88,6 @@ options:
         default: null
         type: dict
         suboptions:
-            802.1_tlvs:
-                description:
-                    - Transmitted IEEE 802.1 TLVs.
-                type: str
-                choices:
-                    - port-vlan-id
-            802.3_tlvs:
-                description:
-                    - Transmitted IEEE 802.3 TLVs.
-                type: str
-                choices:
-                    - max-frame-size
             auto_isl:
                 description:
                     - Enable/disable auto inter-switch LAG.
@@ -203,8 +191,6 @@ EXAMPLES = '''
       https: "False"
       state: "present"
       switch_controller_lldp_profile:
-        802.1_tlvs: "port-vlan-id"
-        802.3_tlvs: "max-frame-size"
         auto_isl: "disable"
         auto_isl_hello_timer: "6"
         auto_isl_port_group: "7"
@@ -307,8 +293,8 @@ def login(data, fos):
 
 
 def filter_switch_controller_lldp_profile_data(json):
-    option_list = ['802.1_tlvs', '802.3_tlvs', 'auto_isl',
-                   'auto_isl_hello_timer', 'auto_isl_port_group', 'auto_isl_receive_timeout',
+    option_list = ['auto_isl', 'auto_isl_hello_timer',
+                   'auto_isl_port_group', 'auto_isl_receive_timeout',
                    'custom_tlvs', 'med_network_policy', 'med_tlvs',
                    'name']
     dictionary = {}
@@ -380,10 +366,6 @@ def main():
         "switch_controller_lldp_profile": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "802.1_tlvs": {"required": False, "type": "str",
-                               "choices": ["port-vlan-id"]},
-                "802.3_tlvs": {"required": False, "type": "str",
-                               "choices": ["max-frame-size"]},
                 "auto_isl": {"required": False, "type": "str",
                              "choices": ["disable", "enable"]},
                 "auto_isl_hello_timer": {"required": False, "type": "int"},

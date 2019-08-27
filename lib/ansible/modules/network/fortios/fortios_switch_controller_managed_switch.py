@@ -88,33 +88,6 @@ options:
         default: null
         type: dict
         suboptions:
-            802_1X_settings:
-                description:
-                    - Configuration method to edit FortiSwitch 802.1X global settings.
-                type: dict
-                suboptions:
-                    link_down_auth:
-                        description:
-                            - Authentication state to set if a link is down.
-                        type: str
-                        choices:
-                            - set-unauth
-                            - no-action
-                    local_override:
-                        description:
-                            - Enable to override global 802.1X settings on individual FortiSwitches.
-                        type: str
-                        choices:
-                            - enable
-                            - disable
-                    max_reauth_attempt:
-                        description:
-                            - Maximum number of authentication attempts (0 - 15).
-                        type: int
-                    reauth_period:
-                        description:
-                            - Reauthentication time interval (1 - 1440 min).
-                        type: int
             custom_command:
                 description:
                     - Configuration method to edit FortiSwitch commands to be pushed to this FortiSwitch device upon rebooting the FortiGate switch controller
@@ -832,11 +805,6 @@ EXAMPLES = '''
       https: "False"
       state: "present"
       switch_controller_managed_switch:
-        802_1X_settings:
-            link_down_auth: "set-unauth"
-            local_override: "enable"
-            max_reauth_attempt: "6"
-            reauth_period: "7"
         custom_command:
          -
             command_entry: "<your_own_value>"
@@ -1057,7 +1025,7 @@ def login(data, fos):
 
 
 def filter_switch_controller_managed_switch_data(json):
-    option_list = ['802_1X_settings', 'custom_command', 'delayed_restart_trigger',
+    option_list = ['custom_command', 'delayed_restart_trigger',
                    'description', 'directly_connected', 'dynamic_capability',
                    'dynamically_discovered', 'fsw_wan1_admin', 'fsw_wan1_peer',
                    'fsw_wan2_admin', 'fsw_wan2_peer', 'igmp_snooping',
@@ -1136,15 +1104,6 @@ def main():
         "switch_controller_managed_switch": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "802_1X_settings": {"required": False, "type": "dict",
-                                    "options": {
-                                        "link_down_auth": {"required": False, "type": "str",
-                                                           "choices": ["set-unauth", "no-action"]},
-                                        "local_override": {"required": False, "type": "str",
-                                                           "choices": ["enable", "disable"]},
-                                        "max_reauth_attempt": {"required": False, "type": "int"},
-                                        "reauth_period": {"required": False, "type": "int"}
-                                    }},
                 "custom_command": {"required": False, "type": "list",
                                    "options": {
                                        "command_entry": {"required": False, "type": "str"},
