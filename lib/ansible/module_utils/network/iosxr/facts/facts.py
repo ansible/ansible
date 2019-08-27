@@ -20,6 +20,7 @@ from ansible.module_utils.network.iosxr.facts.lacp_interfaces.lacp_interfaces im
 from ansible.module_utils.network.iosxr.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.iosxr.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.iosxr.facts.interfaces.interfaces import InterfacesFacts
+from ansible.module_utils.network.iosxr.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
 from ansible.module_utils.network.iosxr.facts.legacy.base import Default, Hardware, Interfaces, Config
 from ansible.module_utils.network.iosxr.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
 from ansible.module_utils.network.iosxr.facts.legacy.\
@@ -39,6 +40,7 @@ FACT_RESOURCE_SUBSETS = dict(
     lldp_interfaces=Lldp_interfacesFacts,
     interfaces=InterfacesFacts,
     l2_interfaces=L2_InterfacesFacts,
+    lag_interfaces=Lag_interfacesFacts
 )
 
 
