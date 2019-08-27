@@ -58,7 +58,7 @@ EXAMPLES = '''
     name: InClusterUpgrade
   register: result
 - debug:
-    var: result.ovirt_scheduling_policies
+    msg: "{{ result.ovirt_scheduling_policies }}"
 '''
 
 RETURN = '''

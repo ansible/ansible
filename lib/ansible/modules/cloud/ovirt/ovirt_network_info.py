@@ -56,7 +56,7 @@ EXAMPLES = '''
     pattern: name=vlan1*
   register: result
 - debug:
-    var: result.ovirt_networks
+    msg: "{{ result.ovirt_networks }}"
 '''
 
 

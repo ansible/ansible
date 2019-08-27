@@ -57,7 +57,7 @@ EXAMPLES = '''
     pattern: name=data* and datacenter=west
   register: result
 - debug:
-    var: result.ovirt_storage_domains
+    msg: "{{ result.ovirt_storage_domains }}"
 '''
 
 RETURN = '''

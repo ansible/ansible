@@ -67,7 +67,7 @@ EXAMPLES = '''
     authz_name: example.com-authz
   register: result
 - debug:
-    var: result.ovirt_permissions
+    msg: "{{ result.ovirt_permissions }}"
 '''
 
 RETURN = '''

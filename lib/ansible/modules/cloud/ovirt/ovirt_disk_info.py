@@ -56,7 +56,7 @@ EXAMPLES = '''
     pattern: name=centos*
   register: result
 - debug:
-    var: result.ovirt_disks
+    msg: "{{ result.ovirt_disks }}"
 '''
 
 RETURN = '''

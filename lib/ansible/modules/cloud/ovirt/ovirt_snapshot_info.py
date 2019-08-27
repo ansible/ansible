@@ -48,7 +48,7 @@ EXAMPLES = '''
     description: update*
   register: result
 - debug:
-    var: result.ovirt_snapshots
+    msg: "{{ result.ovirt_snapshots }}"
 '''
 
 RETURN = '''

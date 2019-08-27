@@ -55,14 +55,14 @@ EXAMPLES = '''
     pattern: name=host* and datacenter=west
   register: result
 - debug:
-    var: result.ovirt_hosts
+    msg: "{{ result.ovirt_hosts }}"
 # All hosts with cluster version 4.2:
 - ovirt_host_info:
     pattern: name=host*
     cluster_version: "4.2"
   register: result
 - debug:
-    var: result.ovirt_hosts
+    msg: "{{ result.ovirt_hosts }}"
 '''
 
 RETURN = '''

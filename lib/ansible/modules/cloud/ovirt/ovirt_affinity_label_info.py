@@ -60,7 +60,7 @@ EXAMPLES = '''
     name: label*
   register: result
 - debug:
-    var: result.affinity_labels
+    msg: "{{ result.ovirt_affinity_labels }}"
 
 # Gather information about all affinity labels, which are assigned to VMs
 # which names start with C(postgres):
@@ -68,7 +68,7 @@ EXAMPLES = '''
     vm: postgres*
   register: result
 - debug:
-    var: result.affinity_labels
+    msg: "{{ result.ovirt_affinity_labels }}"
 
 # Gather information about all affinity labels, which are assigned to hosts
 # which names start with C(west):
@@ -76,7 +76,7 @@ EXAMPLES = '''
     host: west*
   register: result
 - debug:
-    var: result.affinity_labels
+    msg: "{{ result.ovirt_affinity_labels }}"
 
 # Gather information about all affinity labels, which are assigned to hosts
 # which names start with C(west) or VMs which names start with C(postgres):
@@ -85,7 +85,7 @@ EXAMPLES = '''
     vm: postgres*
   register: result
 - debug:
-    var: result.affinity_labels
+    msg: "{{ result.ovirt_affinity_labels }}"
 '''
 
 RETURN = '''

@@ -64,7 +64,7 @@ EXAMPLES = '''
     unregistered=True
   register: result
 - debug:
-    var: result.ovirt_storage_templates
+    msg: "{{ result.ovirt_storage_templates }}"
 '''
 
 RETURN = '''

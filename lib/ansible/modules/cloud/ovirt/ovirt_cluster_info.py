@@ -57,7 +57,7 @@ EXAMPLES = '''
       name: 'production*'
   register: result
 - debug:
-    var: result.ovirt_clusters
+    msg: "{{ result.ovirt_clusters }}"
 '''
 
 RETURN = '''

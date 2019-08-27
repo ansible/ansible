@@ -59,7 +59,7 @@ EXAMPLES = '''
     name: myquota
   register: result
 - debug:
-    var: result.ovirt_quotas
+    msg: "{{ result.ovirt_quotas }}"
 '''
 
 RETURN = '''

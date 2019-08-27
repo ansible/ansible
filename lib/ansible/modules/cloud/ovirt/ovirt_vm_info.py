@@ -77,7 +77,7 @@ EXAMPLES = '''
     pattern: name=centos* and cluster=west
   register: result
 - debug:
-    var: result.ovirt_vms
+    msg: "{{ result.ovirt_vms }}"
 
 # Gather info about next run configuration of virtual machine named myvm
 - ovirt_vm_info:
@@ -85,7 +85,7 @@ EXAMPLES = '''
     next_run: true
   register: result
 - debug:
-    var: result.ovirt_vms[0]
+    msg: "{{ result.ovirt_vms[0] }}"
 '''
 
 RETURN = '''

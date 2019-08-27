@@ -55,7 +55,7 @@ EXAMPLES = '''
     pattern: name=john*
   register: result
 - debug:
-    var: result.ovirt_users
+    msg: "{{ result.ovirt_users }}"
 '''
 
 RETURN = '''

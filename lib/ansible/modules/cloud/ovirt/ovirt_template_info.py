@@ -57,7 +57,7 @@ EXAMPLES = '''
     pattern: name=centos* and datacenter=west
   register: result
 - debug:
-    var: result.ovirt_templates
+    msg: "{{ result.ovirt_templates }}"
 '''
 
 RETURN = '''

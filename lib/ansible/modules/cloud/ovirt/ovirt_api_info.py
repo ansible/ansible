@@ -39,7 +39,7 @@ EXAMPLES = '''
 - ovirt_api_info:
   register: result
 - debug:
-    var: result.ovirt_api
+    msg: "{{ result.ovirt_api }}"
 '''
 
 RETURN = '''

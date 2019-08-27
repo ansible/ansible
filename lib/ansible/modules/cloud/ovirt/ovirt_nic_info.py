@@ -59,7 +59,7 @@ EXAMPLES = '''
     name: eth*
   register: result
 - debug:
-    var: result.ovirt_nics
+    msg: "{{ result.ovirt_nics }}"
 '''
 
 RETURN = '''

@@ -40,7 +40,7 @@ EXAMPLES = '''
     pattern: name=production*
   register: result
 - debug:
-    var: result.ovirt_datacenters
+    msg: "{{ result.ovirt_datacenters }}"
 '''
 
 RETURN = '''

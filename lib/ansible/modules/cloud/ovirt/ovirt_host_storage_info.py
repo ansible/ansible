@@ -51,7 +51,7 @@ EXAMPLES = '''
       address: 10.34.63.204
   register: result
 - debug:
-    var: result.ovirt_host_storages
+    msg: "{{ result.ovirt_host_storages }}"
 '''
 
 RETURN = '''

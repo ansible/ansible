@@ -55,7 +55,7 @@ EXAMPLES = '''
     pattern: name=admin*
   register: result
 - debug:
-    var: result.ovirt_groups
+    msg: "{{ result.ovirt_groups }}"
 '''
 
 RETURN = '''

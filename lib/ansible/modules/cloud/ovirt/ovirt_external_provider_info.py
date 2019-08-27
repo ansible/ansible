@@ -60,7 +60,7 @@ EXAMPLES = '''
     name: glance
   register: result
 - debug:
-    var: result.ovirt_external_providers
+    msg: "{{ result.ovirt_external_providers }}"
 '''
 
 RETURN = '''

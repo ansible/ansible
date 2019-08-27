@@ -55,7 +55,7 @@ EXAMPLES = '''
     pattern: name=centos*
   register: result
 - debug:
-    var: result.ovirt_vmpools
+    msg: "{{ result.ovirt_vmpools }}"
 '''
 
 RETURN = '''
