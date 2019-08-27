@@ -67,6 +67,15 @@ options:
             - The next host destination for the route e.g. 10.0.0.10
         required: false
         type: str
+    version:
+        description:
+            - The IP version. Used when searching (e.g. List all IPv6 routes)
+        required: false
+        type: int
+        default: 4
+        choices:
+            - 4
+            - 6
 notes:
     - Requires NTT Ltd. MCP account/credentials
 requirements:
@@ -227,6 +236,7 @@ def main():
             name=dict(default=None, required=False, type='str'),
             cidr=dict(default=None, required=False, type='str'),
             next_hop=dict(default=None, required=False, type='str'),
+            version=dict(default=4, required=False, type='int', choices=[4, 6])
         ),
         supports_check_mode=True
     )

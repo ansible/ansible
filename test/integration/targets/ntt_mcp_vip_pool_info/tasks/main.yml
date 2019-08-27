@@ -36,7 +36,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      id: 0e54ab37-c2aa-487f-9f19-04eda53b9470
+      id: 1a28e0c1-a687-411a-b7ff-0073446a8daf
     register: pool
     tags:
       - get_by_id

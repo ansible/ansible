@@ -8,7 +8,7 @@
       datacenter: NA12
       network_domain: myCND
       internal_ip: 10.1.77.6
-      external_ip: 168.128.31.150
+      external_ip: 168.128.29.246
       state: present
     register: nat
     tags:
@@ -25,7 +25,7 @@
       datacenter: NA12
       network_domain: myCND
       internal_ip: 10.1.77.6
-      external_ip: 168.128.31.151
+      external_ip: 168.128.29.62
       state: present
     register: nat
     tags:

@@ -211,7 +211,6 @@ def delete_public_ipv4(module, client, network_domain_id):
     """
     ip_address = module.params.get('ip_address')
     public_ipv4_block_id = module.params.get('id')
-
     if public_ipv4_block_id is None and ip_address is None:
         module.fail_json(msg='A value for id or ip_address is required')
     try:
