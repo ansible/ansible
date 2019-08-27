@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-module: os_image_facts
-short_description: Retrieve facts about an image within OpenStack.
+module: os_image_info
+short_description: Retrieve information about an image within OpenStack.
 version_added: "2.0"
 author: "Davide Agnello (@dagnello)"
 description:
-    - Retrieve facts about a image image from OpenStack.
-notes:
-    - Facts are placed in the C(openstack_image) variable.
+    - Retrieve information about a image image from OpenStack.
+    - This module was called C(os_image_facts) before Ansible 2.9, returning C(ansible_facts).
+      Note that the M(os_image_info) module no longer returns C(ansible_facts)!
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -37,31 +37,33 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-- name: Gather facts about a previously created image named image1
-  os_image_facts:
+- name: Gather information about a previously created image named image1
+  os_image_info:
     auth:
       auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
     image: image1
+  register: result
 
-- name: Show openstack facts
+- name: Show openstack information
   debug:
-    var: openstack_image
+    msg: "{{ result.openstack_image }}"
 
 # Show all available Openstack images
 - name: Retrieve all available Openstack images
-  os_image_facts:
+  os_image_info:
+  register: result
 
 - name: Show images
   debug:
-    var: openstack_image
+    msg: "{{ result.openstack_image }}"
 '''
 
 RETURN = '''
 openstack_image:
-    description: has all the openstack facts about the image
+    description: has all the openstack information about the image
     returned: always, but can be null
     type: complex
     contains:
@@ -146,17 +148,27 @@ def main():
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
+    is_old_facts = module._name == 'os_image_facts'
+    if is_old_facts:
+        module.deprecate("The 'os_image_facts' module has been renamed to 'os_image_info', "
+                         "and the renamed one no longer returns ansible_facts", version='2.13')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         if module.params['image']:
             image = cloud.get_image(module.params['image'])
-            module.exit_json(changed=False, ansible_facts=dict(
-                openstack_image=image))
+            if is_old_facts:
+                module.exit_json(changed=False, ansible_facts=dict(
+                    openstack_image=image))
+            else:
+                module.exit_json(changed=False, openstack_image=image)
         else:
             images = cloud.list_images()
-            module.exit_json(changed=False, ansible_facts=dict(
-                openstack_image=images))
+            if is_old_facts:
+                module.exit_json(changed=False, ansible_facts=dict(
+                    openstack_image=images))
+            else:
+                module.exit_json(changed=False, openstack_image=images)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
