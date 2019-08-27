@@ -32,6 +32,7 @@ from ..util_common import (
     intercept_command,
     run_command,
     write_text_file,
+    ResultType,
 )
 
 from ..ansible_util import (
@@ -75,8 +76,10 @@ class ImportTest(SanityMultipleVersion):
 
         env = ansible_environment(args, color=False)
 
+        temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
+
         # create a clean virtual environment to minimize the available imports beyond the python standard library
-        virtual_environment_path = os.path.abspath('test/runner/.tox/minimal-py%s' % python_version.replace('.', ''))
+        virtual_environment_path = os.path.join(temp_root, 'minimal-py%s' % python_version.replace('.', ''))
         virtual_environment_bin = os.path.join(virtual_environment_path, 'bin')
 
         remove_tree(virtual_environment_path)
@@ -96,7 +99,7 @@ class ImportTest(SanityMultipleVersion):
             os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'importer.py')), importer_path)
 
         # create a minimal python library
-        python_path = os.path.abspath('test/runner/.tox/import/lib')
+        python_path = os.path.join(temp_root, 'lib')
         ansible_path = os.path.join(python_path, 'ansible')
         ansible_init = os.path.join(ansible_path, '__init__.py')
         ansible_link = os.path.join(ansible_path, 'module_utils')

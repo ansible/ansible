@@ -113,7 +113,7 @@ include =
      %s/*
 
 omit =
-    */test/runner/.tox/*
+    */test/results/*
 ''' % data_context().content.root
     else:
         coverage_config += '''

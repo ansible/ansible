@@ -266,8 +266,8 @@ def main():
             filepath = os.path.relpath(warning.filename)
             lineno = warning.lineno
 
-            import_dir = 'test/runner/.tox/import/'
-            minimal_dir = 'test/runner/.tox/minimal-'
+            import_dir = 'test/results/.tmp/sanity/import/'
+            minimal_dir = 'test/results/.tmp/sanity/import/minimal-'
 
             if filepath.startswith('../') or filepath.startswith(minimal_dir):
                 # The warning occurred outside our source tree.
