@@ -10,7 +10,7 @@ __metaclass__ = type
 
 from ansible.module_utils.network.junos.junos import tostring
 try:
-    from ncclient.xml_ import new_ele, to_ele, to_xml
+    from ncclient.xml_ import new_ele, to_ele
     HAS_NCCLIENT = True
 except ImportError:
     HAS_NCCLIENT = False
