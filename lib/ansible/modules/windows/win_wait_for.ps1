@@ -16,7 +16,7 @@ $exclude_hosts = Get-AnsibleParam -obj $params -name "exclude_hosts" -type "list
 $hostname = Get-AnsibleParam -obj $params -name "host" -type "str" -default "127.0.0.1"
 $path = Get-AnsibleParam -obj $params -name "path" -type "path"
 $port = Get-AnsibleParam -obj $params -name "port" -type "int"
-$search_regex = Get-AnsibleParam -obj $params -name "search_regex" -type "str"
+$regex = Get-AnsibleParam -obj $params -name "regex" -type "str" -aliases "search_regex","regexp"
 $sleep = Get-AnsibleParam -obj $params -name "sleep" -type "int" -default 1
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "started" -validateset "present","started","stopped","absent","drained"
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 300
@@ -44,8 +44,8 @@ if ($null -ne $path) {
 }
 
 if ($null -ne $port) {
-    if ($null -ne $search_regex) {
-        Fail-Json $result "search_regex should by used when checking a string in a file in the win_wait_for module"
+    if ($null -ne $regex) {
+        Fail-Json $result "regex should by used when checking a string in a file in the win_wait_for module"
     }
 
     if ($null -ne $exclude_hosts -and $state -ne "drained") {
@@ -112,12 +112,12 @@ if ($null -eq $path -and $null -eq $port -and $state -ne "drained") {
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
             if (Test-AnsiblePath -Path $path) {
-                if ($null -eq $search_regex) {
+                if ($null -eq $regex) {
                     $complete = $true
                     break
                 } else {
                     $file_contents = Get-Content -Path $path -Raw
-                    if ($file_contents -match $search_regex) {
+                    if ($file_contents -match $regex) {
                         $complete = $true
                         break
                     }
@@ -129,10 +129,10 @@ if ($null -eq $path -and $null -eq $port -and $state -ne "drained") {
         if ($complete -eq $false) {
             $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $result.wait_attempts = $attempts
-            if ($null -eq $search_regex) {
+            if ($null -eq $regex) {
                 Fail-Json $result "timeout while waiting for file $path to be present"
             } else {
-                Fail-Json $result "timeout while waiting for string regex $search_regex in file $path to match"
+                Fail-Json $result "timeout while waiting for string regex $regex in file $path to match"
             }
         }
     } elseif ($state -in @("absent")) {
@@ -142,9 +142,9 @@ if ($null -eq $path -and $null -eq $port -and $state -ne "drained") {
         while (((Get-Date) - $start_time).TotalSeconds -lt $timeout) {
             $attempts += 1
             if (Test-AnsiblePath -Path $path) {
-                if ($null -ne $search_regex) {
+                if ($null -ne $regex) {
                     $file_contents = Get-Content -Path $path -Raw
-                    if ($file_contents -notmatch $search_regex) {
+                    if ($file_contents -notmatch $regex) {
                         $complete = $true
                         break
                     }
@@ -160,10 +160,10 @@ if ($null -eq $path -and $null -eq $port -and $state -ne "drained") {
         if ($complete -eq $false) {
             $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $result.wait_attempts = $attempts
-            if ($null -eq $search_regex) {
+            if ($null -eq $regex) {
                 Fail-Json $result "timeout while waiting for file $path to be absent"
             } else {
-                Fail-Json $result "timeout while waiting for string regex $search_regex in file $path to not match"
+                Fail-Json $result "timeout while waiting for string regex $regex in file $path to not match"
             }
         }
     }
