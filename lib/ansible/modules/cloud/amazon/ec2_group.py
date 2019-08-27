@@ -982,6 +982,7 @@ def flatten_nested_targets(module, rules):
                 rule[target_list_type] = list(_flatten(rule[target_list_type]))
     return rules
 
+
 def get_rule_sort_key(dicts):
     if dicts.get('cidr_ip'):
         return dicts.get('cidr_ip')
@@ -992,6 +993,7 @@ def get_rule_sort_key(dicts):
     elif dicts.get('group_id'):
         return dicts.get('group_id')
     return None
+
 
 def get_ip_permissions_sort_key(rule):
     if rule.get('ip_ranges'):
@@ -1007,6 +1009,7 @@ def get_ip_permissions_sort_key(rule):
         rule.get('user_id_group_pairs').sort(key=get_rule_sort_key)
         return rule.get('user_id_group_pairs')[0]['group_id']
     return None
+
 
 def main():
     argument_spec = dict(
