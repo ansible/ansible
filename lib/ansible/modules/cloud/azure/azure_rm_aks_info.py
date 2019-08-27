@@ -106,6 +106,10 @@ class AzureRMManagedClusterInfo(AzureRMModuleBase):
         self.tags = None
         self.show_kubeconfig = None
 
+        is_old_facts = self.module._name == 'azure_rm_aks_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_aks_facts' module has been renamed to 'azure_rm_aks_info'", version='2.13')
+
         super(AzureRMManagedClusterInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
