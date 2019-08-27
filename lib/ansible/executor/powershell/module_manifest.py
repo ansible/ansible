@@ -175,11 +175,17 @@ class PSModuleDepFinder(object):
             n_resource_name = to_native(submodules[-1] + ext, errors='surrogate_or_strict')
 
             try:
-                # FIXME: need this in py2 for some reason TBD
-                import_module(to_native(n_package_name))
+                module_util = import_module(to_native(n_package_name))
                 module_util_data = to_bytes(pkgutil.get_data(n_package_name, n_resource_name),
                                             errors='surrogate_or_strict')
-                mu_path = None  # TODO: get this path
+
+                # Get the path of the util which is required for coverage collection.
+                resource_paths = list(module_util.__path__)
+                if len(resource_paths) != 1:
+                    # This should never happen with a collection but we are just being defensive about it.
+                    raise AnsibleError("Internal error: Referenced module_util package '%s' contains 0 or multiple "
+                                       "import locations when we only expect 1." % n_package_name)
+                mu_path = os.path.join(resource_paths[0], n_resource_name)
             except OSError as err:
                 if err.errno == errno.ENOENT:
                     raise AnsibleError('Could not find collection imported module support code for \'%s\''
