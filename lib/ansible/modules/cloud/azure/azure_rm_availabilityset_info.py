@@ -105,6 +105,7 @@ azure_availabilityset:
             sample: { env: sandbox }
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:

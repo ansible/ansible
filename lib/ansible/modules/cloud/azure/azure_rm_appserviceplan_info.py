@@ -126,6 +126,7 @@ except Exception:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 AZURE_OBJECT_CLASS = 'AppServicePlan'
