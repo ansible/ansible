@@ -84,6 +84,7 @@ omit =
     */pyshared/*
     */pytest
     */AnsiballZ_*.py
+    */test/results/*
 '''
 
     return coverage_config
