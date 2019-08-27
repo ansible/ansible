@@ -314,7 +314,7 @@ options are:
   not verified (None), verified but not required (Relaxed), or verified and
   required (Strict). CBT is only used when connecting with NTLM or Kerberos
   over HTTPS. The downstream libraries that Ansible currently uses can only
-  pass the CBT with NTLM authentication. Using Kerberos with
+  pass the CBT with NTLM or Kerberos authentication. Using Kerberos with
   ``CbtHardeningLevel = Strict`` will result in a ``404`` error.
 
 * ``Service\CertificateThumbprint``: This is the thumbprint of the certificate
