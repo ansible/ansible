@@ -172,6 +172,20 @@ notes:
   another user also, R can still access database objects via these privileges.
 - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
 
+seealso:
+- module: postgresql_user
+- module: postgresql_owner
+- module: postgresql_membership
+- name: PostgreSQL privileges
+  description: General information about PostgreSQL privileges.
+  link: https://www.postgresql.org/docs/current/ddl-priv.html
+- name: PostgreSQL GRANT command reference
+  description: Complete reference of the PostgreSQL GRANT command documentation.
+  link: https://www.postgresql.org/docs/current/sql-grant.html
+- name: PostgreSQL REVOKE command reference
+  description: Complete reference of the PostgreSQL REVOKE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-revoke.html
+
 extends_documentation_fragment:
 - postgres
 
