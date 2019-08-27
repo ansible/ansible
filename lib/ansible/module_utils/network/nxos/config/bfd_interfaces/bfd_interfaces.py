@@ -9,18 +9,14 @@ This class creates a command set to bring the current device configuration
 to a desired end-state. The command set is based on a comparison of the
 current configuration (as dict) and the provided configuration (as dict).
 """
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import re
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import dict_diff, to_list, remove_empties
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.utils.utils import flatten_dict, get_interface_type, normalize_interface, search_obj_in_list, vlan_range_to_list
-
-
-import pdb # remove ME ######
-
 
 
 class Bfd_interfaces(ConfigBase):
@@ -43,15 +39,12 @@ class Bfd_interfaces(ConfigBase):
     def get_bfd_interfaces_facts(self):
         """ Get the 'facts' (the current configuration)
 
-        :rtype: A dictionary
-        :returns: The current configuration as a dictionary
+        :returns: A list of interface configs and a platform string
         """
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
-        bfd_interfaces_facts = facts['ansible_network_resources'].get('bfd_interfaces')
-        if bfd_interfaces_facts:
-            return bfd_interfaces_facts
-        else:
-            return []
+        bfd_interfaces_facts = facts['ansible_network_resources'].get('bfd_interfaces', [])
+        platform = facts.get('ansible_net_platform', '')
+        return bfd_interfaces_facts, platform
 
     def edit_config(self, commands):
         return self._connection.edit_config(commands)
@@ -66,15 +59,15 @@ class Bfd_interfaces(ConfigBase):
         warnings = list()
         cmds = list()
 
-        existing_bfd_interfaces_facts = self.get_bfd_interfaces_facts()
-        cmds.extend(self.set_config(existing_bfd_interfaces_facts))
+        existing_bfd_interfaces_facts, platform = self.get_bfd_interfaces_facts()
+        cmds.extend(self.set_config(existing_bfd_interfaces_facts, platform))
         if cmds:
             if not self._module.check_mode:
                 self.edit_config(cmds)
             result['changed'] = True
         result['commands'] = cmds
 
-        changed_bfd_interfaces_facts = self.get_bfd_interfaces_facts()
+        changed_bfd_interfaces_facts, platform = self.get_bfd_interfaces_facts()
         result['before'] = existing_bfd_interfaces_facts
         if result['changed']:
             result['after'] = changed_bfd_interfaces_facts
@@ -82,7 +75,7 @@ class Bfd_interfaces(ConfigBase):
         result['warnings'] = warnings
         return result
 
-    def set_config(self, existing_bfd_interfaces_facts):
+    def set_config(self, existing_bfd_interfaces_facts, platform):
         """ Collect the configuration from the args passed to the module,
             collect the current configuration (as a dict from facts)
 
@@ -90,8 +83,23 @@ class Bfd_interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        want = self._module.params['config']
-        have = existing_bfd_interfaces_facts
+        if re.search('N[56]K', platform):
+            # Some platforms do not support the 'bfd' interface keyword;
+            # remove the 'bfd' key from each want/have interface.
+            orig_want = self._module.params['config']
+            want = []
+            for w in orig_want:
+                del w['bfd']
+                want.append(w)
+            orig_have = existing_bfd_interfaces_facts
+            have = []
+            for h in orig_have:
+                del h['bfd']
+                have.append(h)
+        else:
+            want = self._module.params['config']
+            have = existing_bfd_interfaces_facts
+
         resp = self.set_state(want, have)
         return to_list(resp)
 
@@ -157,7 +165,7 @@ class Bfd_interfaces(ConfigBase):
         """
         cmds = []
         for h in have:
-            # Check existing states and set to default if not included in want or different than want
+            # Check existing states, set to default if not in want or different than want
             h = flatten_dict(h)
             obj_in_want = flatten_dict(search_obj_in_list(h['name'], want, 'name'))
             if h == obj_in_want:
@@ -203,9 +211,9 @@ class Bfd_interfaces(ConfigBase):
         # 'bfd' and 'bfd echo' are enabled by default so the handling is
         # counter-intuitive; we are enabling them to remove them. The end result
         # is that they are removed from the interface config on the device.
-        if 'bfd' in obj:
+        if 'bfd' in obj and 'disable' in obj['bfd']:
             cmds.append('bfd')
-        if 'bfd_echo' in obj:
+        if 'bfd_echo' in obj and 'disable' in obj['bfd_echo']:
             cmds.append('bfd echo')
         if cmds:
             cmds.insert(0, 'interface ' + obj['name'])

@@ -44,11 +44,16 @@ class Bfd_interfacesFacts(object):
         objs = []
 
         if not data:
-            data = connection.get('show running-config | section ^interface')
+            data = connection.get("show running-config | section '^interface|^feature bfd'")
 
-        resources = data.split('interface ')
+        # Some of the bfd attributes
+        if 'feature bfd' in data.split('\n'):
+            resources = data.split('interface ')
+            resources.pop(0)
+        else:
+            resources = []
         for resource in resources:
-            if resource and re.search(r'bfd', resource):
+            if resource:
                 obj = self.render_config(self.generated_spec, resource)
                 if obj and len(obj.keys()) > 1:
                     objs.append(obj)
@@ -81,7 +86,9 @@ class Bfd_interfacesFacts(object):
         if get_interface_type(intf) == 'unknown':
             return {}
         config['name'] = intf
-        config['bfd'] = utils.parse_conf_cmd_arg(conf, 'bfd', 'enable', 'disable')
-        config['bfd_echo'] = utils.parse_conf_cmd_arg(conf, 'bfd echo', 'enable', 'disable')
+        # 'bfd'/'bfd echo' do not nvgen when enabled thus set to 'enable' when None.
+        # 'bfd' is not supported on some platforms
+        config['bfd'] = utils.parse_conf_cmd_arg(conf, 'bfd', 'enable', 'disable') or 'enable'
+        config['bfd_echo'] = utils.parse_conf_cmd_arg(conf, 'bfd echo', 'enable', 'disable') or 'enable'
 
         return utils.remove_empties(config)
