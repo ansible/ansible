@@ -122,6 +122,7 @@ notes:
   - Traditional volume groups (raid0, raid1, raid5, raid6) are performed in steps dictated by the storage array. Each
     required step will be attempted until the request fails which is likely because of the required expansion time.
   - raidUnsupported will be treated as raid0, raidAll as raidDiskPool and raid3 as raid5.
+  - Tray loss protection and drawer loss protection will be chosen if at all possible.
 """
 EXAMPLES = """
 - name: No disk groups
@@ -141,7 +142,6 @@ msg:
     type: str
     sample: Json facts for the pool that was created.
 """
-
 import functools
 from itertools import groupby
 from time import sleep
@@ -486,7 +486,33 @@ class NetAppESeriesStoragePool(NetAppESeriesModule):
                     if candidates:
                         candidates_list.extend(candidates["volumeCandidate"])
 
-            return candidates_list
+            # Sort output based on tray and then drawer protection first
+            tray_drawer_protection = list()
+            tray_protection = list()
+            drawer_protection = list()
+            no_protection = list()
+            sorted_candidates = list()
+            for item in candidates_list:
+                if item["trayLossProtection"]:
+                    if item["drawerLossProtection"]:
+                        tray_drawer_protection.append(item)
+                    else:
+                        tray_protection.append(item)
+                elif item["drawerLossProtection"]:
+                    drawer_protection.append(item)
+                else:
+                    no_protection.append(item)
+
+            if tray_drawer_protection:
+                sorted_candidates.extend(tray_drawer_protection)
+            if tray_protection:
+                sorted_candidates.extend(tray_protection)
+            if drawer_protection:
+                sorted_candidates.extend(drawer_protection)
+            if no_protection:
+                sorted_candidates.extend(no_protection)
+
+            return sorted_candidates
 
         # Determine the appropriate candidate list
         for candidate in get_candidate_drive_request():
@@ -501,7 +527,7 @@ class NetAppESeriesStoragePool(NetAppESeriesModule):
                         self.criteria_min_usable_capacity > int(candidate["usableSize"])):
                     continue
             if self.criteria_drive_min_size:
-                if self.criteria_drive_min_size > min(self.get_available_drive_capacities(candidate["drives"])):
+                if self.criteria_drive_min_size > min(self.get_available_drive_capacities(candidate["driveRefList"]["driveRef"])):
                     continue
 
             return candidate
