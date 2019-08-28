@@ -47,7 +47,7 @@ options:
   aggressive_aging:
     description:
       - Sets short (aggressive) timeouts for idle connections.
-    type: list
+    type: dict
     suboptions:
       default_timeout:
         description:
@@ -173,7 +173,7 @@ def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
         port=dict(type='str'),
-        aggressive_aging=dict(type='list', options=dict(
+        aggressive_aging=dict(type='dict', options=dict(
             default_timeout=dict(type='int'),
             enable=dict(type='bool'),
             timeout=dict(type='int'),
