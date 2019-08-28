@@ -63,6 +63,7 @@ from .util import (
     get_ansible_version,
     tempdir,
     open_zipfile,
+    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from .util_common import (
@@ -137,19 +138,6 @@ from .integration import (
 
 from .data import (
     data_context,
-)
-
-REMOTE_ONLY_PYTHON_VERSIONS = (
-    '2.6',
-)
-
-SUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-    '2.7',
-    '3.5',
-    '3.6',
-    '3.7',
-    '3.8',
 )
 
 HTTPTESTER_HOSTS = (

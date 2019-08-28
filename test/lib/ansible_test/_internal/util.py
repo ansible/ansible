@@ -99,6 +99,19 @@ ENCODING = 'utf-8'
 
 Text = type(u'')
 
+REMOTE_ONLY_PYTHON_VERSIONS = (
+    '2.6',
+)
+
+SUPPORTED_PYTHON_VERSIONS = (
+    '2.6',
+    '2.7',
+    '3.5',
+    '3.6',
+    '3.7',
+    '3.8',
+)
+
 
 def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
     """Return the given value as bytes encoded using UTF-8 if not already bytes, or None if the value is None."""
@@ -301,7 +314,15 @@ def get_ansible_version():  # type: () -> str
 
 def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Dict[str, str]
     """Return a dictionary indicating which of the requested Python versions are available."""
-    return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in versions) if path)
+    try:
+        return get_available_python_versions.result
+    except AttributeError:
+        pass
+
+    get_available_python_versions.result = dict((version, path) for version, path in
+                                                ((version, find_python(version, required=False)) for version in versions) if path)
+
+    return get_available_python_versions.result
 
 
 def generate_pip_command(python):
@@ -893,7 +914,7 @@ def load_module(path, name):  # type: (str, str) -> None
 
 
 @contextlib.contextmanager
-def tempdir():
+def tempdir():  # type: () -> str
     """Creates a temporary directory that is deleted outside the context scope."""
     temp_path = tempfile.mkdtemp()
     yield temp_path
