@@ -137,8 +137,6 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * na_ontap_gather_facts use :ref:`na_ontap_info <na_ontap_info_module>` instead.
 
-* nginx_status_facts use :ref:`nginx_status_info <nginx_status_info_module>` instead.
-
 * net_banner use the platform-specific [netos]_banner modules instead.
 
 * net_interface use the new platform-specific [netos]_interfaces modules instead.
@@ -165,7 +163,13 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * net_vrf use the platform-specific [netos]_vrf modules instead.
 
+* nginx_status_facts use :ref:`nginx_status_info <nginx_status_info_module>` instead.
+
 * nxos_interface use :ref:`nxos_interfaces <nxos_interfaces_module>` instead.
+
+* nxos_l2_interface use :ref:`nxos_l2_interfaces <nxos_l2_interfaces_module>` instead.
+
+* nxos_l3_interface use :ref:`nxos_l3_interfaces <nxos_l3_interfaces_module>` instead.
 
 * nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
 
@@ -271,14 +275,11 @@ The following modules will be removed in Ansible 2.13. Please update update your
 
 * vyos_lldp_interface use :ref:`vyos_lldp_interfaces <vyos_lldp_interfaces_module>` instead.
 
-* nxos_l3_interface use :ref:`nxos_l3_interfaces <nxos_l3_interfaces_module>` instead.
-
-* nxos_l2_interface use :ref:`nxos_l2_interfaces <nxos_l2_interfaces_module>` instead.
-
 
 The following functionality will be removed in Ansible 2.12. Please update update your playbooks accordingly.
 
 * ``vmware_cluster`` DRS, HA and VSAN configuration; use :ref:`vmware_cluster_drs <vmware_cluster_drs_module>`, :ref:`vmware_cluster_ha <vmware_cluster_ha_module>` and :ref:`vmware_cluster_vsan <vmware_cluster_vsan_module>` instead.
+
 
 The following functionality will be removed in Ansible 2.13. Please update update your playbooks accordingly.
 
@@ -287,6 +288,7 @@ The following functionality will be removed in Ansible 2.13. Please update updat
   replace the provider with the :ref:`openssl_certificate_info <openssl_certificate_info_module>`,
   :ref:`openssl_csr_info <openssl_csr_info_module>`, :ref:`openssl_privatekey_info <openssl_privatekey_info_module>`
   and :ref:`assert <assert_module>` modules.
+
 
 For the following modules, the PyOpenSSL-based backend ``pyopenssl`` has been deprecated and will be
 removed in Ansible 2.13:
@@ -318,6 +320,19 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
   To access return values, :ref:`register a variable <registered_variables>`.
 * The ``aws_sgw_facts`` module was renamed to :ref:`aws_sgw_info <aws_sgw_info_module>`.
 * The ``aws_waf_facts`` module was renamed to :ref:`aws_waf_info <aws_waf_info_module>`.
+* The ``azure_rm_aks_facts`` module was renamed to :ref:`azure_rm_aks_info <azure_rm_aks_info_module>`.
+* The ``azure_rm_aksversion_facts`` module was renamed to :ref:`azure_rm_aksversion_info <azure_rm_aksversion_info_module>`.
+* The ``azure_rm_applicationsecuritygroup_facts`` module was renamed to :ref:`azure_rm_applicationsecuritygroup_info <azure_rm_applicationsecuritygroup_info_module>`.
+* The ``azure_rm_appserviceplan_facts`` module was renamed to :ref:`azure_rm_appserviceplan_info <azure_rm_appserviceplan_info_module>`.
+* The ``azure_rm_automationaccount_facts`` module was renamed to :ref:`azure_rm_automationaccount_info <azure_rm_automationaccount_info_module>`.
+* The ``azure_rm_autoscale_facts`` module was renamed to :ref:`azure_rm_autoscale_info <azure_rm_autoscale_info_module>`.
+* The ``azure_rm_availabilityset_facts`` module was renamed to :ref:`azure_rm_availabilityset <azure_rm_availabilityset_info_module>`.
+* The ``azure_rm_cdnendpoint_facts`` module was renamed to :ref:`azure_rm_cdnendpoint_info <azure_rm_cdnendpoint_info_module>`.
+* The ``azure_rm_cdnprofile_facts`` module was renamed to :ref:`azure_rm_cdnprofile_info <azure_rm_cdnprofile_info_module>`.
+* The ``azure_rm_containerinstance_facts`` module was renamed to :ref:`azure_rm_containerinstance_info <azure_rm_containerinstance_info_module>`.
+* The ``azure_rm_containerregistry_facts`` module was renamed to :ref:`azure_rm_containerregistry_info <azure_rm_containerregistry_info_module>`.
+* The ``azure_rm_cosmosdbaccount_facts`` module was renamed to :ref:`azure_rm_cosmosdbaccount_info <azure_rm_cosmosdbaccount_info_module>`.
+* The ``azure_rm_deployment_facts`` module was renamed to :ref:`azure_rm_deployment_info <azure_rm_deployment_info_module>`.
 * The ``azure_rm_resourcegroup_facts`` module was renamed to :ref:`azure_rm_resourcegroup_info <azure_rm_resourcegroup_info_module>`.
 * The ``bigip_device_facts`` module was renamed to :ref:`bigip_device_info <bigip_device_info_module>`.
 * The ``bigiq_device_facts`` module was renamed to :ref:`bigiq_device_info <bigiq_device_info_module>`.
@@ -459,12 +474,12 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``hpilo_facts`` module was renamed to :ref:`hpilo_info <hpilo_info_module>`.
   When called with the new name, the module no longer returns ``ansible_facts``.
   To access return values, :ref:`register a variable <registered_variables>`.
-* The ``idrac_redfish_facts`` module was renamed to :ref:`idrac_redfish_info <idrac_redfish_info_module>`.
-  When called with the new name, the module no longer returns ``ansible_facts``.
-  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``iam_mfa_device_facts`` module was renamed to :ref:`iam_mfa_device_info <iam_mfa_device_info_module>`.
 * The ``iam_role_facts`` module was renamed to :ref:`iam_role_info <iam_role_info_module>`.
 * The ``iam_server_certificate_facts`` module was renamed to :ref:`iam_server_certificate_info <iam_server_certificate_info_module>`.
+* The ``idrac_redfish_facts`` module was renamed to :ref:`idrac_redfish_info <idrac_redfish_info_module>`.
+  When called with the new name, the module no longer returns ``ansible_facts``.
+  To access return values, :ref:`register a variable <registered_variables>`.
 * The ``intersight_facts`` module was renamed to :ref:`intersight_info <intersight_info_module>`.
 * The ``jenkins_job_facts`` module was renamed to :ref:`jenkins_job_info <jenkins_job_info_module>`.
 * The ``k8s_facts`` module was renamed to :ref:`k8s_info <k8s_info_module>`.
@@ -620,19 +635,6 @@ be removed in Ansible 2.13. Please update update your playbooks accordingly.
 * The ``xenserver_guest_facts`` module was renamed to :ref:`xenserver_guest_info <xenserver_guest_info_module>`.
 * The ``zabbix_group_facts`` module was renamed to :ref:`zabbix_group_info <zabbix_group_info_module>`.
 * The ``zabbix_host_facts`` module was renamed to :ref:`zabbix_host_info <zabbix_host_info_module>`.
-* The ``azure_rm_aks_facts`` module was renamed to :ref:`azure_rm_aks_info <azure_rm_aks_info_module>`.
-* The ``azure_rm_aksversion_facts`` module was renamed to :ref:`azure_rm_aksversion_info <azure_rm_aksversion_info_module>`.
-* The ``azure_rm_applicationsecuritygroup_facts`` module was renamed to :ref:`azure_rm_applicationsecuritygroup_info <azure_rm_applicationsecuritygroup_info_module>`.
-* The ``azure_rm_appserviceplan_facts`` module was renamed to :ref:`azure_rm_appserviceplan_info <azure_rm_appserviceplan_info_module>`.
-* The ``azure_rm_autoscale_facts`` module was renamed to :ref:`azure_rm_autoscale_info <azure_rm_autoscale_info_module>`.
-* The ``azure_rm_availabilityset_facts`` module was renamed to :ref:`azure_rm_availabilityset <azure_rm_availabilityset_info_module>`.
-* The ``azure_rm_automationaccount_facts`` module was renamed to :ref:`azure_rm_automationaccount_info <azure_rm_automationaccount_info_module>`.
-* The ``azure_rm_cdnprofile_facts`` module was renamed to :ref:`azure_rm_cdnprofile_info <azure_rm_cdnprofile_info_module>`.
-* The ``azure_rm_cdnendpoint_facts`` module was renamed to :ref:`azure_rm_cdnendpoint_info <azure_rm_cdnendpoint_info_module>`.
-* The ``azure_rm_containerinstance_facts`` module was renamed to :ref:`azure_rm_containerinstance_info <azure_rm_containerinstance_info_module>`.
-* The ``azure_rm_containerregistry_facts`` module was renamed to :ref:`azure_rm_containerregistry_info <azure_rm_containerregistry_info_module>`.
-* The ``azure_rm_cosmosdbaccount_facts`` module was renamed to :ref:`azure_rm_cosmosdbaccount_info <azure_rm_cosmosdbaccount_info_module>`.
-* The ``azure_rm_deployment_facts`` module was renamed to :ref:`azure_rm_deployment_info <azure_rm_deployment_info_module>`.
 
 Noteworthy module changes
 -------------------------
