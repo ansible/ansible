@@ -72,7 +72,7 @@ options:
   nat_settings:
     description:
       - NAT settings.
-    type: list
+    type: dict
     suboptions:
       auto_rule:
         description:
@@ -190,7 +190,7 @@ def main():
         mask_length4=dict(type='int'),
         mask_length6=dict(type='int'),
         subnet_mask=dict(type='str'),
-        nat_settings=dict(type='list', options=dict(
+        nat_settings=dict(type='dict', options=dict(
             auto_rule=dict(type='bool'),
             ip_address=dict(type='str'),
             ipv4_address=dict(type='str'),
