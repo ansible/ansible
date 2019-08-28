@@ -200,7 +200,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if collections_list and 'ansible.builtin' not in collections_list and 'ansible.legacy' not in collections_list:
             collections_list.append('ansible.legacy')
 
-        ds['collections'] = collections_list
+        if collections_list:
+            ds['collections'] = collections_list
 
         # use the args parsing class to determine the action, args,
         # and the delegate_to value from the various possible forms
