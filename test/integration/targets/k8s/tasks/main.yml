@@ -1,6 +1,7 @@
 - set_fact:
     virtualenv: "{{ remote_tmp_dir }}/virtualenv"
     virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
+    selinux_enabled: '{{ ansible_selinux.status == "enabled" }}'
 
 - set_fact:
     virtualenv_interpreter: "{{ virtualenv }}/bin/python"
@@ -16,7 +17,7 @@
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: no
+    virtualenv_site_packages: '{{ selinux_enabled | bool }}'
 
 - include_tasks: validate_not_installed.yml
   vars:
@@ -35,7 +36,7 @@
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: no
+    virtualenv_site_packages: '{{ selinux_enabled | bool }}'
 
 - include_tasks: validate_installed.yml
   vars:
@@ -55,7 +56,7 @@
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: no
+    virtualenv_site_packages: '{{ selinux_enabled | bool }}'
 
 - include_tasks: older_openshift_fail.yml
   vars:
@@ -75,7 +76,7 @@
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: no
+    virtualenv_site_packages: '{{ selinux_enabled | bool }}'
 
 - include_tasks: full_test.yml
   vars:
