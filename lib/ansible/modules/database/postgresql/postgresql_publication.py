@@ -578,7 +578,7 @@ def main():
         tables=dict(type='list'),
         parameters=dict(type='dict'),
         owner=dict(type='str'),
-        cascade=dict(type='bool'),
+        cascade=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
