@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_endpoint_control_settings
 short_description: Configure endpoint control settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify endpoint_control feature and settings category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -92,7 +92,7 @@ options:
                     - custom
             forticlient_avdb_update_interval:
                 description:
-                    - Period of time between FortiClient AntiVirus database updates (0 - 24 hours, default = 8).
+                    - Period of time between FortiClient AntiVirus database updates (0 - 24 hours).
                 type: int
             forticlient_dereg_unsupported_client:
                 description:
@@ -103,11 +103,11 @@ options:
                     - disable
             forticlient_ems_rest_api_call_timeout:
                 description:
-                    - FortiClient EMS call timeout in milliseconds (500 - 30000 milliseconds, default = 5000).
+                    - FortiClient EMS call timeout in milliseconds (500 - 30000 milliseconds).
                 type: int
             forticlient_keepalive_interval:
                 description:
-                    - Interval between two KeepAlive messages from FortiClient (20 - 300 sec, default = 60).
+                    - Interval between two KeepAlive messages from FortiClient (20 - 300 sec).
                 type: int
             forticlient_offline_grace:
                 description:
@@ -118,7 +118,7 @@ options:
                     - disable
             forticlient_offline_grace_interval:
                 description:
-                    - Grace period for offline registered FortiClient (60 - 600 sec, default = 120).
+                    - Grace period for offline registered FortiClient (60 - 600 sec).
                 type: int
             forticlient_reg_key:
                 description:
@@ -137,7 +137,7 @@ options:
                 type: int
             forticlient_sys_update_interval:
                 description:
-                    - Interval between two system update messages from FortiClient (30 - 1440 min, default = 720).
+                    - Interval between two system update messages from FortiClient (30 - 1440 min).
                 type: int
             forticlient_user_avatar:
                 description:
@@ -148,7 +148,7 @@ options:
                     - disable
             forticlient_warning_interval:
                 description:
-                    - Period of time between FortiClient portal warnings (0 - 24 hours, default = 1).
+                    - Period of time between FortiClient portal warnings (0 - 24 hours).
                 type: int
 '''
 
@@ -323,7 +323,7 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
@@ -357,6 +357,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None

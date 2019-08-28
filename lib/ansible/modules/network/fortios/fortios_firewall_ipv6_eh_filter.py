@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_firewall_ipv6_eh_filter
 short_description: Configure IPv6 extension header filter in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify firewall feature and ipv6_eh_filter category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -81,21 +81,21 @@ options:
         suboptions:
             auth:
                 description:
-                    - Enable/disable blocking packets with the Authentication header.
+                    - Enable/disable blocking packets with the Authentication header .
                 type: str
                 choices:
                     - enable
                     - disable
             dest_opt:
                 description:
-                    - Enable/disable blocking packets with Destination Options headers.
+                    - Enable/disable blocking packets with Destination Options headers .
                 type: str
                 choices:
                     - enable
                     - disable
             fragment:
                 description:
-                    - Enable/disable blocking packets with the Fragment header.
+                    - Enable/disable blocking packets with the Fragment header .
                 type: str
                 choices:
                     - enable
@@ -106,21 +106,21 @@ options:
                 type: int
             hop_opt:
                 description:
-                    - Enable/disable blocking packets with the Hop-by-Hop Options header.
+                    - Enable/disable blocking packets with the Hop-by-Hop Options header .
                 type: str
                 choices:
                     - enable
                     - disable
             no_next:
                 description:
-                    - Enable/disable blocking packets with the No Next header.
+                    - Enable/disable blocking packets with the No Next header
                 type: str
                 choices:
                     - enable
                     - disable
             routing:
                 description:
-                    - Enable/disable blocking packets with Routing headers.
+                    - Enable/disable blocking packets with Routing headers .
                 type: str
                 choices:
                     - enable
@@ -294,7 +294,7 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
@@ -323,6 +323,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
