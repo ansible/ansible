@@ -1107,7 +1107,6 @@ class TaskExecutor:
         return handler
 
 
-
 def start_connection(play_context, variables):
     '''
     Starts the persistent connection
