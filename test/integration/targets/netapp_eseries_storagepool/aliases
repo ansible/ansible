@@ -1,0 +1,10 @@
+# This test is not enabled by default, but can be utilized by defining required variables in integration_config.yml
+# Example integration_config.yml:
+# ---
+#netapp_e_api_host: 10.113.1.111:8443
+#netapp_e_api_username: admin
+#netapp_e_api_password: myPass
+#netapp_e_ssid: 1
+
+unsupported
+netapp/eseries
