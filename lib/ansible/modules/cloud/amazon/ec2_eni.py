@@ -474,7 +474,7 @@ def create_eni(connection, vpc_id, module):
                     NetworkInterfaceId=eni["NetworkInterfaceId"]
                 )
             except botocore.exceptions.ClientError:
-                connection.delete_network_interface(eni["NetworkInterfaceId"])
+                connection.delete_network_interface(NetworkInterfaceId=eni["NetworkInterfaceId"])
                 raise
             # Wait to allow creation / attachment to finish
             wait_for(correct_status, connection, "attached", module, eni)
@@ -488,7 +488,7 @@ def create_eni(connection, vpc_id, module):
                 )
                 eni = uniquely_find_eni(connection, module, eni)
             except botocore.exceptions.ClientError:
-                connection.delete_network_interface(eni["NetworkInterfaceId"])
+                connection.delete_network_interface(NetworkInterfaceId=eni["NetworkInterfaceId"])
                 raise
 
         if secondary_private_ip_addresses is not None:
@@ -499,7 +499,7 @@ def create_eni(connection, vpc_id, module):
                 )
                 eni = uniquely_find_eni(connection, module, eni)
             except botocore.exceptions.ClientError:
-                connection.delete_network_interface(eni["NetworkInterfaceId"])
+                connection.delete_network_interface(NetworkInterfaceId=eni["NetworkInterfaceId"])
                 raise
 
         manage_tags(eni, tags, purge_tags, connection)
