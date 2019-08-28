@@ -148,7 +148,6 @@ EXAMPLES = """
       default_timeout: 3600
     color: green
     name: New_SCTP_Service_1
-    new_name: New_SCTP_Service_2
     port: 5656
     state: present
 
