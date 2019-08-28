@@ -840,26 +840,26 @@ class PathMapper:
 
         if '/' not in path:
             if path in (
-                '.gitattributes',
-                '.gitignore',
-                '.mailmap',
-                'COPYING',
-                'Makefile',
+                    '.gitattributes',
+                    '.gitignore',
+                    '.mailmap',
+                    'COPYING',
+                    'Makefile',
             ):
                 return minimal
 
             if path in (
-                'setup.py',
-                'shippable.yml',
+                    'setup.py',
+                    'shippable.yml',
             ):
                 return all_tests(self.args)  # broad impact, run all tests
 
             if ext in (
-                '.in',
-                '.md',
-                '.rst',
-                '.toml',
-                '.txt',
+                    '.in',
+                    '.md',
+                    '.rst',
+                    '.toml',
+                    '.txt',
             ):
                 return minimal
 
