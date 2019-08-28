@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubnamespace
 version_added: "2.9"
-short_description: Manage Azure Eventhub Namespace.
+short_description: Manage Azure Eventhub Namespace
 description:
     - Create, update and delete an Azure Eventhub Namespace.
 
@@ -24,42 +24,48 @@ options:
         description:
             - Name of a resource group where the eventhub namespace exists or will be created.
         required: true
+        type: str
     name:
         description:
             - Name of the eventhub namespace.
         required: true
+        type: str
     state:
         description:
             - Assert the state of the eventhub namespace. Use C(present) to create or update an eventhub namespace and C(absent) to delete it.
         default: present
+        type: str
         choices:
             - absent
             - present
     location:
         description:
             - Location of the eventhub namespace.
+        type: str
     sku:
         description:
             - Pricing tier for Azure eventhub namespace.
-            - Note that basic eventhub namespace cannot support kafka_enabled.
+            - Note that C(basic) eventhub namespace cannot support I(kafka_enabled).
+        type: str
         choices:
             - basic
             - standard
     auto_inflate_enabled:
         description:
             - Value that indicates whether AutoInflate is enabled for eventhub namespace.
-            - Default is false when creation.
+            - Default is C(false) when creation.
         type: bool
     maximum_throughput_units:
         description:
-            - Upper limit of throughput units when AutoInflate is enabled, value should be within 0 to 20 throughput units. ( '0' if AutoInflateEnabled = false)
-            - Only can be set when the C(auto_inflate_enabled) == true
+            - Upper limit of throughput units when I(auto_inflate_enabled=true), value should be within 0 to 20 throughput units.
+            - The value is C(0) if I(auto_inflate_enabled=false).
+            - Only can be set when the I(auto_inflate_enabled=true).
         type: int
     kafka_enabled:
         description:
             - Value that indicates whether Kafka is enabled for eventhub namespace.
-            - Default is false when creation.
-            - Cannot be updated after the creation
+            - Default is C(false) when creation.
+            - Cannot be updated after the creation.
         type: bool
 
 extends_documentation_fragment:
@@ -67,7 +73,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 

@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubnamespace_info
 version_added: "2.9"
-short_description: Get Azure eventhub namespace information.
+short_description: Get Azure eventhub namespace information
 description:
     - Get information for an a specific eventhub namespace or all eventhub namespaces.
 
@@ -23,9 +23,11 @@ options:
     resource_group:
         description:
             - The resource group to search for the desired eventhub namespace.
+        type: str
     name:
         description:
-            - Name of the eventhub namespace
+            - Name of the eventhub namespace.
+        type: str
     show_sas_policies:
         description:
             - Whether to show the SAS policies.
@@ -34,12 +36,13 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Fan Qiu (@MyronFanQiu)"
+    - Fan Qiu (@MyronFanQiu)
 
 '''
 
@@ -64,7 +67,8 @@ EXAMPLES = '''
 
 RETURN = '''
 eventhubnamespaces:
-    description: List of eventhub namespace dicts.
+    description:
+        - List of eventhub namespace dicts.
     returned: always
     type: list
 '''
