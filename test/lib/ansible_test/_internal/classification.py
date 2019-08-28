@@ -431,11 +431,6 @@ class PathMapper:
                     'units': path,
                 }
 
-            if path.startswith('test/units/compat/'):
-                return {
-                    'units': 'test/units/',
-                }
-
             # changes to files which are not unit tests should trigger tests from the nearest parent directory
 
             test_path = os.path.dirname(path)
@@ -467,6 +462,11 @@ class PathMapper:
 
     def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
         """Return the classification for the given path using rules specific to Ansible."""
+        if path.startswith('test/units/compat/'):
+            return {
+                'units': 'test/units/',
+            }
+
         result = self._classify_common(path)
 
         if result:
