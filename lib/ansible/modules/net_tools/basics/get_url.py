@@ -61,6 +61,7 @@ options:
         will only be downloaded if the destination does not exist. Generally
         should be C(yes) only for small local files.
       - Prior to 0.6, this module behaved as if C(yes) was the default.
+      - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: no
     aliases: [ thirsty ]
@@ -445,6 +446,9 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[['checksum', 'sha256sum']],
     )
+
+    if module.params.get('thirsty'):
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
 
     url = module.params['url']
     dest = module.params['dest']
