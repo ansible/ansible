@@ -83,7 +83,6 @@ EXAMPLES = """
 - name: set-security-zone
   cp_mgmt_security_zone:
     name: SZone1
-    new_name: SZone2
     state: present
 
 - name: delete-security-zone
