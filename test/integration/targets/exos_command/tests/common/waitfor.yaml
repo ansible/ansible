@@ -1,0 +1,15 @@
+---
+- debug: msg="START common/waitfor.yaml on connection={{ ansible_connection }}"
+
+- name: run show version and check to see if output contains ExtremeXOS
+  exos_command:
+    commands: show version
+    wait_for: result[0] contains ExtremeXOS
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END common/waitfor.yaml on connection={{ ansible_connection }}"
