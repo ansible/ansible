@@ -751,7 +751,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
-                    code='multiple-utils-per-requires',
+                    code='multiple-c#-utils-per-requires',
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -1053,7 +1053,7 @@ class ModuleValidator(Validator):
                 else:
                     self.reporter.warning(
                         path=self.object_path,
-                        code='return-provided',
+                        code='missing-return-legacy',
                         msg='No RETURN provided'
                     )
             else:
@@ -1302,7 +1302,7 @@ class ModuleValidator(Validator):
                         msg += " defines type as %r but documentation doesn't define type" % (data['type'])
                         self.reporter.error(
                             path=self.object_path,
-                            code='documentation-type',
+                            code='parameter-type-not-in-doc',
                             msg=msg
                         )
                 elif data['type'] != doc_type:
@@ -1333,7 +1333,7 @@ class ModuleValidator(Validator):
                     msg += "implies type as 'str' but documentation defines as %r" % doc_type
                     self.reporter.error(
                         path=self.object_path,
-                        code='parameter-default-type-matches-documentation',
+                        code='implied-parameter-type-mismatch',
                         msg=msg
                     )
 
@@ -1473,7 +1473,7 @@ class ModuleValidator(Validator):
                 fragment = doc['extends_documentation_fragment']
                 self.reporter.warning(
                     path=self.object_path,
-                    code='documentation-fragment-exists',
+                    code='missing-existing-doc-fragment',
                     msg='Pre-existing DOCUMENTATION fragment missing: %s' % fragment
                 )
                 return
