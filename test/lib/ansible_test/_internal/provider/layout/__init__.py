@@ -80,14 +80,14 @@ class ContentLayout(Layout):
                  root,  # type: str
                  paths,  # type: t.List[str]
                  plugin_paths,  # type: t.Dict[str, str]
-                 collection=None,  # type: t.Optional[CollectionDetail]
-                 test_path=None,  # type: t.Optional[str]
-                 results_path=None,  # type: t.Optional[str]
-                 sanity_path=None,  # type: t.Optional[str]
-                 integration_path=None,  # type: t.Optional[str]
-                 unit_path=None,  # type: t.Optional[str]
-                 unit_module_path=None,  # type: t.Optional[str]
-                 unit_module_utils_path=None,  # type: t.Optional[str]
+                 collection,  # type: t.Optional[CollectionDetail]
+                 test_path,  # type: str
+                 results_path,  # type: str
+                 sanity_path,  # type: str
+                 integration_path,  # type: str
+                 unit_path,  # type: str
+                 unit_module_path,  # type: str
+                 unit_module_utils_path,  # type: str
                  ):  # type: (...) -> None
         super(ContentLayout, self).__init__(root, paths)
 
