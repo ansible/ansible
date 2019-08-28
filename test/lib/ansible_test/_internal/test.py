@@ -4,11 +4,13 @@ __metaclass__ = type
 
 import datetime
 import os
+import re
 
 from . import types as t
 
 from .util import (
     display,
+    get_ansible_version,
 )
 
 from .util_common import (
@@ -276,6 +278,10 @@ class TestFailure(TestResult):
             for message in self.messages:
                 display.error(message.format(show_confidence=True))
 
+            doc_url = self.find_docs()
+            if doc_url:
+                display.info('See documentation for help: %s' % doc_url)
+
     def write_lint(self):
         """Write lint results to stdout."""
         if self.summary:
@@ -358,7 +364,15 @@ class TestFailure(TestResult):
         """
         :rtype: str
         """
-        testing_docs_url = 'https://docs.ansible.com/ansible/devel/dev_guide/testing'
+
+        # Use the major.minor version for the URL only if this a release that
+        # matches the pattern 2.4.0, otherwise, use 'devel'
+        ansible_version = get_ansible_version()
+        url_version = 'devel'
+        if re.search(r'^[0-9.]+$', ansible_version):
+            url_version = '.'.join(ansible_version.split('.')[:2])
+
+        testing_docs_url = 'https://docs.ansible.com/ansible/%s/dev_guide/testing' % url_version
         testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
 
         url = '%s/%s/' % (testing_docs_url, self.command)
