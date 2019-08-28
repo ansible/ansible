@@ -84,10 +84,7 @@ EXAMPLES = """
 - name: set-tag
   cp_mgmt_tag:
     name: My New Tag1
-    new_name: My New Tag21
     state: present
-    tags:
-      add: tag3
 
 - name: delete-tag
   cp_mgmt_tag:
