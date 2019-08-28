@@ -80,16 +80,22 @@ class ContentLayout(Layout):
                  root,  # type: str
                  paths,  # type: t.List[str]
                  plugin_paths,  # type: t.Dict[str, str]
-                 collection=None,  # type: t.Optional[CollectionDetail]
-                 integration_path=None,  # type: t.Optional[str]
-                 unit_path=None,  # type: t.Optional[str]
-                 unit_module_path=None,  # type: t.Optional[str]
-                 unit_module_utils_path=None,  # type: t.Optional[str]
+                 collection,  # type: t.Optional[CollectionDetail]
+                 test_path,  # type: str
+                 results_path,  # type: str
+                 sanity_path,  # type: str
+                 integration_path,  # type: str
+                 unit_path,  # type: str
+                 unit_module_path,  # type: str
+                 unit_module_utils_path,  # type: str
                  ):  # type: (...) -> None
         super(ContentLayout, self).__init__(root, paths)
 
         self.plugin_paths = plugin_paths
         self.collection = collection
+        self.test_path = test_path
+        self.results_path = results_path
+        self.sanity_path = sanity_path
         self.integration_path = integration_path
         self.integration_targets_path = os.path.join(integration_path, 'targets')
         self.integration_vars_path = os.path.join(integration_path, 'integration_config.yml')

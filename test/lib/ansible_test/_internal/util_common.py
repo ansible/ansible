@@ -58,12 +58,12 @@ class ResultType:
     @property
     def relative_path(self):  # type: () -> str
         """The content relative path to the results."""
-        return os.path.join(data_context().results_relative, self.name)
+        return os.path.join(data_context().content.results_path, self.name)
 
     @property
     def path(self):  # type: () -> str
         """The absolute path to the results."""
-        return os.path.join(data_context().results, self.name)
+        return os.path.join(data_context().content.root, self.relative_path)
 
     def __str__(self):  # type: () -> str
         return self.name
@@ -238,7 +238,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
         # config is in a temporary directory
         # results are in the source tree
         coverage_config_base_path = args.coverage_config_base_path
-        coverage_output_base_path = data_context().results
+        coverage_output_base_path = os.path.join(data_context().content.root, data_context().content.results_path)
     else:
         raise Exception('No temp path and no coverage config base path. Check for missing coverage_context usage.')
 
