@@ -12,8 +12,6 @@ export ANSIBLE_HOST_PATTERN_MISMATCH=error
 ipath=../../$(basename "${INVENTORY_PATH}")
 export INVENTORY_PATH="$ipath"
 
-ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml
-
 # test callback
 ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
 
@@ -29,6 +27,9 @@ if [[ ${INVENTORY_PATH} == *.winrm ]]; then
   export TEST_PLAYBOOK=windows.yml
 else
   export TEST_PLAYBOOK=posix.yml
+
+  echo "testing default collection support"
+  ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml
 fi
 
 # run test playbook
