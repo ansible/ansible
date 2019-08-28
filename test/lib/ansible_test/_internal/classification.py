@@ -698,6 +698,9 @@ class PathMapper:
         if path.startswith('lib/ansible/'):
             return all_tests(self.args)  # broad impact, run all tests
 
+        if path.startswith('licenses/'):
+            return minimal
+
         if path.startswith('packaging/'):
             if path.startswith('packaging/requirements/'):
                 if name.startswith('requirements-') and ext == '.txt':
