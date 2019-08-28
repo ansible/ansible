@@ -61,6 +61,7 @@ options:
     description:
     - Drop publication dependencies. Has effect with I(state=absent) only.
     type: bool
+    default: false
 notes:
 - PostgreSQL version must be 10 or greater.
 seealso:
