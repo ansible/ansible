@@ -443,71 +443,6 @@ class PathMapper:
 
                 test_path = os.path.dirname(test_path)
 
-        return None
-
-    def _classify_collection(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
-        """Return the classification for the given path using rules specific to collections."""
-        result = self._classify_common(path)
-
-        if result:
-            return result
-
-        return None
-
-    def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
-        """Return the classification for the given path using rules specific to Ansible."""
-        if path.startswith('test/units/compat/'):
-            return {
-                'units': 'test/units/',
-            }
-
-        result = self._classify_common(path)
-
-        if result:
-            return result
-
-        dirname = os.path.dirname(path)
-        filename = os.path.basename(path)
-        name, ext = os.path.splitext(filename)
-
-        minimal = {}
-
-        if path.startswith('bin/'):
-            return all_tests(self.args)  # broad impact, run all tests
-
-        if path.startswith('changelogs/'):
-            return minimal
-
-        if path.startswith('contrib/'):
-            return {
-                'units': 'test/units/contrib/'
-            }
-
-        if path.startswith('docs/'):
-            return minimal
-
-        if path.startswith('examples/'):
-            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
-                return {
-                    'windows-integration': 'connection_winrm',
-                }
-
-            return minimal
-
-        if path.startswith('hacking/'):
-            return minimal
-
-        if path.startswith('lib/ansible/executor/powershell/'):
-            units_path = 'test/units/executor/powershell/'
-
-            if units_path not in self.units_paths:
-                units_path = None
-
-            return {
-                'windows-integration': self.integration_all_target,
-                'units': units_path,
-            }
-
         if is_subdir(path, data_context().content.module_path):
             module_name = self.module_names_by_path.get(path)
 
@@ -632,6 +567,11 @@ class PathMapper:
                 'units': units_path,
             }
 
+        if is_subdir(path, data_context().content.plugin_paths['doc_fragments']):
+            return {
+                'sanity': 'all',
+            }
+
         if is_subdir(path, data_context().content.plugin_paths['inventory']):
             if name == '__init__':
                 return all_tests(self.args)  # broad impact, run all tests
@@ -689,9 +629,69 @@ class PathMapper:
                     'units': 'all',
                 }
 
-        if is_subdir(path, data_context().content.plugin_paths['doc_fragments']):
+        return None
+
+    def _classify_collection(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules specific to collections."""
+        result = self._classify_common(path)
+
+        if result:
+            return result
+
+        return None
+
+    def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules specific to Ansible."""
+        if path.startswith('test/units/compat/'):
             return {
-                'sanity': 'all',
+                'units': 'test/units/',
+            }
+
+        result = self._classify_common(path)
+
+        if result:
+            return result
+
+        dirname = os.path.dirname(path)
+        filename = os.path.basename(path)
+        name, ext = os.path.splitext(filename)
+
+        minimal = {}
+
+        if path.startswith('bin/'):
+            return all_tests(self.args)  # broad impact, run all tests
+
+        if path.startswith('changelogs/'):
+            return minimal
+
+        if path.startswith('contrib/'):
+            return {
+                'units': 'test/units/contrib/'
+            }
+
+        if path.startswith('docs/'):
+            return minimal
+
+        if path.startswith('examples/'):
+            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
+                return {
+                    'windows-integration': 'connection_winrm',
+                }
+
+            return minimal
+
+        if path.startswith('hacking/'):
+            return minimal
+
+        if path.startswith('lib/ansible/executor/powershell/'):
+            units_path = 'test/units/executor/powershell/'
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            return {
+                'windows-integration': self.integration_all_target,
+                'units': units_path,
             }
 
         if path.startswith('lib/ansible/'):
