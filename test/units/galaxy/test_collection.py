@@ -54,6 +54,7 @@ def collection_input(tmp_path_factory):
 
     return collection_dir, output_dir
 
+
 @pytest.fixture()
 def galaxy_api_version(monkeypatch):
     mock_avail_ver = MagicMock()
