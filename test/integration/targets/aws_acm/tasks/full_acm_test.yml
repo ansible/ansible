@@ -111,59 +111,75 @@
   - name: check output of prior task (fetch data about cert just uploaded, by ARN)
     assert:
       that:
-      - item.certificates | length == 1
-      - item.certificates[0].certificate_arn == item.item.certificate.arn
-      - item.certificates[0].domain_name == item.item.item.domain 
-      - (item.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) == (lookup( 'file', item.item.item.cert ) | replace( ' ', '' ) | replace( '\n', '' ))
-      - "'Name' in item.certificates[0].tags"
-      - item.certificates[0].tags['Name'] == item.item.item.name
+      - fetch_after_up_result.certificates | length == 1
+      - fetch_after_up_result.certificates[0].certificate_arn == upload_result.certificate.arn
+      - fetch_after_up_result.certificates[0].domain_name == original_cert.domain 
+      - (fetch_after_up_result.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', ''))
+        ==
+        (lookup( 'file', original_cert.cert ) | replace( ' ', '' ) | replace( '\n', '' ))
+      - "'Name' in fetch_after_up_result.certificates[0].tags"
+      - fetch_after_up_result.certificates[0].tags['Name'] == original_cert.name
     with_items: "{{ fetch_after_up.results }}"
-    # item = result of fetch_after_up
-    # item.item = result of upload
-    # item.item.item = value in local_certs
+    vars:
+      fetch_after_up_result: "{{ item }}" # corresponding result from task registered as fetch_after_up
+      upload_result: "{{ item.item }}" # corresponding result from task registered as upload
+      original_cert: "{{ item.item.item }}"
 
   - name: fetch data about cert just uploaded, by name
     aws_acm_info:
       tags:
-        Name: "{{ item.item.name }}"
+        Name: "{{ original_cert.name }}"
       <<: *aws_connection_info
     register: fetch_after_up_name
     with_items: "{{ upload.results }}"
-    
-  - name: print output of previous task
-    debug:
-      var: fetch_after_up
+    vars:
+      upload_result: "{{ item }}"
+      original_cert: "{{ item.item }}"
     
   - name: check fetched data of cert we just uploaded
     assert:
       that:
-      - fetch_after_up_name.certificates | length == 1
-      - fetch_after_up_name.certificates[0].certificate_arn == item.certificate.arn
-      - fetch_after_up_name.certificates[0].domain_name == item.item.domain 
-      - (fetch_after_up_name.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) 
+      - fetch_after_up_name_result.certificates | length == 1
+      - fetch_after_up_name_result.certificates[0].certificate_arn == upload_result.certificate.arn
+      - fetch_after_up_name_result.certificates[0].domain_name == original_cert.domain 
+      - (fetch_after_up_name_result.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) 
         ==
-        (lookup('file', item.item.cert ) | replace( ' ', '' ) | replace( '\n', '')) 
-      - "'Name' in fetch_after_up_name.certificates[0].tags"
-      - fetch_after_up_name.certificates[0].tags['Name'] == item.item.name
+        (lookup('file', original_cert.cert ) | replace( ' ', '' ) | replace( '\n', '')) 
+      - "'Name' in fetch_after_up_name_result.certificates[0].tags"
+      - fetch_after_up_name_result.certificates[0].tags['Name'] == original_cert.name
+    with_items: "{{ fetch_after_up_name.results }}"
+    vars:
+      fetch_after_up_name_result: "{{ item }}" # corresponding result from task registered as fetch_after_up_name
+      upload_result: "{{ item.item }}" # corresponding result from task registered as upload
+      original_cert: "{{ item.item.item }}"
+
 
   - name: fetch data about cert just uploaded, by domain name
     aws_acm_info:
-      domain_name: "{{ item.item.domain }}"
+      domain_name: "{{ original_cert.domain }}"
       <<: *aws_connection_info
     register: fetch_after_up_domain
     with_items: "{{ upload.results }}"
+    vars:
+      original_cert: "{{ item.item }}"
 
   - name: compare fetched data of cert just uploaded to upload task
     assert:
       that:
-      - fetch_after_up_domain.certificates | length == 1
-      - fetch_after_up_domain.certificates[0].certificate_arn == item.certificate.arn
-      - fetch_after_up_domain.certificates[0].domain_name == item.item.domain
-      - (fetch_after_up_domain.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) 
+      - fetch_after_up_domain_result.certificates | length == 1
+      - fetch_after_up_domain_result.certificates[0].certificate_arn == upload_result.certificate.arn
+      - fetch_after_up_domain_result.certificates[0].domain_name == original_cert.domain
+      - (fetch_after_up_domain_result.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) 
         ==
-        (lookup('file', item.item.cert ) | replace( ' ', '' ) | replace( '\n', ''))
-      - "'Name' in fetch_after_up_domain.certificates[0].tags"
-      - fetch_after_up_domain.certificates[0].tags['Name'] == item.item.name
+        (lookup('file', original_cert.cert ) | replace( ' ', '' ) | replace( '\n', ''))
+      - "'Name' in fetch_after_up_domain_result.certificates[0].tags"
+      - fetch_after_up_domain_result.certificates[0].tags['Name'] == original_cert.name
+    with_items: "{{ fetch_after_up_domain.results }}"
+    vars:
+      fetch_after_up_domain_result: "{{ item }}"
+      upload_result: "{{ item.item }}"
+      original_cert: "{{ item.item.item }}"
+    
     
   # now upload that certificate
   - name: upload certificates again, check not changed
