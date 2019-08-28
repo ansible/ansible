@@ -379,7 +379,7 @@ class PathMapper:
 
         minimal = {}
 
-        if path.startswith('.github/'):
+        if is_subdir(path, '.github'):
             return minimal
 
         if is_subdir(path, data_context().content.integration_targets_path):
