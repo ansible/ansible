@@ -228,7 +228,7 @@ def walk_integration_targets():
     """
     :rtype: collections.Iterable[IntegrationTarget]
     """
-    path = 'test/integration/targets'
+    path = data_context().content.integration_targets_path
     modules = frozenset(target.module for target in walk_module_targets())
     paths = data_context().content.get_dirs(path)
     prefixes = load_integration_prefixes()
@@ -241,7 +241,7 @@ def load_integration_prefixes():
     """
     :rtype: dict[str, str]
     """
-    path = 'test/integration'
+    path = data_context().content.integration_path
     file_paths = sorted(f for f in data_context().content.get_files(path) if os.path.splitext(os.path.basename(f))[0] == 'target-prefixes')
     prefixes = {}
 
@@ -306,7 +306,7 @@ def analyze_integration_target_dependencies(integration_targets):
     :type integration_targets: list[IntegrationTarget]
     :rtype: dict[str,set[str]]
     """
-    real_target_root = os.path.realpath('test/integration/targets') + '/'
+    real_target_root = os.path.realpath(data_context().content.integration_targets_path) + '/'
 
     role_targets = [target for target in integration_targets if target.type == 'role']
     hidden_role_target_names = set(target.name for target in role_targets if 'hidden/' in target.aliases)
@@ -595,10 +595,12 @@ class IntegrationTarget(CompletionTarget):
         if self.type not in ('script', 'role'):
             groups.append('hidden')
 
+        targets_relative_path = data_context().content.integration_targets_path
+
         # Collect file paths before group expansion to avoid including the directories.
         # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
         self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
-                                           g.startswith('needs/file/') and not g.startswith('needs/file/test/integration/targets/'))))
+                                           g.startswith('needs/file/') and not g.startswith('needs/file/%s/' % targets_relative_path))))
 
         for group in itertools.islice(groups, 0, len(groups)):
             if '/' in group:

@@ -44,6 +44,7 @@ class CollectionLayout(LayoutProvider):
                                  namespace=collection_namespace,
                                  root=collection_root,
                              ),
+                             integration_path='test/integration',
                              unit_path='test/unit',
                              unit_module_path='test/unit/plugins/modules',
                              unit_module_utils_path='test/unit/plugins/module_utils',

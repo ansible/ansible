@@ -4,15 +4,17 @@ __metaclass__ = type
 
 import atexit
 import contextlib
+import json
 import os
 import shutil
 import tempfile
 import textwrap
 
+from . import types as t
+
 from .util import (
     common_environment,
     COVERAGE_CONFIG_NAME,
-    COVERAGE_OUTPUT_NAME,
     display,
     find_python,
     is_shippable,
@@ -22,11 +24,53 @@ from .util import (
     raw_command,
     to_bytes,
     ANSIBLE_TEST_DATA_ROOT,
+    make_dirs,
 )
 
 from .data import (
     data_context,
 )
+
+
+class ResultType:
+    """Test result type."""
+    BOT = None  # type: ResultType
+    COVERAGE = None  # type: ResultType
+    DATA = None  # type: ResultType
+    JUNIT = None  # type: ResultType
+    LOGS = None  # type: ResultType
+    REPORTS = None  # type: ResultType
+    TMP = None   # type: ResultType
+
+    @staticmethod
+    def _populate():
+        ResultType.BOT = ResultType('bot')
+        ResultType.COVERAGE = ResultType('coverage')
+        ResultType.DATA = ResultType('data')
+        ResultType.JUNIT = ResultType('junit')
+        ResultType.LOGS = ResultType('logs')
+        ResultType.REPORTS = ResultType('reports')
+        ResultType.TMP = ResultType('.tmp')
+
+    def __init__(self, name):  # type: (str) -> None
+        self.name = name
+
+    @property
+    def relative_path(self):  # type: () -> str
+        """The content relative path to the results."""
+        return os.path.join(data_context().results_relative, self.name)
+
+    @property
+    def path(self):  # type: () -> str
+        """The absolute path to the results."""
+        return os.path.join(data_context().results, self.name)
+
+    def __str__(self):  # type: () -> str
+        return self.name
+
+
+# noinspection PyProtectedMember
+ResultType._populate()  # pylint: disable=protected-access
 
 
 class CommonConfig:
@@ -73,6 +117,33 @@ def named_temporary_file(args, prefix, suffix, directory, content):
             tempfile_fd.flush()
 
             yield tempfile_fd.name
+
+
+def write_json_test_results(category, name, content):  # type: (ResultType, str, t.Union[t.List[t.Any], t.Dict[str, t.Any]]) -> None
+    """Write the given json content to the specified test results path, creating directories as needed."""
+    path = os.path.join(category.path, name)
+    write_json_file(path, content, create_directories=True)
+
+
+def write_text_test_results(category, name, content):  # type: (ResultType, str, str) -> None
+    """Write the given text content to the specified test results path, creating directories as needed."""
+    path = os.path.join(category.path, name)
+    write_text_file(path, content, create_directories=True)
+
+
+def write_json_file(path, content, create_directories=False):  # type: (str, t.Union[t.List[t.Any], t.Dict[str, t.Any]], bool) -> None
+    """Write the given json content to the specified path, optionally creating missing directories."""
+    text_content = json.dumps(content, sort_keys=True, indent=4, ensure_ascii=False) + '\n'
+    write_text_file(path, text_content, create_directories=create_directories)
+
+
+def write_text_file(path, content, create_directories=False):  # type: (str, str, bool) -> None
+    """Write the given text content to the specified path, optionally creating missing directories."""
+    if create_directories:
+        make_dirs(os.path.dirname(path))
+
+    with open(to_bytes(path), 'wb') as file:
+        file.write(to_bytes(content))
 
 
 def get_python_path(args, interpreter):
@@ -126,8 +197,7 @@ def get_python_path(args, interpreter):
         execv(python, [python] + argv[1:])
         ''' % (interpreter, interpreter)).lstrip()
 
-        with open(injected_interpreter, 'w') as python_fd:
-            python_fd.write(code)
+        write_text_file(injected_interpreter, code)
 
         os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
@@ -173,7 +243,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
         raise Exception('No temp path and no coverage config base path. Check for missing coverage_context usage.')
 
     config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_NAME)
-    coverage_file = os.path.join(coverage_output_base_path, COVERAGE_OUTPUT_NAME, '%s=%s=%s=%s=coverage' % (
+    coverage_file = os.path.join(coverage_output_base_path, ResultType.COVERAGE.name, '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version))
 
     if not args.explain and not os.path.exists(config_file):
