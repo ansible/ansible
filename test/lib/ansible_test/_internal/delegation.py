@@ -300,7 +300,7 @@ def delegate_docker(args, exclude, require, integration_targets):
     else:
         content_root = install_root
 
-    remote_results_root = os.path.join(content_root, data_context().results_relative)
+    remote_results_root = os.path.join(content_root, data_context().content.results_path)
 
     cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
 
@@ -407,7 +407,7 @@ def delegate_docker(args, exclude, require, integration_targets):
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:
-                local_test_root = os.path.dirname(data_context().results)
+                local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
 
                 remote_test_root = os.path.dirname(remote_results_root)
                 remote_results_name = os.path.basename(remote_results_root)
@@ -530,9 +530,9 @@ def delegate_remote(args, exclude, require, integration_targets):
                     download = False
 
             if download and content_root:
-                local_test_root = os.path.dirname(data_context().results)
+                local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
 
-                remote_results_root = os.path.join(content_root, data_context().results_relative)
+                remote_results_root = os.path.join(content_root, data_context().content.results_path)
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_path = os.path.join('/tmp', remote_results_name)
 

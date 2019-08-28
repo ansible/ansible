@@ -72,8 +72,6 @@ class DataContext:
             content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
         self.content = content  # type: ContentLayout
-        self.results_relative = os.path.join('test', 'results')
-        self.results = os.path.join(self.content.root, self.results_relative)
 
     def create_collection_layouts(self):  # type: () -> t.List[ContentLayout]
         """
