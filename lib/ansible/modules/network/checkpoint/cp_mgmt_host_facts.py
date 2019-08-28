@@ -63,6 +63,17 @@ options:
       - Sorts results by the given field. By default the results are sorted in the ascending order by name.
         This parameter is relevant only for getting few objects.
     type: list
+    suboptions:
+      ASC:
+        description:
+          - Sorts results by the given field in ascending order.
+        type: str
+        choices: ['name']
+      DESC:
+        description:
+          - Sorts results by the given field in descending order.
+        type: str
+        choices: ['name']
   show_membership:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
@@ -99,7 +110,10 @@ def main():
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         limit=dict(type='int'),
         offset=dict(type='int'),
-        order=dict(type='list'),
+        order=dict(type='list', options=dict(
+            ASC=dict(type='str', choices=['name']),
+            DESC=dict(type='str', choices=['name'])
+        )),
         show_membership=dict(type='bool')
     )
     argument_spec.update(checkpoint_argument_spec_for_facts)

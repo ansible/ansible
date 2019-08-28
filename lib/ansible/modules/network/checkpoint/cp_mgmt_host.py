@@ -56,10 +56,70 @@ options:
     description:
       - Host interfaces.
     type: list
+    suboptions:
+      name:
+        description:
+          - Interface name.
+        type: str
+      subnet:
+        description:
+          - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
+        type: str
+      subnet4:
+        description:
+          - IPv4 network address.
+        type: str
+      subnet6:
+        description:
+          - IPv6 network address.
+        type: str
+      mask_length:
+        description:
+          - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields explicitly. Instead of IPv4 mask
+            length it is possible to specify IPv4 mask itself in subnet-mask field.
+        type: int
+      mask_length4:
+        description:
+          - IPv4 network mask length.
+        type: int
+      mask_length6:
+        description:
+          - IPv6 network mask length.
+        type: int
+      subnet_mask:
+        description:
+          - IPv4 network mask.
+        type: str
+      color:
+        description:
+          - Color of the object. Should be one of existing colors.
+        type: str
+        choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange',
+                 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
+                 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive',
+                 'orange', 'red', 'sienna', 'yellow']
+      comments:
+        description:
+          - Comments string.
+        type: str
+      details_level:
+        description:
+          - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+            representation of the object.
+        type: str
+        choices: ['uid', 'standard', 'full']
+      ignore_warnings:
+        description:
+          - Apply changes ignoring warnings.
+        type: bool
+      ignore_errors:
+        description:
+          - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
+        type: bool
   nat_settings:
     description:
       - NAT settings.
-    type: list
+    type: dict
     suboptions:
       auto_rule:
         description:
@@ -99,7 +159,7 @@ options:
   host_servers:
     description:
       - Servers Configuration.
-    type: list
+    type: dict
     suboptions:
       dns_server:
         description:
@@ -116,7 +176,7 @@ options:
       web_server_config:
         description:
           - Web Server configuration.
-        type: list
+        type: dict
         suboptions:
           additional_ports:
             description:
@@ -208,8 +268,26 @@ def main():
         ip_address=dict(type='str'),
         ipv4_address=dict(type='str'),
         ipv6_address=dict(type='str'),
-        interfaces=dict(type='list'),
-        nat_settings=dict(type='list', options=dict(
+        interfaces=dict(type='list', options=dict(
+            name=dict(type='str'),
+            subnet=dict(type='str'),
+            subnet4=dict(type='str'),
+            subnet6=dict(type='str'),
+            mask_length=dict(type='int'),
+            mask_length4=dict(type='int'),
+            mask_length6=dict(type='int'),
+            subnet_mask=dict(type='str'),
+            color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan',
+                                            'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
+                                            'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
+                                            'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
+                                            'sienna', 'yellow']),
+            comments=dict(type='str'),
+            details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+            ignore_warnings=dict(type='bool'),
+            ignore_errors=dict(type='bool')
+        )),
+        nat_settings=dict(type='dict', options=dict(
             auto_rule=dict(type='bool'),
             ip_address=dict(type='str'),
             ipv4_address=dict(type='str'),
@@ -219,11 +297,11 @@ def main():
             method=dict(type='str', choices=['hide', 'static'])
         )),
         tags=dict(type='list'),
-        host_servers=dict(type='list', options=dict(
+        host_servers=dict(type='dict', options=dict(
             dns_server=dict(type='bool'),
             mail_server=dict(type='bool'),
             web_server=dict(type='bool'),
-            web_server_config=dict(type='list', options=dict(
+            web_server_config=dict(type='dict', options=dict(
                 additional_ports=dict(type='list'),
                 application_engines=dict(type='list'),
                 listen_standard_port=dict(type='bool'),
