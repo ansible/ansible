@@ -7,6 +7,8 @@ import re
 import sys
 import tempfile
 
+from . import types as t
+
 from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
     HTTPTESTER_HOSTS,
@@ -46,6 +48,7 @@ from .util import (
     display,
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
+    tempdir,
 )
 
 from .util_common import (
@@ -79,6 +82,10 @@ from .data import (
 
 from .payload import (
     create_payload,
+)
+
+from .venv import (
+    create_virtual_environment,
 )
 
 
@@ -124,6 +131,10 @@ def delegate_command(args, exclude, require, integration_targets):
     :type integration_targets: tuple[IntegrationTarget]
     :rtype: bool
     """
+    if args.venv:
+        delegate_venv(args, exclude, require, integration_targets)
+        return True
+
     if args.tox:
         delegate_tox(args, exclude, require, integration_targets)
         return True
@@ -202,6 +213,53 @@ def delegate_tox(args, exclude, require, integration_targets):
         env.update(pass_vars(required=[], optional=optional))
 
         run_command(args, tox + cmd, env=env)
+
+
+def delegate_venv(args,  # type: EnvironmentConfig
+                  exclude,  # type: t.List[str]
+                  require,  # type: t.List[str]
+                  integration_targets,  # type: t.Tuple[IntegrationTarget, ...]
+                  ):  # type: (...) -> None
+    """Delegate ansible-test execution to a virtual environment using venv or virtualenv."""
+    if args.python:
+        versions = (args.python_version,)
+    else:
+        versions = SUPPORTED_PYTHON_VERSIONS
+
+    if args.httptester:
+        needs_httptester = sorted(target.name for target in integration_targets if 'needs/httptester/' in target.aliases)
+
+        if needs_httptester:
+            display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
+
+    venvs = dict((version, os.path.join(ResultType.TMP.path, 'delegation', 'python%s' % version)) for version in versions)
+    venvs = dict((version, path) for version, path in venvs.items() if create_virtual_environment(args, version, path))
+
+    if not venvs:
+        raise ApplicationError('No usable virtual environment support found.')
+
+    options = {
+        '--venv': 0,
+    }
+
+    with tempdir() as inject_path:
+        for version, path in venvs.items():
+            os.symlink(os.path.join(path, 'bin', 'python'), os.path.join(inject_path, 'python%s' % version))
+
+        python_interpreter = os.path.join(inject_path, 'python%s' % args.python_version)
+
+        cmd = generate_command(args, python_interpreter, ANSIBLE_BIN_PATH, data_context().content.root, options, exclude, require)
+
+        if isinstance(args, TestConfig):
+            if args.coverage and not args.coverage_label:
+                cmd += ['--coverage-label', 'venv']
+
+        env = common_environment()
+        env.update(
+            PATH=inject_path + os.pathsep + env['PATH'],
+        )
+
+        run_command(args, cmd, env=env)
 
 
 def delegate_docker(args, exclude, require, integration_targets):

@@ -44,6 +44,7 @@ class EnvironmentConfig(CommonConfig):
         super(EnvironmentConfig, self).__init__(args, command)
 
         self.local = args.local is True
+        self.venv = args.venv
 
         if args.tox is True or args.tox is False or args.tox is None:
             self.tox = args.tox is True
@@ -87,7 +88,7 @@ class EnvironmentConfig(CommonConfig):
         self.python_version = self.python or actual_major_minor
         self.python_interpreter = args.python_interpreter
 
-        self.delegate = self.tox or self.docker or self.remote
+        self.delegate = self.tox or self.docker or self.remote or self.venv
         self.delegate_args = []  # type: t.List[str]
 
         if self.delegate:

@@ -643,6 +643,10 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               action='store_true',
                               help='run from the local environment')
 
+    environments.add_argument('--venv',
+                              action='store_true',
+                              help='run from ansible-test managed virtual environments')
+
     if data_context().content.is_ansible:
         if tox_version:
             environments.add_argument('--tox',

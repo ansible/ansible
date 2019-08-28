@@ -11,6 +11,7 @@ from ..sanity import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SanitySkipped,
     SANITY_ROOT,
 )
 
@@ -22,10 +23,11 @@ from ..util import (
     SubprocessError,
     remove_tree,
     display,
-    find_python,
     parse_to_list_of_dict,
     is_subdir,
     ANSIBLE_LIB_ROOT,
+    generate_pip_command,
+    find_python,
 )
 
 from ..util_common import (
@@ -51,6 +53,10 @@ from ..coverage_util import (
     coverage_context,
 )
 
+from ..venv import (
+    create_virtual_environment,
+)
+
 from ..data import (
     data_context,
 )
@@ -70,6 +76,14 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
+        capture_pip = args.verbosity < 2
+
+        if python_version.startswith('2.') and args.requirements:
+            # hack to make sure that virtualenv is available under Python 2.x
+            # on Python 3.x we can use the built-in venv
+            pip = generate_pip_command(find_python(python_version))
+            run_command(args, generate_pip_install(pip, 'sanity.import', packages=['virtualenv']), capture=capture_pip)
+
         settings = self.load_processor(args, python_version)
 
         paths = [target.path for target in targets.include]
@@ -84,14 +98,9 @@ class ImportTest(SanityMultipleVersion):
 
         remove_tree(virtual_environment_path)
 
-        python = find_python(python_version)
-
-        cmd = [python, '-m', 'virtualenv', virtual_environment_path, '--python', python, '--no-setuptools', '--no-wheel']
-
-        if not args.coverage:
-            cmd.append('--no-pip')
-
-        run_command(args, cmd, capture=True)
+        if not create_virtual_environment(args, python_version, virtual_environment_path):
+            display.warning("Skipping sanity test '%s' on Python %s due to missing virtual environment support." % (self.name, python_version))
+            return SanitySkipped(self.name, python_version)
 
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
@@ -132,12 +141,16 @@ class ImportTest(SanityMultipleVersion):
             SANITY_MINIMAL_DIR=os.path.relpath(virtual_environment_path, data_context().content.root) + os.path.sep,
         )
 
+        virtualenv_python = os.path.join(virtual_environment_bin, 'python')
+        virtualenv_pip = generate_pip_command(virtualenv_python)
+
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
-            run_command(args, generate_pip_install(['pip'], 'sanity.import', packages=['setuptools']), env=env)
-            run_command(args, generate_pip_install(['pip'], 'sanity.import', packages=['coverage']), env=env)
-            run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env)
-            run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
+            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['setuptools']), env=env, capture=capture_pip)
+            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['coverage']), env=env, capture=capture_pip)
+
+        run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env, capture=capture_pip)
+        run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env, capture=capture_pip)
 
         cmd = ['importer.py']
 
@@ -146,8 +159,6 @@ class ImportTest(SanityMultipleVersion):
         display.info(data, verbosity=4)
 
         results = []
-
-        virtualenv_python = os.path.join(virtual_environment_bin, 'python')
 
         try:
             with coverage_context(args):
