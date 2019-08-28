@@ -41,10 +41,6 @@ options:
     description:
       - Object name. Should be unique in the domain.
     type: str
-  rule_number:
-    description:
-      - Rule number.
-    type: int
   layer:
     description:
       - Layer that the rule belongs to identified by the name or UID.
@@ -202,7 +198,6 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 def main():
     argument_spec = dict(
         name=dict(type='str'),
-        rule_number=dict(type='int'),
         layer=dict(type='str'),
         show_as_ranges=dict(type='bool'),
         show_hits=dict(type='bool'),
