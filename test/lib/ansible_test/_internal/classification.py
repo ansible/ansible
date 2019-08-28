@@ -276,7 +276,7 @@ class PathMapper:
             if ext == '.cs':
                 return self.get_csharp_module_utils_usage(path)
 
-        if path.startswith('test/integration/targets/'):
+        if is_subdir(path, data_context().content.integration_targets_path):
             return self.get_integration_target_usage(path)
 
         return []
@@ -338,7 +338,8 @@ class PathMapper:
         :rtype: list[str]
         """
         target_name = path.split('/')[3]
-        dependents = [os.path.join('test/integration/targets/%s/' % target) for target in sorted(self.integration_dependencies.get(target_name, set()))]
+        dependents = [os.path.join(data_context().content.integration_targets_path, target) + os.path.sep
+                      for target in sorted(self.integration_dependencies.get(target_name, set()))]
 
         return dependents
 
@@ -623,13 +624,7 @@ class PathMapper:
         if path.startswith('test/legacy/'):
             return minimal
 
-        if path.startswith('test/env/'):
-            return minimal
-
-        if path.startswith('test/integration/roles/'):
-            return minimal
-
-        if path.startswith('test/integration/targets/'):
+        if is_subdir(path, data_context().content.integration_targets_path):
             if not os.path.exists(path):
                 return minimal
 
@@ -649,25 +644,8 @@ class PathMapper:
                 FOCUSED_TARGET: True,
             }
 
-        if path.startswith('test/integration/'):
-            if dirname == 'test/integration':
-                if self.prefixes.get(name) == 'network' and ext == '.yaml':
-                    return minimal  # network integration test playbooks are not used by ansible-test
-
-                if filename == 'network-all.yaml':
-                    return minimal  # network integration test playbook not used by ansible-test
-
-                if filename == 'platform_agnostic.yaml':
-                    return minimal  # network integration test playbook not used by ansible-test
-
-                if filename.startswith('inventory.') and filename.endswith('.template'):
-                    return minimal  # ansible-test does not use these inventory templates
-
-                if filename == 'inventory':
-                    return {
-                        'integration': self.integration_all_target,
-                    }
-
+        if is_subdir(path, data_context().content.integration_path):
+            if dirname == data_context().content.integration_path:
                 for command in (
                         'integration',
                         'windows-integration',

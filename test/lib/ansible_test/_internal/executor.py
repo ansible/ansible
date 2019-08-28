@@ -130,9 +130,7 @@ from .integration import (
     integration_test_environment,
     integration_test_config_file,
     setup_common_temp_dir,
-    INTEGRATION_VARS_FILE_RELATIVE,
     get_inventory_relative_path,
-    INTEGRATION_DIR_RELATIVE,
     check_inventory,
     delegate_inventory,
 )
@@ -393,7 +391,7 @@ def command_network_integration(args):
     template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
     if args.inventory:
-        inventory_path = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE, args.inventory)
+        inventory_path = os.path.join(data_context().content.root, data_context().content.integration_path, args.inventory)
     else:
         inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 
@@ -574,7 +572,7 @@ def command_windows_integration(args):
     template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
     if args.inventory:
-        inventory_path = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE, args.inventory)
+        inventory_path = os.path.join(data_context().content.root, data_context().content.integration_path, args.inventory)
     else:
         inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 
@@ -879,7 +877,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
 
     cloud_init(args, internal_targets)
 
-    vars_file_src = os.path.join(data_context().content.root, INTEGRATION_VARS_FILE_RELATIVE)
+    vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
     if os.path.exists(vars_file_src):
         def integration_config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
@@ -892,7 +890,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
             else:
                 working_path = ''
 
-            files.append((vars_file_src, os.path.join(working_path, INTEGRATION_VARS_FILE_RELATIVE)))
+            files.append((vars_file_src, os.path.join(working_path, data_context().content.integration_vars_path)))
 
         data_context().register_payload_callback(integration_config_callback)
 

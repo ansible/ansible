@@ -30,8 +30,6 @@ from ..util import (
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
-    INTEGRATION_DIR_RELATIVE,
-    INTEGRATION_VARS_FILE_RELATIVE,
     to_bytes,
 )
 
@@ -153,7 +151,7 @@ def get_inventory_relative_path(args):  # type: (IntegrationConfig) -> str
         NetworkIntegrationConfig: 'inventory.networking',
     }  # type: t.Dict[t.Type[IntegrationConfig], str]
 
-    return os.path.join(INTEGRATION_DIR_RELATIVE, inventory_names[type(args)])
+    return os.path.join(data_context().content.integration_path, inventory_names[type(args)])
 
 
 def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, str) -> None
@@ -202,10 +200,10 @@ def integration_test_environment(args, target, inventory_path_src):
     if args.no_temp_workdir or 'no/temp_workdir/' in target.aliases:
         display.warning('Disabling the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
 
-        integration_dir = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE)
+        integration_dir = os.path.join(data_context().content.root, data_context().content.integration_path)
         inventory_path = inventory_path_src
         ansible_config = ansible_config_src
-        vars_file = os.path.join(data_context().content.root, INTEGRATION_VARS_FILE_RELATIVE)
+        vars_file = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
         yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
         return
@@ -237,11 +235,11 @@ def integration_test_environment(args, target, inventory_path_src):
 
         files_needed = get_files_needed(target_dependencies)
 
-        integration_dir = os.path.join(temp_dir, INTEGRATION_DIR_RELATIVE)
+        integration_dir = os.path.join(temp_dir, data_context().content.integration_path)
         ansible_config = os.path.join(temp_dir, ansible_config_relative)
 
-        vars_file_src = os.path.join(data_context().content.root, INTEGRATION_VARS_FILE_RELATIVE)
-        vars_file = os.path.join(temp_dir, INTEGRATION_VARS_FILE_RELATIVE)
+        vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
+        vars_file = os.path.join(temp_dir, data_context().content.integration_vars_path)
 
         file_copies = [
             (ansible_config_src, ansible_config),
@@ -253,8 +251,10 @@ def integration_test_environment(args, target, inventory_path_src):
 
         file_copies += [(path, os.path.join(temp_dir, path)) for path in files_needed]
 
+        integration_targets_relative_path = data_context().content.integration_targets_path
+
         directory_copies = [
-            (os.path.join(INTEGRATION_DIR_RELATIVE, 'targets', target.name), os.path.join(integration_dir, 'targets', target.name))
+            (os.path.join(integration_targets_relative_path, target.name), os.path.join(integration_targets_relative_path, target.name))
             for target in target_dependencies
         ]
 

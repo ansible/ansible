@@ -280,8 +280,6 @@ class CloudBase(ABC):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
-    TEST_DIR = 'test/integration'
-
     def __init__(self, args, config_extension='.ini'):
         """
         :type args: IntegrationConfig
@@ -291,7 +289,7 @@ class CloudProvider(CloudBase):
 
         self.remove_config = False
         self.config_static_name = 'cloud-config-%s%s' % (self.platform, config_extension)
-        self.config_static_path = os.path.join(self.TEST_DIR, self.config_static_name)
+        self.config_static_path = os.path.join(data_context().content.integration_path, self.config_static_name)
         self.config_template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, '%s.template' % self.config_static_name)
         self.config_extension = config_extension
 
@@ -352,8 +350,8 @@ class CloudProvider(CloudBase):
         """
         prefix = '%s-' % os.path.splitext(os.path.basename(self.config_static_path))[0]
 
-        with tempfile.NamedTemporaryFile(dir=self.TEST_DIR, prefix=prefix, suffix=self.config_extension, delete=False) as config_fd:
-            filename = os.path.join(self.TEST_DIR, os.path.basename(config_fd.name))
+        with tempfile.NamedTemporaryFile(dir=data_context().content.integration_path, prefix=prefix, suffix=self.config_extension, delete=False) as config_fd:
+            filename = os.path.join(data_context().content.integration_path, os.path.basename(config_fd.name))
 
             self.config_path = filename
             self.remove_config = True
