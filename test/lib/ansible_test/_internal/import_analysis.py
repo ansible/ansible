@@ -10,6 +10,7 @@ from . import types as t
 from .util import (
     display,
     ApplicationError,
+    is_subdir,
 )
 
 from .data import (
@@ -245,7 +246,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
 
             name = '.'.join(name.split('.')[:-1])
 
-        if self.path.startswith('test/'):
+        if is_subdir(self.path, data_context().content.test_path):
             return  # invalid imports in tests are ignored
 
         # Treat this error as a warning so tests can be executed as best as possible.
