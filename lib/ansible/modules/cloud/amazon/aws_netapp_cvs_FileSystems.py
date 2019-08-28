@@ -29,10 +29,11 @@ description:
 
 options:
   state:
-     description:
-     - Whether the specified fileSystem should exist or not.
-     required: true
-     choices: ['present', 'absent']
+    description:
+    - Whether the specified fileSystem should exist or not.
+    required: true
+    choices: ['present', 'absent']
+    type: str
 
   region:
     description:
@@ -56,21 +57,24 @@ options:
     description:
     - Service Level of a filesystem.
     choices: ['standard', 'premium', 'extreme']
+    type: str
 
   exportPolicy:
     description:
     - The policy rules to export the filesystem
+    type: dict
     suboptions:
         rules:
             description:
             - Set of rules to export the filesystem
             - Requires allowedClients, access and protocol
+            type: list
             suboptions:
                 allowedClients:
                   description:
-                  - List of ip address of the clients to access the fileSystem
+                  - Comma separated list of ip address blocks of the clients to access the fileSystem
                   - Each address block contains the starting IP address and size for the block
-                  type: list
+                  type: str
 
                 cifs:
                   description:
@@ -153,6 +157,9 @@ EXAMPLES = """
      secret_key : U1FwdHdKSGRQQUhIdkIwMktMU1ZCV2x6WUowZWRD
 """
 
+RETURN = """
+"""
+
 import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netapp_module import NetAppModule
@@ -190,8 +197,8 @@ class AwsCvsNetappFileSystem(object):
                             nfsv3=dict(required=False, type='bool'),
                             nfsv4=dict(required=False, type='bool'),
                             ruleIndex=dict(required=False, type='int'),
-                            unixReadOnly=dict(required=False, type='int'),
-                            unixReadWrite=dict(required=False, type='int')
+                            unixReadOnly=dict(required=False, type='bool'),
+                            unixReadWrite=dict(required=False, type='bool')
                         )
                     )
                 )
@@ -240,97 +247,91 @@ class AwsCvsNetappFileSystem(object):
             return filesystemInfo
         return None
 
+    def is_job_done(self, response):
+        # check jobId is present and equal to 'done'
+        # return True on success, False otherwise
+        try:
+            job_id = response['jobs'][0]['jobId']
+        except TypeError:
+            job_id = None
+
+        if job_id is not None and self.restApi.get_state(job_id) == 'done':
+            return True
+        return False
+
     def create_fileSystem(self):
         # Create fileSystem
         api = 'FileSystems'
         response, error = self.restApi.post(api, self.data)
-        if error:
-            self.module.fail_json(msg=error)
-        else:
-            if response['jobs'][0]['jobId'] is not None:
-                jobId = response['jobs'][0]['jobId']
-                if self.restApi.get_state(jobId) is 'done':
-                    return response
+        if not error:
+            if self.is_job_done(response):
+                return
+            error = "Error: unexpected response on FileSystems create: %s" % str(response)
+        self.module.fail_json(msg=error)
 
     def delete_fileSystem(self, fileSystemId):
         # Delete FileSystem
         api = 'FileSystems/' + fileSystemId
         self.data = None
         response, error = self.restApi.delete(api, self.data)
-        if error:
-            self.module.fail_json(msg=error)
-        else:
-            if response['jobs'][0]['jobId'] is not None:
-                jobId = response['jobs'][0]['jobId']
-                if self.restApi.get_state(jobId) is 'done':
-                    return response
+        if not error:
+            if self.is_job_done(response):
+                return
+            error = "Error: unexpected response on FileSystems delete: %s" % str(response)
+        self.module.fail_json(msg=error)
 
     def update_fileSystem(self, fileSystemId):
         # Update FileSystem
         api = 'FileSystems/' + fileSystemId
         response, error = self.restApi.put(api, self.data)
-        if error:
-            self.module.fail_json(msg=error)
-        else:
-            if response['jobs'][0]['jobId'] is not None:
-                jobId = response['jobs'][0]['jobId']
-                if self.restApi.get_state(jobId) is 'done':
-                    return response
+        if not error:
+            if self.is_job_done(response):
+                return
+            error = "Error: unexpected response on FileSystems update: %s" % str(response)
+        self.module.fail_json(msg=error)
 
     def apply(self):
         """
         Perform pre-checks, call functions and exit
         """
 
-        changed = False
-        update_fileSystem = False
         fileSystem = None
-
         fileSystemId = self.get_filesystemId()
 
-        cd_action = self.na_helper.get_cd_action(fileSystem, self.parameters)
         if fileSystemId:
             # Getting the FileSystem details
             fileSystem = self.get_filesystem(fileSystemId)
-        if fileSystem:
-            if self.parameters['state'] == 'absent':
-                changed = True
-            elif self.parameters['state'] == 'present':
-                # Check if we need to update the fileSystem
-                if fileSystem['quotaInBytes'] is not None and 'quotaInBytes' in self.parameters \
-                        and fileSystem['quotaInBytes'] != self.parameters['quotaInBytes']:
-                    update_fileSystem = True
-                    changed = True
-                elif fileSystem['creationToken'] is not None and 'creationToken' in self.parameters \
-                        and fileSystem['creationToken'] != self.parameters['creationToken']:
-                    update_fileSystem = True
-                    changed = True
-                elif fileSystem['serviceLevel'] is not None and 'serviceLevel' in self.parameters \
-                        and fileSystem['serviceLevel'] != self.parameters['serviceLevel']:
-                    update_fileSystem = True
-                    changed = True
-                elif fileSystem['exportPolicy']['rules'] is not None and 'exportPolicy' in self.parameters:
-                    for rule_org in fileSystem['exportPolicy']['rules']:
-                        for rule in self.parameters['exportPolicy']['rules']:
-                            if rule_org['allowedClients'] != rule['allowedClients']:
-                                update_fileSystem = True
-                                changed = True
-                            elif rule_org['unixReadOnly'] != rule['unixReadOnly']:
-                                update_fileSystem = True
-                                changed = True
-                            elif rule_org['unixReadWrite'] != rule['unixReadWrite']:
-                                update_fileSystem = True
-                                changed = True
 
-                else:
-                    pass
-        else:
-            if self.parameters['state'] == 'present':
-                changed = True
+        cd_action = self.na_helper.get_cd_action(fileSystem, self.parameters)
+
+        if cd_action is None and self.parameters['state'] == 'present':
+            # Check if we need to update the fileSystem
+            update_fileSystem = False
+            if fileSystem['quotaInBytes'] is not None and 'quotaInBytes' in self.parameters \
+                    and fileSystem['quotaInBytes'] != self.parameters['quotaInBytes']:
+                update_fileSystem = True
+            elif fileSystem['creationToken'] is not None and 'creationToken' in self.parameters \
+                    and fileSystem['creationToken'] != self.parameters['creationToken']:
+                update_fileSystem = True
+            elif fileSystem['serviceLevel'] is not None and 'serviceLevel' in self.parameters \
+                    and fileSystem['serviceLevel'] != self.parameters['serviceLevel']:
+                update_fileSystem = True
+            elif fileSystem['exportPolicy']['rules'] is not None and 'exportPolicy' in self.parameters:
+                for rule_org in fileSystem['exportPolicy']['rules']:
+                    for rule in self.parameters['exportPolicy']['rules']:
+                        if rule_org['allowedClients'] != rule['allowedClients']:
+                            update_fileSystem = True
+                        elif rule_org['unixReadOnly'] != rule['unixReadOnly']:
+                            update_fileSystem = True
+                        elif rule_org['unixReadWrite'] != rule['unixReadWrite']:
+                            update_fileSystem = True
+
+            if update_fileSystem:
+                self.na_helper.changed = True
 
         result_message = ""
 
-        if changed:
+        if self.na_helper.changed:
             if self.module.check_mode:
                 # Skip changes
                 result_message = "Check mode, skipping changes"
@@ -341,10 +342,10 @@ class AwsCvsNetappFileSystem(object):
                 elif cd_action == "delete":
                     self.delete_fileSystem(fileSystemId)
                     result_message = "FileSystem Deleted"
-                elif update_fileSystem:
+                else:   # modify
                     self.update_fileSystem(fileSystemId)
                     result_message = "FileSystem Updated"
-        self.module.exit_json(changed=changed, msg=result_message)
+        self.module.exit_json(changed=self.na_helper.changed, msg=result_message)
 
 
 def main():

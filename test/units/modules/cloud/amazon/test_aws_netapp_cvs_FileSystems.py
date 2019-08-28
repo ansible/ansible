@@ -3,10 +3,11 @@
 
 ''' unit tests ONTAP Ansible module: aws_netapp_cvs_FileSystems'''
 
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 import pytest
-
 
 from units.compat import unittest
 from units.compat.mock import patch, Mock
