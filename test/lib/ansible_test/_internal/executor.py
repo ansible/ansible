@@ -676,9 +676,9 @@ def command_windows_integration(args):
             pre_target = forward_ssh_ports
             post_target = cleanup_ssh_ports
 
-    def run_playbook(playbook, playbook_vars):
+    def run_playbook(playbook, run_playbook_vars):  # type: (str, t.Dict[str, t.Any]) -> None
         playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
-        command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(playbook_vars)]
+        command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(run_playbook_vars)]
         if args.verbosity:
             command.append('-%s' % ('v' * args.verbosity))
 

@@ -797,8 +797,8 @@ def get_available_port():
 
 def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
     """Returns the set of types that are concrete subclasses of the given type."""
-    subclasses = set()
-    queue = [class_type]
+    subclasses = set()  # type: t.Set[t.Type[C]]
+    queue = [class_type]  # type: t.List[t.Type[C]]
 
     while queue:
         parent = queue.pop()
