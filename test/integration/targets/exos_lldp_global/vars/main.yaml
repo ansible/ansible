@@ -1,0 +1,85 @@
+---
+merged:
+  before:
+    interval: 30
+    tlv_select:
+      system_name: true
+      system_description: true
+      system_capabilities: false
+      port_description: false
+      management_address: false
+
+  requests:
+    # 'suppress-tlv-advertisement' list is sorted to compare test
+    - data: '{"openconfig-lldp:config": {"suppress-tlv-advertisement": ["MANAGEMENT_ADDRESS", "PORT_DESCRIPTION", "SYSTEM_CAPABILITIES", "SYSTEM_DESCRIPTION"], "hello-timer": 10}}'
+      method: PUT
+      path: /rest/restconf/data/openconfig-lldp:lldp/config
+
+  after:
+    interval: 10
+    tlv_select:
+      system_name: true
+      system_description: false
+      system_capabilities: false
+      port_description: false
+      management_address: false
+
+populate:
+  interval: 50
+  tlv_select:
+    system_name: true
+    system_description: true
+    system_capabilities: true
+    port_description: false
+    management_address: false
+
+replaced:
+  requests:
+    # 'suppress-tlv-advertisement' list is sorted to compare test
+    - data: '{"openconfig-lldp:config": {"suppress-tlv-advertisement": ["MANAGEMENT_ADDRESS", "PORT_DESCRIPTION", "SYSTEM_CAPABILITIES", "SYSTEM_NAME"], "hello-timer": 20}}'
+      method: PUT
+      path: /rest/restconf/data/openconfig-lldp:lldp/config
+
+  after:
+    interval: 20
+    tlv_select:
+      system_name: false
+      system_description: true
+      system_capabilities: false
+      port_description: false
+      management_address: false
+
+deleted:
+  before:
+    interval: 50
+    tlv_select:
+      system_name: true
+      system_description: true
+      system_capabilities: true
+      port_description: false
+      management_address: false
+
+  requests:
+    # 'suppress-tlv-advertisement' list is sorted to compare test
+    - data: '{"openconfig-lldp:config": {"suppress-tlv-advertisement": ["MANAGEMENT_ADDRESS", "PORT_DESCRIPTION", "SYSTEM_CAPABILITIES"], "hello-timer": 30}}'
+      method: PUT
+      path: /rest/restconf/data/openconfig-lldp:lldp/config
+
+
+  after:
+    interval: 30
+    tlv_select:
+      system_name: true
+      system_description: true
+      system_capabilities: false
+      port_description: false
+      management_address: false
+
+round_trip:
+  interval: 30
+  tlv_select:
+    system_name: true
+    system_description: true
+    system_capabilities: false
+    port_description: false
+    management_address: false
