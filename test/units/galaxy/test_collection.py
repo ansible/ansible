@@ -1004,7 +1004,7 @@ def test_get_available_api_versions_v3_auth_required_without_auth(galaxy_server,
     error_response = {'code': 'unauthorized', 'detail': 'The request was not authorized'}
     artifact_path, mock_open = collection_artifact
 
-    return_content = StringIO(json.dumps(error_response))
+    return_content = StringIO(to_text(json.dumps(error_response)))
     mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 401, 'msg', {'WWW-Authenticate': 'Bearer'}, return_content)
     with pytest.raises(AnsibleError):
         collection.get_available_api_versions(galaxy_server)
