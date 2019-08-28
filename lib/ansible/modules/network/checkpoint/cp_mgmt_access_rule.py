@@ -337,7 +337,7 @@ def main():
         ignore_warnings=dict(type='bool'),
         ignore_errors=dict(type='bool')
     )
-    argument_spec['vpn']['directional']['from'] = dict(type='str')
+    argument_spec['vpn']['options']['directional']['options']['from'] = dict(type='str')
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
