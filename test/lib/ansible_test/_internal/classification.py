@@ -379,6 +379,75 @@ class PathMapper:
 
         minimal = {}
 
+        if path.startswith('.github/'):
+            return minimal
+
+        if is_subdir(path, data_context().content.integration_targets_path):
+            if not os.path.exists(path):
+                return minimal
+
+            target = self.integration_targets_by_name.get(path.split('/')[3])
+
+            if not target:
+                display.warning('Unexpected non-target found: %s' % path)
+                return minimal
+
+            if 'hidden/' in target.aliases:
+                return minimal  # already expanded using get_dependent_paths
+
+            return {
+                'integration': target.name if 'posix/' in target.aliases else None,
+                'windows-integration': target.name if 'windows/' in target.aliases else None,
+                'network-integration': target.name if 'network/' in target.aliases else None,
+                FOCUSED_TARGET: True,
+            }
+
+        if is_subdir(path, data_context().content.integration_path):
+            if dirname == data_context().content.integration_path:
+                for command in (
+                        'integration',
+                        'windows-integration',
+                        'network-integration',
+                ):
+                    if name == command and ext == '.cfg':
+                        return {
+                            command: self.integration_all_target,
+                        }
+
+            return {
+                'integration': self.integration_all_target,
+                'windows-integration': self.integration_all_target,
+                'network-integration': self.integration_all_target,
+            }
+
+        if is_subdir(path, data_context().content.sanity_path):
+            return {
+                'sanity': 'all',  # test infrastructure, run all sanity checks
+            }
+
+        if is_subdir(path, data_context().content.unit_path):
+            if path in self.units_paths:
+                return {
+                    'units': path,
+                }
+
+            if path.startswith('test/units/compat/'):
+                return {
+                    'units': 'test/units/',
+                }
+
+            # changes to files which are not unit tests should trigger tests from the nearest parent directory
+
+            test_path = os.path.dirname(path)
+
+            while test_path:
+                if test_path + '/' in self.units_paths:
+                    return {
+                        'units': test_path + '/',
+                    }
+
+                test_path = os.path.dirname(test_path)
+
         return None
 
     def _classify_collection(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
@@ -408,9 +477,6 @@ class PathMapper:
         name, ext = os.path.splitext(filename)
 
         minimal = {}
-
-        if path.startswith('.github/'):
-            return minimal
 
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests
@@ -661,72 +727,6 @@ class PathMapper:
 
         if path.startswith('test/legacy/'):
             return minimal
-
-        if is_subdir(path, data_context().content.integration_targets_path):
-            if not os.path.exists(path):
-                return minimal
-
-            target = self.integration_targets_by_name.get(path.split('/')[3])
-
-            if not target:
-                display.warning('Unexpected non-target found: %s' % path)
-                return minimal
-
-            if 'hidden/' in target.aliases:
-                return minimal  # already expanded using get_dependent_paths
-
-            return {
-                'integration': target.name if 'posix/' in target.aliases else None,
-                'windows-integration': target.name if 'windows/' in target.aliases else None,
-                'network-integration': target.name if 'network/' in target.aliases else None,
-                FOCUSED_TARGET: True,
-            }
-
-        if is_subdir(path, data_context().content.integration_path):
-            if dirname == data_context().content.integration_path:
-                for command in (
-                        'integration',
-                        'windows-integration',
-                        'network-integration',
-                ):
-                    if name == command and ext == '.cfg':
-                        return {
-                            command: self.integration_all_target,
-                        }
-
-            return {
-                'integration': self.integration_all_target,
-                'windows-integration': self.integration_all_target,
-                'network-integration': self.integration_all_target,
-            }
-
-        if is_subdir(path, data_context().content.sanity_path):
-            return {
-                'sanity': 'all',  # test infrastructure, run all sanity checks
-            }
-
-        if is_subdir(path, data_context().content.unit_path):
-            if path in self.units_paths:
-                return {
-                    'units': path,
-                }
-
-            if path.startswith('test/units/compat/'):
-                return {
-                    'units': 'test/units/',
-                }
-
-            # changes to files which are not unit tests should trigger tests from the nearest parent directory
-
-            test_path = os.path.dirname(path)
-
-            while test_path:
-                if test_path + '/' in self.units_paths:
-                    return {
-                        'units': test_path + '/',
-                    }
-
-                test_path = os.path.dirname(test_path)
 
         if path.startswith('test/lib/ansible_test/config/'):
             if name.startswith('cloud-config-'):
