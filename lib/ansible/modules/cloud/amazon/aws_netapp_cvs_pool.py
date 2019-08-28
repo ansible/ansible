@@ -62,9 +62,10 @@ options:
         - can be used with pool create, update operations
         - must be unique
         type: str
-    new_name:
+    from_name:
         description:
         - rename the existing pool name ( The human readable name of the Pool )
+        - I(from_name) is the existing name, and I(name) the new name
         - can be used with update operation
         type: str
 '''
@@ -94,8 +95,8 @@ EXAMPLES = """
 - name: Update a Pool
   aws_netapp_cvs_pool:
     state: present
-    name: TestPoolBB12
-    new_name: Mynewpool7
+    from_name: TestPoolBB12
+    name: Mynewpool7
     vendorID: ansibleVendorMynewpool15
     serviceLevel: extreme
     sizeInBytes: 4000000000000
@@ -127,7 +128,7 @@ class NetAppAWSCVS(object):
             state=dict(required=True, choices=['present', 'absent']),
             region=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            new_name=dict(required=False, type='str'),
+            from_name=dict(required=False, type='str'),
             serviceLevel=dict(required=False, choices=['basic', 'standard', 'extreme'], type='str'),
             sizeInBytes=dict(required=False, type='int'),
             vendorID=dict(required=False, type='str'),
@@ -142,36 +143,25 @@ class NetAppAWSCVS(object):
         self.restApi = AwsCvsRestAPI(self.module)
         self.sizeInBytes_min_value = 4000000000000
 
-    def get_aws_netapp_cvs_pool(self):
+    def get_aws_netapp_cvs_pool(self, name=None):
         """
         Returns Pool object if exists else Return None
         """
         pool_info = None
-        new_name_exists = False
-        is_new_name_check_needed = False
 
-        if 'new_name' in self.parameters.keys():
-            is_new_name_check_needed = True
+        if name is None:
+            name = self.parameters['name']
 
         pools, error = self.restApi.get('Pools')
 
         if error is None and pools is not None:
             for pool in pools:
                 if 'name' in pool and pool['region'] == self.parameters['region']:
-                    if pool['name'] == self.parameters['name']:
+                    if pool['name'] == name:
                         pool_info = pool
-
-                    if is_new_name_check_needed is True:
-                        if self.parameters['new_name'] == pool['name']:
-                            new_name_exists = True
-                    else:
-                        if pool_info is not None:
-                            break
-
-                    if pool_info is not None and new_name_exists is True:
                         break
 
-        return pool_info, new_name_exists
+        return pool_info
 
     def create_aws_netapp_cvs_pool(self):
         """
@@ -190,8 +180,6 @@ class NetAppAWSCVS(object):
             "sizeInBytes": self.parameters['sizeInBytes'],
             "vendorID": self.parameters['vendorID']
         }
-        if 'new_name' in self.parameters.keys():
-            self.module.exit_json(changed=False)
 
         response, error = self.restApi.post(api, pool)
         if error is not None:
@@ -231,24 +219,25 @@ class NetAppAWSCVS(object):
         Perform pre-checks, call functions and exit
         """
         update_required = False
-        new_name_exists = False
+        cd_action = None
 
         if 'sizeInBytes' in self.parameters.keys() and self.parameters['sizeInBytes'] < self.sizeInBytes_min_value:
             self.module.fail_json(changed=False, msg="sizeInBytes should be greater than  or equal to %d" % (self.sizeInBytes_min_value))
 
-        current, new_name_exists = self.get_aws_netapp_cvs_pool()
-        cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        current = self.get_aws_netapp_cvs_pool()
+        if self.parameters.get('from_name'):
+            existing = self.get_aws_netapp_cvs_pool(self.parameters['from_name'])
+            rename = self.na_helper.is_rename_action(existing, current)
+            if rename is None:
+                self.module.fail_json(changed=False, msg="unable to rename pool: '%s' does not exist" % self.parameters['from_name'])
+            if rename:
+                current = existing
+        else:
+            cd_action = self.na_helper.get_cd_action(current, self.parameters)
 
-        if current and self.parameters['state'] != 'absent':
+        if cd_action is None and self.parameters['state'] == 'present':
             keys_to_check = ['name', 'vendorID', 'sizeInBytes', 'serviceLevel']
             update_pool_info, update_required = self.na_helper.compare_and_update_values(current, self.parameters, keys_to_check)
-
-            if 'new_name' in self.parameters.keys():
-                if new_name_exists is True:
-                    self.module.fail_json(changed=False, msg="unable to rename pool '%s': already exists" % (self.parameters['new_name']))
-                else:
-                    update_pool_info['name'] = self.parameters['new_name']
-                    update_required = True
 
             if update_required is True:
                 self.na_helper.changed = True
@@ -272,7 +261,6 @@ def main():
     '''Main Function'''
     aws_cvs_netapp_pool = NetAppAWSCVS()
     aws_cvs_netapp_pool.apply()
-
 
 if __name__ == '__main__':
     main()

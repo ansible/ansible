@@ -58,13 +58,13 @@ class TestMyModule(unittest.TestCase):
 
     def set_default_args_fail_check(self):
         return dict({
-            'name': 'TestPoolAA',
-            'new_name': 'TestPoolAA_new',
+            'from_name': 'TestPoolAA',
+            'name': 'TestPoolAA_new',
             'serviceLevel': 'standard',
             'sizeInBytes': 4000000000000,
             'vendorID': 'ansiblePoolTestVendorA',
             'region': 'us-east-1',
-            'api_url': 'hostname.com:8080',
+            'api_url': 'hostname.invalid',
             'api_key': 'myapikey',
             'secret_key': 'mysecretkey'
         })
@@ -72,13 +72,13 @@ class TestMyModule(unittest.TestCase):
     def set_default_args_pass_check(self):
         return dict({
             'state': 'present',
-            'name': 'TestPoolAA',
-            'new_name': 'TestPoolAA_new',
+            'from_name': 'TestPoolAA',
+            'name': 'TestPoolAA_new',
             'serviceLevel': 'standard',
             'sizeInBytes': 4000000000000,
             'vendorID': 'ansiblePoolTestVendorA',
             'region': 'us-east-1',
-            'api_url': 'hostname.com',
+            'api_url': 'hostname.invalid',
             'api_key': 'myapikey',
             'secret_key': 'mysecretkey'
         })
@@ -91,7 +91,7 @@ class TestMyModule(unittest.TestCase):
             'sizeInBytes': 4000000000000,
             'vendorID': 'ansiblePoolTestVendorA',
             'region': 'us-east-1',
-            'api_url': 'hostname.com',
+            'api_url': 'hostname.invalid',
             'api_key': 'myapikey',
             'secret_key': 'mysecretkey'
         })
@@ -99,13 +99,13 @@ class TestMyModule(unittest.TestCase):
     def set_args_update_aws_netapp_cvs_pool(self):
         return dict({
             'state': 'present',
-            'name': 'TestPoolAA',
-            'new_name': 'TestPoolAA_new',
+            'from_name': 'TestPoolAA',
+            'name': 'TestPoolAA_new',
             'serviceLevel': 'standard',
             'sizeInBytes': 4000000000000,
             'vendorID': 'ansiblePoolTestVendorA',
             'region': 'us-east-1',
-            'api_url': 'hostname.com',
+            'api_url': 'hostname.invalid',
             'api_key': 'myapikey',
             'secret_key': 'mysecretkey'
         })
@@ -115,7 +115,7 @@ class TestMyModule(unittest.TestCase):
             'state': 'absent',
             'name': 'TestPoolAA',
             'region': 'us-east-1',
-            'api_url': 'hostname.com',
+            'api_url': 'hostname.invalid',
             'api_key': 'myapikey',
             'secret_key': 'mysecretkey'
         })
@@ -150,7 +150,7 @@ class TestMyModule(unittest.TestCase):
             "state": "available",
             "vendorID": "Dummy"
         }
-        get_aws_api.return_value = my_pool, False
+        get_aws_api.return_value = my_pool
         get_put_api.return_value = my_pool, None
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
@@ -172,7 +172,7 @@ class TestMyModule(unittest.TestCase):
             "vendorID": "Dummy"
         }
         get_put_api.return_value = my_pool, "Error"
-        get_aws_api.return_value = my_pool, False
+        get_aws_api.return_value = my_pool
         with pytest.raises(AnsibleFailJson) as exc:
             my_obj.apply()
         print('Info: test_update_aws_netapp_cvs_pool_fail: %s' % repr(exc.value))
@@ -192,7 +192,7 @@ class TestMyModule(unittest.TestCase):
             "state": "available",
             "vendorID": "Dummy"
         }
-        get_aws_api.return_value = None, False
+        get_aws_api.return_value = None
         get_post_api.return_value = None, None
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
@@ -214,7 +214,7 @@ class TestMyModule(unittest.TestCase):
             "vendorID": "Dummy"
         }
         get_post_api.return_value = my_pool, "Error"
-        get_aws_api.return_value = None, False
+        get_aws_api.return_value = None
         with pytest.raises(AnsibleFailJson) as exc:
             my_obj.apply()
         print('Info: test_create_aws_netapp_cvs_pool_fail: %s' % repr(exc.value))
@@ -234,7 +234,7 @@ class TestMyModule(unittest.TestCase):
             "state": "available",
             "vendorID": "Dummy"
         }
-        get_aws_api.return_value = my_pool, False
+        get_aws_api.return_value = my_pool
         get_delete_api.return_value = None, None
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
@@ -256,7 +256,7 @@ class TestMyModule(unittest.TestCase):
             "vendorID": "Dummy"
         }
         get_delete_api.return_value = my_pool, "Error"
-        get_aws_api.return_value = my_pool, False
+        get_aws_api.return_value = my_pool
         with pytest.raises(AnsibleFailJson) as exc:
             my_obj.apply()
         print('Info: test_delete_aws_netapp_cvs_pool_fail: %s' % repr(exc.value))
