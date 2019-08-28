@@ -46,6 +46,7 @@ class UnversionedSource(SourceProvider):
             'test': (
                 'results',
                 'cache',
+                'output',
             ),
             'docs/docsite': (
                 '_build',
