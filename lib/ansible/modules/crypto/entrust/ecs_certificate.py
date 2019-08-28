@@ -44,7 +44,7 @@ options:
         default: false
     path:
         description:
-            - Path to put the certificate file as a PEM encoded cert
+            - Path to put the certificate file as a PEM encoded cert.
             - If the certificate at this location is not an Entrust issued certificate, a new certificate will always be requested regardless of validity.
             - If there is already an Entrust certificate at this location, whether it is replaced is dependent upon the I(remaining_days) calculation.
             - If an existing certificate is being replaced (see I(remaining_days), I(force), I(tracking_id)), the operation taken to replace it is dependent
@@ -72,7 +72,7 @@ options:
             - I(tracking_id) is invalid if C(request_type=new) or C(request_type=validate_only).
             - If there is a certificate present in I(path) and it is an ECS certificate, I(tracking_id) will be ignored.
             - If there is not a certificate present in I(path) or there is but it is from another provider, the certificate represented by I(tracking_id) will
-              be renewed or reissued and saved to I(path)
+              be renewed or reissued and saved to I(path).
             - If there is not a certificate present in I(path) and the I(force) and I(remaining_days) parameters do not indicate a new certificate is needed,
               the certificate referenced by I(tracking_id) certificate will be saved to I(path).
             - This can be used when a known certificate is not currently present on a server, but you want to renew or reissue it to be managed by an ansible
@@ -137,7 +137,7 @@ options:
             - In compliance with browser requirements, this certificate may be posted to the Certificate Transparency (CT) logs. This is a best practice
               technique that helps domain owners monitor certificates issued to their domains. Note that not all certificates are eligible for CT logging.
             - If I(ct_log) is not specified, the certificate uses the account default.
-            - If I(ct_log) is specified and the account settings allow it,    I(ct_log) overrides the account default.
+            - If I(ct_log) is specified and the account settings allow it, I(ct_log) overrides the account default.
             - If I(ct_log) is set to C(false), but the account settings are set to "always log", the certificate generation will fail.
         type: bool
     client_id:
@@ -175,7 +175,7 @@ options:
             - Applicable only to I(cert_type) of values C(CODE_SIGNING) and C(EV_CODE_SIGNING).
         type: bool
     tracking_info:
-        description: Free form tracking information to attach to the record for the certificate
+        description: Free form tracking information to attach to the record for the certificate.
         type: str
     requester_name:
         description: Requester name to associate with certificate tracking information.
@@ -190,7 +190,7 @@ options:
         type: str
         required: true
     additional_emails:
-        description: A list of additional email addresses to receive the delivery notice and expiry notification for the certificate
+        description: A list of additional email addresses to receive the delivery notice and expiry notification for the certificate.
         type: list
     custom_fields:
         description:
@@ -341,8 +341,9 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Request a new certificate from Entrust with bare minimum parameters. Will request a new certificate if current one is valid but within 30 days of
-        expiry. If replacing an existing file in path, will back it up.
+- name: Request a new certificate from Entrust with bare minimum parameters.
+        Will request a new certificate if current one is valid but within 30
+        days of expiry. If replacing an existing file in path, will back it up.
   ecs_certificate:
     backup: true
     path: /etc/ssl/crt/ansible.com.crt
@@ -357,8 +358,10 @@ EXAMPLES = r'''
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
-- name: If there is no certificate present in path, request a new certificate of type EV_SSL. Otherwise, if there is an Entrust managed certificate in path and
-        it is within 63 days of expiration, request a renew of that certificate.
+- name: If there is no certificate present in path, request a new certificate
+        of type EV_SSL. Otherwise, if there is an Entrust managed certificate
+        in path and it is within 63 days of expiration, request a renew of that
+        certificate.
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
@@ -374,8 +377,11 @@ EXAMPLES = r'''
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
-- name: If there is no certificate present in path, download certificate specified by tracking_id if it is still valid. Otherwise, if the certificate is within
-        79 days of expiration, request a renew of that certificate and save it in path. This can be used to "migrate" a certificate to be Ansible managed.
+- name: If there is no certificate present in path, download certificate
+        specified by tracking_id if it is still valid. Otherwise, if the
+        certificate is within 79 days of expiration, request a renew of that
+        certificate and save it in path. This can be used to "migrate" a
+        certificate to be Ansible managed.
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
@@ -398,8 +404,10 @@ EXAMPLES = r'''
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
-- name: Request a new certificate with an alternative client. Note that the issued certificate will have it's Subject Distinguished Name use the organization
-        details associated with that client, rather than what is in the CSR.
+- name: Request a new certificate with an alternative client. Note that the
+        issued certificate will have it's Subject Distinguished Name use the
+        organization details associated with that client, rather than what is
+        in the CSR.
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     csr: /etc/ssl/csr/ansible.com.csr
@@ -412,7 +420,8 @@ EXAMPLES = r'''
     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
 
-- name: Request a new certificate with a number of CSR parameters overridden and tracking information
+- name: Request a new certificate with a number of CSR parameters overridden
+        and tracking information
   ecs_certificate:
     path: /etc/ssl/crt/ansible.com.crt
     full_chain_path: /etc/ssl/crt/ansible.com.chain.crt
