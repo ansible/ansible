@@ -12,8 +12,6 @@ export ANSIBLE_HOST_PATTERN_MISMATCH=error
 ipath=../../$(basename "${INVENTORY_PATH}")
 export INVENTORY_PATH="$ipath"
 
-ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml
-
 # test callback
 ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
 
