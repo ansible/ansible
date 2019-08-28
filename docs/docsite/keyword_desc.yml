@@ -68,6 +68,7 @@ serial: |
 strategy: Allows you to choose the connection plugin to use for the play.
 tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
 tasks: Main list of tasks to execute in the play, they run after :term:`roles` and before :term:`post_tasks`.
+throttle: Limit number of concurrent task runs on task, block and playbook level. This is independent of the forks and serial settings, but cannot be set higher than those limits. For example, if forks is set to 10 and the throttle is set to 15, at most 10 hosts will be operated on in parallel.
 until: "This keyword implies a ':term:`retries` loop' that will go on until the condition supplied here is met or we hit the :term:`retries` limit."
 vars: Dictionary/map of variables
 vars_files: List of files that contain vars to include in the play.
