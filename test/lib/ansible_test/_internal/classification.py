@@ -662,12 +662,12 @@ class PathMapper:
                 'network-integration': self.integration_all_target,
             }
 
-        if path.startswith('test/sanity/'):
+        if is_subdir(path, data_context().content.sanity_path):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
             }
 
-        if path.startswith('test/units/'):
+        if is_subdir(path, data_context().content.unit_path):
             if path in self.units_paths:
                 return {
                     'units': path,
