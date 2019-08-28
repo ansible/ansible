@@ -7,8 +7,6 @@ import os
 import re
 import time
 
-from . import types as t
-
 from xml.etree.ElementTree import (
     Comment,
     Element,
@@ -19,6 +17,8 @@ from xml.etree.ElementTree import (
 from xml.dom import (
     minidom,
 )
+
+from . import types as t
 
 from .target import (
     walk_module_targets,
