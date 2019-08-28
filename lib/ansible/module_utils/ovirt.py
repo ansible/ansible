@@ -391,10 +391,10 @@ def __get_auth_dict():
     return auth
 
 
-def ovirt_facts_full_argument_spec(**kwargs):
+def ovirt_info_full_argument_spec(**kwargs):
     """
-    Extend parameters of facts module with parameters which are common to all
-    oVirt facts modules.
+    Extend parameters of info module with parameters which are common to all
+    oVirt info modules.
 
     :param kwargs: kwargs to be extended
     :return: extended dictionary with common parameters
@@ -406,6 +406,17 @@ def ovirt_facts_full_argument_spec(**kwargs):
     )
     spec.update(kwargs)
     return spec
+
+
+# Left for third-party module compatibility
+def ovirt_facts_full_argument_spec(**kwargs):
+    """
+    This is deprecated. Please use ovirt_info_full_argument_spec instead!
+
+    :param kwargs: kwargs to be extended
+    :return: extended dictionary with common parameters
+    """
+    return ovirt_info_full_argument_spec(**kwargs)
 
 
 def ovirt_full_argument_spec(**kwargs):
