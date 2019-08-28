@@ -475,13 +475,13 @@ class PathMapper:
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests
 
+        if path.startswith('changelogs/'):
+            return minimal
+
         if path.startswith('contrib/'):
             return {
                 'units': 'test/units/contrib/'
             }
-
-        if path.startswith('changelogs/'):
-            return minimal
 
         if path.startswith('docs/'):
             return minimal
