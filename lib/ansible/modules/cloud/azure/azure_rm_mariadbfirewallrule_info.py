@@ -27,13 +27,16 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
             - The name of the server firewall rule.
+        type: str
 
 extends_documentation_fragment:
     - azure

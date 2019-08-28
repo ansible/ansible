@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabartifact_facts
+module: azure_rm_devtestlabartifact_info
 version_added: "2.9"
 short_description: Get Azure DevTest Lab Artifact facts
 description:
@@ -26,17 +26,21 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of the lab.
         required: True
+        type: str
     artifact_source_name:
         description:
             - The name of the artifact source.
         required: True
+        type: str
     name:
         description:
             - The name of the artifact.
+        type: str
 
 extends_documentation_fragment:
     - azure
@@ -48,7 +52,7 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of DevTest Lab Artifact
-    azure_rm_devtestlabartifact_facts:
+    azure_rm_devtestlabartifact_info:
       resource_group: myResourceGroup
       lab_name: myLab
       artifact_source_name: myArtifactSource

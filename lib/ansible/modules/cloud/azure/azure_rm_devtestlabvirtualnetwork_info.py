@@ -26,13 +26,16 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of DevTest Lab.
         required: True
+        type: str
     name:
         description:
             - The name of DevTest Lab Virtual Network.
+        type: str
 
 extends_documentation_fragment:
     - azure

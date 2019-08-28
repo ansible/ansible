@@ -27,13 +27,16 @@ options:
         description:
             - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
             - Setting name.
+        type: str
 
 extends_documentation_fragment:
     - azure

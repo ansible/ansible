@@ -26,13 +26,16 @@ options:
         description:
             - The name of the resource group that contains the resource.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
             - Setting name.
+        type: str
 
 extends_documentation_fragment:
     - azure

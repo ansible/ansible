@@ -26,17 +26,21 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of the lab.
         required: True
+        type: str
     artifact_source_name:
         description:
             - The name of the artifact source.
         required: True
+        type: str
     name:
         description:
             - The name of the ARM template.
+        type: str
 
 extends_documentation_fragment:
     - azure
