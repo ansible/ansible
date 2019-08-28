@@ -67,7 +67,7 @@ options:
   nat_settings:
     description:
       - NAT settings.
-    type: list
+    type: dict
     suboptions:
       auto_rule:
         description:
@@ -179,7 +179,7 @@ def main():
         ip_address_last=dict(type='str'),
         ipv4_address_last=dict(type='str'),
         ipv6_address_last=dict(type='str'),
-        nat_settings=dict(type='list', options=dict(
+        nat_settings=dict(type='dict', options=dict(
             auto_rule=dict(type='bool'),
             ip_address=dict(type='str'),
             ipv4_address=dict(type='str'),
