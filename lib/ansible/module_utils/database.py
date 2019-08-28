@@ -38,7 +38,16 @@ class UnclosedQuoteError(SQLParseError):
 # maps a type of identifier to the maximum number of dot levels that are
 # allowed to specify that identifier.  For example, a database column can be
 # specified by up to 4 levels: database.schema.table.column
-_PG_IDENTIFIER_TO_DOT_LEVEL = dict(database=1, schema=2, table=3, column=4, role=1, tablespace=1, sequence=3)
+_PG_IDENTIFIER_TO_DOT_LEVEL = dict(
+    database=1,
+    schema=2,
+    table=3,
+    column=4,
+    role=1,
+    tablespace=1,
+    sequence=3,
+    publication=1,
+)
 _MYSQL_IDENTIFIER_TO_DOT_LEVEL = dict(database=1, table=2, column=3, role=1, vars=1)
 
 

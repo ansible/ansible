@@ -10,6 +10,10 @@
   - ansible_os_family == 'Debian'
   - postgres_version_resp.stdout is version('9.4', '>=')
 
+# Test postgresql_publication
+- import_tasks: postgresql_publication.yml
+  when: postgres_version_resp.stdout is version('10', '>=')
+
 - include_tasks: '{{ loop_item }}'
   loop:
   # Test postgresql_set
