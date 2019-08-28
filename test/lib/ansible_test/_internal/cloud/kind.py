@@ -1,4 +1,4 @@
-"""OpenShift plugin for integration tests."""
+"""Kind plugin for integration tests."""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -35,18 +35,18 @@ from ..docker_util import (
 )
 
 
-class OpenShiftCloudProvider(CloudProvider):
-    """OpenShift cloud provider plugin. Sets up cloud resources before delegation."""
-    DOCKER_CONTAINER_NAME = 'openshift-origin'
+class KindCloudProvider(CloudProvider):
+    """Kind cloud provider plugin. Sets up cloud resources before delegation."""
+    DOCKER_CONTAINER_NAME = 'kind'
 
     def __init__(self, args):
         """
         :type args: TestConfig
         """
-        super(OpenShiftCloudProvider, self).__init__(args, config_extension='.kubeconfig')
+        super(KindCloudProvider, self).__init__(args, config_extension='.kubeconfig')
 
         # The image must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'openshift/origin:v3.9.0'
+        self.image = 'bsycorp/kind:latest-1.14'
         self.container_name = ''
 
     def filter(self, targets, exclude):
@@ -72,7 +72,7 @@ class OpenShiftCloudProvider(CloudProvider):
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(OpenShiftCloudProvider, self).setup()
+        super(KindCloudProvider, self).setup()
 
         if self._use_static_config():
             self._setup_static()
@@ -102,10 +102,10 @@ class OpenShiftCloudProvider(CloudProvider):
         if self.container_name:
             docker_rm(self.args, self.container_name)
 
-        super(OpenShiftCloudProvider, self).cleanup()
+        super(KindCloudProvider, self).cleanup()
 
     def _setup_static(self):
-        """Configure OpenShift tests for use with static configuration."""
+        """Configure Kind tests for use with static configuration."""
         with open(self.config_static_path, 'r') as config_fd:
             config = config_fd.read()
 
@@ -115,10 +115,10 @@ class OpenShiftCloudProvider(CloudProvider):
             endpoint = match.group('server')
             self._wait_for_service(endpoint)
         else:
-            display.warning('Could not find OpenShift endpoint in kubeconfig. Skipping check for OpenShift service availability.')
+            display.warning('Could not find Kind endpoint in kubeconfig. Skipping check for Kind service availability.')
 
     def _setup_dynamic(self):
-        """Create a OpenShift container using docker."""
+        """Create a Kind container using docker."""
         self.container_name = self.DOCKER_CONTAINER_NAME
 
         results = docker_inspect(self.args, self.container_name)
@@ -128,19 +128,19 @@ class OpenShiftCloudProvider(CloudProvider):
             results = []
 
         if results:
-            display.info('Using the existing OpenShift docker container.', verbosity=1)
+            display.info('Using the existing Kind docker container.', verbosity=1)
         else:
-            display.info('Starting a new OpenShift docker container.', verbosity=1)
+            display.info('Starting a new Kind docker container.', verbosity=1)
             docker_pull(self.args, self.image)
-            cmd = ['start', 'master', '--listen', 'https://0.0.0.0:8443']
-            docker_run(self.args, self.image, ['-d', '-p', '8443:8443', '--name', self.container_name], cmd)
+            cmd = []
+            docker_run(self.args, self.image, ['--privileged', '-d', '-p', '8443:8443', '--name', self.container_name], cmd)
 
         container_id = get_docker_container_id()
 
         if container_id:
             display.info('Running in docker container: %s' % container_id, verbosity=1)
             host = self._get_container_address()
-            display.info('Found OpenShift container address: %s' % host, verbosity=1)
+            display.info('Found Kind container address: %s' % host, verbosity=1)
         else:
             host = 'localhost'
 
@@ -174,7 +174,7 @@ class OpenShiftCloudProvider(CloudProvider):
             raise
 
     def _wait_for_service(self, endpoint):
-        """Wait for the OpenShift service endpoint to accept connections.
+        """Wait for the Kind service endpoint to accept connections.
         :type endpoint: str
         """
         if self.args.explain:
@@ -183,7 +183,7 @@ class OpenShiftCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True, insecure=True)
 
         for dummy in range(1, 30):
-            display.info('Waiting for OpenShift service: %s' % endpoint, verbosity=1)
+            display.info('Waiting for Kind service: %s' % endpoint, verbosity=1)
 
             try:
                 client.get(endpoint)
@@ -193,14 +193,14 @@ class OpenShiftCloudProvider(CloudProvider):
 
             time.sleep(10)
 
-        raise ApplicationError('Timeout waiting for OpenShift service.')
+        raise ApplicationError('Timeout waiting for Kind service.')
 
     def _get_config(self, server):
-        """Get OpenShift config from container.
+        """Get Kind config from container.
         :type server: str
         :rtype: dict[str, str]
         """
-        cmd = ['cat', '/var/lib/origin/openshift.local.config/master/admin.kubeconfig']
+        cmd = ['cat', '/root/.kube/config']
 
         stdout, dummy = docker_exec(self.args, self.container_name, cmd, capture=True)
 
@@ -211,8 +211,8 @@ class OpenShiftCloudProvider(CloudProvider):
         return config
 
 
-class OpenShiftCloudEnvironment(CloudEnvironment):
-    """OpenShift cloud environment plugin. Updates integration test environment after delegation."""
+class KindCloudEnvironment(CloudEnvironment):
+    """Kind cloud environment plugin. Updates integration test environment after delegation."""
     def get_environment_config(self):
         """
         :rtype: CloudEnvironmentConfig
