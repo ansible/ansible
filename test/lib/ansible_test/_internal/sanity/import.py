@@ -27,6 +27,7 @@ from ..util import (
     is_subdir,
     ANSIBLE_LIB_ROOT,
     generate_pip_command,
+    find_python,
 )
 
 from ..util_common import (
@@ -75,6 +76,12 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
+        if python_version.startswith('2.'):
+            # hack to make sure that virtualenv is available under Python 2.x
+            # on Python 3.x we can use the built-in venv
+            pip = generate_pip_command(find_python(python_version))
+            run_command(args, generate_pip_install(pip, 'sanity.import', packages=['virtualenv']))
+
         settings = self.load_processor(args, python_version)
 
         paths = [target.path for target in targets.include]
