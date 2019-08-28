@@ -91,7 +91,7 @@ options:
     required: true
 
 requirements:
-  - "vdirect-client >= 4.1.1"
+  - "vdirect-client >= 4.9.0-post4"
 '''
 
 EXAMPLES = '''
