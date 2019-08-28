@@ -508,7 +508,7 @@ class PathMapper:
                 'units': units_path,
             }
 
-        if path.startswith('lib/ansible/modules/'):
+        if is_subdir(path, data_context().content.module_path):
             module_name = self.module_names_by_path.get(path)
 
             if module_name:
@@ -522,7 +522,7 @@ class PathMapper:
 
             return minimal
 
-        if path.startswith('lib/ansible/module_utils/'):
+        if is_subdir(path, data_context().content.module_utils_path):
             if ext == '.cs':
                 return minimal  # already expanded using get_dependent_paths
 
@@ -532,7 +532,7 @@ class PathMapper:
             if ext == '.py':
                 return minimal  # already expanded using get_dependent_paths
 
-        if path.startswith('lib/ansible/plugins/action/'):
+        if is_subdir(path, data_context().content.plugin_paths['action']):
             if ext == '.py':
                 if name.startswith('net_'):
                     network_target = 'network/.*_%s' % name[4:]
@@ -572,7 +572,7 @@ class PathMapper:
                         'units': 'all',
                     }
 
-        if path.startswith('lib/ansible/plugins/connection/'):
+        if is_subdir(path, data_context().content.plugin_paths['connection']):
             if name == '__init__':
                 return {
                     'integration': self.integration_all_target,
@@ -632,7 +632,7 @@ class PathMapper:
                 'units': units_path,
             }
 
-        if path.startswith('lib/ansible/plugins/inventory/'):
+        if is_subdir(path, data_context().content.plugin_paths['inventory']):
             if name == '__init__':
                 return all_tests(self.args)  # broad impact, run all tests
 
@@ -665,9 +665,9 @@ class PathMapper:
                 FOCUSED_TARGET: target is not None,
             }
 
-        if (path.startswith('lib/ansible/plugins/terminal/') or
-                path.startswith('lib/ansible/plugins/cliconf/') or
-                path.startswith('lib/ansible/plugins/netconf/')):
+        if (is_subdir(path, data_context().content.plugin_paths['terminal']) or
+                is_subdir(path, data_context().content.plugin_paths['cliconf']) or
+                is_subdir(path, data_context().content.plugin_paths['netconf'])):
             if ext == '.py':
                 if name in self.prefixes and self.prefixes[name] == 'network':
                     network_target = 'network/%s/' % name
@@ -689,7 +689,7 @@ class PathMapper:
                     'units': 'all',
                 }
 
-        if path.startswith('lib/ansible/plugins/doc_fragments/'):
+        if is_subdir(path, data_context().content.plugin_paths['doc_fragments']):
             return {
                 'sanity': 'all',
             }
