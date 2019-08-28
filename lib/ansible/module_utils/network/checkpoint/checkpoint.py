@@ -442,7 +442,8 @@ def install_policy(connection, policy_package, targets):
                'targets': targets}
 
     connection.send_request('/web_api/install-policy', payload)
-	
+
+
 # handle api call for gaia_api
 def api_call_gaia(module, api_call_object):
     payload = get_payload_from_parameters(module)

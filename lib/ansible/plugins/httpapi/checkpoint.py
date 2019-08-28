@@ -41,7 +41,7 @@ class HttpApi(HttpApiBase):
 
         try:
             self.connection._auth = {'X-chkp-sid': response_data['sid']}
-            if CONTEXT == "web_api"
+            if CONTEXT == "web_api":
                 self.connection._session_uid = response_data['uid']
         except KeyError:
             raise ConnectionError(
