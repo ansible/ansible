@@ -1,0 +1,42 @@
+---
+- debug: msg="START cli/diff_against_startup.yaml on connection={{ ansible_connection }}"
+
+- name: Make a configuration and save it to startup
+  exos_config:
+    lines:
+      - "create vlan 100"
+
+- name: Save the configuration to startup
+  exos_config:
+    save_when: modified
+
+- name: Make a configuration change without saving into running config
+  exos_config: 
+    lines:
+      - "create vlan 200"
+  
+- name: check the startup-config against the running-config
+  exos_config:
+    diff_against: startup
+    diff_ignore_lines:
+      - ntp clock .*
+  diff: yes
+  register: result
+- assert:
+    that:
+      - "result.diff.before is defined"
+      - "result.diff.after is defined"
+      - "result.diff.before is search('configure vlan VLAN_0100 tag 100')"
+      - "result.diff.after is search('configure vlan VLAN_0200 tag 200')"
+
+- name: Restore and save original config
+  exos_config:
+    lines:
+      - "delete vlan 100"
+      - "delete vlan 200"
+
+- name: Save the configuration to startup
+  exos_config:
+    save_when: modified
+
+- debug: msg="END cli/diff_against_startup.yaml on connection={{ ansible_connection }}"
