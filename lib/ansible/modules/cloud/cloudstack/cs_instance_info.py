@@ -54,7 +54,7 @@ EXAMPLES = '''
 
 - name: Show the returned results of the registered variable
   debug:
-    var: vm
+    msg: "{{ vm }}"
 
 # When the module is called as cs_instance_facts, return values are also
 # published in ansible_facts['cloudstack_instance'] and can be used as
@@ -67,7 +67,7 @@ EXAMPLES = '''
 
 - name: Show the facts by the ansible_facts key cloudstack_instance
   debug:
-    var: cloudstack_instance
+    msg: "{{ cloudstack_instance }}"
 '''
 
 RETURN = '''

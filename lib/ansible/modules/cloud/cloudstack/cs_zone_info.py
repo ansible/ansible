@@ -40,7 +40,7 @@ EXAMPLES = '''
 
 - name: Show the returned results of the registered variable
   debug:
-    var: zone
+    msg: "{{ zone }}"
 
 # When the module is called as cs_zone_facts, return values are also
 # published in ansible_facts['cloudstack_zone'] and can be used as
@@ -53,7 +53,7 @@ EXAMPLES = '''
 
 - name: Show the facts by the ansible_facts key cloudstack_zone
   debug:
-    var: cloudstack_zone
+    msg: "{{ cloudstack_zone }}"
 '''
 
 RETURN = '''
