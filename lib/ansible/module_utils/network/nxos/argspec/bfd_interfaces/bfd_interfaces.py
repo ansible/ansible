@@ -40,11 +40,11 @@ class Bfd_interfacesArgs(object):  # pylint: disable=R0903
         'config': {
             'elements': 'dict',
             'options': {
-                'name': { 'type': 'str' },
+                'name': {'type': 'str'},
                 'bfd': {
-                    'choices': ['enable', 'disable'], 'type': 'str' },
+                    'choices': ['enable', 'disable'], 'type': 'str'},
                 'bfd_echo': {
-                    'choices': ['enable', 'disable'], 'type': 'str' },
+                    'choices': ['enable', 'disable'], 'type': 'str'},
             },
             'type': 'list'
         },
