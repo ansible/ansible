@@ -3636,7 +3636,6 @@ lib/ansible/modules/network/exos/exos_command.py validate-modules:E337
 lib/ansible/modules/network/exos/exos_command.py validate-modules:E338
 lib/ansible/modules/network/exos/exos_config.py validate-modules:E337
 lib/ansible/modules/network/exos/exos_config.py validate-modules:E338
-lib/ansible/modules/network/exos/exos_facts.py validate-modules:E337
 lib/ansible/modules/network/f5/_bigip_asm_policy.py validate-modules:E337
 lib/ansible/modules/network/f5/_bigip_asm_policy.py validate-modules:E338
 lib/ansible/modules/network/f5/_bigip_facts.py validate-modules:E337
