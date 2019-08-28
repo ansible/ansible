@@ -32,6 +32,7 @@ options:
          - Whether the specified ActiveDirectory should exist or not.
      choices: ['present', 'absent']
      required: true
+     type: str
 
   region:
     description:
@@ -129,7 +130,7 @@ class AwsCvsNetappActiveDir(object):
         """
         self.argument_spec = netapp_utils.aws_cvs_host_argument_spec()
         self.argument_spec.update(dict(
-            state=dict(required=True, choices=['present', 'absent']),
+            state=dict(required=True, choices=['present', 'absent'], type='str'),
             region=dict(required=True, type='str'),
             DNS=dict(required=False, type='str'),
             domain=dict(required=False, type='str'),
