@@ -139,6 +139,7 @@ class ConnectionProcess(object):
                         display.display("jsonrpc request: %s" % data, log_only=True)
 
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
+
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
