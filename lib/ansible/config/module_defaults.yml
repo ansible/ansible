@@ -622,15 +622,15 @@ groupings:
   - azure
   azure_rm_aks:
   - azure
-  azure_rm_aks_info:
+  azure_rm_aks_facts:
   - azure
   azure_rm_appserviceplan:
   - azure
-  azure_rm_appserviceplan_info:
+  azure_rm_appserviceplan_facts:
   - azure
   azure_rm_availabilityset:
   - azure
-  azure_rm_availabilityset_info:
+  azure_rm_availabilityset_facts:
   - azure
   azure_rm_containerinstance:
   - azure
