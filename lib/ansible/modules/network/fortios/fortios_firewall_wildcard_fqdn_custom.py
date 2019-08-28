@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             color:
                 description:
                     - GUI icon color.
@@ -251,7 +264,12 @@ def underscore_to_hyphen(data):
 
 def firewall_wildcard_fqdn_custom(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_wildcard_fqdn_custom'] and data['firewall_wildcard_fqdn_custom']:
+        state = data['firewall_wildcard_fqdn_custom']['state']
+    else:
+        state = True
     firewall_wildcard_fqdn_custom_data = data['firewall_wildcard_fqdn_custom']
     filtered_data = underscore_to_hyphen(filter_firewall_wildcard_fqdn_custom_data(firewall_wildcard_fqdn_custom_data))
 
@@ -291,11 +309,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "firewall_wildcard_fqdn_custom": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "color": {"required": False, "type": "int"},
                 "comment": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
