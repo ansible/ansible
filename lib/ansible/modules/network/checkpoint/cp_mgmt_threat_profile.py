@@ -303,7 +303,6 @@ EXAMPLES = """
       exclude_protection_with_performance_impact_mode: high or lower
       newly_updated_protections: active
     name: New Profile 1
-    new_name: New Profile 2
     state: present
     threat_emulation: true
 
