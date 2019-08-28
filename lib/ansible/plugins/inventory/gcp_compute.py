@@ -116,11 +116,12 @@ projects:
   - gcp-prod-gke-100
   - gcp-cicd-101
 # In most cases, you can use a dictionary for filters.
+# This will look for all machines that are BOTH n1-standard-1 and have automatic restarts.
 filters:
     machineType: n1-standard-1
     scheduling.automaticRestart: true
 
-# If you prefer using boolean statements (or need to use < or >, use an array)
+# If you prefer using boolean statements (or need to use !=, < or >, use an array)
 filters:
   - machineType = n1-standard-1
   - scheduling.automaticRestart = true AND machineType = n1-standard-1

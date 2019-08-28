@@ -574,7 +574,6 @@ Noteworthy module changes
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: no``. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` and ``selfsigned`` providers create subject key identifiers if not explicitly disabled with ``ownca_create_subject_key_identifier: never_create`` resp. ``selfsigned_create_subject_key_identifier: never_create``. If a subject key identifier is provided by the CSR, it is taken; if not, it is created from the public key. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
 
-
 Plugins
 =======
 
@@ -582,6 +581,11 @@ Removed Lookup Plugins
 ----------------------
 
 * ``redis_kv`` use :ref:`redis <redis_lookup>` instead.
+
+Noteworthy plugin changes
+------------------------
+
+* :ref: `gcp_compute <gcp_compute>` now accepts a dictionary of filters or a list of boolean expressions.
 
 
 Porting custom scripts
