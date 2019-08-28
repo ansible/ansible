@@ -254,7 +254,7 @@ def integration_test_environment(args, target, inventory_path_src):
         integration_targets_relative_path = data_context().content.integration_targets_path
 
         directory_copies = [
-            (os.path.join(integration_targets_relative_path, target.name), os.path.join(integration_targets_relative_path, target.name))
+            (os.path.join(integration_targets_relative_path, target.name), os.path.join(temp_dir, integration_targets_relative_path, target.name))
             for target in target_dependencies
         ]
 
