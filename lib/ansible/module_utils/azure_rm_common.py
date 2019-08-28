@@ -1193,6 +1193,7 @@ class AzureSASAuthentication(Authentication):
         session = super(AzureSASAuthentication, self).signed_session()
         session.headers['Authorization'] = self.token
         return session
+
     def eventhub_client(self):
         self.log('Getting eventhub client')
         if not self._eventhub_client:
