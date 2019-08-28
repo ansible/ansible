@@ -78,7 +78,7 @@ class ImportTest(SanityMultipleVersion):
         """
         capture_pip = args.verbosity < 2
 
-        if python_version.startswith('2.'):
+        if python_version.startswith('2.') and args.requirements:
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
             pip = generate_pip_command(find_python(python_version))
