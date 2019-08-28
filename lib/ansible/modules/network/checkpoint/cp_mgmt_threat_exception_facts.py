@@ -156,14 +156,14 @@ extends_documentation_fragment: checkpoint_facts
 EXAMPLES = """
 - name: show-threat-exception
   cp_mgmt_threat_exception_facts:
-    exception_number: 1
+    name: Exception Rule
     layer: New Layer 1
-    rule_number: 1
+    rule_name: Threat Rule 1
 
 - name: show-threat-rule-exception-rulebase
   cp_mgmt_threat_exception_facts:
     name: Standard Threat Prevention
-    rule_number: 1
+    rule_name: Threat Rule 1
 """
 
 RETURN = """

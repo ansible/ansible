@@ -140,7 +140,7 @@ EXAMPLES = """
     name: Exception Rule
     position: 1
     protected_scope: All_Internet
-    rule_number: 1
+    rule_name: Threat Rule 1
     state: present
     track: Log
 
@@ -148,14 +148,14 @@ EXAMPLES = """
   cp_mgmt_threat_exception:
     layer: New Layer 1
     name: Exception Rule
-    rule_number: 1
+    rule_name: Threat Rule 1
     state: present
 
 - name: delete-threat-exception
   cp_mgmt_threat_exception:
-    exception_number: 1
+    name: Exception Rule
     layer: New Layer 1
-    rule_number: 1
+    rule_name: Threat Rule 1
     state: absent
 """
 
