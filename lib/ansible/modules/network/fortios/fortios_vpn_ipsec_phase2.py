@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             add_route:
                 description:
                     - Enable/disable automatic route addition.
@@ -517,7 +530,12 @@ def underscore_to_hyphen(data):
 
 def vpn_ipsec_phase2(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['vpn_ipsec_phase2'] and data['vpn_ipsec_phase2']:
+        state = data['vpn_ipsec_phase2']['state']
+    else:
+        state = True
     vpn_ipsec_phase2_data = data['vpn_ipsec_phase2']
     filtered_data = underscore_to_hyphen(filter_vpn_ipsec_phase2_data(vpn_ipsec_phase2_data))
 
@@ -557,11 +575,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "vpn_ipsec_phase2": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "add_route": {"required": False, "type": "str",
                               "choices": ["phase1", "enable", "disable"]},
                 "auto_negotiate": {"required": False, "type": "str",

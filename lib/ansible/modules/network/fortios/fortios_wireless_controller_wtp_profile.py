@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             allowaccess:
                 description:
                     - Control management access to the managed WTP, FortiAP, or AP. Separate entries with a space.
@@ -1575,7 +1588,12 @@ def underscore_to_hyphen(data):
 
 def wireless_controller_wtp_profile(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['wireless_controller_wtp_profile'] and data['wireless_controller_wtp_profile']:
+        state = data['wireless_controller_wtp_profile']['state']
+    else:
+        state = True
     wireless_controller_wtp_profile_data = data['wireless_controller_wtp_profile']
     filtered_data = underscore_to_hyphen(filter_wireless_controller_wtp_profile_data(wireless_controller_wtp_profile_data))
 
@@ -1615,11 +1633,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "wireless_controller_wtp_profile": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "allowaccess": {"required": False, "type": "str",
                                 "choices": ["telnet", "http", "https",
                                             "ssh"]},
