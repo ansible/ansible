@@ -97,7 +97,6 @@ EXAMPLES = """
   cp_mgmt_service_rpc:
     color: green
     name: New_RPC_Service_1
-    new_name: New_RPC_Service_5
     program_number: 5656
     state: present
 
