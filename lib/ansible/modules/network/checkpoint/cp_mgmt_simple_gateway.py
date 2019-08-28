@@ -75,7 +75,7 @@ options:
   firewall_settings:
     description:
       - N/A
-    type: list
+    type: dict
     suboptions:
       auto_calculate_connections_hash_table_size_and_memory_pool:
         description:
@@ -105,6 +105,133 @@ options:
     description:
       - Network interfaces. When a gateway is updated with a new interfaces, the existing interfaces are removed.
     type: list
+    suboptions:
+      name:
+        description:
+          - Object name.
+        type: str
+      anti_spoofing:
+        description:
+          - N/A
+        type: bool
+      anti_spoofing_settings:
+        description:
+          - N/A
+        type: dict
+        suboptions:
+          action:
+            description:
+              - If packets will be rejected (the Prevent option) or whether the packets will be monitored (the Detect option).
+            type: str
+            choices: ['prevent', 'detect']
+      ip_address:
+        description:
+          - IPv4 or IPv6 address. If both addresses are required use ipv4-address and ipv6-address fields explicitly.
+        type: str
+      ipv4_address:
+        description:
+          - IPv4 address.
+        type: str
+      ipv6_address:
+        description:
+          - IPv6 address.
+        type: str
+      network_mask:
+        description:
+          - IPv4 or IPv6 network mask. If both masks are required use ipv4-network-mask and ipv6-network-mask fields explicitly. Instead of
+            providing mask itself it is possible to specify IPv4 or IPv6 mask length in mask-length field. If both masks length are required use
+            ipv4-mask-length and  ipv6-mask-length fields explicitly.
+        type: str
+      ipv4_network_mask:
+        description:
+          - IPv4 network address.
+        type: str
+      ipv6_network_mask:
+        description:
+          - IPv6 network address.
+        type: str
+      mask_length:
+        description:
+          - IPv4 or IPv6 network mask length.
+        type: str
+      ipv4_mask_length:
+        description:
+          - IPv4 network mask length.
+        type: str
+      ipv6_mask_length:
+        description:
+          - IPv6 network mask length.
+        type: str
+      security_zone:
+        description:
+          - N/A
+        type: bool
+      security_zone_settings:
+        description:
+          - N/A
+        type: dict
+        suboptions:
+          auto_calculated:
+            description:
+              - Security Zone is calculated according to where the interface leads to.
+            type: bool
+          specific_zone:
+            description:
+              - Security Zone specified manually.
+            type: str
+      tags:
+        description:
+          - Collection of tag identifiers.
+        type: list
+      topology:
+        description:
+          - N/A
+        type: str
+        choices: ['automatic', 'external', 'internal']
+      topology_settings:
+        description:
+          - N/A
+        type: dict
+        suboptions:
+          interface_leads_to_dmz:
+            description:
+              - Whether this interface leads to demilitarized zone (perimeter network).
+            type: bool
+          ip_address_behind_this_interface:
+            description:
+              - N/A
+            type: str
+            choices: ['not defined', 'network defined by the interface ip and net mask', 'network defined by routing', 'specific']
+          specific_network:
+            description:
+              - Network behind this interface.
+            type: str
+      color:
+        description:
+          - Color of the object. Should be one of existing colors.
+        type: str
+        choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange',
+                 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray',
+                 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive',
+                 'orange', 'red', 'sienna', 'yellow']
+      comments:
+        description:
+          - Comments string.
+        type: str
+      details_level:
+        description:
+          - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+            representation of the object.
+        type: str
+        choices: ['uid', 'standard', 'full']
+      ignore_warnings:
+        description:
+          - Apply changes ignoring warnings.
+        type: bool
+      ignore_errors:
+        description:
+          - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
+        type: bool
   ips:
     description:
       - Intrusion Prevention System blade enabled.
@@ -112,7 +239,7 @@ options:
   logs_settings:
     description:
       - N/A
-    type: list
+    type: dict
     suboptions:
       alert_when_free_disk_space_below:
         description:
@@ -289,7 +416,7 @@ options:
   vpn_settings:
     description:
       - Gateway VPN settings.
-    type: list
+    type: dict
     suboptions:
       maximum_concurrent_ike_negotiations:
         description:
@@ -377,7 +504,7 @@ def main():
         application_control=dict(type='bool'),
         content_awareness=dict(type='bool'),
         firewall=dict(type='bool'),
-        firewall_settings=dict(type='list', options=dict(
+        firewall_settings=dict(type='dict', options=dict(
             auto_calculate_connections_hash_table_size_and_memory_pool=dict(type='bool'),
             auto_maximum_limit_for_concurrent_connections=dict(type='bool'),
             connections_hash_size=dict(type='int'),
@@ -385,9 +512,47 @@ def main():
             maximum_memory_pool_size=dict(type='int'),
             memory_pool_size=dict(type='int')
         )),
-        interfaces=dict(type='list'),
+        interfaces=dict(type='list', options=dict(
+            name=dict(type='str'),
+            anti_spoofing=dict(type='bool'),
+            anti_spoofing_settings=dict(type='dict', options=dict(
+                action=dict(type='str', choices=['prevent', 'detect'])
+            )),
+            ip_address=dict(type='str'),
+            ipv4_address=dict(type='str'),
+            ipv6_address=dict(type='str'),
+            network_mask=dict(type='str'),
+            ipv4_network_mask=dict(type='str'),
+            ipv6_network_mask=dict(type='str'),
+            mask_length=dict(type='str'),
+            ipv4_mask_length=dict(type='str'),
+            ipv6_mask_length=dict(type='str'),
+            security_zone=dict(type='bool'),
+            security_zone_settings=dict(type='dict', options=dict(
+                auto_calculated=dict(type='bool'),
+                specific_zone=dict(type='str')
+            )),
+            tags=dict(type='list'),
+            topology=dict(type='str', choices=['automatic', 'external', 'internal']),
+            topology_settings=dict(type='dict', options=dict(
+                interface_leads_to_dmz=dict(type='bool'),
+                ip_address_behind_this_interface=dict(type='str',
+                                                                           choices=['not defined', 'network defined by the interface ip and net mask',
+                                                                           'network defined by routing', 'specific']),
+                specific_network=dict(type='str')
+            )),
+            color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan',
+                                            'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick',
+                                            'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral',
+                                            'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
+                                            'sienna', 'yellow']),
+            comments=dict(type='str'),
+            details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+            ignore_warnings=dict(type='bool'),
+            ignore_errors=dict(type='bool')
+        )),
         ips=dict(type='bool'),
-        logs_settings=dict(type='list', options=dict(
+        logs_settings=dict(type='dict', options=dict(
             alert_when_free_disk_space_below=dict(type='bool'),
             alert_when_free_disk_space_below_threshold=dict(type='int'),
             alert_when_free_disk_space_below_type=dict(type='str', choices=['none',
@@ -433,7 +598,7 @@ def main():
         url_filtering=dict(type='bool'),
         version=dict(type='str'),
         vpn=dict(type='bool'),
-        vpn_settings=dict(type='list', options=dict(
+        vpn_settings=dict(type='dict', options=dict(
             maximum_concurrent_ike_negotiations=dict(type='int'),
             maximum_concurrent_tunnels=dict(type='int')
         )),
