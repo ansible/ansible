@@ -56,7 +56,6 @@ from .util import (
     find_python,
     get_docker_completion,
     get_remote_completion,
-    COVERAGE_OUTPUT_NAME,
     cmd_quote,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
@@ -71,6 +70,9 @@ from .util_common import (
     intercept_command,
     named_temporary_file,
     run_command,
+    write_text_file,
+    write_json_test_results,
+    ResultType,
 )
 
 from .docker_util import (
@@ -128,9 +130,7 @@ from .integration import (
     integration_test_environment,
     integration_test_config_file,
     setup_common_temp_dir,
-    INTEGRATION_VARS_FILE_RELATIVE,
     get_inventory_relative_path,
-    INTEGRATION_DIR_RELATIVE,
     check_inventory,
     delegate_inventory,
 )
@@ -198,8 +198,8 @@ def install_command_requirements(args, python_version=None):
     :type python_version: str | None
     """
     if not args.explain:
-        make_dirs(os.path.join(data_context().results, 'coverage'))
-        make_dirs(os.path.join(data_context().results, 'data'))
+        make_dirs(ResultType.COVERAGE.path)
+        make_dirs(ResultType.DATA.path)
 
     if isinstance(args, ShellConfig):
         if args.raw:
@@ -322,12 +322,9 @@ Author-email: info@ansible.com
 License: GPLv3+
 ''' % get_ansible_version()
 
-    os.mkdir(egg_info_path)
-
     pkg_info_path = os.path.join(egg_info_path, 'PKG-INFO')
 
-    with open(pkg_info_path, 'w') as pkg_info_fd:
-        pkg_info_fd.write(pkg_info.lstrip())
+    write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
 def generate_pip_install(pip, command, packages=None):
@@ -394,7 +391,7 @@ def command_network_integration(args):
     template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
     if args.inventory:
-        inventory_path = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE, args.inventory)
+        inventory_path = os.path.join(data_context().content.root, data_context().content.integration_path, args.inventory)
     else:
         inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 
@@ -445,8 +442,7 @@ def command_network_integration(args):
         display.info('>>> Inventory: %s\n%s' % (inventory_path, inventory.strip()), verbosity=3)
 
         if not args.explain:
-            with open(inventory_path, 'w') as inventory_fd:
-                inventory_fd.write(inventory)
+            write_text_file(inventory_path, inventory)
 
     success = False
 
@@ -576,7 +572,7 @@ def command_windows_integration(args):
     template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
     if args.inventory:
-        inventory_path = os.path.join(data_context().content.root, INTEGRATION_DIR_RELATIVE, args.inventory)
+        inventory_path = os.path.join(data_context().content.root, data_context().content.integration_path, args.inventory)
     else:
         inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 
@@ -620,8 +616,7 @@ def command_windows_integration(args):
         display.info('>>> Inventory: %s\n%s' % (inventory_path, inventory.strip()), verbosity=3)
 
         if not args.explain:
-            with open(inventory_path, 'w') as inventory_fd:
-                inventory_fd.write(inventory)
+            write_text_file(inventory_path, inventory)
 
         use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in internal_targets)
         # if running under Docker delegation, the httptester may have already been started
@@ -681,9 +676,9 @@ def command_windows_integration(args):
             pre_target = forward_ssh_ports
             post_target = cleanup_ssh_ports
 
-    def run_playbook(playbook, playbook_vars):
+    def run_playbook(playbook, run_playbook_vars):  # type: (str, t.Dict[str, t.Any]) -> None
         playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
-        command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(playbook_vars)]
+        command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(run_playbook_vars)]
         if args.verbosity:
             command.append('-%s' % ('v' * args.verbosity))
 
@@ -716,7 +711,7 @@ def command_windows_integration(args):
 
                 for filename in os.listdir(local_temp_path):
                     with open_zipfile(os.path.join(local_temp_path, filename)) as coverage_zip:
-                        coverage_zip.extractall(os.path.join(data_context().results, 'coverage'))
+                        coverage_zip.extractall(ResultType.COVERAGE.path)
 
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             for instance in instances:
@@ -882,7 +877,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
 
     cloud_init(args, internal_targets)
 
-    vars_file_src = os.path.join(data_context().content.root, INTEGRATION_VARS_FILE_RELATIVE)
+    vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
     if os.path.exists(vars_file_src):
         def integration_config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
@@ -895,7 +890,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
             else:
                 working_path = ''
 
-            files.append((vars_file_src, os.path.join(working_path, INTEGRATION_VARS_FILE_RELATIVE)))
+            files.append((vars_file_src, os.path.join(working_path, data_context().content.integration_vars_path)))
 
         data_context().register_payload_callback(integration_config_callback)
 
@@ -1086,23 +1081,22 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
     finally:
         if not args.explain:
             if args.coverage:
-                coverage_temp_path = os.path.join(common_temp_path, COVERAGE_OUTPUT_NAME)
-                coverage_save_path = os.path.join(data_context().results, 'coverage')
+                coverage_temp_path = os.path.join(common_temp_path, ResultType.COVERAGE.name)
+                coverage_save_path = ResultType.COVERAGE.path
 
                 for filename in os.listdir(coverage_temp_path):
                     shutil.copy(os.path.join(coverage_temp_path, filename), os.path.join(coverage_save_path, filename))
 
             remove_tree(common_temp_path)
 
-            results_path = os.path.join(data_context().results, 'data', '%s-%s.json' % (
-                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0)))))
+            result_name = '%s-%s.json' % (
+                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
 
             data = dict(
                 targets=results,
             )
 
-            with open(results_path, 'w') as results_fd:
-                results_fd.write(json.dumps(data, sort_keys=True, indent=4))
+            write_json_test_results(ResultType.DATA, result_name, data)
 
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
@@ -1286,7 +1280,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
 
     integration = dict(
-        JUNIT_OUTPUT_DIR=os.path.join(data_context().results, 'junit'),
+        JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),

@@ -18,6 +18,8 @@ from xml.dom import (
     minidom,
 )
 
+from . import types as t
+
 from .target import (
     walk_module_targets,
     walk_compile_targets,
@@ -34,7 +36,8 @@ from .util import (
 )
 
 from .util_common import (
-    run_command,
+    intercept_command,
+    ResultType,
 )
 
 from .config import (
@@ -57,6 +60,7 @@ from .data import (
 
 COVERAGE_GROUPS = ('command', 'target', 'environment', 'version')
 COVERAGE_CONFIG_PATH = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coveragerc')
+COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 
 def command_coverage_combine(args):
@@ -74,9 +78,9 @@ def _command_coverage_combine_python(args):
     """
     coverage = initialize_coverage(args)
 
-    modules = dict((t.module, t.path) for t in list(walk_module_targets()) if t.path.endswith('.py'))
+    modules = dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
-    coverage_dir = os.path.join(data_context().results, 'coverage')
+    coverage_dir = ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=python' in f]
 
@@ -140,7 +144,7 @@ def _command_coverage_combine_python(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
-    coverage_file = os.path.join(data_context().results, 'coverage', 'coverage')
+    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
 
     for group in sorted(groups):
         arc_data = groups[group]
@@ -322,9 +326,7 @@ def command_coverage_report(args):
             if args.omit:
                 options.extend(['--omit', args.omit])
 
-            env = common_environment()
-            env.update(dict(COVERAGE_FILE=output_file))
-            run_command(args, env=env, cmd=['coverage', 'report', '--rcfile', COVERAGE_CONFIG_PATH] + options)
+            run_coverage(args, output_file, 'report', options)
 
 
 def command_coverage_html(args):
@@ -339,10 +341,10 @@ def command_coverage_html(args):
             display.info("Skipping output file %s in html generation" % output_file, verbosity=3)
             continue
 
-        dir_name = os.path.join(data_context().results, 'reports', os.path.basename(output_file))
-        env = common_environment()
-        env.update(dict(COVERAGE_FILE=output_file))
-        run_command(args, env=env, cmd=['coverage', 'html', '--rcfile', COVERAGE_CONFIG_PATH, '-i', '-d', dir_name])
+        dir_name = os.path.join(ResultType.REPORTS.path, os.path.basename(output_file))
+        run_coverage(args, output_file, 'html', ['-i', '-d', dir_name])
+
+        display.info('HTML report generated: file:///%s' % os.path.join(dir_name, 'index.html'))
 
 
 def command_coverage_xml(args):
@@ -352,7 +354,7 @@ def command_coverage_xml(args):
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
-        xml_name = os.path.join(data_context().results, 'reports', '%s.xml' % os.path.basename(output_file))
+        xml_name = os.path.join(ResultType.REPORTS.path, '%s.xml' % os.path.basename(output_file))
         if output_file.endswith('-powershell'):
             report = _generage_powershell_xml(output_file)
 
@@ -363,9 +365,7 @@ def command_coverage_xml(args):
             with open(xml_name, 'w') as xml_fd:
                 xml_fd.write(pretty)
         else:
-            env = common_environment()
-            env.update(dict(COVERAGE_FILE=output_file))
-            run_command(args, env=env, cmd=['coverage', 'xml', '--rcfile', COVERAGE_CONFIG_PATH, '-i', '-o', xml_name])
+            run_coverage(args, output_file, 'xml', ['-i', '-o', xml_name])
 
 
 def command_coverage_erase(args):
@@ -374,7 +374,7 @@ def command_coverage_erase(args):
     """
     initialize_coverage(args)
 
-    coverage_dir = os.path.join(data_context().results, 'coverage')
+    coverage_dir = ResultType.COVERAGE.path
 
     for name in os.listdir(coverage_dir):
         if not name.startswith('coverage') and '=coverage.' not in name:
@@ -440,13 +440,13 @@ def _command_coverage_combine_powershell(args):
     :type args: CoverageConfig
     :rtype: list[str]
     """
-    coverage_dir = os.path.join(data_context().results, 'coverage')
+    coverage_dir = ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=powershell' in f]
 
-    def _default_stub_value(line_count):
+    def _default_stub_value(lines):
         val = {}
-        for line in range(line_count):
+        for line in range(lines):
             val[line] = 0
         return val
 
@@ -504,7 +504,7 @@ def _command_coverage_combine_powershell(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
-    coverage_file = os.path.join(data_context().results, 'coverage', 'coverage')
+    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
 
     for group in sorted(groups):
         coverage_data = groups[group]
@@ -543,7 +543,7 @@ def _command_coverage_combine_powershell(args):
 
 def _generage_powershell_xml(coverage_file):
     """
-    :type input_path: str
+    :type coverage_file: str
     :rtype: Element
     """
     with open(coverage_file, 'rb') as coverage_fd:
@@ -669,7 +669,7 @@ def _add_cobertura_package(packages, package_name, package_data):
 
 def _generate_powershell_output_report(args, coverage_file):
     """
-    :type args: CoverageConfig
+    :type args: CoverageReportConfig
     :type coverage_file: str
     :rtype: str
     """
@@ -756,3 +756,13 @@ def _generate_powershell_output_report(args, coverage_file):
 
     report = '{0}\n{1}\n{2}\n{1}\n{3}'.format(header, line_break, "\n".join(lines), totals)
     return report
+
+
+def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str, str, t.List[str]) -> None
+    """Run the coverage cli tool with the specified options."""
+    env = common_environment()
+    env.update(dict(COVERAGE_FILE=output_file))
+
+    cmd = ['python', '-m', 'coverage', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
+
+    intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)

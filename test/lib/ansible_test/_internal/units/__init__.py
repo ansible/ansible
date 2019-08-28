@@ -15,6 +15,7 @@ from ..util import (
 
 from ..util_common import (
     intercept_command,
+    ResultType,
 )
 
 from ..ansible_util import (
@@ -98,7 +99,7 @@ def command_units(args):
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
-            '--junit-xml', os.path.join(data_context().results, 'junit', 'python%s-units.xml' % version),
+            '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-units.xml' % version),
         ]
 
         if not data_context().content.collection:

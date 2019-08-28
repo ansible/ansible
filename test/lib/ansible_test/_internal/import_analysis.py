@@ -5,6 +5,8 @@ __metaclass__ = type
 import ast
 import os
 
+from . import types as t
+
 from .util import (
     display,
     ApplicationError,
@@ -35,13 +37,8 @@ def get_python_module_utils_imports(compile_targets):
     for target in compile_targets:
         imports_by_target_path[target.path] = extract_python_module_utils_imports(target.path, module_utils)
 
-    def recurse_import(import_name, depth=0, seen=None):
-        """Recursively expand module_utils imports from module_utils files.
-        :type import_name: str
-        :type depth: int
-        :type seen: set[str] | None
-        :rtype set[str]
-        """
+    def recurse_import(import_name, depth=0, seen=None):  # type: (str, int, t.Optional[t.Set[str]]) -> t.Set[str]
+        """Recursively expand module_utils imports from module_utils files."""
         display.info('module_utils import: %s%s' % ('  ' * depth, import_name), verbosity=4)
 
         if seen is None:

@@ -79,14 +79,7 @@ ansible.egg-info/
 # Release directory
 packaging/release/ansible_release
 /.cache/
-/test/results/coverage/*=coverage.*
-/test/results/coverage/coverage*
-/test/results/reports/coverage*.xml
-/test/results/reports/coverage*/
-/test/results/bot/*.json
-/test/results/junit/*.xml
-/test/results/logs/*.log
-/test/results/data/*.json
+/test/results/
 /test/integration/cloud-config-aws.yml
 /test/integration/inventory.networking
 /test/integration/inventory.winrm
