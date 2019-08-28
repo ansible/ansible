@@ -82,13 +82,13 @@ class ValidateModulesTest(SanitySingleVersion):
 
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
-
-        if args.base_branch:
-            cmd.extend([
-                '--base-branch', args.base_branch,
-            ])
         else:
-            display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
+            if args.base_branch:
+                cmd.extend([
+                    '--base-branch', args.base_branch,
+                ])
+            else:
+                display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
 
         try:
             stdout, stderr = run_command(args, cmd, env=env, capture=True)
