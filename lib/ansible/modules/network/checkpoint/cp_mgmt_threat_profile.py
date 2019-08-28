@@ -69,10 +69,20 @@ options:
     description:
       - Indicators whose action will be overridden in this profile.
     type: list
+    suboptions:
+      action:
+        description:
+          - The indicator's action in this profile.
+        type: str
+        choices: ['Inactive', 'Ask', 'Prevent', 'Detect']
+      indicator:
+        description:
+          - The indicator whose action is to be overriden.
+        type: str
   ips_settings:
     description:
       - IPS blade settings.
-    type: list
+    type: dict
     suboptions:
       exclude_protection_with_performance_impact:
         description:
@@ -100,7 +110,7 @@ options:
   malicious_mail_policy_settings:
     description:
       - Malicious Mail Policy for MTA Gateways.
-    type: list
+    type: dict
     suboptions:
       add_customized_text_to_email_body:
         description:
@@ -158,6 +168,25 @@ options:
     description:
       - Overrides per profile for this protection.
     type: list
+    suboptions:
+      action:
+        description:
+          - Protection action.
+        type: str
+        choices: ['Threat Cloud: Inactive', 'Detect', 'Prevent <br> Core: Drop', 'Inactive', 'Accept']
+      protection:
+        description:
+          - IPS protection identified by name or UID.
+        type: str
+      capture_packets:
+        description:
+          - Capture packets.
+        type: bool
+      track:
+        description:
+          - Tracking method for protection.
+        type: str
+        choices: ['none', 'log', 'alert', 'mail', 'snmp trap', 'user alert', 'user alert 1', 'user alert 2']
   tags:
     description:
       - Collection of tag identifiers.
@@ -186,10 +215,28 @@ options:
     description:
       - Activate protections by these extended attributes.
     type: list
+    suboptions:
+      name:
+        description:
+          - IPS tag name.
+        type: str
+      category:
+        description:
+          - IPS tag category name.
+        type: str
   deactivate_protections_by_extended_attributes:
     description:
       - Deactivate protections by these extended attributes.
     type: list
+    suboptions:
+      name:
+        description:
+          - IPS tag name.
+        type: str
+      category:
+        description:
+          - IPS tag category name.
+        type: str
   use_extended_attributes:
     description:
       - Whether to activate/deactivate IPS protections according to the extended attributes.
@@ -285,15 +332,18 @@ def main():
         confidence_level_high=dict(type='str', choices=['Inactive', 'Ask', 'Prevent', 'Detect']),
         confidence_level_low=dict(type='str', choices=['Inactive', 'Ask', 'Prevent', 'Detect']),
         confidence_level_medium=dict(type='str', choices=['Inactive', 'Ask', 'Prevent', 'Detect']),
-        indicator_overrides=dict(type='list'),
-        ips_settings=dict(type='list', options=dict(
+        indicator_overrides=dict(type='list', options=dict(
+            action=dict(type='str', choices=['Inactive', 'Ask', 'Prevent', 'Detect']),
+            indicator=dict(type='str')
+        )),
+        ips_settings=dict(type='dict', options=dict(
             exclude_protection_with_performance_impact=dict(type='bool'),
             exclude_protection_with_performance_impact_mode=dict(type='str', choices=['very low', 'low or lower', 'medium or lower', 'high or lower']),
             exclude_protection_with_severity=dict(type='bool'),
             exclude_protection_with_severity_mode=dict(type='str', choices=['low or above', 'medium or above', 'high or above', 'critical']),
             newly_updated_protections=dict(type='str', choices=['active', 'inactive', 'staging'])
         )),
-        malicious_mail_policy_settings=dict(type='list', options=dict(
+        malicious_mail_policy_settings=dict(type='dict', options=dict(
             add_customized_text_to_email_body=dict(type='bool'),
             add_email_subject_prefix=dict(type='bool'),
             add_x_header_to_email=dict(type='bool'),
@@ -307,15 +357,26 @@ def main():
             send_copy=dict(type='bool'),
             send_copy_list=dict(type='list')
         )),
-        overrides=dict(type='list'),
+        overrides=dict(type='list', options=dict(
+            action=dict(type='str', choices=['Threat Cloud: Inactive', 'Detect', 'Prevent <br> Core: Drop', 'Inactive', 'Accept']),
+            protection=dict(type='str'),
+            capture_packets=dict(type='bool'),
+            track=dict(type='str', choices=['none', 'log', 'alert', 'mail', 'snmp trap', 'user alert', 'user alert 1', 'user alert 2'])
+        )),
         tags=dict(type='list'),
         use_indicators=dict(type='bool'),
         anti_bot=dict(type='bool'),
         anti_virus=dict(type='bool'),
         ips=dict(type='bool'),
         threat_emulation=dict(type='bool'),
-        activate_protections_by_extended_attributes=dict(type='list'),
-        deactivate_protections_by_extended_attributes=dict(type='list'),
+        activate_protections_by_extended_attributes=dict(type='list', options=dict(
+            name=dict(type='str'),
+            category=dict(type='str')
+        )),
+        deactivate_protections_by_extended_attributes=dict(type='list', options=dict(
+            name=dict(type='str'),
+            category=dict(type='str')
+        )),
         use_extended_attributes=dict(type='bool'),
         color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
                                         'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
