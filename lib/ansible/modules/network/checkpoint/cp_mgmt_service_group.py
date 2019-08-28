@@ -93,8 +93,6 @@ EXAMPLES = """
 
 - name: set-service-group
   cp_mgmt_service_group:
-    members:
-      add: http
     name: New Service Group 1
     state: present
 
