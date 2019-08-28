@@ -11,6 +11,7 @@ from ..util import (
     get_available_python_versions,
     is_subdir,
     SubprocessError,
+    REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
 from ..util_common import (
@@ -45,7 +46,6 @@ from ..executor import (
     Delegate,
     get_changes_filter,
     install_command_requirements,
-    REMOTE_ONLY_PYTHON_VERSIONS,
     SUPPORTED_PYTHON_VERSIONS,
 )
 
