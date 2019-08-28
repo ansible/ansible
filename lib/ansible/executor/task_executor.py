@@ -1058,12 +1058,11 @@ class TaskExecutor:
                 host=self._play_context.remote_addr,
             )
 
-        # module prefix is network and no list of collections provided
+        # module prefix is network and a handler wasn't found previously
         # default to using the module's local collection
         # set the tasks collection to the module's collection name
         elif all(
             (
-                collections is None,
                 module_prefix in C.NETWORK_GROUP_MODULES,
                 action_loader.has_plugin(
                     module_prefix,
@@ -1074,8 +1073,10 @@ class TaskExecutor:
             handler_name = module_prefix
             collections = derived_collections
             display.vvv(
-                "Found network platform handler using module prefix with"
-                " collection from task: %s"
+                "Found network platform handler using module prefix, "
+                " handler was not found in provided collection list"
+                " or provided collection list was empty."
+                " Collection derived from task: %s"
                 % action_loader.find_plugin(
                     module_prefix, collection_list=collections
                 ),
