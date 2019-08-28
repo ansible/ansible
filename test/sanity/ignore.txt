@@ -6323,8 +6323,8 @@ test/units/modules/network/checkpoint/test_checkpoint_session.py future-import-b
 test/units/modules/network/checkpoint/test_checkpoint_session.py metaclass-boilerplate
 test/units/modules/network/checkpoint/test_checkpoint_task_facts.py future-import-boilerplate
 test/units/modules/network/checkpoint/test_checkpoint_task_facts.py metaclass-boilerplate
-test/units/modules/network/checkpoint/test_cp_network.py future-import-boilerplate
-test/units/modules/network/checkpoint/test_cp_network.py metaclass-boilerplate
+test/units/modules/network/checkpoint/test_cp_mgmt_network.py future-import-boilerplate
+test/units/modules/network/checkpoint/test_cp_mgmt_network.py metaclass-boilerplate
 test/units/modules/network/cloudvision/test_cv_server_provision.py future-import-boilerplate
 test/units/modules/network/cloudvision/test_cv_server_provision.py metaclass-boilerplate
 test/units/modules/network/cumulus/test_nclu.py future-import-boilerplate
