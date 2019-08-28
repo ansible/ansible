@@ -315,7 +315,7 @@ files:
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: trishnaguha
   $modules/network/eric_eccli/: itercheng
-  $modules/network/exos/: rdvencioneck
+  $modules/network/exos/: rdvencioneck $teamextreme
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
     maintainers: caphrim007 wojtek0806
@@ -773,7 +773,7 @@ files:
     maintainers: $team_networking
                  itercheng
   $module_utils/network/exos:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $module_utils/network/f5:
     maintainers: caphrim007 wojtek0806
   $module_utils/f5_utils.py:
@@ -1068,7 +1068,7 @@ files:
     maintainers: $team_networking
                  itercheng
   $plugins/cliconf/exos.py:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $plugins/cliconf/ios.py:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -1202,6 +1202,8 @@ files:
     maintainers: $team_networking
     labels: networking
   $plugins/httpapi/ftd.py: *ftd
+  $plugins/httpapi/exos.py:
+    maintainers: $team_extreme
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
@@ -1376,7 +1378,7 @@ files:
     support: community
     maintainers: itercheng
   $plugins/terminal/exos.py:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $plugins/terminal/ios.py:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -1504,6 +1506,7 @@ files:
     <<: *docker
     maintainers: $team_docker morph027
   test/integration/targets/intersight: *intersight
+  test/integration/targets/exos_: $team_extreme
   test/integration/targets/ios_: *ios
   test/integration/targets/iosxr_: *ios
   test/integration/targets/meraki_: *meraki
@@ -1551,6 +1554,7 @@ files:
     maintainers: $team_networking
     labels: networking
   test/units/modules/network/aireos: *aireos
+  test/units/modules/network/exos: $team_extreme
   test/units/modules/network/ftd: *ftd
   test/units/modules/network/ios: *ios
   test/units/modules/network/iosxr: *iosxr
@@ -1586,7 +1590,7 @@ macros:
   team_digital_ocean: aluvenko, BondAnthony, mgregson
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet WojciechowskiPiotr
   team_e_spirit: MatrixCrawler getjack
-  team_extreme: bigmstone LindsayHill
+  team_extreme: bigmstone LindsayHill ujwalkomarla
   team_foreman: ehelms ares xprazak2 ekohl
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_ftd: annikulin
