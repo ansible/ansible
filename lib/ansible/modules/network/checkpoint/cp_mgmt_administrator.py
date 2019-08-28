@@ -74,6 +74,11 @@ options:
       - Administrator permissions profile. Permissions profile should not be provided when multi-domain-profile is set to "Multi-Domain Super User" or
         "Domain Super User".
     type: list
+    suboptions:
+      profile:
+        description:
+          - Permission profile.
+        type: str
   phone_number:
     description:
       - Administrator phone number.
@@ -165,7 +170,9 @@ def main():
         must_change_password=dict(type='bool'),
         password=dict(type='str'),
         password_hash=dict(type='str'),
-        permissions_profile=dict(type='list'),
+        permissions_profile=dict(type='list', options=dict(
+            profile=dict(type='str')
+        )),
         phone_number=dict(type='str'),
         radius_server=dict(type='str'),
         tacacs_server=dict(type='str'),
