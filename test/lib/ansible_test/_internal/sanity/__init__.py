@@ -246,7 +246,7 @@ class SanityIgnoreParser:
             file_name = 'ignore.txt'
 
         self.args = args
-        self.relative_path = os.path.join('test/sanity', file_name)
+        self.relative_path = os.path.join(data_context().content.sanity_path, file_name)
         self.path = os.path.join(data_context().content.root, self.relative_path)
         self.ignores = collections.defaultdict(lambda: collections.defaultdict(dict))  # type: t.Dict[str, t.Dict[str, t.Dict[str, int]]]
         self.skips = collections.defaultdict(lambda: collections.defaultdict(int))  # type: t.Dict[str, t.Dict[str, int]]
