@@ -1036,67 +1036,50 @@ class TaskExecutor:
         ):
             handler_name = self._task.action
 
-        # user has specified a network_os and a list of collections
+        # module prefix is network and a list of collections provided
+        # this would return the core plugin if checked independant of
+        # collections
         elif all(
             (
                 collections,
+                module_prefix in C.NETWORK_GROUP_MODULES,
                 action_loader.has_plugin(
-                    self._play_context.network_os, collection_list=collections
+                    module_prefix, collection_list=collections
                 ),
             )
         ):
 
-            handler_name = self._play_context.network_os
+            handler_name = module_prefix
             display.vvv(
-                "Found network platform handler using network_os and provided"
+                "Found network platform handler using module prefix with"
                 " collection list: %s"
                 % action_loader.find_plugin(
-                    self._play_context.network_os, collection_list=collections
+                    module_prefix, collection_list=collections
                 ),
                 host=self._play_context.remote_addr,
             )
 
-        # user has specified network_os, not specified collections
+        # module prefix is network and no list of collections provided
         # default to using the module's local collection
         # set the tasks collection to the module's collection name
         elif all(
             (
                 collections is None,
-                action_loader.has_plugin(
-                    self._play_context.network_os,
-                    collection_list=derived_collections,
-                ),
-            )
-        ):
-            handler_name = self._play_context.network_os
-            collections = derived_collections
-            display.vvv(
-                "Found network platform handler using network_os and"
-                " collection derived from task action: %s"
-                % action_loader.find_plugin(
-                    self._play_context.network_os,
-                    collection_list=derived_collections,
-                ),
-                host=self._play_context.remote_addr,
-            )
-
-        # user has not specified a network_os
-        # constrain this to NETWORK_GROUP_MODULES
-        # connection is local, no collection support here
-        # this stops working when the platform plugins are
-        # no longer in core and can be removed
-        elif all(
-            (
-                self._play_context.connection == "local",
                 module_prefix in C.NETWORK_GROUP_MODULES,
-                action_loader.has_plugin(module_prefix),
+                action_loader.has_plugin(
+                    module_prefix,
+                    collection_list=derived_collections,
+                ),
             )
         ):
             handler_name = module_prefix
+            collections = derived_collections
             display.vvv(
-                "Found network platform handler module_prefix and"
-                " NETWORK_GROUP_MODULES lookup: %s"
-                % action_loader.find_plugin(module_prefix),
+                "Found network platform handler using module prefix with"
+                " collection from task: %s"
+                % action_loader.find_plugin(
+                    module_prefix, collection_list=collections
+                ),
                 host=self._play_context.remote_addr,
             )
 
