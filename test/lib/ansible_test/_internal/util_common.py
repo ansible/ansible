@@ -133,7 +133,7 @@ def write_text_test_results(category, name, content):  # type: (ResultType, str,
 
 def write_json_file(path, content, create_directories=False):  # type: (str, t.Union[t.List[t.Any], t.Dict[str, t.Any]], bool) -> None
     """Write the given json content to the specified path, optionally creating missing directories."""
-    text_content = json.dumps(content, sort_keys=True, indent=4, ensure_ascii=False) + '\n'
+    text_content = json.dumps(content, sort_keys=True, indent=4) + '\n'
     write_text_file(path, text_content, create_directories=create_directories)
 
 
