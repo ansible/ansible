@@ -64,25 +64,18 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-external_host_providers:
-    description: "List of dictionaries of all the external_host_provider attributes. External provider attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/external_host_provider."
-    returned: "On success and if parameter 'type: foreman' is used."
-    type: list
-openstack_image_providers:
-    description: "List of dictionaries of all the openstack_image_provider attributes. External provider attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_image_provider."
-    returned: "On success and if parameter 'type: os_image' is used."
-    type: list
-openstack_volume_providers:
-    description: "List of dictionaries of all the openstack_volume_provider attributes. External provider attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_volume_provider."
-    returned: "On success and if parameter 'type: os_volume' is used."
-    type: list
-openstack_network_providers:
-    description: "List of dictionaries of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt/RHV instance
-                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_network_provider."
-    returned: "On success and if parameter 'type: os_network' is used."
+ovirt_external_providers:
+    description:
+        - "List of dictionaries. Content depends on I(type)."
+        - "For type C(foreman), attributes appearing in the dictionary can be found on your oVirt/RHV instance
+           at the following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/external_host_provider."
+        - "For type C(os_image), attributes appearing in the dictionary can be found on your oVirt/RHV instance
+           at the following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_image_provider."
+        - "For type C(os_volume), attributes appearing in the dictionary can be found on your oVirt/RHV instance
+           at the following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_volume_provider."
+        - "For type C(os_network), attributes appearing in the dictionary can be found on your oVirt/RHV instance
+           at the following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_network_provider."
+    returned: On success
     type: list
 '''
 
