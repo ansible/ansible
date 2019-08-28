@@ -81,7 +81,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Create a new publication with name "acme" targeting all tables in database "test"
+- name: Create a new publication with name "acme" targeting all tables in database "test".
   postgresql_publication:
     db: test
     name: acme
@@ -104,7 +104,7 @@ EXAMPLES = r'''
 
 - name: >
     Assuming publication "acme" exists and there are targeted
-    tables "prices" and "vehicles", add table "stores" to the publication
+    tables "prices" and "vehicles", add table "stores" to the publication.
   postgresql_publication:
     name: acme
     tables:
@@ -112,7 +112,7 @@ EXAMPLES = r'''
     - vehicles
     - stores
 
-- name: Remove publication "acme" if exists in database "test"
+- name: Remove publication "acme" if exists in database "test".
   postgresql_publication:
     db: test
     name: acme
@@ -132,13 +132,13 @@ queries:
   type: str
   sample: [ 'DROP PUBLICATION "acme" CASCADE' ]
 owner:
-  description: Owner of the owner at the end of runtime.
+  description: Owner of the publication at the end of runtime.
   returned: if publication exists
   type: str
   sample: "alice"
 tables:
   description:
-  - list of tables in the publication at the end of runtime.
+  - List of tables in the publication at the end of runtime.
   - If all tables are published, returns empty list.
   returned: if publication exists
   type: list
@@ -148,7 +148,7 @@ alltables:
   - Flag indicates that all tables are published.
   returned: if publication exists
   type: bool
-  sample: False
+  sample: false
 parameters:
   description: Publication parameters at the end of runtime.
   returned: if publication exists
@@ -396,7 +396,7 @@ class PgPublication():
     def drop(self, cascade=False, check_mode=True):
         """Drop the publication.
 
-        Kargs:
+        Kwargs:
             cascade (bool): Flag indicates that publication needs to be deleted
                 with its dependencies.
             check_mode (bool): If True, don't actually change anything,
