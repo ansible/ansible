@@ -65,3 +65,7 @@
       wait_for:
         path: '{{ remote_dir }}/cron_canary1'
         timeout: '{{ 20 if faketime_pkg else 70 }}'
+      register: wait_canary
+
+    - debug:
+        msg: 'elapsed time waiting for canary: {{ wait_canary.elapsed }}'
