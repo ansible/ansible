@@ -47,7 +47,7 @@ options:
   action:
     description:
       - Contains an INSPECT expression that defines the action to take if a rule containing this service is matched.
-Example, set r_mhandler &open_ssl_handler sets a handler on the connection.
+        Example, set r_mhandler &open_ssl_handler sets a handler on the connection.
     type: str
   aggressive_aging:
     description:
@@ -82,7 +82,7 @@ Example, set r_mhandler &open_ssl_handler sets a handler on the connection.
   match:
     description:
       - Contains an INSPECT expression that defines the matching criteria. The connection is examined against the expression during the first packet.
-Example, tcp, dport = 21, direction = 0 matches incoming FTP control connections.
+        Example, tcp, dport = 21, direction = 0 matches incoming FTP control connections.
     type: str
   match_for_any:
     description:
@@ -162,7 +162,6 @@ EXAMPLES = """
       default_timeout: 3600
     color: green
     name: New_Service_1
-    new_name: New_Service_3
     state: present
 
 - name: delete-service-other
