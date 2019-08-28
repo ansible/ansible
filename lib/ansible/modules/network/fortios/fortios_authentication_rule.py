@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_authentication_rule
 short_description: Configure Authentication Rules in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify authentication feature and rule category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -76,7 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
+        required: false
         choices:
             - present
             - absent
@@ -87,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             active_auth_method:
                 description:
                     - Select an active authentication method. Source authentication.scheme.name.
@@ -109,8 +123,7 @@ options:
                 type: str
             protocol:
                 description:
-                    - Select the protocol to use for authentication (default = http). Users connect to the FortiGate using this protocol and are asked to
-                       authenticate.
+                    - Select the protocol to use for authentication . Users connect to the FortiGate using this protocol and are asked to authenticate.
                 type: str
                 choices:
                     - http
@@ -150,14 +163,14 @@ options:
                     - disable
             transaction_based:
                 description:
-                    - Enable/disable transaction based authentication (default = disable).
+                    - Enable/disable transaction based authentication .
                 type: str
                 choices:
                     - enable
                     - disable
             web_auth_cookie:
                 description:
-                    - Enable/disable Web authentication cookies (default = disable).
+                    - Enable/disable Web authentication cookies .
                 type: str
                 choices:
                     - enable
@@ -308,7 +321,12 @@ def underscore_to_hyphen(data):
 
 def authentication_rule(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['authentication_rule'] and data['authentication_rule']:
+        state = data['authentication_rule']['state']
+    else:
+        state = True
     authentication_rule_data = data['authentication_rule']
     filtered_data = underscore_to_hyphen(filter_authentication_rule_data(authentication_rule_data))
 
@@ -344,15 +362,17 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "authentication_rule": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "active_auth_method": {"required": False, "type": "str"},
                 "comments": {"required": False, "type": "str"},
                 "ip_based": {"required": False, "type": "str",
@@ -384,6 +404,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
