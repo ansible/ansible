@@ -171,7 +171,6 @@ container_groups:
             sample: { "tag1": "abc" }
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.common.dict_transformations import _camel_to_snake
 
@@ -208,14 +207,14 @@ class AzureRMContainerInstanceInfo(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
 
-        module = AnsibleModule(self.module_arg_spec)
-        is_old_facts = module._name == 'azure_rm_containerinstance_facts'
-        if is_old_facts:
-            module.deprecate("The 'azure_rm_containerinstance_facts' module has been renamed to 'azure_rm_containerinstance_info'", version='2.13')
-
         super(AzureRMContainerInstanceInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_containerinstance_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_containerinstance_facts' module has been renamed to 'azure_rm_containerinstance_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 

@@ -165,7 +165,6 @@ cdnendpoints:
             sample: foo
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -209,11 +208,6 @@ class AzureRMCdnEndpointInfo(AzureRMModuleBase):
         self.profile_name = None
         self.tags = None
 
-        module = AnsibleModule(self.module_args)
-        is_old_facts = module._name == 'azure_rm_cdnendpoint_facts'
-        if is_old_facts:
-            module.deprecate("The 'azure_rm_cdnendpoint_facts' module has been renamed to 'azure_rm_cdnendpoint_info'", version='2.13')
-
         super(AzureRMCdnEndpointInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
@@ -221,6 +215,10 @@ class AzureRMCdnEndpointInfo(AzureRMModuleBase):
         )
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_cdnendpoint_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_cdnendpoint_facts' module has been renamed to 'azure_rm_cdnendpoint_info'", version='2.13')
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])

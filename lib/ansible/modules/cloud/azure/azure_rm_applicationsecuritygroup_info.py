@@ -89,7 +89,6 @@ applicationsecuritygroups:
             sample: Succeeded
 '''
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -130,18 +129,17 @@ class AzureRMApplicationSecurityGroupInfo(AzureRMModuleBase):
 
         self.results = dict(changed=False)
 
-        module = AnsibleModule(self.module_arg_spec)
-        is_old_facts = module._name == 'azure_rm_applicationsecuritygroup_facts'
-        if is_old_facts:
-            module.deprecate("The 'azure_rm_applicationsecuritygroup_facts' module has been renamed to 'azure_rm_applicationsecuritygroup_info'",
-                             version='2.13')
-
         super(AzureRMApplicationSecurityGroupInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                                   supports_check_mode=False,
                                                                   supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
+
+        is_old_facts = self.module._name == 'azure_rm_applicationsecuritygroup_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_applicationsecuritygroup_facts' module has been renamed to 'azure_rm_applicationsecuritygroup_info'",
+                                  version='2.13')
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
