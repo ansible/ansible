@@ -32,6 +32,10 @@
     ansible_python_module_rlimit_nofile: '{{ rlimit_original_return.rlimit_nofile[1] + 1 }}'
   register: rlimit_above_hard_return
 
+- name: run a role module which uses a role module_util using relative imports
+  custom_module:
+  register: custom_module_return
+
 - assert:
     that:
       # make sure ansible-test was able to set the limit unless it exceeds the hard limit or the value is lower on macOS
@@ -54,3 +58,6 @@
 
       # setting the limit higher than the existing hard limit should use the hard limit (except on macOS)
       - rlimit_above_hard_return.rlimit_nofile[0] == rlimit_original_return.rlimit_nofile[1] or ansible_distribution == 'MacOSX'
+
+      # custom module returned the correct answer
+      - custom_module_return.answer == 42

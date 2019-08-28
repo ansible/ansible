@@ -79,7 +79,7 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ansible.module_utils._text import to_native, to_bytes, to_text
+from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
