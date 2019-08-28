@@ -1064,7 +1064,6 @@ lib/ansible/modules/cloud/amazon/s3_logging.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/amazon/s3_sync.py future-import-boilerplate
 lib/ansible/modules/cloud/amazon/s3_sync.py metaclass-boilerplate
 lib/ansible/modules/cloud/amazon/s3_sync.py pylint:blacklisted-name
-<<<<<<< rename-dtl-and-db
 lib/ansible/modules/cloud/amazon/s3_sync.py validate-modules:E322
 lib/ansible/modules/cloud/amazon/s3_sync.py validate-modules:E326
 lib/ansible/modules/cloud/amazon/s3_sync.py validate-modules:E337
