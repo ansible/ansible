@@ -211,9 +211,12 @@ from ansible.module_utils.aws.acm import ACMServiceManager
 # For converting PEM bodies to something that can be easily compared
 # e.g. ignore case, strip trailing whitespace
 #
-# There's probably a standard crypto library to do this, I'm being lazy
-# But if I mistakenly think two identical certs with different format are the different,
-# then the only impact is that changed=True when it should be changed=False
+# There's probably a standard crypto library to do this, I'm writing 
+# another function here to minimize dependencies.
+# The lack of rigour we get by not importing a proper crypto lib
+# should result in only errors where equal certs are considered different,
+# in which case the only impact is that changed=True when it should be changed=False.
+# The other kind of error (different certs being considered equal) should not happen.
 def standardize_pem(pem):
     if pem is None:
         return('')
@@ -227,7 +230,7 @@ def standardize_pem(pem):
     while '--' in pem:
         pem = pem.replace('--', '-')
 
-    return(pem.lower().strip())
+    return(pem.strip())
 
 
 # Returns True if two PEM encoded strings are the same
