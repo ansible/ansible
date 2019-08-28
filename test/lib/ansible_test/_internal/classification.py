@@ -365,11 +365,12 @@ class PathMapper:
     def _classify(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
         """Return the classification for the given path."""
         if data_context().content.is_ansible:
-            self._classify_ansible(path)
-        elif data_context().content.collection:
-            self._classify_collection(path)
-        else:
-            return None
+            return self._classify_ansible(path)
+
+        if data_context().content.collection:
+            return self._classify_collection(path)
+
+        return None
 
     def _classify_common(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
         """Return the classification for the given path using rules common to all layouts."""
@@ -635,7 +636,7 @@ class PathMapper:
         """Return the classification for the given path using rules specific to collections."""
         result = self._classify_common(path)
 
-        if result:
+        if result is not None:
             return result
 
         return None
@@ -649,7 +650,7 @@ class PathMapper:
 
         result = self._classify_common(path)
 
-        if result:
+        if result is not None:
             return result
 
         dirname = os.path.dirname(path)
