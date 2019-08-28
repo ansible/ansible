@@ -87,7 +87,6 @@ EXAMPLES = """
   cp_mgmt_dns_domain:
     is_sub_domain: true
     name: .www.example.com
-    new_name: .example.com
     state: present
 
 - name: delete-dns-domain
