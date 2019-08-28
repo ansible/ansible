@@ -23,6 +23,7 @@
       that:
         - "{{ replaced['requests'][0]['method'] == result['requests'][0]['method'] }}"
         - "{{ replaced['requests'][0]['path'] == result['requests'][0]['path'] }}"
+        - "{{ replaced['requests'][0]['data'] == result['requests'][0]['data'] }}"
 
   - name: Assert that before dicts are correctly generated
     assert:

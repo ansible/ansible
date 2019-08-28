@@ -23,6 +23,7 @@
       that:
         - "{{ deleted['requests'][0]['method'] == result['requests'][0]['method'] }}"
         - "{{ deleted['requests'][0]['path'] == result['requests'][0]['path'] }}"
+        - "{{ deleted['requests'][0]['data'] == result['requests'][0]['data'] }}"
 
   - name: Assert that the after dicts were correctly generated
     assert:

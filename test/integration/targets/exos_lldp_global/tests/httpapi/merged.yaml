@@ -24,6 +24,7 @@
       that:
         - "{{ merged['requests'][0]['method'] == result['requests'][0]['method'] }}"
         - "{{ merged['requests'][0]['path'] == result['requests'][0]['path'] }}"
+        - "{{ merged['requests'][0]['data'] == result['requests'][0]['data'] }}"
 
   - name: Assert that after dicts was correctly generated
     assert:

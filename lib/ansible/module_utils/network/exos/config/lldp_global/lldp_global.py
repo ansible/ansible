@@ -176,7 +176,7 @@ class Lldp_global(ConfigBase):
             if have['tlv_select'] != self.LLDP_DEFAULT_TLV:
                 request["data"]["openconfig-lldp:config"].update(
                     {"suppress-tlv-advertisement": [key.upper() for key, value in self.LLDP_DEFAULT_TLV.items() if not value]})
-
+                request["data"]["openconfig-lldp:config"]["suppress-tlv-advertisement"].sort()
         if len(request["data"]["openconfig-lldp:config"]):
             request["data"] = json.dumps(request["data"])
             requests.append(request)
@@ -196,3 +196,4 @@ class Lldp_global(ConfigBase):
                 want_suppress.extend([key.upper() for key, value in have["tlv_select"].items() if value is False])
                 request["data"]["openconfig-lldp:config"].update(
                     {"suppress-tlv-advertisement": want_suppress})
+                request["data"]["openconfig-lldp:config"]["suppress-tlv-advertisement"].sort()
