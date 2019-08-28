@@ -15,16 +15,15 @@ __metaclass__ = type
 
 from ansible.module_utils.network.iosxr.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
+from ansible.module_utils.network.iosxr.facts.legacy.base import Default, Hardware, Interfaces, Config
 from ansible.module_utils.network.iosxr.facts.lacp.lacp import LacpFacts
 from ansible.module_utils.network.iosxr.facts.lacp_interfaces.lacp_interfaces import Lacp_interfacesFacts
 from ansible.module_utils.network.iosxr.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.iosxr.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.iosxr.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.iosxr.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
-from ansible.module_utils.network.iosxr.facts.legacy.base import Default, Hardware, Interfaces, Config
 from ansible.module_utils.network.iosxr.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
 from ansible.module_utils.network.iosxr.facts.l3_interfaces.l3_interfaces import L3_InterfacesFacts
-from ansible.module_utils.network.iosxr.facts.legacy.base import Default, Hardware, Interfaces, Config
 
 
 FACT_LEGACY_SUBSETS = dict(
