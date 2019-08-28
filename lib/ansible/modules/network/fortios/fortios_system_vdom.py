@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             name:
                 description:
                     - VDOM name.
@@ -238,7 +251,12 @@ def underscore_to_hyphen(data):
 
 def system_vdom(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['system_vdom'] and data['system_vdom']:
+        state = data['system_vdom']['state']
+    else:
+        state = True
     system_vdom_data = data['system_vdom']
     filtered_data = underscore_to_hyphen(filter_system_vdom_data(system_vdom_data))
 
@@ -278,11 +296,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "system_vdom": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "name": {"required": True, "type": "str"},
                 "short_name": {"required": False, "type": "str"},
                 "temporary": {"required": False, "type": "int"},

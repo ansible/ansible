@@ -179,7 +179,7 @@ options:
                     - disable
             query_port:
                 description:
-                    - SNMPv3 query port (default = 161).
+                    - SNMPv3 query port .
                 type: int
             security_level:
                 description:
@@ -206,11 +206,11 @@ options:
                     - disable
             trap_lport:
                 description:
-                    - SNMPv3 local trap port (default = 162).
+                    - SNMPv3 local trap port .
                 type: int
             trap_rport:
                 description:
-                    - SNMPv3 trap remote port (default = 162).
+                    - SNMPv3 trap remote port .
                 type: int
             trap_status:
                 description:

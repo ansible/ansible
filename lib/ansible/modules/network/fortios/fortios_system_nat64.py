@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_system_nat64
 short_description: Configure NAT64 in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system feature and nat64 category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -80,7 +80,7 @@ options:
         suboptions:
             always_synthesize_aaaa_record:
                 description:
-                    - Enable/disable AAAA record synthesis (default = enable).
+                    - Enable/disable AAAA record synthesis .
                 type: str
                 choices:
                     - enable
@@ -101,7 +101,7 @@ options:
                     - disable
             nat64_prefix:
                 description:
-                    - "NAT64 prefix must be ::/96 (default = 64:ff9b::/96)."
+                    - "NAT64 prefix must be ::/96 ."
                 type: str
             secondary_prefix:
                 description:
@@ -126,7 +126,7 @@ options:
                     - disable
             status:
                 description:
-                    - Enable/disable NAT64 (default = disable).
+                    - Enable/disable NAT64 .
                 type: str
                 choices:
                     - enable
@@ -298,7 +298,7 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
@@ -329,6 +329,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
