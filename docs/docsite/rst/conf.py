@@ -61,8 +61,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Ansible Documentation'
-copyright = "2013-2018 Ansible, Inc"
+project = 'Ansible'
+copyright = "2019 Red Hat, Inc."
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -129,10 +129,10 @@ rst_epilog = """
 html_theme_path = ['../_themes']
 html_theme = 'sphinx_rtd_theme'
 html_short_title = 'Ansible Documentation'
+html_show_sphinx = False
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
-    'collapse_navigation': "True",
     'vcs_pageview_mode': 'edit'
 }
 
@@ -164,7 +164,7 @@ html_title = 'Ansible Documentation'
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.
-# html_logo = None
+# html_logo =
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
