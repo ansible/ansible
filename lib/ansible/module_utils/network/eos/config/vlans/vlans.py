@@ -197,6 +197,9 @@ class Vlans(ConfigBase):
 def generate_commands(vlan_id, to_set, to_remove):
     commands = []
     for key, value in to_set.items():
+        if value is None:
+            continue
+
         commands.append("{0} {1}".format(key, value))
 
     for key in to_remove.keys():
