@@ -91,12 +91,15 @@
     
   - assert:
       that:
-        - item.certificate.arn is defined
+        - prev_task.certificate.arn is defined
         - ('arn:aws:acm:123' | regex_search( 'arn:aws:acm:' )) is defined # check this works like s.startswith('arn')
-        - (item.certificate.arn | regex_search( 'arn:aws:acm:' )) is defined
-        - item.certificate.domain_name == item.item.domain
-        - item.changed
+        - (prev_task.certificate.arn | regex_search( 'arn:aws:acm:' )) is defined
+        - prev_task.certificate.domain_name == original_cert.domain
+        - prev_task.changed
     with_items: "{{ upload.results }}"
+    vars:
+      original_cert: "{{ item.item }}"
+      prev_task: "{{ item }}"
   
   - name: fetch data about cert just uploaded, by ARN
     aws_acm_info:
@@ -105,7 +108,7 @@
     register: fetch_after_up
     with_items: "{{ upload.results }}"
     
-  - name: check output of prior task
+  - name: check output of prior task (fetch data about cert just uploaded, by ARN)
     assert:
       that:
       - item.certificates | length == 1
@@ -126,14 +129,22 @@
       <<: *aws_connection_info
     register: fetch_after_up_name
     with_items: "{{ upload.results }}"
-    failed_when: >
-      ( fetch_after_up_name.certificates | length != 1 ) or
-      ( fetch_after_up_name.certificates[0].certificate_arn != item.certificate.arn ) or
-      ( fetch_after_up_name.certificates[0].domain_name != item.item.domain ) or
-      ( (fetch_after_up_name.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) != (lookup('file', item.item.cert ) | replace( ' ', '' ) | replace( '\n', '')) ) or 
-      ( 'Name' not in fetch_after_up_name.certificates[0].tags ) or 
-      ( fetch_after_up_name.certificates[0].tags['Name'] != item.item.name )
-
+    
+  - name: print output of previous task
+    debug:
+      var: fetch_after_up
+    
+  - name: check fetched data of cert we just uploaded
+    assert:
+      that:
+      - fetch_after_up_name.certificates | length == 1
+      - fetch_after_up_name.certificates[0].certificate_arn == item.certificate.arn
+      - fetch_after_up_name.certificates[0].domain_name == item.item.domain 
+      - (fetch_after_up_name.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) 
+        ==
+        (lookup('file', item.item.cert ) | replace( ' ', '' ) | replace( '\n', '')) 
+      - "'Name' in fetch_after_up_name.certificates[0].tags"
+      - fetch_after_up_name.certificates[0].tags['Name'] == item.item.name
 
   - name: fetch data about cert just uploaded, by domain name
     aws_acm_info:
@@ -141,13 +152,18 @@
       <<: *aws_connection_info
     register: fetch_after_up_domain
     with_items: "{{ upload.results }}"
-    failed_when: >
-      ( fetch_after_up_domain.certificates | length != 1 ) or
-      ( fetch_after_up_domain.certificates[0].certificate_arn != item.certificate.arn ) or
-      ( fetch_after_up_domain.certificates[0].domain_name != item.item.domain ) or
-      ( (fetch_after_up_domain.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) != (lookup('file', item.item.cert ) | replace( ' ', '' ) | replace( '\n', '')) ) or 
-      ( 'Name' not in fetch_after_up_domain.certificates[0].tags ) or 
-      ( fetch_after_up_domain.certificates[0].tags['Name'] != item.item.name )
+
+  - name: compare fetched data of cert just uploaded to upload task
+    assert:
+      that:
+      - fetch_after_up_domain.certificates | length == 1
+      - fetch_after_up_domain.certificates[0].certificate_arn == item.certificate.arn
+      - fetch_after_up_domain.certificates[0].domain_name == item.item.domain
+      - (fetch_after_up_domain.certificates[0].certificate | replace( ' ', '' ) | replace( '\n', '')) 
+        ==
+        (lookup('file', item.item.cert ) | replace( ' ', '' ) | replace( '\n', ''))
+      - "'Name' in fetch_after_up_domain.certificates[0].tags"
+      - fetch_after_up_domain.certificates[0].tags['Name'] == item.item.name
     
   # now upload that certificate
   - name: upload certificates again, check not changed
@@ -170,12 +186,15 @@
       certificate: "{{ lookup('file', local_certs[1].cert ) }}"
       private_key: "{{ lookup('file', local_certs[1].priv_key ) }}"
     register: overwrite
-    failed_when: >
-      ( overwrite.certificate.arn is not defined ) or 
-      ( overwrite.certificate.arn | regex_search( 'arn:aws:acm:' ) is not defined) or
-      ( overwrite.certificate.arn != upload.results[0].certificate.arn ) or
-      ( overwrite.certificate.domain_name != local_certs[1].domain ) or
-      ( not overwrite.changed )
+  
+  - name: check output of previous task (update first cert with body of the second, first time)
+    assert:
+      that:
+      - overwrite.certificate.arn is defined
+      - overwrite.certificate.arn | regex_search( 'arn:aws:acm:' ) is defined
+      - overwrite.certificate.arn == upload.results[0].certificate.arn
+      - overwrite.certificate.domain_name == local_certs[1].domain
+      - overwrite.changed
       
   - name: check update was sucessfull
     aws_acm_info:
@@ -184,7 +203,7 @@
       <<: *aws_connection_info
     register: fetch_after_overwrite
     
-  - name: check output of update fetch
+  - name: check output of update fetch 
     assert:
       that:
         - fetch_after_overwrite.certificates | length == 1
@@ -194,14 +213,14 @@
         - "'Name' in fetch_after_overwrite.certificates[0].tags"
         - fetch_after_overwrite.certificates[0].tags['Name'] == local_certs[0].name
 
-  - name: check other cert unaffected
+  - name: fetch other cert
     aws_acm_info:
       tags:
         Name: "{{ local_certs[1].name }}"
       <<: *aws_connection_info
     register: check_after_overwrite
     
-  - name: check output of previous task
+  - name: check other cert unaffected
     assert:
       that:
       - check_after_overwrite.certificates | length == 1 
@@ -211,7 +230,7 @@
       - "'Name' in check_after_overwrite.certificates[0].tags"
       - check_after_overwrite.certificates[0].tags['Name'] == local_certs[1].name
 
-  - name: update first cert with body of the second again, check changed
+  - name: update first cert with body of the second again
     aws_acm:
       state: present
       <<: *aws_connection_info
@@ -219,14 +238,16 @@
       certificate: "{{ lookup('file', local_certs[1].cert ) }}"
       private_key: "{{ lookup('file', local_certs[1].priv_key ) }}"
     register: overwrite2
-    failed_when: >
-      ( overwrite2.certificate.arn is not defined ) or 
-      ( overwrite2.certificate.arn | regex_search( 'arn:aws:acm:' ) is not defined) or
-      ( overwrite2.certificate.arn != upload.results[0].certificate.arn ) or
-      ( overwrite2.certificate.domain_name != local_certs[1].domain ) or
-      ( overwrite2.changed )
+    
+  - name: check output of previous task (update first cert with body of the second again)
+    assert:
+      that:
+      - overwrite2.certificate.arn is defined
+      - overwrite2.certificate.arn | regex_search( 'arn:aws:acm:' ) is defined
+      - overwrite2.certificate.arn == upload.results[0].certificate.arn
+      - overwrite2.certificate.domain_name == local_certs[1].domain
+      - not overwrite2.changed
       
-
   - name: delete certs 1 and 2
     aws_acm:
       <<: *aws_connection_info
@@ -242,7 +263,7 @@
         - upload.results[0].certificate.arn in delete_both.arns
         - delete_both.changed
       
-  - name: check certs 1 and 2 deleted
+  - name: fetch info for certs 1 and 2
     aws_acm_info:
       <<: *aws_connection_info
       tags:
@@ -252,12 +273,11 @@
       - 0
       - 1
       
-  - name: check output of prev task
+  - name: check certs 1 and 2 were already deleted
     with_items: "{{ check_del_one.results }}"
     assert:
       that: item.certificates | length == 0
     
-
   - name: check cert 3 not deleted
     aws_acm_info:
       <<: *aws_connection_info
@@ -273,7 +293,7 @@
       domain_name: "{{ local_certs[2].domain }}"
     register: delete_third
     
-  - name: check output of previous task
+  - name: check cert 3 deletion went as expected
     assert:
       that:
       - delete_third.arns is defined
@@ -289,19 +309,20 @@
     register: check_del_three
     failed_when: check_del_three.certificates | length != 0
     
-  - name: delete cert 3 again, check changed isfalse
+  - name: delete cert 3 again
     aws_acm:
       <<: *aws_connection_info
       state: absent
       domain_name: "{{ local_certs[2].domain }}"
     register: delete_third
-    failed_when: >
-      ( delete_third.arns is not defined ) or
-      ( delete_third.arns | length != 0 ) or 
-      ( delete_third.changed )
-
-
     
+  - name: check deletion of cert 3 not changed, because already deleted
+    assert:
+      that:
+      - delete_third.arns is defined
+      - delete_third.arns | length == 0
+      - not delete_third.changed
+
   - name: check directory was made
     assert:
       that: 
@@ -404,9 +425,12 @@
       private_key: "{{ lookup('file', chained_cert.priv_key ) }}"
       state: present 
     register: upload_chain_3
-    failed_when: >
-      ( not upload_chain_3.changed ) or
-      ( upload_chain_3.certificate.arn != upload_chain.certificate.arn )
+    
+  - name: check uploading with different chain is changed
+    assert:
+      that:
+      - upload_chain_3.changed
+      - upload_chain_3.certificate.arn == upload_chain.certificate.arn
 
   - name: fetch info about chain of cert we just updated
     aws_acm_info:
@@ -431,9 +455,12 @@
       <<: *aws_connection_info
       state: absent
     register: delete_chain_3
-    failed_when: >
-      ( not delete_chain_3.changed ) or
-      ( upload_chain.certificate.arn not in delete_chain_3.arns  )
+  
+  - name: check deletion of chained cert 3 is changed
+    assert:
+      that:
+      - delete_chain_3.changed
+      - upload_chain.certificate.arn in delete_chain_3.arns
         
 
   always:

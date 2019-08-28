@@ -52,6 +52,7 @@ description:
     this module will delete all ACM resources in this AWS region with a corresponding C(Name) tag.
     If there are none, it will succeed without effect.
   - Note that this may not work properly with keys of size 4096 bits, due to a limitation of the ACM API.
+  - This module uses the C(cryptography) python library to interact with OpenSSL. (C(pip install cryptography))
 version_added: "2.9"
 options:
   certificate:
@@ -206,36 +207,13 @@ arns:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.aws.acm import ACMServiceManager
+from ansible.module_utils.crypto import get_fingerprint_from_pem_cert as get_fingerprint
+from ansible.module_utils._text import to_bytes
 
-
-# For converting PEM bodies to something that can be easily compared
-# e.g. ignore case, strip trailing whitespace
-#
-# There's probably a standard crypto library to do this, I'm writing 
-# another function here to minimize dependencies.
-# The lack of rigour we get by not importing a proper crypto lib
-# should result in only errors where equal certs are considered different,
-# in which case the only impact is that changed=True when it should be changed=False.
-# The other kind of error (different certs being considered equal) should not happen.
-def standardize_pem(pem):
-    if pem is None:
-        return('')
-    # eliminate whitespace
-    for c in [' ', '\n', '\t']:
-        pem = pem.replace(c, '')
-
-    # I'm not sure whether the number of dashes at the top and bottom can vary
-    # reduce all consecutive dashes to one dash
-    # (The actual body never contains dashes)
-    while '--' in pem:
-        pem = pem.replace('--', '-')
-
-    return(pem.strip())
-
-
-# Returns True if two PEM encoded strings are the same
-def pem_compare(a, b):
-    return(standardize_pem(a) == standardize_pem(b))
+# Returns True if two PEM encoded certs are the same
+# This function will handle bytes vs string
+def cert_compare(a, b):
+    return get_fingerprint(to_bytes(a)) == get_fingerprint(to_bytes(b))
 
 
 def main():
@@ -306,15 +284,15 @@ def main():
 
             # Are the existing certificate in ACM and the local certificate the same?
             same = True
-            same &= pem_compare(old_cert['certificate'], module.params['certificate'])
+            same &= cert_compare(old_cert['certificate'], module.params['certificate'])
             if module.params['certificate_chain']:
                 # Need to test this
                 # not sure if Amazon appends the cert itself to the chain when self-signed
-                same &= pem_compare(old_cert['certificate_chain'], module.params['certificate_chain'])
+                same &= cert_compare(old_cert['certificate_chain'], module.params['certificate_chain'])
             else:
                 # When there is no chain with a cert
                 # it seems Amazon returns the cert itself as the chain
-                same &= pem_compare(old_cert['certificate_chain'], module.params['certificate'])
+                same &= cert_compare(old_cert['certificate_chain'], module.params['certificate'])
 
             if same:
                 module.debug("Existing certificate in ACM is the same, doing nothing")

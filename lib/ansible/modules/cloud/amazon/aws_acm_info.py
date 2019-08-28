@@ -283,10 +283,10 @@ def main():
                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     certificates = acm_info.get_certificates(client, module,
-                                              domain_name=module.params['domain_name'],
-                                              statuses=module.params['statuses'],
-                                              arn=module.params['certificate_arn'],
-                                              only_tags=module.params['tags'])
+                                             domain_name=module.params['domain_name'],
+                                             statuses=module.params['statuses'],
+                                             arn=module.params['certificate_arn'],
+                                             only_tags=module.params['tags'])
 
     if module.params['certificate_arn'] and len(certificates) != 1:
         module.fail_json(msg="No certificate exists in this region with ARN %s" % module.params['certificate_arn'])
