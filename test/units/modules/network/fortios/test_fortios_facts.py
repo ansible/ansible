@@ -21,7 +21,7 @@ import os
 import json
 import pytest
 from mock import ANY
-from units.modules.utils import *
+from units.modules.utils import exit_json, fail_json
 from units.compat import unittest
 from units.compat.mock import patch
 from ansible.module_utils import basic
@@ -58,7 +58,7 @@ def test_facts_get(mocker):
     }
     mock_module.params = args
 
-    response, _ = Facts(mock_module, fos_instance).get_facts()
+    response, ignore = Facts(mock_module, fos_instance).get_facts()
 
     monitor_method_mock.assert_called_with('system', 'status/select', vdom='root')
     assert response['ansible_network_resources']['system_status_select']['status'] == 'success'
@@ -74,7 +74,7 @@ def test_facts_get(mocker):
 
     mock_module.params = args
 
-    response, _ = Facts(mock_module, fos_instance).get_facts()
+    response, ignore = Facts(mock_module, fos_instance).get_facts()
 
     monitor_method_mock.assert_called_with('system', 'interface/select?vdom=root&include_vlan=true&interface_name=port3', vdom=None)
     assert response['ansible_network_resources']['system_interface_select']['status'] == 'success'
@@ -93,7 +93,7 @@ def test_facts_get(mocker):
 
     mock_module.params = args
 
-    response, _ = Facts(mock_module, fos_instance).get_facts()
+    response, ignore = Facts(mock_module, fos_instance).get_facts()
 
     monitor_method_mock.assert_any_call('system', 'current-admins/select', vdom='root')
     monitor_method_mock.assert_any_call('system', 'firmware/select', vdom='root')
