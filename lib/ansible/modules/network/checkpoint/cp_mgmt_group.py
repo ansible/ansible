@@ -91,8 +91,6 @@ EXAMPLES = """
 
 - name: set-group
   cp_mgmt_group:
-    members:
-      add: New Host 2
     name: New Group 1
     state: present
 
