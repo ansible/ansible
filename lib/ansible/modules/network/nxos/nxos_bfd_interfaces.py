@@ -37,7 +37,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: bfd_interfaces
+module: nxos_bfd_interfaces
 version_added: 2.9
 short_description: 'Manages BFD attributes of nxos interfaces.'
 description: 'Manages attributes of Bidirectional Forwarding Detection (BFD) on the interface.'
@@ -81,14 +81,14 @@ EXAMPLES = """
 # Using deleted
 
 - name: Configure interfaces
-  bfd_interfaces:
+  nxos_bfd_interfaces:
     operation: deleted
 
 
 # Using merged
 
 - name: Configure interfaces
-  bfd_interfaces:
+  nxos_bfd_interfaces:
     config:
       - name: Ethernet1/1
         bfd: enable
@@ -102,7 +102,7 @@ EXAMPLES = """
 # Using overridden
 
 - name: Configure interfaces
-  myos_interfaces:
+  nxos_bfd_interfaces:
     config:
       - name: Ethernet1/1
         bfd: enable
@@ -116,7 +116,7 @@ EXAMPLES = """
 # Using replaced
 
 - name: Configure interfaces
-  nxos_interfaces:
+  nxos_bfd_interfaces:
     config:
       - name: Ethernet1/1
         bfd: enable
