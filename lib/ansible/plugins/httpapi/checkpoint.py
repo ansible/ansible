@@ -34,7 +34,7 @@ class HttpApi(HttpApiBase):
         if username and password:
             payload = {'user': username, 'password': password}
             CONTEXT = os.environ.get('CONTEXT', 'web_api')
-            url = '/{}/login'.format(CONTEXT)
+            url = '/{0}/login'.format(CONTEXT)
             response, response_data = self.send_request(url, payload)
         else:
             raise AnsibleConnectionFailure('Username and password are required for login')
@@ -49,7 +49,7 @@ class HttpApi(HttpApiBase):
 
     def logout(self):
         CONTEXT = os.environ.get('CONTEXT', 'web_api')
-        url = '/{}/logout'.format(CONTEXT)
+        url = '/{0}/logout'.format(CONTEXT)
 
         response, dummy = self.send_request(url, None)
 

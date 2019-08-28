@@ -25,11 +25,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-import ast
-import sys
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import api_call_gaia
 
 DOCUMENTATION = """
 author: Yuval Feiger (@chkp-yuvalfe)
@@ -50,11 +45,24 @@ EXAMPLES = """
 - name: Show physical interfaces
   cp_gaia_physical_interfaces_facts:
 
-  - name: Show physical interface by specifying it name
+- name: Show physical interface by specifying it name
   cp_gaia_physical_interfaces_facts:
     name: eth0
 
 """
+
+RETURN = """
+cp_gaia_physical_interface:
+  description: The interface/s facts.
+  returned: always.
+  type: list
+"""
+
+import ast
+import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.checkpoint.checkpoint import api_call_gaia
 
 
 def main():
