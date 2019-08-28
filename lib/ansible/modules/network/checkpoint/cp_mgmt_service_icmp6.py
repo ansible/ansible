@@ -102,7 +102,6 @@ EXAMPLES = """
     icmp_code: 13
     icmp_type: 45
     name: icmp1
-    new_name: icmp2
     state: present
 
 - name: delete-service-icmp6
