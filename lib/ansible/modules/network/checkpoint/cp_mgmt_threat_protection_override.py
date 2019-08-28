@@ -49,7 +49,7 @@ options:
     type: bool
   overrides:
     description:
-      - Overrides per profile for this protection<br> Note, Remove override for Core protections removes only the action's override. Remove override
+      - Overrides per profile for this protection Note, Remove override for Core protections removes only the action's override. Remove override
         for Threat Cloud protections removes the action, track and packet captures.
     type: list
     suboptions:
