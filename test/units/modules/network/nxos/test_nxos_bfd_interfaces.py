@@ -145,13 +145,13 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         # Expected result commands for each 'state'
         merged = ['interface Ethernet1/1', 'bfd', 'no bfd echo']
         deleted = ['interface Ethernet1/1', 'bfd',
-                    'interface Ethernet1/2', 'bfd echo']
+                   'interface Ethernet1/2', 'bfd echo']
         overridden = ['interface Ethernet1/1', 'bfd',
-                       'interface Ethernet1/2', 'bfd echo',
-                       'interface Ethernet1/3', 'bfd', 'bfd echo',
-                       'interface Ethernet1/1', 'bfd', 'no bfd echo']
+                      'interface Ethernet1/2', 'bfd echo',
+                      'interface Ethernet1/3', 'bfd', 'bfd echo',
+                      'interface Ethernet1/1', 'bfd', 'no bfd echo']
         replaced = ['interface Ethernet1/1', 'bfd', 'no bfd echo',
-                     'interface Ethernet1/2', 'bfd echo']
+                    'interface Ethernet1/2', 'bfd echo']
 
         playbook['state'] = 'merged'
         set_module_args(playbook, ignore_provider_arg)
@@ -189,8 +189,8 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         merged = []
         deleted = ['interface Ethernet1/1', 'bfd']
         overridden = ['interface Ethernet1/1', 'bfd',
-                       'interface Ethernet1/2', 'bfd echo',
-                       'interface Ethernet1/3', 'bfd', 'bfd echo']
+                      'interface Ethernet1/2', 'bfd echo',
+                      'interface Ethernet1/3', 'bfd', 'bfd echo']
         replaced = ['interface Ethernet1/1', 'bfd']
 
         playbook['state'] = 'merged'
@@ -227,7 +227,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
         merged = ['interface Ethernet1/1.42', 'bfd', 'no bfd echo']
         deleted = []
         overridden = ['interface Ethernet1/1.42', 'bfd', 'no bfd echo',
-                       'interface Ethernet1/1', 'bfd']
+                      'interface Ethernet1/1', 'bfd']
         replaced = ['interface Ethernet1/1.42', 'bfd', 'no bfd echo']
 
         playbook['state'] = 'merged'
