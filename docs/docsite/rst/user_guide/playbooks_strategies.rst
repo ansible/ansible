@@ -38,6 +38,12 @@ Using keywords to control execution
 -----------------------------------
 Several play-level :ref:`keyword<playbook_keywords>` also affect play execution. The most common one is ``serial``, which sets a number, a percentage, or a list of numbers of hosts you want to manage at a time. Setting ``serial`` with any strategy directs Ansible to 'batch' the hosts, completing the play on the specified number or percentage of hosts before starting the next 'batch'. This is especially useful for :ref:`rolling updates<rolling_update_batch_size>`.
 
+The second keyword to affect execution is ``throttle``, which can also be used at the block and task level. This keyword limits the number of workers up to the maximum set via the forks setting or ``serial``. This can be useful in restricting tasks that may be CPU-intensive or interact with a rate-limiting API::
+
+    tasks:
+    - command: /path/to/cpu_intensive_command
+      throttle: 1
+
 Other keywords that affect play execution include ``ignore_errors``, ``ignore_unreachable``, and ``any_errors_fatal``. Please note that these keywords are not strategies. They are play-level directives or options.
 
 .. seealso::
