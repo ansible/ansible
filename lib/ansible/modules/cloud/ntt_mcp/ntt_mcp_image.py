@@ -86,8 +86,7 @@ options:
         type: bool
         default: true
     wait_time:
-        description: The maximum time the Ansible should wait for the task
-                     to complete in seconds
+        description: The maximum time the Ansible should wait for the task to complete in seconds
         required: false
         type: int
         default: 600
@@ -126,7 +125,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+data:
     description: The imported image object
     returned: state == present
     type: complex
@@ -136,7 +135,7 @@ results:
             type: complex
             contains:
                 coresPerSocket:
-                    description: # of cores per CPU socket
+                    description: The number of cores per CPU socket
                     type: int
                     sample: 1
                 count:
@@ -184,7 +183,7 @@ results:
                             type: str
                             sample: "CENTOS"
                 osCustomization:
-                    description:  Does this OS support guest OS cusomtizations
+                    description: Does this OS support guest OS cusomtizations
                     type: bool
                     sample: true
         id:
@@ -244,11 +243,10 @@ results:
                     type: int
                     sample: 1000
         softwareLabel:
-            description:  List of associated labels
-            type: complex
-            contains:
-                type: str
-                sample: "MSSQL2012R2E"
+            description: List of associated labels
+            type: list
+            sample:
+                - "MSSQL2012R2E"
         tag:
             description: List of associated tags
             type: complex
@@ -310,7 +308,7 @@ def import_image(module, client):
             module.fail_json(msg='Could not verify the image import was successful. Check manually')
         return_data['image'].append(wait_result)
 
-    module.exit_json(changed=True, results=return_data.get('image'))
+    module.exit_json(changed=True, data=return_data.get('image'))
 
 
 def delete_image(module, client, image):

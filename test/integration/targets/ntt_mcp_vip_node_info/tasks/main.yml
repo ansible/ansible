@@ -21,7 +21,7 @@
       region: na
       datacenter: NA12
       network_domain: myCND
-      id: e542a819-2942-4d01-9a6c-d26c9b61b88c
+      id: dd9793eb-9d46-482b-a040-34b75c5cf699
     register: node
     tags:
       - get_by_id

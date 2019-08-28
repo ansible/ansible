@@ -230,7 +230,7 @@
       datacenter: NA12
       network_domain: myCND
       name: myServer02
-      disk_id: 085fcf3e-fb9a-43c4-a44b-ffc7531e57b3
+      disk_id: 70112699-d3a0-4bd0-98ac-4e8f96cdbf90
       disk_size: 125
       disk_iops: 1250
       state: expand_disk

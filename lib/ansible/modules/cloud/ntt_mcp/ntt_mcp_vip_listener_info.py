@@ -146,14 +146,14 @@ data:
                             sample: "my_ssl_profile"
                 type:
                     description:
-                        The virtual listener type is used to both specify how the load balancer should
-                        handle traffic and what features/options can be assigned.
+                        - The virtual listener type is used to both specify how the load balancer should handle
+                        - traffic and what features/options can be assigned.
                     type: str
                     sample: Standard
                 sourcePortPreservation:
                     description:
-                        Identifies how the port of the source traffic will be treated when sending
-                        connections to the pool member.
+                        - Identifies how the port of the source traffic will be treated when sending
+                        - connections to the pool member.
                     type: str
                     sample: Preserve
                 enabled:
@@ -161,8 +161,8 @@ data:
                     type: bool
                 persistenceProfile:
                     description:
-                        Provides a method for ensuring that traffic from a client is sent to the same
-                        server in a pool based on an attribute of the connection.
+                        - Provides a method for ensuring that traffic from a client is sent to the same
+                        - server in a pool based on an attribute of the connection.
                     type: complex
                     contains:
                         id:
@@ -191,20 +191,20 @@ data:
                     sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
                 connectionRateLimit:
                     description:
-                        The amount of new connections permitted every second. Should be an
-                        integer between 1 and 4,000.
+                        - The amount of new connections permitted every second. Should be an
+                        - integer between 1 and 4,000.
                     type: int
                     sample: 4000
                 optimizationProfile:
                     description:
-                        For certain combinations of Virtual Listener type and protocol,
-                        it is possible to specify an additional optimization profile.
+                        - For certain combinations of Virtual Listener type and protocol,
+                        - it is possible to specify an additional optimization profile.
                     type: str
                     sample: TCP
                 irule:
                     description:
-                        Custom configured rules that are applied to Virtual Servers to perform a wide
-                        array of actions.
+                        - Custom configured rules that are applied to Virtual Servers to perform a wide
+                        - array of actions.
                     type: list
                     contains:
                         id:
@@ -221,8 +221,8 @@ data:
                     sample: NORMAL
                 connectionLimit:
                     description:
-                        The maximum number of simultaneous connections permitted on the Node.
-                        Should be an integer between 1 and 100,000
+                        - The maximum number of simultaneous connections permitted on the Node.
+                        - Should be an integer between 1 and 100,000
                     type: int
                     sample: 100000
                 listenerIpAddress:
@@ -234,7 +234,7 @@ data:
                     type: str
                     sample: "2019-01-14T11:12:31.000Z"
                 pool:
-                    description:
+                    description: dict containing the VIP Pool
                     type: complex
                     contains:
                         name:
@@ -251,8 +251,8 @@ data:
                             sample: 10
                         healthMonitor:
                             description:
-                                The procedure that the load balancer uses to verify that the VIP Pool is
-                                considered healthy and available for load balancing
+                                - The procedure that the load balancer uses to verify that the VIP Pool is
+                                - considered healthy and available for load balancing
                             type: complex
                             contains:
                                 id:
@@ -265,9 +265,9 @@ data:
                                     sample: CCDEFAULT.Tcp
                         serviceDownAction:
                             description:
-                                When a Pool Member fails to respond to a Health Monitor, the system marks
-                                that Pool Member down and removes any persistence entries associated with
-                                the Pool Member
+                                - When a Pool Member fails to respond to a Health Monitor, the system marks
+                                - that Pool Member down and removes any persistence entries associated with
+                                - the Pool Member
                             type: str
                             sample: "RESELECT"
                         id:

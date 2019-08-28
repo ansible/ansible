@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2019 NTT Communictions Cloud Infrastructure Services
@@ -22,8 +21,10 @@
 # Object Helper functions to keep modules clean
 
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from ansible.module_utils.ntt_mcp.ntt_mcp_utils import compare_json
+
 
 def fw_update_dict(fw_rule):
     """
@@ -37,6 +38,7 @@ def fw_update_dict(fw_rule):
     fw_rule.pop('name', None)
     fw_rule.pop('id', None)
     return fw_rule
+
 
 def compare_fw_rule(new_fw_rule, existing_fw_rule):
     """

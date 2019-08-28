@@ -129,7 +129,7 @@ data:
                     type: complex
                     contains:
                         coresPerSocket:
-                            description: # of cores per CPU socket
+                            description: The number of cores per CPU socket
                             type: int
                             sample: 1
                         count:
@@ -177,7 +177,7 @@ data:
                                     type: str
                                     sample: "CENTOS"
                         osCustomization:
-                            description:  Does this OS support guest OS cusomtizations
+                            description: Does this OS support guest OS cusomtizations
                             type: bool
                             sample: true
                 id:
@@ -237,11 +237,10 @@ data:
                             type: int
                             sample: 1000
                 softwareLabel:
-                    description:  List of associated labels
-                    type: complex
-                    contains:
-                        type: str
-                        sample: "MSSQL2012R2E"
+                    description: List of associated labels
+                    type: list
+                    sample:
+                        - "MSSQL2012R2E"
                 tag:
                     description: List of associated tags
                     type: complex

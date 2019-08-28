@@ -87,8 +87,7 @@ options:
         type: bool
         default: true
     wait_time:
-        description: The maximum time the Ansible should wait for the task
-                     to complete in seconds
+        description: The maximum time the Ansible should wait for the task to complete in seconds
         required: false
         type: int
         default: 600
@@ -193,12 +192,12 @@ data:
             returned: when state == present and wait is True
             sample: "1111:1111:1111:1111:0:0:0:1"
         outsideTransitVlanIpv4Subnet:
-            description:
+            description: The upstream IPv4 transit network
             type: complex
             returned: when state == present and wait is True
             contains:
                 address:
-                    description: The upstream IPv4 transit network
+                    description: The upstream IPv4 transit network gateway
                     type: str
                     sample: "10.10.10.0"
                 prefixSize:
@@ -206,12 +205,12 @@ data:
                     type: int
                     sample: 24
         outsideTransitVlanIpv6Subnet:
-            description:
+            description: The upstream IPv6 transit network
             type: complex
             returned: when state == present and wait is True
             contains:
                 address:
-                    description: The upstream IPv6 transit network
+                    description: The upstream IPv6 transit network gateway
                     type: str
                     sample: "1111:1111:1111:1111:0:0:0:0"
                 prefixSize:

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2019 NTT Communications Cloud Infrastructure Services
@@ -22,14 +21,13 @@
 # NTT LTD MCP Cloud API Provider (MCP 2.0)
 
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 try:
     import requests as REQ
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
-import struct
-import socket
 try:
     from ipaddress import (ip_address as ip_addr)
     HAS_IPADDRESS = True
@@ -37,6 +35,13 @@ except ImportError:
     HAS_IPADDRESS = False
 from ansible.module_utils.ntt_mcp.ntt_mcp_config import (HTTP_HEADERS, API_VERSION, API_ENDPOINTS, DEFAULT_REGION)
 from ansible.module_utils.ntt_mcp.ntt_mcp_utils import get_ip_version, IP_TO_INT, INT_TO_IP
+
+# Python3 workaround for unicode function so the same code can be used with ipaddress later
+try:
+    unicode('')
+except NameError:
+    unicode = str
+
 
 class NTTMCPAPIException(Exception):
     """
@@ -90,7 +95,7 @@ class NTTMCPClient():
         url = ('https://%s/caas/%s/user/myUser' %
                (API_ENDPOINTS[DEFAULT_REGION]['host'], API_VERSION))
         response = self.api_get_call(url, None)
-        if response != None:
+        if response is not None:
             return response.json()['organization']['homeGeoApiHost']
         else:
             raise NTTMCPAPIException('Could not determine the Home Geo for user: %s') % (self.credentials[0])
@@ -105,11 +110,10 @@ class NTTMCPClient():
         url = ('https://%s/caas/%s/user/myUser' %
                (API_ENDPOINTS[DEFAULT_REGION]['host'], API_VERSION))
         response = self.api_get_call(url, None)
-        if response != None:
+        if response is not None:
             return response.json()['organization']['id']
         else:
             raise NTTMCPAPIException('Could not determine the Org Id for user: %s') % (self.credentials[0])
-
 
     '''
     NETWORK FUNCTIONS
@@ -141,14 +145,13 @@ class NTTMCPClient():
         url = self.base_url + 'network/networkDomain'
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             if response.json()['totalCount'] > 0:
                 return response.json()['networkDomain']
             else:
                 raise NTTMCPAPIException('No Network Domain found with the parameters {0}'.format(str(params)))
         else:
             raise NTTMCPAPIException('Could not get a list of network domains')
-
 
     def get_network_domain_by_name(self, name=None, datacenter=None):
         """
@@ -174,7 +177,6 @@ class NTTMCPClient():
         except IndexError as e:
             return None
 
-
     def create_network_domain(self, datacenter=None, name=None, network_type=None, description=None):
         """
         Create a Cloud Network domain
@@ -199,14 +201,13 @@ class NTTMCPClient():
         url = self.base_url + 'network/deployNetworkDomain'
 
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the create Cloud Network Domain request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def update_network_domain(self, network_domain_id=None, name=None, network_type=None, description=None):
         """
@@ -234,14 +235,13 @@ class NTTMCPClient():
         url = self.base_url + 'network/editNetworkDomain'
 
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the update Cloud Network Domain request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def delete_network_domain(self, network_domain_id=None):
         """
@@ -260,8 +260,8 @@ class NTTMCPClient():
         url = self.base_url + 'network/deleteNetworkDomain'
 
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the delete '
@@ -269,7 +269,6 @@ class NTTMCPClient():
                                          'accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def list_vlans(self, datacenter=None, network_domain_id=None, name=None, ipv4_network_address=None,
                    ipv6_network_address=None, state=None, attached=None):
@@ -304,14 +303,13 @@ class NTTMCPClient():
 
         url = self.base_url + 'network/vlan'
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             if 'vlan' in response.json():
                 return response.json()['vlan']
             else:
                 return []
         else:
             raise NTTMCPAPIException('Could not get a list of VLANs')
-
 
     def get_vlan_by_name(self, name=None, datacenter=None, network_domain_id=None):
         """
@@ -335,7 +333,6 @@ class NTTMCPClient():
         except IndexError as e:
             return None
 
-
     def create_vlan(self,
                     networkDomainId=None,
                     name=None,
@@ -345,8 +342,7 @@ class NTTMCPClient():
                     attachedVlan=False,
                     detachedVlan=False,
                     attachedVlan_gatewayAddressing=None,
-                    detachedVlan_ipv4GatewayAddress=None
-                   ):
+                    detachedVlan_ipv4GatewayAddress=None):
         """
         Create a VLAN
         """
@@ -373,8 +369,8 @@ class NTTMCPClient():
         url = self.base_url + 'network/deployVlan'
 
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the create VLAN request was accepted')
@@ -386,8 +382,7 @@ class NTTMCPClient():
                     name=None,
                     description=None,
                     detached_vlan_gw=None,
-                    detached_vlan_gw_ipv6=None
-                   ):
+                    detached_vlan_gw_ipv6=None):
         """
         Update an existing VLAN
         """
@@ -409,14 +404,13 @@ class NTTMCPClient():
         url = self.base_url + 'network/editVlan'
 
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the update VLAN request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def delete_vlan(self, vlan_id=None):
         """
@@ -431,14 +425,13 @@ class NTTMCPClient():
         url = self.base_url + 'network/deleteVlan'
 
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the delete VLAN request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def list_servers(self, datacenter=None, network_domain_id=None, vlan_id=None, name=None):
         """
@@ -461,14 +454,13 @@ class NTTMCPClient():
         url = self.base_url + 'server/server'
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             if 'server' in response.json():
                 return response.json()['server']
             else:
                 return []
         else:
             raise NTTMCPAPIException('Could not get a list of servers')
-
 
     def get_server_by_name(self, datacenter=None, network_domain_id=None, vlan_id=None, name=None):
         """
@@ -489,7 +481,6 @@ class NTTMCPClient():
         else:
             return None
 
-
     def create_server(self, ngoc, params):
         """
         Create a VM
@@ -499,14 +490,13 @@ class NTTMCPClient():
         else:
             url = self.base_url + 'server/deployServer'
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the create server request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def reconfigure_server(self, params):
         """
@@ -517,15 +507,14 @@ class NTTMCPClient():
         """
         url = self.base_url + 'server/reconfigureServer'
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the update '
                                          'server request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def delete_server(self, server_id=None):
         """
@@ -540,14 +529,13 @@ class NTTMCPClient():
         url = self.base_url + 'server/deleteServer'
 
         response = self.api_post_call(url, params)
-        if response != None:
-            if response.json()['requestId'] != None:
+        if response is not None:
+            if response.json()['requestId']:
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the delete Server request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def shutdown_server(self, server_id=None):
         """
@@ -561,7 +549,7 @@ class NTTMCPClient():
 
         url = self.base_url + 'server/shutdownServer'
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             if 'requestId' in response.json():
                 return response.json()
             elif 'responseCode' in response.json():
@@ -578,7 +566,6 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
-
     def poweroff_server(self, server_id=None):
         """
         Hard power off a VM
@@ -591,7 +578,7 @@ class NTTMCPClient():
 
         url = self.base_url + 'server/powerOffServer'
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             if 'requestId' in response.json():
                 return response.json()
             elif 'responseCode' in response.json():
@@ -608,7 +595,6 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
-
     def start_server(self, server_id=None):
         """
         Power on a VM
@@ -621,7 +607,7 @@ class NTTMCPClient():
 
         url = self.base_url + 'server/startServer'
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             if 'requestId' in response.json():
                 return response.json()
             else:
@@ -641,14 +627,13 @@ class NTTMCPClient():
 
         url = self.base_url + 'server/rebootServer'
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             if 'requestId' in response.json():
                 return response.json()
             else:
                 raise NTTMCPAPIException('Could not confirm that the reboot server request was accepted')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def add_disk(self, controller_id=None, controller_name=None,
                  device_number=None, size=None, speed=None, iops=None):
@@ -680,11 +665,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/addDisk'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def change_iops(self, disk_id=None, disk_iops=None):
         """
@@ -702,11 +686,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/changeDiskIops'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def expand_disk(self, server_id=None, disk_id=None, disk_size=None):
         """
@@ -729,11 +712,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/expandDisk'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def update_disk_speed(self, disk_id=None, speed=None, iops=None):
         """
@@ -753,11 +735,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/changeDiskSpeed'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def update_disk_iops(self, disk_id=None, iops=None):
         """
@@ -775,11 +756,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/changeDiskIops'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def remove_disk(self, disk_id=None):
         """
@@ -794,11 +774,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/removeDisk'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def add_controller(self, server_id=None, controller_type=None, adapter_type=None, controller_number=None):
         """
@@ -817,15 +796,13 @@ class NTTMCPClient():
         params['serverId'] = server_id
         params['adapterType'] = adapter_type
 
-
         url = self.base_url + 'server/addScsiController'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def remove_controller(self, controller_id=None):
         """
@@ -840,11 +817,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/removeScsiController'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def add_nic(self, server_id=None, vlan_id=None, ipv4_address=None, nic_type='VMXNET3', connected=True):
         """
@@ -868,11 +844,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/addNic'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def remove_nic(self, nic_id=None):
         """
@@ -887,11 +862,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/removeNic'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def change_nic_type(self, nic_id=None, nic_type=None):
         """
@@ -907,11 +881,10 @@ class NTTMCPClient():
         url = self.base_url + 'server/changeNetworkAdapter'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def exchange_nic(self, nic_1_id=None, nic_2_id=None):
         """
@@ -927,7 +900,7 @@ class NTTMCPClient():
         url = self.base_url + 'server/exchangeNicVlans'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
@@ -950,7 +923,7 @@ class NTTMCPClient():
 
         response = self.api_get_call(url, params)
         try:
-            if response != None:
+            if response is not None:
                 snats = response.json().get('snatExclusion')
                 if network:
                     for snat in snats:
@@ -969,7 +942,6 @@ class NTTMCPClient():
         except Exception as e:
             raise NTTMCPAPIException('Could not decode the response - {0}'.format(e))
 
-
     def get_snat_exclusion(self, snat_id):
         """
         Get a specific SNAT exclusion
@@ -985,10 +957,11 @@ class NTTMCPClient():
 
         response = self.api_get_call(url, params)
         try:
+            if response.json().get('responseCode') == 'RESOURCE_NOT_FOUND':
+                return []
             return response.json()
         except KeyError:
             return {}
-
 
     def create_snat_exclusion(self, network_domain_id=None, description=None, network=None, prefix=None):
         """
@@ -1018,7 +991,6 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the create firewall rule request was accepted')
 
-
     def remove_snat_exclusion(self, snat_id):
         """
         Remove a SNAT exclusion
@@ -1034,11 +1006,10 @@ class NTTMCPClient():
         url = self.base_url + 'network/removeSnatExclusion'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def restore_snat_exclusion(self, network_domain_id):
         """
@@ -1056,11 +1027,10 @@ class NTTMCPClient():
         url = self.base_url + 'network/restoreSnatExclusions'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def list_static_routes(self, network_domain_id=None, name=None, version=None, network=None, prefix=None, next_hop=None):
         """
@@ -1080,7 +1050,7 @@ class NTTMCPClient():
         url = self.base_url + 'network/staticRoute'
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             routes = response.json().get('staticRoute')
             if network is not None or next_hop:
                 for route in routes:
@@ -1089,8 +1059,7 @@ class NTTMCPClient():
                     elif all([network, prefix, next_hop]):
                         if (route.get('destinationNetworkAddress') == network
                                 and route.get('destinationPrefixSize') == prefix
-                                and route.get('nextHopAddress') == next_hop
-                           ):
+                                and route.get('nextHopAddress') == next_hop):
                             return_data.append(route)
                     elif all([network, prefix]):
                         if route.get('destinationNetworkAddress') == network and route.get('destinationPrefixSize') == prefix:
@@ -1109,7 +1078,6 @@ class NTTMCPClient():
             return return_data
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def create_static_route(self, network_domain_id=None, name=None, description=None,
                             version=None, network=None, prefix=None, next_hop=None):
@@ -1132,7 +1100,7 @@ class NTTMCPClient():
         url = self.base_url + 'network/createStaticRoute'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
@@ -1149,11 +1117,10 @@ class NTTMCPClient():
         url = self.base_url + 'network/deleteStaticRoute'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def restore_static_routes(self, network_domain_id):
         """
@@ -1168,11 +1135,10 @@ class NTTMCPClient():
         url = self.base_url + 'network/restoreStaticRoutes'
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_geo(self, geo_id=None, geo_name=None, is_home=False):
         """
@@ -1189,11 +1155,10 @@ class NTTMCPClient():
                (self.home_geo, API_VERSION, self.org_id))
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_dc(self, dc_id=None):
         """
@@ -1206,11 +1171,10 @@ class NTTMCPClient():
         url = self.base_url + 'infrastructure/datacenter'
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_os(self, os_id=None, os_name=None, os_family=None):
         """
@@ -1233,7 +1197,7 @@ class NTTMCPClient():
         url = self.base_url + 'infrastructure/operatingSystem'
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
@@ -1261,11 +1225,10 @@ class NTTMCPClient():
         url = self.base_url + 'image/osImage'
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_customer_image(self, image_id):
         """
@@ -1277,11 +1240,10 @@ class NTTMCPClient():
         url = self.base_url + 'image/customerImage/%s' % image_id
 
         response = self.api_get_call(url)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def list_customer_image(self, datacenter_id=None, image_id=None, image_name=None, os_family=None):
         """
@@ -1312,14 +1274,13 @@ class NTTMCPClient():
         url = self.base_url + 'image/customerImage'
 
         response = self.api_get_call(url, params)
-        if response != None:
+        if response is not None:
             try:
                 return response.json().get('customerImage')
             except AttributeError:
                 raise NTTMCPAPIException('Error with the API response')
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def import_customer_image(self, datacenter_id, ovf_package, image_name, description, guest_customization):
         """
@@ -1355,11 +1316,10 @@ class NTTMCPClient():
             params['guestOsCustomization'] = guest_customization
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def delete_customer_image(self, image_id):
         """
@@ -1377,11 +1337,10 @@ class NTTMCPClient():
             params['id'] = image_id
 
         response = self.api_post_call(url, params)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def list_public_ipv4(self, network_domain_id):
         """
@@ -1399,7 +1358,6 @@ class NTTMCPClient():
         except KeyError:
             return []
 
-
     def get_public_ipv4(self, public_ipv4_block_id):
         """
         Return a specific public IPv4 block object
@@ -1410,13 +1368,12 @@ class NTTMCPClient():
         url = self.base_url + 'network/publicIpBlock/%s' % (public_ipv4_block_id)
 
         response = self.api_get_call(url)
-        if response != None:
+        if response is not None:
             if response.json().get('responseCode') == 'RESOURCE_NOT_FOUND':
                 return []
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_public_ipv4_by_ip(self, network_domain_id, public_ipv4):
         """
@@ -1427,20 +1384,18 @@ class NTTMCPClient():
         :returns: The public IPv4 block dict
         """
         ip_list = []
-        ip_to_int = lambda ip_address: struct.unpack('!I', socket.inet_aton(ip_address))[0]
-        public_ipv4_int = ip_to_int(public_ipv4)
+        public_ipv4_int = IP_TO_INT(public_ipv4)
         try:
             public_ip_blocks = self.list_public_ipv4(network_domain_id)
             for public_block in public_ip_blocks:
-                ip_list.append(ip_to_int(public_block['baseIp']))
+                ip_list.append(IP_TO_INT(public_block['baseIp']))
                 for i in range(public_block['size']):
-                    ip_list.append(ip_to_int(public_block['baseIp']) + i)
+                    ip_list.append(IP_TO_INT(public_block['baseIp']) + i)
                 if public_ipv4_int in ip_list:
                     return public_block
             return None
         except Exception as e:
             raise NTTMCPAPIException('{0}'.format(e))
-
 
     def get_next_public_ipv4(self, network_domain_id):
         """
@@ -1450,8 +1405,6 @@ class NTTMCPClient():
         """
         return_data = {}
         return_data['changed'] = False
-        ip_to_int = lambda ip_address: struct.unpack('!I', socket.inet_aton(ip_address))[0]
-        int_to_ip = lambda i: socket.inet_ntoa(struct.pack('!I', i))
         nat_public_ip_list = []
         try:
             public_ip_blocks = self.list_public_ipv4(network_domain_id)
@@ -1460,7 +1413,7 @@ class NTTMCPClient():
                 nat_public_ip_list.append(nat['externalIp'])
             for public_block in public_ip_blocks:
                 ip1 = public_block['baseIp']
-                ip2 = int_to_ip(ip_to_int(ip1) + 1)
+                ip2 = INT_TO_IP(IP_TO_INT(ip1) + 1)
                 if ip1 not in nat_public_ip_list:
                     return_data['ipAddress'] = ip1
                     return return_data
@@ -1475,7 +1428,6 @@ class NTTMCPClient():
             return return_data
         except Exception as e:
             raise NTTMCPAPIException('{0}'.format(e))
-
 
     def add_public_ipv4(self, network_domain_id):
         """
@@ -1492,7 +1444,6 @@ class NTTMCPClient():
             return response.json()['info'][0]['value']
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the add public ipv4 block request was accepted')
-
 
     def remove_public_ipv4(self, public_ipv4_block_id):
         """
@@ -1512,7 +1463,6 @@ class NTTMCPClient():
                 return response.json()['error']
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove public ipv4 block request was accepted')
-
 
     def check_public_block_in_use(self, network_domain_id, base_public_ipv4):
         """
@@ -1534,7 +1484,6 @@ class NTTMCPClient():
             return True
         except (KeyError, IndexError, NTTMCPAPIException) as e:
             raise NTTMCPAPIException('{0}'.format(e))
-
 
     def list_reserved_ip(self, vlan_id=None, datacenter_id=None, version=4):
         """
@@ -1570,8 +1519,6 @@ class NTTMCPClient():
                 raise NTTMCPAPIException('Invalid IP version')
         except (KeyError, NTTMCPAPIException) as e:
             raise NTTMCPAPIException(e)
-            #return []
-
 
     def reserve_ip(self, vlan_id=None, ip_address=None, description=None, version=4):
         """
@@ -1606,7 +1553,6 @@ class NTTMCPClient():
         except (KeyError, IndexError, AttributeError):
             raise NTTMCPAPIException('Could not confirm that the reserve private ipv{0} address request was accepted'.format(version))
 
-
     def unreserve_ip(self, vlan_id=None, ip_address=None, version=4):
         """
         Unreserve an IPv4 or IPv6 address
@@ -1637,7 +1583,6 @@ class NTTMCPClient():
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the unreserving of the private ipv{0} address request was accepted'.format(version))
 
-
     def list_nat_rule(self, network_domain_id):
         """
         Return an array of NAT rules for a Cloud Network Domain
@@ -1653,7 +1598,6 @@ class NTTMCPClient():
             return response.json()['natRule']
         except KeyError:
             return []
-
 
     def create_nat_rule(self, network_domain_id=None, internal_ip=None, external_ip=None):
         """
@@ -1684,7 +1628,6 @@ class NTTMCPClient():
         except IndexError:
             raise NTTMCPAPIException('Could not confirm that the create NAT rule request was accepted')
 
-
     def get_nat_rule(self, nat_rule_id):
         """
         Return a specific NAT rule by UUID
@@ -1692,14 +1635,13 @@ class NTTMCPClient():
         :arg nat_rule_id: NAT rule UUID
         :returns: The NAT rule object
         """
-        url = self.base_url + 'network/natRule/{0}}'.format(nat_rule_id)
+        url = self.base_url + 'network/natRule/{0}'.format(nat_rule_id)
 
         response = self.api_get_call(url)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_nat_by_private_ip(self, network_domain_id, private_ip):
         """
@@ -1711,7 +1653,7 @@ class NTTMCPClient():
         """
         try:
             nat_rules = self.list_nat_rule(network_domain_id)
-            for nat_rule  in nat_rules:
+            for nat_rule in nat_rules:
                 if nat_rule['internalIp'] == private_ip:
                     return nat_rule
             return None
@@ -1728,13 +1670,12 @@ class NTTMCPClient():
         """
         try:
             nat_rules = self.list_nat_rule(network_domain_id)
-            for nat_rule  in nat_rules:
+            for nat_rule in nat_rules:
                 if nat_rule['externalIp'] == public_ip:
                     return nat_rule
             return None
         except Exception as e:
             raise NTTMCPAPIException('{0}'.format(e))
-
 
     def remove_nat_rule(self, nat_rule_id):
         """
@@ -1755,7 +1696,6 @@ class NTTMCPClient():
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove NAT rule request was accepted')
 
-
     def list_port_list(self, network_domain_id):
         """
         Return an array of port lists for a specified Cloud Network Domains
@@ -1772,7 +1712,6 @@ class NTTMCPClient():
         except KeyError:
             return []
 
-
     def get_port_list(self, network_domain_id, port_list_id):
         """
         Return a port list based on UUIDs
@@ -1784,11 +1723,10 @@ class NTTMCPClient():
         url = self.base_url + 'network/portList/%s' % port_list_id
 
         response = self.api_get_call(url)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_port_list_by_name(self, network_domain_id, name):
         """
@@ -1831,8 +1769,7 @@ class NTTMCPClient():
                                              ports,
                                              None,
                                              child_port_lists,
-                                             None
-                                            )
+                                             None)
         url = self.base_url + 'network/createPortList'
 
         response = self.api_post_call(url, params)
@@ -1840,7 +1777,6 @@ class NTTMCPClient():
             return response.json()['info'][0]['value']
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the create Port List request was accepted')
-
 
     def update_port_list(self, network_domain_id, port_list_id, description, ports, ports_nil, child_port_lists, child_port_lists_nil):
         """
@@ -1868,8 +1804,7 @@ class NTTMCPClient():
                                              ports,
                                              ports_nil,
                                              child_port_lists,
-                                             child_port_lists_nil
-                                            )
+                                             child_port_lists_nil)
         params.pop('name')
         url = self.base_url + 'network/editPortList'
 
@@ -1878,7 +1813,6 @@ class NTTMCPClient():
             return response.json()['responseCode']
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the update Port List request was accepted')
-
 
     def port_list_args_to_dict(self, create, network_domain_id, port_list_id, name, description,
                                ports, ports_nil, child_port_list, child_port_list_nil):
@@ -1931,7 +1865,6 @@ class NTTMCPClient():
 
         return params
 
-
     def remove_port_list(self, port_list_id):
         """
         Remove a port list - Note port list must not be currently used in a firewall rule
@@ -1950,7 +1883,6 @@ class NTTMCPClient():
                 return response.json()['error']
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove Port List request was accepted')
-
 
     def list_ip_list(self, network_domain_id, version):
         """
@@ -1972,7 +1904,6 @@ class NTTMCPClient():
         except KeyError:
             return []
 
-
     def get_ip_list(self, network_domain_id, ip_address_list_id):
         """
         Return a specific IP address list based on a UUID
@@ -1983,11 +1914,10 @@ class NTTMCPClient():
         url = self.base_url + 'network/ipAddressList/%s' % ip_address_list_id
 
         response = self.api_get_call(url)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_ip_list_by_name(self, network_domain_id, name, version):
         """
@@ -2011,7 +1941,6 @@ class NTTMCPClient():
             return None
         except IndexError:
             return None
-
 
     def create_ip_list(self, network_domain_id, name, description, ip_addresses, child_ip_lists, version):
         """
@@ -2037,8 +1966,7 @@ class NTTMCPClient():
                                            False,
                                            child_ip_lists,
                                            False,
-                                           version
-                                          )
+                                           version)
 
         url = self.base_url + 'network/createIpAddressList'
         response = self.api_post_call(url, params)
@@ -2046,7 +1974,6 @@ class NTTMCPClient():
             return response.json()['info'][0]['value']
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the create IP Address List request was accepted')
-
 
     def update_ip_list(self, network_domain_id, ip_address_list_id, description, ip_addresses, ip_addresses_nil,
                        child_ip_lists, child_ip_lists_nil):
@@ -2076,8 +2003,7 @@ class NTTMCPClient():
                                            ip_addresses_nil,
                                            child_ip_lists,
                                            child_ip_lists_nil,
-                                           None
-                                          )
+                                           None)
         params.pop('name')
         params.pop('ipVersion')
 
@@ -2088,7 +2014,6 @@ class NTTMCPClient():
             return response.json()['responseCode']
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the update IP Address List request was accepted')
-
 
     def ip_list_args_to_dict(self, create, network_domain_id, ip_address_list_id, name, description, ip_addresses,
                              ip_addresses_nil, child_ip_lists, child_ip_lists_nil, version):
@@ -2141,7 +2066,6 @@ class NTTMCPClient():
                 except KeyError:
                     raise NTTMCPAPIException('IP Addresses must have a beginning IP Address')
 
-
         if description:
             params['description'] = description
 
@@ -2149,7 +2073,6 @@ class NTTMCPClient():
             params['childIpAddressListId'] = child_ip_list_id
 
         return params
-
 
     def remove_ip_list(self, ip_address_list_id):
         """
@@ -2170,7 +2093,6 @@ class NTTMCPClient():
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove IP Address List request was accepted')
 
-
     def list_fw_rules(self, network_domain_id,):
         """
         Return an array of firewall rules for the specified Cloud Network Domain
@@ -2188,7 +2110,6 @@ class NTTMCPClient():
         except KeyError:
             return []
 
-
     def get_fw_rule(self, network_domain_id, fw_rule_id):
         """
         Return a specific firewall rule based on a UUID
@@ -2200,11 +2121,10 @@ class NTTMCPClient():
         url = self.base_url + 'network/firewallRule/{0}'.format(fw_rule_id)
 
         response = self.api_get_call(url)
-        if response != None:
+        if response is not None:
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
-
 
     def get_fw_rule_by_name(self, network_domain_id, name):
         """
@@ -2225,7 +2145,6 @@ class NTTMCPClient():
             return None
         except IndexError:
             return None
-
 
     def create_fw_rule(self, fw_rule):
         """
@@ -2258,7 +2177,6 @@ class NTTMCPClient():
             return response.json()['info'][0]['value']
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the create firewall rule request was accepted')
-
 
     def fw_args_to_dict(self, create, fw_rule_id, network_domain_id, name, action, version,
                         protocol, src_ip, src_ip_prefix, src_ip_list_id,
@@ -2363,7 +2281,6 @@ class NTTMCPClient():
 
         return params
 
-
     def update_fw_rule(self, fw_rule):
         """
         Update an existing firewall rule
@@ -2381,7 +2298,6 @@ class NTTMCPClient():
             return response.json().get('responseCode')
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the update firewall rule request was accepted')
-
 
     def remove_fw_rule(self, firewall_rule_id):
         """
@@ -2401,7 +2317,6 @@ class NTTMCPClient():
                 return response.json()['error']
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove firewall rule request was accepted')
-
 
     def list_vip_node(self, network_domain_id=None, name=None, ip_address=None):
         """
@@ -2437,7 +2352,6 @@ class NTTMCPClient():
         except Exception:
             return []
 
-
     def get_vip_node(self, node_id):
         """
         Return a specific Virtual IP node
@@ -2453,13 +2367,12 @@ class NTTMCPClient():
 
         response = self.api_get_call(url, params)
         try:
-            if response:
+            if response is not None:
                 if response.json().get('responseCode') == 'RESOURCE_NOT_FOUND':
                     return []
                 return response.json()
         except (KeyError, AttributeError, NTTMCPAPIException):
             return {}
-
 
     def create_vip_node(self, network_domain_id=None, name=None, description=None, ip_address=None, status=None,
                         health_monitor=None, connection_limit=None, connection_rate_limit=None):
@@ -2500,7 +2413,6 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the create VIP Node request was accepted')
 
-
     def update_vip_node(self, node_id=None, description=None, status=None, health_monitor=None, no_health_monitor=False,
                         connection_limit=None, connection_rate_limit=None):
         """
@@ -2539,7 +2451,6 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the update VIP Node request was accepted')
 
-
     def remove_vip_node(self, node_id):
         """
         Remove a Virtual IP node
@@ -2562,7 +2473,6 @@ class NTTMCPClient():
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove VIP Node request was accepted')
 
-
     def list_vip_health_monitor(self, network_domain_id=None):
         """
         Return an array of Virtual IP health monitor profiles
@@ -2582,7 +2492,6 @@ class NTTMCPClient():
             return response.json().get('defaultHealthMonitor')
         except Exception:
             return []
-
 
     def list_vip_pool(self, network_domain_id=None, name=None):
         """
@@ -2609,7 +2518,6 @@ class NTTMCPClient():
         except Exception:
             return []
 
-
     def get_vip_pool(self, pool_id):
         """
         Return a specific Virtual IP pool based on the specified UUID
@@ -2629,7 +2537,6 @@ class NTTMCPClient():
         except Exception:
             return {}
 
-
     def create_vip_pool(self, network_domain_id=None, name=None, description=None, load_balancing=None,
                         service_down_action=None, health_monitor=None, slow_ramp_time=None):
         """
@@ -2639,10 +2546,14 @@ class NTTMCPClient():
         :kw name: The node name
         :kw description: The pool description
         :kw ip_address: The IPv4 or IPv6 address of the Node
-        :kw load_balancing: The load balancing method for the node. Valid values are stored in LOAD_BALANCING_METHODS in ansible.module_utils.ntt_mcp_config
-        :kw health_monitor: List of UUID for a pool compatible health monitoring profiles (maximum of 2 IDs in the list)
-        :kw service_down_action: When a Pool Member fails to respond to a Health Monitor, the system marks that Pool Member down and removes any persistence entries associated with the Pool Member.
-        :kw slow_ramp_time: The Slow Ramp Time setting controls the percentage of connections that are sent to a new Pool Member by specifying the duration (in seconds)
+        :kw load_balancing: The load balancing method for the node. Valid values are stored in LOAD_BALANCING_METHODS
+                            in ansible.module_utils.ntt_mcp_config
+        :kw health_monitor: List of UUID for a pool compatible health monitoring profiles
+                            (maximum of 2 IDs in the list)
+        :kw service_down_action: When a Pool Member fails to respond to a Health Monitor, the system marks that Pool
+                                 Member down and removes any persistence entries associated with the Pool Member.
+        :kw slow_ramp_time: The Slow Ramp Time setting controls the percentage of connections that are sent to a new
+                            Pool Member by specifying the duration (in seconds)
         :returns: The UUID of the newly created pool
         """
         params = {}
@@ -2667,18 +2578,21 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the create VIP Pool request was accepted')
 
-
     def update_vip_pool(self, vip_pool_id, description=None, load_balancing=None, health_monitor=None,
                         no_health_monitor=None, service_down_action=None, slow_ramp_time=None):
         """
         Update an existing IP Pool
         :kw vip_pool_id: The UUID of the VIP Pool
         :kw description: The description of the VIP Pool
-        :kw load_balancing: The load balancing method for the node. Valid values are stored in LOAD_BALANCING_METHODS in ansible.module_utils.ntt_mcp_config
-        :kw health_monitor: List of UUID for a pool compatible health monitoring profiles (maximum of 2 IDs in the list)
+        :kw load_balancing: The load balancing method for the node. Valid values are stored in LOAD_BALANCING_METHODS
+                            in ansible.module_utils.ntt_mcp_config
+        :kw health_monitor: List of UUID for a pool compatible health monitoring profiles
+                            (maximum of 2 IDs in the list)
         :kw no_health_monitor: If this is True all health monitoring profiles will be removed from the VIP Pool
-        :kw service_down_action: When a Pool Member fails to respond to a Health Monitor, the system marks that Pool Member down and removes any persistence entries associated with the Pool Member.
-        :kw slow_ramp_time: The Slow Ramp Time setting controls the percentage of connections that are sent to a new Pool Member by specifying the duration (in seconds)
+        :kw service_down_action: When a Pool Member fails to respond to a Health Monitor, the system marks that Pool
+                                 Member down and removes any persistence entries associated with the Pool Member.
+        :kw slow_ramp_time: The Slow Ramp Time setting controls the percentage of connections that are sent to a new
+                            Pool Member by specifying the duration (in seconds)
         # Return: The UUID of the updated pool
         """
         params = {}
@@ -2707,7 +2621,6 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the update VIP Pool request was accepted')
 
-
     def remove_vip_pool(self, vip_pool_id=None):
         """
         Remove a VIP Pool
@@ -2730,7 +2643,6 @@ class NTTMCPClient():
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove VIP Pool request was accepted')
 
-
     def list_vip_pool_members(self, vip_pool_id=None):
         """
         List all the members for the given VIP Pool ID
@@ -2750,7 +2662,6 @@ class NTTMCPClient():
             return response.json().get('poolMember')
         except (KeyError, IndexError):
             return []
-
 
     def add_vip_pool_member(self, vip_pool_id=None, vip_node_id=None, port=None, status=None):
         """
@@ -2779,7 +2690,6 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the add VIP Pool Member request was accepted')
 
-
     def remove_vip_pool_member(self, vip_pool_member_id):
         """
         Remove a member to an existing VIP Pool
@@ -2801,7 +2711,6 @@ class NTTMCPClient():
                 return response.json().get('error')
         except (KeyError, AttributeError):
             raise NTTMCPAPIException('Could not confirm that the remove VIP Pool Member request was accepted')
-
 
     def list_vip_ssl(self, network_domain_id=None, ssl_type=None, name=None):
         """
@@ -2828,7 +2737,6 @@ class NTTMCPClient():
             return response.json().get(ssl_type)
         except (KeyError, IndexError, AttributeError):
             return []
-
 
     def get_vip_ssl(self, ssl_type=None, ssl_id=None):
         """
@@ -2859,7 +2767,6 @@ class NTTMCPClient():
         except (KeyError, IndexError, AttributeError):
             return {}
 
-
     def import_ssl_cert(self, network_domain_id=None, name=None, description=None, cert=None, cert_key=None):
         """
         Import a SSL certificate
@@ -2889,7 +2796,6 @@ class NTTMCPClient():
         except (KeyError, IndexError, AttributeError):
             raise NTTMCPAPIException('Could not confirm that the import SSL certificate request was accepted')
 
-
     def import_ssl_cert_chain(self, network_domain_id=None, name=None, description=None, cert_chain=None):
         """
         Import a SSL certificate chain
@@ -2916,7 +2822,6 @@ class NTTMCPClient():
             return response.json().get('info')[0].get('value')
         except (KeyError, IndexError, AttributeError):
             raise NTTMCPAPIException('Could not confirm that the import SSL certificate chain request was accepted')
-
 
     def create_ssl_offload_profile(self, network_domain_id=None, name=None, description=None, ciphers=None, cert_id=None, cert_chain_id=None):
         """
@@ -2948,7 +2853,6 @@ class NTTMCPClient():
             return response.json().get('info')[0].get('value')
         except (KeyError, IndexError, AttributeError):
             raise NTTMCPAPIException('Could not confirm that the create SSL Offload Profile request was accepted')
-
 
     def update_ssl_offload_profile(self, profile_id=None, name=None, description=None, ciphers=None, cert_id=None, cert_chain_id=None):
         """
@@ -2984,8 +2888,6 @@ class NTTMCPClient():
         except (KeyError, IndexError, AttributeError):
             raise NTTMCPAPIException('Could not confirm that the update SSL Offload Profile request was accepted')
 
-
-
     def remove_ssl(self, ssl_type=None, ssl_id=None):
         """
         Remove a VIP SSL object
@@ -3016,7 +2918,6 @@ class NTTMCPClient():
         except Exception as e:
             raise NTTMCPAPIException('{0}'.format(e))
 
-
     def list_vip_listener(self, network_domain_id=None, name=None):
         """
         List VIP Virtual Listeners
@@ -3040,7 +2941,6 @@ class NTTMCPClient():
         except Exception:
             return []
 
-
     def get_vip_listener(self, listener_id):
         """
         List VIP Virtual Listeners
@@ -3061,8 +2961,6 @@ class NTTMCPClient():
             return response.json()
         except Exception:
             return {}
-
-
 
     def list_irule(self, network_domain_id=None, name=None):
         """
@@ -3089,7 +2987,6 @@ class NTTMCPClient():
         except Exception:
             return []
 
-
     def list_persistence_profile(self, network_domain_id=None, name=None):
         """
         List VIP Persistence Profiles
@@ -3114,7 +3011,6 @@ class NTTMCPClient():
             return response.json().get('defaultPersistenceProfile')
         except Exception:
             return []
-
 
     def create_vip_listener(self, network_domain_id=None, name=None, description=None, listener_type='STANDARD',
                             protocol='ANY', ip_address=None, port=None, enabled=True, connection_limit=100000,
@@ -3185,7 +3081,6 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the create VIP Virtual Listener request was accepted')
 
-
     def update_vip_listener(self, listener_id=None, description=None, listener_type='STANDARD',
                             protocol='ANY', enabled=True, connection_limit=100000,
                             connection_rate_limit=4000, preservation=None, pool_id_1=None, pool_id_2=None,
@@ -3244,7 +3139,6 @@ class NTTMCPClient():
         except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not confirm that the update VIP Virtual Listener request was accepted')
 
-
     def remove_vip_listener(self, listener_id=None):
         """
         Remove a VIP Pool
@@ -3280,11 +3174,10 @@ class NTTMCPClient():
         """
         response = REQ.get(url, auth=self.credentials, headers=HTTP_HEADERS, params=params)
         try:
-            if response != None:
+            if response is not None:
                 if response.status_code == 200:
                     return response
                 elif response.json().get('responseCode') == 'RESOURCE_NOT_FOUND':
-                    #raise Exception('No object found')
                     return response
                 else:
                     raise NTTMCPAPIException(response.text)
@@ -3292,7 +3185,6 @@ class NTTMCPClient():
                 raise Exception('No response from the API for url: {0}'.format(url))
         except Exception as e:
             raise NTTMCPAPIException('{0} {1}'.format(e, response.text))
-
 
     def api_post_call(self, url, params):
         """
@@ -3304,7 +3196,7 @@ class NTTMCPClient():
         """
         response = REQ.post(url, auth=self.credentials, headers=HTTP_HEADERS, json=params)
         try:
-            if response != None:
+            if response is not None:
                 if response.status_code == 200:
                     return response
                 else:

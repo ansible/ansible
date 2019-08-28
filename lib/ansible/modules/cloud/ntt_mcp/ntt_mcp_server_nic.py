@@ -90,7 +90,7 @@ options:
             - E1000
     connected:
         description:
-            - Should the NIC be connected
+            - Should the NIC be connected at boot
         required: false
         type: bool
         default: true
@@ -100,7 +100,7 @@ options:
             - Disk operations can only be performed while the server is stopped
         required: false
         type: bool
-        default: True
+        default: true
     start:
         description:
             - Should the server be started after the NIC operations have completed
@@ -114,8 +114,7 @@ options:
         type: bool
         default: true
     wait_time:
-        description: The maximum time the Ansible should wait for the task
-                     to complete in seconds
+        description: The maximum time the Ansible should wait for the task to complete in seconds
         required: false
         type: int
         default: 1200
@@ -521,7 +520,7 @@ data:
             returned: when state == present and wait is True
             contains:
                 coresPerSocket:
-                    description: # of cores per CPU socket
+                    description: The number of cores per CPU socket
                     type: int
                     sample: 1
                 count:
