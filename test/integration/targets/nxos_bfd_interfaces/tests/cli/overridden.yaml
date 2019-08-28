@@ -41,26 +41,17 @@
     nxos_bfd_interfaces: &overridden
       config:
         - name: "{{ test_int1 }}"
-          bfd: "{{ bfd_enable|default(omit)}}"
-          echo: disable
-        - name: "{{ test_int2 }}"
           bfd: "{{ bfd_disable|default(omit)}}"
-          echo: enable
+          echo: disable
       state: overridden
     register: result
 
   - assert:
       that:
-        - "result.changed == true"
-        - "'no bfd echo' in result.commands"
-        - "'bfd echo' in result.commands"
+        - result.changed == true
+        - result.commands[1] == 'bfd echo'     # test_int2 reset to defaults
+        - result.commands[3] == 'no bfd echo'  # test_int1 set to playval
       msg: "Assert failed. 'result.commands': {{ result.commands }}"
-
-  - assert:
-      that:
-        - "{{ 'bfd' in result.commands }}"
-      msg: "Assert failed. 'result.commands': {{ result.commands }}"
-    when: bfd_enable is defined
 
   - name: Idempotence - Overridden
     nxos_bfd_interfaces: *overridden

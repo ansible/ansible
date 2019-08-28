@@ -165,15 +165,19 @@ class Bfd_interfaces(ConfigBase):
         """
         cmds = []
         for h in have:
-            # Check existing states, set to default if not in want or different than want
+            # Clean up bfd attrs for any interfaces not listed in the play
             h = flatten_dict(h)
             obj_in_want = flatten_dict(search_obj_in_list(h['name'], want, 'name'))
-            if h == obj_in_want:
+            if obj_in_want:
+                # Let the 'want' loop handle all vals for this interface
                 continue
             cmds.extend(self.del_attribs(h))
         for w in want:
-            # Update any wants if needed
-            cmds.extend(self.set_commands(flatten_dict(w), have))
+            # Update any want attrs if needed. The overridden state considers
+            # the play as the source of truth for the entire device, therefore
+            # set any unspecified attrs to their default state.
+            w = self.set_none_vals_to_defaults(flatten_dict(w))
+            cmds.extend(self.set_commands(w, have))
         return cmds
 
     def _state_merged(self, want, have):
@@ -218,6 +222,14 @@ class Bfd_interfaces(ConfigBase):
         if cmds:
             cmds.insert(0, 'interface ' + obj['name'])
         return cmds
+
+    def set_none_vals_to_defaults(self, want):
+        # Set dict None values to default states
+        if 'bfd' in want and want['bfd'] is None:
+            want['bfd'] = 'enable'
+        if 'echo' in want and want['echo'] is None:
+            want['echo'] = 'enable'
+        return want
 
     def diff_of_dicts(self, want, obj_in_have):
         diff = set(want.items()) - set(obj_in_have.items())
