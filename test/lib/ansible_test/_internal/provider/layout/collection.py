@@ -46,6 +46,7 @@ class CollectionLayout(LayoutProvider):
                              ),
                              test_path='test',
                              results_path='test/results',
+                             sanity_path='test/sanity',
                              integration_path='test/integration',
                              unit_path='test/unit',
                              unit_module_path='test/unit/plugins/modules',

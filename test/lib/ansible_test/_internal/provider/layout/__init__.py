@@ -83,6 +83,7 @@ class ContentLayout(Layout):
                  collection=None,  # type: t.Optional[CollectionDetail]
                  test_path=None,  # type: t.Optional[str]
                  results_path=None,  # type: t.Optional[str]
+                 sanity_path=None,  # type: t.Optional[str]
                  integration_path=None,  # type: t.Optional[str]
                  unit_path=None,  # type: t.Optional[str]
                  unit_module_path=None,  # type: t.Optional[str]
@@ -94,6 +95,7 @@ class ContentLayout(Layout):
         self.collection = collection
         self.test_path = test_path
         self.results_path = results_path
+        self.sanity_path = sanity_path
         self.integration_path = integration_path
         self.integration_targets_path = os.path.join(integration_path, 'targets')
         self.integration_vars_path = os.path.join(integration_path, 'integration_config.yml')

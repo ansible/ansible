@@ -33,6 +33,7 @@ class AnsibleLayout(LayoutProvider):
                              plugin_paths=plugin_paths,
                              test_path='test',
                              results_path='test/results',
+                             sanity_path='test/sanity',
                              integration_path='test/integration',
                              unit_path='test/units',
                              unit_module_path='test/units/modules',
