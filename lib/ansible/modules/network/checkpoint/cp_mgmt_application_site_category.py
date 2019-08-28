@@ -91,7 +91,6 @@ EXAMPLES = """
   cp_mgmt_application_site_category:
     description: My new Application Site category
     name: New Application Site Category 1
-    new_name: New Application Site Category 2
     state: present
 
 - name: delete-application-site-category
