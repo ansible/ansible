@@ -1,40 +1,15 @@
 ---
 ## Verify that integration_config was specified
 - block:
-  - name: Test API User is provided.
-    fail:
-      msg: entrust_api_user should be defined in integration_config.yml
-    when: entrust_api_user is not defined
-
-  - name: Test API Key is provided.
-    fail:
-      msg: entrust_api_key should be defined in integration_config.yml
-    when: entrust_api_key is not defined
-
-  - name: Test API IP address is provided
-    fail:
-      msg: entrust_api_ip_address should be defined in integration_config.yml
-    when: entrust_api_ip_address is not defined
-
-  - name: Test Cloud IP address is provided
-    fail:
-      msg: entrust_cloud_ip_address should be defined in integration_config.yml
-    when: entrust_cloud_ip_address is not defined
-
-  - name: Test Entrust Client Cert path is provided
-    fail:
-      msg: entrust_api_client_cert_path should be defined in integration_config.yml
-    when: entrust_api_client_cert_path is not defined
-
-  - name: Test Entrust Client Key path is provided
-    fail:
-      msg: entrust_api_client_cert_key_path should be defined in integration_config.yml
-    when: entrust_api_client_cert_key_path is not defined
-
-  - name: Test cacerts local path is provided
-    fail:
-      msg: cacerts_bundle_path_local should be defined in integration_config.yml
-    when: cacerts_bundle_path_local is not defined
+  - assert:
+      that:
+        - entrust_api_user is defined
+        - entrust_api_key is defined
+        - entrust_api_ip_address is defined
+        - entrust_cloud_ip_address is defined
+        - entrust_api_client_cert_path is defined or entrust_api_client_cert_contents is defined
+        - entrust_api_client_cert_key_path is defined or entrust_api_client_cert_key_contents
+        - cacerts_bundle_path_local is defined
 
 ## SET UP TEST ENVIRONMENT ########################################################################
 - name: copy the files needed for verifying test server certificate to the host
@@ -126,9 +101,8 @@
 
   # Internal CA refuses to issue certificates with the same DN in a short time frame
   - name: Sleep for 5 seconds so we don't run into duplicate-request errors
-    wait_for:
-      timeout: 5
-    delegate_to: localhost
+    pause:
+      seconds: 5
 
   - name: Attempt to have ECS generate a signed certificate, but existing one is valid
     ecs_certificate:
@@ -155,12 +129,10 @@
         - example2_result.serial_number == example1_result.serial_number
         - example2_result.tracking_id == example1_result.tracking_id
 
-
   # Internal CA refuses to issue certificates with the same DN in a short time frame
   - name: Sleep for 5 seconds so we don't run into duplicate-request errors
-    wait_for:
-      timeout: 5
-    delegate_to: localhost
+    pause:
+      seconds: 5
 
   - name: Force a reissue with no CSR, verify that contents changed
     ecs_certificate:
@@ -188,6 +160,11 @@
         - example3_result.tracking_id > 0
         - example3_result.tracking_id != example1_result.tracking_id
         - example3_result.serial_number != example1_result.serial_number
+
+  # Internal CA refuses to issue certificates with the same DN in a short time frame
+  - name: Sleep for 5 seconds so we don't run into duplicate-request errors
+    pause:
+      seconds: 5
 
   - name: Test a request with all of the various optional possible fields populated
     ecs_certificate:
