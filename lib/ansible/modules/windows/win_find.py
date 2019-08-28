@@ -240,6 +240,11 @@ files:
             returned: success, path exists, path is a file
             type: str
             sample: ".ps1"
+        filename:
+            description: The name of the file.
+            returned: success, path exists
+            type: str
+            sample: temp
         isarchive:
             description: If the path is ready for archiving or not.
             returned: success, path exists
