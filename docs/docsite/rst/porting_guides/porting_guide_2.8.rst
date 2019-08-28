@@ -90,7 +90,9 @@ based on a variable you define **as a string** (with quotation marks around it):
 
 Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, as long as ``'string'`` is not empty, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option.
 
-.. note:: In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
+.. note::
+
+   In 2.10 the default setting for ``conditional_bare_variables`` will change to ``false``. In 2.12 the old behavior will be deprecated.
 
 Updating your playbooks
 ^^^^^^^^^^^^^^^^^^^^^^^
