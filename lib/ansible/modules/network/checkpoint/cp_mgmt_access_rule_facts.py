@@ -64,7 +64,7 @@ options:
   hits_settings:
     description:
       - N/A
-    type: list
+    type: dict
     suboptions:
       from_date:
         description:
@@ -92,7 +92,7 @@ options:
   filter_settings:
     description:
       - Sets filter preferences.
-    type: list
+    type: dict
     suboptions:
       search_mode:
         description:
@@ -104,7 +104,7 @@ options:
       packet_search_settings:
         description:
           - When 'search-mode' is set to 'packet', this object allows to set the packet search preferences.
-        type: list
+        type: dict
         suboptions:
           expand_group_members:
             description:
@@ -131,15 +131,29 @@ options:
   limit:
     description:
       - No more than that many results will be returned.
+        This parameter is relevant only for getting few objects.
     type: int
   offset:
     description:
       - Skip that many results before beginning to return them.
+        This parameter is relevant only for getting few objects.
     type: int
   order:
     description:
       - Sorts results by the given field. By default the results are sorted in the ascending order by name.
+        This parameter is relevant only for getting few objects.
     type: list
+    suboptions:
+      ASC:
+        description:
+          - Sorts results by the given field in ascending order.
+        type: str
+        choices: ['name']
+      DESC:
+        description:
+          - Sorts results by the given field in descending order.
+        type: str
+        choices: ['name']
   package:
     description:
       - Name of the package.
@@ -192,16 +206,16 @@ def main():
         layer=dict(type='str'),
         show_as_ranges=dict(type='bool'),
         show_hits=dict(type='bool'),
-        hits_settings=dict(type='list', options=dict(
+        hits_settings=dict(type='dict', options=dict(
             from_date=dict(type='str'),
             target=dict(type='str'),
             to_date=dict(type='str')
         )),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         filter=dict(type='str'),
-        filter_settings=dict(type='list', options=dict(
+        filter_settings=dict(type='dict', options=dict(
             search_mode=dict(type='str', choices=['general', 'packet']),
-            packet_search_settings=dict(type='list', options=dict(
+            packet_search_settings=dict(type='dict', options=dict(
                 expand_group_members=dict(type='bool'),
                 expand_group_with_exclusion_members=dict(type='bool'),
                 match_on_any=dict(type='bool'),
@@ -211,7 +225,10 @@ def main():
         )),
         limit=dict(type='int'),
         offset=dict(type='int'),
-        order=dict(type='list'),
+        order=dict(type='list', options=dict(
+            ASC=dict(type='str', choices=['name']),
+            DESC=dict(type='str', choices=['name'])
+        )),
         package=dict(type='str'),
         use_object_dictionary=dict(type='bool'),
         dereference_group_members=dict(type='bool'),

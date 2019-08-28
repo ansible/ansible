@@ -55,7 +55,7 @@ options:
   action_settings:
     description:
       - Action settings.
-    type: list
+    type: dict
     suboptions:
       enable_identity_captive_portal:
         description:
@@ -81,7 +81,7 @@ options:
   custom_fields:
     description:
       - Custom fields.
-    type: list
+    type: dict
     suboptions:
       field_1:
         description:
@@ -138,7 +138,7 @@ options:
   track:
     description:
       - Track Settings.
-    type: list
+    type: dict
     suboptions:
       accounting:
         description:
@@ -168,7 +168,7 @@ options:
   user_check:
     description:
       - User check settings.
-    type: list
+    type: dict
     suboptions:
       confirm:
         description:
@@ -178,7 +178,7 @@ options:
       custom_frequency:
         description:
           - N/A
-        type: list
+        type: dict
         suboptions:
           every:
             description:
@@ -202,6 +202,24 @@ options:
     description:
       - Communities or Directional.
     type: list
+    suboptions:
+      community:
+        description:
+          - List of community name or UID.
+        type: list
+      directional:
+        description:
+          - Communities directional match condition.
+        type: list
+        suboptions:
+          from:
+            description:
+              - From community name or UID.
+            type: str
+          to:
+            description:
+              - To community name or UID.
+            type: str
   comments:
     description:
       - Comments string.
@@ -269,14 +287,14 @@ def main():
         position=dict(type='str'),
         name=dict(type='str', required=True),
         action=dict(type='str'),
-        action_settings=dict(type='list', options=dict(
+        action_settings=dict(type='dict', options=dict(
             enable_identity_captive_portal=dict(type='bool'),
             limit=dict(type='str')
         )),
         content=dict(type='list'),
         content_direction=dict(type='str', choices=['any', 'up', 'down']),
         content_negate=dict(type='bool'),
-        custom_fields=dict(type='list', options=dict(
+        custom_fields=dict(type='dict', options=dict(
             field_1=dict(type='str'),
             field_2=dict(type='str'),
             field_3=dict(type='str')
@@ -291,7 +309,7 @@ def main():
         source=dict(type='list'),
         source_negate=dict(type='bool'),
         time=dict(type='list'),
-        track=dict(type='list', options=dict(
+        track=dict(type='dict', options=dict(
             accounting=dict(type='bool'),
             alert=dict(type='str', choices=['none', 'alert', 'snmp', 'mail', 'user alert 1', 'user alert 2', 'user alert 3']),
             enable_firewall_session=dict(type='bool'),
@@ -299,21 +317,27 @@ def main():
             per_session=dict(type='bool'),
             type=dict(type='str')
         )),
-        user_check=dict(type='list', options=dict(
+        user_check=dict(type='dict', options=dict(
             confirm=dict(type='str', choices=['per rule', 'per category', 'per application/site', 'per data type']),
-            custom_frequency=dict(type='list', options=dict(
+            custom_frequency=dict(type='dict', options=dict(
                 every=dict(type='int'),
                 unit=dict(type='str', choices=['hours', 'days', 'weeks', 'months'])
             )),
             frequency=dict(type='str', choices=['once a day', 'once a week', 'once a month', 'custom frequency...']),
             interaction=dict(type='str')
         )),
-        vpn=dict(type='list'),
+        vpn=dict(type='list', options=dict(
+            community=dict(type='list'),
+            directional=dict(type='list', options=dict(
+                to=dict(type='str')
+            ))
+        )),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         ignore_warnings=dict(type='bool'),
         ignore_errors=dict(type='bool')
     )
+    argument_spec['vpn']['directional']['from'] = dict(type='str')
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
