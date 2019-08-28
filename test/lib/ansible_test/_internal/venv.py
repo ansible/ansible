@@ -50,33 +50,27 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
         # something went wrong, this shouldn't happen
         return False
 
+    # use the installed 'virtualenv' module on the Python requested version
+    if run_virtualenv(args, python, python, system_site_packages, pip, path):
+        display.info('Created Python %s virtual environment using "virtualenv": %s' % (version, path))
+        return True
+
     available_pythons = get_available_python_versions(SUPPORTED_PYTHON_VERSIONS)
-    available_virtualenvs = get_available_virtualenv_versions(args, available_pythons)
 
-    if version == '2.6':
-        # virtualenv 16.0.0 dropped python 2.6 support: https://virtualenv.pypa.io/en/latest/changes/#v16-0-0-2018-05-16
-        available_virtualenvs = dict((pv, vv) for pv, vv in available_virtualenvs.items() if vv < (16, 0, 0))
+    for available_python_version, available_python_interpreter in sorted(available_pythons.items()):
+        virtualenv_version = get_virtualenv_version(args, available_python_interpreter)
 
-    if not available_virtualenvs:
-        # no known python interpreter has a suitable 'virtualenv' installed
-        return False
+        if not virtualenv_version:
+            # virtualenv not available for this Python or we were unable to detect the version
+            continue
 
-    virtualenv = available_virtualenvs.get(version)
-
-    if virtualenv:
-        # use the installed 'virtualenv' module on the Python requested version
-        if run_virtualenv(args, python, python, system_site_packages, pip, path):
-            display.info('Created Python %s virtual environment using "virtualenv": %s' % (version, path))
-            return True
-
-    # the 'virtualenv' module was found for a Python version other than the one requested
-
-    for available_version in sorted(available_virtualenvs.keys()):
-        available_python = available_pythons[available_version]
+        if python_version == (2, 6) and virtualenv_version >= (16, 0, 0):
+            # virtualenv 16.0.0 dropped python 2.6 support: https://virtualenv.pypa.io/en/latest/changes/#v16-0-0-2018-05-16
+            continue
 
         # try using 'virtualenv' from another Python to setup the desired version
-        if run_virtualenv(args, available_python, python, system_site_packages, pip, path):
-            display.info('Created Python %s virtual environment using "virtualenv" on Python %s: %s' % (version, available_version, path))
+        if run_virtualenv(args, available_python_interpreter, python, system_site_packages, pip, path):
+            display.info('Created Python %s virtual environment using "virtualenv" on Python %s: %s' % (version, available_python_version, path))
             return True
 
     # no suitable 'virtualenv' available
@@ -134,30 +128,27 @@ def run_virtualenv(args,  # type: EnvironmentConfig
     return True
 
 
-def get_available_virtualenv_versions(args, versions):  # type: (EnvironmentConfig, t.Dict[str, str]) -> t.Dict[str, t.Tuple[int, ...]]
-    """Return a dictionary indicating the virtualenv version available for the requested Python versions."""
+def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t.Optional[t.Tuple[int, ...]]
+    """Get the virtualenv version for the given python intepreter, if available."""
     try:
-        return get_available_virtualenv_versions.result
+        return get_virtualenv_version.result
     except AttributeError:
         pass
 
-    get_available_virtualenv_versions.result = dict((pv, vv) for pv, vv in
-                                                    ((version, get_virtualenv_version(args, python)) for version, python in versions.items()) if vv)
+    get_virtualenv_version.result = None
 
-    return get_available_virtualenv_versions.result
-
-
-def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t.Optional[t.Tuple[int, ...]]
-    """Get the virtualenv version for the given python intepreter, if available."""
     cmd = [python, '-m', 'virtualenv', '--version']
 
     try:
         stdout = run_command(args, cmd, capture=True)[0]
     except SubprocessError:
-        return None
+        stdout = ''
 
-    # noinspection PyBroadException
-    try:
-        return tuple(int(v) for v in stdout.strip().split('.'))
-    except Exception:  # pylint: disable=broad-except
-        return None
+    if stdout:
+        # noinspection PyBroadException
+        try:
+            get_virtualenv_version.result = tuple(int(v) for v in stdout.strip().split('.'))
+        except Exception:  # pylint: disable=broad-except
+            pass
+
+    return get_virtualenv_version.result
