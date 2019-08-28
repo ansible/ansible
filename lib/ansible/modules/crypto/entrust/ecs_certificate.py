@@ -458,7 +458,7 @@ EXAMPLES = r'''
 
 RETURN = '''
 filename:
-    description: Path to the generated Certificate
+    description: Path to the generated Certificate.
     returned: changed or success
     type: str
     sample: /etc/ssl/crt/www.ansible.com.crt
