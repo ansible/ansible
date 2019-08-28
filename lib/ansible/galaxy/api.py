@@ -43,11 +43,14 @@ def g_connect(method):
         if not self.initialized:
             display.vvvv("Initial connection to galaxy_server: %s" % self.api_server)
             server_version = self._get_server_api_version()
+
             if server_version not in self.SUPPORTED_VERSIONS:
                 raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
 
             self.baseurl = _urljoin(self.api_server, "api", server_version)
+
             self.version = server_version  # for future use
+
             display.vvvv("Base API: %s" % self.baseurl)
             self.initialized = True
         return method(self, *args, **kwargs)
@@ -63,25 +66,32 @@ class GalaxyAPI(object):
 
     SUPPORTED_VERSIONS = ['v1']
 
-    def __init__(self, galaxy, name, url, username=None, password=None, token=None):
+    def __init__(self, galaxy, name, url, username=None, password=None, token=None, token_type=None):
         self.galaxy = galaxy
         self.name = name
         self.username = username
         self.password = password
         self.token = token
+        self.token_type = token_type or 'Token'
         self.api_server = url
         self.validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
         self.version = None
         self.initialized = False
+        self.available_api_versions = {}
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
-    def _auth_header(self, required=True):
+    def _auth_header(self, required=True, token_type=None):
+        '''Generate the Authorization header.
+
+        Valid token_type values are 'Token' (galaxy v2) and 'Bearer' (galaxy v3)'''
         token = self.token.get() if self.token else None
 
+        # 'Token' for v2 api, 'Bearer' for v3
+        token_type = token_type or self.token_type
         if token:
-            return {'Authorization': "Token %s" % token}
+            return {'Authorization': "%s %s" % (token_type, token)}
         elif self.username:
             token = "%s:%s" % (to_text(self.username, errors='surrogate_or_strict'),
                                to_text(self.password, errors='surrogate_or_strict', nonstring='passthru') or '')
@@ -122,9 +132,6 @@ class GalaxyAPI(object):
             data = json.loads(to_text(return_data.read(), errors='surrogate_or_strict'))
         except Exception as e:
             raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
-
-        if 'current_version' not in data:
-            raise AnsibleError("missing required 'current_version' from server response (%s)" % url)
 
         return data['current_version']
 
