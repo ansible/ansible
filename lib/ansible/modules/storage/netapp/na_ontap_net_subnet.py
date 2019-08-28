@@ -276,6 +276,9 @@ class NetAppOntapSubnet(object):
 
     def apply(self):
         '''Apply action to subnet'''
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event("na_ontap_net_subnet", cserver)
         current = self.get_subnet()
         cd_action, rename = None, None
 
