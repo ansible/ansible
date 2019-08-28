@@ -83,7 +83,6 @@ EXAMPLES = """
 - name: set-dynamic-object
   cp_mgmt_dynamic_object:
     name: Dynamic_Object_1
-    new_name: Dynamic_Object_2
     state: present
 
 - name: delete-dynamic-object
