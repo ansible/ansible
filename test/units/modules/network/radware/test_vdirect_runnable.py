@@ -72,7 +72,7 @@ RUN_RESULT = [200, '', '', {
     "complete": True, "status": 200, "success": True, "messages": [], "action": "apply", "parameters": {},
 }]
 
-MODULE_RESULT = {"msg": "Configuration template run completed.", "parameters": {}}
+MODULE_RESULT = {"msg": "Configuration template run completed."}
 
 
 @patch('vdirect_client.rest_client.RestClient')
@@ -138,7 +138,8 @@ class Catalog:
     def set_catalog_item_404(cls):
         Catalog._404 = True
 
-    def get_catalog_item(self, type=None, name=None):
+    @classmethod
+    def get_catalog_item(cls, type=None, name=None):
         if Catalog._404:
             from ansible.modules.network.radware import vdirect_runnable
             raise vdirect_runnable.MissingRunnableException(name)
@@ -182,13 +183,6 @@ class TestManager(unittest.TestCase):
             vdirectRunnable._validate_runnable_exists()
             assert True
 
-            Catalog.set_catalog_item_404()
-            try:
-                vdirectRunnable._validate_runnable_exists()
-                self.fail("MissingRunnableException was not thrown for missing runnable name")
-            except vdirect_runnable.MissingRunnableException:
-                assert True
-
     def test_validate_workflow_template_exists(self, *args):
         with patch.dict('sys.modules', **{
             'vdirect_client': self.module_mock,
@@ -204,14 +198,24 @@ class TestManager(unittest.TestCase):
             vdirectRunnable._validate_runnable_exists()
             assert True
 
-            Catalog.set_catalog_item_404()
-            try:
-                vdirectRunnable._validate_runnable_exists()
-                self.fail("MissingRunnableException was not thrown for missing runnable name")
-            except vdirect_runnable.MissingRunnableException:
-                assert True
-
     def test_validate_workflow_exists(self, *args):
+        with patch.dict('sys.modules', **{
+            'vdirect_client': self.module_mock,
+            'vdirect_client.rest_client': self.module_mock,
+        }):
+            from ansible.modules.network.radware import vdirect_runnable
+
+            Catalog.set_catalog_item_200()
+            BASE_PARAMS.update(CONFIGURATION_TEMPLATE_RUNNABLE_PARAMS)
+            Runnable.set_runnable_objects_result(WORKFLOW_RUNNABLE_OBJECT_RESULT)
+            BASE_PARAMS.update(WORKFLOW_RUNNABLE_PARAMS)
+            vdirectRunnable = vdirect_runnable.VdirectRunnable(BASE_PARAMS)
+            vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
+            vdirectRunnable.client.catalog = Catalog(vdirectRunnable.client)
+            vdirectRunnable._validate_runnable_exists()
+            assert True
+
+    def test_validate_plugin_exists(self, *args):
         with patch.dict('sys.modules', **{
             'vdirect_client': self.module_mock,
             'vdirect_client.rest_client': self.module_mock,
@@ -236,7 +240,7 @@ class TestManager(unittest.TestCase):
             except vdirect_runnable.MissingRunnableException:
                 assert True
 
-    def test_validate_plugin_exists(self, *args):
+    def test_validate_configuration_template_action_name(self, *args):
         with patch.dict('sys.modules', **{
             'vdirect_client': self.module_mock,
             'vdirect_client.rest_client': self.module_mock,
@@ -398,17 +402,18 @@ class TestManager(unittest.TestCase):
             vdirectRunnable.client.runnable = Runnable(vdirectRunnable.client)
             Runnable.set_run_result(RUN_RESULT)
             res = vdirectRunnable.run()
-            assert res == MODULE_RESULT
+            assert res['msg'] == MODULE_RESULT['msg']
 
             result_parameters = {"param1": "value1", "param2": "value2"}
             RUN_RESULT[self.module_mock.rest_client.RESP_DATA]['parameters'] = result_parameters
             MODULE_RESULT['parameters'] = result_parameters
             res = vdirectRunnable.run()
-            assert res == MODULE_RESULT
+            assert res['msg'] == MODULE_RESULT['msg']
+            assert res['output']['parameters'] == result_parameters
 
             RUN_RESULT[self.module_mock.rest_client.RESP_DATA]['status'] = 404
             vdirectRunnable.run()
-            assert res == MODULE_RESULT
+            assert res['msg'] == MODULE_RESULT['msg']
 
             RUN_RESULT[self.module_mock.rest_client.RESP_STATUS] = 400
             RUN_RESULT[self.module_mock.rest_client.RESP_REASON] = "Reason"
