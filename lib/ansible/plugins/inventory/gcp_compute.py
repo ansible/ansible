@@ -36,8 +36,8 @@ DOCUMENTATION = """
             A list of filter value pairs. Available filters are listed here
             U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/aggregatedList).
             Each additional filter in the list will act be added as an AND condition
-            (filter1 and filter2)
-          type: list
+            (filter1 and filter2).
+            This can either be a list of boolean statements or a dictionary.
         hostnames:
           description: A list of options that describe the ordering for which
               hostnames should be assigned. Currently supported hostnames are
@@ -115,6 +115,12 @@ zones: # populate inventory with instances in these regions
 projects:
   - gcp-prod-gke-100
   - gcp-cicd-101
+# In most cases, you can use a dictionary for filters.
+filters:
+    machineType: n1-standard-1
+    scheduling.automaticRestart: true
+
+# If you prefer using boolean statements (or need to use < or >, use an array)
 filters:
   - machineType = n1-standard-1
   - scheduling.automaticRestart = true AND machineType = n1-standard-1
@@ -355,6 +361,36 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return arrays_for_zones
 
     def _get_query_options(self, filters):
+        if isinstance(filters, list):
+            return self._get_query_options_from_array(filters)
+        elif isinstance(filters, dict):
+            return self._get_query_options_from_dictionary(filters)
+        else:
+            raise AnsibleParserError("Filters must be either a list or dictionary")
+
+    def _get_query_options_from_dictionary(self, filters):
+        if not filters:
+            return ""
+
+        if len(filters) == 1:
+            key = list(filters.keys())[0]
+            if str(filters[key]).lower() not in ['true', 'false']:
+                value = "\"%s\"" % filters[key]
+            else:
+                value = filters[key]
+            return "%s = %s" % (key, value)
+        else:
+            queries = []
+            for key in filters:
+                if str(filters[key]).lower() not in ['true', 'false']:
+                    value = "\"%s\"" % filters[key]
+                else:
+                    value = filters[key]
+                queries.append("(%s = %s)" % (key, value))
+            return " AND ".join(queries)
+
+
+    def _get_query_options_from_array(self, filters):
         """
             :param config_data: contents of the inventory config file
             :return A fully built query string
