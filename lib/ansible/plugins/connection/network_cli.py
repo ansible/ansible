@@ -194,6 +194,7 @@ options:
   terminal_stdout_re:
     type: list
     elements: dict
+    version_added: '2.9'
     description:
       - A single regex pattern or a sequence of patterns along with optional flags
         to match the command prompt from the received response chunk. This option
@@ -206,6 +207,7 @@ options:
   terminal_stderr_re:
     type: list
     elements: dict
+    version_added: '2.9'
     description:
       - This option provides the regex pattern and optional flags to match the
         error string from the received response chunk. This option
@@ -217,6 +219,7 @@ options:
       - name: ansible_terminal_stderr_re
   terminal_initial_prompt:
     type: list
+    version_added: '2.9'
     description:
       - A single regex pattern or a sequence of patterns to evaluate the expected
         prompt at the time of initial login to the remote host.
@@ -224,6 +227,7 @@ options:
       - name: ansible_terminal_initial_prompt
   terminal_initial_answer:
     type: list
+    version_added: '2.9'
     description:
       - The answer to reply with if the C(terminal_initial_prompt) is matched. The value can be a single answer
         or a list of answers for multiple terminal_initial_prompt. In case the login menu has
@@ -234,6 +238,7 @@ options:
       - name: ansible_terminal_initial_answer
   terminal_initial_prompt_checkall:
     type: boolean
+    version_added: '2.9'
     description:
       - By default the value is set to I(False) and any one of the prompts mentioned in C(terminal_initial_prompt)
         option is matched it won't check for other prompts. When set to I(True) it will check for all the prompts
@@ -244,12 +249,28 @@ options:
       - name: ansible_terminal_initial_prompt_checkall
   terminal_inital_prompt_newline:
     type: boolean
+    version_added: '2.9'
     description:
       - This boolean flag, that when set to I(True) will send newline in the response if any of values
         in I(terminal_initial_prompt) is matched.
     default: True
     vars:
       - name: ansible_terminal_initial_prompt_newline
+  network_cli_retries:
+    description:
+      - Number of attempts to connect to remote host. The delay time between the retires increases after
+        every attempt by power of 2 in seconds till either the maximum attempts are exhausted or any of the
+        C(persistent_command_timeout) or C(persistent_connect_timeout) timers are triggered.
+    default: 3
+    version_added: '2.9'
+    type: integer
+    env:
+        - name: ANSIBLE_NETWORK_CLI_RETRIES
+    ini:
+        - section: persistent_connection
+          key: network_cli_retries
+    vars:
+        - name: ansible_network_cli_retries
 """
 
 import getpass
@@ -259,6 +280,7 @@ import re
 import os
 import signal
 import socket
+import time
 import traceback
 from io import BytesIO
 
@@ -386,13 +408,34 @@ class Connection(NetworkConnectionBase):
             self.paramiko_conn._set_log_channel(self._get_log_channel())
             self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
             self.paramiko_conn.force_persistence = self.force_persistence
-            ssh = self.paramiko_conn._connect()
+
+            command_timeout = self.get_option('persistent_command_timeout')
+            max_pause = min([self.get_option('persistent_connect_timeout'), command_timeout])
+            retries = self.get_option('network_cli_retries')
+            total_pause = 0
+
+            for attempt in range(retries + 1):
+                try:
+                    ssh = self.paramiko_conn._connect()
+                    break
+                except Exception as e:
+                    pause = 2 ** (attempt + 1)
+                    if attempt == retries or total_pause >= max_pause:
+                        raise AnsibleConnectionFailure(to_text(e, errors='surrogate_or_strict'))
+                    else:
+                        msg = (u"network_cli_retry: attempt: %d, caught exception(%s), "
+                               u"pausing for %d seconds" % (attempt + 1, to_text(e, errors='surrogate_or_strict'), pause))
+
+                        self.queue_message('vv', msg)
+                        time.sleep(pause)
+                        total_pause += pause
+                        continue
 
             self.queue_message('vvvv', 'ssh connection done, setting terminal')
             self._connected = True
 
             self._ssh_shell = ssh.ssh.invoke_shell()
-            self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
+            self._ssh_shell.settimeout(command_timeout)
 
             self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
 
