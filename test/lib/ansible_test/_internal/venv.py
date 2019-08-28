@@ -16,6 +16,7 @@ from .util import (
     get_available_python_versions,
     SUPPORTED_PYTHON_VERSIONS,
     display,
+    remove_tree,
 )
 
 from .util_common import (
@@ -47,8 +48,8 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
             display.info('Created Python %s virtual environment using "venv": %s' % (version, path), verbosity=1)
             return True
 
-        # something went wrong, this shouldn't happen
-        return False
+        # something went wrong, most likely the package maintainer for the Python installation removed ensurepip
+        # which will prevent creation of a virtual environment without installation of other OS packages
 
     # use the installed 'virtualenv' module on the Python requested version
     if run_virtualenv(args, python, python, system_site_packages, pip, path):
@@ -96,7 +97,12 @@ def run_venv(args,  # type: EnvironmentConfig
 
     try:
         run_command(args, cmd, capture=True)
-    except SubprocessError:
+    except SubprocessError as ex:
+        remove_tree(path)
+
+        if args.verbosity > 1:
+            display.error(ex)
+
         return False
 
     return True
@@ -110,7 +116,10 @@ def run_virtualenv(args,  # type: EnvironmentConfig
                    path,  # type: str
                    ):  # type: (...) -> bool
     """Create a virtual environment using the 'virtualenv' module."""
-    cmd = [run_python, '-m', 'virtualenv', '--python', env_python]
+    cmd = [run_python, '-m', 'virtualenv']
+
+    if run_python != env_python:
+        cmd += ['--python', env_python]
 
     if system_site_packages:
         cmd.append('--system-site-packages')
@@ -122,7 +131,12 @@ def run_virtualenv(args,  # type: EnvironmentConfig
 
     try:
         run_command(args, cmd, capture=True)
-    except SubprocessError:
+    except SubprocessError as ex:
+        remove_tree(path)
+
+        if args.verbosity > 1:
+            display.error(ex)
+
         return False
 
     return True
@@ -141,7 +155,10 @@ def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t
 
     try:
         stdout = run_command(args, cmd, capture=True)[0]
-    except SubprocessError:
+    except SubprocessError as ex:
+        if args.verbosity > 1:
+            display.error(ex)
+
         stdout = ''
 
     if stdout:
