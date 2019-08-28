@@ -3,6 +3,7 @@
     msg: "Start nxos_bfd_interfaces overridden integration tests connection={{ ansible_connection }}"
 
 - set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
 - set_fact:
     bfd_enable: enable
     bfd_disable: disable
@@ -13,6 +14,7 @@
     config: |
       no feature bfd
       default interface {{ test_int1 }}
+      default interface {{ test_int2 }}
 
 - block:
   - name: setup2
@@ -21,13 +23,18 @@
         feature bfd
         interface {{ test_int1 }}
           no switchport
+        interface {{ test_int2 }}
+          no switchport
 
   - name: setup initial bfd state
     nxos_bfd_interfaces:
       config:
         - name: "{{ test_int1 }}"
           bfd: "{{ bfd_disable|default(omit)}}"
-          bfd_echo: enable
+          echo: enable
+        - name: "{{ test_int2 }}"
+          bfd: "{{ bfd_enable|default(omit)}}"
+          echo: disable
       state: merged
 
   - name: Overridden
@@ -35,7 +42,10 @@
       config:
         - name: "{{ test_int1 }}"
           bfd: "{{ bfd_enable|default(omit)}}"
-          bfd_echo: disable
+          echo: disable
+        - name: "{{ test_int2 }}"
+          bfd: "{{ bfd_disable|default(omit)}}"
+          echo: enable
       state: overridden
     register: result
 
@@ -43,6 +53,7 @@
       that:
         - "result.changed == true"
         - "'no bfd echo' in result.commands"
+        - "'bfd echo' in result.commands"
       msg: "Assert failed. 'result.commands': {{ result.commands }}"
 
   - assert:

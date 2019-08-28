@@ -213,7 +213,7 @@ class Bfd_interfaces(ConfigBase):
         # is that they are removed from the interface config on the device.
         if 'bfd' in obj and 'disable' in obj['bfd']:
             cmds.append('bfd')
-        if 'bfd_echo' in obj and 'disable' in obj['bfd_echo']:
+        if 'echo' in obj and 'disable' in obj['echo']:
             cmds.append('bfd echo')
         if cmds:
             cmds.insert(0, 'interface ' + obj['name'])
@@ -233,8 +233,8 @@ class Bfd_interfaces(ConfigBase):
         if 'bfd' in want and want['bfd'] is not None:
             cmd = 'bfd' if want['bfd'] == 'enable' else 'no bfd'
             cmds.append(cmd)
-        if 'bfd_echo' in want and want['bfd_echo'] is not None:
-            cmd = 'bfd echo' if want['bfd_echo'] == 'enable' else 'no bfd echo'
+        if 'echo' in want and want['echo'] is not None:
+            cmd = 'bfd echo' if want['echo'] == 'enable' else 'no bfd echo'
             cmds.append(cmd)
 
         if cmds:

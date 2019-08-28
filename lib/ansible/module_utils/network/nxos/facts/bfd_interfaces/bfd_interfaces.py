@@ -92,6 +92,6 @@ class Bfd_interfacesFacts(object):
         # 'bfd'/'bfd echo' do not nvgen when enabled thus set to 'enable' when None.
         # 'bfd' is not supported on some platforms
         config['bfd'] = utils.parse_conf_cmd_arg(conf, 'bfd', 'enable', 'disable') or 'enable'
-        config['bfd_echo'] = utils.parse_conf_cmd_arg(conf, 'bfd echo', 'enable', 'disable') or 'enable'
+        config['echo'] = utils.parse_conf_cmd_arg(conf, 'bfd echo', 'enable', 'disable') or 'enable'
 
         return utils.remove_empties(config)

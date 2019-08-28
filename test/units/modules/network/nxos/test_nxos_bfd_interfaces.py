@@ -91,7 +91,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
             dict(
                 name='Ethernet1/1',
                 bfd='disable',
-                bfd_echo='disable'),
+                echo='disable'),
             dict(
                 name='Ethernet1/2',
                 bfd='disable'),
@@ -136,7 +136,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
             dict(
                 name='Ethernet1/1',
                 bfd='enable',
-                bfd_echo='disable'),
+                echo='disable'),
             dict(
                 name='Ethernet1/2'),
             # Eth1/3 not present! Thus overridden should set Eth1/3 to defaults;
@@ -221,7 +221,7 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
             dict(
                 name='Ethernet1/1.42',
                 bfd='enable',
-                bfd_echo='disable'),
+                echo='disable'),
         ])
         # Expected result commands for each 'state'
         merged = ['interface Ethernet1/1.42', 'bfd', 'no bfd echo']
@@ -260,11 +260,11 @@ class TestNxosBfdInterfacesModule(TestNxosModule):
             dict(
                 name='Ethernet1/1',
                 bfd='disable',
-                bfd_echo='disable'),
+                echo='disable'),
             dict(
                 name='Ethernet1/2',
                 bfd='enable',
-                bfd_echo='enable'),
+                echo='enable'),
         ])
         # Expected result commands for each 'state'
         merged = []

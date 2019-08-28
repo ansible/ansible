@@ -27,7 +27,7 @@
       config:
         - name: "{{ test_int1 }}"
           bfd: "{{ bfd_disable|default(omit)}}"
-          bfd_echo: disable
+          echo: disable
       state: merged
 
   - name: Gather bfd_interfaces facts

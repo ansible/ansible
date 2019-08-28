@@ -59,7 +59,7 @@ options:
         choices:
         - enable
         - disable
-      bfd_echo:
+      echo:
         type: str
         description:
         - Enable/Disable BFD Echo functionality on the interface.
@@ -92,10 +92,10 @@ EXAMPLES = """
     config:
       - name: Ethernet1/1
         bfd: enable
-        bfd_echo: enable
+        echo: enable
       - name: Ethernet1/2
         bfd: disable
-        bfd_echo: disable
+        echo: disable
     operation: merged
 
 
@@ -106,10 +106,10 @@ EXAMPLES = """
     config:
       - name: Ethernet1/1
         bfd: enable
-        bfd_echo: enable
+        echo: enable
       - name: Ethernet1/2
         bfd: disable
-        bfd_echo: disable
+        echo: disable
     operation: overridden
 
 
@@ -120,10 +120,10 @@ EXAMPLES = """
     config:
       - name: Ethernet1/1
         bfd: enable
-        bfd_echo: enable
+        echo: enable
       - name: Ethernet1/2
         bfd: disable
-        bfd_echo: disable
+        echo: disable
     operation: replaced
 
 

@@ -27,7 +27,7 @@
       config:
         - name: "{{ test_int1 }}"
           bfd: "{{ bfd_disable|default(omit)}}"
-          bfd_echo: enable
+          echo: enable
       state: merged
 
   - name: Replaced
@@ -35,7 +35,7 @@
       config:
         - name: "{{ test_int1 }}"
           bfd: "{{ bfd_enable|default(omit)}}"
-          bfd_echo: disable
+          echo: disable
       state: replaced
     register: result
 
