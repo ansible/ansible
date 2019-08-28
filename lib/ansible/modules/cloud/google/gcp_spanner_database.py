@@ -158,6 +158,9 @@ def main():
     fetch = fetch_resource(module, self_link(module))
     changed = False
 
+    if 'instance' in module.params and 'name' in module.params['instance']:
+        module.params['instance']['name'] = module.params['instance']['name'].split('/')[-1]
+
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
