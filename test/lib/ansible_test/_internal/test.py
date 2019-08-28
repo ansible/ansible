@@ -497,7 +497,7 @@ class TestMessage:
         :rtype: str
         """
         if self.__code:
-            msg = '%s %s' % (self.__code, self.__message)
+            msg = '%s: %s' % (self.__code, self.__message)
         else:
             msg = self.__message
 
