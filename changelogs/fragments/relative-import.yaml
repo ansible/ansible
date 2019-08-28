@@ -1,0 +1,2 @@
+minor_changes:
+- Ansible now supports relative imports of module_utils files in modules and module_utils.

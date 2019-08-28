@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os.path
+
 import pytest
 
 import ansible.errors
@@ -28,7 +30,7 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.module_utils.six import PY2
 
 
-class TestStripComments(object):
+class TestStripComments:
     def test_no_changes(self):
         no_comments = u"""def some_code():
     return False"""
@@ -69,7 +71,7 @@ def test(arg):
         assert amc._strip_comments(mixed) == mixed_results
 
 
-class TestSlurp(object):
+class TestSlurp:
     def test_slurp_nonexistent(self, mocker):
         mocker.patch('os.path.exists', side_effect=lambda x: False)
         with pytest.raises(ansible.errors.AnsibleError):
@@ -96,14 +98,14 @@ class TestSlurp(object):
 
 @pytest.fixture
 def templar():
-    class FakeTemplar(object):
+    class FakeTemplar:
         def template(self, template_string, *args, **kwargs):
             return template_string
 
     return FakeTemplar()
 
 
-class TestGetShebang(object):
+class TestGetShebang:
     """Note: We may want to change the API of this function in the future.  It isn't a great API"""
     def test_no_interpreter_set(self, templar):
         # normally this would return /usr/bin/python, but so long as we're defaulting to auto python discovery, we'll get
@@ -129,3 +131,67 @@ class TestGetShebang(object):
     def test_python_via_env(self, templar):
         assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/env python'}, templar) == \
             (u'#!/usr/bin/env python', u'/usr/bin/env python')
+
+
+class TestDetectionRegexes:
+    ANSIBLE_MODULE_UTIL_STRINGS = (
+        # Absolute collection imports
+        b'import ansible_collections.my_ns.my_col.plugins.module_utils.my_util',
+        b'from ansible_collections.my_ns.my_col.plugins.module_utils import my_util',
+        b'from ansible_collections.my_ns.my_col.plugins.module_utils.my_util import my_func',
+        # Absolute core imports
+        b'import ansible.module_utils.basic',
+        b'from ansible.module_utils import basic',
+        b'from ansible.module_utils.basic import AnsibleModule',
+        # Relative imports
+        b'from ..module_utils import basic',
+        b'from .. module_utils import basic',
+        b'from ....module_utils import basic',
+        b'from ..module_utils.basic import AnsibleModule',
+    )
+    NOT_ANSIBLE_MODULE_UTIL_STRINGS = (
+        b'from ansible import release',
+        b'from ..release import __version__',
+        b'from .. import release',
+        b'from ansible.modules.system import ping',
+        b'from ansible_collecitons.my_ns.my_col.plugins.modules import function',
+    )
+
+    OFFSET = os.path.dirname(os.path.dirname(amc.__file__))
+    CORE_PATHS = (
+        ('%s/modules/from_role.py' % OFFSET, 'ansible/modules/from_role'),
+        ('%s/modules/system/ping.py' % OFFSET, 'ansible/modules/system/ping'),
+        ('%s/modules/cloud/amazon/s3.py' % OFFSET, 'ansible/modules/cloud/amazon/s3'),
+    )
+
+    COLLECTION_PATHS = (
+        ('/root/ansible_collections/ns/col/plugins/modules/ping.py',
+         'ansible_collections/ns/col/plugins/modules/ping'),
+        ('/root/ansible_collections/ns/col/plugins/modules/subdir/ping.py',
+         'ansible_collections/ns/col/plugins/modules/subdir/ping'),
+    )
+
+    @pytest.mark.parametrize('testcase', ANSIBLE_MODULE_UTIL_STRINGS)
+    def test_detect_new_style_python_module_re(self, testcase):
+        assert amc.NEW_STYLE_PYTHON_MODULE_RE.search(testcase)
+
+    @pytest.mark.parametrize('testcase', NOT_ANSIBLE_MODULE_UTIL_STRINGS)
+    def test_no_detect_new_style_python_module_re(self, testcase):
+        assert not amc.NEW_STYLE_PYTHON_MODULE_RE.search(testcase)
+
+    # pylint bug: https://github.com/PyCQA/pylint/issues/511
+    @pytest.mark.parametrize('testcase, result', CORE_PATHS)  # pylint: disable=undefined-variable
+    def test_detect_core_library_path_re(self, testcase, result):
+        assert amc.CORE_LIBRARY_PATH_RE.search(testcase).group('path') == result
+
+    @pytest.mark.parametrize('testcase', (p[0] for p in COLLECTION_PATHS))  # pylint: disable=undefined-variable
+    def test_no_detect_core_library_path_re(self, testcase):
+        assert not amc.CORE_LIBRARY_PATH_RE.search(testcase)
+
+    @pytest.mark.parametrize('testcase, result', COLLECTION_PATHS)  # pylint: disable=undefined-variable
+    def test_detect_collection_path_re(self, testcase, result):
+        assert amc.COLLECTION_PATH_RE.search(testcase).group('path') == result
+
+    @pytest.mark.parametrize('testcase', (p[0] for p in CORE_PATHS))  # pylint: disable=undefined-variable
+    def test_no_detect_collection_path_re(self, testcase):
+        assert not amc.COLLECTION_PATH_RE.search(testcase)
