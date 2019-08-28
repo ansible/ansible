@@ -837,39 +837,29 @@ class PathMapper:
         if path.startswith('test/utils/'):
             return minimal
 
-        if path == 'test/README.md':
-            return minimal
-
-        if path.startswith('ticket_stubs/'):
-            return minimal
-
         if '/' not in path:
             if path in (
-                    '.gitattributes',
-                    '.gitignore',
-                    '.gitmodules',
-                    '.mailmap',
-                    'tox.ini',  # obsolete
-                    'COPYING',
-                    'VERSION',
-                    'Makefile',
+                '.gitattributes',
+                '.gitignore',
+                '.mailmap',
+                'COPYING',
+                'Makefile',
             ):
                 return minimal
 
             if path in (
-                    'shippable.yml',
+                'setup.py',
+                'shippable.yml',
             ):
-                return all_tests(self.args)  # test infrastructure, run all tests
-
-            if path == 'setup.py':
                 return all_tests(self.args)  # broad impact, run all tests
 
-            if path == '.yamllint':
-                return {
-                    'sanity': 'all',
-                }
-
-            if ext in ('.md', '.rst', '.txt', '.xml', '.in'):
+            if ext in (
+                '.in',
+                '.md',
+                '.rst',
+                '.toml',
+                '.txt',
+            ):
                 return minimal
 
         return None  # unknown, will result in fall-back to run all tests
