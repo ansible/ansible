@@ -63,6 +63,38 @@ Modules
 * The ``win_get_url`` and ``win_uri`` module now sends requests with a default ``User-Agent`` of ``ansible-httpget``. This can be changed by using the ``http_agent`` key.
 
 
+Writing modules
+---------------
+
+* Module and module_utils files can now use relative imports to include other module_utils files.
+  This is useful for shortening long import lines, especially in collections.
+
+  Example of using a relative import in collections:
+
+  .. code-block:: python
+
+    # File: ansible_collections/my_namespace/my_collection/plugins/modules/my_module.py
+    # Old way to use an absolute import to import module_utils from the collection:
+    from ansible_collections.my_namespace.my_collection.plugins.module_utils import my_util
+    # New way using a relative import:
+    from ..module_utils import my_util
+
+  Modules and module_utils shipped with Ansible can use relative imports as well but the savings
+  are smaller:
+
+  .. code-block:: python
+
+    # File: ansible/modules/system/ping.py
+    # Old way to use an absolute import to import module_utils from core:
+    from ansible.module_utils.basic import AnsibleModule
+    # New way using a relative import:
+    from ...module_utils.basic import AnsibleModule
+
+  Each single dot (``.``) represents one level of the tree (equivalent to ``../`` in filesystem relative links).
+
+  .. seealso:: `The Python Relative Import Docs <https://www.python.org/dev/peps/pep-0328/#guido-s-decision>`_ go into more detail of how to write relative imports.
+
+
 Modules removed
 ---------------
 
