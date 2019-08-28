@@ -218,6 +218,7 @@ files:
     supershipit: felixfontein
   $modules/crypto/openssl_certificate.py:
     maintainers: ctrufan
+  $modules/crypto/entrust/: ctrufan tylert
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
@@ -460,7 +461,7 @@ files:
     notified: jlozadad
   $modules/storage/hpe3par/: farhan7500 gautamphegde
   $modules/storage/infinidat/: GR360RY vmalloc
-  $modules/storage/netapp/: 
+  $modules/storage/netapp/:
     maintainers: $team_netapp
     support: community
   $modules/storage/purestorage/:
@@ -672,7 +673,7 @@ files:
       - aws
       - cloud
   $module_utils/ecs/:
-    maintainers: ctrufan $team_crypto
+    maintainers: ctrufan tylert $team_crypto
   $module_utils/facts:
     support: core
   $module_utils/facts/hardware/aix.py: *aix
