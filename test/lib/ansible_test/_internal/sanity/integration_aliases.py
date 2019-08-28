@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import textwrap
 import re
 import os
@@ -37,8 +36,9 @@ from ..util import (
     display,
 )
 
-from ..data import (
-    data_context,
+from ..util_common import (
+    write_json_test_results,
+    ResultType,
 )
 
 
@@ -180,8 +180,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
 
         self.check_changes(args, results)
 
-        with open(os.path.join(data_context().results, 'bot', 'data-sanity-ci.json'), 'w') as results_fd:
-            json.dump(results, results_fd, sort_keys=True, indent=4)
+        write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results)
 
         messages = []
 

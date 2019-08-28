@@ -62,7 +62,6 @@ except AttributeError:
     MAXFD = -1
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
-COVERAGE_OUTPUT_NAME = 'coverage'
 
 ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -81,9 +80,6 @@ if not os.path.exists(ANSIBLE_LIB_ROOT):
 
 ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
 ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, 'config')
-
-INTEGRATION_DIR_RELATIVE = 'test/integration'
-INTEGRATION_VARS_FILE_RELATIVE = os.path.join(INTEGRATION_DIR_RELATIVE, 'integration_config.yml')
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -801,8 +797,8 @@ def get_available_port():
 
 def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
     """Returns the set of types that are concrete subclasses of the given type."""
-    subclasses = set()
-    queue = [class_type]
+    subclasses = set()  # type: t.Set[t.Type[C]]
+    queue = [class_type]  # type: t.List[t.Type[C]]
 
     while queue:
         parent = queue.pop()

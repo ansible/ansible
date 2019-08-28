@@ -14,7 +14,6 @@ from .util import (
     generate_pip_command,
     get_docker_completion,
     ApplicationError,
-    INTEGRATION_DIR_RELATIVE,
 )
 
 from .util_common import (
@@ -247,7 +246,7 @@ class IntegrationConfig(TestConfig):
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
-        ansible_config_relative_path = os.path.join(INTEGRATION_DIR_RELATIVE, '%s.cfg' % self.command)
+        ansible_config_relative_path = os.path.join(data_context().content.integration_path, '%s.cfg' % self.command)
         ansible_config_path = os.path.join(data_context().content.root, ansible_config_relative_path)
 
         if not os.path.exists(ansible_config_path):
@@ -327,6 +326,7 @@ class CoverageConfig(EnvironmentConfig):
         self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
         self.all = args.all if 'all' in args else False  # type: bool
         self.stub = args.stub if 'stub' in args else False  # type: bool
+        self.coverage = False  # temporary work-around to support intercept_command in cover.py
 
 
 class CoverageReportConfig(CoverageConfig):

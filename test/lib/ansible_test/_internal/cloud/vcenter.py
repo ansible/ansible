@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import time
 
 from . import (
     CloudProvider,
@@ -14,10 +13,8 @@ from . import (
 from ..util import (
     find_executable,
     display,
-    ApplicationError,
     is_shippable,
     ConfigParser,
-    SubprocessError,
 )
 
 from ..docker_util import (
@@ -30,10 +27,6 @@ from ..docker_util import (
 
 from ..core_ci import (
     AnsibleCoreCI,
-)
-
-from ..http import (
-    HttpClient,
 )
 
 

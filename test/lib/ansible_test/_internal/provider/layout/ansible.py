@@ -31,6 +31,7 @@ class AnsibleLayout(LayoutProvider):
         return ContentLayout(root,
                              paths,
                              plugin_paths=plugin_paths,
+                             integration_path='test/integration',
                              unit_path='test/units',
                              unit_module_path='test/units/modules',
                              unit_module_utils_path='test/units/module_utils',

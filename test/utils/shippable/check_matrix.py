@@ -94,7 +94,13 @@ def fail(message, output):  # type: (str, str) -> NoReturn
 </testsuites>
 ''' % (timestamp, message, output)
 
-    with open('test/results/junit/check-matrix.xml', 'w') as junit_fd:
+    path = 'shippable/testresults/check-matrix.xml'
+    dir_path = os.path.dirname(path)
+
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    with open(path, 'w') as junit_fd:
         junit_fd.write(xml.lstrip())
 
     sys.stderr.write(message + '\n')

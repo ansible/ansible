@@ -16,6 +16,9 @@ def main():
     import traceback
     import warnings
 
+    import_dir = os.environ['SANITY_IMPORT_DIR']
+    minimal_dir = os.environ['SANITY_MINIMAL_DIR']
+
     try:
         import importlib.util
         imp = None  # pylint: disable=invalid-name
@@ -265,9 +268,6 @@ def main():
 
             filepath = os.path.relpath(warning.filename)
             lineno = warning.lineno
-
-            import_dir = 'test/runner/.tox/import/'
-            minimal_dir = 'test/runner/.tox/minimal-'
 
             if filepath.startswith('../') or filepath.startswith(minimal_dir):
                 # The warning occurred outside our source tree.

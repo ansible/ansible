@@ -888,7 +888,7 @@ def complete_network_testcase(prefix, parsed_args, **_):
     if len(parsed_args.include) != 1:
         return []
 
-    test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+    test_dir = os.path.join(data_context().content.integration_targets_path, parsed_args.include[0], 'tests')
     connection_dirs = data_context().content.get_dirs(test_dir)
 
     for connection_dir in connection_dirs:

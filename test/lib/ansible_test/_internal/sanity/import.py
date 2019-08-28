@@ -24,7 +24,6 @@ from ..util import (
     display,
     find_python,
     parse_to_list_of_dict,
-    make_dirs,
     is_subdir,
     ANSIBLE_LIB_ROOT,
 )
@@ -32,6 +31,8 @@ from ..util import (
 from ..util_common import (
     intercept_command,
     run_command,
+    write_text_file,
+    ResultType,
 )
 
 from ..ansible_util import (
@@ -75,8 +76,10 @@ class ImportTest(SanityMultipleVersion):
 
         env = ansible_environment(args, color=False)
 
+        temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
+
         # create a clean virtual environment to minimize the available imports beyond the python standard library
-        virtual_environment_path = os.path.abspath('test/runner/.tox/minimal-py%s' % python_version.replace('.', ''))
+        virtual_environment_path = os.path.join(temp_root, 'minimal-py%s' % python_version.replace('.', ''))
         virtual_environment_bin = os.path.join(virtual_environment_path, 'bin')
 
         remove_tree(virtual_environment_path)
@@ -96,7 +99,7 @@ class ImportTest(SanityMultipleVersion):
             os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'importer.py')), importer_path)
 
         # create a minimal python library
-        python_path = os.path.abspath('test/runner/.tox/import/lib')
+        python_path = os.path.join(temp_root, 'lib')
         ansible_path = os.path.join(python_path, 'ansible')
         ansible_init = os.path.join(ansible_path, '__init__.py')
         ansible_link = os.path.join(ansible_path, 'module_utils')
@@ -104,10 +107,7 @@ class ImportTest(SanityMultipleVersion):
         if not args.explain:
             remove_tree(ansible_path)
 
-            make_dirs(ansible_path)
-
-            with open(ansible_init, 'w'):
-                pass
+            write_text_file(ansible_init, '', create_directories=True)
 
             os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'module_utils'), ansible_link)
 
@@ -116,20 +116,21 @@ class ImportTest(SanityMultipleVersion):
                 # the __init__.py files are needed only for Python 2.x
                 # the empty modules directory is required for the collection loader to generate the synthetic packages list
 
-                make_dirs(os.path.join(ansible_path, 'utils'))
-                with open(os.path.join(ansible_path, 'utils/__init__.py'), 'w'):
-                    pass
+                write_text_file(os.path.join(ansible_path, 'utils/__init__.py'), '', create_directories=True)
 
                 os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'collection_loader.py'), os.path.join(ansible_path, 'utils', 'collection_loader.py'))
                 os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'singleton.py'), os.path.join(ansible_path, 'utils', 'singleton.py'))
 
-                make_dirs(os.path.join(ansible_path, 'modules'))
-                with open(os.path.join(ansible_path, 'modules/__init__.py'), 'w'):
-                    pass
+                write_text_file(os.path.join(ansible_path, 'modules/__init__.py'), '', create_directories=True)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
         env['PYTHONPATH'] = python_path
+
+        env.update(
+            SANITY_IMPORT_DIR=os.path.relpath(temp_root, data_context().content.root) + os.path.sep,
+            SANITY_MINIMAL_DIR=os.path.relpath(virtual_environment_path, data_context().content.root) + os.path.sep,
+        )
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
@@ -163,9 +164,11 @@ class ImportTest(SanityMultipleVersion):
 
             results = parse_to_list_of_dict(pattern, ex.stdout)
 
+            relative_temp_root = os.path.relpath(temp_root, data_context().content.root) + os.path.sep
+
             results = [SanityMessage(
                 message=r['message'],
-                path=r['path'],
+                path=os.path.relpath(r['path'], relative_temp_root) if r['path'].startswith(relative_temp_root) else r['path'],
                 line=int(r['line']),
                 column=int(r['column']),
             ) for r in results]

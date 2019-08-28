@@ -26,6 +26,12 @@ from .util import (
     get_available_python_versions,
 )
 
+from .util_common import (
+    write_json_test_results,
+    write_json_file,
+    ResultType,
+)
+
 from .git import (
     Git,
 )
@@ -45,10 +51,6 @@ from .constants import (
 
 from .test import (
     TestTimeout,
-)
-
-from .data import (
-    data_context,
 )
 
 from .executor import (
@@ -122,8 +124,7 @@ def show_dump_env(args):
         show_dict(data, verbose)
 
     if args.dump and not args.explain:
-        with open(os.path.join(data_context().results, 'bot', 'data-environment.json'), 'w') as results_fd:
-            results_fd.write(json.dumps(data, sort_keys=True))
+        write_json_test_results(ResultType.BOT, 'data-environment.json', data)
 
 
 def set_timeout(args):
@@ -151,8 +152,7 @@ def set_timeout(args):
             deadline=deadline,
         )
 
-        with open(TIMEOUT_PATH, 'w') as timeout_fd:
-            json.dump(data, timeout_fd, indent=4, sort_keys=True)
+        write_json_file(TIMEOUT_PATH, data)
     elif os.path.exists(TIMEOUT_PATH):
         os.remove(TIMEOUT_PATH)
 
