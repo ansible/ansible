@@ -119,17 +119,10 @@ EXAMPLES = """
 
 - name: set-application-site
   cp_mgmt_application_site:
-    additional_categories:
-      remove:
-      - Instant Chat
-      - Supports Streaming
     description: My New Application Site
     name: New Application Site 1
-    new_name: New Application Site 2
     primary_category: Instant Chat
     state: present
-    url_list:
-      add: www.download.com
     urls_defined_as_regular_expression: true
 
 - name: delete-application-site
