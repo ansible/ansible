@@ -142,7 +142,7 @@ class ACMServiceManager(object):
     # A cert with that ARN must already exist
     def get_domain_of_cert(self, client, module, arn):
         if arn is None:
-            module.fail(msg="Internal error with ACM domain fetching" % arn)
+            module.fail(msg="Internal error with ACM domain fetching, no certificate ARN specified")
         try:
             cert_data = self.describe_certificate_with_backoff(client=client, certificate_arn=arn)
         except (BotoCoreError, ClientError) as e:
