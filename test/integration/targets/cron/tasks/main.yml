@@ -2,8 +2,9 @@
   vars:
     search:
       files:
+        - 'cron.{{ ansible_system | lower }}.yml'
         - 'cron.{{ ansible_distribution | lower }}.yml'
-        - 'cron.{{ ansible_distribution_file_variety | lower }}.yml'
+        - 'cron.{{ ansible_os_family | lower }}.yml'
       paths:
         - '../defaults/'
 
@@ -13,19 +14,12 @@
     - name: install cron package
       package:
         name: '{{ cron_pkg }}'
+      when: cron_pkg|default(false, true)
       register: cron_package_installed
       until: cron_package_installed is success
 
     - when: faketime_pkg|default(false, true)
       block:
-        - name: create directory for cron drop-in file
-          file:
-            path: '/etc/systemd/system/{{ cron_service }}.service.d'
-            state: directory
-            owner: root
-            group: root
-            mode: 0755
-
         - name: install cron and faketime packages
           package:
             name: '{{ faketime_pkg }}'
@@ -38,16 +32,36 @@
             warn: false
           register: libfaketime_path
 
-        - name: Use faketime with cron service
+        - when: ansible_service_mgr == 'systemd'
+          block:
+            - name: create directory for cron drop-in file
+              file:
+                path: '/etc/systemd/system/{{ cron_service }}.service.d'
+                state: directory
+                owner: root
+                group: root
+                mode: 0755
+
+            - name: Use faketime with cron service
+              copy:
+                content: |-
+                  [Service]
+                  Environment=LD_PRELOAD={{ libfaketime_path.stdout_lines[0].strip() }}
+                  Environment="FAKETIME=+0y x10"
+                  Environment=RANDOM_DELAY=0
+                dest: '/etc/systemd/system/{{ cron_service }}.service.d/faketime.conf'
+                owner: root
+                group: root
+                mode: 0644
+
+        - when: ansible_system == 'FreeBSD'
+          name: Use faketime with cron service
           copy:
             content: |-
-              [Service]
-              Environment=LD_PRELOAD={{ libfaketime_path.stdout_lines[0] }}
-              Environment="FAKETIME=+0y x10"
-              Environment=RANDOM_DELAY=0
-            dest: '/etc/systemd/system/{{ cron_service }}.service.d/faketime.conf'
+              cron_env='LD_PRELOAD={{ libfaketime_path.stdout_lines[0].strip() }} FAKETIME="+0y x10"'
+            dest: '/etc/rc.conf.d/cron'
             owner: root
-            group: root
+            group: wheel
             mode: 0644
 
     - name: enable cron service

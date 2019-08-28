@@ -1,3 +1,2 @@
 ---
-cron_pkg: cron
 faketime_pkg: libfaketime
