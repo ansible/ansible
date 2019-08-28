@@ -61,11 +61,16 @@
         name: test cron task
         job: 'date > {{ remote_dir }}/cron_canary1'
 
-    - name: wait for canary creation
-      wait_for:
-        path: '{{ remote_dir }}/cron_canary1'
-        timeout: '{{ 20 if faketime_pkg else 70 }}'
-      register: wait_canary
+    - block:
+        - name: wait for canary creation
+          wait_for:
+            path: '{{ remote_dir }}/cron_canary1'
+            timeout: '{{ 20 if faketime_pkg else 70 }}'
+          register: wait_canary
+      always:
+        - name: display some logs in case of failure
+          command: 'journalctl -u {{ cron_service }}'
+          when: wait_canary is failed and ansible_service_mgr == 'systemd'
 
     - debug:
         msg: 'elapsed time waiting for canary: {{ wait_canary.elapsed }}'
