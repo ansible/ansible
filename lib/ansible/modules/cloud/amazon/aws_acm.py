@@ -148,6 +148,7 @@ options:
     type: str
 requirements:
   - boto3
+  - cryptography >= 1.3
 author:
   - Matthew Davis (@matt-telstra) on behalf of Telstra Corporation Limited
 extends_documentation_fragment:

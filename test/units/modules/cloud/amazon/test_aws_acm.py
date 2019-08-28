@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.modules.cloud.amazon.aws_acm import cert_compare
 from ansible.module_utils.crypto import get_fingerprint_from_pem_cert as get_fingerprint
 from ansible.module_utils._text import to_bytes, to_text
+from binascii import hexlify as to_hex
 
 # You can manually check the fingerprints with
 # openssl x509 -in a.pem -noout -sha256 -fingerprint
@@ -36,6 +37,8 @@ test_certs = [
     }
 ]
 
+
+
 def test_fingerprinting():
     for cert in test_certs:
         with open(cert['path'],'r') as f:
@@ -45,8 +48,8 @@ def test_fingerprinting():
         
         # convert to the format of test_cert['expected_fingerprint']
         # Which is what you can copy and paste from a browser
-        cert['fingerprint_text'] = cert['fingerprint_bytes'].hex().upper()
-        cert['expected_fingerprint'] = cert['expected_fingerprint'].replace(':','')
+        cert['fingerprint_text'] = to_text(to_hex(cert['fingerprint_bytes'])).upper()
+        cert['expected_fingerprint'] = cert['expected_fingerprint'].replace(':','').upper()
         if cert['fingerprint_text'] != cert['expected_fingerprint']:
             print("Expected fingerprint: %s" % cert['expected_fingerprint'])
             print("Actual fingerprint:   %s" % cert['fingerprint_text'])
