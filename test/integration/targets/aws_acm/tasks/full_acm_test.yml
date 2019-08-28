@@ -2,12 +2,13 @@
   block:
 
   - set_fact:
-        aws_connection_info: &aws_connection_info
-            aws_region: "{{ aws_region }}"
-            aws_access_key: "{{ aws_access_key }}"
-            aws_secret_key: "{{ aws_secret_key }}"
-            security_token: "{{ security_token }}"
-
+      aws_connection_info: &aws_connection_info
+        aws_region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+      no_log: True
+        
   # just check this task doesn't fail
   # I'm not sure if I can assume there aren't already other certs in this account
   - name: list certs
@@ -84,6 +85,9 @@
       state: present 
     register: upload
     with_items: "{{ local_certs }}"
+    until: upload is succeeded
+    retries: 5
+    delay: 10
     
   - assert:
       that:
