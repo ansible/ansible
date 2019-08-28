@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 Ansible Project
+# Copyright (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # This module is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 #
 # Author:
 #   - Matthew Davis <Matthew.Davis.2@team.telstra.com>
+#     on behalf of Telstra Corporation Limited
 #
 # Common functionality to be used by the modules:
 #   - acm
