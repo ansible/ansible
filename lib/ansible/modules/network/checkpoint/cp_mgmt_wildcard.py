@@ -106,7 +106,6 @@ EXAMPLES = """
     ipv6_address: 2001:db8::1111
     ipv6_mask_wildcard: ffff:ffff::f0f0
     name: New Wildcard 1
-    new_name: New Wildcard 3
     state: present
 
 - name: delete-wildcard
