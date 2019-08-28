@@ -120,7 +120,6 @@ EXAMPLES = """
   cp_mgmt_exception_group:
     apply_on: all-threat-rules
     name: exception_group_2
-    new_name: exception_group_2.1
     state: present
     tags: tag3
 
