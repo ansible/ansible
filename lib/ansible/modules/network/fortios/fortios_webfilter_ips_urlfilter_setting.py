@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import (absolute_import, division, print_function)
-# Copyright 2018 Fortinet, Inc.
+# Copyright 2019 Fortinet, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -27,12 +24,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_webfilter_ips_urlfilter_setting
-short_description: Configure IPS URL filter settings.
+short_description: Configure IPS URL filter settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure webfilter feature and ips_urlfilter_setting category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify webfilter feature and ips_urlfilter_setting category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,46 +41,60 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     webfilter_ips_urlfilter_setting:
         description:
             - Configure IPS URL filter settings.
         default: null
+        type: dict
         suboptions:
             device:
                 description:
                     - Interface for this route. Source system.interface.name.
+                type: str
             distance:
                 description:
                     - Administrative distance (1 - 255) for this route.
+                type: int
             gateway:
                 description:
                     - Gateway IP address for this route.
-            geo-filter:
+                type: str
+            geo_filter:
                 description:
                     - Filter based on geographical location. Route will NOT be installed if the resolved IP address belongs to the country in the filter.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -93,6 +104,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure IPS URL filter settings.
     fortios_webfilter_ips_urlfilter_setting:
@@ -100,11 +112,12 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
       webfilter_ips_urlfilter_setting:
         device: "<your_own_value> (source system.interface.name)"
         distance: "4"
         gateway: "<your_own_value>"
-        geo-filter: "<your_own_value>"
+        geo_filter: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -127,7 +140,7 @@ mkey:
   description: Master key (id) used in the last call to FortiGate
   returned: success
   type: str
-  sample: "key1"
+  sample: "id"
 name:
   description: Name of the table used to fulfill the request
   returned: always
@@ -167,14 +180,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -182,12 +197,12 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_webfilter_ips_urlfilter_setting_data(json):
     option_list = ['device', 'distance', 'gateway',
-                   'geo-filter']
+                   'geo_filter']
     dictionary = {}
 
     for attribute in option_list:
@@ -197,44 +212,60 @@ def filter_webfilter_ips_urlfilter_setting_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def webfilter_ips_urlfilter_setting(data, fos):
     vdom = data['vdom']
     webfilter_ips_urlfilter_setting_data = data['webfilter_ips_urlfilter_setting']
-    filtered_data = filter_webfilter_ips_urlfilter_setting_data(
-        webfilter_ips_urlfilter_setting_data)
+    filtered_data = underscore_to_hyphen(filter_webfilter_ips_urlfilter_setting_data(webfilter_ips_urlfilter_setting_data))
+
     return fos.set('webfilter',
                    'ips-urlfilter-setting',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_webfilter(data, fos):
-    login(data)
 
-    methodlist = ['webfilter_ips_urlfilter_setting']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['webfilter_ips_urlfilter_setting']:
+        resp = webfilter_ips_urlfilter_setting(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "webfilter_ips_urlfilter_setting": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "device": {"required": False, "type": "str"},
                 "distance": {"required": False, "type": "int"},
                 "gateway": {"required": False, "type": "str"},
-                "geo-filter": {"required": False, "type": "str"}
+                "geo_filter": {"required": False, "type": "str"}
 
             }
         }
@@ -242,15 +273,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_webfilter(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_webfilter(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_webfilter(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
