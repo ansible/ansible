@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_firewall_ippool6
 short_description: Configure IPv6 IP pools in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify firewall feature and ippool6 category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -76,7 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
+        required: false
         choices:
             - present
             - absent
@@ -87,13 +90,24 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             comments:
                 description:
                     - Comment.
                 type: str
             endip:
                 description:
-                    - "Final IPv6 address (inclusive) in the range for the address pool (format xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, Default: ::)."
+                    - "Final IPv6 address (inclusive) in the range for the address pool (format xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx)."
                 type: str
             name:
                 description:
@@ -102,7 +116,7 @@ options:
                 type: str
             startip:
                 description:
-                    - "First IPv6 address (inclusive) in the range for the address pool (format xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, Default: ::)."
+                    - "First IPv6 address (inclusive) in the range for the address pool (format xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx)."
                 type: str
 '''
 
@@ -237,7 +251,12 @@ def underscore_to_hyphen(data):
 
 def firewall_ippool6(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_ippool6'] and data['firewall_ippool6']:
+        state = data['firewall_ippool6']['state']
+    else:
+        state = True
     firewall_ippool6_data = data['firewall_ippool6']
     filtered_data = underscore_to_hyphen(filter_firewall_ippool6_data(firewall_ippool6_data))
 
@@ -273,15 +292,17 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "firewall_ippool6": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "comments": {"required": False, "type": "str"},
                 "endip": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
@@ -294,6 +315,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None

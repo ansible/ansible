@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_antivirus_profile
 short_description: Configure AntiVirus profiles in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify antivirus feature and profile category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -76,7 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
+        required: false
         choices:
             - present
             - absent
@@ -87,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             analytics_bl_filetype:
                 description:
                     - Only submit files matching this DLP file-pattern to FortiSandbox. Source dlp.filepattern.id.
@@ -100,7 +114,7 @@ options:
                     - enable
             analytics_max_upload:
                 description:
-                    - Maximum size of files that can be uploaded to FortiSandbox (1 - 395 MBytes, default = 10).
+                    - Maximum size of files that can be uploaded to FortiSandbox (1 - 395 MBytes).
                 type: int
             analytics_wl_filetype:
                 description:
@@ -1040,7 +1054,12 @@ def underscore_to_hyphen(data):
 
 def antivirus_profile(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['antivirus_profile'] and data['antivirus_profile']:
+        state = data['antivirus_profile']['state']
+    else:
+        state = True
     antivirus_profile_data = data['antivirus_profile']
     filtered_data = underscore_to_hyphen(filter_antivirus_profile_data(antivirus_profile_data))
 
@@ -1076,15 +1095,17 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "antivirus_profile": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "analytics_bl_filetype": {"required": False, "type": "int"},
                 "analytics_db": {"required": False, "type": "str",
                                  "choices": ["disable", "enable"]},
@@ -1310,6 +1331,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None

@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_firewall_addrgrp
 short_description: Configure IPv4 address groups in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify firewall feature and addrgrp category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -76,7 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
+        required: false
         choices:
             - present
             - absent
@@ -87,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             allow_routing:
                 description:
                     - Enable/disable use of this group in the static route configuration.
@@ -298,7 +312,12 @@ def underscore_to_hyphen(data):
 
 def firewall_addrgrp(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_addrgrp'] and data['firewall_addrgrp']:
+        state = data['firewall_addrgrp']['state']
+    else:
+        state = True
     firewall_addrgrp_data = data['firewall_addrgrp']
     filtered_data = underscore_to_hyphen(filter_firewall_addrgrp_data(firewall_addrgrp_data))
 
@@ -334,15 +353,17 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "firewall_addrgrp": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "allow_routing": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
                 "color": {"required": False, "type": "int"},
@@ -372,6 +393,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None

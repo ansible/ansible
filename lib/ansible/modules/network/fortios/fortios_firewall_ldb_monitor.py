@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_firewall_ldb_monitor
 short_description: Configure server load balancing health monitors in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify firewall feature and ldb_monitor category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -76,7 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
+        required: false
         choices:
             - present
             - absent
@@ -87,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             http_get:
                 description:
                     - URL used to send a GET request to check the health of an HTTP server.
@@ -97,11 +111,11 @@ options:
                 type: str
             http_max_redirects:
                 description:
-                    - The maximum number of HTTP redirects to be allowed (0 - 5, default = 0).
+                    - The maximum number of HTTP redirects to be allowed (0 - 5).
                 type: int
             interval:
                 description:
-                    - Time between health checks (5 - 65635 sec, default = 10).
+                    - Time between health checks (5 - 65635 sec).
                 type: int
             name:
                 description:
@@ -110,17 +124,15 @@ options:
                 type: str
             port:
                 description:
-                    - Service port used to perform the health check. If 0, health check monitor inherits port configured for the server (0 - 65635, default =
-                       0).
+                    - Service port used to perform the health check. If 0, health check monitor inherits port configured for the server (0 - 65635).
                 type: int
             retry:
                 description:
-                    - Number health check attempts before the server is considered down (1 - 255, default = 3).
+                    - Number health check attempts before the server is considered down (1 - 255).
                 type: int
             timeout:
                 description:
-                    - Time to wait to receive response to a health check from a server. Reaching the timeout means the health check failed (1 - 255 sec,
-                       default = 2).
+                    - Time to wait to receive response to a health check from a server. Reaching the timeout means the health check failed (1 - 255 sec).
                 type: int
             type:
                 description:
@@ -270,7 +282,12 @@ def underscore_to_hyphen(data):
 
 def firewall_ldb_monitor(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_ldb_monitor'] and data['firewall_ldb_monitor']:
+        state = data['firewall_ldb_monitor']['state']
+    else:
+        state = True
     firewall_ldb_monitor_data = data['firewall_ldb_monitor']
     filtered_data = underscore_to_hyphen(filter_firewall_ldb_monitor_data(firewall_ldb_monitor_data))
 
@@ -306,15 +323,17 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "firewall_ldb_monitor": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "http_get": {"required": False, "type": "str"},
                 "http_match": {"required": False, "type": "str"},
                 "http_max_redirects": {"required": False, "type": "int"},
@@ -334,6 +353,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None

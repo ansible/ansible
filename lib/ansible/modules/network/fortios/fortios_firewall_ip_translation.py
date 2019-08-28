@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_firewall_ip_translation
 short_description: Configure firewall IP-translation in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify firewall feature and ip_translation category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -76,7 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
+        required: false
         choices:
             - present
             - absent
@@ -87,17 +90,28 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             endip:
                 description:
-                    - "Final IPv4 address (inclusive) in the range of the addresses to be translated (format xxx.xxx.xxx.xxx, default: 0.0.0.0)."
+                    - "Final IPv4 address (inclusive) in the range of the addresses to be translated (format xxx.xxx.xxx.xxx)."
                 type: str
             map_startip:
                 description:
-                    - "Address to be used as the starting point for translation in the range (format xxx.xxx.xxx.xxx, default: 0.0.0.0)."
+                    - "Address to be used as the starting point for translation in the range (format xxx.xxx.xxx.xxx)."
                 type: str
             startip:
                 description:
-                    - "First IPv4 address (inclusive) in the range of the addresses to be translated (format xxx.xxx.xxx.xxx, default: 0.0.0.0)."
+                    - "First IPv4 address (inclusive) in the range of the addresses to be translated (format xxx.xxx.xxx.xxx)."
                 type: str
             transid:
                 description:
@@ -244,7 +258,12 @@ def underscore_to_hyphen(data):
 
 def firewall_ip_translation(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_ip_translation'] and data['firewall_ip_translation']:
+        state = data['firewall_ip_translation']['state']
+    else:
+        state = True
     firewall_ip_translation_data = data['firewall_ip_translation']
     filtered_data = underscore_to_hyphen(filter_firewall_ip_translation_data(firewall_ip_translation_data))
 
@@ -280,15 +299,17 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "firewall_ip_translation": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "endip": {"required": False, "type": "str"},
                 "map_startip": {"required": False, "type": "str"},
                 "startip": {"required": False, "type": "str"},
@@ -303,6 +324,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None
