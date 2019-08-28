@@ -35,6 +35,10 @@ description:
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
+  uid:
+    description:
+      - Session unique identifier. Specify it to discard a different session than the one you currently use.
+    type: str
 extends_documentation_fragment: checkpoint_commands
 """
 
@@ -56,6 +60,7 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
+        uid=dict(type='str')
     )
     argument_spec.update(checkpoint_argument_spec_for_commands)
 
