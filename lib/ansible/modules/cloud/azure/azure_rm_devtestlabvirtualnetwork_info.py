@@ -150,6 +150,10 @@ class AzureRMDevTestLabVirtualNetworkInfo(AzureRMModuleBase):
         super(AzureRMDevTestLabVirtualNetworkInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlabvirtualnetwork_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlabvirtualnetwork_facts' module has been renamed to 'azure_rm_devtestlabvirtualnetwork_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
