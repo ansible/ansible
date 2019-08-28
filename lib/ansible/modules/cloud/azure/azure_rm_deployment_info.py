@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_deployment_facts
-version_added: "2.8"
+module: azure_rm_deployment_info
+version_added: "2.9"
 short_description: Get Azure Deployment facts
 description:
     - Get facts of Azure Deployment.
@@ -40,7 +40,7 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of Deployment
-    azure_rm_deployment_facts:
+    azure_rm_deployment_info:
       resource_group: myResourceGroup
       name: myDeployment
 '''
@@ -135,7 +135,7 @@ except ImportError:
     pass
 
 
-class AzureRMDeploymentFacts(AzureRMModuleBase):
+class AzureRMDeploymentInfo(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(
@@ -151,9 +151,15 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        super(AzureRMDeploymentFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+
+        super(AzureRMDeploymentInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_deployment_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_deployment_facts' module has been renamed to 'azure_rm_deployment_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -237,7 +243,7 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDeploymentFacts()
+    AzureRMDeploymentInfo()
 
 
 if __name__ == '__main__':
