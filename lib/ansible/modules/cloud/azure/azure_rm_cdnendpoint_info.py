@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_cdnendpoint_facts
+module: azure_rm_cdnendpoint_info
 
-version_added: "2.8"
+version_added: "2.9"
 
 short_description: Get Azure CDN endpoint facts
 
@@ -49,12 +49,12 @@ author:
 
 EXAMPLES = '''
   - name: Get facts for all endpoints in CDN profile
-    azure_rm_cdnendpoint_facts:
+    azure_rm_cdnendpoint_info:
       resource_group: myResourceGroup
       profile_name: myCDNProfile
 
   - name: Get facts of specific CDN endpoint
-    azure_rm_cdnendpoint_facts:
+    azure_rm_cdnendpoint_info:
       resource_group: myResourceGroup
       profile_name: myCDNProfile
       name: myEndpoint1
@@ -165,6 +165,7 @@ cdnendpoints:
             sample: foo
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -180,7 +181,7 @@ import re
 AZURE_OBJECT_CLASS = 'endpoints'
 
 
-class AzureRMCdnEndpointFacts(AzureRMModuleBase):
+class AzureRMCdnEndpointInfo(AzureRMModuleBase):
     """Utility class to get Azure Azure CDN endpoint facts"""
 
     def __init__(self):
@@ -208,7 +209,12 @@ class AzureRMCdnEndpointFacts(AzureRMModuleBase):
         self.profile_name = None
         self.tags = None
 
-        super(AzureRMCdnEndpointFacts, self).__init__(
+        module = AnsibleModule(self.module_args)
+        is_old_facts = module._name == 'azure_rm_cdnendpoint_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_cdnendpoint_facts' module has been renamed to 'azure_rm_cdnendpoint_info'", version='2.13')
+
+        super(AzureRMCdnEndpointInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
@@ -304,7 +310,7 @@ class AzureRMCdnEndpointFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMCdnEndpointFacts()
+    AzureRMCdnEndpointInfo()
 
 
 if __name__ == '__main__':

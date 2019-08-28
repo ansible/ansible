@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_automationaccount_facts
+module: azure_rm_automationaccount_info
 version_added: '2.9'
 short_description: Get Azure automation account facts
 description:
@@ -61,7 +61,7 @@ author:
 
 EXAMPLES = '''
 - name: Get details of an automation account
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount_info:
       name: Testing
       resource_group: myResourceGroup
       list_statistics: yes
@@ -69,11 +69,11 @@ EXAMPLES = '''
       list_keys: yes
 
 - name: List automation account in a resource group
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount_info:
       resource_group: myResourceGroup
 
 - name: List automation account in a resource group
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount_info:
 '''
 
 RETURN = '''
@@ -238,6 +238,7 @@ automation_accounts:
 
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -246,7 +247,7 @@ except ImportError:
     pass
 
 
-class AzureRMAutomationAccountFacts(AzureRMModuleBase):
+class AzureRMAutomationAccountInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -278,7 +279,13 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
         self.list_statistics = None
         self.list_usages = None
         self.list_keys = None
-        super(AzureRMAutomationAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
+
+        module = AnsibleModule(self.module_arg_spec)
+        is_old_facts = module._name == 'azure_rm_automationaccount_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_automationaccount_facts' module has been renamed to 'azure_rm_automationaccount_info'", version='2.13')
+
+        super(AzureRMAutomationAccountInfo, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
     def exec_module(self, **kwargs):
         for key in list(self.module_arg_spec):
@@ -370,7 +377,7 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMAutomationAccountFacts()
+    AzureRMAutomationAccountInfo()
 
 
 if __name__ == '__main__':

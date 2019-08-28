@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_containerinstance_facts
-version_added: "2.8"
+module: azure_rm_containerinstance_info
+version_added: "2.9"
 short_description: Get Azure Container Instance facts
 description:
     - Get facts of Container Instance.
@@ -43,12 +43,12 @@ author:
 
 EXAMPLES = '''
   - name: Get specific Container Instance facts
-    azure_rm_containerinstance_facts:
+    azure_rm_containerinstance_info:
       resource_group: myResourceGroup
       name: myContainer
 
   - name: List Container Instances in a specified resource group name
-    azure_rm_containerinstance_facts:
+    azure_rm_containerinstance_info:
       resource_group: myResourceGroup
 '''
 
@@ -171,6 +171,7 @@ container_groups:
             sample: { "tag1": "abc" }
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.common.dict_transformations import _camel_to_snake
 
@@ -184,7 +185,7 @@ except ImportError:
     pass
 
 
-class AzureRMContainerInstanceFacts(AzureRMModuleBase):
+class AzureRMContainerInstanceInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -206,7 +207,13 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        super(AzureRMContainerInstanceFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+
+        module = AnsibleModule(self.module_arg_spec)
+        is_old_facts = module._name == 'azure_rm_containerinstance_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_containerinstance_facts' module has been renamed to 'azure_rm_containerinstance_info'", version='2.13')
+
+        super(AzureRMContainerInstanceInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -308,7 +315,7 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMContainerInstanceFacts()
+    AzureRMContainerInstanceInfo()
 
 
 if __name__ == '__main__':

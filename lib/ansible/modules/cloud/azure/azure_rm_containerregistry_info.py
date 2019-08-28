@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_containerregistry_facts
-version_added: "2.7"
+module: azure_rm_containerregistry_info
+version_added: "2.9"
 short_description: Get Azure Container Registry facts
 description:
     - Get facts for Container Registry.
@@ -48,12 +48,12 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of Registry
-    azure_rm_containerregistry_facts:
+    azure_rm_containerregistry_info:
       resource_group: myResourceGroup
       name: myRegistry
 
   - name: List instances of Registry
-    azure_rm_containerregistry_facts:
+    azure_rm_containerregistry_info:
       resource_group: myResourceGroup
 '''
 
@@ -138,6 +138,7 @@ registries:
             sample: { "tag1": "abc" }
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -150,7 +151,7 @@ except ImportError:
     pass
 
 
-class AzureRMContainerRegistryFacts(AzureRMModuleBase):
+class AzureRMContainerRegistryInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -176,7 +177,13 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.retrieve_credentials = False
-        super(AzureRMContainerRegistryFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+
+        module = AnsibleModule(self.module_arg_spec)
+        is_old_facts = module._name == 'azure_rm_containerregistry_facts'
+        if is_old_facts:
+            module.deprecate("The 'azure_rm_containerregistry_facts' module has been renamed to 'azure_rm_containerregistry_info'", version='2.13')
+
+        super(AzureRMContainerRegistryInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -270,7 +277,7 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMContainerRegistryFacts()
+    AzureRMContainerRegistryInfo()
 
 
 if __name__ == '__main__':
