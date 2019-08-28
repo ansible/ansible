@@ -85,7 +85,6 @@ EXAMPLES = """
 - name: set-threat-layer
   cp_mgmt_threat_layer:
     name: New Layer 1
-    new_name: New Layer 2
     state: present
 
 - name: delete-threat-layer
