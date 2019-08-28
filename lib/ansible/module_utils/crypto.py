@@ -303,7 +303,7 @@ def select_message_digest(digest_string):
     return digest
 
 
-def write_file(module, content, default_mode=None):
+def write_file(module, content, default_mode=None, path=None):
     '''
     Writes content into destination file as securely as possible.
     Uses file arguments from module.
@@ -312,6 +312,9 @@ def write_file(module, content, default_mode=None):
     file_args = module.load_file_common_arguments(module.params)
     if file_args['mode'] is None:
         file_args['mode'] = default_mode
+    # If the path was set to override module path
+    if path is not None:
+        file_args['path'] = path
     # Create tempfile name
     tmp_fd, tmp_name = tempfile.mkstemp(prefix=b'.ansible_tmp')
     try:
