@@ -491,12 +491,13 @@ def get_collection_name_from_path(path):
     :param n_path: native-string path to evaluate for collection containment
     :return: collection name or None
     """
-    n_collection_paths = [os.path.realpath(p) for p in AnsibleCollectionLoader().n_collection_paths]
+    n_collection_paths = [to_native(os.path.realpath(to_bytes(p))) for p in AnsibleCollectionLoader().n_collection_paths]
 
-    n_path = os.path.realpath(to_native(path))
+    b_path = os.path.realpath(to_bytes(path))
+    n_path = to_native(b_path)
 
     for coll_path in n_collection_paths:
-        common_prefix = os.path.commonprefix([n_path, coll_path])
+        common_prefix = to_native(os.path.commonprefix([b_path, to_bytes(coll_path)]))
         if common_prefix == coll_path:
             # strip off the common prefix (handle weird testing cases of nested collection roots, eg)
             collection_remnant = n_path[len(coll_path):]
@@ -507,19 +508,19 @@ def get_collection_name_from_path(path):
             found_collection = _N_COLLECTION_PATH_RE.search(collection_remnant)
             if not found_collection:
                 continue
-            collection_name = '{0}.{1}'.format(*found_collection.groups())
+            n_collection_name = '{0}.{1}'.format(*found_collection.groups())
 
-            loaded_collection_path = AnsibleCollectionLoader().get_collection_path(collection_name)
+            loaded_collection_path = AnsibleCollectionLoader().get_collection_path(n_collection_name)
 
             if not loaded_collection_path:
                 return None
 
             # ensure we're using the canonical real path, with the bogus __synthetic__ stripped off
-            loaded_collection_path = os.path.dirname(os.path.realpath(loaded_collection_path))
+            b_loaded_collection_path = os.path.dirname(os.path.realpath(to_bytes(loaded_collection_path)))
 
             # if the collection path prefix matches the path prefix we were passed, it's the same collection that's loaded
-            if os.path.commonprefix([n_path, loaded_collection_path]) == loaded_collection_path:
-                return collection_name
+            if os.path.commonprefix([b_path, b_loaded_collection_path]) == b_loaded_collection_path:
+                return n_collection_name
 
             return None  # if not, it's a collection, but not the same collection the loader sees, so ignore it
 
