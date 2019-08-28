@@ -390,7 +390,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 queries.append("(%s = %s)" % (key, value))
             return " AND ".join(queries)
 
-
     def _get_query_options_from_array(self, filters):
         """
             :param config_data: contents of the inventory config file

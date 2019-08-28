@@ -584,7 +584,7 @@ Removed Lookup Plugins
 * ``redis_kv`` use :ref:`redis <redis_lookup>` instead.
 
 Noteworthy plugin changes
-------------------------
+-------------------------
 
 * :ref: `gcp_compute <gcp_compute>` now accepts a dictionary of filters or a list of boolean expressions.
 
