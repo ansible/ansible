@@ -93,8 +93,6 @@ EXAMPLES = """
 
 - name: set-application-site-group
   cp_mgmt_application_site_group:
-    members:
-      add: AliveProxy
     name: New Application Site Group 1
     state: present
 
