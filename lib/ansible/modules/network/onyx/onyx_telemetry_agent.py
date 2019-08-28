@@ -24,10 +24,12 @@ options:
     description:
       - Name of the of the telemetry agent docker container.
     required: true
+    type: str
   state:
     description:
       - State of the telemetry agent agent docker container.
     default: present
+    type: str
     choices: ['present', 'absent']
   install_mode:
     description:
@@ -35,37 +37,46 @@ options:
         or fetch an image from given location, required if I(state)
         is C(present).
     choices: ['pull', 'fetch']
+    type: str
   location:
     description:
       - location of the docker image, required if I(install_mode) is C(fetch).
+    type: dict
     suboptions:
       server:
         description:
           - name of IP address of the server storing the image.
         required: true
+        type: str
       protocol:
         description:
           - protocol for fetching the image from the server.
         choices: ['http', 'https', 'ftp', 'tftp', 'scp', 'sftp']
         required: true
+        type: str
       path:
         description:
           - Image absolute path within the server.
         required: true
+        type: str
       image:
         description:
           - Image name, the default is telemetry-agent.
         default: telemetry-agent
+        type: str
       version:
         description:
           - Image version.
         required: true
+        type: str
       username:
         description:
           - username used to fetch the image.
+        type: str
       password:
         description:
           - password used to fetch the image.
+        type: str
 """
 
 EXAMPLES = """
