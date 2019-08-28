@@ -44,6 +44,10 @@ options:
         description:
           - The sku name.
         type: str
+        choices:
+          - Standard_LRS
+          - Premium_LRS
+          - Standard_ZRS
       tier:
         description:
           - The sku tier.
@@ -52,6 +56,9 @@ options:
     description:
       - The Operating System type.
     type: str
+    choices:
+      - Linux
+      - Windows
   creation_data:
     description:
       - >-
@@ -78,6 +85,7 @@ options:
         Use C(present) to create or update an Snapshot and C(absent) to delete
         it.
     default: present
+    type: str
     choices:
       - absent
       - present
@@ -156,6 +164,9 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
                         choices=['Standard_LRS',
                                  'Premium_LRS',
                                  'Standard_ZRS']
+                    ),
+                    tier=dict(
+                        type='str'
                     )
                 )
             ),
@@ -302,7 +313,7 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-           self.results["id"] = response["id"]
+            self.results["id"] = response["id"]
 
         return self.results
 
