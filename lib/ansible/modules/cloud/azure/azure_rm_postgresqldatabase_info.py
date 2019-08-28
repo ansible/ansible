@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mysqldatabase_facts
-version_added: "2.7"
-short_description: Get Azure MySQL Database facts
+module: azure_rm_postgresqldatabase_info
+version_added: "2.9"
+short_description: Get Azure PostgreSQL Database facts
 description:
-    - Get facts of MySQL Database.
+    - Get facts of PostgreSQL Database.
 
 options:
     resource_group:
@@ -43,14 +43,14 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of MySQL Database
-    azure_rm_mysqldatabase_facts:
+  - name: Get instance of PostgreSQL Database
+    azure_rm_postgresqldatabase_info:
       resource_group: myResourceGroup
       server_name: server_name
       name: database_name
 
-  - name: List instances of MySQL Database
-    azure_rm_mysqldatabase_facts:
+  - name: List instances of PostgreSQL Database
+    azure_rm_postgresqldatabase_info:
       resource_group: myResourceGroup
       server_name: server_name
 '''
@@ -58,7 +58,7 @@ EXAMPLES = '''
 RETURN = '''
 databases:
     description:
-        - A list of dictionaries containing facts for MySQL Databases.
+        - A list of dict results where the key is the name of the PostgreSQL Database and the values are the facts for that PostgreSQL Database.
     returned: always
     type: complex
     contains:
@@ -67,7 +67,7 @@ databases:
                 - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testser
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/testser
                     ver/databases/db1"
         resource_group:
             description:
@@ -92,7 +92,7 @@ databases:
                 - The charset of the database.
             returned: always
             type: str
-            sample: utf8
+            sample: UTF8
         collation:
             description:
                 - The collation of the database.
@@ -105,14 +105,14 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
+class AzureRMPostgreSqlDatabasesInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -135,7 +135,7 @@ class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMMySqlDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMPostgreSqlDatabasesInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -154,9 +154,9 @@ class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mysql_client.databases.get(resource_group_name=self.resource_group,
-                                                       server_name=self.server_name,
-                                                       database_name=self.name)
+            response = self.postgresql_client.databases.get(resource_group_name=self.resource_group,
+                                                            server_name=self.server_name,
+                                                            database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
@@ -170,8 +170,8 @@ class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mysql_client.databases.list_by_server(resource_group_name=self.resource_group,
-                                                                  server_name=self.server_name)
+            response = self.postgresql_client.databases.list_by_server(resource_group_name=self.resource_group,
+                                                                       server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.fail("Error listing for server {0} - {1}".format(self.server_name, str(e)))
@@ -195,7 +195,7 @@ class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMySqlDatabaseFacts()
+    AzureRMPostgreSqlDatabasesInfo()
 
 
 if __name__ == '__main__':

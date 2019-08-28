@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabenvironment_facts
-version_added: "2.8"
-short_description: Get Azure Environment facts
+module: azure_rm_devtestlabcustomimage_info
+version_added: "2.9"
+short_description: Get Azure DevTest Lab Custom Image facts
 description:
-    - Get facts of Azure Environment.
+    - Get facts of Azure Azure DevTest Lab Custom Image.
 
 options:
     resource_group:
@@ -30,13 +30,9 @@ options:
         description:
             - The name of the lab.
         required: True
-    user_name:
-        description:
-            - The name of the user profile.
-        required: True
     name:
         description:
-            - The name of the environment.
+            - The name of the custom image.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -50,18 +46,23 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Environment
-    azure_rm_devtestlabenvironment_facts:
+  - name: Get instance of Custom Image
+    azure_rm_devtestlabcustomimage_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      user_name: myUser
-      name: myEnvironment
+      name: myImage
+
+  - name: List instances of Custom Image in the lab
+    azure_rm_devtestlabcustomimage_info:
+      resource_group: myResourceGroup
+      lab_name: myLab
+      name: myImage
 '''
 
 RETURN = '''
-environments:
+custom_images:
     description:
-        - A list of dictionaries containing facts for Environment.
+        - A list of dictionaries containing facts for Custom Image.
     returned: always
     type: complex
     contains:
@@ -70,8 +71,8 @@ environments:
                 - The identifier of the artifact source.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/sc
-                     hedules/xxxxxxxx-xxxx-xxxx-xxxxx-xxxxxxxxxxxxx/environments/myEnvironment"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/cu
+                     stomimages/myImage"
         resource_group:
             description:
                 - Name of the resource group.
@@ -86,35 +87,29 @@ environments:
             sample: myLab
         name:
             description:
-                - The name of the environment.
+                - The name of the image.
             returned: always
             type: str
-            sample: myEnvironment
-        deployment_template:
+            sample: myImage
+        managed_shapshot_id:
             description:
-                - The identifier of the artifact source.
+                - Managed snapshot id.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/mylab/art
-                     ifactSources/public environment repo/armTemplates/WebApp"
-        resource_group_id:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.compute/snapshots/myImage"
+        source_vm_id:
             description:
-                - Target resource group id.
+                - Source VM id.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myLab-myEnvironment-982571"
-        state:
-            description:
-                - Deployment state.
-            returned: always
-            type: str
-            sample: Succeeded
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx//resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/v
+                     irtualmachines/myLabVm"
         tags:
             description:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: "{ 'MyTag': 'MyValue' }"
+            sample: "{ 'MyTag':'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -128,7 +123,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlEnvironmentFacts(AzureRMModuleBase):
+class AzureRMDtlCustomImageInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -140,12 +135,9 @@ class AzureRMDtlEnvironmentFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            user_name=dict(
+            name=dict(
                 type='str',
                 required=True
-            ),
-            name=dict(
-                type='str'
             ),
             tags=dict(
                 type='list'
@@ -158,10 +150,9 @@ class AzureRMDtlEnvironmentFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.lab_name = None
-        self.user_name = None
         self.name = None
         self.tags = None
-        super(AzureRMDtlEnvironmentFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlCustomImageInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -170,23 +161,21 @@ class AzureRMDtlEnvironmentFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['environments'] = self.get()
+            self.results['custom_images'] = self.get()
         else:
-            self.results['environments'] = self.list()
-
+            self.results['custom_images'] = self.list()
         return self.results
 
     def get(self):
         response = None
         results = []
         try:
-            response = self.mgmt_client.environments.get(resource_group_name=self.resource_group,
-                                                         lab_name=self.lab_name,
-                                                         user_name=self.user_name,
-                                                         name=self.name)
+            response = self.mgmt_client.custom_images.get(resource_group_name=self.resource_group,
+                                                          lab_name=self.lab_name,
+                                                          name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Environment.')
+            self.log('Could not get facts for Custom Image.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -197,12 +186,11 @@ class AzureRMDtlEnvironmentFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.environments.list(resource_group_name=self.resource_group,
-                                                          lab_name=self.lab_name,
-                                                          user_name=self.user_name)
+            response = self.mgmt_client.custom_images.list(resource_group_name=self.resource_group,
+                                                           lab_name=self.lab_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Environment.')
+            self.log('Could not get facts for Custom Image.')
 
         if response is not None:
             for item in response:
@@ -217,19 +205,16 @@ class AzureRMDtlEnvironmentFacts(AzureRMModuleBase):
             'resource_group': self.resource_group,
             'lab_name': self.lab_name,
             'name': d.get('name'),
-            'user_name': self.user_name,
-            'id': d.get('id', None),
-            'deployment_template': d.get('deployment_properties', {}).get('arm_template_id'),
-            'location': d.get('location'),
-            'provisioning_state': d.get('provisioning_state'),
-            'resource_group_id': d.get('resource_group_id'),
-            'tags': d.get('tags', None)
+            'id': d.get('id'),
+            'managed_snapshot_id': d.get('managed_snapshot_id'),
+            'source_vm_id': d.get('vm', {}).get('source_vm_id'),
+            'tags': d.get('tags')
         }
         return d
 
 
 def main():
-    AzureRMDtlEnvironmentFacts()
+    AzureRMDtlCustomImageInfo()
 
 
 if __name__ == '__main__':

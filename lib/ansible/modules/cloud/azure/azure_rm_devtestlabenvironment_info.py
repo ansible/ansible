@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabartifactsource_facts
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Artifact Source facts
+module: azure_rm_devtestlabenvironment_info
+version_added: "2.9"
+short_description: Get Azure Environment facts
 description:
-    - Get facts of Azure DevTest Lab Artifact Source.
+    - Get facts of Azure Environment.
 
 options:
     resource_group:
@@ -28,11 +28,15 @@ options:
         required: True
     lab_name:
         description:
-            - The name of DevTest Lab.
+            - The name of the lab.
+        required: True
+    user_name:
+        description:
+            - The name of the user profile.
         required: True
     name:
         description:
-            - The name of DevTest Lab Artifact Source.
+            - The name of the environment.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -46,17 +50,18 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of DevTest Lab Artifact Source
-    azure_rm_devtestlabartifactsource_facts:
+  - name: Get instance of Environment
+    azure_rm_devtestlabenvironment_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      name: myArtifactSource
+      user_name: myUser
+      name: myEnvironment
 '''
 
 RETURN = '''
-artifactsources:
+environments:
     description:
-        - A list of dictionaries containing facts for DevTest Lab Artifact Source.
+        - A list of dictionaries containing facts for Environment.
     returned: always
     type: complex
     contains:
@@ -65,8 +70,8 @@ artifactsources:
                 - The identifier of the artifact source.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/ar
-                     tifactSources/myArtifactSource"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/sc
+                     hedules/xxxxxxxx-xxxx-xxxx-xxxxx-xxxxxxxxxxxxx/environments/myEnvironment"
         resource_group:
             description:
                 - Name of the resource group.
@@ -81,49 +86,26 @@ artifactsources:
             sample: myLab
         name:
             description:
-                - The name of the artifact source.
+                - The name of the environment.
             returned: always
             type: str
-            sample: myArtifactSource
-        display_name:
+            sample: myEnvironment
+        deployment_template:
             description:
-                - The artifact source's display name.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: Public Artifact Repo
-        source_type:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/mylab/art
+                     ifactSources/public environment repo/armTemplates/WebApp"
+        resource_group_id:
             description:
-                - The artifact source's type.
+                - Target resource group id.
             returned: always
             type: str
-            sample: github
-        is_enabled:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myLab-myEnvironment-982571"
+        state:
             description:
-                - Is the artifact source enabled.
-            returned: always
-            type: str
-            sample: True
-        uri:
-            description:
-                - URI of the artifact source.
-            returned: always
-            type: str
-            sample: https://github.com/Azure/azure-devtestlab.git
-        folder_path:
-            description:
-                - The folder containing artifacts.
-            returned: always
-            type: str
-            sample: /Artifacts
-        arm_template_folder_path:
-            description:
-                - The folder containing Azure Resource Manager templates.
-            returned: always
-            type: str
-            sample: /Environments
-        provisioning_state:
-            description:
-                - Provisioning state of artifact source.
+                - Deployment state.
             returned: always
             type: str
             sample: Succeeded
@@ -146,7 +128,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
+class AzureRMDtlEnvironmentInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -155,6 +137,10 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
                 required=True
             ),
             lab_name=dict(
+                type='str',
+                required=True
+            ),
+            user_name=dict(
                 type='str',
                 required=True
             ),
@@ -172,9 +158,10 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.lab_name = None
+        self.user_name = None
         self.name = None
         self.tags = None
-        super(AzureRMDtlArtifactSourceFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlEnvironmentInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -183,9 +170,9 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['artifactsources'] = self.get()
+            self.results['environments'] = self.get()
         else:
-            self.results['artifactsources'] = self.list()
+            self.results['environments'] = self.list()
 
         return self.results
 
@@ -193,12 +180,13 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.artifact_sources.get(resource_group_name=self.resource_group,
-                                                             lab_name=self.lab_name,
-                                                             name=self.name)
+            response = self.mgmt_client.environments.get(resource_group_name=self.resource_group,
+                                                         lab_name=self.lab_name,
+                                                         user_name=self.user_name,
+                                                         name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get facts for Artifact Source.')
+            self.log('Could not get facts for Environment.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -209,11 +197,12 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.artifact_sources.list(resource_group_name=self.resource_group,
-                                                              lab_name=self.lab_name)
+            response = self.mgmt_client.environments.list(resource_group_name=self.resource_group,
+                                                          lab_name=self.lab_name,
+                                                          user_name=self.user_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get facts for Artifact Source.')
+            self.log('Could not get facts for Environment.')
 
         if response is not None:
             for item in response:
@@ -225,24 +214,22 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
     def format_response(self, item):
         d = item.as_dict()
         d = {
-            'id': d.get('id'),
-            'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
-            'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
+            'resource_group': self.resource_group,
+            'lab_name': self.lab_name,
             'name': d.get('name'),
-            'display_name': d.get('display_name'),
-            'tags': d.get('tags'),
-            'source_type': d.get('source_type').lower(),
-            'is_enabled': d.get('status') == 'Enabled',
-            'uri': d.get('uri'),
-            'arm_template_folder_path': d.get('arm_template_folder_path'),
-            'folder_path': d.get('folder_path'),
-            'provisioning_state': d.get('provisioning_state')
+            'user_name': self.user_name,
+            'id': d.get('id', None),
+            'deployment_template': d.get('deployment_properties', {}).get('arm_template_id'),
+            'location': d.get('location'),
+            'provisioning_state': d.get('provisioning_state'),
+            'resource_group_id': d.get('resource_group_id'),
+            'tags': d.get('tags', None)
         }
         return d
 
 
 def main():
-    AzureRMDtlArtifactSourceFacts()
+    AzureRMDtlEnvironmentInfo()
 
 
 if __name__ == '__main__':

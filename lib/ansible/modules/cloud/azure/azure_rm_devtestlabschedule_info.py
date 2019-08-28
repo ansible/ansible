@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabcustomimage_facts
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Custom Image facts
+module: azure_rm_devtestlabschedule_info
+version_added: "2.9"
+short_description: Get Azure Schedule facts
 description:
-    - Get facts of Azure Azure DevTest Lab Custom Image.
+    - Get facts of Azure Schedule.
 
 options:
     resource_group:
@@ -32,7 +32,7 @@ options:
         required: True
     name:
         description:
-            - The name of the custom image.
+            - The name of the schedule.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -46,23 +46,17 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Custom Image
-    azure_rm_devtestlabcustomimage_facts:
+  - name: Get instance of Schedule
+    azure_rm_devtestlabschedule_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      name: myImage
-
-  - name: List instances of Custom Image in the lab
-    azure_rm_devtestlabcustomimage_facts:
-      resource_group: myResourceGroup
-      lab_name: myLab
-      name: myImage
+      name: mySchedule
 '''
 
 RETURN = '''
-custom_images:
+schedules:
     description:
-        - A list of dictionaries containing facts for Custom Image.
+        - A list of dictionaries containing facts for Schedule.
     returned: always
     type: complex
     contains:
@@ -71,8 +65,8 @@ custom_images:
                 - The identifier of the artifact source.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/cu
-                     stomimages/myImage"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/sc
+                     hedules/labvmsshutdown"
         resource_group:
             description:
                 - Name of the resource group.
@@ -87,32 +81,32 @@ custom_images:
             sample: myLab
         name:
             description:
-                - The name of the image.
+                - The name of the environment.
             returned: always
             type: str
-            sample: myImage
-        managed_shapshot_id:
+            sample: lab_vms_shutdown
+        time:
             description:
-                - Managed snapshot id.
+                - Time of the schedule.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.compute/snapshots/myImage"
-        source_vm_id:
+            sample: lab_vms_shutdown
+        time_zone_id:
             description:
-                - Source VM id.
+                - Time zone id.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx//resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/v
-                     irtualmachines/myLabVm"
+            sample: UTC+12
         tags:
             description:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: "{ 'MyTag':'MyValue' }"
+            sample: "{ 'MyTag': 'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _camel_to_snake, _snake_to_camel
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -123,7 +117,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlCustomImageFacts(AzureRMModuleBase):
+class AzureRMDtlScheduleInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -136,8 +130,7 @@ class AzureRMDtlCustomImageFacts(AzureRMModuleBase):
                 required=True
             ),
             name=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             tags=dict(
                 type='list'
@@ -152,30 +145,30 @@ class AzureRMDtlCustomImageFacts(AzureRMModuleBase):
         self.lab_name = None
         self.name = None
         self.tags = None
-        super(AzureRMDtlCustomImageFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlScheduleInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
-
         if self.name:
-            self.results['custom_images'] = self.get()
+            self.results['schedules'] = self.get()
         else:
-            self.results['custom_images'] = self.list()
+            self.results['schedules'] = self.list()
+
         return self.results
 
     def get(self):
         response = None
         results = []
         try:
-            response = self.mgmt_client.custom_images.get(resource_group_name=self.resource_group,
-                                                          lab_name=self.lab_name,
-                                                          name=self.name)
+            response = self.mgmt_client.schedules.get(resource_group_name=self.resource_group,
+                                                      lab_name=self.lab_name,
+                                                      name=_snake_to_camel(self.name))
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Custom Image.')
+            self.log('Could not get facts for Schedule.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -186,11 +179,11 @@ class AzureRMDtlCustomImageFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.custom_images.list(resource_group_name=self.resource_group,
-                                                           lab_name=self.lab_name)
+            response = self.mgmt_client.schedules.list(resource_group_name=self.resource_group,
+                                                       lab_name=self.lab_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Custom Image.')
+            self.log('Could not get facts for Schedule.')
 
         if response is not None:
             for item in response:
@@ -204,17 +197,17 @@ class AzureRMDtlCustomImageFacts(AzureRMModuleBase):
         d = {
             'resource_group': self.resource_group,
             'lab_name': self.lab_name,
-            'name': d.get('name'),
-            'id': d.get('id'),
-            'managed_snapshot_id': d.get('managed_snapshot_id'),
-            'source_vm_id': d.get('vm', {}).get('source_vm_id'),
-            'tags': d.get('tags')
+            'name': _camel_to_snake(d.get('name')),
+            'id': d.get('id', None),
+            'tags': d.get('tags', None),
+            'time': d.get('daily_recurrence', {}).get('time'),
+            'time_zone_id': d.get('time_zone_id')
         }
         return d
 
 
 def main():
-    AzureRMDtlCustomImageFacts()
+    AzureRMDtlScheduleInfo()
 
 
 if __name__ == '__main__':

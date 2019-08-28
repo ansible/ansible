@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlab_facts
-version_added: "2.8"
+module: azure_rm_devtestlab_info
+version_added: "2.9"
 short_description: Get Azure DevTest Lab facts
 description:
     - Get facts of Azure DevTest Lab.
@@ -41,14 +41,14 @@ author:
 
 EXAMPLES = '''
   - name: List instances of DevTest Lab by resource group
-    azure_rm_devtestlab_facts:
+    azure_rm_devtestlab_info:
       resource_group: testrg
 
   - name: List instances of DevTest Lab in subscription
-    azure_rm_devtestlab_facts:
+    azure_rm_devtestlab_info:
 
   - name: Get instance of DevTest Lab
-    azure_rm_devtestlab_facts:
+    azure_rm_devtestlab_info:
       resource_group: testrg
       name: testlab
 '''
@@ -151,7 +151,7 @@ except ImportError:
     pass
 
 
-class AzureRMDevTestLabFacts(AzureRMModuleBase):
+class AzureRMDevTestLabInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -173,7 +173,7 @@ class AzureRMDevTestLabFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMDevTestLabFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDevTestLabInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -258,7 +258,7 @@ class AzureRMDevTestLabFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDevTestLabFacts()
+    AzureRMDevTestLabInfo()
 
 
 if __name__ == '__main__':

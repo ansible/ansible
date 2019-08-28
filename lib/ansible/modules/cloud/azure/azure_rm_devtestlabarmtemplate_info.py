@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabarmtemplate_facts
-version_added: "2.8"
+module: azure_rm_devtestlabarmtemplate_info
+version_added: "2.9"
 short_description: Get Azure DevTest Lab ARM Template facts
 description:
     - Get facts of Azure DevTest Lab ARM Template.
@@ -48,7 +48,7 @@ author:
 
 EXAMPLES = '''
   - name: Get information on DevTest Lab ARM Template
-    azure_rm_devtestlabarmtemplate_facts:
+    azure_rm_devtestlabarmtemplate_info:
       resource_group: myResourceGroup
       lab_name: myLab
       artifact_source_name: public environment repo
@@ -117,7 +117,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlArmTemplateFacts(AzureRMModuleBase):
+class AzureRMDtlArmTemplateInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -146,7 +146,7 @@ class AzureRMDtlArmTemplateFacts(AzureRMModuleBase):
         self.lab_name = None
         self.artifact_source_name = None
         self.name = None
-        super(AzureRMDtlArmTemplateFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlArmTemplateInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -211,7 +211,7 @@ class AzureRMDtlArmTemplateFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDtlArmTemplateFacts()
+    AzureRMDtlArmTemplateInfo()
 
 
 if __name__ == '__main__':

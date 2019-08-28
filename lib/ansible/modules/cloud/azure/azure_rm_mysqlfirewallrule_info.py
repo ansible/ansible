@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_postgresqlfirewallrule_facts
-version_added: "2.8"
-short_description: Get Azure PostgreSQL Firewall Rule facts
+module: azure_rm_mysqlfirewallrule_info
+version_added: "2.9"
+short_description: Get Azure MySQL Firewall Rule facts
 description:
-    - Get facts of Azure PostgreSQL Firewall Rule.
+    - Get facts of Azure MySQL Firewall Rule.
 
 options:
     resource_group:
@@ -43,14 +43,14 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of PostgreSQL Firewall Rule
-    azure_rm_postgresqlfirewallrule_facts:
+  - name: Get instance of MySQL Firewall Rule
+    azure_rm_mysqlfirewallrule_info:
       resource_group: myResourceGroup
       server_name: server_name
       name: firewall_rule_name
 
-  - name: List instances of PostgreSQL Firewall Rule
-    azure_rm_postgresqlfirewallrule_facts:
+  - name: List instances of MySQL Firewall Rule
+    azure_rm_mysqlfirewallrule_info:
       resource_group: myResourceGroup
       server_name: server_name
 '''
@@ -58,7 +58,7 @@ EXAMPLES = '''
 RETURN = '''
 rules:
     description:
-        - A list of dictionaries containing facts for PostgreSQL Firewall Rule.
+        - A list of dictionaries containing facts for MySQL Firewall Rule.
     returned: always
     type: complex
     contains:
@@ -67,7 +67,7 @@ rules:
                 - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/fire
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/fire
                     wallRules/rule1"
         server_name:
             description:
@@ -83,13 +83,13 @@ rules:
             sample: rule1
         start_ip_address:
             description:
-                - The start IP address of the PostgreSQL firewall rule.
+                - The start IP address of the MySQL firewall rule.
             returned: always
             type: str
             sample: 10.0.0.16
         end_ip_address:
             description:
-                - The end IP address of the PostgreSQL firewall rule.
+                - The end IP address of the MySQL firewall rule.
             returned: always
             type: str
             sample: 10.0.0.18
@@ -99,14 +99,15 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from msrestazure.azure_operation import AzureOperationPoller
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-class AzureRMPostgreSQLFirewallRulesFacts(AzureRMModuleBase):
+class AzureRMMySqlFirewallRuleInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -130,12 +131,12 @@ class AzureRMPostgreSQLFirewallRulesFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMPostgreSQLFirewallRulesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlFirewallRuleInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
+        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.name is not None):
@@ -190,7 +191,7 @@ class AzureRMPostgreSQLFirewallRulesFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMPostgreSQLFirewallRulesFacts()
+    AzureRMMySqlFirewallRuleInfo()
 
 
 if __name__ == '__main__':

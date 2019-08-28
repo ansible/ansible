@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabvirtualmachine_facts
-version_added: "2.8"
+module: azure_rm_devtestlabvirtualmachine_info
+version_added: "2.9"
 short_description: Get Azure DevTest Lab Virtual Machine facts
 description:
     - Get facts of Azure DevTest Lab Virtual Machine.
@@ -47,7 +47,7 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of DTL Virtual Machine
-    azure_rm_devtestlabvirtualmachine_facts:
+    azure_rm_devtestlabvirtualmachine_info:
       resource_group: myResourceGroup
       lab_name: myLab
       name: myVm
@@ -212,7 +212,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlVirtualMachineFacts(AzureRMModuleBase):
+class AzureRMDtlVirtualMachineInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -240,7 +240,7 @@ class AzureRMDtlVirtualMachineFacts(AzureRMModuleBase):
         self.lab_name = None
         self.name = None
         self.tags = None
-        super(AzureRMDtlVirtualMachineFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlVirtualMachineInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -313,7 +313,7 @@ class AzureRMDtlVirtualMachineFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDtlVirtualMachineFacts()
+    AzureRMDtlVirtualMachineInfo()
 
 
 if __name__ == '__main__':

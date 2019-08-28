@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mysqlserver_facts
-version_added: "2.7"
-short_description: Get Azure MySQL Server facts
+module: azure_rm_postgresqlserver_info
+version_added: "2.9"
+short_description: Get Azure PostgreSQL Server facts
 description:
-    - Get facts of MySQL Server.
+    - Get facts of PostgreSQL Server.
 
 options:
     resource_group:
@@ -42,20 +42,20 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of MySQL Server
-    azure_rm_mysqlserver_facts:
+  - name: Get instance of PostgreSQL Server
+    azure_rm_postgresqlserver_info:
       resource_group: myResourceGroup
       name: server_name
 
-  - name: List instances of MySQL Server
-    azure_rm_mysqlserver_facts:
+  - name: List instances of PostgreSQL Server
+    azure_rm_postgresqlserver_info:
       resource_group: myResourceGroup
 '''
 
 RETURN = '''
 servers:
     description:
-        - A list of dictionaries containing facts for MySQL servers.
+        - A list of dictionaries containing facts for PostgreSQL servers.
     returned: always
     type: complex
     contains:
@@ -64,7 +64,8 @@ servers:
                 - Resource ID.
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/po
+                     stgreabdud1223"
         resource_group:
             description:
                 - Resource group name.
@@ -76,7 +77,7 @@ servers:
                 - Resource name.
             returned: always
             type: str
-            sample: myabdud1223
+            sample: postgreabdud1223
         location:
             description:
                 - The location the resource resides in.
@@ -142,7 +143,7 @@ servers:
                 - The fully qualified domain name of a server.
             returned: always
             type: str
-            sample: myabdud1223.mys.database.azure.com
+            sample: postgreabdud1223.postgres.database.azure.com
         tags:
             description:
                 - Tags assigned to the resource. Dictionary of string:string pairs.
@@ -154,14 +155,14 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-class AzureRMMySqlServerFacts(AzureRMModuleBase):
+class AzureRMPostgreSqlServersInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -183,7 +184,7 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMMySqlServerFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMPostgreSqlServersInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -200,11 +201,11 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mysql_client.servers.get(resource_group_name=self.resource_group,
-                                                     server_name=self.name)
+            response = self.postgresql_client.servers.get(resource_group_name=self.resource_group,
+                                                          server_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for MySQL Server.')
+            self.log('Could not get facts for PostgreSQL Server.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_item(response))
@@ -215,10 +216,10 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mysql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
+            response = self.postgresql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for MySQL Servers.')
+            self.log('Could not get facts for PostgreSQL Servers.')
 
         if response is not None:
             for item in response:
@@ -248,7 +249,7 @@ class AzureRMMySqlServerFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMySqlServerFacts()
+    AzureRMPostgreSqlServersInfo()
 
 
 if __name__ == '__main__':

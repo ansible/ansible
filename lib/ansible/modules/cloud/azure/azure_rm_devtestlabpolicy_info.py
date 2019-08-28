@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabartifact_facts
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Artifact facts
+module: azure_rm_devtestlabpolicy_info
+version_added: "2.9"
+short_description: Get Azure DTL Policy facts
 description:
-    - Get facts of Azure DevTest Lab Artifact.
+    - Get facts of Azure DTL Policy.
 
 options:
     resource_group:
@@ -30,13 +30,16 @@ options:
         description:
             - The name of the lab.
         required: True
-    artifact_source_name:
+    policy_set_name:
         description:
-            - The name of the artifact source.
+            - The name of the policy set.
         required: True
     name:
         description:
-            - The name of the artifact.
+            - The name of the policy.
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -47,28 +50,28 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of DevTest Lab Artifact
-    azure_rm_devtestlabartifact_facts:
+  - name: Get instance of Policy
+    azure_rm_devtestlabpolicy_info:
       resource_group: myResourceGroup
       lab_name: myLab
-      artifact_source_name: myArtifactSource
-      name: myArtifact
+      policy_set_name: myPolicySet
+      name: myPolicy
 '''
 
 RETURN = '''
-artifacts:
+policies:
     description:
-        - A list of dictionaries containing facts for DevTest Lab Artifact.
+        - A list of dictionaries containing facts for Policy.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - The identifier of the artifact.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/ar
-                     tifactSources/myArtifactSource/artifacts/myArtifact"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/po
+                     licysets/myPolicySet/policies/myPolicy"
         resource_group:
             description:
                 - Name of the resource group.
@@ -81,54 +84,36 @@ artifacts:
             returned: always
             type: str
             sample: myLab
-        artifact_source_name:
+        name:
             description:
                 - The name of the artifact source.
             returned: always
             type: str
             sample: myArtifactSource
-        name:
+        fact_name:
             description:
-                - The name of the artifact.
+                - The name of the policy fact.
             returned: always
             type: str
-            sample: myArtifact
-        description:
+            sample: UserOwnedLabVmCount
+        evaluator_type:
             description:
-                - Description of the artifact.
+                - Evaluator type for policy fact.
             returned: always
             type: str
-            sample: Installs My Software
-        file_path:
+            sample: MaxValuePolicy
+        threshold:
             description:
-                - Artifact's path in the repo.
+                - Fact's threshold.
             returned: always
             type: str
-            sample: Artifacts/myArtifact
-        publisher:
+            sample: 5
+        tags:
             description:
-                - Publisher name.
-            returned: always
-            type: str
-            sample: MyPublisher
-        target_os_type:
-            description:
-                - Target OS type.
-            returned: always
-            type: str
-            sample: Linux
-        title:
-            description:
-                - Title of the artifact.
-            returned: always
-            type: str
-            sample: My Software
-        parameters:
-            description:
-                - A dictionary containing parameters definition of the artifact.
+                - The tags of the resource.
             returned: always
             type: complex
-            sample: {}
+            sample: "{ 'MyTag': 'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -142,7 +127,7 @@ except ImportError:
     pass
 
 
-class AzureRMArtifactFacts(AzureRMModuleBase):
+class AzureRMDtlPolicyInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -154,12 +139,15 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            artifact_source_name=dict(
+            policy_set_name=dict(
                 type='str',
                 required=True
             ),
             name=dict(
                 type='str'
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
@@ -169,9 +157,10 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.lab_name = None
-        self.artifact_source_name = None
+        self.policy_set_name = None
         self.name = None
-        super(AzureRMArtifactFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        self.tags = None
+        super(AzureRMDtlPolicyInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -180,9 +169,9 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['artifacts'] = self.get()
+            self.results['policies'] = self.get()
         else:
-            self.results['artifacts'] = self.list()
+            self.results['policies'] = self.list()
 
         return self.results
 
@@ -190,15 +179,15 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.artifacts.get(resource_group_name=self.resource_group,
-                                                      lab_name=self.lab_name,
-                                                      artifact_source_name=self.artifact_source_name,
-                                                      name=self.name)
+            response = self.mgmt_client.policies.get(resource_group_name=self.resource_group,
+                                                     lab_name=self.lab_name,
+                                                     policy_set_name=self.policy_set_name,
+                                                     name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Artifact.')
+            self.log('Could not get facts for Policy.')
 
-        if response:
+        if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
 
         return results
@@ -207,39 +196,38 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.artifacts.list(resource_group_name=self.resource_group,
-                                                       lab_name=self.lab_name,
-                                                       artifact_source_name=self.artifact_source_name)
+            response = self.mgmt_client.policies.list(resource_group_name=self.resource_group,
+                                                      lab_name=self.lab_name,
+                                                      policy_set_name=self.policy_set_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Artifact.')
+            self.log('Could not get facts for Policy.')
 
         if response is not None:
             for item in response:
-                results.append(self.format_response(item))
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_response(item))
 
         return results
 
     def format_response(self, item):
         d = item.as_dict()
         d = {
-            'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
-            'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
-            'artifact_source_name': self.parse_resource_to_dict(d.get('id')).get('child_name_1'),
-            'id': d.get('id'),
-            'description': d.get('description'),
-            'file_path': d.get('file_path'),
+            'resource_group': self.resource_group,
+            'policy_set_name': self.policy_set_name,
             'name': d.get('name'),
-            'parameters': d.get('parameters'),
-            'publisher': d.get('publisher'),
-            'target_os_type': d.get('target_os_type'),
-            'title': d.get('title')
+            'id': d.get('id'),
+            'tags': d.get('tags'),
+            'status': d.get('status'),
+            'threshold': d.get('threshold'),
+            'fact_name': d.get('fact_name'),
+            'evaluator_type': d.get('evaluator_type')
         }
         return d
 
 
 def main():
-    AzureRMArtifactFacts()
+    AzureRMDtlPolicyInfo()
 
 
 if __name__ == '__main__':
