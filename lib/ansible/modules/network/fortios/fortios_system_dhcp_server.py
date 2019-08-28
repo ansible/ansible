@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             auto_configuration:
                 description:
                     - Enable/disable auto configuration.
@@ -708,7 +721,12 @@ def underscore_to_hyphen(data):
 
 def system_dhcp_server(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['system_dhcp_server'] and data['system_dhcp_server']:
+        state = data['system_dhcp_server']['state']
+    else:
+        state = True
     system_dhcp_server_data = data['system_dhcp_server']
     filtered_data = underscore_to_hyphen(filter_system_dhcp_server_data(system_dhcp_server_data))
 
@@ -748,11 +766,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "system_dhcp_server": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "auto_configuration": {"required": False, "type": "str",
                                        "choices": ["disable", "enable"]},
                 "conflicted_ip_timeout": {"required": False, "type": "int"},
