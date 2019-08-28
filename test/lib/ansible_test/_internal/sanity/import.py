@@ -76,11 +76,13 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
+        capture_pip = args.verbosity < 2
+
         if python_version.startswith('2.'):
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
             pip = generate_pip_command(find_python(python_version))
-            run_command(args, generate_pip_install(pip, 'sanity.import', packages=['virtualenv']))
+            run_command(args, generate_pip_install(pip, 'sanity.import', packages=['virtualenv']), capture=capture_pip)
 
         settings = self.load_processor(args, python_version)
 
@@ -144,11 +146,11 @@ class ImportTest(SanityMultipleVersion):
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
-            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['setuptools']), env=env)
-            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['coverage']), env=env)
+            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['setuptools']), env=env, capture=capture_pip)
+            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['coverage']), env=env, capture=capture_pip)
 
-        run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env)
-        run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
+        run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env, capture=capture_pip)
+        run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env, capture=capture_pip)
 
         cmd = ['importer.py']
 
