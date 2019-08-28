@@ -44,6 +44,19 @@ options:
     description:
       - Machines that can access the system.
     type: list
+    suboptions:
+      source:
+        description:
+          - Active Directory name or UID or Identity Tag.
+        type: str
+      selection:
+        description:
+          - Name or UID of an object selected from source.
+        type: list
+      base_dn:
+        description:
+          - When source is "Active Directory" use "base-dn" to refine the query in AD database.
+        type: str
   networks:
     description:
       - Collection of Network objects identified by the name or UID that can access the system.
@@ -60,6 +73,19 @@ options:
     description:
       - Users that can access the system.
     type: list
+    suboptions:
+      source:
+        description:
+          - Active Directory name or UID or Identity Tag  or Internal User Groups or LDAP groups or Guests.
+        type: str
+      selection:
+        description:
+          - Name or UID of an object selected from source.
+        type: list
+      base_dn:
+        description:
+          - When source is "Active Directory" use "base-dn" to refine the query in AD database.
+        type: str
   color:
     description:
       - Color of the object. Should be one of existing colors.
@@ -125,11 +151,19 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        machines=dict(type='list'),
+        machines=dict(type='list', options=dict(
+            source=dict(type='str'),
+            selection=dict(type='list'),
+            base_dn=dict(type='str')
+        )),
         networks=dict(type='list'),
         remote_access_clients=dict(type='str'),
         tags=dict(type='list'),
-        users=dict(type='list'),
+        users=dict(type='list', options=dict(
+            source=dict(type='str'),
+            selection=dict(type='list'),
+            base_dn=dict(type='str')
+        )),
         color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
                                         'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown',
                                         'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
