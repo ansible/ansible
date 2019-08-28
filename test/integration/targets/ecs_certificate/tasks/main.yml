@@ -121,6 +121,8 @@
       that:
         - example1_result is not failed
         - example1_result.changed
+        - example1_result.tracking_id > 0
+        - example1_result.serial_number is string
 
   # Internal CA refuses to issue certificates with the same DN in a short time frame
   - name: Sleep for 5 seconds so we don't run into duplicate-request errors
@@ -150,6 +152,9 @@
         - not example2_result.changed
         - example2_result.backup_file is undefined
         - example2_result.backup_full_chain_file is undefined
+        - example2_result.serial_number == example1_result.serial_number
+        - example2_result.tracking_id == example1_result.tracking_id
+
 
   # Internal CA refuses to issue certificates with the same DN in a short time frame
   - name: Sleep for 5 seconds so we don't run into duplicate-request errors
@@ -180,14 +185,15 @@
         - example3_result.changed
         - example3_result.backup_file is string
         - example3_result.backup_full_chain_file is string
+        - example3_result.tracking_id > 0
         - example3_result.tracking_id != example1_result.tracking_id
         - example3_result.serial_number != example1_result.serial_number
 
   - name: Test a request with all of the various optional possible fields populated
     ecs_certificate:
-      path: '{{ example4_full_request }}'
+      path: '{{ example4_cert_path }}'
       csr: '{{ csr_path }}'
-      subject_alt_name: {{ example4_subject_alt_name }}
+      subject_alt_name: '{{ example4_subject_alt_name }}'
       eku: '{{ example4_eku }}'
       ct_log: True
       cert_type: '{{ example4_cert_type }}'
@@ -212,7 +218,7 @@
         - example4_result.changed
         - example4_result.backup_file is undefined
         - example4_result.backup_full_chain_file is undefined
-        - example4_result.tracking_id is int
+        - example4_result.tracking_id > 0
         - example4_result.serial_number is string
 
   always:
