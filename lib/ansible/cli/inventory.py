@@ -139,10 +139,10 @@ class InventoryCLI(CLI):
 
         elif context.CLIARGS['graph']:
             results = self.inventory_graph()
-        elif context.CLIARGS['list']:
-            top = self._get_group('all')
         elif context.CLIARGS['group']:
             top = self._get_group(context.CLIARGS['group'])
+        elif context.CLIARGS['list']:
+            top = self._get_group('all')
             if context.CLIARGS['yaml']:
                 results = self.yaml_inventory(top)
             elif context.CLIARGS['toml']:
