@@ -7,6 +7,8 @@ import os
 import re
 import time
 
+from . import types as t
+
 from .target import (
     walk_module_targets,
     walk_integration_targets,
@@ -360,11 +362,47 @@ class PathMapper:
 
         return result
 
-    def _classify(self, path):
-        """
-        :type path: str
-        :rtype: dict[str, str] | None
-        """
+    def _classify(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path."""
+        if data_context().content.is_ansible:
+            self._classify_ansible(path)
+        elif data_context().content.collection:
+            self._classify_collection(path)
+        else:
+            return None
+
+    def _classify_common(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules common to all layouts."""
+        dirname = os.path.dirname(path)
+        filename = os.path.basename(path)
+        name, ext = os.path.splitext(filename)
+
+        minimal = {}
+
+        return None
+
+    def _classify_collection(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules specific to collections."""
+        result = self._classify_common(path)
+
+        if result:
+            return result
+
+        dirname = os.path.dirname(path)
+        filename = os.path.basename(path)
+        name, ext = os.path.splitext(filename)
+
+        minimal = {}
+
+        return None
+
+    def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Return the classification for the given path using rules specific to Ansible."""
+        result = self._classify_common(path)
+
+        if result:
+            return result
+
         dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
