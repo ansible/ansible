@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             addr_type:
                 description:
                     - IP version to use for IP packets.
@@ -307,7 +320,12 @@ def underscore_to_hyphen(data):
 
 def vpn_ipsec_manualkey_interface(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['vpn_ipsec_manualkey_interface'] and data['vpn_ipsec_manualkey_interface']:
+        state = data['vpn_ipsec_manualkey_interface']['state']
+    else:
+        state = True
     vpn_ipsec_manualkey_interface_data = data['vpn_ipsec_manualkey_interface']
     filtered_data = underscore_to_hyphen(filter_vpn_ipsec_manualkey_interface_data(vpn_ipsec_manualkey_interface_data))
 
@@ -347,11 +365,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "vpn_ipsec_manualkey_interface": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "addr_type": {"required": False, "type": "str",
                               "choices": ["4", "6"]},
                 "auth_alg": {"required": False, "type": "str",

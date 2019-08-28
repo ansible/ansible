@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             allow_user_access:
                 description:
                     - Allow user access to SSL-VPN applications.
@@ -964,7 +977,12 @@ def underscore_to_hyphen(data):
 
 def vpn_ssl_web_portal(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['vpn_ssl_web_portal'] and data['vpn_ssl_web_portal']:
+        state = data['vpn_ssl_web_portal']['state']
+    else:
+        state = True
     vpn_ssl_web_portal_data = data['vpn_ssl_web_portal']
     filtered_data = underscore_to_hyphen(filter_vpn_ssl_web_portal_data(vpn_ssl_web_portal_data))
 
@@ -1004,11 +1022,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "vpn_ssl_web_portal": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "allow_user_access": {"required": False, "type": "str",
                                       "choices": ["web", "ftp", "smb",
                                                   "telnet", "ssh", "vnc",
