@@ -300,7 +300,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 success = True
                 result['result'] = k8s_obj
                 if wait:
-                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_sleep, wait_timeout)
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_sleep, wait_timeout, condition=wait_condition)
                 if existing:
                     existing = existing.to_dict()
                 else:
