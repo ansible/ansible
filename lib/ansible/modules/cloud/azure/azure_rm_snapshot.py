@@ -33,11 +33,10 @@ options:
   location:
     description:
       - Resource location
-    required: true
     type: str
   sku:
     description:
-      - undefined
+      - SKU
     type: dict
     suboptions:
       name:
@@ -64,14 +63,15 @@ options:
       - >-
         Disk source information. CreationData information cannot be changed
         after the disk has been created.
-    required: true
     type: dict
     suboptions:
       create_option:
         description:
           - This enumerates the possible sources of a disk's creation.
-        required: true
         type: str
+        default: Import
+        choices:
+          - Import
       source_uri:
         description:
           - >-
@@ -152,8 +152,7 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/',
-                required=True
+                disposition='/'
             ),
             sku=dict(
                 type='dict',
@@ -179,19 +178,12 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
             creation_data=dict(
                 type='dict',
                 disposition='/properties/creationData',
-                required=True,
                 options=dict(
                     create_option=dict(
                         type='str',
                         disposition='createOption',
-                        choices=['Empty',
-                                 'Attach',
-                                 'FromImage',
-                                 'Import',
-                                 'Copy',
-                                 'Restore',
-                                 'Upload'],
-                        required=True
+                        choices=['Import'],
+                        default='Import'
                     ),
                     source_uri=dict(
                         type='str',
