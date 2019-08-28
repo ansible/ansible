@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_automationaccount_facts
+module: azure_rm_automationaccount_info
 version_added: '2.9'
 short_description: Get Azure automation account facts
 description:
@@ -61,7 +61,7 @@ author:
 
 EXAMPLES = '''
 - name: Get details of an automation account
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount_info:
       name: Testing
       resource_group: myResourceGroup
       list_statistics: yes
@@ -69,11 +69,11 @@ EXAMPLES = '''
       list_keys: yes
 
 - name: List automation account in a resource group
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount_info:
       resource_group: myResourceGroup
 
 - name: List automation account in a resource group
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount_info:
 '''
 
 RETURN = '''
@@ -246,7 +246,7 @@ except ImportError:
     pass
 
 
-class AzureRMAutomationAccountFacts(AzureRMModuleBase):
+class AzureRMAutomationAccountInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -278,9 +278,15 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
         self.list_statistics = None
         self.list_usages = None
         self.list_keys = None
-        super(AzureRMAutomationAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
+
+        super(AzureRMAutomationAccountInfo, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_automationaccount_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_automationaccount_facts' module has been renamed to 'azure_rm_automationaccount_info'", version='2.13')
+
         for key in list(self.module_arg_spec):
             setattr(self, key, kwargs[key])
 
@@ -370,7 +376,7 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMAutomationAccountFacts()
+    AzureRMAutomationAccountInfo()
 
 
 if __name__ == '__main__':

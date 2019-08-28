@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_cosmosdbaccount_facts
-version_added: "2.8"
+module: azure_rm_cosmosdbaccount_info
+version_added: "2.9"
 short_description: Get Azure Cosmos DB Account facts
 description:
     - Get facts of Azure Cosmos DB Account.
@@ -53,12 +53,12 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of Database Account
-    azure_rm_cosmosdbaccount_facts:
+    azure_rm_cosmosdbaccount_info:
       resource_group: myResourceGroup
       name: testaccount
 
   - name: List instances of Database Account
-    azure_rm_cosmosdbaccousnt_facts:
+    azure_rm_cosmosdbaccousnt_info:
       resource_group: myResourceGroup
 '''
 
@@ -357,7 +357,7 @@ except ImportError:
     pass
 
 
-class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
+class AzureRMCosmosDBAccountInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -389,9 +389,14 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
         self.retrieve_keys = None
         self.retrieve_connection_strings = None
 
-        super(AzureRMCosmosDBAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMCosmosDBAccountInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_cosmosdbaccount_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_cosmosdbaccount_facts' module has been renamed to 'azure_rm_cosmosdbaccount_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(CosmosDB,
@@ -508,7 +513,7 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMCosmosDBAccountFacts()
+    AzureRMCosmosDBAccountInfo()
 
 
 if __name__ == '__main__':

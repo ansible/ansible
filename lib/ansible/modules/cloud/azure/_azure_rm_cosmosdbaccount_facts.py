@@ -1,0 +1,1 @@
+azure_rm_cosmosdbaccount_info.py
