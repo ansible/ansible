@@ -2,8 +2,6 @@
 
 set -eux
 
-# Verify that extra data before module JSON output during async call is ignored.
-ANSIBLE_DEBUG=0 LC_ALL=bogus ansible-playbook test_async.yml -i inventory -v "$@"
-# Verify that the warning exists by examining debug output.
-ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i inventory -v "$@" \
-    | grep 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)' > /dev/null
+# Verify that extra data before module JSON output during async call is ignored, and that the warning exists.
+ANSIBLE_DEBUG=0 ansible-playbook -i ../../inventory test_async.yml -v "$@" \
+    | grep 'junk after the JSON data: junk_after_module_output'

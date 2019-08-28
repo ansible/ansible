@@ -193,15 +193,6 @@
       - testmodule_out.source == 'user'
       - systestmodule_out.source == 'sys'
 
-# FIXME: this won't work until collections list gets passed through task templar
-#  - name: exercise unqualified filters/tests/lookups
-#    assert:
-#      that:
-#      - "'data' | testfilter == 'data_from_userdir'"
-#      - "'from_user' is testtest"
-#      - lookup('mylookup') == 'lookup_from_user_dir'
-
-
 # test keyword-static execution of a FQ collection-backed role with "tasks/main.yaml"
 - name: verify collection-backed role execution (keyword static)
   hosts: testhost

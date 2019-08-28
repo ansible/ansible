@@ -121,8 +121,8 @@ class ModuleArgsParser:
         # store the valid Task/Handler attrs for quick access
         self._task_attrs = set(Task._valid_attrs.keys())
         self._task_attrs.update(set(Handler._valid_attrs.keys()))
-        # HACK: why is static not a FieldAttribute on task with a post-validate to bomb if not include/import?
-        self._task_attrs.add('static')
+        # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
+        self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)
 
     def _split_module_string(self, module_string):
@@ -259,7 +259,7 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def parse(self):
+    def parse(self, skip_action_validation=False):
         '''
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
@@ -300,7 +300,7 @@ class ModuleArgsParser:
 
         # walk the filtered input dictionary to see if we recognize a module name
         for item, value in iteritems(non_task_ds):
-            if item in BUILTIN_TASKS or action_loader.has_plugin(item, collection_list=self._collection_list) or \
+            if item in BUILTIN_TASKS or skip_action_validation or action_loader.has_plugin(item, collection_list=self._collection_list) or \
                     module_loader.has_plugin(item, collection_list=self._collection_list):
                 # finding more than one module name is a problem
                 if action is not None:
