@@ -347,7 +347,7 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
             kwargs.update(kwargs['mounts'])
             del kwargs['mounts']
         if 'pubkey' in kwargs:
-            if float(proxmox.version.get()['version']) >= 4.2:
+            if float(proxmox.version.get()['version'].split('-')[0]) >= 4.2:
                 kwargs['ssh-public-keys'] = kwargs['pubkey']
             del kwargs['pubkey']
     else:
@@ -481,7 +481,7 @@ def main():
     try:
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
-        VZ_TYPE = 'openvz' if float(proxmox.version.get()['version']) < 4.0 else 'lxc'
+        VZ_TYPE = 'openvz' if int(proxmox.version.get()['version'].split('.', 1)[0]) < 4 else 'lxc'
 
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
