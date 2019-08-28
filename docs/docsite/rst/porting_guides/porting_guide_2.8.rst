@@ -71,7 +71,9 @@ Command line facts
 Bare variables in conditionals
 ------------------------------
 
-In Ansible 2.7 and earlier, top-level variables sometimes treated boolean strings as if they were boolean values. This led to inconsistent behavior in conditional tests built on top-level variables defined as strings. Ansible 2.8 began changing this behavior. For example, if you set two conditions like this::
+In Ansible 2.7 and earlier, top-level variables sometimes treated boolean strings as if they were boolean values. This led to inconsistent behavior in conditional tests built on top-level variables defined as strings. Ansible 2.8 began changing this behavior. For example, if you set two conditions like this:
+
+.. code-block:: yaml
 
    tasks:
      - include_tasks: teardown.yml
@@ -86,12 +88,16 @@ based on a variable you define **as a string** (with quotation marks around it):
 * In Ansible 2.7 and earlier, both conditions evaluated as ``False`` if ``teardown: 'false'``
 * In Ansible 2.8 and later, you have the option of disabling conditional bare variables, so ``when: teardown`` always evaluates as ``True`` and ``when: not teardown`` always evaluates as ``False`` when ``teardown`` is a non-empty string (including ``'true'`` or ``'false'``)
 
-Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option. In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
+Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option.
+
+.. note:: In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
 
 Updating your playbooks
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``::
+To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``:
+
+.. code-block:: yaml
 
     vars:
       teardown: 'false'
@@ -103,7 +109,9 @@ To prepare your playbooks for the new behavior, you must update your conditional
       - include_tasks: provision.yml
         when: not teardown | bool
 
-Alternatively, you can re-define your variables as boolean values (without quotation marks) instead of strings::
+Alternatively, you can re-define your variables as boolean values (without quotation marks) instead of strings:
+
+.. code-block:: yaml
 
             vars:
               teardown: false
@@ -115,7 +123,9 @@ Alternatively, you can re-define your variables as boolean values (without quota
               - include_tasks: provision.yml
                 when: not teardown
 
-For dictionaries and lists, use the ``length`` filter to evaluate the presence of a dictionary or list as ``True``::
+For dictionaries and lists, use the ``length`` filter to evaluate the presence of a dictionary or list as ``True``:
+
+.. code-block:: yaml
 
       - debug:
         when: my_list | length > 0
@@ -128,7 +138,9 @@ Do not use the ``bool`` filter with lists or dictionaries. If you use ``bool`` w
 Double-interpolation
 ^^^^^^^^^^^^^^^^^^^^
 
-The ``conditional_bare_variables`` setting also affects variables set based on other variables. The old behavior unexpectedly double-interpolated those variables. For example::
+The ``conditional_bare_variables`` setting also affects variables set based on other variables. The old behavior unexpectedly double-interpolated those variables. For example:
+
+.. code-block:: yaml
 
     vars:
       double_interpolated: 'bare_variable'
@@ -141,16 +153,18 @@ The ``conditional_bare_variables`` setting also affects variables set based on o
 * In Ansible 2.7 and earlier, ``when: double_interpolated`` evaluated to the value of ``bare_variable``, in this case, ``False``. If the variable ``bare_variable`` is undefined, the conditional fails.
 * In Ansible 2.8 and later, with bare variables disabled, Ansible evaluates ``double_interpolated`` as the string ``'bare_variable'``, which is ``True``.
 
-To double-interpolate variable values, use curly braces::
+To double-interpolate variable values, use curly braces:
 
-          vars:
-            double_interpolated: "{{ other_variable }}"
-            other_variable: false
+.. code-block:: yaml
+
+    vars:
+      double_interpolated: "{{ other_variable }}"
+      other_variable: false
 
 Nested variables
 ^^^^^^^^^^^^^^^^
 
-The ``conditional_bare_variables`` setting does not affect nested variables. Subkey strings are already respected and not treated as booleans: ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey to be evaluated as a boolean you must use the ``bool`` filter.
+The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean: ``when: complex_variable['any string']`` is always ``True`` and ``when: not complex_variable['any string']`` is always ``False``. If you want a string subkey like ``complex_variable['false']`` to be evaluated as a boolean you must use the ``bool`` filter.
 
 Python Interpreter Discovery
 ============================
