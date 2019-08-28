@@ -31,7 +31,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
                                ):  # type: (...) -> bool
     """Create a virtual environment using venv or virtualenv for the requested Python version."""
     if os.path.isdir(path):
-        display.info('Using existing Python %s virtual environment: %s' % (version, path))
+        display.info('Using existing Python %s virtual environment: %s' % (version, path), verbosity=1)
         return True
 
     python = find_python(version, required=False)
@@ -44,7 +44,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
     if python_version >= (3, 0):
         # use the built-in 'venv' module on Python 3.x
         if run_venv(args, python, system_site_packages, pip, path):
-            display.info('Created Python %s virtual environment using "venv": %s' % (version, path))
+            display.info('Created Python %s virtual environment using "venv": %s' % (version, path), verbosity=1)
             return True
 
         # something went wrong, this shouldn't happen
@@ -52,7 +52,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
 
     # use the installed 'virtualenv' module on the Python requested version
     if run_virtualenv(args, python, python, system_site_packages, pip, path):
-        display.info('Created Python %s virtual environment using "virtualenv": %s' % (version, path))
+        display.info('Created Python %s virtual environment using "virtualenv": %s' % (version, path), verbosity=1)
         return True
 
     available_pythons = get_available_python_versions(SUPPORTED_PYTHON_VERSIONS)
@@ -70,7 +70,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
 
         # try using 'virtualenv' from another Python to setup the desired version
         if run_virtualenv(args, available_python_interpreter, python, system_site_packages, pip, path):
-            display.info('Created Python %s virtual environment using "virtualenv" on Python %s: %s' % (version, available_python_version, path))
+            display.info('Created Python %s virtual environment using "virtualenv" on Python %s: %s' % (version, available_python_version, path), verbosity=1)
             return True
 
     # no suitable 'virtualenv' available
