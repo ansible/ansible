@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2017, Nathan Davison <ndavison85@gmail.com>
+# Copyright: (c) 2017, Nathan Davison <ndavison85@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -18,7 +18,7 @@ module: listen_ports_facts
 author:
     - Nathan Davison (@ndavison)
 
-version_added: "2.8"
+version_added: "2.9"
 
 description:
     - Gather facts on processes listening on TCP and UDP ports.
@@ -42,15 +42,15 @@ EXAMPLES = r'''
 
 - name: List TCP ports
   debug:
-    var: ansible_facts.tcp_listen  | map(attribute='port') | sort | list
+    msg: "{{ ansible_facts.tcp_listen  | map(attribute='port') | sort | list }}"
 
 - name: List UDP ports
   debug:
-    var: ansible_facts.udp_listen | map(attribute='port') | sort | list
+    msg: "{{ ansible_facts.udp_listen | map(attribute='port') | sort | list }}"
 
 - name: List all ports
   debug:
-    var: (ansible_facts.tcp_listen + ansible_facts.udp_listen) | map(attribute='port') | unique | sort | list
+    msg: "{{ (ansible_facts.tcp_listen + ansible_facts.udp_listen) | map(attribute='port') | unique | sort | list }}"
 '''
 
 RETURN = r'''
@@ -161,7 +161,7 @@ def netStatParse(raw):
             elif 'udp' in splitted[0]:
                 protocol = 'udp'
                 pidstr = splitted[5]
-            pids = re.search('(([0-9]+)/(.*)|-)', pidstr)
+            pids = re.search(r'(([0-9]+)/(.*)|-)', pidstr)
             if conns and pids:
                 address = conns.group(1)
                 port = conns.group(2)
@@ -173,7 +173,13 @@ def netStatParse(raw):
                     name = pids.group(3)
                 else:
                     name = ''
-                result = dict(pid=int(pid), address=address, port=int(port), protocol=protocol, name=name)
+                result = {
+                    'pid': int(pid),
+                    'address': address,
+                    'port': int(port),
+                    'protocol': protocol,
+                    'name': name,
+                }
                 if result not in results:
                     results.append(result)
             else:
@@ -184,7 +190,7 @@ def netStatParse(raw):
 def main():
 
     module = AnsibleModule(
-        argument_spec=dict(),
+        argument_spec={},
         supports_check_mode=True,
     )
 
@@ -211,13 +217,13 @@ def main():
                     user = line
         return user
 
-    result = dict(
-        changed=False,
-        ansible_facts=dict(
-            tcp_listen=list(),
-            udp_listen=list(),
-        ),
-    )
+    result = {
+        'changed': False,
+        'ansible_facts': {
+            'tcp_listen': [],
+            'udp_listen': [],
+        },
+    }
 
     try:
         netstat_cmd = module.get_bin_path('netstat', True)
@@ -233,7 +239,7 @@ def main():
                     result['ansible_facts']['tcp_listen'].append(p)
                 elif p['protocol'] == 'udp':
                     result['ansible_facts']['udp_listen'].append(p)
-    except KeyError as e:
+    except (KeyError, EnvironmentError) as e:
         module.fail_json(msg=to_native(e))
 
     module.exit_json(**result)
