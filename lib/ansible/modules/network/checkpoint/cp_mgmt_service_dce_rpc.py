@@ -98,7 +98,6 @@ EXAMPLES = """
     color: green
     interface_uuid: 44aeb460-9aea-11d5-bd16-009027266b30
     name: New_DCE-RPC_Service_1
-    new_name: New_DCE-RPC_Service_3
     state: present
 
 - name: delete-service-dce-rpc
