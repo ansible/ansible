@@ -260,10 +260,9 @@ class L2_Interfaces(ConfigBase):
 
             if l2transport or l2protocol:
                 for each in l2protocol:
+                    each = dict(each)
                     if isinstance(each, dict):
                         cmd = 'l2transport l2protocol {0} {1}'.format(each.keys()[0], each.values()[0])
-                    else:
-                        cmd = 'l2transport l2protocol {0} {1}'.format(each[0], each[1])
                     add_command_to_config_list(interface, cmd, commands)
                 if propagate and not have.get('propagate'):
                     cmd = 'l2transport propagate remote-status'

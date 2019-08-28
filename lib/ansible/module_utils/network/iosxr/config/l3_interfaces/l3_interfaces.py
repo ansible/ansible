@@ -242,7 +242,7 @@ class L3_Interfaces(ConfigBase):
             for each in diff_ipv4:
                 ipv4_dict = dict(each)
                 if ipv4_dict.get('address') != 'dhcp':
-                    cmd = "ip address {0}".format(ipv4_dict['address'])
+                    cmd = "ipv4 address {0}".format(ipv4_dict['address'])
                     if ipv4_dict.get("secondary"):
                         cmd += " secondary"
                 add_command_to_config_list(interface, cmd, commands)

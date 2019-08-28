@@ -88,10 +88,11 @@ def filter_dict_having_none_value(want, have):
                 if each.get('secondary'):
                     want_ip = each.get('address').split('/')
                     have_ip = have.get('ipv4')
-                    if len(want_ip) > 1 and have_ip and have_ip[0].get('secondary'):
-                        have_ip = have_ip[0]['address'].split(' ')[0]
-                        if have_ip != want_ip[0]:
-                            diff_ip = True
+                    for each in have_ip:
+                        if len(want_ip) > 1 and each.get('secondary'):
+                            have_ip = each.get('address').split(' ')[0]
+                            if have_ip != want_ip[0]:
+                                diff_ip = True
                     if each.get('secondary') and diff_ip is True:
                         test_key_dict.update({'secondary': True})
                     test_dict.update({'ipv4': test_key_dict})

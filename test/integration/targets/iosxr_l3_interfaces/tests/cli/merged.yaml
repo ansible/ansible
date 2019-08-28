@@ -8,26 +8,26 @@
     - name: Merge provided configuration with device configuration
       iosxr_l3_interfaces: &merged
         config:
-          - name: GigabitEthernet0/0/0/2
+          - name: GigabitEthernet0/0/0/1
             ipv4:
-            - address: 192.0.1.1/24
-          - name: GigabitEthernet0/0/0/3
+            - address: 198.51.100.1/24
+          - name: GigabitEthernet0/0/0/2
             ipv6:
-            - address: 2001:DB8:ACAD:1::/64
+            - address: 2001:db8:0000:3::/64
             ipv4:
             - address: 192.0.2.1/24
-            - address: 192.0.3.2/24
+            - address: 192.0.2.2/24
               secondary: True
-          - name: GigabitEthernet0/0/0/4
+          - name: GigabitEthernet0/0/0/3
             ipv4:
-            - address: 192.0.2.12/24
-            - address: 192.100.10.2/24
+            - address: 203.0.110.1/24
+            - address: 203.0.110.5/24
               secondary: True
-          - name: preconfigure GigabitEthernet0/0/0/3.100
+          - name: GigabitEthernet0/0/0/3.100
             ipv4:
             - address: 198.51.100.14/24
             ipv6:
-            - address: FD05::/64
+            - address: 2001:db8:0000:4::/64
         state: merged
       register: result
 
