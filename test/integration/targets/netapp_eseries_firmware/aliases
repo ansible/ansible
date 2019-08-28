@@ -1,0 +1,15 @@
+# This test is not enabled by default, but can be utilized by defining required variables in integration_config.yml
+# Example integration_config.yml:
+# ---
+netapp_e_embedded_api_host: 192.168.1.1
+netapp_e_embedded_api_username: admin
+netapp_e_embedded_api_password: adminPass
+netapp_e_embedded_ssid: 1
+
+netapp_e_proxy_api_host: 192.168.1.100
+netapp_e_proxy_api_username: admin
+netapp_e_proxy_api_password: adminPass
+netapp_e_proxy_ssid: 10
+
+unsupported
+netapp/eseries
