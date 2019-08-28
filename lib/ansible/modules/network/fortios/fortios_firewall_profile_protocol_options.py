@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_firewall_profile_protocol_options
 short_description: Configure protocol options in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS device by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify firewall feature and profile_protocol_options category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.5
@@ -76,7 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
+        required: false
         choices:
             - present
             - absent
@@ -87,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             comment:
                 description:
                     - Optional comments.
@@ -98,7 +112,7 @@ options:
                 suboptions:
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 53).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     status:
                         description:
@@ -114,11 +128,11 @@ options:
                 suboptions:
                     comfort_amount:
                         description:
-                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes, default = 1).
+                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes).
                         type: int
                     comfort_interval:
                         description:
-                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec, default = 10).
+                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec).
                         type: int
                     inspect_all:
                         description:
@@ -139,11 +153,11 @@ options:
                             - bypass-mode-command
                     oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
                         type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 21).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     scan_bzip2:
                         description:
@@ -161,11 +175,11 @@ options:
                             - disable
                     uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
                         type: int
                     uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
                         type: int
             http:
                 description:
@@ -174,15 +188,15 @@ options:
                 suboptions:
                     block_page_status_code:
                         description:
-                            - Code number returned for blocked HTTP pages (non-FortiGuard only) (100 - 599, default = 403).
+                            - Code number returned for blocked HTTP pages (non-FortiGuard only) (100 - 599).
                         type: int
                     comfort_amount:
                         description:
-                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes, default = 1).
+                            - Amount of data to send in a transmission for client comforting (1 - 10240 bytes).
                         type: int
                     comfort_interval:
                         description:
-                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec, default = 10).
+                            - Period of time between start, or last transmission, and the next client comfort transmission of data (1 - 900 sec).
                         type: int
                     fortinet_bar:
                         description:
@@ -193,7 +207,7 @@ options:
                             - disable
                     fortinet_bar_port:
                         description:
-                            - Port for use by Fortinet Bar (1 - 65535, default = 8011).
+                            - Port for use by Fortinet Bar (1 - 65535).
                         type: int
                     http_policy:
                         description:
@@ -220,11 +234,11 @@ options:
                             - chunkedbypass
                     oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
                         type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 80).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     post_lang:
                         description:
@@ -261,7 +275,7 @@ options:
                             - enable
                     retry_count:
                         description:
-                            - Number of attempts to retry HTTP connection (0 - 100, default = 0).
+                            - Number of attempts to retry HTTP connection (0 - 100).
                         type: int
                     scan_bzip2:
                         description:
@@ -300,11 +314,11 @@ options:
                             - block
                     uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
                         type: int
                     uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
                         type: int
             imap:
                 description:
@@ -327,11 +341,11 @@ options:
                             - oversize
                     oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
                         type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 143).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     scan_bzip2:
                         description:
@@ -349,11 +363,11 @@ options:
                             - disable
                     uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
                         type: int
                     uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
                         type: int
             mail_signature:
                 description:
@@ -385,11 +399,11 @@ options:
                             - oversize
                     oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
                         type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 135).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     scan_bzip2:
                         description:
@@ -407,11 +421,11 @@ options:
                             - disable
                     uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
                         type: int
                     uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
                         type: int
             name:
                 description:
@@ -439,11 +453,11 @@ options:
                             - splice
                     oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
                         type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 119).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     scan_bzip2:
                         description:
@@ -461,11 +475,11 @@ options:
                             - disable
                     uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
                         type: int
                     uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
                         type: int
             oversize_log:
                 description:
@@ -495,11 +509,11 @@ options:
                             - oversize
                     oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
                         type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 110).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     scan_bzip2:
                         description:
@@ -517,11 +531,11 @@ options:
                             - disable
                     uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
                         type: int
                     uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
                         type: int
             replacemsg_group:
                 description:
@@ -556,11 +570,11 @@ options:
                             - splice
                     oversize_limit:
                         description:
-                            - Maximum in-memory file size that can be scanned (1 - 383 MB, default = 10).
+                            - Maximum in-memory file size that can be scanned (1 - 383 MB).
                         type: int
                     ports:
                         description:
-                            - Ports to scan for content (1 - 65535, default = 25).
+                            - Ports to scan for content (1 - 65535).
                         type: int
                     scan_bzip2:
                         description:
@@ -585,11 +599,11 @@ options:
                             - disable
                     uncompressed_nest_limit:
                         description:
-                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100, default = 12).
+                            - Maximum nested levels of compression that can be uncompressed and scanned (2 - 100).
                         type: int
                     uncompressed_oversize_limit:
                         description:
-                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited, default = 10).
+                            - Maximum in-memory uncompressed file size that can be scanned (0 - 383 MB, 0 = unlimited).
                         type: int
             switching_protocols_log:
                 description:
@@ -819,7 +833,12 @@ def underscore_to_hyphen(data):
 
 def firewall_profile_protocol_options(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_profile_protocol_options'] and data['firewall_profile_protocol_options']:
+        state = data['firewall_profile_protocol_options']['state']
+    else:
+        state = True
     firewall_profile_protocol_options_data = data['firewall_profile_protocol_options']
     filtered_data = underscore_to_hyphen(filter_firewall_profile_protocol_options_data(firewall_profile_protocol_options_data))
 
@@ -855,15 +874,17 @@ def main():
     fields = {
         "host": {"required": False, "type": "str"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "firewall_profile_protocol_options": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "comment": {"required": False, "type": "str"},
                 "dns": {"required": False, "type": "dict",
                         "options": {
@@ -1027,6 +1048,7 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
 
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
     legacy_mode = 'host' in module.params and module.params['host'] is not None and \
                   'username' in module.params and module.params['username'] is not None and \
                   'password' in module.params and module.params['password'] is not None

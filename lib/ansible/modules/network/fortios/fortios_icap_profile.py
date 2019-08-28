@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             methods:
                 description:
                     - The allowed HTTP methods that will be sent to ICAP server for further processing.
@@ -304,7 +317,12 @@ def underscore_to_hyphen(data):
 
 def icap_profile(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['icap_profile'] and data['icap_profile']:
+        state = data['icap_profile']['state']
+    else:
+        state = True
     icap_profile_data = data['icap_profile']
     filtered_data = underscore_to_hyphen(filter_icap_profile_data(icap_profile_data))
 
@@ -344,11 +362,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "icap_profile": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "methods": {"required": False, "type": "str",
                             "choices": ["delete", "get", "head",
                                         "options", "post", "put",

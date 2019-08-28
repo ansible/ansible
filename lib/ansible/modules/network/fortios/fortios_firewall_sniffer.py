@@ -76,8 +76,10 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
         type: str
-        required: true
+        required: false
         choices:
             - present
             - absent
@@ -88,6 +90,17 @@ options:
         default: null
         type: dict
         suboptions:
+            state:
+                description:
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
+                choices:
+                    - present
+                    - absent
             anomaly:
                 description:
                     - Configuration method to edit Denial of Service (DoS) anomaly settings.
@@ -121,7 +134,7 @@ options:
                             - attacker
                     quarantine_expiry:
                         description:
-                            - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m, default = 5m). Requires quarantine set to attacker.
+                            - Duration of quarantine. (Format ###d##h##m, minimum 1m, maximum 364d23h59m). Requires quarantine set to attacker.
                         type: str
                     quarantine_log:
                         description:
@@ -143,8 +156,8 @@ options:
                         type: int
                     threshold(default):
                         description:
-                            - Number of detected instances per minute which triggers action (1 - 2147483647, default = 1000). Note that each anomaly has a
-                               different threshold value assigned to it.
+                            - Number of detected instances per minute which triggers action (1 - 2147483647). Note that each anomaly has a different threshold
+                               value assigned to it.
                         type: int
             application_list:
                 description:
@@ -234,7 +247,7 @@ options:
                     - disable
             max_packet_count:
                 description:
-                    - Maximum packet count (1 - 1000000, default = 10000).
+                    - Maximum packet count (1 - 1000000).
                 type: int
             non_ip:
                 description:
@@ -465,7 +478,12 @@ def underscore_to_hyphen(data):
 
 def firewall_sniffer(data, fos):
     vdom = data['vdom']
-    state = data['state']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_sniffer'] and data['firewall_sniffer']:
+        state = data['firewall_sniffer']['state']
+    else:
+        state = True
     firewall_sniffer_data = data['firewall_sniffer']
     filtered_data = underscore_to_hyphen(filter_firewall_sniffer_data(firewall_sniffer_data))
 
@@ -505,11 +523,13 @@ def main():
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
         "ssl_verify": {"required": False, "type": "bool", "default": True},
-        "state": {"required": True, "type": "str",
+        "state": {"required": False, "type": "str",
                   "choices": ["present", "absent"]},
         "firewall_sniffer": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "state": {"required": False, "type": "str",
+                          "choices": ["present", "absent"]},
                 "anomaly": {"required": False, "type": "list",
                             "options": {
                                 "action": {"required": False, "type": "str",
