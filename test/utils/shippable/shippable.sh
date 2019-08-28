@@ -120,8 +120,6 @@ function cleanup
         fi
     fi
 
-    rmdir shippable/testresults/
-
     if [ -d test/results/junit/ ]; then
       cp -a test/results/junit/ shippable/testresults/
     fi
