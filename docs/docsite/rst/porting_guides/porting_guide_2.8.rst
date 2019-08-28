@@ -88,7 +88,7 @@ based on a variable you define **as a string** (with quotation marks around it):
 * In Ansible 2.7 and earlier, both conditions evaluated as ``False`` if ``teardown: 'false'``
 * In Ansible 2.8 and later, you have the option of disabling conditional bare variables, so ``when: teardown`` always evaluates as ``True`` and ``when: not teardown`` always evaluates as ``False`` when ``teardown`` is a non-empty string (including ``'true'`` or ``'false'``)
 
-Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option.
+Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, as long as ``'string'`` is not empty, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option.
 
 .. note:: In 2.10 the default will change to ``false``. In 2.12 the old behavior will be deprecated.
 
@@ -125,7 +125,7 @@ Alternatively, you can re-define your variables as boolean values (without quota
 
 For dictionaries and lists, use the ``length`` filter to evaluate the presence of a dictionary or list as ``True``:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
       - debug:
         when: my_list | length > 0
@@ -155,7 +155,7 @@ The ``conditional_bare_variables`` setting also affects variables set based on o
 
 To double-interpolate variable values, use curly braces:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     vars:
       double_interpolated: "{{ other_variable }}"
@@ -164,7 +164,7 @@ To double-interpolate variable values, use curly braces:
 Nested variables
 ^^^^^^^^^^^^^^^^
 
-The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean: ``when: complex_variable['any non-empty string']`` is always ``True`` and ``when: not complex_variable['any non-empty string']`` is always ``False``. If you want a string subkey like ``complex_variable['false']`` to be evaluated as a boolean you must use the ``bool`` filter.
+The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean. If ``complex_variable['subkey'] is a non-empty string, then ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey like ``complex_variable['subkey']`` to be evaluated as a boolean, you must use the ``bool`` filter.
 
 Python Interpreter Discovery
 ============================
